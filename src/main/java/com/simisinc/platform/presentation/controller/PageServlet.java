@@ -283,7 +283,8 @@ public class PageServlet extends HttpServlet {
             String collectionIdValue = request.getParameter("collectionId");
             if (StringUtils.isNumeric(collectionIdValue)) {
               long collectionId = Long.parseLong(collectionIdValue);
-              thisCollection = LoadCollectionCommand.loadCollectionByIdForAuthorizedUser(collectionId, userSession.getUserId());
+              thisCollection = LoadCollectionCommand.loadCollectionByIdForAuthorizedUser(collectionId,
+                  userSession.getUserId());
               if (thisCollection != null) {
                 collectionUniqueId = thisCollection.getUniqueId();
               }
@@ -296,6 +297,7 @@ public class PageServlet extends HttpServlet {
         }
         if (!StringUtils.isBlank(collectionUniqueId)) {
           if (thisCollection == null) {
+            thisCollection = LoadCollectionCommand.loadCollectionByUniqueIdForAuthorizedUser(collectionUniqueId,
                 userSession.getUserId());
           }
           if (thisCollection == null) {
