@@ -16,8 +16,21 @@
 
 package com.simisinc.platform.presentation.controller;
 
-import com.simisinc.platform.domain.model.cms.WebContainer;
-import com.simisinc.platform.infrastructure.persistence.cms.WebContainerRepository;
+import static java.util.stream.Collectors.toList;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Serializable;
+import java.net.URL;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.FactoryConfigurationError;
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -26,22 +39,10 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import javax.servlet.ServletContext;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.FactoryConfigurationError;
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Serializable;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Stream;
-
-import static java.util.stream.Collectors.toList;
+import com.simisinc.platform.domain.model.cms.WebContainer;
 
 /**
- * Description
+ * Processor for the footer XML
  *
  * @author matt rajkowski
  * @created 1/17/21 10:48 AM
@@ -54,25 +55,9 @@ public class XMLFooterLoader implements Serializable {
   public XMLFooterLoader() {
   }
 
-  public static Footer retrieveFooter(ServletContext context, Map<String, String> widgetLibrary, String layout) {
-    // Load the footer from the database
-    WebContainer container = WebContainerRepository.findByName(layout);
+  public static Footer loadFromURL(Map<String, String> widgetLibrary, String layoutName, URL url) {
     try {
-      // Not found, import it from XML
-      if (container == null && context != null) {
-        // @todo Save the header to the DB?
-        return loadFooterFromFile(context, layout, "/WEB-INF/web-layouts/footer/footer-layout.xml", widgetLibrary);
-      }
-      return XMLFooterLoader.addFromXml(container, widgetLibrary);
-    } catch (Exception e) {
-      LOG.error("Could not parse container XML");
-    }
-    return null;
-  }
-
-  public static Footer loadFooterFromFile(ServletContext context, String layoutName, String fileName, Map<String, String> widgetLibrary) {
-    try {
-      Document document = readDocument(context, fileName);
+      Document document = parseDocument(url);
       return parseDocument(document, layoutName, widgetLibrary);
     } catch (Exception e) {
       e.printStackTrace();
@@ -80,7 +65,7 @@ public class XMLFooterLoader implements Serializable {
     return null;
   }
 
-  private static Document readDocument(ServletContext context, String file)
+  private static Document parseDocument(URL url)
       throws FactoryConfigurationError, ParserConfigurationException, SAXException, IOException {
     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
     factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
@@ -88,7 +73,7 @@ public class XMLFooterLoader implements Serializable {
     factory.setExpandEntityReferences(false);
 
     DocumentBuilder builder = factory.newDocumentBuilder();
-    try (InputStream is = context.getResourceAsStream(file)) {
+    try (InputStream is = url.openStream()) {
       return builder.parse(is);
     }
   }
@@ -128,7 +113,7 @@ public class XMLFooterLoader implements Serializable {
       }
     }
     if (container != null) {
-      Footer footer = loadFooter(document, container, widgetLibrary);
+      Footer footer = parseContainer(document, container, widgetLibrary);
       // @note set it back to the requested layout name regardless of what the document has
       footer.setName(layoutName);
       LOG.debug("Created footer: " + footer.getName());
@@ -137,7 +122,7 @@ public class XMLFooterLoader implements Serializable {
     return null;
   }
 
-  private static Footer loadFooter(Document document, Element container, Map<String, String> widgetLibrary) {
+  private static Footer parseContainer(Document document, Element container, Map<String, String> widgetLibrary) {
     String layoutName = container.getAttribute("name");
     if (layoutName.contains("{")) {
       layoutName = layoutName.substring(0, layoutName.indexOf("{"));

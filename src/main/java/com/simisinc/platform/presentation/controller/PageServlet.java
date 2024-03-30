@@ -103,11 +103,25 @@ public class PageServlet extends HttpServlet {
 
     // Load the web page designs
     LOG.info("Loading the web page designs...");
-    Map<String, String> widgetLibrary = WebPageXmlLayoutCommand.init(config.getServletContext());
+    Map<String, String> widgetLibrary = null;
+    try {
+      widgetLibrary = WebPageXmlLayoutCommand.init(config.getServletContext());
+    } catch (Exception e) {
+      throw new ServletException(e);
+    }
 
     // Load the web containers
     LOG.info("Populating the header and footer containers...");
-    WebContainerLayoutCommand.populateCache(config.getServletContext(), widgetLibrary);
+    try {
+      WebContainerLayoutCommand.retrieveHeader(widgetLibrary, "header.default",
+          config.getServletContext().getResource("/WEB-INF/web-layouts/header/header-layout.xml"));
+      WebContainerLayoutCommand.retrieveHeader(widgetLibrary, "header.plain",
+          config.getServletContext().getResource("/WEB-INF/web-layouts/header/header-layout.xml"));
+      WebContainerLayoutCommand.retrieveFooter(widgetLibrary, "footer.default",
+          config.getServletContext().getResource("/WEB-INF/web-layouts/footer/footer-layout.xml"));
+    } catch (Exception e) {
+      throw new ServletException(e);
+    }
 
     // Instantiate the widgets
     LOG.info("Instantiating the widgets...");
@@ -162,7 +176,7 @@ public class PageServlet extends HttpServlet {
 
     if (LOG.isDebugEnabled()) {
       // Reload the configuration for any developer changes
-      WebPageXmlLayoutCommand.reloadPages(request.getServletContext());
+      WebPageXmlLayoutCommand.reloadPages();
     }
 
     long startRequestTime = System.currentTimeMillis();
@@ -444,19 +458,24 @@ public class PageServlet extends HttpServlet {
       }
 
       // Render the header
-      Header requestHeader = null;
+      Header header = null;
       if (pageRenderInfo.getName().startsWith("/checkout")) {
-        requestHeader = WebContainerLayoutCommand.retrievePlainHeader(request.getServletContext(), widgetLibrary);
+        header = WebContainerLayoutCommand.retrieveHeader(widgetLibrary, "header.plain",
+            request.getServletContext().getResource("/WEB-INF/web-layouts/header/header-layout.xml"));
       } else {
-        requestHeader = WebContainerLayoutCommand.retrieveHeader(request.getServletContext(), widgetLibrary);
+        header = WebContainerLayoutCommand.retrieveHeader(widgetLibrary, "header.default",
+            request.getServletContext().getResource("/WEB-INF/web-layouts/header/header-layout.xml"));
       }
-      HeaderRenderInfo headerRenderInfo = new HeaderRenderInfo(requestHeader, pagePath);
-      WebContainerCommand.processWidgets(webContainerContext, requestHeader.getSections(), headerRenderInfo, coreData, contextPath, pagePath, userSession, themePropertyMap);
+      HeaderRenderInfo headerRenderInfo = new HeaderRenderInfo(header, pageRequest.getPagePath());
+      WebContainerCommand.processWidgets(webContainerContext, header.getSections(), headerRenderInfo, coreData,
+          userSession, themePropertyMap, request);
 
       // Render the footer
-      Footer footer = WebContainerLayoutCommand.retrieveFooter(request.getServletContext(), widgetLibrary);
-      FooterRenderInfo footerRenderInfo = new FooterRenderInfo(footer, pagePath);
-      WebContainerCommand.processWidgets(webContainerContext, footer.getSections(), footerRenderInfo, coreData, contextPath, pagePath, userSession, themePropertyMap);
+      Footer footer = WebContainerLayoutCommand.retrieveFooter(widgetLibrary, "footer.default",
+          request.getServletContext().getResource("/WEB-INF/web-layouts/footer/footer-layout.xml"));
+      FooterRenderInfo footerRenderInfo = new FooterRenderInfo(footer, pageRequest.getPagePath());
+      WebContainerCommand.processWidgets(webContainerContext, footer.getSections(), footerRenderInfo, coreData,
+          userSession, themePropertyMap, request);
 
       // Finalize the controller session (zero out the widget's session data)
       controllerSession.clearAllWidgetData();

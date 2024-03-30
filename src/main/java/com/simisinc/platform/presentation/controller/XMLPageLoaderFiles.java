@@ -16,47 +16,43 @@
 
 package com.simisinc.platform.presentation.controller;
 
+import java.net.URL;
+
 /**
- * Description
+ * Represents the file for which web pages are loaded from
  *
  * @author matt rajkowski
  * @created 1/22/19 12:12 PM
  */
 public class XMLPageLoaderFiles {
-  private String file = null;
+  private URL url = null;
   private long lastModified = -1;
 
   public XMLPageLoaderFiles() {
   }
 
-
-  public XMLPageLoaderFiles(String fileName) {
-    this(fileName, -1);
+  public XMLPageLoaderFiles(URL url) {
+    this(url, -1);
   }
 
-
-  public XMLPageLoaderFiles(String file, long lastModified) {
-    this.file = file;
+  public XMLPageLoaderFiles(URL url, long lastModified) {
+    this.url = url;
     this.lastModified = lastModified;
   }
-
 
   public long getLastModified() {
     return lastModified;
   }
 
-
-  public String getFile() {
-    return file;
+  public URL getUrl() {
+    return url;
   }
-
 
   public void setLastModified(long value) {
     lastModified = value;
   }
 
-
-  public void setFile(String value) {
-    file = value;
+  public void setUrl(URL value) {
+    url = value;
   }
 }

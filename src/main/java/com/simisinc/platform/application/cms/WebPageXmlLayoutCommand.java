@@ -16,21 +16,26 @@
 
 package com.simisinc.platform.application.cms;
 
-import com.simisinc.platform.domain.model.cms.WebPage;
-import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
-import com.simisinc.platform.presentation.controller.XMLPageLoader;
-import com.simisinc.platform.presentation.controller.Page;
+import java.io.File;
+import java.net.MalformedURLException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.servlet.ServletContext;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import javax.servlet.ServletContext;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.simisinc.platform.domain.model.cms.WebPage;
+import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
+import com.simisinc.platform.presentation.controller.Page;
+import com.simisinc.platform.presentation.controller.XMLPageLoader;
 
 /**
- * Handles loading and retrieving page layouts for different page types (pages, collections, json services, etc.)
+ * Handles loading and retrieving page layouts for different page types (pages, collections, etc.)
  *
  * @author matt rajkowski
  * @created 2/8/21 9:45 PM
@@ -42,18 +47,18 @@ public class WebPageXmlLayoutCommand {
   private static XMLPageLoader pages = new XMLPageLoader(new HashMap<>());
   private static XMLPageLoader customPages = new XMLPageLoader(new HashMap<>());
 
-  public static Map<String, String> init(ServletContext servletContext) {
+  public static Map<String, String> init(File webAppPath) throws MalformedURLException {
     // Load the widget library, the XML validates against it
-    pages.loadWidgetLibrary(servletContext, "/WEB-INF/widgets/widget-library.xml");
+    pages.loadWidgetLibrary(new File(webAppPath, "/WEB-INF/widgets/widget-library.xml").toURI().toURL());
     customPages.setWidgetLibrary(pages.getWidgetLibrary());
 
     // Load the page layouts and json services
     LOG.info("Loading the page layouts from a directory...");
-    pages.addDirectory(servletContext, "web-layouts/page");
-    pages.addDirectory(servletContext, "web-layouts/collection");
+    pages.addDirectory(new File(webAppPath, "/WEB-INF/web-layouts/page"));
+    pages.addDirectory(new File(webAppPath, "/WEB-INF/web-layouts/collection"));
     // @todo remove when json services are separate
-    pages.addDirectory(servletContext, "json-services");
-    pages.load(servletContext);
+    pages.addDirectory(new File(webAppPath, "/WEB-INF/json-services"));
+    pages.load();
 
     // Test and Pre-process the XML layouts
     LOG.info("Loading the custom page layouts...");
@@ -70,8 +75,55 @@ public class WebPageXmlLayoutCommand {
     return pages.getWidgetLibrary();
   }
 
-  public static void reloadPages(ServletContext servletContext) {
-    pages.load(servletContext);
+  public static Map<String, String> init(ServletContext servletContext) throws MalformedURLException {
+    // Load the widget library, the XML validates against it
+    pages.loadWidgetLibrary(servletContext.getResource("/WEB-INF/widgets/widget-library.xml"));
+    customPages.setWidgetLibrary(pages.getWidgetLibrary());
+
+    // Load the page layouts and json services
+    LOG.info("Loading the page layouts...");
+
+    // Pages
+    Set<String> pageResourcePaths = servletContext.getResourcePaths("/WEB-INF/web-layouts/page");
+    for (String file : pageResourcePaths) {
+      LOG.debug("Found page file: " + file);
+      pages.addFile(servletContext.getResource(file));
+    }
+
+    // Collections
+    Set<String> collectionResourcePaths = servletContext.getResourcePaths("/WEB-INF/web-layouts/collection");
+    for (String file : collectionResourcePaths) {
+      LOG.debug("Found collection file: " + file);
+      pages.addFile(servletContext.getResource(file));
+    }
+
+    // Services
+    // @todo remove when json services are separate
+    Set<String> serviceResourcePaths = servletContext.getResourcePaths("/WEB-INF/json-services");
+    for (String file : serviceResourcePaths) {
+      LOG.debug("Found service file: " + file);
+      pages.addFile(servletContext.getResource(file));
+    }
+
+    pages.load();
+
+    // Test and Pre-process the XML layouts
+    LOG.info("Loading the custom page layouts...");
+    List<WebPage> webPageList = WebPageRepository.findAll();
+    for (WebPage webPage : webPageList) {
+      try {
+        if (webPage.getPageXml() != null) {
+          customPages.addFromXml(webPage.getLink(), webPage);
+        }
+      } catch (Exception e) {
+        LOG.error("Page XML Error: " + webPage.getLink() + " " + e.getMessage(), e);
+      }
+    }
+    return pages.getWidgetLibrary();
+  }
+
+  public static void reloadPages() {
+    pages.load();
   }
 
   public static boolean containsPage(String name) {
