@@ -155,14 +155,8 @@ public class PageServlet extends HttpServlet {
     response.setHeader("X-XSS-Protection", "1; mode=block");
 
     try {
-      // Determine the resource
-      String scheme = request.getScheme();
-      String serverName = request.getServerName();
-      int port = request.getServerPort();
-      String contextPath = request.getServletContext().getContextPath();
-      String requestURI = request.getRequestURI();
-      String pagePath = requestURI.substring(contextPath.length());
-      LOG.debug("Using resource: " + pagePath);
+      // Determine the resources
+      PageRequest pageRequest = new PageRequest(request);
 
       // Use the session data (created in WebRequestFilter)
       ControllerSession controllerSession = (ControllerSession) request.getSession().getAttribute(SessionConstants.CONTROLLER);
@@ -175,27 +169,20 @@ public class PageServlet extends HttpServlet {
         return;
       }
 
-      if (!pagePath.startsWith("/assets")) {
+      // Update the page cache headers
+      if (!pageRequest.getPagePath().startsWith("/assets")) {
         response.setHeader("Pragma", "no-cache");
         response.setHeader("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate");
         response.setHeader("Expires", "-1");
       }
 
-      // Determine if this is a JSON service (shares similarities as a page)
-      /*
-      if (serviceInstances.containsKey(pagePath)) {
-        Object classRef = serviceInstances.get(pagePath);
-        WidgetContext widgetContext = createWidgetContext();
-      }
-      */
-
       // Always access the webPage record so it can be used downstream
-      WebPage webPage = LoadWebPageCommand.loadByLink(pagePath);
+      WebPage webPage = LoadWebPageCommand.loadByLink(pageRequest.getPagePath());
       if (webPage != null) {
         // Determine if this is a draft page
         if (webPage.getDraft()) {
           if (!userSession.hasRole("admin") && !userSession.hasRole("content-manager")) {
-            LOG.error("DRAFT FOUND, no access: " + pagePath + " " + request.getRemoteAddr());
+            LOG.error("DRAFT FOUND, no access: " + pageRequest.getPagePath() + " " + pageRequest.getRemoteAddr());
             controllerSession.clearAllWidgetData();
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
             return;
@@ -206,10 +193,7 @@ public class PageServlet extends HttpServlet {
         if (StringUtils.isNotBlank(redirectLocation)) {
           // Handle a redirect immediately
           if (!redirectLocation.startsWith("http:") && !redirectLocation.startsWith("https:")) {
-            redirectLocation =
-                scheme + "://" +
-                    serverName +
-                    (port != 80 ? ":" + port : "") +
+            redirectLocation = pageRequest.getBaseUrl() +
                     (redirectLocation.startsWith("/") ? "" : "/") +
                     redirectLocation;
           }
@@ -217,11 +201,12 @@ public class PageServlet extends HttpServlet {
           response.setStatus(SC_MOVED_PERMANENTLY);
           return;
         }
+        // @todo Not needed once pageRenderInfo has calculated title, keywords, description
         request.setAttribute(MASTER_WEB_PAGE, webPage);
       }
 
       // Determine the Page XML Layout for this request
-      Page pageRef = WebPageXmlLayoutCommand.retrievePageForRequest(webPage, pagePath);
+      Page pageRef = WebPageXmlLayoutCommand.retrievePageForRequest(webPage, pageRequest.getPagePath());
       Map<String, String> widgetLibrary = WebPageXmlLayoutCommand.getWidgetLibrary();
 
       // Load the properties
@@ -236,7 +221,8 @@ public class PageServlet extends HttpServlet {
       if (pageRef != null) {
         // Determine if this is a monitoring app
         if (request.getHeader("X-Monitor") == null) {
-          SaveWebPageHitCommand.saveHit(request.getRemoteAddr(), request.getMethod(), pagePath, webPage, userSession);
+          SaveWebPageHitCommand.saveHit(pageRequest.getRemoteAddr(), request.getMethod(), pageRequest.getPagePath(),
+              webPage, userSession);
         }
       }
 
@@ -251,7 +237,7 @@ public class PageServlet extends HttpServlet {
       if (!userSession.hasRole("admin") &&
           !userSession.hasRole("content-manager") &&
           "false".equals(sitePropertyMap.getOrDefault("site.online", "false"))) {
-        if ("/".equals(pagePath)) {
+        if ("/".equals(pageRequest.getPagePath())) {
           pageRef = WebPageXmlLayoutCommand.retrievePage("_new_install_");
 //        } else if (!"/login".equals(pagePath)) {
           // @todo implement and test this...
@@ -260,13 +246,13 @@ public class PageServlet extends HttpServlet {
       }
 
       // Looks like a new install (do after admin above)
-      if (pageRef == null && "/".equals(pagePath)) {
+      if (pageRef == null && "/".equals(pageRequest.getPagePath())) {
         pageRef = WebPageXmlLayoutCommand.retrievePage("_new_install_");
       }
 
       // Still no page? show an error
       if (pageRef == null) {
-        LOG.error("PAGE NOT FOUND: " + pagePath + " " + request.getRemoteAddr());
+        LOG.error("PAGE NOT FOUND: " + pageRequest.getPagePath() + " " + pageRequest.getRemoteAddr());
         controllerSession.clearAllWidgetData();
         response.sendError(HttpServletResponse.SC_NOT_FOUND);
         return;
@@ -274,10 +260,10 @@ public class PageServlet extends HttpServlet {
 
       // Verify the user has access to the page
       if (!WebComponentCommand.allowsUser(pageRef, userSession)) {
-        LOG.warn("PAGE NOT ALLOWED: " + pagePath + " " +
+        LOG.warn("PAGE NOT ALLOWED: " + pageRequest.getPagePath() + " " +
             (!pageRef.getRoles().isEmpty() ? "[roles=" + pageRef.getRoles().toString() + "]" + " " : "") +
             (!pageRef.getGroups().isEmpty() ? "[groups=" + pageRef.getGroups().toString() + "]" + " " : "") +
-            request.getRemoteAddr());
+            pageRequest.getRemoteAddr());
         controllerSession.clearAllWidgetData();
         response.sendError(HttpServletResponse.SC_NOT_FOUND);
         return;
@@ -306,14 +292,15 @@ public class PageServlet extends HttpServlet {
             collectionUniqueId = request.getParameter("collectionUniqueId");
           }
         } else if (pageRef.getCollectionUniqueId().startsWith("/")) {
-          collectionUniqueId = requestURI.substring(pageRef.getCollectionUniqueId().indexOf("*"));
+          collectionUniqueId = pageRequest.getUri().substring(pageRef.getCollectionUniqueId().indexOf("*"));
         }
         if (!StringUtils.isBlank(collectionUniqueId)) {
           if (thisCollection == null) {
-            thisCollection = LoadCollectionCommand.loadCollectionByUniqueIdForAuthorizedUser(collectionUniqueId, userSession.getUserId());
+                userSession.getUserId());
           }
           if (thisCollection == null) {
-            LOG.error("COLLECTION NOT ALLOWED: " + pagePath + " [roles=" + pageRef.getRoles().toString() + "]");
+            LOG.error("COLLECTION NOT ALLOWED: " + pageRequest.getPagePath() + " [roles="
+                + pageRef.getRoles().toString() + "]");
             controllerSession.clearAllWidgetData();
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
             return;
@@ -328,7 +315,7 @@ public class PageServlet extends HttpServlet {
       if (pageRef.checkForItemUniqueId()) {
         String subTab = "";
         // Extract the item unique id
-        String itemUniqueId = requestURI.substring(pageRef.getItemUniqueId().indexOf("*"));
+        String itemUniqueId = pageRequest.getUri().substring(pageRef.getItemUniqueId().indexOf("*"));
         if (itemUniqueId.contains("/")) {
           subTab = "/_" + itemUniqueId.substring(itemUniqueId.indexOf("/") + 1) + "_";
           itemUniqueId = itemUniqueId.substring(0, itemUniqueId.indexOf("/"));
@@ -336,7 +323,8 @@ public class PageServlet extends HttpServlet {
         // User must be authorized here...
         thisItem = LoadItemCommand.loadItemByUniqueIdForAuthorizedUser(itemUniqueId, userSession.getUserId());
         if (thisItem == null) {
-          LOG.error("ITEM NOT ALLOWED: " + pagePath + " [roles=" + pageRef.getRoles().toString() + "]");
+          LOG.error(
+              "ITEM NOT ALLOWED: " + pageRequest.getPagePath() + " [roles=" + pageRef.getRoles().toString() + "]");
           controllerSession.clearAllWidgetData();
           response.sendError(HttpServletResponse.SC_NOT_FOUND);
           return;
@@ -350,8 +338,8 @@ public class PageServlet extends HttpServlet {
           LOG.debug("Added item's collection to coreData: " + thisCollection.getUniqueId());
           // Check for a collection customized page
           // @note plan for sub-tabs too
-          int slashIndex = pagePath.indexOf("/", 1);
-          String itemMethod = pagePath.substring(1, slashIndex);
+          int slashIndex = pageRequest.getPagePath().indexOf("/", 1);
+          String itemMethod = pageRequest.getPagePath().substring(1, slashIndex);
           String itemCollectionKey = "_" + itemMethod + "_" + thisCollection.getUniqueId() + "_" + subTab;
           LOG.debug("itemCollectionKey=" + itemCollectionKey);
           if (WebPageXmlLayoutCommand.containsPage(itemCollectionKey)) {
@@ -367,10 +355,10 @@ public class PageServlet extends HttpServlet {
       }
 
       // Setup the rendering info
-      PageRenderInfo pageRenderInfo = new PageRenderInfo(pageRef, pagePath);
+      PageRenderInfo pageRenderInfo = new PageRenderInfo(pageRef, pageRequest.getPagePath());
       if (pageRenderInfo.getName().startsWith("_")) {
         // Show the actual name from the request, not the template name
-        pageRenderInfo.setName(pagePath);
+        pageRenderInfo.setName(pageRequest.getPagePath());
       }
       if (thisCollection != null && thisItem != null) {
         pageRenderInfo.setTitle(thisItem.getName() + " | " + thisCollection.getName());
@@ -392,25 +380,30 @@ public class PageServlet extends HttpServlet {
       }
 
       // Create a context for processing the widgets
-      WebContainerContext webContainerContext = new WebContainerContext(request, response, controllerSession, widgetInstances, webPage, pageRef);
+      URL applicationUrl = request.getServletContext().getResource("/");
+      WebContainerContext webContainerContext = new WebContainerContext(applicationUrl, pageRequest, request, response,
+          controllerSession, widgetInstances, webPage, pageRef);
 
-      // Validate post/delete/action calls
+      // Validate post/delete/action calls (a specific widget is targeted)
       if (webContainerContext.isTargeted()) {
 
         // Verify a target widget exists
         String targetWidget = request.getParameter("widget");
         if (StringUtils.isEmpty(targetWidget)) {
-          LOG.error("DEVELOPER: TARGET WIDGET PARAMETER WAS NOT FOUND AND IS REQUIRED " + pagePath + " " + request.getRemoteAddr());
+          LOG.error(
+              "DEVELOPER: TARGET WIDGET PARAMETER WAS NOT FOUND AND IS REQUIRED " + pageRequest.getPagePath() + " "
+                  + pageRequest.getRemoteAddr());
           controllerSession.clearAllWidgetData();
           response.sendError(HttpServletResponse.SC_NOT_FOUND);
           return;
         }
         pageRenderInfo.setTargetWidget(targetWidget);
 
-        // Verify a token exists
+        // Verify a mandatory request token exists
         String formToken = request.getParameter("token");
         if (StringUtils.isEmpty(formToken)) {
-          LOG.error("DEVELOPER: A FORM TOKEN IS REQUIRED " + pagePath + " " + request.getRemoteAddr());
+          LOG.error(
+              "DEVELOPER: A FORM TOKEN IS REQUIRED " + pageRequest.getPagePath() + " " + pageRequest.getRemoteAddr());
           controllerSession.clearAllWidgetData();
           response.sendError(HttpServletResponse.SC_NOT_FOUND);
           return;
@@ -481,7 +474,8 @@ public class PageServlet extends HttpServlet {
       request.setAttribute(RENDER_TIME, totalTime);
 
       // Start rendering the page
-      request.setAttribute(CONTEXT_PATH, contextPath);
+      LOG.debug("Page title: " + pageRenderInfo.getTitle());
+      request.setAttribute(CONTEXT_PATH, pageRequest.getContextPath());
       request.setAttribute(PAGE_RENDER_INFO, pageRenderInfo);
       if (thisCollection != null) {
         request.setAttribute(PAGE_COLLECTION, thisCollection);
