@@ -61,7 +61,7 @@ public class ImageUploadWidget extends GenericWidget {
     long fileLength = 0;
     File tempFile = null;
     try {
-      Part filePart = context.getRequest().getPart("file");
+      Part filePart = context.getPart("file");
       if (filePart == null) {
         context.setWarningMessage("A file was not found, please choose a file and try again");
         return context;

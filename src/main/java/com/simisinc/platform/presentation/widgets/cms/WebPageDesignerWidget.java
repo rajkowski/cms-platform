@@ -131,7 +131,7 @@ public class WebPageDesignerWidget extends GenericWidget {
         //  </div>
       } else {
         // Load web templates from the filesystem and database
-        List<WebPageTemplate> webPageTemplateList = XMLWebPageTemplateLoader.retrieveTemplateList(context.getRequest().getServletContext());
+        List<WebPageTemplate> webPageTemplateList = XMLWebPageTemplateLoader.retrieveTemplateList(context.getServletContext());
         if (!webPageTemplateList.isEmpty()) {
           LOG.debug("Found templates...");
 
@@ -196,7 +196,7 @@ public class WebPageDesignerWidget extends GenericWidget {
       webPageTemplate = WebPageTemplateRepository.findById(Long.parseLong(templateIdValue));
     } else if (StringUtils.isNumeric(templateUniqueIdValue)) {
       // Filesystem template
-      List<WebPageTemplate> webPageTemplateList = XMLWebPageTemplateLoader.retrieveTemplateList(context.getRequest().getServletContext());
+      List<WebPageTemplate> webPageTemplateList = XMLWebPageTemplateLoader.retrieveTemplateList(context.getServletContext());
       webPageTemplate = webPageTemplateList.stream()
           .filter(template -> Long.parseLong(templateUniqueIdValue) == template.getUniqueId())
           .findFirst()

@@ -16,26 +16,28 @@
 
 package com.simisinc.platform.presentation.widgets.admin;
 
-import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
-import com.simisinc.platform.application.cms.ColorCommand;
-import com.simisinc.platform.domain.model.SiteProperty;
-import com.simisinc.platform.infrastructure.persistence.SitePropertyRepository;
-import com.simisinc.platform.presentation.controller.SqlTimestampConverter;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import org.apache.commons.beanutils.ConvertUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.validator.routines.UrlValidator;
-
-import javax.servlet.jsp.jstl.core.Config;
 import java.sql.Timestamp;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
 
+import javax.servlet.jsp.jstl.core.Config;
+
+import org.apache.commons.beanutils.ConvertUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.validator.routines.UrlValidator;
+
+import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
+import com.simisinc.platform.application.cms.ColorCommand;
+import com.simisinc.platform.domain.model.SiteProperty;
+import com.simisinc.platform.infrastructure.persistence.SitePropertyRepository;
+import com.simisinc.platform.presentation.controller.SqlTimestampConverter;
+import com.simisinc.platform.presentation.controller.WidgetContext;
+import com.simisinc.platform.presentation.widgets.GenericWidget;
+
 /**
- * Description
+ * Widget to manage theme properties
  *
  * @author matt rajkowski
  * @created 4/18/18 4:20 PM
@@ -145,7 +147,7 @@ public class SitePropertiesEditorWidget extends GenericWidget {
       String timezone = LoadSitePropertyCommand.loadByName("site.timezone");
       if (StringUtils.isNotBlank(timezone)) {
         // The format users see
-        Config.set(context.getRequest().getServletContext(), Config.FMT_TIME_ZONE, timezone);
+        Config.set(context.getServletContext(), Config.FMT_TIME_ZONE, timezone);
         // Replace the default converter
         SqlTimestampConverter converter = (SqlTimestampConverter) ConvertUtils.lookup(Timestamp.class);
         converter.setTimeZone(TimeZone.getTimeZone(ZoneId.of(timezone)));

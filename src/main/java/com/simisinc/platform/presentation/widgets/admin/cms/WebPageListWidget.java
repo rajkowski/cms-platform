@@ -16,21 +16,22 @@
 
 package com.simisinc.platform.presentation.widgets.admin.cms;
 
-import com.simisinc.platform.application.cms.LoadMenuTabsCommand;
-import com.simisinc.platform.domain.model.cms.MenuTab;
-import com.simisinc.platform.domain.model.cms.WebPage;
-import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
-import com.simisinc.platform.presentation.controller.XMLPageLoader;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
-import com.simisinc.platform.presentation.controller.Page;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.simisinc.platform.application.cms.LoadMenuTabsCommand;
+import com.simisinc.platform.domain.model.cms.MenuTab;
+import com.simisinc.platform.domain.model.cms.WebPage;
+import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
+import com.simisinc.platform.presentation.controller.Page;
+import com.simisinc.platform.presentation.controller.WidgetContext;
+import com.simisinc.platform.presentation.controller.XMLPageLoader;
+import com.simisinc.platform.presentation.widgets.GenericWidget;
+
 /**
- * Description
+ * Displays the site's web pages
  *
  * @author matt rajkowski
  * @created 4/25/18 5:45 PM
@@ -65,10 +66,17 @@ public class WebPageListWidget extends GenericWidget {
     // Load the built in pages (just the ones which the pages use)
     Map<String, Page> standardPages = new HashMap<String, Page>();
     XMLPageLoader xmlPageConfig = new XMLPageLoader(standardPages);
-    xmlPageConfig.loadWidgetLibrary(context.getRequest().getServletContext(), "/WEB-INF/widgets/widget-library.xml");
-    xmlPageConfig.addFile("/WEB-INF/web-layouts/page/page-layout.xml");
-    xmlPageConfig.load(context.getRequest().getServletContext());
-    context.getRequest().setAttribute("standardPages", standardPages);
+    try {
+      xmlPageConfig.loadWidgetLibrary(context.getResource("/WEB-INF/widgets/widget-library.xml"));
+      URL pageConfigUrl = context.getServletContext()
+          .getResource("/WEB-INF/web-layouts/page");
+      xmlPageConfig.addFile(pageConfigUrl);
+      xmlPageConfig.load();
+      context.getRequest().setAttribute("standardPages", standardPages);
+    } catch (Exception e) {
+      e.printStackTrace();
+      return null;
+    }
 
     LOG.debug("Widgets: " + xmlPageConfig.getWidgetLibrary().size());
     LOG.debug("Standard pages: " + standardPages.size());
