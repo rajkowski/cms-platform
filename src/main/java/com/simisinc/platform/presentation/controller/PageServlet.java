@@ -198,9 +198,10 @@ public class PageServlet extends HttpServlet {
       PageRequest pageRequest = new PageRequest(request);
 
       // Use the session data (created in WebRequestFilter)
-      ControllerSession controllerSession = (ControllerSession) request.getSession().getAttribute(SessionConstants.CONTROLLER);
+      ControllerSession controllerSession = (ControllerSession) request.getSession()
+          .getAttribute(SessionConstants.CONTROLLER);
 
-      // Confirm the servlet filter setup a user session
+      // Confirm that the servlet filter has setup a user session
       UserSession userSession = (UserSession) request.getSession().getAttribute(SessionConstants.USER);
       if (userSession == null) {
         LOG.debug("A user session is required, and it's set by the servlet filter");
@@ -452,7 +453,9 @@ public class PageServlet extends HttpServlet {
       }
 
       // Render the page first
-      if (WebContainerCommand.processWidgets(webContainerContext, pageRef.getSections(), pageRenderInfo, coreData, contextPath, pagePath, userSession, themePropertyMap)) {
+      PageResponse pageResponse = WebContainerCommand.processWidgets(webContainerContext, pageRef.getSections(),
+          pageRenderInfo, coreData, userSession, themePropertyMap, request);
+      if (pageResponse.isHandled()) {
         // The widget processor handled the response, immediately return
         return;
       }

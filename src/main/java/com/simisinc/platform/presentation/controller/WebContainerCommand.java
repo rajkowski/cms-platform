@@ -463,6 +463,7 @@ public class WebContainerCommand implements Serializable {
           // If the method was a success, check for content
           String widgetContent = null;
           if (result != null) {
+            if (httpRequest != null && widgetContext.hasJsp()) {
               // Render the widget's JSP
               // @todo if the JSP does not exist, a recursive loop occurs
               if (httpRequest != null) {
