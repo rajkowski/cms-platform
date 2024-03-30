@@ -16,12 +16,20 @@
 
 package com.simisinc.platform.presentation.controller;
 
+import java.io.IOException;
 import java.io.Serializable;
+import java.net.URI;
+import java.net.URL;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import javax.servlet.http.Part;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -35,10 +43,15 @@ import com.simisinc.platform.presentation.widgets.cms.PreferenceEntriesList;
  */
 public class WidgetContext implements Serializable {
 
-  final static long serialVersionUID = 215434482513634196L;
+  private static final long serialVersionUID = 215434482513634196L;
 
-  private HttpServletRequest request = null;
+  private URL applicationUrl = null;
+  private PageRequest pageRequest = null;
+  private UserSession userSession = null;
+
+  private HttpServletRequest httpRequest = null;
   private HttpServletResponse response = null;
+  
   private String uniqueId = null;
   private String resourcePath = null;
   private Map<String, String> preferences = null;
@@ -67,21 +80,29 @@ public class WidgetContext implements Serializable {
   private Object requestObject = null;
   private Map<String, String> sharedRequestValueMap = null;
 
-  private UserSession userSession = null;
-
   public WidgetContext() {
   }
 
-  public WidgetContext(HttpServletRequest request, HttpServletResponse response, String widgetUniqueId,
+  public WidgetContext(URL applicationUrl, PageRequest pageRequest, HttpServletRequest httpRequest, HttpServletResponse response, String widgetUniqueId,
       String resourcePath) {
-    this.request = request;
+    this.applicationUrl = applicationUrl;
+    this.pageRequest = pageRequest;
+    this.httpRequest = httpRequest;
     this.response = response;
     this.uniqueId = widgetUniqueId;
     this.resourcePath = resourcePath;
   }
 
-  public HttpServletRequest getRequest() {
-    return request;
+  public ServletContext getServletContext() {
+    return httpRequest.getServletContext();
+  }
+
+  public HttpSession getSession() {
+    return httpRequest.getSession();
+  }
+
+  public PageRequest getRequest() {
+    return pageRequest;
   }
 
   public HttpServletResponse getResponse() {
@@ -285,24 +306,19 @@ public class WidgetContext implements Serializable {
   }
 
   public boolean isSecure() {
-    return request.isSecure();
+    return pageRequest.isSecure();
   }
 
   public String getUrl() {
-    String scheme = request.getScheme();
-    String serverName = request.getServerName();
-    int port = request.getServerPort();
-    return scheme + "://" +
-        serverName +
-        (port != 80 && port != 443 ? ":" + port : "") + getContextPath();
+    return pageRequest.getUrl();
   }
 
   public String getUri() {
-    return request.getRequestURI();
+    return pageRequest.getUri();
   }
 
   public String getContextPath() {
-    return request.getServletContext().getContextPath();
+    return pageRequest.getContextPath();
   }
 
   public long getUserId() {
@@ -406,4 +422,21 @@ public class WidgetContext implements Serializable {
   public String getResourcePath() {
     return resourcePath;
   }
+
+  public URL getResource(String name) {
+    try {
+      return new URI(applicationUrl.toString() + name).toURL();
+    } catch (Exception e) {
+      return null;
+    }
+  }
+
+  public Collection<Part> getParts() throws IOException, ServletException {
+    return httpRequest.getParts();
+  }
+
+  public Part getPart(String name) throws IOException, ServletException {
+    return httpRequest.getPart(name);
+  }
+
 }
