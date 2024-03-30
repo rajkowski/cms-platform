@@ -16,8 +16,52 @@
 
 package com.simisinc.platform.presentation.controller;
 
+import static com.simisinc.platform.presentation.controller.RequestConstants.CONTEXT_PATH;
+import static com.simisinc.platform.presentation.controller.RequestConstants.FOOTER_RENDER_INFO;
+import static com.simisinc.platform.presentation.controller.RequestConstants.FOOTER_STICKY_LINKS;
+import static com.simisinc.platform.presentation.controller.RequestConstants.HEADER_RENDER_INFO;
+import static com.simisinc.platform.presentation.controller.RequestConstants.LOG_USER;
+import static com.simisinc.platform.presentation.controller.RequestConstants.MASTER_MENU_TAB_LIST;
+import static com.simisinc.platform.presentation.controller.RequestConstants.MASTER_WEB_PAGE;
+import static com.simisinc.platform.presentation.controller.RequestConstants.PAGE_BODY;
+import static com.simisinc.platform.presentation.controller.RequestConstants.PAGE_COLLECTION;
+import static com.simisinc.platform.presentation.controller.RequestConstants.PAGE_COLLECTION_CATEGORY;
+import static com.simisinc.platform.presentation.controller.RequestConstants.PAGE_RENDER_INFO;
+import static com.simisinc.platform.presentation.controller.RequestConstants.RENDER_TIME;
+import static com.simisinc.platform.presentation.controller.RequestConstants.SHOW_MAIN_MENU;
+import static javax.servlet.http.HttpServletResponse.SC_MOVED_PERMANENTLY;
+
+import java.math.BigDecimal;
+import java.net.URL;
+import java.sql.Timestamp;
+import java.time.ZoneId;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.TimeZone;
+
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.MultipartConfig;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.beanutils.ConvertUtils;
+import org.apache.commons.beanutils.converters.BigDecimalConverter;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
-import com.simisinc.platform.application.cms.*;
+import com.simisinc.platform.application.cms.LoadMenuTabsCommand;
+import com.simisinc.platform.application.cms.LoadStylesheetCommand;
+import com.simisinc.platform.application.cms.LoadTableOfContentsCommand;
+import com.simisinc.platform.application.cms.LoadWebPageCommand;
+import com.simisinc.platform.application.cms.SaveWebPageHitCommand;
+import com.simisinc.platform.application.cms.WebContainerLayoutCommand;
+import com.simisinc.platform.application.cms.WebPageXmlLayoutCommand;
 import com.simisinc.platform.application.items.LoadCategoryCommand;
 import com.simisinc.platform.application.items.LoadCollectionCommand;
 import com.simisinc.platform.application.items.LoadItemCommand;
@@ -29,25 +73,6 @@ import com.simisinc.platform.domain.model.items.Category;
 import com.simisinc.platform.domain.model.items.Collection;
 import com.simisinc.platform.domain.model.items.Item;
 import com.simisinc.platform.presentation.widgets.cms.WebContainerContext;
-import org.apache.commons.beanutils.ConvertUtils;
-import org.apache.commons.beanutils.converters.BigDecimalConverter;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.annotation.MultipartConfig;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.math.BigDecimal;
-import java.sql.Timestamp;
-import java.time.ZoneId;
-import java.util.*;
-
-import static com.simisinc.platform.presentation.controller.RequestConstants.*;
-import static javax.servlet.http.HttpServletResponse.SC_MOVED_PERMANENTLY;
 
 /**
  * Handles all web browser page requests
@@ -56,8 +81,8 @@ import static javax.servlet.http.HttpServletResponse.SC_MOVED_PERMANENTLY;
  * @created 4/6/18 9:22 AM
  */
 @MultipartConfig(fileSizeThreshold = 1024 * 1024 * 2, // 2MB
-    maxFileSize = 1024 * 1024 * 100,      // 100MB
-    maxRequestSize = 1024 * 1024 * 100)   // 100MB
+    maxFileSize = 1024 * 1024 * 100, // 100MB
+    maxRequestSize = 1024 * 1024 * 100) // 100MB
 public class PageServlet extends HttpServlet {
 
   private static Log LOG = LogFactory.getLog(PageServlet.class);
