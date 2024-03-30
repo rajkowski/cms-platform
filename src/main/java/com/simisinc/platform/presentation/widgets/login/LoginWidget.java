@@ -84,7 +84,7 @@ public class LoginWidget extends GenericWidget {
     }
 
     // Update the user's session
-    UserSession userSession = (UserSession) context.getRequest().getSession().getAttribute(SessionConstants.USER);
+    UserSession userSession = (UserSession) context.getSession().getAttribute(SessionConstants.USER);
     if (user.getTimeZone() != null) {
       // Override the system timezone for this user session
 //      Config.set(context.getRequest(), Config.FMT_TIME_ZONE, user.getTimeZone());

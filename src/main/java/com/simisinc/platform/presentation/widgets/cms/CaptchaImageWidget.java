@@ -48,7 +48,7 @@ public class CaptchaImageWidget extends GenericWidget {
 
     // Store it in the session / or in the timed pool so it expires
     // by context.getUserSession().getVisitorId()
-    context.getRequest().getSession().setAttribute(SessionConstants.CAPTCHA_TEXT, text);
+    context.getSession().setAttribute(SessionConstants.CAPTCHA_TEXT, text);
 
     // Send the image
     context.getResponse().setDateHeader("Last-Modified", System.currentTimeMillis());
