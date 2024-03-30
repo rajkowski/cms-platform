@@ -61,8 +61,8 @@ class FormDataListWidgetTest extends WidgetBase {
 
     // Verify
     Assertions.assertEquals(FormDataListWidget.JSP, widgetContext.getJsp());
-    Assertions.assertEquals("Submitted Forms", request.getAttribute("title"));
-    List<FormData> formDataListRequest = (List) request.getAttribute("formDataList");
+    Assertions.assertEquals("Submitted Forms", pageRequest.getAttribute("title"));
+    List<FormData> formDataListRequest = (List) pageRequest.getAttribute("formDataList");
     Assertions.assertEquals(formData.getId(), formDataListRequest.get(0).getId());
   }
 

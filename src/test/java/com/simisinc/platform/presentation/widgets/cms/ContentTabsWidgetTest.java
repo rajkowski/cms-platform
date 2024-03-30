@@ -63,7 +63,7 @@ class ContentTabsWidgetTest extends WidgetBase {
       widget.execute(widgetContext);
     }
 
-    ArrayList<ContentTab> contentTabList = (ArrayList<ContentTab>) request.getAttribute("contentTabList");
+    ArrayList<ContentTab> contentTabList = (ArrayList<ContentTab>) pageRequest.getAttribute("contentTabList");
     Assertions.assertNotNull(contentTabList);
     Assertions.assertEquals(1, contentTabList.size());
 
@@ -74,7 +74,7 @@ class ContentTabsWidgetTest extends WidgetBase {
     Assertions.assertNotNull(contentTab.getHtml());
     Assertions.assertFalse(contentTab.getIsActive());
 
-    Assertions.assertEquals("false", request.getAttribute("smudge"));
+    Assertions.assertEquals("false", pageRequest.getAttribute("smudge"));
     Assertions.assertEquals(ContentTabsWidget.JSP, widgetContext.getJsp());
   }
 }

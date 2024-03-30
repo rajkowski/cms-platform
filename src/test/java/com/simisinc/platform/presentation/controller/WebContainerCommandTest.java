@@ -135,7 +135,7 @@ class WebContainerCommandTest {
 
   @Test
   void replaceWithParameterValue() {
-    HttpServletRequest request = mock(HttpServletRequest.class);
+    PageRequest request = mock(PageRequest.class);
     when(request.getParameter("name")).thenReturn("Sam");
 
     String content = "Hi ${request.name}, welcome to the site.";
@@ -146,7 +146,7 @@ class WebContainerCommandTest {
 
   @Test
   void replaceWithParameterValueEncoding() {
-    HttpServletRequest request = mock(HttpServletRequest.class);
+    PageRequest request = mock(PageRequest.class);
     when(request.getParameter("name")).thenReturn("Sam \"O'Dell\"");
 
     String content = "Hi ${request.name:html}, welcome to the site.";
@@ -157,7 +157,7 @@ class WebContainerCommandTest {
 
   @Test
   void loopReplaceWithParameterValueEncoding() {
-    HttpServletRequest request = mock(HttpServletRequest.class);
+    PageRequest request = mock(PageRequest.class);
     when(request.getParameter("name")).thenReturn("Sam");
     String content = "Hi ${request.name:html}, welcome to the site. Your name is ${request.name:html}.";
     while (content.contains("${request.")) {
@@ -168,7 +168,7 @@ class WebContainerCommandTest {
 
   @Test
   void loopErrorReplaceWithParameterValueEncoding() {
-    HttpServletRequest request = mock(HttpServletRequest.class);
+    PageRequest request = mock(PageRequest.class);
     when(request.getParameter("name")).thenReturn("Sam");
     String content = "Hi ${request.name, welcome to the site. Your name is ${request.name:html.";
     while (content.contains("${request.")) {
