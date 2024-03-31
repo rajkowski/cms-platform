@@ -83,7 +83,7 @@
     <slf4j.version>2.0.11</slf4j.version>
     <square.version>24.0.0.20220921</square.version>
     <okhttp.version>4.11.0</okhttp.version>
-    <stripe.version>22.26.0</stripe.version>
+    <stripe.version>22.31.0</stripe.version>
     <testcontainers.version>1.18.3</testcontainers.version>
     <thymeleaf.version>3.1.2</thymeleaf.version>
     <timeago.version>3.0.1</timeago.version>
