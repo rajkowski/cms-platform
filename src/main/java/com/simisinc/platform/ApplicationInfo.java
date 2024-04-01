@@ -32,13 +32,13 @@ public class ApplicationInfo {
   // Use: Change the date, increment the decimal on same day updates
   // then reset back to 10000
   //                         VERSION = "--------.10000";
-  public static final String VERSION = "20240219.10000";
+  public static final String VERSION = "20240331.10000";
 
   /**
    * Outputs the version from the command line
    * @param args
    */
-  public static void main(String args[]) {
+  public static void main(String[] args) {
     System.out.println("Version: " + VERSION);
     System.out.println("Product: " + PRODUCT_NAME);
     System.out.println("URL: " + PRODUCT_URL);
