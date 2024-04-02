@@ -52,6 +52,7 @@
     <jarDirectory url="file://$PROJECT_DIR$/lib/build/hikaricp" recursive="false" />
     <jarDirectory url="file://$PROJECT_DIR$/lib/build/jackson" recursive="false" />
     <jarDirectory url="file://$PROJECT_DIR$/lib/build/javamail" recursive="false" />
+    <jarDirectory url="file://$PROJECT_DIR$/lib/build/jmail" recursive="false" />
     <jarDirectory url="file://$PROJECT_DIR$/lib/build/jobrunr" recursive="false" />
     <jarDirectory url="file://$PROJECT_DIR$/lib/build/johnzon" recursive="false" />
     <jarDirectory url="file://$PROJECT_DIR$/lib/build/jsoup" recursive="false" />
