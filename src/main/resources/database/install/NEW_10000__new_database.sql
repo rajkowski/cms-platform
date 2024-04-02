@@ -125,13 +125,14 @@ INSERT INTO site_properties (property_order, property_label, property_name, prop
 
 -- Mail
 
-INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('Default From Address', 'mail.from_address', 'auto-sender@site.local');
-INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('Default From Name', 'mail.from_name', 'New Site');
-INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('Host Name', 'mail.host_name', '127.0.0.1');
-INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('SMTP Port', 'mail.port', '25');
-INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('SMTP Username', 'mail.username', '');
-INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('SMTP Password', 'mail.password', '');
-INSERT INTO site_properties (property_label, property_name, property_value, property_type) VALUES ('SMTP SSL', 'mail.ssl', 'false', 'boolean');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value) VALUES (10, 'Default From Address', 'mail.from_address', 'auto-sender@site.local');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value) VALUES (20, 'Default From Name', 'mail.from_name', 'New Site');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value) VALUES (30, 'Host Name', 'mail.host_name', '127.0.0.1');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value) VALUES (40, 'SMTP Port', 'mail.port', '25');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value) VALUES (50, 'SMTP Username', 'mail.username', '');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value) VALUES (60, 'SMTP Password', 'mail.password', '');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (70, 'SMTP SSL', 'mail.ssl', 'false', 'boolean');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (80, 'SMTP TLS', 'mail.tls', 'false', 'boolean');
 
 -- Mailing List
 
