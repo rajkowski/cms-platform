@@ -449,7 +449,7 @@
       </div>
     </div>
   </div>
-  <div class="button-container margin-bottom-20">
+  <div class="button-container">
     <c:choose>
       <c:when test="${!empty returnPage}">
         <input type="submit" class="button radius success" value="Save"/>
