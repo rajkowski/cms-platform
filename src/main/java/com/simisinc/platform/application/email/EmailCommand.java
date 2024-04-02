@@ -52,6 +52,7 @@ public class EmailCommand {
     String mailUsername = LoadSitePropertyCommand.loadByName("mail.username");
     String mailPassword = LoadSitePropertyCommand.loadByName("mail.password");
     String mailSSL = LoadSitePropertyCommand.loadByName("mail.ssl");
+    String mailTLS = LoadSitePropertyCommand.loadByName("mail.tls");
 
     ImageHtmlEmail email = new ImageHtmlEmail();
     email.setCharset(EmailConstants.UTF_8);
@@ -63,8 +64,15 @@ public class EmailCommand {
       email.setAuthenticator(new DefaultAuthenticator(mailUsername, mailPassword));
     }
     if ("true".equals(mailSSL)) {
+      // SSL takes precedence in Apache Common Mail
       email.setSSLOnConnect(true);
+      email.setSslSmtpPort(String.valueOf(Integer.parseInt(mailPort)));
+      email.setSSLCheckServerIdentity(true);
+    } else if ("true".equals(mailTLS)) {
+      email.setStartTLSRequired(true);
+      email.setSSLCheckServerIdentity(true);
     }
+
     // @todo use the bounce address for tracking because emails can come from different systems and users
     // email.setBounceAddress("bounce@example.com");
 
