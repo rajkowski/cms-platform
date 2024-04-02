@@ -56,7 +56,7 @@ public class SendMailWidget extends GenericWidget {
     WorkflowManager.triggerWorkflowForEvent(new UserRegisteredEvent(context.getUserSession().getUser(), context.getRequest().getRemoteAddr()));
 
     // Determine the page to return to (if other than this one)
-    context.setSuccessMessage("Mail was sent");
+    context.setSuccessMessage("Mail was queued");
     context.setRedirect("/admin/mail-properties");
     return context;
   }
