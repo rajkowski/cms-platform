@@ -16,15 +16,16 @@
 
 package com.simisinc.platform.application.admin;
 
-import com.simisinc.platform.domain.model.SiteProperty;
-import com.simisinc.platform.infrastructure.cache.CacheManager;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.simisinc.platform.domain.model.SiteProperty;
+import com.simisinc.platform.infrastructure.cache.CacheManager;
 
 /**
  * Reads site properties, using a cache if possible
@@ -35,7 +36,6 @@ import java.util.Map;
 public class LoadSitePropertyCommand {
 
   private static Log LOG = LogFactory.getLog(LoadSitePropertyCommand.class);
-
 
   public static Map<String, String> loadAsMap(String prefix) {
     return loadAsMap(prefix, true);
@@ -83,10 +83,24 @@ public class LoadSitePropertyCommand {
 
   public static boolean loadByNameAsBoolean(String name) {
     String booleanValue = loadByName(name);
-    if ("true".equals(booleanValue)) {
-      return true;
+    return "true".equals(booleanValue);
+  }
+
+  /**
+   * For a given site property, an environment variable is checked based on the format CMS_SITE_PROPERTY
+   * 
+   * @param name
+   * @param defaultValue
+   * @return
+   */
+  public static String getValueBasedOnEnvironment(String name, String defaultValue) {
+    String envName = "CMS_" + name.replaceAll("[.]", "_").toUpperCase();
+    String value = System.getenv(envName);
+    if (value != null) {
+      return value;
+    } else {
+      return defaultValue;
     }
-    return false;
   }
 
 }
