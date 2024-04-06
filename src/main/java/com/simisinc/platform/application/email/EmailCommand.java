@@ -16,6 +16,7 @@
 
 package com.simisinc.platform.application.email;
 
+import java.io.File;
 import java.net.URI;
 import java.net.URL;
 
@@ -28,6 +29,9 @@ import org.apache.commons.mail.ImageHtmlEmail;
 import org.apache.commons.mail.resolver.DataSourceUrlResolver;
 
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
+import com.simisinc.platform.application.cms.ImageUrlCommand;
+import com.simisinc.platform.application.filesystem.FileSystemCommand;
+import com.simisinc.platform.domain.model.cms.Image;
 
 /**
  * Prepares an official site email
@@ -84,6 +88,20 @@ public class EmailCommand {
       }
     } catch (Exception e) {
       LOG.error("Error setting from address: " + mailFromAddress);
+    }
+
+    // Embed the SiteLogo for the HTML's cid:sitelogo
+    String siteLogo = LoadSitePropertyCommand.loadByName("site.logo");
+    try {
+      Image record = ImageUrlCommand.decodeToImageRecord(siteLogo);
+      if (record != null) {
+        File file = FileSystemCommand.getFileServerRootPath(record.getFileServerPath());
+        if (file.isFile()) {
+          email.embed(file, "sitelogo");
+        }
+      }
+    } catch (Exception e) {
+      LOG.error("Could not embed logo: " + siteLogo, e);
     }
 
     // Define your base URL to resolve relative resource locations

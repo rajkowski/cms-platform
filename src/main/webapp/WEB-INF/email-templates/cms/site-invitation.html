@@ -135,7 +135,7 @@
                     <tr>
                       <td align="center" valign="top" style="padding: 10px 50px 40px 50px;">
                         <div th:if="${site.logo != null}">
-                          <img src="logo.png" th:src="${site.logo}" width="300" style="max-width: 430px !important; max-height: 150px !important;" alt="Site Name" th:alt="${site.name}" />
+                          <img src="cid:sitelogo" width="300" style="max-width: 430px !important; max-height: 150px !important;" alt="Site Name" th:alt="${site.name}" />
                         </div>
                         <div th:if="${site.logo == null}">
                           <h1 style="margin: 0; text-align:center; color: #333333; font-family: 'Proxima Nova Soft', 'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif !important; font-size: 22px; line-height: 1.5;"><span th:text="${site.name}">Site Name</span></h1>
