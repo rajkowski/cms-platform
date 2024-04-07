@@ -58,14 +58,14 @@ public class OAuthRequestCommand {
 
     // Check the URL for a "/oauth/callback"...
     if (OAuthConfigurationCommand.getRedirectUri().equals(resource)) {
-      LOG.debug("Checking callback, retrieving access token...");
+      LOG.debug("Handling OAuth callback, retrieving remote access token...");
       String state = request.getParameter("state");
       String code = request.getParameter("code");
       OAuthToken oAuthToken = OAuthAccessTokenCommand.retrieveAccessToken(state, code);
       if (oAuthToken == null) {
         // Failed, return user back to login
-        LOG.error("NO OAUTH TOKEN FOUND");
-        return "/";
+        LOG.error("NO OAUTH TOKEN FOUND... check the SSO client credentials");
+        return "/logout";
       }
       // Retrieve the user info and log them in
       OAuthLoginCommand.loginTheUser(request, response, oAuthToken);
