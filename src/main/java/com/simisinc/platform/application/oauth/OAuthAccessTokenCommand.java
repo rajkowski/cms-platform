@@ -47,7 +47,7 @@ import com.simisinc.platform.domain.model.login.OAuthToken;
        LOG.warn("State not found in cache, may have expired");
        return null;
      }
-     LOG.debug("Found resource: " + resource);
+    LOG.debug("Found matching web resource for state parameter: " + resource);
  
      Map<String, String> params = new HashMap<>();
      params.put("grant_type", "authorization_code");
