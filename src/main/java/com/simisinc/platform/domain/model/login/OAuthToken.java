@@ -33,6 +33,7 @@ public class OAuthToken extends Entity {
   private long userTokenId = -1L;
   private String provider = null;
   private String accessToken = null;
+  private String idToken = null;
   private String tokenType = null;
   private int expiresIn = -1;
   private String refreshToken = null;
@@ -171,5 +172,13 @@ public class OAuthToken extends Entity {
 
   public void setResource(String resource) {
     this.resource = resource;
+  }
+
+  public String getIdToken() {
+    return idToken;
+  }
+
+  public void setIdToken(String idToken) {
+    this.idToken = idToken;
   }
 }

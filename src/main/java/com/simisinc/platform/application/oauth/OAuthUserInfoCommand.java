@@ -48,51 +48,99 @@ public class OAuthUserInfoCommand {
 
   private static Log LOG = LogFactory.getLog(OAuthUserInfoCommand.class);
 
+  /**
+   * For the given oAuthToken, create a User from the accessToken and optional idToken
+   * 
+   * @param oAuthToken
+   * @return
+   */
   public static User createUser(OAuthToken oAuthToken) {
     if (oAuthToken == null || StringUtils.isBlank(oAuthToken.getAccessToken())) {
-      LOG.warn("accessToken is required");
+      LOG.warn("accessToken is required for createUser");
       return null;
     }
-    JsonNode json = OAuthHttpCommand.sendHttpGet(OAuthConfigurationCommand.retrieveUserInfoEndpoint(), oAuthToken);
-    if (json == null) {
-      LOG.warn("userinfo request failed");
-      return null;
-    }
-    if (!json.has("preferred_username") && !json.has("email")) {
-      LOG.warn("preferred_username OR email is required");
-      return null;
-    }
-
-    // Find the user or create a new one
     LOG.debug("Determining user information...");
-    User user = null;
-    String username = null;
-    String email = null;
 
-    if (json.has("preferred_username")) {
-      username = json.get("preferred_username").asText();
+    // Find out if this is a new or returning user
+    User userBean = new User();
+
+    // Use accessToken itself to get values for display purposes
+    String accessToken = oAuthToken.getAccessToken();
+    if (accessToken.contains(".")) {
+      JsonNode accessTokenJson = JWTCommand.parseJwt(accessToken);
+      populateUserFromAccessTokenPayload(accessTokenJson, userBean);
     }
-    if (json.has("email")) {
-      email = json.get("email").asText();
-      if (username == null) {
-        username = email;
+
+    // Use id_token if available
+    boolean hasAllProperties = false;
+    String idToken = oAuthToken.getIdToken();
+    if (!StringUtils.isBlank(idToken) && idToken.contains(".")) {
+      JsonNode idTokenJson = JWTCommand.parseJwt(idToken);
+      hasAllProperties = populateUserFromIdTokenPayload(idTokenJson, userBean);
+      if (hasAllProperties) {
+        populateUserRolesAndGroupsFromPayload(idTokenJson, userBean);
       }
     }
+
+    // Make a userinfo request if needed
+    if (!hasAllProperties) {
+      LOG.debug("Making a userinfo request for user properties");
+      JsonNode userInfoJson = OAuthHttpCommand.sendHttpGet(OAuthConfigurationCommand.retrieveUserInfoEndpoint(), oAuthToken);
+      hasAllProperties = populateUserFromIdTokenPayload(userInfoJson, userBean);
+      if (!hasAllProperties) {
+        LOG.warn("preferred_username OR email is required");
+        return null;
+      }
+      populateUserRolesAndGroupsFromPayload(userInfoJson, userBean);
+    }
+
+    return validateUserRecord(userBean);
+  }
+
+  public static User validateUserRecord(User userBean) {
     // Search by optional email address first since that is a key
-    if (StringUtils.isNotBlank(email)) {
-      user = UserRepository.findByEmailAddress(email);
+    User user = null;
+    if (StringUtils.isNotBlank(userBean.getEmail())) {
+      user = UserRepository.findByEmailAddress(userBean.getEmail());
     }
     // Then try username
     if (user == null) {
-      user = UserRepository.findByUsername(username);
+      user = UserRepository.findByUsername(userBean.getUsername());
     }
     if (user == null) {
+      LOG.debug("User was not found, setting up a new user");
       user = new User();
     }
     // Update related values
     user.setModifiedBy(-1);
-    user.setUsername(username);
-    user.setEmail(email);
+    user.setUsername(userBean.getUsername());
+    user.setEmail(userBean.getEmail());
+    user.setFirstName(userBean.getFirstName());
+    user.setLastName(userBean.getLastName());
+    user.setGroupList(userBean.getGroupList());
+    user.setRoleList(userBean.getRoleList());
+    // Save everything
+    try {
+      user = SaveUserCommand.saveUser(user, true);
+      if (user == null) {
+        LOG.error("User is null");
+        throw new DataException("Save user error");
+      }
+      // Skip email validation
+      UserRepository.updateValidated(user);
+      return user;
+    } catch (DataException | AccountException de) {
+      LOG.error("User could not be saved: " + de.getMessage(), de);
+      return null;
+    }
+  }
+
+  public static boolean populateUserFromAccessTokenPayload(JsonNode json, User user) {
+    // Validate args
+    if (json == null) {
+      return false;
+    }
+    // Update the user values
     if (json.has("given_name")) {
       JsonNode node = json.get("given_name");
       user.setFirstName(node.asText());
@@ -101,15 +149,45 @@ public class OAuthUserInfoCommand {
       JsonNode node = json.get("family_name");
       user.setLastName(node.asText());
     }
+    return true;
+  }
+
+  public static boolean populateUserFromIdTokenPayload(JsonNode json, User user) {
+    // Validate args
+    if (json == null) {
+      return false;
+    }
+    // Update the user values
+    if (json.has("preferred_username")) {
+      user.setUsername(json.get("preferred_username").asText().trim().toLowerCase());
+    }
+    if (json.has("email")) {
+      user.setEmail(json.get("email").asText().trim().toLowerCase());
+      if (StringUtils.isBlank(user.getUsername())) {
+        user.setUsername(user.getEmail());
+      }
+    }
+    if (json.has("given_name")) {
+      user.setFirstName(json.get("given_name").asText());
+    }
+    if (json.has("family_name")) {
+      user.setLastName(json.get("family_name").asText());
+    }
     if (json.has("email_verified")) {
       JsonNode node = json.get("email_verified");
       if (node.asBoolean(false)) {
         user.setValidated(new Timestamp(System.currentTimeMillis()));
       }
     }
+    return !StringUtils.isAnyBlank(user.getEmail(), user.getUsername());
+  }
 
+  public static boolean populateUserRolesAndGroupsFromPayload(JsonNode json, User user) {
     // Check for CMS Roles
-    List<Role> userRoleList = new ArrayList<>();
+    List<Role> userRoleList = user.getRoleList();
+    if (userRoleList == null) {
+      userRoleList = new ArrayList<>();
+    }
     String roleAttribute = LoadSitePropertyCommand.loadByName("oauth.role.attribute");
     if (StringUtils.isNotBlank(roleAttribute) && json.has(roleAttribute)) {
       for (JsonNode jsonNode : json.get(roleAttribute)) {
@@ -125,7 +203,10 @@ public class OAuthUserInfoCommand {
     // Check for CMS User Groups
     // The remote text *might* be configured to send the roles/groups map
     Group defaultGroup = GroupRepository.findByName("All Users");
-    List<Group> userGroupList = new ArrayList<>();
+    List<Group> userGroupList = user.getGroupList();
+    if (userGroupList == null) {
+      userGroupList = new ArrayList<>();
+    }
     userGroupList.add(defaultGroup);
     String groupAttribute = LoadSitePropertyCommand.loadByName("oauth.group.attribute");
     if (StringUtils.isNotBlank(groupAttribute) && json.has(groupAttribute)) {
@@ -138,20 +219,6 @@ public class OAuthUserInfoCommand {
       }
     }
     user.setGroupList(userGroupList);
-
-    try {
-      // Save everything
-      user = SaveUserCommand.saveUser(user, true);
-      if (user == null) {
-        LOG.error("User is null");
-        throw new DataException("Save user error");
-      }
-      // Skip email validation
-      UserRepository.updateValidated(user);
-      return user;
-    } catch (DataException | AccountException de) {
-      LOG.error("User could not be saved: " + de.getMessage(), de);
-      return null;
-    }
+    return true;
   }
 }
