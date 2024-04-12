@@ -46,6 +46,8 @@
     menubar: false,
     relative_urls : false,
     convert_urls : true,
+    convert_unsafe_embeds: true,
+    sandbox_iframes: true,
     content_css: ['${ctx}/css/${font:fontawesome()}/css/all.min.css'],
     noneditable_class: 'tinymce-noedit',
     browser_spellcheck: true,

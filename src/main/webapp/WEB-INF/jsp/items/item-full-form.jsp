@@ -32,6 +32,8 @@
     menubar: false,
     relative_urls: false,
     convert_urls: true,
+    convert_unsafe_embeds: true,
+    sandbox_iframes: true,
     browser_spellcheck: true,
     plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code insertdatetime media table wordcount',
     toolbar: 'link image media table | undo redo | blocks | bold italic backcolor | bullist numlist outdent indent hr | removeformat | visualblocks code',

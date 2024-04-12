@@ -25,6 +25,8 @@ tinymce.init({
   width: '100%',
   height: 500,
   menubar: false,
+  convert_unsafe_embeds: true,
+  sandbox_iframes: true,
   plugins: 'searchreplace code fullscreen code wordcount',
   toolbar: 'insert | undo redo | removeformat',
   insert_button_items: ''
