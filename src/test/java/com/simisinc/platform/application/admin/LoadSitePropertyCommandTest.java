@@ -16,21 +16,22 @@
 
 package com.simisinc.platform.application.admin;
 
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.LoadingCache;
-import com.simisinc.platform.domain.model.SiteProperty;
-import com.simisinc.platform.infrastructure.cache.CacheManager;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mockStatic;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mockStatic;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
+import com.simisinc.platform.domain.model.SiteProperty;
+import com.simisinc.platform.infrastructure.cache.CacheManager;
 
 /**
  * @author matt rajkowski
@@ -64,6 +65,14 @@ class LoadSitePropertyCommandTest {
       siteProperty.setId(31);
       sitePropertyList.add(siteProperty);
     }
+    {
+      SiteProperty siteProperty = new SiteProperty();
+      siteProperty.setLabel("Sample list of comma-separated values");
+      siteProperty.setName("oauth.group.list");
+      siteProperty.setValue("Group1, Group_2, Group-3");
+      siteProperty.setId(185);
+      sitePropertyList.add(siteProperty);
+    }
     return sitePropertyList;
   }
 
@@ -81,7 +90,7 @@ class LoadSitePropertyCommandTest {
 
       Map<String, String> sitePropertyMap = LoadSitePropertyCommand.loadAsMap("site");
 
-      Assertions.assertEquals(3, sitePropertyMap.size());
+      Assertions.assertEquals(4, sitePropertyMap.size());
       Assertions.assertEquals("New Site", sitePropertyMap.get("site.name"));
       Assertions.assertEquals("https://simiscms.com", sitePropertyMap.get("site.url"));
       Assertions.assertTrue(sitePropertyMap.containsKey("site.header.link"));
@@ -95,7 +104,7 @@ class LoadSitePropertyCommandTest {
 
       Map<String, String> sitePropertyMap = LoadSitePropertyCommand.loadNonEmptyAsMap("site");
 
-      Assertions.assertEquals(2, sitePropertyMap.size());
+      Assertions.assertEquals(3, sitePropertyMap.size());
       Assertions.assertEquals("New Site", sitePropertyMap.get("site.name"));
       Assertions.assertEquals("https://simiscms.com", sitePropertyMap.get("site.url"));
       Assertions.assertFalse(sitePropertyMap.containsKey("site.header.link"));
@@ -125,6 +134,21 @@ class LoadSitePropertyCommandTest {
       value = LoadSitePropertyCommand.loadByName("site.example", "https://example.com");
       Assertions.assertNotNull(value);
       Assertions.assertEquals("https://example.com", value);
+    }
+  }
+
+  @Test
+  void loadByNameAsList() {
+    try (MockedStatic<CacheManager> cacheManager = mockStatic(CacheManager.class)) {
+      cacheManager.when(() -> CacheManager.getLoadingCache(anyString())).thenReturn(sitePropertyListCache);
+
+      List<String> valueList = LoadSitePropertyCommand.loadByNameAsList("oauth.group.list");
+      Assertions.assertNotNull(valueList);
+      Assertions.assertTrue(!valueList.isEmpty());
+      Assertions.assertEquals(3, valueList.size());
+      Assertions.assertTrue(valueList.contains("Group1"));
+      Assertions.assertTrue(valueList.contains("Group_2"));
+      Assertions.assertTrue(valueList.contains("Group-3"));
     }
   }
 }

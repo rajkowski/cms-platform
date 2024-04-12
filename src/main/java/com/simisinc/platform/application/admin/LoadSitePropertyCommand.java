@@ -19,6 +19,8 @@ package com.simisinc.platform.application.admin;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -81,9 +83,21 @@ public class LoadSitePropertyCommand {
     return null;
   }
 
+  /** Return the value as either true/false from String value matching "true" */
   public static boolean loadByNameAsBoolean(String name) {
     String booleanValue = loadByName(name);
     return "true".equals(booleanValue);
+  }
+
+  /** Return the value as a List from comma separated String value */
+  public static List<String> loadByNameAsList(String name) {
+    String listValue = loadByName(name);
+    if (StringUtils.isNotBlank(listValue)) {
+      return Stream.of(listValue.split(","))
+          .map(String::trim)
+          .collect(Collectors.toList());
+    }
+    return null;
   }
 
   /**

@@ -111,6 +111,7 @@ public class RoleRepository {
       record.setLevel(rs.getInt("level"));
       record.setCode(rs.getString("code"));
       record.setTitle(rs.getString("title"));
+      record.setOAuthPath(rs.getString("oauth_path"));
       return record;
     } catch (SQLException se) {
       LOG.error("buildRecord", se);

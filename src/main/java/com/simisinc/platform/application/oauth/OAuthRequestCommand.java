@@ -67,7 +67,7 @@ public class OAuthRequestCommand {
         LOG.error("NO OAUTH TOKEN FOUND... check the SSO client credentials");
         return "/logout";
       }
-      // Retrieve the user info and log them in
+      // Determine the user's information and log them in
       OAuthLoginCommand.loginTheUser(request, response, oAuthToken);
       // Return the user to the site home page (or back to provider)
       if (StringUtils.isNotBlank(oAuthToken.getResource())) {

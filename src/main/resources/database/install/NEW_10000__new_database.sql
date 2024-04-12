@@ -258,6 +258,8 @@ INSERT INTO site_properties (property_order, property_label, property_name, prop
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (20, 'OpenAuth Enabled', 'oauth.enabled', 'false', 'boolean');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (22, 'OpenAuth Role Attribute', 'oauth.role.attribute', 'roles', 'text');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (24, 'OpenAuth Group Attribute', 'oauth.group.attribute', 'groups', 'text');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (26, 'OpenAuth Role Admin', 'oauth.role.admin', '', 'disabled');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (28, 'OpenAuth Group List', 'oauth.group.list', '', 'disabled');
 
 CREATE TABLE lookup_role (
   role_id SERIAL PRIMARY KEY,
