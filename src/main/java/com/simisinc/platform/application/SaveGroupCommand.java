@@ -78,6 +78,9 @@ public class SaveGroupCommand {
     group.setUniqueId(generateUniqueId(group, groupBean));
     group.setName(groupBean.getName());
     group.setDescription(groupBean.getDescription());
+    if (StringUtils.isBlank(group.getOAuthPath()) && !StringUtils.isBlank(groupBean.getOAuthPath())) {
+      group.setOAuthPath(groupBean.getOAuthPath());
+    }
     return GroupRepository.save(group);
   }
 

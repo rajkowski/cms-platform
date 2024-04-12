@@ -28,6 +28,7 @@ import org.apache.commons.logging.LogFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.application.SaveGroupCommand;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.application.register.SaveUserCommand;
 import com.simisinc.platform.domain.model.Group;
@@ -48,12 +49,7 @@ public class OAuthUserInfoCommand {
 
   private static Log LOG = LogFactory.getLog(OAuthUserInfoCommand.class);
 
-  /**
-   * For the given oAuthToken, create a User from the accessToken and optional idToken
-   * 
-   * @param oAuthToken
-   * @return
-   */
+  /** For the given oAuthToken, create a User from the accessToken and optional idToken */
   public static User createUser(OAuthToken oAuthToken) {
     if (oAuthToken == null || StringUtils.isBlank(oAuthToken.getAccessToken())) {
       LOG.warn("accessToken is required for createUser");
@@ -67,6 +63,7 @@ public class OAuthUserInfoCommand {
     // Use accessToken itself to get values for display purposes
     String accessToken = oAuthToken.getAccessToken();
     if (accessToken.contains(".")) {
+      LOG.debug("Found OAuth access token...");
       JsonNode accessTokenJson = JWTCommand.parseJwt(accessToken);
       populateUserFromAccessTokenPayload(accessTokenJson, userBean);
     }
@@ -75,28 +72,31 @@ public class OAuthUserInfoCommand {
     boolean hasAllProperties = false;
     String idToken = oAuthToken.getIdToken();
     if (!StringUtils.isBlank(idToken) && idToken.contains(".")) {
+      LOG.debug("Found OAuth id token...");
       JsonNode idTokenJson = JWTCommand.parseJwt(idToken);
       hasAllProperties = populateUserFromIdTokenPayload(idTokenJson, userBean);
       if (hasAllProperties) {
-        populateUserRolesAndGroupsFromPayload(idTokenJson, userBean);
+        populateUserRolesFromPayload(idTokenJson, userBean);
+        populateUserGroupsFromPayload(idTokenJson, userBean);
       }
     }
 
     // Make a userinfo request if needed
     if (!hasAllProperties) {
-      LOG.debug("Making a userinfo request for user properties");
+      LOG.debug("Making a userinfo request for user properties...");
       JsonNode userInfoJson = OAuthHttpCommand.sendHttpGet(OAuthConfigurationCommand.retrieveUserInfoEndpoint(), oAuthToken);
       hasAllProperties = populateUserFromIdTokenPayload(userInfoJson, userBean);
       if (!hasAllProperties) {
         LOG.warn("preferred_username OR email is required");
         return null;
       }
-      populateUserRolesAndGroupsFromPayload(userInfoJson, userBean);
+      populateUserRolesFromPayload(userInfoJson, userBean);
+      populateUserGroupsFromPayload(userInfoJson, userBean);
     }
-
     return validateUserRecord(userBean);
   }
 
+  /** Finalize validating and saving the user record */
   public static User validateUserRecord(User userBean) {
     // Search by optional email address first since that is a key
     User user = null;
@@ -135,6 +135,7 @@ public class OAuthUserInfoCommand {
     }
   }
 
+  /** Populate some user fields from the access token */
   public static boolean populateUserFromAccessTokenPayload(JsonNode json, User user) {
     // Validate args
     if (json == null) {
@@ -152,6 +153,7 @@ public class OAuthUserInfoCommand {
     return true;
   }
 
+  /** Populate user info from an id_token or user_info token */
   public static boolean populateUserFromIdTokenPayload(JsonNode json, User user) {
     // Validate args
     if (json == null) {
@@ -182,43 +184,75 @@ public class OAuthUserInfoCommand {
     return !StringUtils.isAnyBlank(user.getEmail(), user.getUsername());
   }
 
-  public static boolean populateUserRolesAndGroupsFromPayload(JsonNode json, User user) {
-    // Check for CMS Roles
+  /** Populate the users roles from the token payload */
+  public static void populateUserRolesFromPayload(JsonNode json, User user) {
     List<Role> userRoleList = user.getRoleList();
     if (userRoleList == null) {
       userRoleList = new ArrayList<>();
     }
     String roleAttribute = LoadSitePropertyCommand.loadByName("oauth.role.attribute");
     if (StringUtils.isNotBlank(roleAttribute) && json.has(roleAttribute)) {
+      String oauthAdminRoleValue = LoadSitePropertyCommand.loadByName("oauth.role.admin");
       for (JsonNode jsonNode : json.get(roleAttribute)) {
         String roleValue = jsonNode.asText();
         Role thisRole = RoleRepository.findByOAuthPath(roleValue);
+        // Determine if there is a setting to promote this user to admin based on role value
+        if (thisRole == null && StringUtils.isNotBlank(oauthAdminRoleValue) && roleValue.equals(oauthAdminRoleValue)) {
+          thisRole = RoleRepository.findByCode("admin");
+        }
         if (thisRole != null) {
           userRoleList.add(thisRole);
         }
       }
     }
     user.setRoleList(userRoleList);
+  }
 
-    // Check for CMS User Groups
-    // The remote text *might* be configured to send the roles/groups map
+  /** Populate the users groups from the token payload */
+  public static void populateUserGroupsFromPayload(JsonNode json, User user) {
+    // All users must belong to the base "All Users" group
     Group defaultGroup = GroupRepository.findByName("All Users");
     List<Group> userGroupList = user.getGroupList();
     if (userGroupList == null) {
       userGroupList = new ArrayList<>();
     }
     userGroupList.add(defaultGroup);
+    // Check the oauth attribute and values
     String groupAttribute = LoadSitePropertyCommand.loadByName("oauth.group.attribute");
     if (StringUtils.isNotBlank(groupAttribute) && json.has(groupAttribute)) {
+      // Use a list of acceptable groups from site properties
+      List<String> oauthGroupList = LoadSitePropertyCommand.loadByNameAsList("oauth.group.list");
+      // Iterate through the found groups, looking for a match
       for (JsonNode jsonNode : json.get(groupAttribute)) {
         String groupValue = jsonNode.asText();
+        // See if the system is configured with this OAuth group value, then use it
         Group thisGroup = GroupRepository.findByOAuthPath(groupValue);
+        if (thisGroup == null && oauthGroupList != null && oauthGroupList.contains(groupValue)) {
+          // Create the group
+          thisGroup = createGroup(groupValue);
+        }
         if (thisGroup != null) {
           userGroupList.add(thisGroup);
         }
       }
     }
     user.setGroupList(userGroupList);
-    return true;
+  }
+
+  /** Creates a user group on-the-fly unless one exists, then returns the group */
+  private static synchronized Group createGroup(String groupValue) {
+    Group thisGroup = null;
+    try {
+      // Create the group based on the group value provided
+      Group groupBean = new Group(groupValue, groupValue);
+      groupBean.setDescription("Added from OAuth");
+      groupBean.setOAuthPath(groupValue);
+      thisGroup = SaveGroupCommand.saveGroup(groupBean);
+      LOG.info("A group was added from OAuth: " + groupValue);
+    } catch (Exception e) {
+      // Already exists?, reload
+      thisGroup = GroupRepository.findByUniqueId(groupValue);
+    }
+    return thisGroup;
   }
 }

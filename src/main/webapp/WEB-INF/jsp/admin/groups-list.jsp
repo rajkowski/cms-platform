@@ -37,6 +37,9 @@
     <tr>
       <td>
         <c:out value="${group.name}" />
+        <c:if test="${!empty group.OAuthPath}">
+          [<c:out value="${group.OAuthPath}" />]
+        </c:if>
         <c:if test="${!empty group.description}">
           <br /><small class="subheader"><c:out value="${group.description}" /></small>
         </c:if>
