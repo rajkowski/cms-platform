@@ -51,3 +51,6 @@ cspell.json
 
 # Sonar
 .sonar_lock
+
+# Draw.io
+*.bkp
