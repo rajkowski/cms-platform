@@ -186,6 +186,7 @@ public class OAuthUserInfoCommand {
 
   /** Populate the users roles from the token payload */
   public static void populateUserRolesFromPayload(JsonNode json, User user) {
+    LOG.debug("Checking OAuth roles...");
     List<Role> userRoleList = user.getRoleList();
     if (userRoleList == null) {
       userRoleList = new ArrayList<>();
@@ -198,6 +199,7 @@ public class OAuthUserInfoCommand {
         Role thisRole = RoleRepository.findByOAuthPath(roleValue);
         // Determine if there is a setting to promote this user to admin based on role value
         if (thisRole == null && StringUtils.isNotBlank(oauthAdminRoleValue) && roleValue.equals(oauthAdminRoleValue)) {
+          LOG.debug("User promoted to admin");
           thisRole = RoleRepository.findByCode("admin");
         }
         if (thisRole != null) {
@@ -210,6 +212,7 @@ public class OAuthUserInfoCommand {
 
   /** Populate the users groups from the token payload */
   public static void populateUserGroupsFromPayload(JsonNode json, User user) {
+    LOG.debug("Checking OAuth groups...");
     // All users must belong to the base "All Users" group
     Group defaultGroup = GroupRepository.findByName("All Users");
     List<Group> userGroupList = user.getGroupList();
@@ -241,16 +244,19 @@ public class OAuthUserInfoCommand {
 
   /** Creates a user group on-the-fly unless one exists, then returns the group */
   private static synchronized Group createGroup(String groupValue) {
+    LOG.debug("Creating a group... " + groupValue);
     Group thisGroup = null;
     try {
       // Create the group based on the group value provided
-      Group groupBean = new Group(groupValue, groupValue);
+      Group groupBean = new Group();
+      groupBean.setName(groupValue);
       groupBean.setDescription("Added from OAuth");
       groupBean.setOAuthPath(groupValue);
       thisGroup = SaveGroupCommand.saveGroup(groupBean);
       LOG.info("A group was added from OAuth: " + groupValue);
     } catch (Exception e) {
       // Already exists?, reload
+      LOG.warn("Could not save group", e);
       thisGroup = GroupRepository.findByUniqueId(groupValue);
     }
     return thisGroup;
