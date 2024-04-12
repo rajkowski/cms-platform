@@ -92,16 +92,18 @@ public class EmailCommand {
 
     // Embed the SiteLogo for the HTML's cid:sitelogo
     String siteLogo = LoadSitePropertyCommand.loadByName("site.logo");
-    try {
-      Image record = ImageUrlCommand.decodeToImageRecord(siteLogo);
-      if (record != null) {
-        File file = FileSystemCommand.getFileServerRootPath(record.getFileServerPath());
-        if (file.isFile()) {
-          email.embed(file, "sitelogo");
+    if (StringUtils.isNotBlank(siteLogo)) {
+      try {
+        Image record = ImageUrlCommand.decodeToImageRecord(siteLogo);
+        if (record != null) {
+          File file = FileSystemCommand.getFileServerRootPath(record.getFileServerPath());
+          if (file.isFile()) {
+            email.embed(file, "sitelogo");
+          }
         }
+      } catch (Exception e) {
+        LOG.error("Could not embed logo: " + siteLogo, e);
       }
-    } catch (Exception e) {
-      LOG.error("Could not embed logo: " + siteLogo, e);
     }
 
     // Define your base URL to resolve relative resource locations
