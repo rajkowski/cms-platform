@@ -346,6 +346,10 @@ public class User extends Entity {
       if (group.getUniqueId().equals(groupUniqueId)) {
         return true;
       }
+      // If SSO is enabled, then also check against the "OAUTH" value in the group...
+      if (StringUtils.isNotBlank(group.getOAuthPath()) && group.getOAuthPath().equals(groupUniqueId)) {
+        return true;
+      }
     }
     return false;
   }
