@@ -1,7 +1,7 @@
 -- Copyright 2022 SimIS Inc. (https://www.simiscms.com), Licensed under the Apache License, Version 2.0 (the "License").
 -- Core Database
 
-CREATE EXTENSION postgis;
+CREATE EXTENSION IF NOT EXISTS postgis;
 
 CREATE TABLE database_version (
   version_id BIGSERIAL PRIMARY KEY,
