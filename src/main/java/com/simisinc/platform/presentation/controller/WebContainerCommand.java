@@ -18,6 +18,7 @@ package com.simisinc.platform.presentation.controller;
 
 import com.simisinc.platform.ApplicationInfo;
 import com.simisinc.platform.application.LoadUserCommand;
+import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.application.cms.HtmlCommand;
 import com.simisinc.platform.application.items.LoadCollectionCommand;
 import com.simisinc.platform.application.items.LoadItemCommand;
@@ -151,7 +152,8 @@ public class WebContainerCommand implements Serializable {
             if (!userSession.getFormToken().equals(formToken)) {
               controllerSession.clearAllWidgetData();
               controllerSession.addWidgetData(thisWidgetUniqueId, MESSAGE, "Your session may have expired before submitting the form, please try again");
-              response.sendRedirect(contextPath + containerRenderInfo.getName());
+              String siteUrl = LoadSitePropertyCommand.loadByName("site.url");
+              response.sendRedirect(siteUrl + contextPath + containerRenderInfo.getName());
               return true;
             }
           }
@@ -358,7 +360,8 @@ public class WebContainerCommand implements Serializable {
           if (!webContainerContext.isTargeted()) {
             if (widgetContext.hasRedirect()) {
               controllerSession.clearAllWidgetData();
-              response.sendRedirect(contextPath + widgetContext.getRedirect());
+              String siteUrl = LoadSitePropertyCommand.loadByName("site.url");
+              response.sendRedirect(siteUrl + contextPath + widgetContext.getRedirect());
               return true;
             }
           }
@@ -422,7 +425,8 @@ public class WebContainerCommand implements Serializable {
               sharedWidgetValueMap = widgetContext.getSharedRequestValueMap();
               controllerSession.addWidgetData(REQUEST_SHARED_VALUE_MAP, sharedWidgetValueMap);
             }
-            response.sendRedirect(contextPath + actionRedirect);
+            String siteUrl = LoadSitePropertyCommand.loadByName("site.url");
+            response.sendRedirect(siteUrl + contextPath + actionRedirect);
             LOG.debug("-----------------------------------------------------------------------");
             return true;
           }
