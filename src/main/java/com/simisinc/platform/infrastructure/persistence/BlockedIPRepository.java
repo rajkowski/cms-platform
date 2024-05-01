@@ -39,7 +39,7 @@ public class BlockedIPRepository {
   private static Log LOG = LogFactory.getLog(BlockedIPRepository.class);
 
   private static String TABLE_NAME = "block_list";
-  private static String[] PRIMARY_KEY = new String[]{"block_list_id"};
+  private static String[] PRIMARY_KEY = new String[] { "block_list_id" };
 
   private static DataResult query(DataConstraints constraints) {
     return DB.selectAllFrom(TABLE_NAME, null, constraints, BlockedIPRepository::buildRecord);
@@ -105,7 +105,7 @@ public class BlockedIPRepository {
     SqlUtils where = new SqlUtils()
         .add("block_list_id = ?", record.getId());
     if (DB.update(TABLE_NAME, updateValues, where)) {
-//      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
+      //      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
     }
     LOG.error("The update failed!");
@@ -113,20 +113,18 @@ public class BlockedIPRepository {
   }
 
   public static boolean remove(BlockedIP record) {
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // Delete the references
-//        ItemCategoryRepository.removeAll(connection, record);
-//        CollectionRepository.updateItemCount(connection, record.getCollectionId(), -1);
-//        CategoryRepository.updateItemCount(connection, record.getCategoryId(), -1);
-        // Delete the record
-        DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("block_list_id = ?", record.getId()));
-        // Finish transaction
-        transaction.commit();
-        return true;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Delete the references
+      //        ItemCategoryRepository.removeAll(connection, record);
+      //        CollectionRepository.updateItemCount(connection, record.getCollectionId(), -1);
+      //        CategoryRepository.updateItemCount(connection, record.getCategoryId(), -1);
+      // Delete the record
+      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("block_list_id = ?", record.getId()));
+      // Finish transaction
+      transaction.commit();
+      return true;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
@@ -152,8 +150,7 @@ public class BlockedIPRepository {
         .addNames(
             "ip_address AS \"IP Address\"",
             "created AS \"Date\"",
-            "reason AS \"Reason\""
-        );
+            "reason AS \"Reason\"");
     // Use the specification to filter results
     if (constraints == null) {
       constraints = new DataConstraints();

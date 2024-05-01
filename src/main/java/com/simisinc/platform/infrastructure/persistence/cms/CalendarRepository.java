@@ -39,7 +39,7 @@ public class CalendarRepository {
   private static Log LOG = LogFactory.getLog(CalendarRepository.class);
 
   private static String TABLE_NAME = "calendars";
-  private static String[] PRIMARY_KEY = new String[]{"calendar_id"};
+  private static String[] PRIMARY_KEY = new String[] { "calendar_id" };
 
   private static DataResult query(CalendarSpecification specification, DataConstraints constraints) {
     SqlUtils where = null;
@@ -122,7 +122,7 @@ public class CalendarRepository {
     SqlUtils where = new SqlUtils()
         .add("calendar_id = ?", record.getId());
     if (DB.update(TABLE_NAME, updateValues, where)) {
-//      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
+      //      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
     }
     LOG.error("The update failed!");
@@ -130,18 +130,16 @@ public class CalendarRepository {
   }
 
   public static boolean remove(Calendar record) {
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // Delete the references
-        CalendarEventRepository.removeAll(connection, record);
-        // Delete the record
-        DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("calendar_id = ?", record.getId()));
-        // Finish transaction
-        transaction.commit();
-        return true;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Delete the references
+      CalendarEventRepository.removeAll(connection, record);
+      // Delete the record
+      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("calendar_id = ?", record.getId()));
+      // Finish transaction
+      transaction.commit();
+      return true;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }

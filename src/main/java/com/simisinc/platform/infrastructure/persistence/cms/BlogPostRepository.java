@@ -197,20 +197,18 @@ public class BlogPostRepository {
   }
 
   public static boolean remove(BlogPost record) {
-    try {
-      try (Connection connection = DB.getConnection();
-          AutoStartTransaction a = new AutoStartTransaction(connection);
-          AutoRollback transaction = new AutoRollback(connection)) {
-        // Delete the references
-        //        ItemCategoryRepository.removeAll(connection, record);
-        //        CollectionRepository.updateItemCount(connection, record.getCollectionId(), -1);
-        //        CategoryRepository.updateItemCount(connection, record.getCategoryId(), -1);
-        // Delete the record
-        DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("post_id = ?", record.getId()));
-        // Finish transaction
-        transaction.commit();
-        return true;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Delete the references
+      //        ItemCategoryRepository.removeAll(connection, record);
+      //        CollectionRepository.updateItemCount(connection, record.getCollectionId(), -1);
+      //        CategoryRepository.updateItemCount(connection, record.getCategoryId(), -1);
+      // Delete the record
+      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("post_id = ?", record.getId()));
+      // Finish transaction
+      transaction.commit();
+      return true;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }

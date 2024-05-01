@@ -46,7 +46,7 @@ public class UserRepository {
   private static Log LOG = LogFactory.getLog(UserRepository.class);
 
   private static String TABLE_NAME = "users";
-  private static String[] PRIMARY_KEY = new String[]{"user_id"};
+  private static String[] PRIMARY_KEY = new String[] { "user_id" };
 
   private static DataResult query(UserSpecification specification, DataConstraints constraints) {
     SqlUtils select = new SqlUtils();
@@ -159,16 +159,15 @@ public class UserRepository {
   }
 
   public static List<StatisticsData> findMonthlyUserRegistrations(int monthsLimit) {
-    String SQL_QUERY =
-        "SELECT DATE_TRUNC('month', month)::VARCHAR(10) AS date_column, COUNT(user_id) AS monthly_count " +
-            "FROM (SELECT generate_series(NOW() - INTERVAL '" + monthsLimit + " months', NOW(), INTERVAL '1 month')::date) d(month) " +
-            "LEFT JOIN users ON DATE_TRUNC('month', created) = DATE_TRUNC('month', month) " +
-            "GROUP BY d.month " +
-            "ORDER BY d.month";
+    String SQL_QUERY = "SELECT DATE_TRUNC('month', month)::VARCHAR(10) AS date_column, COUNT(user_id) AS monthly_count " +
+        "FROM (SELECT generate_series(NOW() - INTERVAL '" + monthsLimit + " months', NOW(), INTERVAL '1 month')::date) d(month) " +
+        "LEFT JOIN users ON DATE_TRUNC('month', created) = DATE_TRUNC('month', month) " +
+        "GROUP BY d.month " +
+        "ORDER BY d.month";
     List<StatisticsData> records = null;
     try (Connection connection = DB.getConnection();
-         PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
-         ResultSet rs = pst.executeQuery()) {
+        PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
+        ResultSet rs = pst.executeQuery()) {
       records = new ArrayList<>();
       while (rs.next()) {
         StatisticsData data = new StatisticsData();
@@ -183,16 +182,15 @@ public class UserRepository {
   }
 
   public static List<StatisticsData> findDailyUserRegistrations(int daysToLimit) {
-    String SQL_QUERY =
-        "SELECT DATE_TRUNC('day', day)::VARCHAR(10) AS date_column, COUNT(user_id) AS daily_count " +
-            "FROM (SELECT generate_series(NOW() - INTERVAL '" + daysToLimit + " days', NOW(), INTERVAL '1 day')::date) d(day) " +
-            "LEFT JOIN users ON DATE_TRUNC('day', created) = DATE_TRUNC('day', day) " +
-            "GROUP BY d.day " +
-            "ORDER BY d.day";
+    String SQL_QUERY = "SELECT DATE_TRUNC('day', day)::VARCHAR(10) AS date_column, COUNT(user_id) AS daily_count " +
+        "FROM (SELECT generate_series(NOW() - INTERVAL '" + daysToLimit + " days', NOW(), INTERVAL '1 day')::date) d(day) " +
+        "LEFT JOIN users ON DATE_TRUNC('day', created) = DATE_TRUNC('day', day) " +
+        "GROUP BY d.day " +
+        "ORDER BY d.day";
     List<StatisticsData> records = null;
     try (Connection connection = DB.getConnection();
-         PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
-         ResultSet rs = pst.executeQuery()) {
+        PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
+        ResultSet rs = pst.executeQuery()) {
       records = new ArrayList<>();
       while (rs.next()) {
         StatisticsData data = new StatisticsData();
@@ -208,12 +206,11 @@ public class UserRepository {
 
   public static long countTotalUsers() {
     long count = -1;
-    String SQL_QUERY =
-        "SELECT COUNT(user_id) AS user_count " +
-            "FROM users ";
+    String SQL_QUERY = "SELECT COUNT(user_id) AS user_count " +
+        "FROM users ";
     try (Connection connection = DB.getConnection();
-         PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
-         ResultSet rs = pst.executeQuery()) {
+        PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
+        ResultSet rs = pst.executeQuery()) {
       if (rs.next()) {
         count = rs.getLong("user_count");
       }
@@ -264,20 +261,18 @@ public class UserRepository {
       insertValues.addGeomPoint("geom", record.getLatitude(), record.getLongitude());
     }
     // Use a transaction
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // In a transaction (use the existing connection)
-        record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
-        // Manage the access groups
-        UserGroupRepository.insertUserGroupList(connection, record);
-        // Manage the roles
-        UserRoleRepository.insertUserRoleList(connection, record);
-        // Finish the transaction
-        transaction.commit();
-        return record;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // In a transaction (use the existing connection)
+      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+      // Manage the access groups
+      UserGroupRepository.insertUserGroupList(connection, record);
+      // Manage the roles
+      UserRoleRepository.insertUserRoleList(connection, record);
+      // Finish the transaction
+      transaction.commit();
+      return record;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
@@ -321,22 +316,20 @@ public class UserRepository {
     SqlUtils where = new SqlUtils()
         .add("user_id = ?", record.getId());
     // Use a transaction
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // In a transaction (use the existing connection)
-        DB.update(connection, TABLE_NAME, updateValues, where);
-        // Manage the access groups
-        UserGroupRepository.removeAll(connection, record);
-        UserGroupRepository.insertUserGroupList(connection, record);
-        // Manage the roles
-        UserRoleRepository.removeAll(connection, record);
-        UserRoleRepository.insertUserRoleList(connection, record);
-        // Finish the transaction
-        transaction.commit();
-        return record;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // In a transaction (use the existing connection)
+      DB.update(connection, TABLE_NAME, updateValues, where);
+      // Manage the access groups
+      UserGroupRepository.removeAll(connection, record);
+      UserGroupRepository.insertUserGroupList(connection, record);
+      // Manage the roles
+      UserRoleRepository.removeAll(connection, record);
+      UserRoleRepository.insertUserRoleList(connection, record);
+      // Finish the transaction
+      transaction.commit();
+      return record;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage(), se);
     }
@@ -419,23 +412,21 @@ public class UserRepository {
 
   // Remove
   public static boolean remove(User record) {
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // Delete the references
-        // @note the User is currently not cleaned up from all tables
-        // until a business decision is made
-        UserGroupRepository.removeAll(connection, record);
-        UserRoleRepository.removeAll(connection, record);
-        UserTokenRepository.removeAll(connection, record);
-        UserLoginRepository.removeAll(connection, record);
-        // Delete the record
-        DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("user_id = ?", record.getId()));
-        // Finish transaction
-        transaction.commit();
-        return true;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Delete the references
+      // @note the User is currently not cleaned up from all tables
+      // until a business decision is made
+      UserGroupRepository.removeAll(connection, record);
+      UserRoleRepository.removeAll(connection, record);
+      UserTokenRepository.removeAll(connection, record);
+      UserLoginRepository.removeAll(connection, record);
+      // Delete the record
+      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("user_id = ?", record.getId()));
+      // Finish transaction
+      transaction.commit();
+      return true;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
