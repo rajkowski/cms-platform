@@ -43,7 +43,7 @@ public class ProductStatusCommand {
     // At least one SKU must be active
     boolean hasActiveSku = false;
     LOG.debug("Checking for an active sku...");
-    for (ProductSku sku : product.getProducts()) {
+    for (ProductSku sku : product.getNativeProductSKUs()) {
       LOG.debug("Checking sku... " + sku.getSku());
       if (sku.getEnabled()) {
         hasActiveSku = true;
