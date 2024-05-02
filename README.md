@@ -1,6 +1,8 @@
-# CMS Platform – SimIS CMS
+# CMS Platform
 
 [![Java CI](https://github.com/rajkowski/cms-platform/actions/workflows/ant.yml/badge.svg)](https://github.com/rajkowski/cms-platform/actions/workflows/ant.yml)
+
+CMS Platform improves upon SimIS.
 
 What is SimIS CMS? [Agile, Enterprise, Open Source Content Management System (CMS) and Portal](https://www.simiscms.com).
 
