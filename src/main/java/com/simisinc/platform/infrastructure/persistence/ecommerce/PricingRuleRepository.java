@@ -45,7 +45,7 @@ public class PricingRuleRepository {
   private static Log LOG = LogFactory.getLog(PricingRuleRepository.class);
 
   private static String TABLE_NAME = "pricing_rules";
-  private static String[] PRIMARY_KEY = new String[]{"rule_id"};
+  private static String[] PRIMARY_KEY = new String[] { "rule_id" };
 
   private static DataResult query(PricingRuleSpecification specification, DataConstraints constraints) {
     SqlUtils where = null;
@@ -111,7 +111,6 @@ public class PricingRuleRepository {
         PricingRuleRepository::buildRecord);
   }
 
-
   public static PricingRule save(PricingRule record) {
     if (record.getId() > -1) {
       return update(record);
@@ -121,43 +120,41 @@ public class PricingRuleRepository {
 
   public static PricingRule add(PricingRule record) {
     // Use a transaction
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // In a transaction (use the existing connection)
-        SqlUtils insertValues = new SqlUtils()
-            .add("name", record.getName())
-            .add("description", record.getDescription())
-            .add("error_message", record.getErrorMessage())
-            .add("from_date", record.getFromDate())
-            .add("to_date", record.getToDate())
-            .add("promo_code", record.getPromoCode())
-            .add("uses_per_code", record.getUsesPerCode())
-            .add("uses_per_customer", record.getUsesPerCustomer())
-            .add("times_used", record.getTimesUsed())
-            .add("created_by", record.getCreatedBy())
-            .add("modified_by", record.getModifiedBy())
-            .add("enabled", record.getEnabled())
-            .add("minimum_subtotal", record.getMinimumSubtotal())
-            .add("minimum_order_qty", record.getMinimumOrderQuantity())
-            .add("maximum_order_qty", record.getMaximumOrderQuantity())
-            .add("item_limit", record.getItemLimit())
-            .add("valid_skus", record.getValidSkus())
-            .add("invalid_skus", record.getInvalidSkus())
-            .add("subtotal_percent", record.getSubtotalPercent())
-            .add("subtract_amount", record.getSubtractAmount())
-            .add("buy_x_items", record.getBuyXItems())
-            .add("get_y_free", record.getGetYItemsFree())
-            .add("free_shipping", record.getFreeShipping())
-            .add("free_product_sku", record.getFreeProductSku())
-            .add("free_shipping_code", record.getFreeShippingCode())
-            .add("valid_country_code", record.getCountryCode());
-        record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
-        // Finish the transaction
-        transaction.commit();
-        return record;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // In a transaction (use the existing connection)
+      SqlUtils insertValues = new SqlUtils()
+          .add("name", record.getName())
+          .add("description", record.getDescription())
+          .add("error_message", record.getErrorMessage())
+          .add("from_date", record.getFromDate())
+          .add("to_date", record.getToDate())
+          .add("promo_code", record.getPromoCode())
+          .add("uses_per_code", record.getUsesPerCode())
+          .add("uses_per_customer", record.getUsesPerCustomer())
+          .add("times_used", record.getTimesUsed())
+          .add("created_by", record.getCreatedBy())
+          .add("modified_by", record.getModifiedBy())
+          .add("enabled", record.getEnabled())
+          .add("minimum_subtotal", record.getMinimumSubtotal())
+          .add("minimum_order_qty", record.getMinimumOrderQuantity())
+          .add("maximum_order_qty", record.getMaximumOrderQuantity())
+          .add("item_limit", record.getItemLimit())
+          .add("valid_skus", record.getValidSkus())
+          .add("invalid_skus", record.getInvalidSkus())
+          .add("subtotal_percent", record.getSubtotalPercent())
+          .add("subtract_amount", record.getSubtractAmount())
+          .add("buy_x_items", record.getBuyXItems())
+          .add("get_y_free", record.getGetYItemsFree())
+          .add("free_shipping", record.getFreeShipping())
+          .add("free_product_sku", record.getFreeProductSku())
+          .add("free_shipping_code", record.getFreeShippingCode())
+          .add("valid_country_code", record.getCountryCode());
+      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+      // Finish the transaction
+      transaction.commit();
+      return record;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage(), se);
     }
@@ -174,7 +171,7 @@ public class PricingRuleRepository {
         .add("promo_code", record.getPromoCode())
         .add("uses_per_code", record.getUsesPerCode())
         .add("uses_per_customer", record.getUsesPerCustomer())
-//        .add("times_used", record.getTimesUsed())
+        //        .add("times_used", record.getTimesUsed())
         .add("enabled", record.getEnabled())
         .add("minimum_subtotal", record.getMinimumSubtotal())
         .add("minimum_order_qty", record.getMinimumOrderQuantity())
@@ -195,7 +192,7 @@ public class PricingRuleRepository {
     SqlUtils where = new SqlUtils()
         .add("rule_id = ?", record.getId());
     if (DB.update(TABLE_NAME, updateValues, where)) {
-//      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
+      //      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
     }
     LOG.error("The update failed!");

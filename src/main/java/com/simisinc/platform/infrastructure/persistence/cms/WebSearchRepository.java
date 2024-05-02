@@ -37,8 +37,7 @@ public class WebSearchRepository {
   private static Log LOG = LogFactory.getLog(WebSearchRepository.class);
 
   private static String TABLE_NAME = "web_searches";
-  private static String[] PRIMARY_KEY = new String[]{"search_id"};
-
+  private static String[] PRIMARY_KEY = new String[] { "search_id" };
 
   public static WebSearch save(WebSearch record) {
     return add(record);
@@ -60,11 +59,9 @@ public class WebSearchRepository {
   }
 
   public static boolean remove(WebSearch record) {
-    try {
-      try (Connection connection = DB.getConnection();
-           PreparedStatement pst = createPreparedStatementForDelete(connection, record)) {
-        pst.execute();
-      }
+    try (Connection connection = DB.getConnection();
+        PreparedStatement pst = createPreparedStatementForDelete(connection, record)) {
+      pst.execute();
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
@@ -73,9 +70,8 @@ public class WebSearchRepository {
   }
 
   private static PreparedStatement createPreparedStatementForDelete(Connection connection, WebSearch record) throws SQLException {
-    String SQL_QUERY =
-        "DELETE FROM web_searches " +
-            "WHERE search_id = ?";
+    String SQL_QUERY = "DELETE FROM web_searches " +
+        "WHERE search_id = ?";
     int i = 0;
     PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
     pst.setLong(++i, record.getId());

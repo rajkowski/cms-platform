@@ -38,8 +38,7 @@ public class PrescriptionRepository {
   private static Log LOG = LogFactory.getLog(PrescriptionRepository.class);
 
   private static String TABLE_NAME = "prescriptions";
-  private static String[] PRIMARY_KEY = new String[]{"prescription_id"};
-
+  private static String[] PRIMARY_KEY = new String[] { "prescription_id" };
 
   public static Prescription save(Prescription record) {
     if (record.getId() > -1) {
@@ -58,23 +57,20 @@ public class PrescriptionRepository {
 
   private static Prescription add(Prescription record) {
     // Use a transaction
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // In a transaction (use the existing connection)
-        add(connection, record);
-        // Finish the transaction
-        transaction.commit();
-        return record;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // In a transaction (use the existing connection)
+      add(connection, record);
+      // Finish the transaction
+      transaction.commit();
+      return record;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
     LOG.error("An id was not set!");
     return null;
   }
-
 
   private static Prescription add(Connection connection, Prescription record) throws SQLException {
     SqlUtils insertValues = new SqlUtils()
@@ -92,7 +88,6 @@ public class PrescriptionRepository {
     record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
     return record;
   }
-
 
   private static Prescription update(Prescription record) {
     SqlUtils updateValues = new SqlUtils()
@@ -115,16 +110,14 @@ public class PrescriptionRepository {
   }
 
   public static boolean remove(Prescription record) {
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // Delete the record
-        DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("prescription_id = ?", record.getId()));
-        // Finish transaction
-        transaction.commit();
-        return true;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Delete the record
+      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("prescription_id = ?", record.getId()));
+      // Finish transaction
+      transaction.commit();
+      return true;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }

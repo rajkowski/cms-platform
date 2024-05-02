@@ -38,7 +38,7 @@ public class ItemFolderRepository {
   private static Log LOG = LogFactory.getLog(ItemFolderRepository.class);
 
   private static String TABLE_NAME = "item_folders";
-  private static String[] PRIMARY_KEY = new String[]{"folder_id"};
+  private static String[] PRIMARY_KEY = new String[] { "folder_id" };
 
   public static ItemFolder save(ItemFolder record) {
     if (record.getId() > -1) {
@@ -63,23 +63,21 @@ public class ItemFolderRepository {
     insertValues.add("has_allowed_groups", record.getFolderGroupList() != null && !record.getFolderGroupList().isEmpty());
     insertValues.add("has_categories", record.getFolderCategoryList() != null && !record.getFolderCategoryList().isEmpty());
     // Use a transaction
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // In a transaction (use the existing connection)
-        record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
-        // Manage the access groups
-        if (record.getFolderGroupList() != null && !record.getFolderGroupList().isEmpty()) {
-          ItemFolderGroupRepository.insertFolderGroupList(connection, record);
-        }
-        if (record.getFolderCategoryList() != null && !record.getFolderCategoryList().isEmpty()) {
-          ItemFolderCategoryRepository.insertFolderCategoryList(connection, record);
-        }
-        // Finish the transaction
-        transaction.commit();
-        return record;
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // In a transaction (use the existing connection)
+      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+      // Manage the access groups
+      if (record.getFolderGroupList() != null && !record.getFolderGroupList().isEmpty()) {
+        ItemFolderGroupRepository.insertFolderGroupList(connection, record);
       }
+      if (record.getFolderCategoryList() != null && !record.getFolderCategoryList().isEmpty()) {
+        ItemFolderCategoryRepository.insertFolderCategoryList(connection, record);
+      }
+      // Finish the transaction
+      transaction.commit();
+      return record;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
@@ -105,23 +103,21 @@ public class ItemFolderRepository {
     updateValues.add("has_categories", record.getFolderCategoryList() != null && !record.getFolderCategoryList().isEmpty());
     SqlUtils where = new SqlUtils().add("folder_id = ?", record.getId());
     // Use a transaction
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // In a transaction (use the existing connection)
-        DB.update(connection, TABLE_NAME, updateValues, where);
-        // Manage the access groups
-        ItemFolderGroupRepository.removeAll(connection, record);
-        ItemFolderGroupRepository.insertFolderGroupList(connection, record);
-        // Manage categories
-        ItemFolderCategoryRepository.updateFolderCategoryList(connection, record);
-        // Finish the transaction
-        transaction.commit();
-        // Expire the cache
-//        CacheManager.invalidateKey(CacheManager.COLLECTION_UNIQUE_ID_CACHE, record.getUniqueId());
-        return record;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // In a transaction (use the existing connection)
+      DB.update(connection, TABLE_NAME, updateValues, where);
+      // Manage the access groups
+      ItemFolderGroupRepository.removeAll(connection, record);
+      ItemFolderGroupRepository.insertFolderGroupList(connection, record);
+      // Manage categories
+      ItemFolderCategoryRepository.updateFolderCategoryList(connection, record);
+      // Finish the transaction
+      transaction.commit();
+      // Expire the cache
+      //        CacheManager.invalidateKey(CacheManager.COLLECTION_UNIQUE_ID_CACHE, record.getUniqueId());
+      return record;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage(), se);
     }
@@ -134,24 +130,22 @@ public class ItemFolderRepository {
 
   // Remove
   public static boolean remove(ItemFolder record) {
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // Delete the references
-        ItemFileVersionRepository.removeAll(connection, record);
-        ItemFileItemRepository.removeAll(connection, record);
-        ItemSubFolderRepository.removeAll(connection, record);
-        ItemFolderGroupRepository.removeAll(connection, record);
-        ItemFolderCategoryRepository.removeAll(connection, record);
-        // Delete the record
-        DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("folder_id = ?", record.getId()));
-        // Finish transaction
-        transaction.commit();
-        // Invalidate the cache
-//        CacheManager.invalidateKey(CacheManager.COLLECTION_UNIQUE_ID_CACHE, record.getUniqueId());
-        return true;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Delete the references
+      ItemFileVersionRepository.removeAll(connection, record);
+      ItemFileItemRepository.removeAll(connection, record);
+      ItemSubFolderRepository.removeAll(connection, record);
+      ItemFolderGroupRepository.removeAll(connection, record);
+      ItemFolderCategoryRepository.removeAll(connection, record);
+      // Delete the record
+      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("folder_id = ?", record.getId()));
+      // Finish transaction
+      transaction.commit();
+      // Invalidate the cache
+      // CacheManager.invalidateKey(CacheManager.COLLECTION_UNIQUE_ID_CACHE, record.getUniqueId());
+      return true;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
@@ -264,11 +258,9 @@ public class ItemFolderRepository {
   }
 
   public static boolean updateFileCount(Connection connection, long folderId, int value) {
-    try {
-      // Increment the count
-      try (PreparedStatement pst = createPreparedStatementForItemCount(connection, folderId, value)) {
-        return pst.execute();
-      }
+    // Increment the count
+    try (PreparedStatement pst = createPreparedStatementForItemCount(connection, folderId, value)) {
+      return pst.execute();
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
@@ -276,11 +268,11 @@ public class ItemFolderRepository {
     return false;
   }
 
-  private static PreparedStatement createPreparedStatementForItemCount(Connection connection, long folderId, int value) throws SQLException {
-    String SQL_QUERY =
-        "UPDATE item_folders " +
-            "SET file_count = file_count + ? " +
-            "WHERE folder_id = ?";
+  private static PreparedStatement createPreparedStatementForItemCount(Connection connection, long folderId, int value)
+      throws SQLException {
+    String SQL_QUERY = "UPDATE item_folders " +
+        "SET file_count = file_count + ? " +
+        "WHERE folder_id = ?";
     int i = 0;
     PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
     pst.setInt(++i, value);
@@ -289,11 +281,9 @@ public class ItemFolderRepository {
   }
 
   public static boolean updateFileCountForFileId(Connection connection, long fileId, int value) {
-    try {
-      // Increment the count
-      try (PreparedStatement pst = createPreparedStatementForItemCountForFileId(connection, fileId, value)) {
-        return pst.execute();
-      }
+    // Increment the count
+    try (PreparedStatement pst = createPreparedStatementForItemCountForFileId(connection, fileId, value)) {
+      return pst.execute();
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
@@ -301,11 +291,11 @@ public class ItemFolderRepository {
     return false;
   }
 
-  private static PreparedStatement createPreparedStatementForItemCountForFileId(Connection connection, long fileId, int value) throws SQLException {
-    String SQL_QUERY =
-        "UPDATE item_folders " +
-            "SET file_count = file_count + ? " +
-            "WHERE folder_id IN (SELECT folder_id FROM files WHERE file_id = ?) ";
+  private static PreparedStatement createPreparedStatementForItemCountForFileId(Connection connection, long fileId, int value)
+      throws SQLException {
+    String SQL_QUERY = "UPDATE item_folders " +
+        "SET file_count = file_count + ? " +
+        "WHERE folder_id IN (SELECT folder_id FROM files WHERE file_id = ?) ";
     int i = 0;
     PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
     pst.setInt(++i, value);

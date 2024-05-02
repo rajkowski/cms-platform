@@ -39,7 +39,7 @@ public class WikiRepository {
   private static Log LOG = LogFactory.getLog(WikiRepository.class);
 
   private static String TABLE_NAME = "wikis";
-  private static String[] PRIMARY_KEY = new String[]{"wiki_id"};
+  private static String[] PRIMARY_KEY = new String[] { "wiki_id" };
 
   private static DataResult query(WikiSpecification specification, DataConstraints constraints) {
     SqlUtils where = null;
@@ -103,25 +103,23 @@ public class WikiRepository {
         .add("enabled", record.getEnabled())
         .add("starting_page", record.getStartingPage());
     // Use a transaction
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // In a transaction (use the existing connection)
-        record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
-        if (record.getStartingPage() == -1L) {
-          // Create the default page
-          long wikiPageId = WikiPageRepository.addDefaultPage(connection, record);
-          // @todo Create the first revision entry
-          // Update the reference
-          SqlUtils update = new SqlUtils().add("starting_page", wikiPageId);
-          SqlUtils where = new SqlUtils().add("wiki_id = ?", record.getId());
-          DB.update(connection, TABLE_NAME, update, where);
-        }
-        // Finish the transaction
-        transaction.commit();
-        return record;
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // In a transaction (use the existing connection)
+      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+      if (record.getStartingPage() == -1L) {
+        // Create the default page
+        long wikiPageId = WikiPageRepository.addDefaultPage(connection, record);
+        // @todo Create the first revision entry
+        // Update the reference
+        SqlUtils update = new SqlUtils().add("starting_page", wikiPageId);
+        SqlUtils where = new SqlUtils().add("wiki_id = ?", record.getId());
+        DB.update(connection, TABLE_NAME, update, where);
       }
+      // Finish the transaction
+      transaction.commit();
+      return record;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
@@ -141,7 +139,7 @@ public class WikiRepository {
     SqlUtils where = new SqlUtils()
         .add("wiki_id = ?", record.getId());
     if (DB.update(TABLE_NAME, updateValues, where)) {
-//      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
+      //      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
     }
     LOG.error("The update failed!");
@@ -149,18 +147,16 @@ public class WikiRepository {
   }
 
   public static boolean remove(Wiki record) {
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // Delete the references
-        WikiPageRepository.removeAll(connection, record);
-        // Delete the record
-        DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("wiki_id = ?", record.getId()));
-        // Finish transaction
-        transaction.commit();
-        return true;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Delete the references
+      WikiPageRepository.removeAll(connection, record);
+      // Delete the record
+      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("wiki_id = ?", record.getId()));
+      // Finish transaction
+      transaction.commit();
+      return true;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }

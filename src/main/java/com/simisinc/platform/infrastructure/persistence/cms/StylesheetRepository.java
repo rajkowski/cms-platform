@@ -40,7 +40,7 @@ public class StylesheetRepository {
   private static Log LOG = LogFactory.getLog(StylesheetRepository.class);
 
   private static String TABLE_NAME = "stylesheets";
-  private static String[] PRIMARY_KEY = new String[]{"stylesheet_id"};
+  private static String[] PRIMARY_KEY = new String[] { "stylesheet_id" };
 
   public static Stylesheet findById(long id) {
     if (id == -1) {
@@ -55,9 +55,7 @@ public class StylesheetRepository {
   public static Stylesheet findByWebPageId(long webPageId) {
     return (Stylesheet) DB.selectRecordFrom(
         TABLE_NAME,
-        (webPageId > 0 ?
-            new SqlUtils().add("web_page_id = ?", webPageId) :
-            new SqlUtils().add("web_page_id IS NULL")),
+        (webPageId > 0 ? new SqlUtils().add("web_page_id = ?", webPageId) : new SqlUtils().add("web_page_id IS NULL")),
         StylesheetRepository::buildRecord);
   }
 
@@ -117,21 +115,19 @@ public class StylesheetRepository {
   }
 
   public static boolean remove(Stylesheet record) {
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // Delete the references
-//        ItemCategoryRepository.removeAll(connection, record);
-//        CollectionRepository.updateItemCount(connection, record.getCollectionId(), -1);
-//        CategoryRepository.updateItemCount(connection, record.getCategoryId(), -1);
-        // Delete the record
-        DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("stylesheet_id = ?", record.getId()));
-        // Finish transaction
-        transaction.commit();
-        CacheManager.invalidateKey(CacheManager.STYLESHEET_WEB_PAGE_ID_CACHE, record.getWebPageId());
-        return true;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Delete the references
+      // ItemCategoryRepository.removeAll(connection, record);
+      // CollectionRepository.updateItemCount(connection, record.getCollectionId(), -1);
+      // CategoryRepository.updateItemCount(connection, record.getCategoryId(), -1);
+      // Delete the record
+      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("stylesheet_id = ?", record.getId()));
+      // Finish transaction
+      transaction.commit();
+      CacheManager.invalidateKey(CacheManager.STYLESHEET_WEB_PAGE_ID_CACHE, record.getWebPageId());
+      return true;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }

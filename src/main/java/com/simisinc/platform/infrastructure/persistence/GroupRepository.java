@@ -163,11 +163,9 @@ public class GroupRepository {
   }
 
   public static boolean updateUserCount(long groupId, int value) {
-    try {
-      // Adjust the count
-      try (Connection connection = DB.getConnection()) {
-        return updateUserCount(connection, groupId, value);
-      }
+    // Adjust the count
+    try (Connection connection = DB.getConnection()) {
+      return updateUserCount(connection, groupId, value);
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
@@ -177,11 +175,9 @@ public class GroupRepository {
   }
 
   public static boolean updateUserCount(Connection connection, long groupId, int value) {
-    try {
-      // Adjust the count
-      try (PreparedStatement pst = createPreparedStatementForUserCount(connection, groupId, value)) {
-        return pst.execute();
-      }
+    // Adjust the count
+    try (PreparedStatement pst = createPreparedStatementForUserCount(connection, groupId, value)) {
+      return pst.execute();
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
@@ -200,11 +196,9 @@ public class GroupRepository {
   }
 
   public static boolean removeUserCount(Connection connection, User user) {
-    try {
-      // Adjust the count
-      try (PreparedStatement pst = createPreparedStatementForRemoveUserCount(connection, user.getId())) {
-        return pst.execute();
-      }
+    // Adjust the count
+    try (PreparedStatement pst = createPreparedStatementForRemoveUserCount(connection, user.getId())) {
+      return pst.execute();
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }

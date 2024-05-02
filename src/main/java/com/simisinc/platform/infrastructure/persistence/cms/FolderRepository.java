@@ -245,11 +245,9 @@ public class FolderRepository {
   }
 
   public static boolean updateFileCount(Connection connection, long folderId, int value) {
-    try {
-      // Increment the count
-      try (PreparedStatement pst = createPreparedStatementForItemCount(connection, folderId, value)) {
-        return pst.execute();
-      }
+    // Increment the count
+    try (PreparedStatement pst = createPreparedStatementForItemCount(connection, folderId, value)) {
+      return pst.execute();
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }

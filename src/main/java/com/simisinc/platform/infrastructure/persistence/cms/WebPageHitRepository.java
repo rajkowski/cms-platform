@@ -40,8 +40,7 @@ public class WebPageHitRepository {
   private static Log LOG = LogFactory.getLog(WebPageHitRepository.class);
 
   private static String TABLE_NAME = "web_page_hits";
-  private static String[] PRIMARY_KEY = new String[]{"hit_id"};
-
+  private static String[] PRIMARY_KEY = new String[] { "hit_id" };
 
   public static WebPageHit save(WebPageHit record) {
     return add(record);
@@ -67,11 +66,9 @@ public class WebPageHitRepository {
   }
 
   public static boolean remove(WebPageHit record) {
-    try {
-      try (Connection connection = DB.getConnection();
-           PreparedStatement pst = createPreparedStatementForDelete(connection, record)) {
-        pst.execute();
-      }
+    try (Connection connection = DB.getConnection();
+        PreparedStatement pst = createPreparedStatementForDelete(connection, record)) {
+      pst.execute();
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
@@ -80,9 +77,8 @@ public class WebPageHitRepository {
   }
 
   private static PreparedStatement createPreparedStatementForDelete(Connection connection, WebPageHit record) throws SQLException {
-    String SQL_QUERY =
-        "DELETE FROM web_page_hits " +
-            "WHERE hit_id = ?";
+    String SQL_QUERY = "DELETE FROM web_page_hits " +
+        "WHERE hit_id = ?";
     int i = 0;
     PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
     pst.setLong(++i, record.getId());
@@ -126,15 +122,14 @@ public class WebPageHitRepository {
   }
 
   public static List<StatisticsData> findDailyWebHits(int daysToLimit) {
-    String SQL_QUERY =
-        "SELECT date_value, web_page_hits " +
-            "FROM web_page_hit_snapshots " +
-            "WHERE snapshot_date > NOW() - INTERVAL '" + daysToLimit + " days' " +
-            "ORDER BY snapshot_date";
+    String SQL_QUERY = "SELECT date_value, web_page_hits " +
+        "FROM web_page_hit_snapshots " +
+        "WHERE snapshot_date > NOW() - INTERVAL '" + daysToLimit + " days' " +
+        "ORDER BY snapshot_date";
     List<StatisticsData> records = null;
     try (Connection connection = DB.getConnection();
-         PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
-         ResultSet rs = pst.executeQuery()) {
+        PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
+        ResultSet rs = pst.executeQuery()) {
       records = new ArrayList<>();
       while (rs.next()) {
         StatisticsData data = new StatisticsData();
@@ -149,15 +144,14 @@ public class WebPageHitRepository {
   }
 
   public static List<StatisticsData> findDailySessions(int daysToLimit) {
-    String SQL_QUERY =
-        "SELECT date_value, unique_sessions " +
-            "FROM web_page_hit_snapshots " +
-            "WHERE snapshot_date > NOW() - INTERVAL '" + daysToLimit + " days' " +
-            "ORDER BY snapshot_date";
+    String SQL_QUERY = "SELECT date_value, unique_sessions " +
+        "FROM web_page_hit_snapshots " +
+        "WHERE snapshot_date > NOW() - INTERVAL '" + daysToLimit + " days' " +
+        "ORDER BY snapshot_date";
     List<StatisticsData> records = null;
     try (Connection connection = DB.getConnection();
-         PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
-         ResultSet rs = pst.executeQuery()) {
+        PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
+        ResultSet rs = pst.executeQuery()) {
       records = new ArrayList<>();
       while (rs.next()) {
         StatisticsData data = new StatisticsData();
@@ -172,16 +166,15 @@ public class WebPageHitRepository {
   }
 
   public static List<StatisticsData> findMonthlySessions(int monthsLimit) {
-    String SQL_QUERY =
-        "SELECT DATE_TRUNC('month', month)::VARCHAR(10) AS date_column, SUM(unique_sessions) AS monthly_count " +
-            "FROM (SELECT generate_series(NOW() - INTERVAL '" + monthsLimit + " months', NOW(), INTERVAL '1 month')::date) d(month) " +
-            "LEFT JOIN web_page_hit_snapshots ON DATE_TRUNC('month', snapshot_date) = DATE_TRUNC('month', month) " +
-            "GROUP BY d.month " +
-            "ORDER BY d.month";
+    String SQL_QUERY = "SELECT DATE_TRUNC('month', month)::VARCHAR(10) AS date_column, SUM(unique_sessions) AS monthly_count " +
+        "FROM (SELECT generate_series(NOW() - INTERVAL '" + monthsLimit + " months', NOW(), INTERVAL '1 month')::date) d(month) " +
+        "LEFT JOIN web_page_hit_snapshots ON DATE_TRUNC('month', snapshot_date) = DATE_TRUNC('month', month) " +
+        "GROUP BY d.month " +
+        "ORDER BY d.month";
     List<StatisticsData> records = null;
     try (Connection connection = DB.getConnection();
-         PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
-         ResultSet rs = pst.executeQuery()) {
+        PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
+        ResultSet rs = pst.executeQuery()) {
       records = new ArrayList<>();
       while (rs.next()) {
         StatisticsData data = new StatisticsData();
@@ -196,19 +189,18 @@ public class WebPageHitRepository {
   }
 
   public static List<StatisticsData> findTopWebPages(int daysToLimit, int recordLimit) {
-    String SQL_QUERY =
-        "SELECT link, count(link) AS link_count " +
-            "FROM web_pages " +
-            "LEFT JOIN web_page_hits wph ON (wph.web_page_id = web_pages.web_page_id) " +
-            "WHERE hit_date > NOW() - INTERVAL '" + daysToLimit + " days' " +
-            "AND NOT EXISTS (SELECT 1 FROM sessions WHERE session_id = web_page_hits.session_id AND is_bot = TRUE) " +
-            "GROUP BY link " +
-            "ORDER BY link_count desc " +
-            "LIMIT " + recordLimit;
+    String SQL_QUERY = "SELECT link, count(link) AS link_count " +
+        "FROM web_pages " +
+        "LEFT JOIN web_page_hits wph ON (wph.web_page_id = web_pages.web_page_id) " +
+        "WHERE hit_date > NOW() - INTERVAL '" + daysToLimit + " days' " +
+        "AND NOT EXISTS (SELECT 1 FROM sessions WHERE session_id = web_page_hits.session_id AND is_bot = TRUE) " +
+        "GROUP BY link " +
+        "ORDER BY link_count desc " +
+        "LIMIT " + recordLimit;
     List<StatisticsData> records = null;
     try (Connection connection = DB.getConnection();
-         PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
-         ResultSet rs = pst.executeQuery()) {
+        PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
+        ResultSet rs = pst.executeQuery()) {
       records = new ArrayList<>();
       while (rs.next()) {
         StatisticsData data = new StatisticsData();
@@ -223,29 +215,26 @@ public class WebPageHitRepository {
   }
 
   public static List<StatisticsData> findTopPaths(int value, char intervalType, int recordLimit) {
-    String SQL_QUERY =
-        "SELECT page_path, count(page_path) AS path_count " +
-            "FROM web_page_hits " +
-            "WHERE hit_date > NOW() - INTERVAL '" + value + " " +
-            (intervalType == 'y' ? "years" :
-                (intervalType == 'm' ? "months" :
-                    (intervalType == 'w' ? "weeks" :
-                        (intervalType == 'h' ? "hours" :
-                            "days")))) +
-            "' " +
-            "AND page_path NOT LIKE '/admin%' " +
-            "AND page_path NOT LIKE '/assets/%' " +
-            "AND page_path NOT LIKE '/json/%' " +
-            "AND page_path NOT LIKE '%/*' " +
-            "AND page_path <> '/content-editor' " +
-            "AND NOT EXISTS (SELECT 1 FROM sessions WHERE session_id = web_page_hits.session_id AND is_bot = TRUE) " +
-            "GROUP BY page_path " +
-            "ORDER BY path_count desc " +
-            "LIMIT " + recordLimit;
+    String SQL_QUERY = "SELECT page_path, count(page_path) AS path_count " +
+        "FROM web_page_hits " +
+        "WHERE hit_date > NOW() - INTERVAL '" + value + " " +
+        (intervalType == 'y' ? "years"
+            : (intervalType == 'm' ? "months" : (intervalType == 'w' ? "weeks" : (intervalType == 'h' ? "hours" : "days"))))
+        +
+        "' " +
+        "AND page_path NOT LIKE '/admin%' " +
+        "AND page_path NOT LIKE '/assets/%' " +
+        "AND page_path NOT LIKE '/json/%' " +
+        "AND page_path NOT LIKE '%/*' " +
+        "AND page_path <> '/content-editor' " +
+        "AND NOT EXISTS (SELECT 1 FROM sessions WHERE session_id = web_page_hits.session_id AND is_bot = TRUE) " +
+        "GROUP BY page_path " +
+        "ORDER BY path_count desc " +
+        "LIMIT " + recordLimit;
     List<StatisticsData> records = null;
     try (Connection connection = DB.getConnection();
-         PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
-         ResultSet rs = pst.executeQuery()) {
+        PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
+        ResultSet rs = pst.executeQuery()) {
       records = new ArrayList<>();
       while (rs.next()) {
         StatisticsData data = new StatisticsData();

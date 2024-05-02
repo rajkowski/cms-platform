@@ -38,7 +38,7 @@ public class SalesTaxNexusAddressRepository {
   private static Log LOG = LogFactory.getLog(SalesTaxNexusAddressRepository.class);
 
   private static String TABLE_NAME = "sales_tax_nexus_addresses";
-  private static String[] PRIMARY_KEY = new String[]{"address_id"};
+  private static String[] PRIMARY_KEY = new String[] { "address_id" };
 
   public static List<SalesTaxNexusAddress> findAll() {
     DataResult result = DB.selectAllFrom(
@@ -68,16 +68,14 @@ public class SalesTaxNexusAddressRepository {
   }
 
   public static boolean remove(SalesTaxNexusAddress record) {
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // Delete the record
-        DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("address_id = ?", record.getId()));
-        // Finish transaction
-        transaction.commit();
-        return true;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Delete the record
+      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("address_id = ?", record.getId()));
+      // Finish transaction
+      transaction.commit();
+      return true;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
@@ -87,27 +85,25 @@ public class SalesTaxNexusAddressRepository {
 
   public static SalesTaxNexusAddress add(SalesTaxNexusAddress record) {
     // Use a transaction
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // In a transaction (use the existing connection)
-        SqlUtils insertValues = new SqlUtils()
-            .add("street_address", record.getStreet())
-            .add("address_line_2", record.getAddressLine2())
-            .add("city", record.getCity())
-            .add("state", record.getState())
-            .add("country", record.getCountry())
-            .add("postal_code", record.getPostalCode())
-            .add("latitude", record.getLatitude())
-            .add("longitude", record.getLongitude())
-            .add("created_by", record.getCreatedBy())
-            .add("modified_by", record.getModifiedBy());
-        record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
-        // Finish the transaction
-        transaction.commit();
-        return record;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // In a transaction (use the existing connection)
+      SqlUtils insertValues = new SqlUtils()
+          .add("street_address", record.getStreet())
+          .add("address_line_2", record.getAddressLine2())
+          .add("city", record.getCity())
+          .add("state", record.getState())
+          .add("country", record.getCountry())
+          .add("postal_code", record.getPostalCode())
+          .add("latitude", record.getLatitude())
+          .add("longitude", record.getLongitude())
+          .add("created_by", record.getCreatedBy())
+          .add("modified_by", record.getModifiedBy());
+      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+      // Finish the transaction
+      transaction.commit();
+      return record;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage(), se);
     }
@@ -129,7 +125,7 @@ public class SalesTaxNexusAddressRepository {
     SqlUtils where = new SqlUtils()
         .add("address_id = ?", record.getId());
     if (DB.update(TABLE_NAME, updateValues, where)) {
-//      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
+      // CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
     }
     LOG.error("The update failed!");

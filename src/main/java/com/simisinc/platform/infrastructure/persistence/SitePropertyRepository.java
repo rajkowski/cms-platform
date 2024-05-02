@@ -93,12 +93,10 @@ public class SitePropertyRepository {
   }
 
   public static SiteProperty save(SiteProperty record) {
-    try {
-      try (Connection connection = DB.getConnection();
-          PreparedStatement pst = createPreparedStatementForUpdate(connection, record)) {
-        if (pst.executeUpdate() > 0) {
-          return record;
-        }
+    try (Connection connection = DB.getConnection();
+        PreparedStatement pst = createPreparedStatementForUpdate(connection, record)) {
+      if (pst.executeUpdate() > 0) {
+        return record;
       }
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());

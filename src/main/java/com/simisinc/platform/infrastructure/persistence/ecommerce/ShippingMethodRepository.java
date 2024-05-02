@@ -37,7 +37,7 @@ public class ShippingMethodRepository {
   private static Log LOG = LogFactory.getLog(ShippingMethodRepository.class);
 
   private static String TABLE_NAME = "lookup_shipping_method";
-  private static String[] PRIMARY_KEY = new String[]{"method_id"};
+  private static String[] PRIMARY_KEY = new String[] { "method_id" };
 
   public static List<ShippingMethod> findAll() {
     DataResult result = DB.selectAllFrom(
@@ -68,23 +68,21 @@ public class ShippingMethodRepository {
 
   public static ShippingMethod add(ShippingMethod record) {
     // Use a transaction
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // In a transaction (use the existing connection)
-        SqlUtils insertValues = new SqlUtils()
-            .add("level", record.getLevel())
-            .add("code", record.getCode())
-            .add("title", record.getTitle())
-            .add("enabled", record.getEnabled());
-//            .addIfExists("created_by", record.getCreatedBy(), -1)
-//            .addIfExists("modified_by", record.getModifiedBy(), -1);
-        record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
-        // Finish the transaction
-        transaction.commit();
-        return record;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // In a transaction (use the existing connection)
+      SqlUtils insertValues = new SqlUtils()
+          .add("level", record.getLevel())
+          .add("code", record.getCode())
+          .add("title", record.getTitle())
+          .add("enabled", record.getEnabled());
+      //            .addIfExists("created_by", record.getCreatedBy(), -1)
+      //            .addIfExists("modified_by", record.getModifiedBy(), -1);
+      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+      // Finish the transaction
+      transaction.commit();
+      return record;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage(), se);
     }
@@ -97,12 +95,12 @@ public class ShippingMethodRepository {
         .add("code", record.getCode())
         .add("title", record.getTitle())
         .add("enabled", record.getEnabled());
-//        .add("modified_by", record.getModifiedBy(), -1)
-//        .add("modified", new Timestamp(System.currentTimeMillis()));
+    //        .add("modified_by", record.getModifiedBy(), -1)
+    //        .add("modified", new Timestamp(System.currentTimeMillis()));
     SqlUtils where = new SqlUtils()
         .add("method_id = ?", record.getId());
     if (DB.update(TABLE_NAME, updateValues, where)) {
-//      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
+      //      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
     }
     LOG.error("The update failed!");

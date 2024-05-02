@@ -41,7 +41,7 @@ public class SubFolderRepository {
   private static Log LOG = LogFactory.getLog(SubFolderRepository.class);
 
   private static String TABLE_NAME = "sub_folders";
-  private static String[] PRIMARY_KEY = new String[]{"sub_folder_id"};
+  private static String[] PRIMARY_KEY = new String[] { "sub_folder_id" };
 
   private static DataResult query(SubFolderSpecification specification, DataConstraints constraints) {
     SqlUtils select = new SqlUtils();
@@ -115,8 +115,7 @@ public class SubFolderRepository {
   }
 
   public static List<Long> queryDistinctStartDateAsYearForFolder(Folder folder) {
-    String SQL_FIELDS =
-        "DISTINCT(EXTRACT(YEAR FROM start_date)) AS year";
+    String SQL_FIELDS = "DISTINCT(EXTRACT(YEAR FROM start_date)) AS year";
     SqlUtils where = new SqlUtils().add("folder_id = ?", folder.getId());
     SqlUtils orderBy = new SqlUtils().add("year DESC");
     return DB.selectFunctionAsLongList(SQL_FIELDS, TABLE_NAME, where, orderBy);
@@ -142,16 +141,14 @@ public class SubFolderRepository {
     }
 
     // Use a transaction
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // In a transaction (use the existing connection)
-        record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
-        // Finish the transaction
-        transaction.commit();
-        return record;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // In a transaction (use the existing connection)
+      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+      // Finish the transaction
+      transaction.commit();
+      return record;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
@@ -160,26 +157,24 @@ public class SubFolderRepository {
   }
 
   private static SubFolder update(SubFolder record) {
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // Update the count in case the folder changed
-        FolderRepository.updateFileCountForFileId(connection, record.getId(), -1);
-        // Update the record
-        SqlUtils updateValues = new SqlUtils()
-            .add("name", StringUtils.trimToNull(record.getName()))
-            .add("summary", StringUtils.trimToNull(record.getSummary()))
-            .add("modified_by", record.getModifiedBy())
-            .add("start_date", record.getStartDate())
-            .add("end_date", record.getEndDate());
-        SqlUtils where = new SqlUtils()
-            .add("sub_folder_id = ?", record.getId());
-        if (DB.update(connection, TABLE_NAME, updateValues, where)) {
-          // Finish transaction
-          transaction.commit();
-          return record;
-        }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Update the count in case the folder changed
+      FolderRepository.updateFileCountForFileId(connection, record.getId(), -1);
+      // Update the record
+      SqlUtils updateValues = new SqlUtils()
+          .add("name", StringUtils.trimToNull(record.getName()))
+          .add("summary", StringUtils.trimToNull(record.getSummary()))
+          .add("modified_by", record.getModifiedBy())
+          .add("start_date", record.getStartDate())
+          .add("end_date", record.getEndDate());
+      SqlUtils where = new SqlUtils()
+          .add("sub_folder_id = ?", record.getId());
+      if (DB.update(connection, TABLE_NAME, updateValues, where)) {
+        // Finish transaction
+        transaction.commit();
+        return record;
       }
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
@@ -189,21 +184,19 @@ public class SubFolderRepository {
   }
 
   public static boolean remove(SubFolder record) {
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // Delete the references
-        FileVersionRepository.removeAll(connection, record);
-        int deleteCount = FileItemRepository.removeAll(connection, record);
-        // Update the folder count
-        FolderRepository.updateFileCount(connection, record.getFolderId(), -deleteCount);
-        // Delete the record
-        DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("sub_folder_id = ?", record.getId()));
-        // Finish transaction
-        transaction.commit();
-        return true;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Delete the references
+      FileVersionRepository.removeAll(connection, record);
+      int deleteCount = FileItemRepository.removeAll(connection, record);
+      // Update the folder count
+      FolderRepository.updateFileCount(connection, record.getFolderId(), -deleteCount);
+      // Delete the record
+      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("sub_folder_id = ?", record.getId()));
+      // Finish transaction
+      transaction.commit();
+      return true;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }

@@ -45,11 +45,10 @@ public class ProductSkuRepository {
   private static Log LOG = LogFactory.getLog(ProductSkuRepository.class);
 
   private static String TABLE_NAME = "product_skus";
-  private static String ADDITIONAL_SELECT =
-      "products.active_date AS product_active_date," +
-          "products.deactivate_on AS product_deactivate_on";
+  private static String ADDITIONAL_SELECT = "products.active_date AS product_active_date," +
+      "products.deactivate_on AS product_deactivate_on";
   private static String JOIN = "LEFT JOIN products ON (product_skus.product_id = products.product_id)";
-  private static String[] PRIMARY_KEY = new String[]{"sku_id"};
+  private static String[] PRIMARY_KEY = new String[] { "sku_id" };
 
   private static DataResult query(ProductSkuSpecification specification, DataConstraints constraints) {
     SqlUtils select = new SqlUtils().add(ADDITIONAL_SELECT);
@@ -78,8 +77,10 @@ public class ProductSkuRepository {
           }
           ++count;
           sb.append("{");
-          sb.append("\"").append("name").append("\"").append(":").append("\"").append(JsonCommand.toJson(skuAttribute.getName())).append("\"").append(",");
-          sb.append("\"").append("value").append("\"").append(":").append("\"").append(JsonCommand.toJson(skuAttribute.getValue())).append("\"");
+          sb.append("\"").append("name").append("\"").append(":").append("\"").append(JsonCommand.toJson(skuAttribute.getName()))
+              .append("\"").append(",");
+          sb.append("\"").append("value").append("\"").append(":").append("\"").append(JsonCommand.toJson(skuAttribute.getValue()))
+              .append("\"");
           sb.append("}");
         }
         if (sb.length() > 0) {
@@ -248,11 +249,11 @@ public class ProductSkuRepository {
     return null;
   }
 
-  private static PreparedStatement createPreparedStatementForInventoryCount(Connection connection, long productSkuId, int value) throws SQLException {
-    String SQL_QUERY =
-        "UPDATE product_skus " +
-            "SET inventory_qty = inventory_qty + ? " +
-            "WHERE sku_id = ?";
+  private static PreparedStatement createPreparedStatementForInventoryCount(Connection connection, long productSkuId, int value)
+      throws SQLException {
+    String SQL_QUERY = "UPDATE product_skus " +
+        "SET inventory_qty = inventory_qty + ? " +
+        "WHERE sku_id = ?";
     int i = 0;
     PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
     pst.setInt(++i, value);
@@ -261,11 +262,9 @@ public class ProductSkuRepository {
   }
 
   public static boolean updateInventoryCount(Connection connection, long productSkuId, int value) throws SQLException {
-    try {
-      // Adjust the count
-      try (PreparedStatement pst = createPreparedStatementForInventoryCount(connection, productSkuId, value)) {
-        return pst.execute();
-      }
+    // Adjust the count
+    try (PreparedStatement pst = createPreparedStatementForInventoryCount(connection, productSkuId, value)) {
+      return pst.execute();
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
@@ -357,7 +356,7 @@ public class ProductSkuRepository {
             "price AS \"Value\"",
             "(SELECT JSONB_AGG(t -> 'value') FROM JSONB_ARRAY_ELEMENTS(attributes) AS x(t) WHERE t ->> 'value' <> '') AS \"Attributes\"",
             "products.description AS \"Description\"",
-//            "short_description AS \"ShortDescription\"",
+            // "short_description AS \"ShortDescription\"",
             "barcode AS \"UPC\"",
             "product_skus.enabled AS \"Enabled\"");
     SqlJoins joins = new SqlJoins().add(JOIN);
