@@ -21,7 +21,7 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * Description
+ * Displays shared page UI messages for success, errors, etc
  *
  * @author matt rajkowski
  * @created 11/18/19 4:28 PM

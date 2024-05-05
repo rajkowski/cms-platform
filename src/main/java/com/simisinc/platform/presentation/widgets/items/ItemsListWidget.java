@@ -32,7 +32,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.List;
 
 /**
- * Description
+ * Display a list of items using a specified layout
  *
  * @author matt rajkowski
  * @created 4/20/18 2:23 PM
@@ -70,6 +70,8 @@ public class ItemsListWidget extends GenericWidget {
     } else if ("jobs".equals(view)) {
       jsp = JOBS_LIST_JSP;
     }
+
+    // @todo Consider using a cache for general users
 
     // Determine the collection
     Collection collection = LoadCollectionCommand.loadCollectionByUniqueIdForAuthorizedUser(collectionUniqueId, context.getUserId());
