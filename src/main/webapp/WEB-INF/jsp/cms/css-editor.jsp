@@ -19,6 +19,8 @@
 <jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="stylesheet" class="com.simisinc.platform.domain.model.cms.Stylesheet" scope="request"/>
+<jsp:useBean id="hasBundled" class="java.lang.String" scope="request"/>
+<jsp:useBean id="isBundled" class="java.lang.String" scope="request"/>
 <script src="${ctx}/javascript/ace-1.32.4/ace.js" type="text/javascript" charset="utf-8"></script>
 <script src="${ctx}/javascript/ace-1.32.4/mode-css.js" type="text/javascript" charset="utf-8"></script>
 <%--<script src="${ctx}/javascript/ace-1.32.4/ext-language_tools.js" type="text/javascript" charset="utf-8"></script>--%>
@@ -58,6 +60,18 @@
     </div>
     <div class="small-12 hide-for-small-only medium-4 cell">
       <div id="information" style="overflow:scroll;padding-right:20px">
+        <c:choose>
+          <c:when test="${isBundled eq 'true'}">
+            <div class="callout primary">
+              You are viewing the bundled stylesheet, if the editor content is saved, then this CSS becomes the current stylesheet.
+            </div>
+          </c:when>
+          <c:when test="${hasBundled eq 'true'}">
+            <div class="callout primary">
+              The application has a bundled stylesheet. If the editor content is removed, then the bundled stylesheet will become active.
+            </div>
+          </c:when>
+        </c:choose>        
         <h4>Typography</h4>
         <h1>H1 Header</h1>
         <h2>H2 Header</h2>

@@ -84,7 +84,7 @@ public class LoadStylesheetCommand {
 
     // Additional check for the global stylesheet
     if (webPageId == GLOBAL_CSS_PAGE && hasGlobalStylesheetFile.booleanValue()) {
-      thisStylesheet = possibleGlobalStylesheet();
+      thisStylesheet = retrievePossibleGlobalStylesheet();
       if (thisStylesheet != null) {
         return thisStylesheet;
       }
@@ -115,7 +115,7 @@ public class LoadStylesheetCommand {
    * so use it except when it exists in the database
    * @return
    */
-  private static synchronized Stylesheet possibleGlobalStylesheet() {
+  public static synchronized Stylesheet retrievePossibleGlobalStylesheet() {
     LOG.info("Checking for external CSS file: " + GLOBAL_CSS_FILE);
     URL defaultStylesheetURL = WebApp.getResource(GLOBAL_CSS_FILE);
     if (defaultStylesheetURL != null) {
@@ -139,6 +139,10 @@ public class LoadStylesheetCommand {
     }
     LOG.debug("Stylesheet was not found: " + GLOBAL_CSS_FILE);
     return null;
+  }
+
+  public static boolean hasGlobalStylesheet() {
+    return hasGlobalStylesheetFile.booleanValue();
   }
 
 }
