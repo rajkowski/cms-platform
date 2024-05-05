@@ -21,14 +21,14 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Description
+ * Common object for standardizing service responses
  *
  * @author matt rajkowski
  * @created 7/17/18 2:30 PM
  */
 public class ServiceResponse implements Serializable {
 
-  final static long serialVersionUID = 215434482513634196L;
+  private static final long serialVersionUID = 215434482513634196L;
 
   private int status = -1;
   private Map<String, Object> meta = new LinkedHashMap<>();

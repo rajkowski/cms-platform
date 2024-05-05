@@ -1,7 +1,7 @@
 -- Copyright 2022 SimIS Inc. (https://www.simiscms.com), Licensed under the Apache License, Version 2.0 (the "License").
 -- Core Database
 
-CREATE EXTENSION postgis;
+CREATE EXTENSION IF NOT EXISTS postgis;
 
 CREATE TABLE database_version (
   version_id BIGSERIAL PRIMARY KEY,
@@ -125,13 +125,14 @@ INSERT INTO site_properties (property_order, property_label, property_name, prop
 
 -- Mail
 
-INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('Default From Address', 'mail.from_address', 'auto-sender@site.local');
-INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('Default From Name', 'mail.from_name', 'New Site');
-INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('Host Name', 'mail.host_name', '127.0.0.1');
-INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('SMTP Port', 'mail.port', '25');
-INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('SMTP Username', 'mail.username', '');
-INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('SMTP Password', 'mail.password', '');
-INSERT INTO site_properties (property_label, property_name, property_value, property_type) VALUES ('SMTP SSL', 'mail.ssl', 'false', 'boolean');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value) VALUES (10, 'Default From Address', 'mail.from_address', 'auto-sender@site.local');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value) VALUES (20, 'Default From Name', 'mail.from_name', 'New Site');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value) VALUES (30, 'Host Name', 'mail.host_name', '127.0.0.1');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value) VALUES (40, 'SMTP Port', 'mail.port', '25');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value) VALUES (50, 'SMTP Username', 'mail.username', '');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value) VALUES (60, 'SMTP Password', 'mail.password', '');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (70, 'SMTP SSL', 'mail.ssl', 'false', 'boolean');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (80, 'SMTP TLS', 'mail.tls', 'false', 'boolean');
 
 -- Mailing List
 
@@ -257,6 +258,8 @@ INSERT INTO site_properties (property_order, property_label, property_name, prop
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (20, 'OpenAuth Enabled', 'oauth.enabled', 'false', 'boolean');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (22, 'OpenAuth Role Attribute', 'oauth.role.attribute', 'roles', 'text');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (24, 'OpenAuth Group Attribute', 'oauth.group.attribute', 'groups', 'text');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (26, 'OpenAuth Role Admin', 'oauth.role.admin', '', 'disabled');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (28, 'OpenAuth Group List', 'oauth.group.list', '', 'disabled');
 
 CREATE TABLE lookup_role (
   role_id SERIAL PRIMARY KEY,

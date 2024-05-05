@@ -38,7 +38,7 @@ public class TrackingNumberRepository {
   private static Log LOG = LogFactory.getLog(TrackingNumberRepository.class);
 
   private static String TABLE_NAME = "order_tracking_numbers";
-  private static String[] PRIMARY_KEY = new String[]{"tracking_id"};
+  private static String[] PRIMARY_KEY = new String[] { "tracking_id" };
 
   public static TrackingNumber findById(long trackingId) {
     return (TrackingNumber) DB.selectRecordFrom(
@@ -51,7 +51,8 @@ public class TrackingNumberRepository {
   public static List<TrackingNumber> findAllForOrderId(long orderId) {
     SqlUtils where = new SqlUtils()
         .add("order_id = ?", orderId);
-    DataResult result = DB.selectAllFrom(TABLE_NAME, where, new DataConstraints().setDefaultColumnToSortBy("created").setUseCount(false), TrackingNumberRepository::buildRecord);
+    DataResult result = DB.selectAllFrom(TABLE_NAME, where,
+        new DataConstraints().setDefaultColumnToSortBy("created").setUseCount(false), TrackingNumberRepository::buildRecord);
     return (List<TrackingNumber>) result.getRecords();
   }
 
@@ -69,24 +70,51 @@ public class TrackingNumberRepository {
     return add(record);
   }
 
+  /** Save the tracking number, update the order */
   private static TrackingNumber add(TrackingNumber record) {
     // Use a transaction
-    try {
-      // Save the tracking number, update the order
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // Add the record
-        SqlUtils insertValues = new SqlUtils()
-            .add("order_id", record.getOrderId())
-            .add("tracking_number", StringUtils.trimToNull(record.getTrackingNumber()))
-            .addIfExists("shipping_carrier", record.getShippingCarrierId(), -1)
-            .addIfExists("created_by", record.getCreatedBy(), -1)
-            .addIfExists("ship_date", record.getShipDate())
-            .addIfExists("delivery_date", record.getDeliveryDate())
-            .add("cart_item_id_list", StringUtils.trimToNull(record.getCartItemIdList()))
-            .add("order_item_id_list", StringUtils.trimToNull(record.getOrderItemIdList()));
-        record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Add the record
+      SqlUtils insertValues = new SqlUtils()
+          .add("order_id", record.getOrderId())
+          .add("tracking_number", StringUtils.trimToNull(record.getTrackingNumber()))
+          .addIfExists("shipping_carrier", record.getShippingCarrierId(), -1)
+          .addIfExists("created_by", record.getCreatedBy(), -1)
+          .addIfExists("ship_date", record.getShipDate())
+          .addIfExists("delivery_date", record.getDeliveryDate())
+          .add("cart_item_id_list", StringUtils.trimToNull(record.getCartItemIdList()))
+          .add("order_item_id_list", StringUtils.trimToNull(record.getOrderItemIdList()));
+      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+      // Maintain an updated field in the order table
+      updateOrderField(connection, record);
+      // Finish the transaction
+      transaction.commit();
+      return record;
+    } catch (SQLException se) {
+      LOG.error("SQLException: " + se.getMessage(), se);
+    }
+    return null;
+  }
+
+  /** Save the tracking number, update the order **/
+  private static TrackingNumber update(TrackingNumber record) {
+    // Use a transaction
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Update the record
+      SqlUtils updateValues = new SqlUtils()
+          .add("tracking_number", StringUtils.trimToNull(record.getTrackingNumber()))
+          .addIfExists("shipping_carrier", record.getShippingCarrierId(), -1)
+          .addIfExists("ship_date", record.getShipDate())
+          .addIfExists("delivery_date", record.getDeliveryDate())
+          .add("cart_item_id_list", StringUtils.trimToNull(record.getCartItemIdList()))
+          .add("order_item_id_list", StringUtils.trimToNull(record.getOrderItemIdList()));
+      SqlUtils where = new SqlUtils()
+          .add("tracking_id = ?", record.getId());
+      if (DB.update(connection, TABLE_NAME, updateValues, where)) {
         // Maintain an updated field in the order table
         updateOrderField(connection, record);
         // Finish the transaction
@@ -99,39 +127,8 @@ public class TrackingNumberRepository {
     return null;
   }
 
-  private static TrackingNumber update(TrackingNumber record) {
-    // Use a transaction
-    try {
-      // Save the tracking number, update the order
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // Update the record
-        SqlUtils updateValues = new SqlUtils()
-            .add("tracking_number", StringUtils.trimToNull(record.getTrackingNumber()))
-            .addIfExists("shipping_carrier", record.getShippingCarrierId(), -1)
-            .addIfExists("ship_date", record.getShipDate())
-            .addIfExists("delivery_date", record.getDeliveryDate())
-            .add("cart_item_id_list", StringUtils.trimToNull(record.getCartItemIdList()))
-            .add("order_item_id_list", StringUtils.trimToNull(record.getOrderItemIdList()));
-        SqlUtils where = new SqlUtils()
-            .add("tracking_id = ?", record.getId());
-        if (DB.update(connection, TABLE_NAME, updateValues, where)) {
-          // Maintain an updated field in the order table
-          updateOrderField(connection, record);
-          // Finish the transaction
-          transaction.commit();
-          return record;
-        }
-      }
-    } catch (SQLException se) {
-      LOG.error("SQLException: " + se.getMessage(), se);
-    }
-    return null;
-  }
-
+  /** Update the order field */
   private static void updateOrderField(Connection connection, TrackingNumber record) throws SQLException {
-    // Update the order field
     SqlUtils update = new SqlUtils()
         .add("tracking_numbers = sub_q.agg_value " +
             "FROM " +

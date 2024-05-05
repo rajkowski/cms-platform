@@ -41,7 +41,7 @@ public class UserProfileRepository {
   private static Log LOG = LogFactory.getLog(UserProfileRepository.class);
 
   private static String TABLE_NAME = "users";
-  private static String[] PRIMARY_KEY = new String[]{"user_id"};
+  private static String[] PRIMARY_KEY = new String[] { "user_id" };
 
   private static DataResult query(UserSpecification specification, DataConstraints constraints) {
     SqlUtils select = new SqlUtils();
@@ -119,23 +119,22 @@ public class UserProfileRepository {
     }
     // Handle custom fields
     if (record.getCustomFieldList() != null && !record.getCustomFieldList().isEmpty()) {
-      updateValues.add(new SqlValue("field_values", SqlValue.JSONB_TYPE, CustomFieldListJSONCommand.createJSONString(record.getCustomFieldList())));
+      updateValues.add(
+          new SqlValue("field_values", SqlValue.JSONB_TYPE, CustomFieldListJSONCommand.createJSONString(record.getCustomFieldList())));
     } else {
       updateValues.add(new SqlValue("field_values", SqlValue.JSONB_TYPE, null));
     }
     SqlUtils where = new SqlUtils()
         .add("user_id = ?", record.getId());
     // Use a transaction
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // In a transaction (use the existing connection)
-        DB.update(connection, TABLE_NAME, updateValues, where);
-        // Finish the transaction
-        transaction.commit();
-        return record;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // In a transaction (use the existing connection)
+      DB.update(connection, TABLE_NAME, updateValues, where);
+      // Finish the transaction
+      transaction.commit();
+      return record;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage(), se);
     }

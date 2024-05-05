@@ -40,7 +40,7 @@ public class ShippingRateRepository {
   private static String TABLE_NAME = "shipping_rates";
   private static String ADDITIONAL_SELECT = "lookup_shipping_method.title";
   private static String JOIN = "LEFT JOIN lookup_shipping_method ON (shipping_rates.shipping_method = lookup_shipping_method.method_id)";
-  private static String[] PRIMARY_KEY = new String[]{"rate_id"};
+  private static String[] PRIMARY_KEY = new String[] { "rate_id" };
 
   private static DataResult query(ShippingRateSpecification specification, DataConstraints constraints) {
     SqlUtils select = new SqlUtils().add(ADDITIONAL_SELECT);
@@ -68,10 +68,11 @@ public class ShippingRateRepository {
           // Determine the region setting
           if (specification.getSpecificRegionOnly()) {
             // Look for a specific region (like Alaska, Hawaii)
-            where.add("(postal_code = ? OR (postal_code = '*' AND region = ?))", new String[]{postalCode, region});
+            where.add("(postal_code = ? OR (postal_code = '*' AND region = ?))", new String[] { postalCode, region });
           } else {
             // Use any generic region
-            where.add("(postal_code = ? OR (postal_code = '*' AND region = ?) OR (postal_code = '*' AND region = '*'))", new String[]{postalCode, region});
+            where.add("(postal_code = ? OR (postal_code = '*' AND region = ?) OR (postal_code = '*' AND region = '*'))",
+                new String[] { postalCode, region });
           }
         }
       }
@@ -119,30 +120,28 @@ public class ShippingRateRepository {
 
   public static ShippingRate add(ShippingRate record) {
     // Use a transaction
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // In a transaction (use the existing connection)
-        SqlUtils insertValues = new SqlUtils()
-            .add("country_code", record.getCountryCode())
-            .add("region", record.getRegion())
-            .add("postal_code", record.getPostalCode())
-            .add("min_subtotal", record.getMinSubTotal())
-            .add("min_weight_oz", record.getMinWeightOz())
-            .add("shipping_fee", record.getShippingFee())
-            .add("handling_fee", record.getHandlingFee())
-            .add("shipping_code", record.getShippingCode())
-            .add("shipping_method", record.getShippingMethodId())
-            .add("display_text", record.getDisplayText())
-            .add("exclude_skus", record.getExcludeSkus());
-//            .addIfExists("created_by", record.getCreatedBy(), -1)
-//            .addIfExists("modified_by", record.getModifiedBy(), -1);
-        record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
-        // Finish the transaction
-        transaction.commit();
-        return record;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // In a transaction (use the existing connection)
+      SqlUtils insertValues = new SqlUtils()
+          .add("country_code", record.getCountryCode())
+          .add("region", record.getRegion())
+          .add("postal_code", record.getPostalCode())
+          .add("min_subtotal", record.getMinSubTotal())
+          .add("min_weight_oz", record.getMinWeightOz())
+          .add("shipping_fee", record.getShippingFee())
+          .add("handling_fee", record.getHandlingFee())
+          .add("shipping_code", record.getShippingCode())
+          .add("shipping_method", record.getShippingMethodId())
+          .add("display_text", record.getDisplayText())
+          .add("exclude_skus", record.getExcludeSkus());
+      // .addIfExists("created_by", record.getCreatedBy(), -1)
+      // .addIfExists("modified_by", record.getModifiedBy(), -1);
+      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+      // Finish the transaction
+      transaction.commit();
+      return record;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage(), se);
     }
@@ -162,12 +161,12 @@ public class ShippingRateRepository {
         .add("shipping_method", record.getShippingMethodId())
         .add("display_text", record.getDisplayText())
         .add("exclude_skus", record.getExcludeSkus());
-//        .add("modified_by", record.getModifiedBy(), -1)
-//        .add("modified", new Timestamp(System.currentTimeMillis()));
+    // .add("modified_by", record.getModifiedBy(), -1)
+    // .add("modified", new Timestamp(System.currentTimeMillis()));
     SqlUtils where = new SqlUtils()
         .add("rate_id = ?", record.getId());
     if (DB.update(TABLE_NAME, updateValues, where)) {
-//      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
+      // CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
     }
     LOG.error("The update failed!");

@@ -17,12 +17,29 @@ In OAuth Provider, configure the client and redirect URL, a dev example would be
 
 On SimIS CMS startup, configure the following environment variables:
 
+The Site's URL, used in general places and redirects:
+
+```bash
+CMS_SITE_URL=http://localhost:8080
+```
+
+The OAuth details:
+
 ```bash
 OAUTH_ENABLED=true
 OAUTH_SERVER_URL=https://localhost/realms/example
 OAUTH_CLIENT_ID=cms-platform
 OAUTH_CLIENT_SECRET=client-secret
 OAUTH_REDIRECT_URI=/oauth/callback
+```
+
+Optional variables:
+
+```bash
+CMS_OAUTH_ROLE_ATTRIBUTE=roles
+CMS_OAUTH_GROUP_ATTRIBUTE=groups
+CMS_OAUTH_ROLE_ADMIN=name_of_role
+CMS_OAUTH_GROUP_LIST=group1, group-2, group_3
 ```
 
 ## OAuth Provider Login (Keycloak example)
@@ -32,7 +49,7 @@ In Keycloak:
 1. Create a realm or use an existing one
 2. Add a client: `simis-cms`
 
-In the SimIS CMS Database, configure the OAuth provider:
+In the SimIS CMS Database, if you're not using environment variables, configure the OAuth provider:
 
 ```sql
 UPDATE site_properties SET property_value = 'true' WHERE property_name = 'oauth.enabled';
@@ -46,6 +63,8 @@ UPDATE site_properties SET property_value = true WHERE property_name = 'oauth.re
 ## OAuth Groups and Roles Mapping to SimIS CMS
 
 Groups and roles can be created in Active Directory and Keycloak. During SSO, SimIS CMS can check the user's info and group memberships.
+
+The following can be set using the environment variables above, or in the database...
 
 For Keycloak:
 

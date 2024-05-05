@@ -42,7 +42,7 @@ public class ProductRepository {
   private static Log LOG = LogFactory.getLog(ProductRepository.class);
 
   private static String TABLE_NAME = "products";
-  private static String[] PRIMARY_KEY = new String[]{"product_id"};
+  private static String[] PRIMARY_KEY = new String[] { "product_id" };
 
   private static DataResult query(ProductSpecification specification, DataConstraints constraints) {
     SqlUtils where = null;
@@ -59,7 +59,8 @@ public class ProductRepository {
           sb.append("?");
         }
         if (sb.length() > 0) {
-          where.add("products.product_unique_id IN (" + sb.toString() + ")", specification.getWithProductUniqueIdList().toArray(new String[0]));
+          where.add("products.product_unique_id IN (" + sb.toString() + ")",
+              specification.getWithProductUniqueIdList().toArray(new String[0]));
         }
       }
       if (specification.getIsForSale() != DataConstants.UNDEFINED) {
@@ -69,7 +70,8 @@ public class ProductRepository {
           // today >= activeDate
           // today < deactivateOnDate
           // has a product_sku with at least 1 visible sku.getEnabled()
-          where.add("EXISTS (SELECT 1 FROM product_skus WHERE product_id = products.product_id AND enabled = " + (specification.getIsForSale() == DataConstants.TRUE ? "true" : "false") + ")");
+          where.add("EXISTS (SELECT 1 FROM product_skus WHERE product_id = products.product_id AND enabled = "
+              + (specification.getIsForSale() == DataConstants.TRUE ? "true" : "false") + ")");
         }
       }
     }
@@ -160,18 +162,16 @@ public class ProductRepository {
   }
 
   public static boolean remove(Product record) {
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // Delete the references
-        ProductSkuRepository.removeAll(connection, record);
-        // Delete the record
-        DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("product_id = ?", record.getId()));
-        // Finish transaction
-        transaction.commit();
-        return true;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Delete the references
+      ProductSkuRepository.removeAll(connection, record);
+      // Delete the record
+      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("product_id = ?", record.getId()));
+      // Finish transaction
+      transaction.commit();
+      return true;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
@@ -214,22 +214,20 @@ public class ProductRepository {
         .add("exclude_us_states", StringUtils.trimToNull(record.getExcludeUsStates()))
         .add("created_by", record.getCreatedBy(), -1)
         .add("modified_by", record.getModifiedBy(), -1)
-//        .add("enabled", record.getEnabled());
+        // .add("enabled", record.getEnabled());
         .add("enabled", true);
     insertValues.add(new SqlValue("sku_attributes", SqlValue.JSONB_TYPE, ProductJSONCommand.createJSONString(record)));
     // Use a transaction
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // In a transaction (use the existing connection)
-        record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
-        // Manage the Product SKUs
-        ProductSkuRepository.saveProductSKUList(connection, record);
-        // Finish the transaction
-        transaction.commit();
-        return record;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // In a transaction (use the existing connection)
+      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+      // Manage the Product SKUs
+      ProductSkuRepository.saveProductSKUList(connection, record);
+      // Finish the transaction
+      transaction.commit();
+      return record;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
@@ -268,18 +266,16 @@ public class ProductRepository {
     updateValues.add(new SqlValue("sku_attributes", SqlValue.JSONB_TYPE, ProductJSONCommand.createJSONString(record)));
     SqlUtils where = new SqlUtils().add("product_id = ?", record.getId());
     // Use a transaction
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // In a transaction (use the existing connection)
-        DB.update(connection, TABLE_NAME, updateValues, where);
-        // Manage the Product SKUs
-        ProductSkuRepository.saveProductSKUList(connection, record);
-        // Finish the transaction
-        transaction.commit();
-        return record;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // In a transaction (use the existing connection)
+      DB.update(connection, TABLE_NAME, updateValues, where);
+      // Manage the Product SKUs
+      ProductSkuRepository.saveProductSKUList(connection, record);
+      // Finish the transaction
+      transaction.commit();
+      return record;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage(), se);
     }

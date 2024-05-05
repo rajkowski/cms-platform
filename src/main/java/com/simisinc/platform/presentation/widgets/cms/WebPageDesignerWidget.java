@@ -16,6 +16,21 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
+import java.io.InputStream;
+import java.util.Comparator;
+import java.util.List;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.commons.text.WordUtils;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+
 import com.simisinc.platform.application.DataException;
 import com.simisinc.platform.application.cms.MakeContentUniqueIdCommand;
 import com.simisinc.platform.application.cms.SaveWebPageCommand;
@@ -28,21 +43,9 @@ import com.simisinc.platform.infrastructure.persistence.cms.WebPageTemplateRepos
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.controller.XMLWebPageTemplateLoader;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.InputStream;
-import java.util.Comparator;
-import java.util.List;
 
 /**
- * Description
+ * Displays web page templates
  *
  * @author matt rajkowski
  * @created 5/6/18 1:12 PM
@@ -64,7 +67,7 @@ public class WebPageDesignerWidget extends GenericWidget {
     // The default JSP
     // @note the ACE editor is unstable for XML, CPU gets out of control; might be fixed
     context.setJsp(ACE_XML_EDITOR_JSP);
-//    context.setJsp(CODE_MIRROR_XML_EDITOR_JSP);
+    // context.setJsp(CODE_MIRROR_XML_EDITOR_JSP);
 
     // See if an editor is specified
     String editor = context.getParameter("editor");
@@ -101,12 +104,16 @@ public class WebPageDesignerWidget extends GenericWidget {
         return context;
       }
       webPage = WebPageRepository.findByLink(webPageLinkValue);
-//      webPage = LoadWebPageCommand.loadByLink(webPageLinkValue);
     }
     if (webPage == null) {
       LOG.debug("Could not find an existing page, ready to create a new one");
       webPage = new WebPage();
       webPage.setLink(webPageLinkValue);
+      // Make a suggested page title
+      String title = webPageLinkValue.replace("-", " ");
+      title = StringUtils.substringAfterLast(title, "/");
+      title = WordUtils.capitalizeFully(title, ' ');
+      webPage.setTitle(title);
     }
     // Show some templates
     if (StringUtils.isBlank(webPage.getPageXml())) {

@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Description
+ * From the Page definition, the composed elements to be rendered for this request
  *
  * @author matt rajkowski
  * @created 4/8/18 2:15 PM

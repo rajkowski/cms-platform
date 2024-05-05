@@ -29,7 +29,7 @@ import java.util.List;
  */
 public class DataResult implements Serializable {
 
-  final static long serialVersionUID = 8345648404174283569L;
+  private static final long serialVersionUID = 8345648404174283569L;
 
   private List<? extends Entity> records = null;
   private long totalRecordCount = -1;

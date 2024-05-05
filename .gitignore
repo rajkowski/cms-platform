@@ -48,3 +48,9 @@ cspell.json
 
 # Snyk
 .dccache
+
+# Sonar
+.sonar_lock
+
+# Draw.io
+*.bkp

@@ -32,6 +32,8 @@
     menubar: false,
     relative_urls: false,
     convert_urls: true,
+    convert_unsafe_embeds: true,
+    sandbox_iframes: true,
     plugins: 'advlist autolink lists link charmap preview anchor searchreplace visualblocks code insertdatetime media table wordcount',
     toolbar: 'link table | undo redo | blocks | bold italic backcolor  | bullist numlist outdent indent | removeformat | visualblocks code',
     images_upload_url: '${ctx}/image-upload?widget=imageUpload1&token=${userSession.formToken}',
@@ -449,7 +451,7 @@
       </div>
     </div>
   </div>
-  <div class="button-container margin-bottom-20">
+  <div class="button-container">
     <c:choose>
       <c:when test="${!empty returnPage}">
         <input type="submit" class="button radius success" value="Save"/>

@@ -164,7 +164,8 @@ public class WebContainerCommand implements Serializable {
               controllerSession.clearAllWidgetData();
               controllerSession.addWidgetData(thisWidgetUniqueId, MESSAGE,
                   "Your session may have expired before submitting the form, please try again");
-              response.sendRedirect(pageRequest.getContextPath() + containerRenderInfo.getName());
+              String siteUrl = LoadSitePropertyCommand.loadByName("site.url");
+              response.sendRedirect(siteUrl + pageRequest.getContextPath() + containerRenderInfo.getName());
               pageResponse.setHandled(true);
               return pageResponse;
             }
@@ -381,7 +382,8 @@ public class WebContainerCommand implements Serializable {
           if (!webContainerContext.isTargeted()) {
             if (widgetContext.hasRedirect()) {
               controllerSession.clearAllWidgetData();
-              response.sendRedirect(pageRequest.getContextPath() + widgetContext.getRedirect());
+              String siteUrl = LoadSitePropertyCommand.loadByName("site.url");
+              response.sendRedirect(siteUrl + pageRequest.getContextPath() + widgetContext.getRedirect());
               pageResponse.setHandled(true);
               return pageResponse;
             }
@@ -454,7 +456,8 @@ public class WebContainerCommand implements Serializable {
               sharedWidgetValueMap = widgetContext.getSharedRequestValueMap();
               controllerSession.addWidgetData(REQUEST_SHARED_VALUE_MAP, sharedWidgetValueMap);
             }
-            response.sendRedirect(pageRequest.getContextPath() + actionRedirect);
+            String siteUrl = LoadSitePropertyCommand.loadByName("site.url");
+            response.sendRedirect(siteUrl + pageRequest.getContextPath() + actionRedirect);
             LOG.debug("-----------------------------------------------------------------------");
             pageResponse.setHandled(true);
             return pageResponse;

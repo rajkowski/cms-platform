@@ -175,21 +175,19 @@ public class FileItemRepository {
         .add("default_token", StringUtils.trimToNull(record.getDefaultToken()));
 
     // Use a transaction
-    try {
-      try (Connection connection = DB.getConnection();
-          AutoStartTransaction a = new AutoStartTransaction(connection);
-          AutoRollback transaction = new AutoRollback(connection)) {
-        // In a transaction (use the existing connection)
-        record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
-        // Create a version record
-        FileVersionRepository.add(connection, record);
-        // Update the file counts
-        FolderRepository.updateFileCount(connection, record.getFolderId(), 1);
-        SubFolderRepository.updateFileCount(connection, record.getSubFolderId(), 1);
-        // Finish the transaction
-        transaction.commit();
-        return record;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // In a transaction (use the existing connection)
+      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+      // Create a version record
+      FileVersionRepository.add(connection, record);
+      // Update the file counts
+      FolderRepository.updateFileCount(connection, record.getFolderId(), 1);
+      SubFolderRepository.updateFileCount(connection, record.getSubFolderId(), 1);
+      // Finish the transaction
+      transaction.commit();
+      return record;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
@@ -198,42 +196,40 @@ public class FileItemRepository {
   }
 
   private static FileItem update(FileItem record) {
-    try {
-      try (Connection connection = DB.getConnection();
-          AutoStartTransaction a = new AutoStartTransaction(connection);
-          AutoRollback transaction = new AutoRollback(connection)) {
-        // Update the counts in case the folder changed
-        FolderRepository.updateFileCountForFileId(connection, record.getId(), -1);
-        SubFolderRepository.updateFileCountForFileId(connection, record.getId(), -1);
-        // Update the record
-        SqlUtils updateValues = new SqlUtils()
-            .add("folder_id", record.getFolderId())
-            .add("sub_folder_id", record.getSubFolderId(), -1L)
-            .add("category_id", record.getCategoryId(), -1L)
-            .addIfExists("filename", StringUtils.trimToNull(record.getFilename()))
-            .add("title", StringUtils.trimToNull(record.getTitle()))
-            .add("barcode", StringUtils.trimToNull(record.getBarcode()))
-            .add("version", StringUtils.trimToNull(record.getVersion()))
-            .addIfExists("width", record.getWidth(), -1)
-            .addIfExists("height", record.getHeight(), -1)
-            .add("summary", StringUtils.trimToNull(record.getSummary()))
-            .add("modified_by", record.getModifiedBy())
-            .add("processed", record.getProcessed())
-            .add("expiration_date", record.getExpirationDate())
-            .add("privacy_type", record.getPrivacyType());
-        //        .add("default_token", StringUtils.trimToNull(record.getDefaultToken()));
-        SqlUtils where = new SqlUtils()
-            .add("file_id = ?", record.getId());
-        if (DB.update(connection, TABLE_NAME, updateValues, where)) {
-          // Update related records
-          FileVersionRepository.update(connection, record);
-          // Update the folder count
-          FolderRepository.updateFileCountForFileId(connection, record.getId(), 1);
-          SubFolderRepository.updateFileCountForFileId(connection, record.getId(), 1);
-          // Finish transaction
-          transaction.commit();
-          return record;
-        }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Update the counts in case the folder changed
+      FolderRepository.updateFileCountForFileId(connection, record.getId(), -1);
+      SubFolderRepository.updateFileCountForFileId(connection, record.getId(), -1);
+      // Update the record
+      SqlUtils updateValues = new SqlUtils()
+          .add("folder_id", record.getFolderId())
+          .add("sub_folder_id", record.getSubFolderId(), -1L)
+          .add("category_id", record.getCategoryId(), -1L)
+          .addIfExists("filename", StringUtils.trimToNull(record.getFilename()))
+          .add("title", StringUtils.trimToNull(record.getTitle()))
+          .add("barcode", StringUtils.trimToNull(record.getBarcode()))
+          .add("version", StringUtils.trimToNull(record.getVersion()))
+          .addIfExists("width", record.getWidth(), -1)
+          .addIfExists("height", record.getHeight(), -1)
+          .add("summary", StringUtils.trimToNull(record.getSummary()))
+          .add("modified_by", record.getModifiedBy())
+          .add("processed", record.getProcessed())
+          .add("expiration_date", record.getExpirationDate())
+          .add("privacy_type", record.getPrivacyType());
+      //        .add("default_token", StringUtils.trimToNull(record.getDefaultToken()));
+      SqlUtils where = new SqlUtils()
+          .add("file_id = ?", record.getId());
+      if (DB.update(connection, TABLE_NAME, updateValues, where)) {
+        // Update related records
+        FileVersionRepository.update(connection, record);
+        // Update the folder count
+        FolderRepository.updateFileCountForFileId(connection, record.getId(), 1);
+        SubFolderRepository.updateFileCountForFileId(connection, record.getId(), 1);
+        // Finish transaction
+        transaction.commit();
+        return record;
       }
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
@@ -243,52 +239,50 @@ public class FileItemRepository {
   }
 
   public static FileItem saveVersion(FileItem record) {
-    try {
-      try (Connection connection = DB.getConnection();
-          AutoStartTransaction a = new AutoStartTransaction(connection);
-          AutoRollback transaction = new AutoRollback(connection)) {
-        // Update the counts in case the folder changed
-        FolderRepository.updateFileCountForFileId(connection, record.getId(), -1);
-        SubFolderRepository.updateFileCountForFileId(connection, record.getId(), -1);
-        // Update the record
-        SqlUtils updateValues = new SqlUtils()
-            .add("folder_id", record.getFolderId())
-            .add("sub_folder_id", record.getSubFolderId(), -1L)
-            .add("category_id", record.getCategoryId(), -1L)
-            .add("filename", StringUtils.trimToNull(record.getFilename()))
-            .add("title", StringUtils.trimToNull(record.getTitle()))
-            .add("barcode", StringUtils.trimToNull(record.getBarcode()))
-            .add("version", StringUtils.trimToNull(record.getVersion()))
-            .add("extension", StringUtils.trimToNull(record.getExtension()))
-            .add("path", StringUtils.trimToNull(record.getFileServerPath()))
-            .add("web_path", StringUtils.trimToNull(record.getWebPath()))
-            .add("file_length", record.getFileLength())
-            .add("file_type", record.getFileType())
-            .add("mime_type", record.getMimeType())
-            .add("file_hash", record.getFileHash())
-            .add("width", record.getWidth(), -1)
-            .add("height", record.getHeight(), -1)
-            .add("summary", StringUtils.trimToNull(record.getSummary()))
-            .add("modified_by", record.getModifiedBy())
-            .add("modified", new Timestamp(System.currentTimeMillis()))
-            .add("processed", record.getProcessed())
-            .add("expiration_date", record.getExpirationDate())
-            .add("privacy_type", record.getPrivacyType())
-            .add("default_token", StringUtils.trimToNull(record.getDefaultToken()));
-        SqlUtils where = new SqlUtils()
-            .add("file_id = ?", record.getId());
-        if (DB.update(connection, TABLE_NAME, updateValues, where)) {
-          // Update related records
-          FileVersionRepository.update(connection, record);
-          // Update the folder counts
-          FolderRepository.updateFileCountForFileId(connection, record.getId(), 1);
-          SubFolderRepository.updateFileCountForFileId(connection, record.getId(), 1);
-          // Create a version record
-          FileVersionRepository.add(connection, record);
-          // Finish transaction
-          transaction.commit();
-          return record;
-        }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Update the counts in case the folder changed
+      FolderRepository.updateFileCountForFileId(connection, record.getId(), -1);
+      SubFolderRepository.updateFileCountForFileId(connection, record.getId(), -1);
+      // Update the record
+      SqlUtils updateValues = new SqlUtils()
+          .add("folder_id", record.getFolderId())
+          .add("sub_folder_id", record.getSubFolderId(), -1L)
+          .add("category_id", record.getCategoryId(), -1L)
+          .add("filename", StringUtils.trimToNull(record.getFilename()))
+          .add("title", StringUtils.trimToNull(record.getTitle()))
+          .add("barcode", StringUtils.trimToNull(record.getBarcode()))
+          .add("version", StringUtils.trimToNull(record.getVersion()))
+          .add("extension", StringUtils.trimToNull(record.getExtension()))
+          .add("path", StringUtils.trimToNull(record.getFileServerPath()))
+          .add("web_path", StringUtils.trimToNull(record.getWebPath()))
+          .add("file_length", record.getFileLength())
+          .add("file_type", record.getFileType())
+          .add("mime_type", record.getMimeType())
+          .add("file_hash", record.getFileHash())
+          .add("width", record.getWidth(), -1)
+          .add("height", record.getHeight(), -1)
+          .add("summary", StringUtils.trimToNull(record.getSummary()))
+          .add("modified_by", record.getModifiedBy())
+          .add("modified", new Timestamp(System.currentTimeMillis()))
+          .add("processed", record.getProcessed())
+          .add("expiration_date", record.getExpirationDate())
+          .add("privacy_type", record.getPrivacyType())
+          .add("default_token", StringUtils.trimToNull(record.getDefaultToken()));
+      SqlUtils where = new SqlUtils()
+          .add("file_id = ?", record.getId());
+      if (DB.update(connection, TABLE_NAME, updateValues, where)) {
+        // Update related records
+        FileVersionRepository.update(connection, record);
+        // Update the folder counts
+        FolderRepository.updateFileCountForFileId(connection, record.getId(), 1);
+        SubFolderRepository.updateFileCountForFileId(connection, record.getId(), 1);
+        // Create a version record
+        FileVersionRepository.add(connection, record);
+        // Finish transaction
+        transaction.commit();
+        return record;
       }
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
@@ -298,20 +292,18 @@ public class FileItemRepository {
   }
 
   public static boolean remove(FileItem record) {
-    try {
-      try (Connection connection = DB.getConnection();
-          AutoStartTransaction a = new AutoStartTransaction(connection);
-          AutoRollback transaction = new AutoRollback(connection)) {
-        // Delete the references
-        FileVersionRepository.removeAll(connection, record);
-        FolderRepository.updateFileCount(connection, record.getFolderId(), -1);
-        SubFolderRepository.updateFileCount(connection, record.getSubFolderId(), -1);
-        // Delete the record
-        DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("file_id = ?", record.getId()));
-        // Finish transaction
-        transaction.commit();
-        return true;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Delete the references
+      FileVersionRepository.removeAll(connection, record);
+      FolderRepository.updateFileCount(connection, record.getFolderId(), -1);
+      SubFolderRepository.updateFileCount(connection, record.getSubFolderId(), -1);
+      // Delete the record
+      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("file_id = ?", record.getId()));
+      // Finish transaction
+      transaction.commit();
+      return true;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }

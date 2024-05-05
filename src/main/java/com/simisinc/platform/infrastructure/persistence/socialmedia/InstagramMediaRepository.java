@@ -39,7 +39,7 @@ public class InstagramMediaRepository {
   private static Log LOG = LogFactory.getLog(InstagramMediaRepository.class);
 
   private static String TABLE_NAME = "instagram_media";
-  private static String[] PRIMARY_KEY = new String[]{"id"};
+  private static String[] PRIMARY_KEY = new String[] { "id" };
 
   public static InstagramMedia findByGraphId(String graphId) {
     if (StringUtils.isBlank(graphId)) {
@@ -106,7 +106,7 @@ public class InstagramMediaRepository {
     SqlUtils where = new SqlUtils()
         .add("id = ?", record.getId());
     if (DB.update(TABLE_NAME, updateValues, where)) {
-//      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
+      // CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
     }
     LOG.error("The update failed!");
@@ -114,20 +114,18 @@ public class InstagramMediaRepository {
   }
 
   public static boolean remove(InstagramMedia record) {
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // Delete the references
-//        ItemCategoryRepository.removeAll(connection, record);
-//        CollectionRepository.updateItemCount(connection, record.getCollectionId(), -1);
-//        CategoryRepository.updateItemCount(connection, record.getCategoryId(), -1);
-        // Delete the record
-        DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("id = ?", record.getId()));
-        // Finish transaction
-        transaction.commit();
-        return true;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Delete the references
+      // ItemCategoryRepository.removeAll(connection, record);
+      // CollectionRepository.updateItemCount(connection, record.getCollectionId(), -1);
+      // CategoryRepository.updateItemCount(connection, record.getCategoryId(), -1);
+      // Delete the record
+      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("id = ?", record.getId()));
+      // Finish transaction
+      transaction.commit();
+      return true;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }

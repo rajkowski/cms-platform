@@ -16,30 +16,35 @@
 
 package com.simisinc.platform.presentation.controller;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.w3c.dom.*;
+import static java.util.stream.Collectors.toList;
 
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathFactory;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.toList;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathFactory;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 /**
- * Description
+ * Commands to parse XML documents into nested classes
  *
  * @author matt rajkowski
  * @created 2/7/2021 12:53 PM
  */
 public class XMLContainerCommands implements Serializable {
 
-  static final long serialVersionUID = 536435325324169646L;
+  private static final long serialVersionUID = 536435325324169646L;
   private static Log LOG = LogFactory.getLog(XMLContainerCommands.class);
 
   public static void appendSections(Document document, List<Section> sections, NodeList children, Map<String, String> widgetLibrary) {
@@ -122,7 +127,8 @@ public class XMLContainerCommands implements Serializable {
     }
   }
 
-  private static void appendColumns(Document document, Section sectionInfo, List<Column> columns, NodeList children, Map<String, String> widgetLibrary) {
+  private static void appendColumns(Document document, Section sectionInfo, List<Column> columns, NodeList children,
+      Map<String, String> widgetLibrary) {
     // Process the columns
     int len = children.getLength();
     for (int i = 0; i < len; i++) {
@@ -195,7 +201,8 @@ public class XMLContainerCommands implements Serializable {
     }
   }
 
-  private static void appendWidgets(Document document, Column columnInfo, List<Widget> widgets, NodeList children, Map<String, String> widgetLibrary) {
+  private static void appendWidgets(Document document, Column columnInfo, List<Widget> widgets, NodeList children,
+      Map<String, String> widgetLibrary) {
     int len = children.getLength();
     for (int i = 0; i < len; i++) {
       if (children.item(i).getNodeType() != Element.ELEMENT_NODE) {
@@ -267,12 +274,13 @@ public class XMLContainerCommands implements Serializable {
         }
       }
       widget.setWidgetName(name);
-      if (widgetLibrary.containsKey(name)) {
-        LOG.trace("Adding widget to layout: " + name);
+      LOG.trace("Adding widget to layout: " + name);
+      if (widgetLibrary != null && widgetLibrary.containsKey(name)) {
+        LOG.trace("Found widget class: " + widgetLibrary.get(name));
         widget.setWidgetClassName(widgetLibrary.get(name));
-        widgets.add(widget);
-        addWidgetPreferences(widget, child.getChildNodes());
       }
+      widgets.add(widget);
+      addWidgetPreferences(widget, child.getChildNodes());
     }
   }
 

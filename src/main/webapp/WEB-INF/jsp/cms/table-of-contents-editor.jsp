@@ -66,7 +66,7 @@
     </c:forEach>
     </tbody>
   </table>
-  <div class="button-container margin-bottom-20">
+  <div class="button-container">
     <input type="submit" class="button radius success" value="Save"/>
     <a href="${returnPage}" class="button radius secondary">Cancel</a>
   </div>

@@ -69,20 +69,18 @@ public class CollectionRepository {
         .add("item_url_text", StringUtils.trimToNull(record.getItemUrlText()));
 
     // Use a transaction
-    try {
-      try (Connection connection = DB.getConnection();
-          AutoStartTransaction a = new AutoStartTransaction(connection);
-          AutoRollback transaction = new AutoRollback(connection)) {
-        // In a transaction (use the existing connection)
-        record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
-        // Manage the access groups
-        if (record.getCollectionGroupList() != null && !record.getCollectionGroupList().isEmpty()) {
-          CollectionGroupRepository.insertCollectionGroupList(connection, record);
-        }
-        // Finish the transaction
-        transaction.commit();
-        return record;
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // In a transaction (use the existing connection)
+      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+      // Manage the access groups
+      if (record.getCollectionGroupList() != null && !record.getCollectionGroupList().isEmpty()) {
+        CollectionGroupRepository.insertCollectionGroupList(connection, record);
       }
+      // Finish the transaction
+      transaction.commit();
+      return record;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
@@ -171,28 +169,26 @@ public class CollectionRepository {
 
   // Remove
   public static boolean remove(Collection record) {
-    try {
-      try (Connection connection = DB.getConnection();
-          AutoStartTransaction a = new AutoStartTransaction(connection);
-          AutoRollback transaction = new AutoRollback(connection)) {
-        // Delete the references
-        // @note the Item, and its mapping to a Category, is currently not cleaned up until a business decision is made
-        //        ActivityRepository.removeAll(connection, record);
-        //        ItemCategoryRepository.removeAll(connection, record);
-        //        ItemRepository.removeAll(connection, record);
-        CollectionRoleRepository.removeAll(connection, record);
-        CollectionGroupRepository.removeAll(connection, record);
-        CollectionTabRepository.removeAll(connection, record);
-        CategoryRepository.removeAll(connection, record);
-        CollectionRelationshipRepository.removeAll(connection, record);
-        // Delete the record
-        DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("collection_id = ?", record.getId()));
-        // Finish transaction
-        transaction.commit();
-        // Invalidate the cache
-        CacheManager.invalidateKey(CacheManager.COLLECTION_UNIQUE_ID_CACHE, record.getUniqueId());
-        return true;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Delete the references
+      // @note the Item, and its mapping to a Category, is currently not cleaned up until a business decision is made
+      // ActivityRepository.removeAll(connection, record);
+      // ItemCategoryRepository.removeAll(connection, record);
+      // ItemRepository.removeAll(connection, record);
+      CollectionRoleRepository.removeAll(connection, record);
+      CollectionGroupRepository.removeAll(connection, record);
+      CollectionTabRepository.removeAll(connection, record);
+      CategoryRepository.removeAll(connection, record);
+      CollectionRelationshipRepository.removeAll(connection, record);
+      // Delete the record
+      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("collection_id = ?", record.getId()));
+      // Finish transaction
+      transaction.commit();
+      // Invalidate the cache
+      CacheManager.invalidateKey(CacheManager.COLLECTION_UNIQUE_ID_CACHE, record.getUniqueId());
+      return true;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
@@ -309,11 +305,9 @@ public class CollectionRepository {
   }
 
   public static boolean updateItemCount(Connection connection, long collectionId, int value) {
-    try {
-      // Increment the count
-      try (PreparedStatement pst = createPreparedStatementForItemCount(connection, collectionId, value)) {
-        return pst.execute();
-      }
+    // Increment the count
+    try (PreparedStatement pst = createPreparedStatementForItemCount(connection, collectionId, value)) {
+      return pst.execute();
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     } finally {

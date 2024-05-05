@@ -26,14 +26,14 @@ import java.io.Serializable;
 import java.util.Map;
 
 /**
- * Description
+ * Common object for context objects available during a service request
  *
  * @author matt rajkowski
  * @created 7/17/18 2:30 PM
  */
 public class ServiceContext implements Serializable {
 
-  final static long serialVersionUID = 215434482513634196L;
+  private static final long serialVersionUID = 215434482513634196L;
 
   private HttpServletRequest request = null;
   private HttpServletResponse response = null;

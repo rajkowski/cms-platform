@@ -40,7 +40,7 @@ public class WikiPageRepository {
   private static Log LOG = LogFactory.getLog(WikiPageRepository.class);
 
   private static String TABLE_NAME = "wiki_pages";
-  private static String[] PRIMARY_KEY = new String[]{"wiki_page_id"};
+  private static String[] PRIMARY_KEY = new String[] { "wiki_page_id" };
 
   private static SqlUtils createWhereStatement(WikiPageSpecification specification) {
     SqlUtils where = null;
@@ -51,7 +51,8 @@ public class WikiPageRepository {
           .addIfExists("page_unique_id = ?", specification.getUniqueId());
       if (specification.getStartingDateRange() != null && specification.getEndingDateRange() != null) {
         where.add("((start_date >= ? AND start_date < ?) OR (end_date >= ? AND end_date < ?))",
-            new Timestamp[]{specification.getStartingDateRange(), specification.getEndingDateRange(), specification.getStartingDateRange(), specification.getEndingDateRange()});
+            new Timestamp[] { specification.getStartingDateRange(), specification.getEndingDateRange(),
+                specification.getStartingDateRange(), specification.getEndingDateRange() });
       }
     }
     return where;
@@ -150,7 +151,7 @@ public class WikiPageRepository {
     SqlUtils where = new SqlUtils()
         .add("wiki_page_id = ?", record.getId());
     if (DB.update(TABLE_NAME, updateValues, where)) {
-//      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
+      //      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
     }
     LOG.error("The update failed!");
@@ -158,20 +159,18 @@ public class WikiPageRepository {
   }
 
   public static boolean remove(WikiPage record) {
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // Delete the references
-//        ItemCategoryRepository.removeAll(connection, record);
-//        CollectionRepository.updateItemCount(connection, record.getCollectionId(), -1);
-//        CategoryRepository.updateItemCount(connection, record.getCategoryId(), -1);
-        // Delete the record
-        DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("wiki_page_id = ?", record.getId()));
-        // Finish transaction
-        transaction.commit();
-        return true;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Delete the references
+      // ItemCategoryRepository.removeAll(connection, record);
+      // CollectionRepository.updateItemCount(connection, record.getCollectionId(), -1);
+      // CategoryRepository.updateItemCount(connection, record.getCategoryId(), -1);
+      // Delete the record
+      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("wiki_page_id = ?", record.getId()));
+      // Finish transaction
+      transaction.commit();
+      return true;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }

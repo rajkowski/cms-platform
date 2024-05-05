@@ -39,7 +39,7 @@ public class MedicineLogRepository {
   private static Log LOG = LogFactory.getLog(MedicineLogRepository.class);
 
   private static String TABLE_NAME = "medicine_log";
-  private static String[] PRIMARY_KEY = new String[]{"log_id"};
+  private static String[] PRIMARY_KEY = new String[] { "log_id" };
 
   private static DataResult query(MedicineLogSpecification specification, DataConstraints constraints) {
     SqlJoins joins = new SqlJoins();
@@ -136,24 +136,21 @@ public class MedicineLogRepository {
       insertValues.add("reason_other_concern", true);
     }
 
-    // Use a transaction
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // In a transaction (use the existing connection)
-        record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
-        if (record.getReminderId() > -1) {
-          if (record.getWasTaken()) {
-            MedicineReminderRepository.markAsTaken(connection, record.getReminderId(), record.getAdministered());
-          } else if (record.getWasSkipped()) {
-            MedicineReminderRepository.markAsSkipped(connection, record.getReminderId());
-          }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // In a transaction (use the existing connection)
+      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+      if (record.getReminderId() > -1) {
+        if (record.getWasTaken()) {
+          MedicineReminderRepository.markAsTaken(connection, record.getReminderId(), record.getAdministered());
+        } else if (record.getWasSkipped()) {
+          MedicineReminderRepository.markAsSkipped(connection, record.getReminderId());
         }
-        // Finish the transaction
-        transaction.commit();
-        return record;
       }
+      // Finish the transaction
+      transaction.commit();
+      return record;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
@@ -176,8 +173,8 @@ public class MedicineLogRepository {
   public static boolean remove(MedicineLog record) {
     try {
       try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
+          AutoStartTransaction a = new AutoStartTransaction(connection);
+          AutoRollback transaction = new AutoRollback(connection)) {
         // Delete the references
         // Delete the record
         DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("log_id = ?", record.getId()));

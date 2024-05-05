@@ -25,9 +25,9 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.cms.ImageUrlCommand;
 import com.simisinc.platform.application.filesystem.FileSystemCommand;
 import com.simisinc.platform.domain.model.cms.Image;
-import com.simisinc.platform.infrastructure.persistence.cms.ImageRepository;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
 
@@ -46,29 +46,8 @@ public class StreamImageWidget extends GenericWidget {
 
     // GET uri /assets/img/20180503171549-5/logo.png
     LOG.debug("Found request uri: " + context.getUri());
-
-    // Use the request uri
-    String resourceValue = context.getUri().substring(context.getResourcePath().length() + 1);
-    if (resourceValue.contains("/")) {
-      resourceValue = resourceValue.substring(0, resourceValue.indexOf("/"));
-    }
-    LOG.debug("Using resource value: " + resourceValue);
-    int dashIdx = resourceValue.lastIndexOf("-");
-    if (dashIdx == -1) {
-      return null;
-    }
-
-    // Determine the file id and web path
-    String webPath = resourceValue.substring(0, dashIdx);
-    String fileIdValue = resourceValue.substring(dashIdx + 1);
-    long fileId = Long.parseLong(fileIdValue);
-    if (fileId <= 0) {
-      return null;
-    }
-
-    Image record = ImageRepository.findByWebPathAndId(webPath, fileId);
+    Image record = ImageUrlCommand.decodeToImageRecord(context.getUri());
     if (record == null) {
-      LOG.warn("Server image record does not exist: " + fileId);
       return null;
     }
     File file = FileSystemCommand.getFileServerRootPath(record.getFileServerPath());

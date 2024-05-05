@@ -16,18 +16,23 @@
 
 package com.simisinc.platform.infrastructure.persistence;
 
-import com.simisinc.platform.domain.model.SiteProperty;
-import com.simisinc.platform.infrastructure.cache.CacheManager;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
+import com.simisinc.platform.domain.model.SiteProperty;
+import com.simisinc.platform.infrastructure.cache.CacheManager;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves site property objects
@@ -40,8 +45,7 @@ public class SitePropertyRepository {
   private static Log LOG = LogFactory.getLog(SitePropertyRepository.class);
 
   private static String TABLE_NAME = "site_properties";
-  private static String[] PRIMARY_KEY = new String[]{"property_id"};
-
+  private static String[] PRIMARY_KEY = new String[] { "property_id" };
 
   public static SiteProperty findByName(String name) {
     if (StringUtils.isBlank(name)) {
@@ -78,10 +82,9 @@ public class SitePropertyRepository {
   }
 
   private static PreparedStatement createPreparedStatementForUpdate(Connection connection, SiteProperty record) throws SQLException {
-    String SQL_QUERY =
-        "UPDATE site_properties " +
-            "SET property_value = ? " +
-            "WHERE property_id = ?";
+    String SQL_QUERY = "UPDATE site_properties " +
+        "SET property_value = ? " +
+        "WHERE property_id = ?";
     int i = 0;
     PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
     pst.setString(++i, StringUtils.trimToEmpty(record.getValue()));
@@ -90,12 +93,10 @@ public class SitePropertyRepository {
   }
 
   public static SiteProperty save(SiteProperty record) {
-    try {
-      try (Connection connection = DB.getConnection();
-           PreparedStatement pst = createPreparedStatementForUpdate(connection, record)) {
-        if (pst.executeUpdate() > 0) {
-          return record;
-        }
+    try (Connection connection = DB.getConnection();
+        PreparedStatement pst = createPreparedStatementForUpdate(connection, record)) {
+      if (pst.executeUpdate() > 0) {
+        return record;
       }
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
@@ -138,6 +139,8 @@ public class SitePropertyRepository {
       record.setName(rs.getString("property_name"));
       record.setValue(rs.getString("property_value"));
       record.setType(rs.getString("property_type"));
+      // Override values from the system environment
+      record.setValue(LoadSitePropertyCommand.getValueBasedOnEnvironment(record.getName(), record.getValue()));
       return record;
     } catch (SQLException se) {
       LOG.error("buildRecord", se);

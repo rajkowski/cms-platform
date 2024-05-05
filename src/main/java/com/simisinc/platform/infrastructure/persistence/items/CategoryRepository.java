@@ -134,20 +134,18 @@ public class CategoryRepository {
   }
 
   public static boolean remove(Category record) {
-    try {
-      try (Connection connection = DB.getConnection();
-          AutoStartTransaction a = new AutoStartTransaction(connection);
-          AutoRollback transaction = new AutoRollback(connection)) {
-        // Delete the references
-        ItemCategoryRepository.removeAll(connection, record);
-        // Update pointers
-        CollectionRepository.updateCategoryCount(connection, record.getCollectionId(), -1);
-        // Delete the record
-        DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("category_id = ?", record.getId()));
-        // Finish transaction
-        transaction.commit();
-        return true;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Delete the references
+      ItemCategoryRepository.removeAll(connection, record);
+      // Update pointers
+      CollectionRepository.updateCategoryCount(connection, record.getCollectionId(), -1);
+      // Delete the record
+      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("category_id = ?", record.getId()));
+      // Finish transaction
+      transaction.commit();
+      return true;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
@@ -169,18 +167,16 @@ public class CategoryRepository {
         .addIfExists("header_text_color", record.getHeaderTextColor())
         .addIfExists("header_bg_color", record.getHeaderBgColor())
         .add("item_url_text", StringUtils.trimToNull(record.getItemUrlText()));
-    try {
-      try (Connection connection = DB.getConnection();
-          AutoStartTransaction a = new AutoStartTransaction(connection);
-          AutoRollback transaction = new AutoRollback(connection)) {
-        // Insert the record
-        record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
-        // Update the pointer
-        CollectionRepository.updateCategoryCount(connection, record.getCollectionId(), 1);
-        // Finish transaction
-        transaction.commit();
-        return record;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Insert the record
+      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+      // Update the pointer
+      CollectionRepository.updateCategoryCount(connection, record.getCollectionId(), 1);
+      // Finish transaction
+      transaction.commit();
+      return record;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
@@ -219,11 +215,9 @@ public class CategoryRepository {
   }
 
   public static boolean updateItemCount(Connection connection, long categoryId, int value) {
-    try {
-      // Increment the count
-      try (PreparedStatement pst = createPreparedStatementForItemCount(connection, categoryId, value)) {
-        return pst.execute();
-      }
+    // Increment the count
+    try (PreparedStatement pst = createPreparedStatementForItemCount(connection, categoryId, value)) {
+      return pst.execute();
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }

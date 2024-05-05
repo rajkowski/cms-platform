@@ -43,8 +43,7 @@ public class MedicineRepository {
   private static Log LOG = LogFactory.getLog(MedicineRepository.class);
 
   private static String TABLE_NAME = "medicines";
-  private static String[] PRIMARY_KEY = new String[]{"medicine_id"};
-
+  private static String[] PRIMARY_KEY = new String[] { "medicine_id" };
 
   public static Medicine save(Medicine record) {
     if (record.getId() > -1) {
@@ -83,33 +82,30 @@ public class MedicineRepository {
         .add("last_taken", record.getLastTaken())
         .add("last_administered_by", record.getLastAdministeredBy(), -1);
     // Use a transaction
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // In a transaction (use the existing connection)
-        record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
-        if (medicineSchedule != null) {
-          medicineSchedule.setMedicineId(record.getId());
-          MedicineScheduleRepository.save(connection, medicineSchedule);
-        }
-        if (prescription != null) {
-          if (!prescription.isEmpty()) {
-            prescription.setMedicineId(record.getId());
-            PrescriptionRepository.save(connection, prescription);
-          }
-        }
-        // Finish the transaction
-        transaction.commit();
-        return record;
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // In a transaction (use the existing connection)
+      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+      if (medicineSchedule != null) {
+        medicineSchedule.setMedicineId(record.getId());
+        MedicineScheduleRepository.save(connection, medicineSchedule);
       }
+      if (prescription != null) {
+        if (!prescription.isEmpty()) {
+          prescription.setMedicineId(record.getId());
+          PrescriptionRepository.save(connection, prescription);
+        }
+      }
+      // Finish the transaction
+      transaction.commit();
+      return record;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
     LOG.error("An id was not set!");
     return null;
   }
-
 
   private static Medicine update(Medicine record, MedicineSchedule medicineSchedule, Prescription prescription) {
     SqlUtils updateValues = new SqlUtils()
@@ -125,34 +121,32 @@ public class MedicineRepository {
     SqlUtils where = new SqlUtils()
         .add("medicine_id = ?", record.getId());
     // Use a transaction
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        if (medicineSchedule != null) {
-          // Remove the references, but keep the records
-          MedicineLogRepository.removeReferences(connection, record);
-          // Delete the references
-          MedicineReminderRepository.removeAll(connection, record);
-          // Update the related data
-          MedicineTimeRepository.removeAll(connection, record);
-          MedicineScheduleRepository.removeAll(connection, record);
-          medicineSchedule.setMedicineId(record.getId());
-          MedicineScheduleRepository.save(connection, medicineSchedule);
-        }
-        if (prescription != null) {
-          if (!prescription.isEmpty()) {
-            PrescriptionRepository.removeAll(connection, record);
-            prescription.setMedicineId(record.getId());
-            PrescriptionRepository.save(connection, prescription);
-          }
-        }
-        // Update this record
-        DB.update(connection, TABLE_NAME, updateValues, where);
-        // Finish the transaction
-        transaction.commit();
-        return record;
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      if (medicineSchedule != null) {
+        // Remove the references, but keep the records
+        MedicineLogRepository.removeReferences(connection, record);
+        // Delete the references
+        MedicineReminderRepository.removeAll(connection, record);
+        // Update the related data
+        MedicineTimeRepository.removeAll(connection, record);
+        MedicineScheduleRepository.removeAll(connection, record);
+        medicineSchedule.setMedicineId(record.getId());
+        MedicineScheduleRepository.save(connection, medicineSchedule);
       }
+      if (prescription != null) {
+        if (!prescription.isEmpty()) {
+          PrescriptionRepository.removeAll(connection, record);
+          prescription.setMedicineId(record.getId());
+          PrescriptionRepository.save(connection, prescription);
+        }
+      }
+      // Update this record
+      DB.update(connection, TABLE_NAME, updateValues, where);
+      // Finish the transaction
+      transaction.commit();
+      return record;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
@@ -161,22 +155,20 @@ public class MedicineRepository {
   }
 
   public static boolean remove(Medicine record) {
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // Delete the references
-        PrescriptionRepository.removeAll(connection, record);
-        MedicineLogRepository.removeAll(connection, record);
-        MedicineReminderRepository.removeAll(connection, record);
-        MedicineTimeRepository.removeAll(connection, record);
-        MedicineScheduleRepository.removeAll(connection, record);
-        // Delete the record
-        DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("medicine_id = ?", record.getId()));
-        // Finish transaction
-        transaction.commit();
-        return true;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Delete the references
+      PrescriptionRepository.removeAll(connection, record);
+      MedicineLogRepository.removeAll(connection, record);
+      MedicineReminderRepository.removeAll(connection, record);
+      MedicineTimeRepository.removeAll(connection, record);
+      MedicineScheduleRepository.removeAll(connection, record);
+      // Delete the record
+      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("medicine_id = ?", record.getId()));
+      // Finish transaction
+      transaction.commit();
+      return true;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
@@ -185,34 +177,32 @@ public class MedicineRepository {
 
   public static void removeAll(Connection connection, Item item) throws SQLException {
     // @todo Delete the references
-//    PrescriptionRepository.removeAll(connection, item);
-//    MedicineLogRepository.removeAll(connection, item);
-//    MedicineReminderRepository.removeAll(connection, item);
-//    MedicineTimeRepository.removeAll(connection, item);
-//    MedicineScheduleRepository.removeAll(connection, item);
+    //    PrescriptionRepository.removeAll(connection, item);
+    //    MedicineLogRepository.removeAll(connection, item);
+    //    MedicineReminderRepository.removeAll(connection, item);
+    //    MedicineTimeRepository.removeAll(connection, item);
+    //    MedicineScheduleRepository.removeAll(connection, item);
     // Delete the records
     DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("individual_id = ?", item.getId()));
   }
 
   public static boolean markAsSuspended(Medicine record) {
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // Suspend the medicine
-        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-        SqlUtils updateValues = new SqlUtils()
-            .add("modified_by", record.getModifiedBy())
-            .add("modified", timestamp)
-            .add("suspended_by", record.getModifiedBy())
-            .add("suspended", timestamp);
-        SqlUtils where = new SqlUtils()
-            .add("medicine_id = ?", record.getId());
-        DB.update(connection, TABLE_NAME, updateValues, where);
-        // Finish transaction
-        transaction.commit();
-        return true;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Suspend the medicine
+      Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+      SqlUtils updateValues = new SqlUtils()
+          .add("modified_by", record.getModifiedBy())
+          .add("modified", timestamp)
+          .add("suspended_by", record.getModifiedBy())
+          .add("suspended", timestamp);
+      SqlUtils where = new SqlUtils()
+          .add("medicine_id = ?", record.getId());
+      DB.update(connection, TABLE_NAME, updateValues, where);
+      // Finish transaction
+      transaction.commit();
+      return true;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
@@ -220,24 +210,22 @@ public class MedicineRepository {
   }
 
   public static boolean markAsResumed(Medicine record) {
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // Suspend the medicine
-        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-        SqlUtils updateValues = new SqlUtils()
-            .add("modified_by", record.getModifiedBy())
-            .add("modified", timestamp)
-            .add("suspended_by", -1L, -1L)
-            .add("suspended", (Timestamp) null);
-        SqlUtils where = new SqlUtils()
-            .add("medicine_id = ?", record.getId());
-        DB.update(connection, TABLE_NAME, updateValues, where);
-        // Finish transaction
-        transaction.commit();
-        return true;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Suspend the medicine
+      Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+      SqlUtils updateValues = new SqlUtils()
+          .add("modified_by", record.getModifiedBy())
+          .add("modified", timestamp)
+          .add("suspended_by", -1L, -1L)
+          .add("suspended", (Timestamp) null);
+      SqlUtils where = new SqlUtils()
+          .add("medicine_id = ?", record.getId());
+      DB.update(connection, TABLE_NAME, updateValues, where);
+      // Finish transaction
+      transaction.commit();
+      return true;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
@@ -245,24 +233,22 @@ public class MedicineRepository {
   }
 
   public static boolean markAsArchived(Medicine record) {
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // Archive the medicine
-        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-        SqlUtils updateValues = new SqlUtils()
-            .add("modified_by", record.getModifiedBy())
-            .add("modified", timestamp)
-            .add("archived_by", record.getModifiedBy())
-            .add("archived", timestamp);
-        SqlUtils where = new SqlUtils()
-            .add("medicine_id = ?", record.getId());
-        DB.update(connection, TABLE_NAME, updateValues, where);
-        // Finish transaction
-        transaction.commit();
-        return true;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Archive the medicine
+      Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+      SqlUtils updateValues = new SqlUtils()
+          .add("modified_by", record.getModifiedBy())
+          .add("modified", timestamp)
+          .add("archived_by", record.getModifiedBy())
+          .add("archived", timestamp);
+      SqlUtils where = new SqlUtils()
+          .add("medicine_id = ?", record.getId());
+      DB.update(connection, TABLE_NAME, updateValues, where);
+      // Finish transaction
+      transaction.commit();
+      return true;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }

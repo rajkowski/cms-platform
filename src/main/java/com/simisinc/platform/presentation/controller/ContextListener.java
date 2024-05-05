@@ -39,6 +39,7 @@ import org.apache.commons.logging.LogFactory;
 import com.simisinc.platform.ApplicationInfo;
 import com.simisinc.platform.application.admin.DatabaseCommand;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
+import com.simisinc.platform.application.cms.LoadStylesheetCommand;
 import com.simisinc.platform.application.filesystem.FileSystemCommand;
 import com.simisinc.platform.application.maps.GeoIPCommand;
 import com.simisinc.platform.domain.model.cms.Content;
@@ -48,6 +49,7 @@ import com.simisinc.platform.infrastructure.instance.InstanceManager;
 import com.simisinc.platform.infrastructure.persistence.cms.ContentRepository;
 import com.simisinc.platform.infrastructure.scheduler.SchedulerManager;
 import com.simisinc.platform.infrastructure.scheduler.cms.LoadSystemFilesJob;
+import com.simisinc.platform.infrastructure.web.WebApp;
 import com.simisinc.platform.infrastructure.workflow.WorkflowManager;
 
 /**
@@ -80,6 +82,9 @@ public class ContextListener implements ServletContextListener {
     ZoneId serverZoneId = ZoneId.systemDefault();
     LOG.info("Server Time: " + now.atZone(serverZoneId).toString());
     LOG.info("Server TimeZone Id: " + serverZoneId.getId());
+
+    // Functions can use the WebApp resources
+    WebApp.init(servletContextEvent.getServletContext());
 
     // Startup the database first
     // @todo create and use a separate Rest DataSource pool
@@ -151,6 +156,7 @@ public class ContextListener implements ServletContextListener {
 
     // The system is not properly setup
     if (!isSuccessful) {
+      LOG.error("Exiting, the system did not properly setup so web requests will not be allowed!");
       return;
     }
 
@@ -169,7 +175,10 @@ public class ContextListener implements ServletContextListener {
     // Load the filesystem lists (these are also scheduled in SchedulerManager)
     LoadSystemFilesJob.execute();
 
-    // Preload all the content (@todo change to async)
+    // Determine if the global stylesheet file exists
+    LoadStylesheetCommand.init();
+
+    // Preload all the content
     List<Content> contentList = ContentRepository.findAll();
     if (contentList != null) {
       ArrayList<String> contentUniqueIdList = new ArrayList<>();
@@ -201,5 +210,8 @@ public class ContextListener implements ServletContextListener {
 
     LOG.info("Shutting down the database...");
     DataSource.shutdown();
+
+    LOG.info("Removing webapp references...");
+    WebApp.shutdown();
   }
 }

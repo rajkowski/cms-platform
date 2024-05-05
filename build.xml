@@ -68,7 +68,8 @@
   </target>
 
   <!-- Creates build directories -->
-  <!-- mvn dependency:copy-dependencies -DincludeScope=compile -DexcludeArtifactIds=commons-logging -DexcludeGroupIds=org.apache.tomcat,org.projectlombok,org.jetbrains.kotlin -->
+  <!-- mvn dependency:tree -->
+  <!-- mvn dependency:copy-dependencies -DincludeScope=compile -DexcludeArtifactIds=commons-logging -DexcludeGroupIds=org.apache.tomcat,org.projectlombok,org.jetbrains.kotlin -DoutputDirectory=${lib.dir}/maven -->
   <target name="prepare" depends="version">
     <mkdir dir="${build.dir}"/>
     <mkdir dir="${target.dir}"/>
@@ -339,7 +340,7 @@
     <checkstyle config="checkstyle.xml"
                 failureProperty="checkstyle.failure"
                 failOnViolation="true">
-      <formatter type="xml" tofile="${target.dir}/checkstyle/checkstyle_report.xml"/>
+      <formatter type="xml" tofile="${target.dir}/checkstyle-result.xml"/>
       <fileset dir="${src.dir}" includes="**/*.java"/>
     </checkstyle>
   </target>

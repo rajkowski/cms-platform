@@ -38,7 +38,7 @@ public class XapiStatementRepository {
   private static Log LOG = LogFactory.getLog(XapiStatementRepository.class);
 
   private static String TABLE_NAME = "xapi_statements";
-  private static String[] PRIMARY_KEY = new String[]{"statement_id"};
+  private static String[] PRIMARY_KEY = new String[] { "statement_id" };
 
   private static SqlUtils createWhereStatement(XapiStatementSpecification specification) {
     SqlUtils where = null;
@@ -129,7 +129,7 @@ public class XapiStatementRepository {
     SqlUtils where = new SqlUtils()
         .add("statement_id = ?", record.getId());
     if (DB.update(TABLE_NAME, updateValues, where)) {
-//      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
+      // CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
     }
     LOG.error("The update failed!");
@@ -137,17 +137,15 @@ public class XapiStatementRepository {
   }
 
   public static boolean remove(XapiStatement record) {
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // Delete the references
-        // Delete the record
-        DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("statement_id = ?", record.getId()));
-        // Finish transaction
-        transaction.commit();
-        return true;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Delete the references
+      // Delete the record
+      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("statement_id = ?", record.getId()));
+      // Finish transaction
+      transaction.commit();
+      return true;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }

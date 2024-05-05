@@ -24,10 +24,10 @@ package com.simisinc.platform.domain.model.items;
  */
 public class ActivityType {
 
-  public final static String ITEM_CREATED = "ITEM_CREATED";
-  public final static String ITEM_RELATIONSHIP_CREATED = "ITEM_RELATIONSHIP_CREATED";
-  public final static String CHAT = "CHAT";
+  public static final String ITEM_CREATED = "ITEM_CREATED";
+  public static final String ITEM_RELATIONSHIP_CREATED = "ITEM_RELATIONSHIP_CREATED";
+  public static final String CHAT = "CHAT";
 
-  final static long serialVersionUID = 8345648404174283569L;
+  private static final long serialVersionUID = 8345648404174283569L;
 
 }

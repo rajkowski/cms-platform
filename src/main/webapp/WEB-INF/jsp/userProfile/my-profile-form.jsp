@@ -32,6 +32,8 @@
     menubar: false,
     relative_urls: false,
     convert_urls: true,
+    convert_unsafe_embeds: true,
+    sandbox_iframes: true,
     browser_spellcheck: true,
     plugins: 'advlist autolink lists charmap preview anchor searchreplace visualblocks code wordcount',
     toolbar: 'undo redo | blocks | bold italic backcolor  | bullist numlist outdent indent | removeformat | visualblocks code'

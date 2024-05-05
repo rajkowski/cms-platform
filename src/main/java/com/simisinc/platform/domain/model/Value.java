@@ -26,6 +26,6 @@ import java.io.Serializable;
  */
 public class Value implements Serializable {
 
-  final static long serialVersionUID = 8345648404174283569L;
+  private static final long serialVersionUID = 8345648404174283569L;
 
 }

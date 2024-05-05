@@ -37,7 +37,7 @@ import com.simisinc.platform.application.cms.LoadStylesheetCommand;
 import com.simisinc.platform.domain.model.cms.Stylesheet;
 
 /**
- * Handles all web browser page requests
+ * Handles all web browser dynamic CSS requests
  *
  * @author matt rajkowski
  * @created 4/6/18 9:22 AM
@@ -87,7 +87,7 @@ public class StylesheetServlet extends HttpServlet {
 
     // Use the latest stylesheet info... (either use invalidating cache, or must load each time)
     Stylesheet stylesheet = LoadStylesheetCommand.loadStylesheetByWebPageId(webPageId);
-    if (stylesheet == null) {
+    if (stylesheet == null || StringUtils.isBlank(stylesheet.getCss())) {
       LOG.debug("Stylesheet not found for pagePath: " + pagePath);
       response.setStatus(404);
       return;

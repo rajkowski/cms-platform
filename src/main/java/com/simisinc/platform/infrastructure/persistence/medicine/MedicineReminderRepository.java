@@ -42,8 +42,7 @@ public class MedicineReminderRepository {
   private static Log LOG = LogFactory.getLog(MedicineReminderRepository.class);
 
   private static String TABLE_NAME = "medicine_reminders";
-  private static String[] PRIMARY_KEY = new String[]{"reminder_id"};
-
+  private static String[] PRIMARY_KEY = new String[] { "reminder_id" };
 
   private static DataResult query(MedicineReminderSpecification specification, DataConstraints constraints) {
     SqlJoins joins = new SqlJoins();
@@ -125,7 +124,8 @@ public class MedicineReminderRepository {
         MedicineReminderRepository::buildRecord);
   }
 
-  private static PreparedStatement createPreparedStatementForDailyReminders(Connection connection, Timestamp startDate, Timestamp endDate, DayOfWeek dayOfWeek, long medicineId) throws SQLException {
+  private static PreparedStatement createPreparedStatementForDailyReminders(Connection connection, Timestamp startDate,
+      Timestamp endDate, DayOfWeek dayOfWeek, long medicineId) throws SQLException {
     StringBuilder currentDay = new StringBuilder();
     switch (dayOfWeek) {
       case MONDAY:
@@ -154,26 +154,26 @@ public class MedicineReminderRepository {
     }
 
     String startDateValue = new SimpleDateFormat("yyyy-MM-dd").format(startDate);
-//    String endDateValue = new SimpleDateFormat("yyyy-MM-dd").format(endDate);
+    //    String endDateValue = new SimpleDateFormat("yyyy-MM-dd").format(endDate);
 
-    String SQL_QUERY =
-        "SELECT ind.item_id AS individual_id, m.medicine_id, sched.schedule_id, mt.time_id, mt.hour, mt.minute " +
-            "FROM medicines m " +
-            "LEFT JOIN items ind ON (individual_id = ind.item_id) " +
-            "LEFT JOIN items drug ON (drug_id = drug.item_id) " +
-            "LEFT JOIN medicine_schedule sched ON (m.medicine_id = sched.medicine_id) " +
-            "LEFT JOIN medicine_times mt ON (sched.schedule_id = mt.schedule_id) " +
-            "WHERE " +
-            "m.archived IS NULL " +
-            (medicineId > -1 ? "AND m.medicine_id = ? " : "") +
-            "AND sched.start_date <= ? " +
-            "AND (sched.end_date IS NULL OR sched.end_date < ?) " +
-            "AND (" +
-            "every_day = TRUE " +
-            "OR " + currentDay.toString() + " = TRUE " +
-            "OR (every_x_days IS NOT NULL AND every_x_days > 0 AND MOD(DATE_PART('day', '" + startDateValue + " 00:00:00'::date - sched.start_date)::NUMERIC, every_x_days) = 0) " +
-            ") " +
-            "ORDER BY mt.hour, mt.minute";
+    String SQL_QUERY = "SELECT ind.item_id AS individual_id, m.medicine_id, sched.schedule_id, mt.time_id, mt.hour, mt.minute " +
+        "FROM medicines m " +
+        "LEFT JOIN items ind ON (individual_id = ind.item_id) " +
+        "LEFT JOIN items drug ON (drug_id = drug.item_id) " +
+        "LEFT JOIN medicine_schedule sched ON (m.medicine_id = sched.medicine_id) " +
+        "LEFT JOIN medicine_times mt ON (sched.schedule_id = mt.schedule_id) " +
+        "WHERE " +
+        "m.archived IS NULL " +
+        (medicineId > -1 ? "AND m.medicine_id = ? " : "") +
+        "AND sched.start_date <= ? " +
+        "AND (sched.end_date IS NULL OR sched.end_date < ?) " +
+        "AND (" +
+        "every_day = TRUE " +
+        "OR " + currentDay.toString() + " = TRUE " +
+        "OR (every_x_days IS NOT NULL AND every_x_days > 0 AND MOD(DATE_PART('day', '" + startDateValue
+        + " 00:00:00'::date - sched.start_date)::NUMERIC, every_x_days) = 0) " +
+        ") " +
+        "ORDER BY mt.hour, mt.minute";
 
     int i = 0;
     PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
@@ -189,8 +189,8 @@ public class MedicineReminderRepository {
     // Load the rules to determine the daily reminders
     List<MedicineReminderRawData> records = null;
     try (Connection connection = DB.getConnection();
-         PreparedStatement pst = createPreparedStatementForDailyReminders(connection, startDate, endDate, dayOfWeek, medicineId);
-         ResultSet rs = pst.executeQuery()) {
+        PreparedStatement pst = createPreparedStatementForDailyReminders(connection, startDate, endDate, dayOfWeek, medicineId);
+        ResultSet rs = pst.executeQuery()) {
       records = new ArrayList<>();
       while (rs.next()) {
         records.add(buildRawDataRecord(rs));
@@ -203,38 +203,37 @@ public class MedicineReminderRepository {
       return;
     }
     // Use a transaction
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // Remove all reminders for the day
-        removeMedicineReminders(connection, medicineId, startDate, endDate);
-        // Add the specified reminders
-        for (MedicineReminderRawData rawData : records) {
-          Calendar calendar = Calendar.getInstance();
-          calendar.setTimeInMillis(startDate.getTime());
-          calendar.set(Calendar.HOUR_OF_DAY, rawData.getHour());
-          calendar.set(Calendar.MINUTE, rawData.getMinute());
-          calendar.set(Calendar.SECOND, 0);
-          calendar.set(Calendar.MILLISECOND, 0);
-          Timestamp reminder = new Timestamp(calendar.getTimeInMillis());
-          SqlUtils insertValues = new SqlUtils()
-              .add("individual_id", rawData.getIndividualId())
-              .add("medicine_id", rawData.getMedicineId())
-              .add("schedule_id", rawData.getScheduleId())
-              .add("time_id", rawData.getTimeId())
-              .add("reminder_date", reminder);
-          DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY);
-        }
-        // Finish the transaction
-        transaction.commit();
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Remove all reminders for the day
+      removeMedicineReminders(connection, medicineId, startDate, endDate);
+      // Add the specified reminders
+      for (MedicineReminderRawData rawData : records) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(startDate.getTime());
+        calendar.set(Calendar.HOUR_OF_DAY, rawData.getHour());
+        calendar.set(Calendar.MINUTE, rawData.getMinute());
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        Timestamp reminder = new Timestamp(calendar.getTimeInMillis());
+        SqlUtils insertValues = new SqlUtils()
+            .add("individual_id", rawData.getIndividualId())
+            .add("medicine_id", rawData.getMedicineId())
+            .add("schedule_id", rawData.getScheduleId())
+            .add("time_id", rawData.getTimeId())
+            .add("reminder_date", reminder);
+        DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY);
       }
+      // Finish the transaction
+      transaction.commit();
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
   }
 
-  private static void removeMedicineReminders(Connection connection, long medicineId, Timestamp startDate, Timestamp endDate) throws SQLException {
+  private static void removeMedicineReminders(Connection connection, long medicineId, Timestamp startDate, Timestamp endDate)
+      throws SQLException {
     SqlUtils deleteWhere = new SqlUtils()
         .add("medicine_id = ?", medicineId)
         .add("reminder_date >= ?", startDate)

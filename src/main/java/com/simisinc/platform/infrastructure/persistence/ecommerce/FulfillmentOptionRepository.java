@@ -38,7 +38,7 @@ public class FulfillmentOptionRepository {
   private static Log LOG = LogFactory.getLog(FulfillmentOptionRepository.class);
 
   private static String TABLE_NAME = "lookup_fulfillment_options";
-  private static String[] PRIMARY_KEY = new String[]{"fulfillment_id"};
+  private static String[] PRIMARY_KEY = new String[] { "fulfillment_id" };
 
   public static List<FulfillmentOption> findAll() {
     SqlUtils where = new SqlUtils().add("enabled = ?", true);
@@ -68,16 +68,14 @@ public class FulfillmentOptionRepository {
   }
 
   public static boolean remove(FulfillmentOption record) {
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // Delete the record
-        DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("fulfillment_id = ?", record.getId()));
-        // Finish transaction
-        transaction.commit();
-        return true;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Delete the record
+      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("fulfillment_id = ?", record.getId()));
+      // Finish transaction
+      transaction.commit();
+      return true;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
@@ -99,16 +97,14 @@ public class FulfillmentOptionRepository {
         .add("enabled", record.getEnabled())
         .add("overrides_others", record.getOverridesOthers());
     // Use a transaction
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // In a transaction (use the existing connection)
-        record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
-        // Finish the transaction
-        transaction.commit();
-        return record;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // In a transaction (use the existing connection)
+      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+      // Finish the transaction
+      transaction.commit();
+      return record;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
@@ -124,16 +120,14 @@ public class FulfillmentOptionRepository {
         .add("overrides_others", record.getOverridesOthers());
     SqlUtils where = new SqlUtils().add("fulfillment_id = ?", record.getId());
     // Use a transaction
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // In a transaction (use the existing connection)
-        DB.update(connection, TABLE_NAME, updateValues, where);
-        // Finish the transaction
-        transaction.commit();
-        return record;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // In a transaction (use the existing connection)
+      DB.update(connection, TABLE_NAME, updateValues, where);
+      // Finish the transaction
+      transaction.commit();
+      return record;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage(), se);
     }

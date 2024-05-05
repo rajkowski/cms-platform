@@ -123,21 +123,19 @@ public class ItemRepository {
     }
 
     // Use a transaction
-    try {
-      try (Connection connection = DB.getConnection();
-          AutoStartTransaction a = new AutoStartTransaction(connection);
-          AutoRollback transaction = new AutoRollback(connection)) {
-        // In a transaction (use the existing connection)
-        record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
-        // Manage the categories
-        ItemCategoryRepository.insertItemCategoryList(connection, record);
-        // Manage a few related tables
-        CollectionRepository.updateItemCount(connection, record.getCollectionId(), 1);
-        CategoryRepository.updateItemCount(connection, record.getCategoryId(), 1);
-        // Finish the transaction
-        transaction.commit();
-        return record;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // In a transaction (use the existing connection)
+      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+      // Manage the categories
+      ItemCategoryRepository.insertItemCategoryList(connection, record);
+      // Manage a few related tables
+      CollectionRepository.updateItemCount(connection, record.getCollectionId(), 1);
+      CategoryRepository.updateItemCount(connection, record.getCategoryId(), 1);
+      // Finish the transaction
+      transaction.commit();
+      return record;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
@@ -209,57 +207,55 @@ public class ItemRepository {
     List<Long> newCategoryList = Arrays.asList(record.getCategoryIdList());
 
     // Use a transaction
-    try {
-      try (Connection connection = DB.getConnection();
-          AutoStartTransaction a = new AutoStartTransaction(connection);
-          AutoRollback transaction = new AutoRollback(connection)) {
-        // In a transaction (use the existing connection)
-        DB.update(connection, TABLE_NAME, updateValues, where);
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // In a transaction (use the existing connection)
+      DB.update(connection, TABLE_NAME, updateValues, where);
 
-        // If the master categoryId does not match, then update the category id counts
-        if (previousRecord.getCategoryId() != record.getCategoryId()) {
-          // This category was removed
-          if (previousRecord.getCategoryId() > -1) {
-            CategoryRepository.updateItemCount(connection, previousRecord.getCategoryId(), -1);
-          }
-          // This category was added
-          if (record.getCategoryId() > -1) {
-            CategoryRepository.updateItemCount(connection, record.getCategoryId(), 1);
+      // If the master categoryId does not match, then update the category id counts
+      if (previousRecord.getCategoryId() != record.getCategoryId()) {
+        // This category was removed
+        if (previousRecord.getCategoryId() > -1) {
+          CategoryRepository.updateItemCount(connection, previousRecord.getCategoryId(), -1);
+        }
+        // This category was added
+        if (record.getCategoryId() > -1) {
+          CategoryRepository.updateItemCount(connection, record.getCategoryId(), 1);
+        }
+      }
+
+      // Compare the existing list and the changed list
+      if (existingCategoryList != null) {
+        for (ItemCategory existingCategory : existingCategoryList) {
+          if (!newCategoryList.contains(existingCategory.getCategoryId())) {
+            // Remove from database
+            ItemCategoryRepository.removeItemCategoryId(connection, record, existingCategory.getCategoryId());
           }
         }
+      }
 
-        // Compare the existing list and the changed list
+      for (Long newCategoryId : newCategoryList) {
+        boolean hasCategory = false;
         if (existingCategoryList != null) {
           for (ItemCategory existingCategory : existingCategoryList) {
-            if (!newCategoryList.contains(existingCategory.getCategoryId())) {
-              // Remove from database
-              ItemCategoryRepository.removeItemCategoryId(connection, record, existingCategory.getCategoryId());
+            if (existingCategory.getCategoryId() == newCategoryId) {
+              hasCategory = true;
+              break;
             }
           }
         }
-
-        for (Long newCategoryId : newCategoryList) {
-          boolean hasCategory = false;
-          if (existingCategoryList != null) {
-            for (ItemCategory existingCategory : existingCategoryList) {
-              if (existingCategory.getCategoryId() == newCategoryId) {
-                hasCategory = true;
-                break;
-              }
-            }
-          }
-          if (!hasCategory) {
-            // Add to database
-            ItemCategoryRepository.insertItemCategoryId(connection, record, newCategoryId);
-          }
+        if (!hasCategory) {
+          // Add to database
+          ItemCategoryRepository.insertItemCategoryId(connection, record, newCategoryId);
         }
-
-        // Finish the transaction
-        transaction.commit();
-        // Expire the cache
-        //        CacheManager.invalidateKey(CacheManager.ITEM_UNIQUE_ID_CACHE, record.getUniqueId());
-        return record;
       }
+
+      // Finish the transaction
+      transaction.commit();
+      // Expire the cache
+      //        CacheManager.invalidateKey(CacheManager.ITEM_UNIQUE_ID_CACHE, record.getUniqueId());
+      return record;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage(), se);
     }
