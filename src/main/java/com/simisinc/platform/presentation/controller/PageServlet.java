@@ -266,7 +266,7 @@ public class PageServlet extends HttpServlet {
         }
       }
 
-      // Allow content admins to see a page
+      // When the Page XML doesn't exist, allow content admins to see a page
       if (pageRef == null &&
           (userSession.hasRole("admin") ||
               userSession.hasRole("content-manager"))) {
@@ -279,7 +279,7 @@ public class PageServlet extends HttpServlet {
           "false".equals(sitePropertyMap.getOrDefault("site.online", "false"))) {
         if ("/".equals(pageRequest.getPagePath())) {
           pageRef = WebPageXmlLayoutCommand.retrievePage("_new_install_");
-//        } else if (!"/login".equals(pagePath)) {
+          //        } else if (!"/login".equals(pagePath)) {
           // @todo implement and test this...
           // Redirect to /, except for login page
         }
@@ -309,7 +309,7 @@ public class PageServlet extends HttpServlet {
         return;
       }
 
-      // Determine the core data to be used by local and remote widgets...
+      // Determine the system and user data to be used by local and remote widgets...
       Map<String, String> coreData = new HashMap<>();
       coreData.put("userId", String.valueOf(userSession.getUserId()));
 
@@ -412,8 +412,20 @@ public class PageServlet extends HttpServlet {
           pageRenderInfo.setTitle(thisItem.getName());
         }
       }
-      if (webPage != null && StringUtils.isNotBlank(webPage.getImageUrl())) {
-        pageRenderInfo.setImageUrl(webPage.getImageUrl());
+      // HTML metadata (which can also be updated later via widgets)
+      if (webPage != null) {
+        if (StringUtils.isBlank(pageRenderInfo.getTitle())) {
+          pageRenderInfo.setTitle(webPage.getTitle());
+        }
+        if (StringUtils.isBlank(pageRenderInfo.getKeywords())) {
+          pageRenderInfo.setKeywords(webPage.getKeywords());
+        }
+        if (StringUtils.isBlank(pageRenderInfo.getDescription())) {
+          pageRenderInfo.setDescription(webPage.getDescription());
+        }
+        if (StringUtils.isNotBlank(webPage.getImageUrl())) {
+          pageRenderInfo.setImageUrl(webPage.getImageUrl());
+        }
       }
 
       // Finally... we have a page ready to be processed...
@@ -553,7 +565,7 @@ public class PageServlet extends HttpServlet {
         request.getServletContext().getRequestDispatcher("/WEB-INF/jsp/embedded.jsp").forward(request, response);
       } else {
         if ("container".equals(request.getSession().getAttribute(SessionConstants.X_VIEW_MODE))) {
-          // For API content
+          // For embedded mobile and API content
           request.setAttribute(PAGE_BODY, "/WEB-INF/jsp/container-layout.jsp");
         } else {
           // For web content with a header and footer
