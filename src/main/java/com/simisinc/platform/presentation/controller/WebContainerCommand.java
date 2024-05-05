@@ -41,6 +41,7 @@ import org.thymeleaf.context.Context;
 
 import com.simisinc.platform.ApplicationInfo;
 import com.simisinc.platform.application.LoadUserCommand;
+import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.application.cms.HtmlCommand;
 import com.simisinc.platform.application.items.LoadCollectionCommand;
 import com.simisinc.platform.application.items.LoadItemCommand;
