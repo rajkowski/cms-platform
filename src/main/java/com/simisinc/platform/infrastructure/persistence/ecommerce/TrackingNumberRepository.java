@@ -70,7 +70,7 @@ public class TrackingNumberRepository {
     return add(record);
   }
 
-  /** Save the tracking number, update the order **/
+  /** Save the tracking number, update the order */
   private static TrackingNumber add(TrackingNumber record) {
     // Use a transaction
     try (Connection connection = DB.getConnection();
@@ -127,7 +127,7 @@ public class TrackingNumberRepository {
     return null;
   }
 
-  /** Update the order field **/
+  /** Update the order field */
   private static void updateOrderField(Connection connection, TrackingNumber record) throws SQLException {
     SqlUtils update = new SqlUtils()
         .add("tracking_numbers = sub_q.agg_value " +
