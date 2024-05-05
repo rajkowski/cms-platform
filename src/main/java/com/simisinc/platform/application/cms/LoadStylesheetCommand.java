@@ -43,7 +43,7 @@ public class LoadStylesheetCommand {
 
   private static Log LOG = LogFactory.getLog(LoadStylesheetCommand.class);
   private static long GLOBAL_CSS_PAGE = -1L;
-  private static String GLOBAL_CSS_FILE = "/css/color.css";
+  private static String GLOBAL_CSS_FILE = "/css/global.css";
 
   private static List<Long> webPageIdNotFoundList = new ArrayList<>();
   private static Boolean hasGlobalStylesheetFile;
