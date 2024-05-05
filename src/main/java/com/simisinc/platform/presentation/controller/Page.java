@@ -18,16 +18,17 @@ package com.simisinc.platform.presentation.controller;
 
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Description
+ * Represents the page SEO and composable layout, along with the permissions
  *
  * @author matt rajkowski
  * @created 4/6/18 2:15 PM
  */
-public class Page {
+public class Page implements Serializable {
 
   private String name;
   private String title;

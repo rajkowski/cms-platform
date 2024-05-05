@@ -16,15 +16,14 @@
 
 package com.simisinc.platform.presentation.controller;
 
-import com.simisinc.platform.domain.model.cms.WebPageTemplate;
-import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Serializable;
+import java.io.StringWriter;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 import javax.servlet.ServletContext;
 import javax.xml.parsers.DocumentBuilder;
@@ -37,17 +36,20 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Serializable;
-import java.io.StringWriter;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
+import com.simisinc.platform.domain.model.cms.WebPageTemplate;
 
 /**
- * Description
+ * Reads web page templates from the file system
  *
  * @author matt rajkowski
  * @created 2/5/2022 6:45 PM
@@ -56,8 +58,8 @@ import java.util.Set;
  */
 public class XMLWebPageTemplateLoader implements Serializable {
 
-  static final long serialVersionUID = 536435325324169646L;
-  private static Log LOG = LogFactory.getLog(XMLHeaderLoader.class);
+  private static final long serialVersionUID = 536435325324169646L;
+  private static Log LOG = LogFactory.getLog(XMLWebPageTemplateLoader.class);
 
   public XMLWebPageTemplateLoader() {
   }
@@ -68,7 +70,7 @@ public class XMLWebPageTemplateLoader implements Serializable {
     return webPageTemplateList;
   }
 
-  public static void retrieveTemplateList(ServletContext context, List<WebPageTemplate> webPageTemplateList, String directory) {
+  private static void retrieveTemplateList(ServletContext context, List<WebPageTemplate> webPageTemplateList, String directory) {
     Set<String> paths = context.getResourcePaths(directory);
     if (paths == null || paths.isEmpty()) {
       return;

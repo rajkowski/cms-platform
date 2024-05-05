@@ -28,7 +28,7 @@ import java.util.List;
  */
 public class DataConstraints implements Serializable {
 
-  final static long serialVersionUID = 8345648404174283569L;
+  private static final long serialVersionUID = 8345648404174283569L;
 
   private int pageNumber = 1;
   private int pageSize = -1;

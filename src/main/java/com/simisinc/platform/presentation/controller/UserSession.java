@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Description
+ * Details about the current user
  *
  * @author matt rajkowski
  * @created 4/9/18 8:32 AM
@@ -44,7 +44,7 @@ public class UserSession implements Serializable {
   public static final String WEB_SOURCE = "web";
   public static final String OAUTH_SOURCE = "oauth";
 
-  final static long serialVersionUID = 8345648404174283570L;
+  private static final long serialVersionUID = 8345648404174283570L;
   protected static Log LOG = LogFactory.getLog(UserSession.class);
 
   private String sessionId = null;
