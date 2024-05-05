@@ -17,6 +17,14 @@ In OAuth Provider, configure the client and redirect URL, a dev example would be
 
 On SimIS CMS startup, configure the following environment variables:
 
+The Site's URL, used in general places and redirects:
+
+```bash
+CMS_SITE_URL=http://localhost:8080
+```
+
+The OAuth details:
+
 ```bash
 OAUTH_ENABLED=true
 OAUTH_SERVER_URL=https://localhost/realms/example
