@@ -16,10 +16,11 @@
 
 package com.simisinc.platform.rest.services.cms;
 
+import com.simisinc.platform.application.cms.ContentValuesCommand;
 import com.simisinc.platform.domain.model.cms.Content;
 
 /**
- * Description
+ * The allowed fields used in a service call
  *
  * @author matt rajkowski
  * @created 1/22/19 12:12 PM
@@ -31,7 +32,7 @@ public class ContentResponse {
 
   public ContentResponse(Content thisContent) {
     uniqueId = thisContent.getUniqueId();
-    content = thisContent.getContent();
+    content = ContentValuesCommand.replaceDynamicValues(thisContent.getContent());
   }
 
   public String getUniqueId() {
