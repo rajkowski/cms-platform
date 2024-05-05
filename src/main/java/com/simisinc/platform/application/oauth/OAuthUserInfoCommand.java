@@ -108,7 +108,7 @@ public class OAuthUserInfoCommand {
       user = UserRepository.findByUsername(userBean.getUsername());
     }
     if (user == null) {
-      LOG.debug("User was not found, setting up a new user");
+      LOG.info("User was not found, setting up a new user: " + userBean.getEmail());
       user = new User();
     }
     // Update related values
