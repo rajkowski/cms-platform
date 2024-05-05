@@ -67,10 +67,10 @@ class BlogListWidgetTest extends WidgetBase {
     // Verify the request
     Assertions.assertEquals(BlogListWidget.JSP, widgetContext.getJsp());
 
-    List<Blog> blogListRequest = (List) request.getAttribute("blogList");
+    List<Blog> blogListRequest = (List) pageRequest.getAttribute("blogList");
     Assertions.assertEquals(blogList.size(), blogListRequest.size());
 
-    Map<Long, Long> blogPostCount = (Map) request.getAttribute("blogPostCount");
+    Map<Long, Long> blogPostCount = (Map) pageRequest.getAttribute("blogPostCount");
     Assertions.assertEquals(8L, blogPostCount.get(blog.getId()));
   }
 

@@ -16,13 +16,11 @@
 
 package com.simisinc.platform.presentation.controller;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
@@ -42,8 +40,14 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 /**
- * Description
+ * Streams file content with HEAD and resume, and file ranges for video playback
  *
  * @author matt rajkowski
  * @created 1/22/19 12:12 PM
@@ -56,7 +60,7 @@ public class MultipartFileSender {
   private static Log LOG = LogFactory.getLog(MultipartFileSender.class);
 
   Path filepath;
-  HttpServletRequest request;
+  PageRequest request;
   HttpServletResponse response;
   String contentType = null;
   String filename = null;
@@ -82,8 +86,8 @@ public class MultipartFileSender {
     return this;
   }
 
-  public MultipartFileSender with(HttpServletRequest httpRequest) {
-    request = httpRequest;
+  public MultipartFileSender with(PageRequest pageRequest) {
+    request = pageRequest;
     return this;
   }
 
@@ -124,7 +128,9 @@ public class MultipartFileSender {
       return;
     }
 
-    long lastModified = LocalDateTime.ofInstant(lastModifiedObj.toInstant(), ZoneId.of(ZoneOffset.systemDefault().getId())).toEpochSecond(ZoneOffset.UTC);
+    long lastModified = LocalDateTime
+        .ofInstant(lastModifiedObj.toInstant(), ZoneId.of(ZoneOffset.systemDefault().getId()))
+        .toEpochSecond(ZoneOffset.UTC);
 
     // Validate request headers for caching ---------------------------------------------------
 
@@ -333,7 +339,7 @@ public class MultipartFileSender {
      */
     public static long stream(InputStream input, OutputStream output) throws IOException {
       try (ReadableByteChannel inputChannel = Channels.newChannel(input);
-           WritableByteChannel outputChannel = Channels.newChannel(output)) {
+          WritableByteChannel outputChannel = Channels.newChannel(output)) {
         ByteBuffer buffer = ByteBuffer.allocateDirect(DEFAULT_BUFFER_SIZE);
         long size = 0;
 

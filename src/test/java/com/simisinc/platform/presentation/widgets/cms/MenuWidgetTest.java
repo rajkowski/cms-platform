@@ -52,7 +52,7 @@ class MenuWidgetTest extends WidgetBase {
             "</widget>");
 
     // Set the page the user is on
-    request.setAttribute(RequestConstants.WEB_PAGE_PATH, "/");
+    pageRequest.setAttribute(RequestConstants.WEB_PAGE_PATH, "/");
 
     try (MockedStatic<LoadSitePropertyCommand> property = mockStatic(LoadSitePropertyCommand.class)) {
       property.when(() -> LoadSitePropertyCommand.loadByName("site.login")).thenReturn("true");
@@ -62,7 +62,7 @@ class MenuWidgetTest extends WidgetBase {
         // Execute the widget
         MenuWidget widget = new MenuWidget();
         widget.execute(widgetContext);
-        List<Map<String, String>> linkList = (List) widgetContext.getRequest().getAttribute("linkList");
+        List<Map<String, String>> linkList = (List) pageRequest.getAttribute("linkList");
 
         // Verify the result
         Assertions.assertEquals(3, linkList.size());
@@ -72,7 +72,7 @@ class MenuWidgetTest extends WidgetBase {
         setRoles(widgetContext, ADMIN);
 
         widget.execute(widgetContext);
-        linkList = (List) widgetContext.getRequest().getAttribute("linkList");
+        linkList = (List) pageRequest.getAttribute("linkList");
 
         // Verify the result
         Assertions.assertEquals(4, linkList.size());
@@ -87,7 +87,7 @@ class MenuWidgetTest extends WidgetBase {
         // Execute the widget
         MenuWidget widget = new MenuWidget();
         widget.execute(widgetContext);
-        List<Map<String, String>> linkList = (List) widgetContext.getRequest().getAttribute("linkList");
+        List<Map<String, String>> linkList = (List) pageRequest.getAttribute("linkList");
 
         Assertions.assertEquals(2, linkList.size());
         Assertions.assertEquals(MenuWidget.JSP, widgetContext.getJsp());

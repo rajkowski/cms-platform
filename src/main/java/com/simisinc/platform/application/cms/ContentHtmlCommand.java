@@ -75,8 +75,9 @@ public class ContentHtmlCommand {
       html = context.getPreferences().get("html");
     }
 
-    // It's possible to have different content injected into this content
+    // It's possible to have different content injected into this content, so process it
     html = embedInlineContent(context, html);
+    html = ContentValuesCommand.replaceDynamicValues(html);
 
     // Display a button for admins to add content
     boolean hasEditorPermission = (context.hasRole("admin") || context.hasRole("content-manager"));

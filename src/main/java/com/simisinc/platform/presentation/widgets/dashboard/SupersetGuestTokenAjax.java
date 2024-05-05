@@ -55,7 +55,7 @@ public class SupersetGuestTokenAjax extends GenericWidget {
       context.setJson("{}");
       return context;
     }
-    String widgetUniqueIdValue = (String) context.getRequest().getSession().getAttribute(SESSION_PREFIX + widgetUniqueId + dashboardId);
+    String widgetUniqueIdValue = (String) context.getSession().getAttribute(SESSION_PREFIX + widgetUniqueId + dashboardId);
     if (widgetUniqueIdValue == null || !widgetUniqueIdValue.equals(widgetUniqueId)) {
       LOG.warn("Session value did not match for widgetUniqueId: " + widgetUniqueId);
       context.setJson("{}");
@@ -63,7 +63,7 @@ public class SupersetGuestTokenAjax extends GenericWidget {
     }
 
     // Determine the optional rls value
-    String rlsClause = (String) context.getRequest().getSession().getAttribute(SESSION_PREFIX + widgetUniqueId + dashboardId + "-rls-clause");
+    String rlsClause = (String) context.getSession().getAttribute(SESSION_PREFIX + widgetUniqueId + dashboardId + "-rls-clause");
     LOG.debug("Using rls-clause: " + rlsClause);
 
     // Request the dashboard

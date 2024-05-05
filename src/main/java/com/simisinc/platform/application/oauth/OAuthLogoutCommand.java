@@ -19,7 +19,7 @@ package com.simisinc.platform.application.oauth;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -40,11 +40,11 @@ public class OAuthLogoutCommand {
 
   private static Log LOG = LogFactory.getLog(OAuthLogoutCommand.class);
 
-  public static void logout(long userId, HttpServletRequest request) {
+  public static void logout(long userId, HttpSession session) {
     // Remove the user token
-    String userTokenValue = (String) request.getSession().getAttribute(SessionConstants.OAUTH_USER_TOKEN);
-    request.getSession().removeAttribute(SessionConstants.OAUTH_USER_TOKEN);
-    request.getSession().removeAttribute(SessionConstants.OAUTH_USER_EXPIRATION_TIME);
+    String userTokenValue = (String) session.getAttribute(SessionConstants.OAUTH_USER_TOKEN);
+    session.removeAttribute(SessionConstants.OAUTH_USER_TOKEN);
+    session.removeAttribute(SessionConstants.OAUTH_USER_EXPIRATION_TIME);
 
     // Cleanup the database
     UserToken userToken = UserTokenRepository.findByToken(userTokenValue);

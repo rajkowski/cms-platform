@@ -16,24 +16,11 @@
 
 package com.simisinc.platform.presentation.controller;
 
-import com.simisinc.platform.ApplicationInfo;
-import com.simisinc.platform.application.LoadUserCommand;
-import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
-import com.simisinc.platform.application.cms.HtmlCommand;
-import com.simisinc.platform.application.items.LoadCollectionCommand;
-import com.simisinc.platform.application.items.LoadItemCommand;
-import com.simisinc.platform.domain.model.User;
-import com.simisinc.platform.domain.model.items.Collection;
-import com.simisinc.platform.domain.model.items.Item;
-import com.simisinc.platform.presentation.widgets.cms.*;
-import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.commons.text.StringEscapeUtils;
+import static com.simisinc.platform.presentation.controller.RequestConstants.ERROR_MESSAGE_TEXT;
+import static com.simisinc.platform.presentation.controller.RequestConstants.MESSAGE_TEXT;
+import static com.simisinc.platform.presentation.controller.RequestConstants.SUCCESS_MESSAGE_TEXT;
+import static com.simisinc.platform.presentation.controller.RequestConstants.WARNING_MESSAGE_TEXT;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.lang.reflect.Method;
@@ -42,17 +29,35 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.simisinc.platform.presentation.controller.RequestConstants.*;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.commons.text.StringEscapeUtils;
+import org.thymeleaf.context.Context;
+
+import com.simisinc.platform.ApplicationInfo;
+import com.simisinc.platform.application.LoadUserCommand;
+import com.simisinc.platform.application.cms.HtmlCommand;
+import com.simisinc.platform.application.items.LoadCollectionCommand;
+import com.simisinc.platform.application.items.LoadItemCommand;
+import com.simisinc.platform.domain.model.User;
+import com.simisinc.platform.domain.model.items.Collection;
+import com.simisinc.platform.domain.model.items.Item;
+import com.simisinc.platform.presentation.widgets.cms.WebContainerContext;
 
 /**
- * Description
+ * Process for executing the widgets on a web page
  *
  * @author matt rajkowski
  * @created 2/7/2021 2:40 PM
  */
 public class WebContainerCommand implements Serializable {
 
-  static final long serialVersionUID = 536435325324169646L;
+  private static final long serialVersionUID = 536435325324169646L;
   private static Log LOG = LogFactory.getLog(WebContainerCommand.class);
 
   private static final String REQUEST_SHARED_VALUE_MAP = "REQUEST_SHARED_VALUE_MAP";
@@ -62,16 +67,18 @@ public class WebContainerCommand implements Serializable {
   private static final String ERROR_MESSAGE = "ERROR_MESSAGE";
   private static final String REQUEST_OBJECT = "REQUEST_OBJECT";
 
-
-  public static boolean processWidgets(WebContainerContext webContainerContext, List<Section> sections,
+  public static PageResponse processWidgets(WebContainerContext webContainerContext, List<Section> sections,
                                        ContainerRenderInfo containerRenderInfo, Map<String, String> coreData,
-                                       String contextPath, String pagePath, UserSession userSession, Map<String, String> themePropertyMap) throws Exception {
+      UserSession userSession, Map<String, String> themePropertyMap, HttpServletRequest httpRequest)
+      throws Exception {
 
     LOG.debug("Processing container... " + containerRenderInfo.getName() + ": " + sections.size());
 
-    HttpServletRequest request = webContainerContext.getRequest();
+    PageRequest pageRequest = webContainerContext.getPageRequest();
     HttpServletResponse response = webContainerContext.getResponse();
     ControllerSession controllerSession = webContainerContext.getControllerSession();
+
+    PageResponse pageResponse = new PageResponse();
 
     // Check the controller session for shared widget data
     Map<String, String> sharedWidgetValueMap = null;
@@ -94,7 +101,7 @@ public class WebContainerCommand implements Serializable {
         LOG.debug("SECTION NOT ALLOWED: " +
             (!section.getRoles().isEmpty() ? "[roles=" + section.getRoles().toString() + "]" + " " : "") +
             (!section.getGroups().isEmpty() ? "[groups=" + section.getGroups().toString() + "]" + " " : "") +
-            request.getRemoteAddr());
+            pageRequest.getRemoteAddr());
         continue;
       }
 
@@ -109,7 +116,7 @@ public class WebContainerCommand implements Serializable {
           LOG.debug("COLUMN NOT ALLOWED: " +
               (!column.getRoles().isEmpty() ? "[roles=" + column.getRoles().toString() + "]" + " " : "") +
               (!column.getGroups().isEmpty() ? "[groups=" + column.getGroups().toString() + "]" + " " : "") +
-              request.getRemoteAddr());
+              pageRequest.getRemoteAddr());
           continue;
         }
 
@@ -120,12 +127,16 @@ public class WebContainerCommand implements Serializable {
         for (Widget widget : column.getWidgets()) {
 
           // Reset the request attributes for each widget
-          Enumeration<?> attributeNames = request.getAttributeNames();
+          Enumeration<?> attributeNames = pageRequest.getAttributeNames();
           while (attributeNames.hasMoreElements()) {
             String name = (String) attributeNames.nextElement();
-//              LOG.debug("Found attribute: " + name);
             if (!name.startsWith("controller") && !name.startsWith("master") && !name.startsWith("request")) {
-              request.removeAttribute(name);
+              // Page request attributes are set by widgets for both JSPs and Templates
+              pageRequest.removeAttribute(name);
+              // HTTP request attributes are set by this container for JSPs specifically
+              if (httpRequest != null) {
+                httpRequest.removeAttribute(name);
+              }
             }
           }
 
@@ -134,7 +145,7 @@ public class WebContainerCommand implements Serializable {
             LOG.debug("WIDGET NOT ALLOWED: " + widget.getWidgetName() + " " +
                 (!widget.getRoles().isEmpty() ? "[roles=" + widget.getRoles().toString() + "]" + " " : "") +
                 (!widget.getGroups().isEmpty() ? "[groups=" + widget.getGroups().toString() + "]" + " " : "") +
-                request.getRemoteAddr());
+                pageRequest.getRemoteAddr());
             continue;
           }
 
@@ -148,25 +159,27 @@ public class WebContainerCommand implements Serializable {
               continue;
             }
             // Validate the token and fail immediately
-            String formToken = request.getParameter("token");
+            String formToken = pageRequest.getParameter("token");
             if (!userSession.getFormToken().equals(formToken)) {
               controllerSession.clearAllWidgetData();
-              controllerSession.addWidgetData(thisWidgetUniqueId, MESSAGE, "Your session may have expired before submitting the form, please try again");
+              controllerSession.addWidgetData(thisWidgetUniqueId, MESSAGE,
+                  "Your session may have expired before submitting the form, please try again");
               String siteUrl = LoadSitePropertyCommand.loadByName("site.url");
-              response.sendRedirect(siteUrl + contextPath + containerRenderInfo.getName());
-              return true;
+              response.sendRedirect(siteUrl + pageRequest.getContextPath() + containerRenderInfo.getName());
+              pageResponse.setHandled(true);
+              return pageResponse;
             }
           }
 
-          // Setup the context for this widget processor
-          WidgetContext widgetContext = new WidgetContext(request, response, thisWidgetUniqueId, containerRenderInfo.getName());
-          widgetContext.setParameterMap(request.getParameterMap());
+          WidgetContext widgetContext = new WidgetContext(webContainerContext.getApplicationURL(), pageRequest, httpRequest, response, thisWidgetUniqueId,
+              containerRenderInfo.getName());
+          widgetContext.setParameterMap(pageRequest.getParameterMap());
           widgetContext.setCoreData(coreData);
           widgetContext.setUserSession(userSession);
           widgetContext.setSharedRequestValueMap(sharedWidgetValueMap);
 
           // Allow the widget to use the properties
-          request.setAttribute("themePropertyMap", themePropertyMap);
+          pageRequest.setAttribute("themePropertyMap", themePropertyMap);
 
           // Get a copy of the preferences and translate any variables
           Map<String, String> preferences = new HashMap<>();
@@ -175,10 +188,11 @@ public class WebContainerCommand implements Serializable {
             String value = widget.getPreferences().get(preference);
             // check for dynamic preferences
             while (value.contains("${ctx}")) {
-              value = StringUtils.replace(value, "${ctx}", contextPath);
+              value = StringUtils.replace(value, "${ctx}", pageRequest.getContextPath());
             }
             if (value.contains("${platform.")) {
-              value = StringUtils.replace(value, "${platform.name}", StringEscapeUtils.escapeXml11(ApplicationInfo.PRODUCT_NAME));
+              value = StringUtils.replace(value, "${platform.name}",
+                  StringEscapeUtils.escapeXml11(ApplicationInfo.PRODUCT_NAME));
               value = StringUtils.replace(value, "${platform.url}", ApplicationInfo.PRODUCT_URL);
               value = StringUtils.replace(value, "${platform.version}", ApplicationInfo.VERSION);
             }
@@ -186,7 +200,7 @@ public class WebContainerCommand implements Serializable {
               if (webContainerContext.getWebPage() != null) {
                 value = StringUtils.replace(value, "${webPage.link}", webContainerContext.getWebPage().getLink());
               } else {
-                value = StringUtils.replace(value, "${webPage.link}", pagePath);
+                value = StringUtils.replace(value, "${webPage.link}", pageRequest.getPagePath());
               }
               if (widgetContext.getUri().contains("/")) {
                 String webPageUniqueId = widgetContext.getUri().substring(widgetContext.getUri().lastIndexOf("/") + 1);
@@ -194,7 +208,8 @@ public class WebContainerCommand implements Serializable {
               }
             }
             if (value.contains("${collection.") && coreData.containsKey("collectionUniqueId")) {
-              Collection collection = LoadCollectionCommand.loadCollectionByUniqueId(coreData.get("collectionUniqueId"));
+              Collection collection = LoadCollectionCommand
+                  .loadCollectionByUniqueId(coreData.get("collectionUniqueId"));
               value = replaceVariable(value, "collection.uniqueId", collection, "uniqueId");
               value = replaceVariable(value, "collection.name", collection, "name");
               value = replaceVariable(value, "collection.link", collection, "listingsLink");
@@ -225,7 +240,7 @@ public class WebContainerCommand implements Serializable {
               value = replaceVariable(value, "user.fullName", thisUser, "fullName");
             }
             while (value.contains("${request.")) {
-              value = replaceVariableWithParameterValue(request, value);
+              value = replaceVariableWithParameterValue(pageRequest, value);
             }
             preferences.put(preference, value);
           }
@@ -242,33 +257,33 @@ public class WebContainerCommand implements Serializable {
           String widgetMessage = (String) controllerSession.getWidgetData(thisWidgetUniqueId, MESSAGE);
           if (widgetMessage != null) {
             widgetContext.setMessage(widgetMessage);
-            request.setAttribute(MESSAGE_TEXT, widgetMessage);
+            pageRequest.setAttribute(MESSAGE_TEXT, widgetMessage);
             controllerSession.clearWidgetData(thisWidgetUniqueId, MESSAGE);
           }
           String widgetSuccessMessage = (String) controllerSession.getWidgetData(thisWidgetUniqueId, SUCCESS_MESSAGE);
           if (widgetSuccessMessage != null) {
             widgetContext.setSuccessMessage(widgetSuccessMessage);
-            request.setAttribute(SUCCESS_MESSAGE_TEXT, widgetSuccessMessage);
+            pageRequest.setAttribute(SUCCESS_MESSAGE_TEXT, widgetSuccessMessage);
             controllerSession.clearWidgetData(thisWidgetUniqueId, SUCCESS_MESSAGE);
           }
           String widgetWarningMessage = (String) controllerSession.getWidgetData(thisWidgetUniqueId, WARNING_MESSAGE);
           if (widgetWarningMessage != null) {
             widgetContext.setWarningMessage(widgetWarningMessage);
-            request.setAttribute(WARNING_MESSAGE_TEXT, widgetWarningMessage);
+            pageRequest.setAttribute(WARNING_MESSAGE_TEXT, widgetWarningMessage);
             controllerSession.clearWidgetData(thisWidgetUniqueId, WARNING_MESSAGE);
           }
           String widgetErrorMessage = (String) controllerSession.getWidgetData(thisWidgetUniqueId, ERROR_MESSAGE);
           if (widgetErrorMessage != null) {
             widgetContext.setErrorMessage(widgetErrorMessage);
-            request.setAttribute(ERROR_MESSAGE_TEXT, widgetErrorMessage);
+            pageRequest.setAttribute(ERROR_MESSAGE_TEXT, widgetErrorMessage);
             controllerSession.clearWidgetData(thisWidgetUniqueId, ERROR_MESSAGE);
           }
 
           // Make this widget context and resources available in the request during processing
-          request.setAttribute(RequestConstants.CONTEXT_PATH, contextPath);
-          request.setAttribute(RequestConstants.WIDGET_CONTEXT, widgetContext);
-          request.setAttribute("webPage", webContainerContext.getWebPage());
-          request.setAttribute(RequestConstants.WEB_PAGE_PATH, pagePath);
+          pageRequest.setAttribute(RequestConstants.CONTEXT_PATH, pageRequest.getContextPath());
+          pageRequest.setAttribute(RequestConstants.WIDGET_CONTEXT, widgetContext);
+          pageRequest.setAttribute("webPage", webContainerContext.getWebPage());
+          pageRequest.setAttribute(RequestConstants.WEB_PAGE_PATH, pageRequest.getPagePath());
 
           // Get the cached class reference for processing
           Object classRef = webContainerContext.getWidgetInstances().get(widget.getWidgetName());
@@ -292,17 +307,18 @@ public class WebContainerCommand implements Serializable {
             }
             LOG.debug("Executing widget: " + widget.getWidgetName() + "." + methodName + " [" + thisWidgetUniqueId + "]");
             Method method = classRef.getClass().getMethod(methodName, widgetContext.getClass());
-            result = (WidgetContext) method.invoke(classRef, new Object[]{widgetContext});
+            result = (WidgetContext) method.invoke(classRef, new Object[] { widgetContext });
             // Check for an alternate widget and execute it, log this
             if (result != null && result.hasWidgetName()) {
-              LOG.warn("Widget requesting a different widget to execute: " + result.getWidgetName());
+              LOG.trace("Widget requesting a different widget to execute: " + result.getWidgetName());
               classRef = webContainerContext.getWidgetInstances().get(result.getWidgetName());
               if (classRef == null) {
                 LOG.error("Class not found for widget: " + result.getWidgetName());
                 continue;
               }
+              LOG.debug("Executing widget: " + result.getWidgetName() + "." + methodName + " [" + thisWidgetUniqueId + "]");
               method = classRef.getClass().getMethod(methodName, widgetContext.getClass());
-              result = (WidgetContext) method.invoke(classRef, new Object[]{widgetContext});
+              result = (WidgetContext) method.invoke(classRef, new Object[] { widgetContext });
             }
           } catch (NoSuchMethodException nm) {
             LOG.error("No Such Method Exception for method execute. MESSAGE = " + nm.getMessage(), nm);
@@ -322,11 +338,15 @@ public class WebContainerCommand implements Serializable {
               if (webContainerContext.getWebPage() != null) {
                 pageRenderInfo.setTitle(
                     widgetContext.getPageTitle() +
-                        (StringUtils.isNotBlank(webContainerContext.getWebPage().getTitle()) ? " - " + webContainerContext.getWebPage().getTitle() : ""));
+                        (StringUtils.isNotBlank(webContainerContext.getWebPage().getTitle())
+                            ? " - " + webContainerContext.getWebPage().getTitle()
+                            : ""));
               } else if (webContainerContext.getPage() != null) {
                 pageRenderInfo.setTitle(
                     widgetContext.getPageTitle() +
-                        (StringUtils.isNotBlank(webContainerContext.getPage().getTitle()) ? " - " + webContainerContext.getPage().getTitle() : ""));
+                        (StringUtils.isNotBlank(webContainerContext.getPage().getTitle())
+                            ? " - " + webContainerContext.getPage().getTitle()
+                            : ""));
               }
             }
             if (StringUtils.isNotBlank(widgetContext.getPageDescription())) {
@@ -346,14 +366,16 @@ public class WebContainerCommand implements Serializable {
             PrintWriter out = response.getWriter();
             out.print(widgetContext.getJson());
             out.flush();
-            return true;
+            pageResponse.setHandled(true);
+            return pageResponse;
           }
 
           // A widget can handle the response, so exit
           if (widgetContext.handledResponse()) {
             LOG.debug("Widget handled response...");
             controllerSession.clearAllWidgetData();
-            return true;
+            pageResponse.setHandled(true);
+            return pageResponse;
           }
 
           // See if the widget issued a redirect
@@ -361,8 +383,9 @@ public class WebContainerCommand implements Serializable {
             if (widgetContext.hasRedirect()) {
               controllerSession.clearAllWidgetData();
               String siteUrl = LoadSitePropertyCommand.loadByName("site.url");
-              response.sendRedirect(siteUrl + contextPath + widgetContext.getRedirect());
-              return true;
+              response.sendRedirect(siteUrl + pageRequest.getContextPath() + widgetContext.getRedirect());
+              pageResponse.setHandled(true);
+              return pageResponse;
             }
           }
 
@@ -370,35 +393,39 @@ public class WebContainerCommand implements Serializable {
           if (webContainerContext.isTargeted()) {
             // Determine the next page after the action
             String actionRedirect = widgetContext.getRedirect();
-            if (actionRedirect != null && contextPath.length() > 0) {
-              if (actionRedirect.startsWith(contextPath)) {
-                actionRedirect = actionRedirect.substring(contextPath.length());
+            if (actionRedirect != null && pageRequest.getContextPath().length() > 0) {
+              if (actionRedirect.startsWith(pageRequest.getContextPath())) {
+                actionRedirect = actionRedirect.substring(pageRequest.getContextPath().length());
               }
             }
             if (actionRedirect == null) {
-              LOG.debug("Action pagePath: " + pagePath);
+              LOG.debug("Action pagePath: " + pageRequest.getPagePath());
               actionRedirect = containerRenderInfo.getName();
               if (webContainerContext.getPage().checkForItemUniqueId()) {
                 // The XML indicates that there is an item
                 if (webContainerContext.getPage().getItemUniqueId().contains("*")) {
                   // Substitute the item's unique id
-                  actionRedirect = StringUtils.replace(webContainerContext.getPage().getItemUniqueId(), "*", widgetContext.getCoreData().get("itemUniqueId"));
+                  actionRedirect = StringUtils.replace(webContainerContext.getPage().getItemUniqueId(), "*",
+                      widgetContext.getCoreData().get("itemUniqueId"));
                 }
               } else if (webContainerContext.getPage().checkForCollectionUniqueId()) {
                 // The XML indicates that there is a collection
                 if (webContainerContext.getPage().getCollectionUniqueId().contains("*")) {
                   // Substitute the collection's uniqueId (/uri/*)
-                  actionRedirect = StringUtils.replace(webContainerContext.getPage().getCollectionUniqueId(), "*", widgetContext.getCoreData().get("collectionUniqueId"));
+                  actionRedirect = StringUtils.replace(webContainerContext.getPage().getCollectionUniqueId(), "*",
+                      widgetContext.getCoreData().get("collectionUniqueId"));
                 } else if ("?collectionId".equals(webContainerContext.getPage().getCollectionUniqueId())) {
                   // Use the collection's id (/admin/collection-form{?collectionId})
                   if (widgetContext.getCoreData().containsKey("collectionId")) {
-                    actionRedirect += webContainerContext.getPage().getCollectionUniqueId() + "=" + widgetContext.getCoreData().get("collectionId");
+                    actionRedirect += webContainerContext.getPage().getCollectionUniqueId() + "="
+                        + widgetContext.getCoreData().get("collectionId");
                   }
                 } else {
                   // Use the collection's uniqueId
                   if (widgetContext.getCoreData().containsKey("collectionUniqueId")) {
                     LOG.warn("This actionRedirect was called and is in use, so remove this comment");
-                    actionRedirect += webContainerContext.getPage().getCollectionUniqueId() + "=" + widgetContext.getCoreData().get("collectionUniqueId");
+                    actionRedirect += webContainerContext.getPage().getCollectionUniqueId() + "="
+                        + widgetContext.getCoreData().get("collectionUniqueId");
                   }
                 }
               }
@@ -409,38 +436,52 @@ public class WebContainerCommand implements Serializable {
             }
             // Since this is an action, use the session to provide data for the next request
             if (widgetContext.getSuccessMessage() != null) {
-              controllerSession.addWidgetData(widgetContext.getUniqueId(), SUCCESS_MESSAGE, widgetContext.getSuccessMessage());
+              controllerSession.addWidgetData(widgetContext.getUniqueId(), SUCCESS_MESSAGE,
+                  widgetContext.getSuccessMessage());
             }
             if (widgetContext.getWarningMessage() != null) {
-              controllerSession.addWidgetData(widgetContext.getUniqueId(), WARNING_MESSAGE, widgetContext.getWarningMessage());
+              controllerSession.addWidgetData(widgetContext.getUniqueId(), WARNING_MESSAGE,
+                  widgetContext.getWarningMessage());
             }
             if (widgetContext.getErrorMessage() != null) {
-              controllerSession.addWidgetData(widgetContext.getUniqueId(), ERROR_MESSAGE, widgetContext.getErrorMessage());
+              controllerSession.addWidgetData(widgetContext.getUniqueId(), ERROR_MESSAGE,
+                  widgetContext.getErrorMessage());
             }
             if (widgetContext.getRequestObject() != null) {
               LOG.debug("Adding a request object: " + widgetContext.getRequestObject().getClass().getName());
-              controllerSession.addWidgetData(widgetContext.getUniqueId(), REQUEST_OBJECT, widgetContext.getRequestObject());
+              controllerSession.addWidgetData(widgetContext.getUniqueId(), REQUEST_OBJECT,
+                  widgetContext.getRequestObject());
             }
             if (widgetContext.getSharedRequestValueMap() != null) {
               sharedWidgetValueMap = widgetContext.getSharedRequestValueMap();
               controllerSession.addWidgetData(REQUEST_SHARED_VALUE_MAP, sharedWidgetValueMap);
             }
             String siteUrl = LoadSitePropertyCommand.loadByName("site.url");
-            response.sendRedirect(siteUrl + contextPath + actionRedirect);
+            response.sendRedirect(siteUrl + pageRequest.getContextPath() + actionRedirect);
             LOG.debug("-----------------------------------------------------------------------");
-            return true;
+            pageResponse.setHandled(true);
+            return pageResponse;
           }
 
           // If the method was a success, check for content
           String widgetContent = null;
           if (result != null) {
-            if (widgetContext.hasJsp()) {
+            if (httpRequest != null && widgetContext.hasJsp()) {
+              // Render the widget's JSP
               // @todo if the JSP does not exist, a recursive loop occurs
+              if (httpRequest != null) {
               LOG.debug("Including JSP: /WEB-INF/jsp" + widgetContext.getJsp());
+                // Map the pageRequest attributes to the http request for JSPs
+                for (String attribute : pageRequest.getAttributes().keySet()) {
+                  httpRequest.setAttribute(attribute, pageRequest.getAttribute(attribute));
+                }
+                // Render the JSP content
               WidgetResponseWrapper responseWrapper = new WidgetResponseWrapper(response);
-              request.getRequestDispatcher("/WEB-INF/jsp" + widgetContext.getJsp()).include(request, responseWrapper);
+                httpRequest.getRequestDispatcher("/WEB-INF/jsp" + widgetContext.getJsp()).include(httpRequest, responseWrapper);
               widgetContent = responseWrapper.getOutputAndClose();
+              }
             } else if (widgetContext.hasHtml()) {
+              // Use the widget's generated HTML
               widgetContent = widgetContext.getHtml();
             }
           }
@@ -467,7 +508,7 @@ public class WebContainerCommand implements Serializable {
         }
       }
     }
-    return false;
+    return pageResponse;
   }
 
   // replaceVariable("collection.uniqueId", value, collection, "uniqueId")
@@ -525,7 +566,7 @@ public class WebContainerCommand implements Serializable {
     return StringUtils.replace(content, searchString, replacementValue);
   }
 
-  public static String replaceVariableWithParameterValue(HttpServletRequest request, String content) {
+  public static String replaceVariableWithParameterValue(PageRequest request, String content) {
     // Determine the search string
     int idxStart = content.indexOf("${request.");
     int idxEnd = content.indexOf("}", idxStart);

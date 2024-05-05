@@ -64,10 +64,10 @@ class CalendarListWidgetTest extends WidgetBase {
     // Verify the request
     Assertions.assertEquals(CalendarListWidget.JSP, widgetContext.getJsp());
 
-    List<Calendar> calendarListRequest = (List) request.getAttribute("calendarList");
+    List<Calendar> calendarListRequest = (List) pageRequest.getAttribute("calendarList");
     Assertions.assertEquals(calendarList.size(), calendarListRequest.size());
 
-    Map<Long, Long> calendarEventCount = (Map) request.getAttribute("calendarEventCount");
+    Map<Long, Long> calendarEventCount = (Map) pageRequest.getAttribute("calendarEventCount");
     Assertions.assertEquals(8L, calendarEventCount.get(calendar.getId()));
   }
 

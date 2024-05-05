@@ -16,21 +16,22 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
+import static com.simisinc.platform.presentation.widgets.cms.BlogPostNameWidget.JSP;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
+
+import java.sql.Timestamp;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+
 import com.simisinc.platform.WidgetBase;
 import com.simisinc.platform.application.cms.LoadBlogCommand;
 import com.simisinc.platform.application.cms.LoadBlogPostCommand;
 import com.simisinc.platform.domain.model.cms.Blog;
 import com.simisinc.platform.domain.model.cms.BlogPost;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
-
-import java.sql.Timestamp;
-
-import static com.simisinc.platform.presentation.widgets.cms.BlogPostNameWidget.JSP;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.when;
 
 class BlogPostNameWidgetTest extends WidgetBase {
 
@@ -40,7 +41,7 @@ class BlogPostNameWidgetTest extends WidgetBase {
     preferences.put("blogUniqueId", "news");
 
     // Widgets can use the URI
-    when(request.getRequestURI()).thenReturn("news/this-is-the-news");
+    when(pageRequest.getUri()).thenReturn("news/this-is-the-news");
 
     // Widgets can have parameters
     //widgetContext.getParameterMap().put("name", new String[]{"value"});
@@ -64,21 +65,23 @@ class BlogPostNameWidgetTest extends WidgetBase {
     try (MockedStatic<LoadBlogCommand> loadBlogCommand = mockStatic(LoadBlogCommand.class)) {
       try (MockedStatic<LoadBlogPostCommand> loadBlogPostCommand = mockStatic(LoadBlogPostCommand.class)) {
         loadBlogCommand.when(() -> LoadBlogCommand.loadBlogByUniqueId(eq(blog.getUniqueId()))).thenReturn(blog);
-        loadBlogPostCommand.when(() -> LoadBlogPostCommand.loadBlogPostByUniqueId(eq(blog.getId()), eq(blogPost.getUniqueId()))).thenReturn(blogPost);
+        loadBlogPostCommand
+            .when(() -> LoadBlogPostCommand.loadBlogPostByUniqueId(eq(blog.getId()), eq(blogPost.getUniqueId())))
+            .thenReturn(blogPost);
         BlogPostNameWidget widget = new BlogPostNameWidget();
         widgetContext = widget.execute(widgetContext);
+
+        Blog blogRequest = (Blog) widgetContext.getRequest().getAttribute("blog");
+        Assertions.assertEquals(1L, blogRequest.getId());
+
+        BlogPost blogPostRequest = (BlogPost) widgetContext.getRequest().getAttribute("blogPost");
+        Assertions.assertEquals(2L, blogPostRequest.getId());
+        Assertions.assertNotNull(blogPostRequest.getTitle());
+
+        Assertions.assertNotNull(widgetContext);
+        Assertions.assertTrue(widgetContext.hasJsp());
+        Assertions.assertEquals(JSP, widgetContext.getJsp());
       }
     }
-
-    Blog blogRequest = (Blog) widgetContext.getRequest().getAttribute("blog");
-    Assertions.assertEquals(1L, blogRequest.getId());
-
-    BlogPost blogPostRequest = (BlogPost) widgetContext.getRequest().getAttribute("blogPost");
-    Assertions.assertEquals(2L, blogPostRequest.getId());
-    Assertions.assertNotNull(blogPostRequest.getTitle());
-
-    Assertions.assertNotNull(widgetContext);
-    Assertions.assertTrue(widgetContext.hasJsp());
-    Assertions.assertEquals(JSP, widgetContext.getJsp());
   }
 }

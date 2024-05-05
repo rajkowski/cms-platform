@@ -60,7 +60,7 @@ public class MainMenuWidget extends GenericWidget {
     String view = context.getPreferences().get("view");
     boolean checkUser = "true".equals(context.getPreferences().getOrDefault("checkUser", "true"));
     boolean highlightActiveTab = Boolean.parseBoolean(context.getPreferences().getOrDefault("useHighlight", "true"));
-    context.getRequest().setAttribute("useHighlight", highlightActiveTab ? "true" : "false");
+    context.getRequest().setAttribute("useHighlight", highlightActiveTab ? "true" : "false");    
     boolean highlightSubmenuItem = Boolean.parseBoolean(context.getPreferences().getOrDefault("highlightSubmenuItem", "true"));
     context.getRequest().setAttribute("highlightSubmenuItem", highlightSubmenuItem ? "true" : "false");
     boolean useSmallHighlight = Boolean.parseBoolean(context.getPreferences().getOrDefault("useSmallHighlight", "false"));
@@ -86,7 +86,7 @@ public class MainMenuWidget extends GenericWidget {
     }
 
     int menuTabCounter = 0;
-      for (MenuTab menuTab : menuTabList) {
+    for (MenuTab menuTab : menuTabList) {
       ++menuTabCounter;
       // Remove redundant Home (the first one)
       if (menuTabCounter == 1 && menuTab.getLink().equals("/")) {
@@ -95,45 +95,44 @@ public class MainMenuWidget extends GenericWidget {
       // Verify the content manager, or that the page has content for other users, based on content, roles and groups
       if (context.hasRole("admin") || context.hasRole("content-manager") || !checkUser ||
           ValidateUserAccessToWebPageCommand.hasAccess(menuTab.getLink(), userSession)) {
-          // Copy the MenuTab, since a cache was used
-          MenuTab thisMenuTab = new MenuTab();
-          thisMenuTab.setName(menuTab.getName());
-          thisMenuTab.setLink(menuTab.getLink());
-          thisMenuTab.setIcon(menuTab.getIcon());
+        // Copy the MenuTab, since a cache was used
+        MenuTab thisMenuTab = new MenuTab();
+        thisMenuTab.setName(menuTab.getName());
+        thisMenuTab.setLink(menuTab.getLink());
+        thisMenuTab.setIcon(menuTab.getIcon());
         // Determine if the menuTab should be highlighted
         if (highlightActiveTab) {
           // Is active when menuTab matches the page path, or the collection name is a match
-          
-          if ((menuTab.getLink().equals(context.getRequest().getRequestURI())) ||
+          if ((menuTab.getLink().equals(context.getRequest().getPagePath())) ||
               (collection != null && collection.getName().equalsIgnoreCase(menuTab.getName()))) {
             thisMenuTab.setActive(true);
           }
         }
-          // Process the sub-menu items
-          if (menuTab.getMenuItemList() != null) {
-            List<MenuItem> thisMenuItemList = new ArrayList<>();
-            for (MenuItem menuItem : menuTab.getMenuItemList()) {
-              if (ValidateUserAccessToWebPageCommand.hasAccess(menuItem.getLink(), userSession)) {
-                // Copy the menu item, since a cache was used
-                MenuItem thisMenuItem = new MenuItem();
-                thisMenuItem.setName(menuItem.getName());
-                thisMenuItem.setLink(menuItem.getLink());
+        // Process the sub-menu items
+        if (menuTab.getMenuItemList() != null) {
+          List<MenuItem> thisMenuItemList = new ArrayList<>();
+          for (MenuItem menuItem : menuTab.getMenuItemList()) {
+            if (ValidateUserAccessToWebPageCommand.hasAccess(menuItem.getLink(), userSession)) {
+              // Copy the menu item, since a cache was used
+              MenuItem thisMenuItem = new MenuItem();
+              thisMenuItem.setName(menuItem.getName());
+              thisMenuItem.setLink(menuItem.getLink());
               // Is active when menuItem matches the page path
-              if (thisMenuItem.getLink().equals(context.getRequest().getRequestURI())) {
+              if (thisMenuItem.getLink().equals(context.getRequest().getPagePath())) {
                 if (highlightActiveTab) {
                   thisMenuTab.setActive(true);
                 }
                 if ((highlightSubmenuItem)) {
-                thisMenuItem.setActive(true);
+                  thisMenuItem.setActive(true);
                 }
               }
               thisMenuItemList.add(thisMenuItem);
-              }
             }
-            if (!thisMenuItemList.isEmpty()) {
-              thisMenuTab.setMenuItemList(thisMenuItemList);
-            }
-            menuTabListToUse.add(thisMenuTab);
+          }
+          if (!thisMenuItemList.isEmpty()) {
+            thisMenuTab.setMenuItemList(thisMenuItemList);
+          }
+          menuTabListToUse.add(thisMenuTab);
         }
       }
     }

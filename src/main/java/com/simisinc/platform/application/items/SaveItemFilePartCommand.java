@@ -55,7 +55,7 @@ public class SaveItemFilePartCommand {
     long fileLength = 0;
     File tempFile = null;
     try {
-      Part filePart = context.getRequest().getPart("file");
+      Part filePart = context.getPart("file");
       if (filePart == null) {
         return null;
       }

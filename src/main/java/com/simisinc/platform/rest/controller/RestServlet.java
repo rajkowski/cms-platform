@@ -16,16 +16,15 @@
 
 package com.simisinc.platform.rest.controller;
 
-import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
-import com.simisinc.platform.application.cms.SaveWebPageHitCommand;
-import com.simisinc.platform.application.json.JsonCommand;
-import com.simisinc.platform.domain.model.App;
-import com.simisinc.platform.domain.model.User;
-import com.simisinc.platform.presentation.controller.ContextConstants;
-import com.simisinc.platform.presentation.controller.RequestConstants;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import javax.json.bind.Jsonb;
 import javax.json.bind.JsonbBuilder;
@@ -35,13 +34,18 @@ import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
 
-import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
+import com.simisinc.platform.application.cms.SaveWebPageHitCommand;
+import com.simisinc.platform.application.json.JsonCommand;
+import com.simisinc.platform.domain.model.App;
+import com.simisinc.platform.domain.model.User;
+import com.simisinc.platform.presentation.controller.ContextConstants;
+import com.simisinc.platform.presentation.controller.RequestConstants;
 
 /**
  * Handles all web api requests
@@ -71,7 +75,15 @@ public class RestServlet extends HttpServlet {
     // Find the available services
     LOG.info("Loading the services library...");
     XMLServiceLoader xmlServiceLoader = new XMLServiceLoader();
-    xmlServiceLoader.addDirectory(config.getServletContext(), "rest-services");
+    Set<String> restServiceResourcePath = config.getServletContext().getResourcePaths("/WEB-INF/rest-services");
+    for (String resource : restServiceResourcePath) {
+      try {
+        URL restServiceUrl = config.getServletContext().getResource(resource);
+        xmlServiceLoader.addFile(restServiceUrl);
+      } catch (Exception e) {
+        throw new ServletException(e);
+      }
+    }
 
     // Instantiate the services
     LOG.info("Instantiating the services...");

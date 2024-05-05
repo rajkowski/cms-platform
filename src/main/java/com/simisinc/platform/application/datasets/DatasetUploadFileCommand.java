@@ -66,7 +66,7 @@ public class DatasetUploadFileCommand {
     // Determine if a file was submitted
     Part filePart = null;
     try {
-      filePart = context.getRequest().getPart("file");
+      filePart = context.getPart("file");
     } catch (Exception e) {
       LOG.debug("File part was not found, continuing...");
     }

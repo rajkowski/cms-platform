@@ -16,12 +16,29 @@
 
 package com.simisinc.platform;
 
-import com.simisinc.platform.domain.model.Group;
-import com.simisinc.platform.domain.model.Role;
-import com.simisinc.platform.domain.model.User;
-import com.simisinc.platform.presentation.controller.UserSession;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.controller.XMLContainerCommands;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,22 +48,13 @@ import org.mockito.stubbing.Answer;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import com.simisinc.platform.domain.model.Group;
+import com.simisinc.platform.domain.model.Role;
+import com.simisinc.platform.domain.model.User;
+import com.simisinc.platform.presentation.controller.PageRequest;
+import com.simisinc.platform.presentation.controller.UserSession;
+import com.simisinc.platform.presentation.controller.WidgetContext;
+import com.simisinc.platform.presentation.controller.XMLContainerCommands;
 
 /**
  * Sets up the common HTTP servlet objects for executing widgets
@@ -62,18 +70,27 @@ public class WidgetBase {
   public static final String COMMUNITY_MANAGER = "community-manager";
 
   public ServletContext servletContext = mock(ServletContext.class);
-  public HttpServletRequest request = mock(HttpServletRequest.class);
+  public HttpServletRequest httpRequest = mock(HttpServletRequest.class);
   public HttpServletResponse response = mock(HttpServletResponse.class);
   public HttpSession session = mock(HttpSession.class);
+  public PageRequest pageRequest = mock(PageRequest.class);
   public WidgetContext widgetContext = null;
   public Map<String, String> preferences = null;
 
   @BeforeEach
-  void setupWidgetContext() {
+  void setupWidgetContext() throws MalformedURLException, URISyntaxException {
+
+    // Every widget needs a widget context
+    widgetContext = new WidgetContext(new URI("http://example.com").toURL(), pageRequest, httpRequest, response, "widget1",
+        "/example/path");
+
     // Provide a mock for the servlet request and response
     when(servletContext.getContextPath()).thenReturn("/");
-    when(request.getServletContext()).thenReturn(servletContext);
-    when(request.getSession()).thenReturn(session);
+    when(widgetContext.getServletContext()).thenReturn(servletContext);
+    when(widgetContext.getSession()).thenReturn(session);
+    when(pageRequest.getScheme()).thenReturn("https");
+    when(pageRequest.getServerName()).thenReturn("localhost");
+    when(pageRequest.getPort()).thenReturn(443);
 
     // Mock Request setAttribute
     final Map<String, String[]> parameterMap = new HashMap<>();
@@ -90,7 +107,7 @@ public class WidgetBase {
         }
         return null;
       }
-    }).when(request).setAttribute(anyString(), any());
+    }).when(pageRequest).setAttribute(anyString(), any());
 
     // Mock Request getAttribute
     Mockito.doAnswer(new Answer<Object>() {
@@ -99,7 +116,7 @@ public class WidgetBase {
         String key = invocation.getArgument(0, String.class);
         return attributes.get(key);
       }
-    }).when(request).getAttribute(anyString());
+    }).when(pageRequest).getAttribute(anyString());
 
     // Mock Request getParameter
     Mockito.doAnswer(new Answer<String>() {
@@ -108,7 +125,7 @@ public class WidgetBase {
         String key = invocation.getArgument(0, String.class);
         return (String) attributes.get(key);
       }
-    }).when(request).getParameter(anyString());
+    }).when(pageRequest).getParameter(anyString());
 
     // Mock Session setAttribute
     final Map<String, Object> sessionAttributes = new ConcurrentHashMap<String, Object>();
@@ -135,9 +152,6 @@ public class WidgetBase {
       }
     }).when(session).getAttribute(anyString());
 
-    // Every widget needs a widget context
-    widgetContext = new WidgetContext(request, response, "widget1", "/example/path");
-
     // Collection to store attributes keys/values between requests
     Map<String, String> sharedWidgetValueMap = null;
     widgetContext.setSharedRequestValueMap(sharedWidgetValueMap);
@@ -158,7 +172,7 @@ public class WidgetBase {
   }
 
   public static void addQueryParameter(WidgetContext context, String name, String value) {
-    context.getParameterMap().put(name, new String[]{value});
+    context.getParameterMap().put(name, new String[] { value });
   }
 
   public static void setRoles(WidgetContext context, String... args) {

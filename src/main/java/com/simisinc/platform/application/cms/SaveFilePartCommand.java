@@ -16,17 +16,19 @@
 
 package com.simisinc.platform.application.cms;
 
-import com.simisinc.platform.application.DataException;
-import com.simisinc.platform.application.filesystem.FileSystemCommand;
-import com.simisinc.platform.domain.model.cms.FileItem;
-import com.simisinc.platform.presentation.controller.WidgetContext;
+import java.io.File;
+import java.nio.file.Paths;
+
+import javax.servlet.http.Part;
+
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import javax.servlet.http.Part;
-import java.io.File;
-import java.nio.file.Paths;
+import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.application.filesystem.FileSystemCommand;
+import com.simisinc.platform.domain.model.cms.FileItem;
+import com.simisinc.platform.presentation.controller.WidgetContext;
 
 /**
  * Validates, retrieves http file parts, and saves file item objects
@@ -52,7 +54,7 @@ public class SaveFilePartCommand {
     long fileLength = 0;
     File tempFile = null;
     try {
-      Part filePart = context.getRequest().getPart("file");
+      Part filePart = context.getPart("file");
       if (filePart == null) {
         return null;
       }

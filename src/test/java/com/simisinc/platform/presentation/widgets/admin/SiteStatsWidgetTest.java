@@ -55,8 +55,8 @@ class SiteStatsWidgetTest extends WidgetBase {
 
     // Verify
     Assertions.assertEquals(SiteStatsWidget.CARD_JSP, widgetContext.getJsp());
-    Assertions.assertEquals("Online Now", request.getAttribute("title"));
-    Assertions.assertEquals("100", request.getAttribute("numberValue"));
+    Assertions.assertEquals("Online Now", pageRequest.getAttribute("title"));
+    Assertions.assertEquals("100", pageRequest.getAttribute("numberValue"));
   }
 
   @Test

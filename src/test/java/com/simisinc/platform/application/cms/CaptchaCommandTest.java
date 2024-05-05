@@ -16,25 +16,25 @@
 
 package com.simisinc.platform.application.cms;
 
-import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
-import com.simisinc.platform.presentation.controller.SessionConstants;
-import com.simisinc.platform.presentation.controller.WidgetContext;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mockStatic;
+
+import java.io.ByteArrayOutputStream;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
-import java.io.ByteArrayOutputStream;
-
-import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.Mockito.*;
+import com.simisinc.platform.WidgetBase;
+import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
+import com.simisinc.platform.presentation.controller.SessionConstants;
 
 /**
  * @author matt rajkowski
  * @created 5/3/2022 7:00 PM
  */
-class CaptchaCommandTest {
+class CaptchaCommandTest extends WidgetBase {
 
   @Test
   void validateRequest() {
@@ -42,19 +42,19 @@ class CaptchaCommandTest {
     try (MockedStatic<LoadSitePropertyCommand> property = mockStatic(LoadSitePropertyCommand.class)) {
       property.when(() -> LoadSitePropertyCommand.loadByName(anyString())).thenReturn(null);
 
-      WidgetContext context = mock(WidgetContext.class);
-      HttpServletRequest request = mock(HttpServletRequest.class);
-      HttpSession session = mock(HttpSession.class);
+      // Set the correct captcha value
+      session.setAttribute(SessionConstants.CAPTCHA_TEXT, "12345");
 
-      when(context.getRequest()).thenReturn(request);
-      when(request.getSession()).thenReturn(session);
-      when(session.getAttribute(SessionConstants.CAPTCHA_TEXT)).thenReturn("12345");
+      // Test when a captcha is not submitted
+      Assertions.assertFalse(CaptchaCommand.validateRequest(widgetContext));
 
-      when(context.getParameter("captcha")).thenReturn("12345");
-      Assertions.assertTrue(CaptchaCommand.validateRequest(context));
+      // Test when a captcha is submitted correctly
+      addQueryParameter(widgetContext, "captcha", "12345");
+      Assertions.assertTrue(CaptchaCommand.validateRequest(widgetContext));
 
-      when(context.getParameter("captcha")).thenReturn("00000");
-      Assertions.assertFalse(CaptchaCommand.validateRequest(context));
+      // Test when a captcha is submitted incorrectly
+      addQueryParameter(widgetContext, "captcha", "00000");
+      Assertions.assertFalse(CaptchaCommand.validateRequest(widgetContext));
     }
   }
 

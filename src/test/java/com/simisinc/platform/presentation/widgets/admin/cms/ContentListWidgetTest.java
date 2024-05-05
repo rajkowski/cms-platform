@@ -56,8 +56,8 @@ class ContentListWidgetTest extends WidgetBase {
 
     // Verify
     Assertions.assertEquals(ContentListWidget.JSP, widgetContext.getJsp());
-    Assertions.assertEquals("Content", request.getAttribute("title"));
-    List<Content> contentListRequest = (List) request.getAttribute("contentList");
+    Assertions.assertEquals("Content", pageRequest.getAttribute("title"));
+    List<Content> contentListRequest = (List) pageRequest.getAttribute("contentList");
     Assertions.assertEquals(content.getId(), contentListRequest.get(0).getId());
   }
 }

@@ -17,8 +17,8 @@
 package com.simisinc.platform.application.login;
 
 import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import com.simisinc.platform.application.oauth.OAuthConfigurationCommand;
 import com.simisinc.platform.application.oauth.OAuthLogoutCommand;
@@ -35,10 +35,10 @@ import com.simisinc.platform.presentation.controller.UserSession;
  */
 public class LogoutCommand {
 
-  public static void logout(HttpServletRequest request, HttpServletResponse response) {
+  public static void logout(HttpSession session, HttpServletResponse response, boolean isSecure) {
     // Remove the cookie
     Cookie cookie = new Cookie(CookieConstants.USER_TOKEN, "");
-    if (request.isSecure()) {
+    if (isSecure) {
       cookie.setSecure(true);
     }
     cookie.setHttpOnly(true);
@@ -48,19 +48,19 @@ public class LogoutCommand {
 
     // Update the user's session
     long userId = -1;
-    UserSession userSession = (UserSession) request.getSession().getAttribute(SessionConstants.USER);
+    UserSession userSession = (UserSession) session.getAttribute(SessionConstants.USER);
     if (userSession != null) {
       if (userSession.isLoggedIn()) {
         userId = userSession.getUserId();
       }
-      request.getSession().removeAttribute(SessionConstants.USER);
+      session.removeAttribute(SessionConstants.USER);
       // Prevent other sessions
       UserTokenRepository.removeAll(userId);
     }
 
     // Log out of OAuth
     if (OAuthConfigurationCommand.isEnabled()) {
-      OAuthLogoutCommand.logout(userId, request);
+      OAuthLogoutCommand.logout(userId, session);
     }
   }
 }

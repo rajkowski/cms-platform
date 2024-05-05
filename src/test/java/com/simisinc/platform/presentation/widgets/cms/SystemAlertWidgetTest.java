@@ -47,7 +47,7 @@ class SystemAlertWidgetTest extends WidgetBase {
       widget.execute(widgetContext);
 
       Assertions.assertEquals(SystemAlertWidget.JSP, widgetContext.getJsp());
-      Map requestSitePropertyMap = (Map) request.getAttribute("sitePropertyMap");
+      Map requestSitePropertyMap = (Map) pageRequest.getAttribute("sitePropertyMap");
       Assertions.assertEquals(1, requestSitePropertyMap.size());
       Assertions.assertEquals(siteHeaderLine1, requestSitePropertyMap.get("site.header.line1"));
     }

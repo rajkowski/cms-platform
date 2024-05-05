@@ -16,14 +16,17 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
-import com.simisinc.platform.domain.model.cms.WebPage;
-import com.simisinc.platform.presentation.controller.ControllerSession;
-import com.simisinc.platform.presentation.controller.Page;
+import java.io.Serializable;
+import java.net.URL;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.Serializable;
-import java.util.Map;
+
+import com.simisinc.platform.domain.model.cms.WebPage;
+import com.simisinc.platform.presentation.controller.ControllerSession;
+import com.simisinc.platform.presentation.controller.Page;
+import com.simisinc.platform.presentation.controller.PageRequest;
 
 /**
  * Description
@@ -33,12 +36,14 @@ import java.util.Map;
  */
 public class WebContainerContext implements Serializable {
 
-  final static long serialVersionUID = 215434482513634196L;
-  final static int METHOD_GET = 0;
-  final static int METHOD_POST = 1;
-  final static int METHOD_DELETE = 2;
-  final static int METHOD_ACTION = 3;
+  private static final long serialVersionUID = 215434482513634196L;
+  private static final int METHOD_GET = 0;
+  private static final int METHOD_POST = 1;
+  private static final int METHOD_DELETE = 2;
+  private static final int METHOD_ACTION = 3;
 
+  private URL applicationUrl = null;
+  private PageRequest pageRequest = null;
   private HttpServletRequest request = null;
   private HttpServletResponse response = null;
 
@@ -50,7 +55,31 @@ public class WebContainerContext implements Serializable {
 
   private boolean embedded = false;
 
-  public WebContainerContext(HttpServletRequest request, HttpServletResponse response, ControllerSession controllerSession, Map<String, Object> widgetInstances, WebPage webPage, Page page) {
+  public WebContainerContext(URL applicationUrl, PageRequest pageRequest, HttpServletRequest request,
+      ControllerSession controllerSession, Map<String, Object> widgetInstances, WebPage webPage, Page page) {
+
+    this.applicationUrl = applicationUrl;
+    this.pageRequest = pageRequest;
+    this.request = request;
+    this.controllerSession = controllerSession;
+    this.widgetInstances = widgetInstances;
+    this.webPage = webPage;
+    this.page = page;
+
+    if ("post".equalsIgnoreCase(pageRequest.getMethod())) {
+      method = METHOD_POST;
+    } else if ("delete".equals(pageRequest.getParameter("command"))) {
+      method = METHOD_DELETE;
+    } else if (pageRequest.getParameter("action") != null) {
+      method = METHOD_ACTION;
+    }
+  }
+
+  public WebContainerContext(URL applicationUrl, PageRequest pageRequest, HttpServletRequest request,
+      HttpServletResponse response, ControllerSession controllerSession, Map<String, Object> widgetInstances,
+      WebPage webPage, Page page) {
+    this.applicationUrl = applicationUrl;
+    this.pageRequest = pageRequest;
     this.request = request;
     this.response = response;
     this.controllerSession = controllerSession;
@@ -58,13 +87,17 @@ public class WebContainerContext implements Serializable {
     this.webPage = webPage;
     this.page = page;
 
-    if ("post".equalsIgnoreCase(request.getMethod())) {
+    if ("post".equalsIgnoreCase(pageRequest.getMethod())) {
       method = METHOD_POST;
-    } else if ("delete".equals(request.getParameter("command"))) {
+    } else if ("delete".equals(pageRequest.getParameter("command"))) {
       method = METHOD_DELETE;
-    } else if (request.getParameter("action") != null) {
+    } else if (pageRequest.getParameter("action") != null) {
       method = METHOD_ACTION;
     }
+  }
+
+  public PageRequest getPageRequest() {
+    return pageRequest;
   }
 
   public HttpServletRequest getRequest() {
@@ -113,5 +146,9 @@ public class WebContainerContext implements Serializable {
 
   public boolean isAction() {
     return method == METHOD_ACTION;
+  }
+
+  public URL getApplicationURL() {
+    return applicationUrl;
   }
 }

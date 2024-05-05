@@ -54,8 +54,8 @@ class AdminImageBrowserWidgetTest extends WidgetBase {
 
     // Verify
     Assertions.assertEquals(AdminImageBrowserWidget.JSP, widgetContext.getJsp());
-    Assertions.assertNull(request.getAttribute("title"));
-    List<Image> imageListRequest = (List) request.getAttribute("imageList");
+    Assertions.assertNull(pageRequest.getAttribute("title"));
+    List<Image> imageListRequest = (List) pageRequest.getAttribute("imageList");
     Assertions.assertEquals(image.getId(), imageListRequest.get(0).getId());
   }
 }

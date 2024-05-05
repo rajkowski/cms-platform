@@ -135,7 +135,7 @@ public class AccountValidationWidget extends GenericWidget {
     }
 
     // Log the user out
-    LogoutCommand.logout(context.getRequest(), context.getResponse());
+    LogoutCommand.logout(context.getSession(), context.getResponse(), context.isSecure());
 
     context.setRedirect("/validate-account?status=complete");
     return context;

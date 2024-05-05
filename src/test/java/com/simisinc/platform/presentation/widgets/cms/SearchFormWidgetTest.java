@@ -30,8 +30,8 @@ class SearchFormWidgetTest extends WidgetBase {
   void execute() {
     SearchFormWidget widget = new SearchFormWidget();
     widget.execute(widgetContext);
-    Assertions.assertNotNull(request.getAttribute("placeholder"));
-    Assertions.assertNotNull(request.getAttribute("expand"));
+    Assertions.assertNotNull(pageRequest.getAttribute("placeholder"));
+    Assertions.assertNotNull(pageRequest.getAttribute("expand"));
     Assertions.assertEquals(SearchFormWidget.JSP, widgetContext.getJsp());
   }
 }
