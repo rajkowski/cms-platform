@@ -490,12 +490,13 @@ public class PageServlet extends HttpServlet {
         request.setAttribute(PAGE_COLLECTION_CATEGORY, thisCollectionCategory);
       }
 
-      // Determine the custom stylesheets
+      // Determine if there is a global custom stylesheet
       Stylesheet globalStylesheet = LoadStylesheetCommand.loadStylesheetByWebPageId(-1);
       if (globalStylesheet != null) {
         request.setAttribute("includeGlobalStylesheet", "true");
         request.setAttribute("includeGlobalStylesheetLastModified", globalStylesheet.getModified().getTime());
       }
+      // Determine if the current webPage has an additional custom stylesheet
       if (webPage != null) {
         Stylesheet pageStylesheet = LoadStylesheetCommand.loadStylesheetByWebPageId(webPage.getId());
         if (pageStylesheet != null) {

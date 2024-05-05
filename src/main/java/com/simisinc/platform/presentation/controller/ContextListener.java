@@ -39,6 +39,7 @@ import org.apache.commons.logging.LogFactory;
 import com.simisinc.platform.ApplicationInfo;
 import com.simisinc.platform.application.admin.DatabaseCommand;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
+import com.simisinc.platform.application.cms.LoadStylesheetCommand;
 import com.simisinc.platform.application.filesystem.FileSystemCommand;
 import com.simisinc.platform.application.maps.GeoIPCommand;
 import com.simisinc.platform.domain.model.cms.Content;
@@ -169,7 +170,10 @@ public class ContextListener implements ServletContextListener {
     // Load the filesystem lists (these are also scheduled in SchedulerManager)
     LoadSystemFilesJob.execute();
 
-    // Preload all the content (@todo change to async)
+    // Determine if the global stylesheet file exists
+    LoadStylesheetCommand.init();
+
+    // Preload all the content
     List<Content> contentList = ContentRepository.findAll();
     if (contentList != null) {
       ArrayList<String> contentUniqueIdList = new ArrayList<>();
