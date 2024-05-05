@@ -44,22 +44,25 @@ public class ContentHtmlCommand {
 
   public static String getHtmlFromPreferences(WidgetContext context) {
 
+    // Content Unique Id can be uniqueId or contentUniqueId
+    String uniqueId = context.getPreferences().getOrDefault("uniqueId", context.getPreferences().get("contentUniqueId"));
+    // The derived content HTML or the fallback HTML if a uniqueId is not found
     String html = null;
-    String uniqueId = context.getPreferences().get("uniqueId");
 
+    // Use the html in the content repository if there's a matching uniqueId
     if (uniqueId != null) {
-      // Populate from dynamic values
+      // Determine the real uniqueId value based on any dynamic property names specified
       uniqueId = checkForBlogPreferences(context, uniqueId);
       context.getRequest().setAttribute("uniqueId", uniqueId);
-      // Check for the content
+      // Check for the content related to the uniqueId
       LOG.debug("Looking up content for uniqueId: " + uniqueId);
       Content content = LoadContentCommand.loadContentByUniqueId(uniqueId);
       if (content == null) {
         LOG.debug("Content not found for uniqueId: " + uniqueId);
-      }
-      if (content != null) {
+      } else {
+        // Use the content repository's html
         html = content.getContent();
-        // Look for draft content
+        // Look for draft content if this role is allowed to
         if (context.hasRole("admin") || context.hasRole("content-manager")) {
           if (content.getDraftContent() != null) {
             LOG.debug("Setting draft content...");
@@ -95,20 +98,30 @@ public class ContentHtmlCommand {
     return html;
   }
 
+  /**
+   * For the given uniqueId, replace any dynamic values
+   *  
+   * @param context
+   * @param uniqueId
+   * @return
+   */
   public static String checkForBlogPreferences(WidgetContext context, String uniqueId) {
     if (uniqueId.contains("${blog.") || uniqueId.contains("${blogPost.")) {
-      // Check blog
+      // Check blog by inspecting blogUniqueId preference value
       Blog blog = BlogPostWidget.retrieveValidatedBlogFromPreferences(context);
       if (blog == null) {
         return null;
       }
+      // Replace ${blog.*} values
       uniqueId = ReplaceBlogDynamicValuesCommand.replaceValues(blog, uniqueId);
       // Check blog post
       if (uniqueId != null && uniqueId.contains("${blogPost.")) {
+        // Look at URL for a blog post ("/*")
         BlogPost blogPost = BlogPostWidget.retrieveValidatedBlogPostFromUrl(context, blog);
         if (blogPost == null) {
           return null;
         }
+        // Replace ${blogPost.*} values
         uniqueId = ReplaceBlogPostDynamicValuesCommand.replaceValues(blogPost, uniqueId);
       }
     }
@@ -116,16 +129,19 @@ public class ContentHtmlCommand {
   }
 
   /**
-  * Check for inline uniqueIds for complex html
+  * Check for inline uniqueIds for embedding html and html content editors
   *
   * @param context
   * @param html
   * @return
   */
   private static String embedInlineContent(WidgetContext context, String html) {
+    // Must have content to continue
     if (html == null) {
       return null;
     }
+
+    //Check for content containing a reference to another uniqueId
     int startUniqueIdx = html.indexOf("${uniqueId:");
     if (startUniqueIdx == -1) {
       return html;
@@ -133,8 +149,9 @@ public class ContentHtmlCommand {
 
     boolean hasEditorPermission = (context.hasRole("admin") || context.hasRole("content-manager"));
     boolean hasDraftContent = false;
-    int endUniqueIdx;
 
+    // Replace content instances of embedded uniqueIds
+    int endUniqueIdx;
     StringBuilder sb = new StringBuilder(html.substring(0, startUniqueIdx));
     while ((endUniqueIdx = html.indexOf("}", startUniqueIdx)) > -1) {
       String embeddedUniqueId = html.substring(startUniqueIdx + 11, endUniqueIdx).trim();
@@ -150,7 +167,7 @@ public class ContentHtmlCommand {
           }
         }
       }
-      // Embed an editor at the content point
+      // Embed an editor at each content point
       if (hasEditorPermission) {
         if (StringUtils.isBlank(embeddedHtml)) {
           embeddedHtml = "<a class=\"button tiny radius primary\" href=\"" + context.getContextPath()
