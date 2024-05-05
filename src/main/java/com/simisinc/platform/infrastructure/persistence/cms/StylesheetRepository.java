@@ -16,6 +16,7 @@
 
 package com.simisinc.platform.infrastructure.persistence.cms;
 
+import com.simisinc.platform.application.cms.LoadStylesheetCommand;
 import com.simisinc.platform.domain.model.cms.Stylesheet;
 import com.simisinc.platform.infrastructure.cache.CacheManager;
 import com.simisinc.platform.infrastructure.database.*;
@@ -94,6 +95,8 @@ public class StylesheetRepository {
       LOG.error("An id was not set!");
       return null;
     }
+    CacheManager.invalidateKey(CacheManager.STYLESHEET_WEB_PAGE_ID_CACHE, record.getWebPageId());
+    LoadStylesheetCommand.markStylesheetExists(record.getWebPageId(), true);
     record.setModified(modified);
     return record;
   }
@@ -107,6 +110,7 @@ public class StylesheetRepository {
         .add("stylesheet_id = ?", record.getId());
     if (DB.update(TABLE_NAME, updateValues, where)) {
       CacheManager.invalidateKey(CacheManager.STYLESHEET_WEB_PAGE_ID_CACHE, record.getWebPageId());
+      LoadStylesheetCommand.markStylesheetExists(record.getWebPageId(), true);
       record.setModified(modified);
       return record;
     }
@@ -127,6 +131,7 @@ public class StylesheetRepository {
       // Finish transaction
       transaction.commit();
       CacheManager.invalidateKey(CacheManager.STYLESHEET_WEB_PAGE_ID_CACHE, record.getWebPageId());
+      LoadStylesheetCommand.markStylesheetExists(record.getWebPageId(), false);
       return true;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());

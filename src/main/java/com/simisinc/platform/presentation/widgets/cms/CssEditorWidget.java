@@ -16,7 +16,14 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
+import static com.simisinc.platform.presentation.controller.RequestConstants.ERROR_MESSAGE_TEXT;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.granule.CSSFastMin;
+import com.simisinc.platform.application.cms.LoadStylesheetCommand;
 import com.simisinc.platform.application.cms.UrlCommand;
 import com.simisinc.platform.domain.model.cms.Stylesheet;
 import com.simisinc.platform.domain.model.cms.WebPage;
@@ -24,11 +31,6 @@ import com.simisinc.platform.infrastructure.persistence.cms.StylesheetRepository
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import static com.simisinc.platform.presentation.controller.RequestConstants.ERROR_MESSAGE_TEXT;
 
 /**
  * Description
@@ -82,7 +84,8 @@ public class CssEditorWidget extends GenericWidget {
         if (webPage != null) {
           webPageId = webPage.getId();
         } else {
-          context.getRequest().setAttribute(ERROR_MESSAGE_TEXT, "This page does not exist or it is a template page -- CSS will not be saved");
+          context.getRequest().setAttribute(ERROR_MESSAGE_TEXT,
+              "This page does not exist or it is a template page -- CSS will not be saved");
           return context;
         }
       }
@@ -92,13 +95,27 @@ public class CssEditorWidget extends GenericWidget {
     // Look for a related stylesheet
     stylesheet = StylesheetRepository.findByWebPageId(webPageId);
     if (stylesheet == null) {
-      LOG.debug("Starting a new stylesheet...");
-      stylesheet = new Stylesheet();
-      stylesheet.setWebPageId(webPageId);
+      // Global stylesheet is a special case
+      if (webPageId == -1) {
+        LOG.debug("Checking for global stylesheet...");
+        stylesheet = LoadStylesheetCommand.retrievePossibleGlobalStylesheet();
+        if (stylesheet != null) {
+          context.getRequest().setAttribute("isBundled", "true");
+        }
+      }
+      // If no stylesheets then start a new one
+      if (stylesheet == null) {
+        LOG.debug("Starting a new stylesheet...");
+        stylesheet = new Stylesheet();
+        stylesheet.setWebPageId(webPageId);
+      }
     }
 
     // Prepare for viewing
     context.getRequest().setAttribute("stylesheet", stylesheet);
+    if (webPageId == -1) {
+      context.getRequest().setAttribute("hasBundled", LoadStylesheetCommand.hasGlobalStylesheet() ? "true" : "false");
+    }
     return context;
   }
 
