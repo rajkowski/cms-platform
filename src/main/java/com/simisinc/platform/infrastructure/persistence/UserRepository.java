@@ -272,6 +272,7 @@ public class UserRepository {
       UserRoleRepository.insertUserRoleList(connection, record);
       // Finish the transaction
       transaction.commit();
+      LOG.info("Inserted userId: " + record.getId() + " - " + record.getEmail());
       return record;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
