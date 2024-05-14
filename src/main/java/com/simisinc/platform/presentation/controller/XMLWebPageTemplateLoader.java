@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Set;
 
 import javax.servlet.ServletContext;
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.FactoryConfigurationError;
@@ -155,6 +156,10 @@ public class XMLWebPageTemplateLoader implements Serializable {
     String xml = null;
     try {
       TransformerFactory transFactory = TransformerFactory.newInstance();
+      transFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+      transFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+      transFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
+
       Transformer transformer = transFactory.newTransformer();
       StringWriter buffer = new StringWriter();
       transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
