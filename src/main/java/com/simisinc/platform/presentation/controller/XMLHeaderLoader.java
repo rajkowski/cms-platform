@@ -27,6 +27,7 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import javax.servlet.ServletContext;
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.FactoryConfigurationError;
@@ -87,6 +88,7 @@ public class XMLHeaderLoader implements Serializable {
       throws FactoryConfigurationError, ParserConfigurationException, SAXException, IOException {
     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
     factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+    factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
     factory.setXIncludeAware(false);
     factory.setExpandEntityReferences(false);
 
@@ -100,6 +102,7 @@ public class XMLHeaderLoader implements Serializable {
       throws FactoryConfigurationError, ParserConfigurationException, SAXException, IOException {
     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
     factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+    factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
     factory.setXIncludeAware(false);
     factory.setExpandEntityReferences(false);
 
