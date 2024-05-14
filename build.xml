@@ -97,7 +97,8 @@
   <target name="compile" depends="prepare">
     <javac srcdir="${src.dir}" source="${jdk}" target="${jdk}"
            destdir="${build.dir}"
-           debug="off"
+           debug="on"
+           debuglevel="lines,vars,source"
            deprecation="on"
            optimize="on"
            includeantruntime="false">
@@ -406,7 +407,7 @@
       <executiondata>
         <file file="${target.dir}/jacoco.exec"/>
       </executiondata>
-      <structure name="SimIS CMS">
+      <structure name="CMS Platform">
         <classfiles>
           <fileset dir="${build.dir}">
             <exclude name="**/*Test*.class"/>
