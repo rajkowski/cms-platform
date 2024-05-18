@@ -49,7 +49,8 @@ public class LoadSitePropertyCommand {
 
   private static Map<String, String> loadAsMap(String prefix, boolean includeEmptyValues) {
     // Use the cache
-    List<SiteProperty> sitePropertyList = (List<SiteProperty>) CacheManager.getLoadingCache(CacheManager.SYSTEM_PROPERTY_PREFIX_CACHE).get(prefix);
+    List<SiteProperty> sitePropertyList = (List<SiteProperty>) CacheManager.getLoadingCache(CacheManager.SYSTEM_PROPERTY_PREFIX_CACHE)
+        .get(prefix);
     // Return the requested map
     Map<String, String> sitePropertyMap = new HashMap<>();
     for (SiteProperty siteProperty : sitePropertyList) {
@@ -71,7 +72,8 @@ public class LoadSitePropertyCommand {
 
   public static String loadByName(String name) {
     String prefix = name.substring(0, name.indexOf("."));
-    List<SiteProperty> sitePropertyList = (List<SiteProperty>) CacheManager.getLoadingCache(CacheManager.SYSTEM_PROPERTY_PREFIX_CACHE).get(prefix);
+    List<SiteProperty> sitePropertyList = (List<SiteProperty>) CacheManager.getLoadingCache(CacheManager.SYSTEM_PROPERTY_PREFIX_CACHE)
+        .get(prefix);
     if (sitePropertyList == null) {
       return null;
     }
@@ -107,14 +109,25 @@ public class LoadSitePropertyCommand {
    * @param defaultValue
    * @return
    */
-  public static String getValueBasedOnEnvironment(String name, String defaultValue) {
+  public static String getValueBasedOnEnvironment(SiteProperty siteProperty) {
+    String name = siteProperty.getName();
+    String originalValue = siteProperty.getValue();
+
+    // Replace with an environment variable
     String envName = "CMS_" + name.replaceAll("[.]", "_").toUpperCase();
     String value = System.getenv(envName);
-    if (value != null) {
-      return value;
-    } else {
-      return defaultValue;
+    if (value == null) {
+      // Not found, so use the original value
+      value = originalValue;
     }
+
+    // Verify the value before returning it
+    if (!ValidateSitePropertyCommand.isValid(siteProperty, value)) {
+      LOG.warn("Resetting an invalid value for: " + name + "=" + value);
+      return "";
+    }
+
+    return value;
   }
 
 }
