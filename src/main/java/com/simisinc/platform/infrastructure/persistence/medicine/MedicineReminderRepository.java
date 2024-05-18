@@ -150,7 +150,7 @@ public class MedicineReminderRepository {
         currentDay.append("on_sunday");
         break;
       default:
-        break;
+        return null;
     }
 
     String startDateValue = new SimpleDateFormat("yyyy-MM-dd").format(startDate);
