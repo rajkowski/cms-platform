@@ -304,8 +304,8 @@ CREATE TABLE users (
   geom geometry(Point,4326),
   description TEXT,
   description_text TEXT,
-  image_url VARCHAR(255),
-  video_url VARCHAR(255),
+  image_url VARCHAR(512),
+  video_url VARCHAR(512),
   field_values JSONB
 );
 CREATE UNIQUE INDEX users_lc_email ON users (LOWER(email));

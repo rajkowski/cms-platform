@@ -15,7 +15,7 @@ CREATE TABLE collections (
   allows_guests BOOLEAN DEFAULT FALSE,
   guest_privacy_type INTEGER NOT NULL,
   listings_link VARCHAR(255),
-  image_url VARCHAR(255),
+  image_url VARCHAR(512),
   header_xml TEXT,
   icon VARCHAR(20),
   show_listings_link BOOLEAN DEFAULT FALSE,
@@ -53,7 +53,7 @@ CREATE TABLE categories (
   header_bg_color VARCHAR(30) DEFAULT '#666666',
   item_url_text VARCHAR(50),
   unique_id VARCHAR(255) NOT NULL,
-  image_url VARCHAR(255)
+  image_url VARCHAR(512)
 );
 CREATE UNIQUE INDEX categories_uni_idx ON categories(collection_id, name);
 CREATE UNIQUE INDEX categories_uidx ON categories (collection_id, unique_id);
@@ -113,7 +113,7 @@ CREATE TABLE collection_tabs (
   enabled BOOLEAN DEFAULT true,
   page_xml TEXT,
   role_id_list VARCHAR(100) DEFAULT NULL,
-  page_image_url VARCHAR(255)
+  page_image_url VARCHAR(512)
 );
 CREATE INDEX col_tabs_col_idx ON collections(collection_id);
 
