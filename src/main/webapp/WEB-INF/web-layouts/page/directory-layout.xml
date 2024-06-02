@@ -69,7 +69,7 @@
     </section>
   </page>
 
-  <page name="/edit{/uniqueId}" itemUniqueId="/edit/*" title="Edit" role="admin,data-manager">
+  <page name="/edit/*" itemUniqueId="/edit/*" title="Edit" role="admin,data-manager">
     <section>
       <column class="small-12 medium-9 small-order-2 medium-order-1 cell">
         <widget name="editItemForm">
