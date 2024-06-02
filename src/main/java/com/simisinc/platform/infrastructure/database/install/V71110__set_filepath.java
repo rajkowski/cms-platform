@@ -42,11 +42,11 @@ public class V71110__set_filepath extends BaseJavaMigration {
 
     File basePath = null;
     if (SystemUtils.IS_OS_LINUX) {
-      basePath = new File("/opt/simis");
+      basePath = new File("/opt/cms-platform");
     } else {
       File userHome = SystemUtils.getUserHome();
       File webPath = new File(userHome, "Web");
-      File cmsPath = new File(webPath, "simis-cms");
+      File cmsPath = new File(webPath, "cms-platform");
       basePath = cmsPath;
     }
 
