@@ -39,11 +39,24 @@
       <p>
         <textarea name="json" data-gutter="1" rows="24" data-editor="json"><c:out value="${json}"/></textarea>
       </p>
+      <p><input type="submit" class="button radius success" value="Save"/></p>
     </div>
     <div class="small-12 hide-for-small-only medium-3 cell">
       <div id="information" class="callout secondary" style="overflow:scroll">
-        <h4>JSON Array</h4>
         <h4>Custom Fields</h4>
+        <h4>JSON Array</h4>
+        <pre>
+[ {
+  "label": "Open",
+  "name": "Open",
+  "type": "text | textarea | html | list"
+}, {
+  "label": "Close",
+  "name": "Close",
+  "type": "list",
+  "list": "choice1=Choice 1, choice2=Choice 2"
+} ]
+        </pre>
         <dl>
           <dt>label</dt>
           <dd>display label</dd>
@@ -52,12 +65,11 @@
           <dt>type</dt>
           <dd>text, textarea, html, list</dd>
           <dt>list</dt>
-          <dt>comma-separated values or name=value</dt>
+          <dt>comma-separated values or value=Name, value2=Name 2</dt>
         </dl>
       </div>
     </div>
   </div>
-  <p><input type="submit" class="button radius success" value="Save"/></p>
 </form>
 <script>
   // Hook up ACE editor to all textareas with data-editor attribute

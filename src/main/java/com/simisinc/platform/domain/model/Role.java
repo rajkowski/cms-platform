@@ -28,6 +28,7 @@ public class Role extends Entity {
   private int level = -1;
   private String code = null;
   private String title = null;
+  private String oAuthPath = null;
 
   public Role() {
   }
@@ -67,5 +68,13 @@ public class Role extends Entity {
 
   public void setTitle(String title) {
     this.title = title;
+  }
+
+  public String getOAuthPath() {
+    return oAuthPath;
+  }
+
+  public void setOAuthPath(String oAuthPath) {
+    this.oAuthPath = oAuthPath;
   }
 }

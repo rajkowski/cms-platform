@@ -1,7 +1,7 @@
 -- Copyright 2022 SimIS Inc. (https://www.simiscms.com), Licensed under the Apache License, Version 2.0 (the "License").
 -- Core Database
 
-CREATE EXTENSION postgis;
+CREATE EXTENSION IF NOT EXISTS postgis;
 
 CREATE TABLE database_version (
   version_id BIGSERIAL PRIMARY KEY,
@@ -23,9 +23,9 @@ CREATE TABLE site_properties (
 
 INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('SSL Required', 'system.ssl', 'true');
 INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('WWW Context', 'system.www.context', '/web-content');
-INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('Customizations path', 'system.customizations.filepath', '/opt/simis/customization');
-INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('File server path', 'system.filepath', '/opt/simis/files');
-INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('Configuration path', 'system.configpath', '/opt/simis/config');
+INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('Customizations path', 'system.customizations.filepath', '/opt/cms-platform/customization');
+INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('File server path', 'system.filepath', '/opt/cms-platform/files');
+INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('Configuration path', 'system.configpath', '/opt/cms-platform/config');
 
 -- Site
 
@@ -125,13 +125,14 @@ INSERT INTO site_properties (property_order, property_label, property_name, prop
 
 -- Mail
 
-INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('Default From Address', 'mail.from_address', 'auto-sender@site.local');
-INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('Default From Name', 'mail.from_name', 'New Site');
-INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('Host Name', 'mail.host_name', '127.0.0.1');
-INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('SMTP Port', 'mail.port', '25');
-INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('SMTP Username', 'mail.username', '');
-INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('SMTP Password', 'mail.password', '');
-INSERT INTO site_properties (property_label, property_name, property_value, property_type) VALUES ('SMTP SSL', 'mail.ssl', 'false', 'boolean');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value) VALUES (10, 'Default From Address', 'mail.from_address', 'auto-sender@site.local');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value) VALUES (20, 'Default From Name', 'mail.from_name', 'New Site');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value) VALUES (30, 'Host Name', 'mail.host_name', '127.0.0.1');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value) VALUES (40, 'SMTP Port', 'mail.port', '25');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value) VALUES (50, 'SMTP Username', 'mail.username', '');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value) VALUES (60, 'SMTP Password', 'mail.password', '');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (70, 'SMTP SSL', 'mail.ssl', 'false', 'boolean');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (80, 'SMTP TLS', 'mail.tls', 'false', 'boolean');
 
 -- Mailing List
 
@@ -257,6 +258,8 @@ INSERT INTO site_properties (property_order, property_label, property_name, prop
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (20, 'OpenAuth Enabled', 'oauth.enabled', 'false', 'boolean');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (22, 'OpenAuth Role Attribute', 'oauth.role.attribute', 'roles', 'text');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (24, 'OpenAuth Group Attribute', 'oauth.group.attribute', 'groups', 'text');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (26, 'OpenAuth Role Admin', 'oauth.role.admin', '', 'disabled');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (28, 'OpenAuth Group List', 'oauth.group.list', '', 'disabled');
 
 CREATE TABLE lookup_role (
   role_id SERIAL PRIMARY KEY,
@@ -301,8 +304,8 @@ CREATE TABLE users (
   geom geometry(Point,4326),
   description TEXT,
   description_text TEXT,
-  image_url VARCHAR(255),
-  video_url VARCHAR(255),
+  image_url VARCHAR(512),
+  video_url VARCHAR(512),
   field_values JSONB
 );
 CREATE UNIQUE INDEX users_lc_email ON users (LOWER(email));
@@ -466,7 +469,7 @@ CREATE INDEX world_cit_pop_idx ON world_cities(population);
 -- CREATE INDEX world_cit_geom_gix ON world_cities USING GIST (geom);
 
 -- COPY world_cities(country,city,accent_city,region,latitude,longitude,population,geom)
--- FROM '/opt/simis/data/world_cities.csv' DELIMITER ',' CSV HEADER;
+-- FROM '/opt/cms-platform/data/world_cities.csv' DELIMITER ',' CSV HEADER;
 --
 -- UPDATE world_cities SET geom = ST_SetSRID(ST_MakePoint(latitude, longitude), 4326) WHERE latitude IS NOT NULL AND longitude IS NOT NULL AND geom IS NULL;
 -- UPDATE world_cities SET population = 0 WHERE population IS NULL;
@@ -534,7 +537,7 @@ CREATE TABLE zip_codes (
 CREATE INDEX zip_codes_code_idx ON zip_codes(code);
 
 -- COPY zip_codes
--- FROM '/opt/simis/data/zipcodes.csv' DELIMITER ',' CSV HEADER;
+-- FROM '/opt/cms-platform/data/zipcodes.csv' DELIMITER ',' CSV HEADER;
 --
 -- UPDATE zip_codes SET geom = ST_SetSRID(ST_MakePoint(latitude, longitude), 4326) WHERE latitude IS NOT NULL AND longitude IS NOT NULL AND geom IS NULL;
 

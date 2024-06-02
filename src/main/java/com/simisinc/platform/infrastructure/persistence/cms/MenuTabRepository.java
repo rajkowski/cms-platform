@@ -36,7 +36,7 @@ import java.util.List;
  */
 public class MenuTabRepository {
 
-  private static final String[] PRIMARY_KEY = new String[]{"menu_tab_id"};
+  private static final String[] PRIMARY_KEY = new String[] { "menu_tab_id" };
   private static String TABLE_NAME = "menu_tabs";
 
   private static Log LOG = LogFactory.getLog(MenuTabRepository.class);
@@ -132,18 +132,16 @@ public class MenuTabRepository {
   }
 
   public static boolean remove(MenuTab record) {
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // Delete the references
-        MenuItemRepository.removeAll(connection, record);
-        // Delete the record
-        DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("menu_tab_id = ?", record.getId()));
-        // Finish transaction
-        transaction.commit();
-        return true;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Delete the references
+      MenuItemRepository.removeAll(connection, record);
+      // Delete the record
+      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("menu_tab_id = ?", record.getId()));
+      // Finish transaction
+      transaction.commit();
+      return true;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
@@ -151,13 +149,12 @@ public class MenuTabRepository {
   }
 
   public static int getNextTabOrder() {
-    String SQL_QUERY =
-        "SELECT max(tab_order) " +
-            "FROM menu_tabs ";
+    String SQL_QUERY = "SELECT max(tab_order) " +
+        "FROM menu_tabs ";
     int maxId = 0;
     try (Connection connection = DB.getConnection();
-         PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
-         ResultSet rs = pst.executeQuery()) {
+        PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
+        ResultSet rs = pst.executeQuery()) {
       if (rs.next()) {
         maxId = rs.getInt(1) + 1;
       }

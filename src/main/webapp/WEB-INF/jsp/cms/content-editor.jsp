@@ -19,7 +19,7 @@
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="content" class="com.simisinc.platform.domain.model.cms.Content" scope="request"/>
 <jsp:useBean id="isDraft" class="java.lang.String" scope="request"/>
-<script src="${ctx}/javascript/tinymce-6.8.2/tinymce.min.js"></script>
+<script src="${ctx}/javascript/tinymce-6.8.3/tinymce.min.js"></script>
 <script>
   $(window).on('resize', function () {
     setTimeout(function () {
@@ -46,6 +46,8 @@
     menubar: false,
     relative_urls : false,
     convert_urls : true,
+    convert_unsafe_embeds: true,
+    sandbox_iframes: true,
     content_css: ['${ctx}/css/${font:fontawesome()}/css/all.min.css'],
     noneditable_class: 'tinymce-noedit',
     browser_spellcheck: true,

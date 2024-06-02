@@ -16,19 +16,20 @@
 
 package com.simisinc.platform.presentation.controller;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpServletResponseWrapper;
 import java.io.CharArrayWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletResponseWrapper;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 /**
- * Description
+ * Internal JSP response for the controller to capture the content from the web server
  *
  * @author matt rajkowski
  * @created 4/6/18 10:50 AM
@@ -52,7 +53,6 @@ public class WidgetResponseWrapper extends HttpServletResponseWrapper {
       throw new IllegalStateException("getOutputStream() has already been called on this response.");
     }
 
-//    LOG.info("Returning writer...");
     if (writer == null) {
       copier = new WidgetOutputStream(this.charArray);
       writer = new PrintWriter(new OutputStreamWriter(copier, getResponse().getCharacterEncoding()), true);
@@ -64,17 +64,14 @@ public class WidgetResponseWrapper extends HttpServletResponseWrapper {
   @Override
   public ServletOutputStream getOutputStream() throws IOException {
     if (servletOutputStream == null) {
-//      LOG.info("Creating servletOutputStream...");
       servletOutputStream = new WidgetOutputStream(this.charArray);
     }
-//    LOG.info("Returning servletOutputStream");
     return servletOutputStream;
   }
 
   public String getOutputAndClose() {
     if (this.servletOutputStream != null) {
       try {
-//        LOG.info("Returning servletOutputStream...");
         // flush() is important to get complete cms and not last "buffered" part missing
         this.servletOutputStream.flush();
         return this.charArray.toString();
@@ -89,7 +86,6 @@ public class WidgetResponseWrapper extends HttpServletResponseWrapper {
       }
     } else if (copier != null) {
       try {
-//        LOG.info("Returning writer output...");
         // flush() is important to get complete cms and not last "buffered" part missing
         this.writer.flush();
         this.copier.flush();

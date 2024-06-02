@@ -16,15 +16,18 @@
 
 package com.simisinc.platform.application.admin;
 
-import com.simisinc.platform.domain.model.SiteProperty;
-import com.simisinc.platform.infrastructure.cache.CacheManager;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.simisinc.platform.domain.model.SiteProperty;
+import com.simisinc.platform.infrastructure.cache.CacheManager;
 
 /**
  * Reads site properties, using a cache if possible
@@ -36,7 +39,6 @@ public class LoadSitePropertyCommand {
 
   private static Log LOG = LogFactory.getLog(LoadSitePropertyCommand.class);
 
-
   public static Map<String, String> loadAsMap(String prefix) {
     return loadAsMap(prefix, true);
   }
@@ -47,7 +49,8 @@ public class LoadSitePropertyCommand {
 
   private static Map<String, String> loadAsMap(String prefix, boolean includeEmptyValues) {
     // Use the cache
-    List<SiteProperty> sitePropertyList = (List<SiteProperty>) CacheManager.getLoadingCache(CacheManager.SYSTEM_PROPERTY_PREFIX_CACHE).get(prefix);
+    List<SiteProperty> sitePropertyList = (List<SiteProperty>) CacheManager.getLoadingCache(CacheManager.SYSTEM_PROPERTY_PREFIX_CACHE)
+        .get(prefix);
     // Return the requested map
     Map<String, String> sitePropertyMap = new HashMap<>();
     for (SiteProperty siteProperty : sitePropertyList) {
@@ -69,7 +72,8 @@ public class LoadSitePropertyCommand {
 
   public static String loadByName(String name) {
     String prefix = name.substring(0, name.indexOf("."));
-    List<SiteProperty> sitePropertyList = (List<SiteProperty>) CacheManager.getLoadingCache(CacheManager.SYSTEM_PROPERTY_PREFIX_CACHE).get(prefix);
+    List<SiteProperty> sitePropertyList = (List<SiteProperty>) CacheManager.getLoadingCache(CacheManager.SYSTEM_PROPERTY_PREFIX_CACHE)
+        .get(prefix);
     if (sitePropertyList == null) {
       return null;
     }
@@ -81,12 +85,49 @@ public class LoadSitePropertyCommand {
     return null;
   }
 
+  /** Return the value as either true/false from String value matching "true" */
   public static boolean loadByNameAsBoolean(String name) {
     String booleanValue = loadByName(name);
-    if ("true".equals(booleanValue)) {
-      return true;
+    return "true".equals(booleanValue);
+  }
+
+  /** Return the value as a List from comma separated String value */
+  public static List<String> loadByNameAsList(String name) {
+    String listValue = loadByName(name);
+    if (StringUtils.isNotBlank(listValue)) {
+      return Stream.of(listValue.split(","))
+          .map(String::trim)
+          .collect(Collectors.toList());
     }
-    return false;
+    return null;
+  }
+
+  /**
+   * For a given site property, an environment variable is checked based on the format CMS_SITE_PROPERTY
+   * 
+   * @param name
+   * @param defaultValue
+   * @return
+   */
+  public static String getValueBasedOnEnvironment(SiteProperty siteProperty) {
+    String name = siteProperty.getName();
+    String originalValue = siteProperty.getValue();
+
+    // Replace with an environment variable
+    String envName = "CMS_" + name.replaceAll("[.]", "_").toUpperCase();
+    String value = System.getenv(envName);
+    if (value == null) {
+      // Not found, so use the original value
+      value = originalValue;
+    }
+
+    // Verify the value before returning it
+    if (!ValidateSitePropertyCommand.isValid(siteProperty, value)) {
+      LOG.warn("Resetting an invalid value for: " + name + "=" + value);
+      return "";
+    }
+
+    return value;
   }
 
 }

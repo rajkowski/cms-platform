@@ -21,7 +21,7 @@
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="blog" class="com.simisinc.platform.domain.model.cms.Blog" scope="request"/>
 <jsp:useBean id="blogPost" class="com.simisinc.platform.domain.model.cms.BlogPost" scope="request"/>
-<script src="${ctx}/javascript/tinymce-6.8.2/tinymce.min.js"></script>
+<script src="${ctx}/javascript/tinymce-6.8.3/tinymce.min.js"></script>
 <script>
   tinymce.init({
     selector: 'textarea',
@@ -31,6 +31,8 @@
     menubar: false,
     relative_urls: false,
     convert_urls: true,
+    convert_unsafe_embeds: true,
+    sandbox_iframes: true,
     browser_spellcheck: true,
     plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code insertdatetime media table wordcount',
     toolbar: 'link image media table | undo redo | blocks | bold italic backcolor | bullist numlist outdent indent hr | removeformat | visualblocks code',

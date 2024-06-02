@@ -51,7 +51,7 @@ public class OrderRepository {
   private static Log LOG = LogFactory.getLog(OrderRepository.class);
 
   private static String TABLE_NAME = "orders";
-  private static String[] PRIMARY_KEY = new String[]{"order_id"};
+  private static String[] PRIMARY_KEY = new String[] { "order_id" };
   private static String STATUS_JOIN = "LEFT JOIN lookup_order_status los ON (orders.status = los.status_id)";
 
   private static DataResult query(OrderSpecification specification, DataConstraints constraints) {
@@ -63,18 +63,22 @@ public class OrderRepository {
           .addIfExists("LOWER(email) = ?", specification.getEmail() != null ? specification.getEmail().toLowerCase() : null)
           .addIfExists("created_by = ?", specification.getCreatedBy(), -1);
       if (StringUtils.isNotBlank(specification.getUniqueId())) {
-        where.add("(LOWER(order_unique_id) = LOWER(?) OR LOWER(order_unique_id) LIKE LOWER(?))", new String[]{specification.getUniqueId(), specification.getUniqueId() + "%"});
+        where.add("(LOWER(order_unique_id) = LOWER(?) OR LOWER(order_unique_id) LIKE LOWER(?))",
+            new String[] { specification.getUniqueId(), specification.getUniqueId() + "%" });
       }
       if (StringUtils.isNotBlank(specification.getCustomerNumber())) {
-        where.add("EXISTS (SELECT 1 FROM customers WHERE orders.customer_id = customers.customer_id AND LOWER(customer_unique_id) = ?)", specification.getCustomerNumber().toLowerCase());
+        where.add(
+            "EXISTS (SELECT 1 FROM customers WHERE orders.customer_id = customers.customer_id AND LOWER(customer_unique_id) = ?)",
+            specification.getCustomerNumber().toLowerCase());
       }
       if (StringUtils.isNotBlank(specification.getPhoneNumber())) {
-        where.add("(billing_phone_number = ? OR shipping_phone_number = ?)", new String[]{specification.getPhoneNumber(), specification.getPhoneNumber()});
+        where.add("(billing_phone_number = ? OR shipping_phone_number = ?)",
+            new String[] { specification.getPhoneNumber(), specification.getPhoneNumber() });
       }
       if (StringUtils.isNotBlank(specification.getName())) {
         where.add(
             "(LOWER(concat_ws(' ', first_name, last_name)) LIKE LOWER(?) ESCAPE '!' OR LOWER(concat_ws(' ', shipping_first_name, shipping_last_name)) LIKE LOWER(?) ESCAPE '!')",
-            new String[]{"%" + specification.getName() + "%", "%" + specification.getName() + "%"});
+            new String[] { "%" + specification.getName() + "%", "%" + specification.getName() + "%" });
       }
       if (specification.getShowSandbox() != DataConstants.UNDEFINED) {
         where.add("live_mode = ?", specification.getShowSandbox() == DataConstants.FALSE);
@@ -122,25 +126,24 @@ public class OrderRepository {
   }
 
   public static List<Session> findDailyUniqueLocations(int daysToLimit) {
-    String SQL_QUERY =
-        "SELECT DISTINCT shipping_country AS country, " +
-            "shipping_state AS state, " +
-            "shipping_city AS city, " +
-            "latitude, longitude " +
-            "FROM orders " +
-            "WHERE payment_date IS NOT NULL " +
-            "AND payment_date > NOW() - INTERVAL '" + daysToLimit + " days' " +
-            "AND latitude IS NOT NULL " +
-            "AND live_mode = true AND processed = true " +
-            "ORDER BY country, state, city, latitude, longitude";
+    String SQL_QUERY = "SELECT DISTINCT shipping_country AS country, " +
+        "shipping_state AS state, " +
+        "shipping_city AS city, " +
+        "latitude, longitude " +
+        "FROM orders " +
+        "WHERE payment_date IS NOT NULL " +
+        "AND payment_date > NOW() - INTERVAL '" + daysToLimit + " days' " +
+        "AND latitude IS NOT NULL " +
+        "AND live_mode = true AND processed = true " +
+        "ORDER BY country, state, city, latitude, longitude";
     List<Session> records = null;
     try (Connection connection = DB.getConnection();
-         PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
-         ResultSet rs = pst.executeQuery()) {
+        PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
+        ResultSet rs = pst.executeQuery()) {
       records = new ArrayList<>();
       while (rs.next()) {
         Session data = new Session();
-//        data.setContinent(rs.getString("continent"));
+        //        data.setContinent(rs.getString("continent"));
         data.setCountry(rs.getString("country"));
         data.setState(rs.getString("state"));
         data.setCity(rs.getString("city"));
@@ -155,27 +158,25 @@ public class OrderRepository {
   }
 
   public static List<StatisticsData> findTopLocations(int daysToLimit, int recordLimit) {
-    String SQL_QUERY =
-        "SELECT UPPER(shipping_country) AS country, " +
-            "UPPER(shipping_state) AS state, " +
-            "COUNT(order_id) AS location_count " +
-            "FROM orders " +
-            "WHERE payment_date IS NOT NULL " +
-            "AND payment_date > NOW() - INTERVAL '" + daysToLimit + " days' " +
-            "AND live_mode = true AND processed = true " +
-            "GROUP BY UPPER(shipping_country), UPPER(shipping_state) " +
-            "ORDER BY location_count desc " +
-            "LIMIT " + recordLimit;
+    String SQL_QUERY = "SELECT UPPER(shipping_country) AS country, " +
+        "UPPER(shipping_state) AS state, " +
+        "COUNT(order_id) AS location_count " +
+        "FROM orders " +
+        "WHERE payment_date IS NOT NULL " +
+        "AND payment_date > NOW() - INTERVAL '" + daysToLimit + " days' " +
+        "AND live_mode = true AND processed = true " +
+        "GROUP BY UPPER(shipping_country), UPPER(shipping_state) " +
+        "ORDER BY location_count desc " +
+        "LIMIT " + recordLimit;
     List<StatisticsData> records = null;
     try (Connection connection = DB.getConnection();
-         PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
-         ResultSet rs = pst.executeQuery()) {
+        PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
+        ResultSet rs = pst.executeQuery()) {
       records = new ArrayList<>();
       while (rs.next()) {
         StatisticsData data = new StatisticsData();
-        String label =
-            rs.getString("country") + ", " +
-                rs.getString("state");
+        String label = rs.getString("country") + ", " +
+            rs.getString("state");
         data.setLabel(label);
         data.setValue(String.valueOf(rs.getLong("location_count")));
         records.add(data);
@@ -187,16 +188,15 @@ public class OrderRepository {
   }
 
   public static List<StatisticsData> findDailyOrdersCount(int daysToLimit) {
-    String SQL_QUERY =
-        "SELECT DATE_TRUNC('day', day)::VARCHAR(10) AS date_column, COUNT(order_id) AS daily_count " +
-            "FROM (SELECT generate_series(NOW() - INTERVAL '" + daysToLimit + " days', NOW(), INTERVAL '1 day')::date) d(day) " +
-            "LEFT JOIN orders ON DATE_TRUNC('day', payment_date) = DATE_TRUNC('day', day) AND live_mode = true AND processed = true " +
-            "GROUP BY d.day " +
-            "ORDER BY d.day";
+    String SQL_QUERY = "SELECT DATE_TRUNC('day', day)::VARCHAR(10) AS date_column, COUNT(order_id) AS daily_count " +
+        "FROM (SELECT generate_series(NOW() - INTERVAL '" + daysToLimit + " days', NOW(), INTERVAL '1 day')::date) d(day) " +
+        "LEFT JOIN orders ON DATE_TRUNC('day', payment_date) = DATE_TRUNC('day', day) AND live_mode = true AND processed = true " +
+        "GROUP BY d.day " +
+        "ORDER BY d.day";
     List<StatisticsData> records = null;
     try (Connection connection = DB.getConnection();
-         PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
-         ResultSet rs = pst.executeQuery()) {
+        PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
+        ResultSet rs = pst.executeQuery()) {
       records = new ArrayList<>();
       while (rs.next()) {
         StatisticsData data = new StatisticsData();
@@ -211,16 +211,15 @@ public class OrderRepository {
   }
 
   public static List<StatisticsData> findDailyItemsSold(int daysToLimit) {
-    String SQL_QUERY =
-        "SELECT DATE_TRUNC('day', day)::VARCHAR(10) AS date_column, SUM(total_items) AS daily_count " +
-            "FROM (SELECT generate_series(NOW() - INTERVAL '" + daysToLimit + " days', NOW(), INTERVAL '1 day')::date) d(day) " +
-            "LEFT JOIN orders ON DATE_TRUNC('day', payment_date) = DATE_TRUNC('day', day) AND live_mode = true AND processed = true " +
-            "GROUP BY d.day " +
-            "ORDER BY d.day";
+    String SQL_QUERY = "SELECT DATE_TRUNC('day', day)::VARCHAR(10) AS date_column, SUM(total_items) AS daily_count " +
+        "FROM (SELECT generate_series(NOW() - INTERVAL '" + daysToLimit + " days', NOW(), INTERVAL '1 day')::date) d(day) " +
+        "LEFT JOIN orders ON DATE_TRUNC('day', payment_date) = DATE_TRUNC('day', day) AND live_mode = true AND processed = true " +
+        "GROUP BY d.day " +
+        "ORDER BY d.day";
     List<StatisticsData> records = null;
     try (Connection connection = DB.getConnection();
-         PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
-         ResultSet rs = pst.executeQuery()) {
+        PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
+        ResultSet rs = pst.executeQuery()) {
       records = new ArrayList<>();
       while (rs.next()) {
         StatisticsData data = new StatisticsData();
@@ -235,16 +234,15 @@ public class OrderRepository {
   }
 
   public static List<StatisticsData> findDailyAmountSold(int daysToLimit) {
-    String SQL_QUERY =
-        "SELECT DATE_TRUNC('day', day)::VARCHAR(10) AS date_column, SUM(total_paid) AS daily_count " +
-            "FROM (SELECT generate_series(NOW() - INTERVAL '" + daysToLimit + " days', NOW(), INTERVAL '1 day')::date) d(day) " +
-            "LEFT JOIN orders ON DATE_TRUNC('day', payment_date) = DATE_TRUNC('day', day) AND live_mode = true AND processed = true " +
-            "GROUP BY d.day " +
-            "ORDER BY d.day";
+    String SQL_QUERY = "SELECT DATE_TRUNC('day', day)::VARCHAR(10) AS date_column, SUM(total_paid) AS daily_count " +
+        "FROM (SELECT generate_series(NOW() - INTERVAL '" + daysToLimit + " days', NOW(), INTERVAL '1 day')::date) d(day) " +
+        "LEFT JOIN orders ON DATE_TRUNC('day', payment_date) = DATE_TRUNC('day', day) AND live_mode = true AND processed = true " +
+        "GROUP BY d.day " +
+        "ORDER BY d.day";
     List<StatisticsData> records = null;
     try (Connection connection = DB.getConnection();
-         PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
-         ResultSet rs = pst.executeQuery()) {
+        PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
+        ResultSet rs = pst.executeQuery()) {
       records = new ArrayList<>();
       while (rs.next()) {
         StatisticsData data = new StatisticsData();
@@ -260,14 +258,13 @@ public class OrderRepository {
 
   public static long countTotalOrders(int daysToLimit) {
     long count = -1;
-    String SQL_QUERY =
-        "SELECT COUNT(order_id) AS order_count " +
-            "FROM orders " +
-            "WHERE live_mode = true AND paid = true AND canceled = false " +
-            "AND created > NOW() - INTERVAL '" + daysToLimit + " days'";
+    String SQL_QUERY = "SELECT COUNT(order_id) AS order_count " +
+        "FROM orders " +
+        "WHERE live_mode = true AND paid = true AND canceled = false " +
+        "AND created > NOW() - INTERVAL '" + daysToLimit + " days'";
     try (Connection connection = DB.getConnection();
-         PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
-         ResultSet rs = pst.executeQuery()) {
+        PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
+        ResultSet rs = pst.executeQuery()) {
       if (rs.next()) {
         count = rs.getLong("order_count");
       }
@@ -279,13 +276,12 @@ public class OrderRepository {
 
   public static long countTotalOrders() {
     long count = -1;
-    String SQL_QUERY =
-        "SELECT COUNT(order_id) AS order_count " +
-            "FROM orders " +
-            "WHERE live_mode = true AND paid = true AND canceled = false";
+    String SQL_QUERY = "SELECT COUNT(order_id) AS order_count " +
+        "FROM orders " +
+        "WHERE live_mode = true AND paid = true AND canceled = false";
     try (Connection connection = DB.getConnection();
-         PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
-         ResultSet rs = pst.executeQuery()) {
+        PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
+        ResultSet rs = pst.executeQuery()) {
       if (rs.next()) {
         count = rs.getLong("order_count");
       }
@@ -297,13 +293,12 @@ public class OrderRepository {
 
   public static long countTotalOrdersNotShipped() {
     long count = -1;
-    String SQL_QUERY =
-        "SELECT COUNT(order_id) AS order_count " +
-            "FROM orders " +
-            "WHERE live_mode = true AND paid = true AND shipped = false AND canceled = false";
+    String SQL_QUERY = "SELECT COUNT(order_id) AS order_count " +
+        "FROM orders " +
+        "WHERE live_mode = true AND paid = true AND shipped = false AND canceled = false";
     try (Connection connection = DB.getConnection();
-         PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
-         ResultSet rs = pst.executeQuery()) {
+        PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
+        ResultSet rs = pst.executeQuery()) {
       if (rs.next()) {
         count = rs.getLong("order_count");
       }
@@ -315,13 +310,12 @@ public class OrderRepository {
 
   public static long countTotalOrdersShipped() {
     long count = -1;
-    String SQL_QUERY =
-        "SELECT COUNT(order_id) AS order_count " +
-            "FROM orders " +
-            "WHERE live_mode = true AND paid = true AND processed = true AND shipped = true";
+    String SQL_QUERY = "SELECT COUNT(order_id) AS order_count " +
+        "FROM orders " +
+        "WHERE live_mode = true AND paid = true AND processed = true AND shipped = true";
     try (Connection connection = DB.getConnection();
-         PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
-         ResultSet rs = pst.executeQuery()) {
+        PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
+        ResultSet rs = pst.executeQuery()) {
       if (rs.next()) {
         count = rs.getLong("order_count");
       }
@@ -344,133 +338,130 @@ public class OrderRepository {
   }
 
   public static Order add(Order record, List<CartItem> cartItemList) {
-    // Use a transaction
-    try {
-      // Generate the order number
-      record.setUniqueId(generateUniqueId());
-      // Save the order
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // In a transaction (use the existing connection)
-        SqlUtils insertValues = new SqlUtils()
-            .add("order_unique_id", record.getUniqueId())
-            .addIfExists("customer_id", record.getCustomerId(), -1)
-            .add("email", record.getEmail())
-            .add("first_name", record.getFirstName())
-            .add("last_name", record.getLastName())
-            .add("customer_note", record.getCustomerNote())
-            .add("barcode", record.getBarcode())
-            .add("remote_order_id", record.getRemoteOrderId())
-            .add("shipping_method", record.getShippingMethodId(), -1)
-            .add("shipping_rate_id", record.getShippingRateId(), -1)
-            .add("total_items", record.getTotalItems())
-            .addIfExists("currency", record.getCurrency())
-            .add("subtotal_amount", record.getSubtotalAmount())
-            .addIfExists("discount_amount", record.getDiscountAmount())
-            .add("promo_code", record.getPromoCode())
-            .add("pricing_rule_1", record.getPricingRuleId(), -1)
-            .addIfExists("fee_amount", record.getHandlingFee())
-            .addIfExists("fee_tax_amount", record.getHandlingFeeTaxAmount())
-            .addIfExists("shipping_amount", record.getShippingFee())
-            .addIfExists("shipping_tax_amount", record.getShippingTaxAmount())
-            .addIfExists("tax_amount", record.getTaxAmount())
-            .addIfExists("tax_rate", record.getTaxRate())
-            .addIfExists("total_amount", record.getTotalAmount())
-            .addIfExists("total_paid", record.getTotalPaid())
-            .addIfExists("total_pending", record.getTotalPending())
-            .addIfExists("total_refunded", record.getTotalRefunded())
-            .add("status", record.getStatusId(), -1)
-            .add("has_preorder", record.getHasPreOrder())
-            .add("has_backorder", record.getHasBackOrder())
-            .add("paid", record.getPaid())
-            .add("processed", record.getProcessed())
-            .add("shipped", record.getShipped())
-            .add("canceled", record.getCanceled())
-            .add("refunded", record.getRefunded())
-            .add("tax_id", record.getTaxId())
-            .add("cart_id", record.getCartId())
-            .add("payment_processor", record.getPaymentProcessor())
-            .add("payment_token", record.getPaymentToken())
-            .add("payment_type", record.getPaymentType())
-            .add("payment_brand", record.getPaymentBrand())
-            .add("payment_last4", record.getPaymentLast4())
-            .add("payment_fingerprint", record.getPaymentFingerprint())
-            .add("payment_country", record.getPaymentCountry())
-            .add("charge_token", record.getChargeToken())
-            .add("ip_address", record.getIpAddress())
-            .add("session_id", record.getSessionId())
-            .add("country_iso", record.getCountryIso())
-            .add("country", record.getCountry())
-            .add("city", record.getCity())
-            .add("state_iso", record.getStateIso())
-            .add("state", record.getState())
-            .add("latitude", record.getLatitude(), 0)
-            .add("longitude", record.getLongitude(), 0)
-            .add("payment_date", record.getPaymentDate())
-            .add("processing_date", record.getProcessingDate())
-            .add("fulfillment_date", record.getFulfillmentDate())
-            .add("shipped_date", record.getShippedDate())
-            .add("canceled_date", record.getCanceledDate())
-            .add("refunded_date", record.getRefundedDate())
-            .addIfExists("tracking_numbers", record.getTrackingNumbers())
-            .addIfExists("square_order_id", record.getSquareOrderId())
-            .addIfExists("created_by", record.getCreatedBy(), -1)
-            .addIfExists("modified_by", record.getModifiedBy(), -1);
-        if (record.getBillingAddress() != null) {
-          insertValues
-              .add("billing_first_name", record.getBillingAddress().getFirstName())
-              .add("billing_last_name", record.getBillingAddress().getLastName())
-              .add("billing_organization", record.getBillingAddress().getOrganization())
-              .add("billing_street_address", record.getBillingAddress().getStreet())
-              .add("billing_address_line_2", record.getBillingAddress().getAddressLine2())
-              .add("billing_address_line_3", record.getBillingAddress().getAddressLine3())
-              .add("billing_city", record.getBillingAddress().getCity())
-              .add("billing_state", record.getBillingAddress().getState())
-              .add("billing_country", record.getBillingAddress().getCountry())
-              .add("billing_postal_code", record.getBillingAddress().getPostalCode())
-              .add("billing_county", record.getBillingAddress().getCounty())
-              .add("billing_phone_number", record.getBillingAddress().getPhoneNumber())
-              .addIfExists("billing_latitude", record.getBillingAddress().getLatitude(), 0)
-              .addIfExists("billing_longitude", record.getBillingAddress().getLongitude(), 0);
-        }
-        if (record.getShippingAddress() != null) {
-          insertValues
-              .add("shipping_first_name", record.getShippingAddress().getFirstName())
-              .add("shipping_last_name", record.getShippingAddress().getLastName())
-              .add("shipping_organization", record.getShippingAddress().getOrganization())
-              .add("shipping_street_address", record.getShippingAddress().getStreet())
-              .add("shipping_address_line_2", record.getShippingAddress().getAddressLine2())
-              .add("shipping_address_line_3", record.getShippingAddress().getAddressLine3())
-              .add("shipping_city", record.getShippingAddress().getCity())
-              .add("shipping_state", record.getShippingAddress().getState())
-              .add("shipping_country", record.getShippingAddress().getCountry())
-              .add("shipping_postal_code", record.getShippingAddress().getPostalCode())
-              .add("shipping_county", record.getShippingAddress().getCounty())
-              .add("shipping_phone_number", record.getShippingAddress().getPhoneNumber())
-              .addIfExists("shipping_latitude", record.getShippingAddress().getLatitude(), 0)
-              .addIfExists("shipping_longitude", record.getShippingAddress().getLongitude(), 0);
-        }
-        record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
-        // Update the cart's link
-        if (record.getCartId() > 0) {
-          SqlUtils update = new SqlUtils()
-              .add("order_id", record.getId())
-              .add("order_date", new Timestamp(System.currentTimeMillis()));
-          SqlUtils where = new SqlUtils().add("cart_id = ?", record.getCartId());
-          DB.update(connection, "carts", update, where);
-        }
-        // Make a copy of the cart items
-        if (cartItemList != null && !cartItemList.isEmpty()) {
-          for (CartItem cartItem : cartItemList) {
-            OrderItem orderItem = OrderItemCommand.generateOrderItem(record, cartItem);
-            OrderItemRepository.add(connection, orderItem);
-          }
-        }
-        // Finish the transaction
-        transaction.commit();
-        return record;
+    // Generate the order number
+    record.setUniqueId(generateUniqueId());
+    // Save the order
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // In a transaction (use the existing connection)
+      SqlUtils insertValues = new SqlUtils()
+          .add("order_unique_id", record.getUniqueId())
+          .addIfExists("customer_id", record.getCustomerId(), -1)
+          .add("email", record.getEmail())
+          .add("first_name", record.getFirstName())
+          .add("last_name", record.getLastName())
+          .add("customer_note", record.getCustomerNote())
+          .add("barcode", record.getBarcode())
+          .add("remote_order_id", record.getRemoteOrderId())
+          .add("shipping_method", record.getShippingMethodId(), -1)
+          .add("shipping_rate_id", record.getShippingRateId(), -1)
+          .add("total_items", record.getTotalItems())
+          .addIfExists("currency", record.getCurrency())
+          .add("subtotal_amount", record.getSubtotalAmount())
+          .addIfExists("discount_amount", record.getDiscountAmount())
+          .add("promo_code", record.getPromoCode())
+          .add("pricing_rule_1", record.getPricingRuleId(), -1)
+          .addIfExists("fee_amount", record.getHandlingFee())
+          .addIfExists("fee_tax_amount", record.getHandlingFeeTaxAmount())
+          .addIfExists("shipping_amount", record.getShippingFee())
+          .addIfExists("shipping_tax_amount", record.getShippingTaxAmount())
+          .addIfExists("tax_amount", record.getTaxAmount())
+          .addIfExists("tax_rate", record.getTaxRate())
+          .addIfExists("total_amount", record.getTotalAmount())
+          .addIfExists("total_paid", record.getTotalPaid())
+          .addIfExists("total_pending", record.getTotalPending())
+          .addIfExists("total_refunded", record.getTotalRefunded())
+          .add("status", record.getStatusId(), -1)
+          .add("has_preorder", record.getHasPreOrder())
+          .add("has_backorder", record.getHasBackOrder())
+          .add("paid", record.getPaid())
+          .add("processed", record.getProcessed())
+          .add("shipped", record.getShipped())
+          .add("canceled", record.getCanceled())
+          .add("refunded", record.getRefunded())
+          .add("tax_id", record.getTaxId())
+          .add("cart_id", record.getCartId())
+          .add("payment_processor", record.getPaymentProcessor())
+          .add("payment_token", record.getPaymentToken())
+          .add("payment_type", record.getPaymentType())
+          .add("payment_brand", record.getPaymentBrand())
+          .add("payment_last4", record.getPaymentLast4())
+          .add("payment_fingerprint", record.getPaymentFingerprint())
+          .add("payment_country", record.getPaymentCountry())
+          .add("charge_token", record.getChargeToken())
+          .add("ip_address", record.getIpAddress())
+          .add("session_id", record.getSessionId())
+          .add("country_iso", record.getCountryIso())
+          .add("country", record.getCountry())
+          .add("city", record.getCity())
+          .add("state_iso", record.getStateIso())
+          .add("state", record.getState())
+          .add("latitude", record.getLatitude(), 0)
+          .add("longitude", record.getLongitude(), 0)
+          .add("payment_date", record.getPaymentDate())
+          .add("processing_date", record.getProcessingDate())
+          .add("fulfillment_date", record.getFulfillmentDate())
+          .add("shipped_date", record.getShippedDate())
+          .add("canceled_date", record.getCanceledDate())
+          .add("refunded_date", record.getRefundedDate())
+          .addIfExists("tracking_numbers", record.getTrackingNumbers())
+          .addIfExists("square_order_id", record.getSquareOrderId())
+          .addIfExists("created_by", record.getCreatedBy(), -1)
+          .addIfExists("modified_by", record.getModifiedBy(), -1);
+      if (record.getBillingAddress() != null) {
+        insertValues
+            .add("billing_first_name", record.getBillingAddress().getFirstName())
+            .add("billing_last_name", record.getBillingAddress().getLastName())
+            .add("billing_organization", record.getBillingAddress().getOrganization())
+            .add("billing_street_address", record.getBillingAddress().getStreet())
+            .add("billing_address_line_2", record.getBillingAddress().getAddressLine2())
+            .add("billing_address_line_3", record.getBillingAddress().getAddressLine3())
+            .add("billing_city", record.getBillingAddress().getCity())
+            .add("billing_state", record.getBillingAddress().getState())
+            .add("billing_country", record.getBillingAddress().getCountry())
+            .add("billing_postal_code", record.getBillingAddress().getPostalCode())
+            .add("billing_county", record.getBillingAddress().getCounty())
+            .add("billing_phone_number", record.getBillingAddress().getPhoneNumber())
+            .addIfExists("billing_latitude", record.getBillingAddress().getLatitude(), 0)
+            .addIfExists("billing_longitude", record.getBillingAddress().getLongitude(), 0);
       }
+      if (record.getShippingAddress() != null) {
+        insertValues
+            .add("shipping_first_name", record.getShippingAddress().getFirstName())
+            .add("shipping_last_name", record.getShippingAddress().getLastName())
+            .add("shipping_organization", record.getShippingAddress().getOrganization())
+            .add("shipping_street_address", record.getShippingAddress().getStreet())
+            .add("shipping_address_line_2", record.getShippingAddress().getAddressLine2())
+            .add("shipping_address_line_3", record.getShippingAddress().getAddressLine3())
+            .add("shipping_city", record.getShippingAddress().getCity())
+            .add("shipping_state", record.getShippingAddress().getState())
+            .add("shipping_country", record.getShippingAddress().getCountry())
+            .add("shipping_postal_code", record.getShippingAddress().getPostalCode())
+            .add("shipping_county", record.getShippingAddress().getCounty())
+            .add("shipping_phone_number", record.getShippingAddress().getPhoneNumber())
+            .addIfExists("shipping_latitude", record.getShippingAddress().getLatitude(), 0)
+            .addIfExists("shipping_longitude", record.getShippingAddress().getLongitude(), 0);
+      }
+      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+      // Update the cart's link
+      if (record.getCartId() > 0) {
+        SqlUtils update = new SqlUtils()
+            .add("order_id", record.getId())
+            .add("order_date", new Timestamp(System.currentTimeMillis()));
+        SqlUtils where = new SqlUtils().add("cart_id = ?", record.getCartId());
+        DB.update(connection, "carts", update, where);
+      }
+      // Make a copy of the cart items
+      if (cartItemList != null && !cartItemList.isEmpty()) {
+        for (CartItem cartItem : cartItemList) {
+          OrderItem orderItem = OrderItemCommand.generateOrderItem(record, cartItem);
+          OrderItemRepository.add(connection, orderItem);
+        }
+      }
+      // Finish the transaction
+      transaction.commit();
+      return record;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage(), se);
     }
@@ -480,8 +471,8 @@ public class OrderRepository {
   public static Order update(Order record) {
     // Use a transaction
     try (Connection connection = DB.getConnection();
-         AutoStartTransaction a = new AutoStartTransaction(connection);
-         AutoRollback transaction = new AutoRollback(connection)) {
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
       // In a transaction (use the existing connection)
       SqlUtils updateValues = new SqlUtils()
           .addIfExists("customer_id", record.getCustomerId(), -1)
@@ -778,25 +769,23 @@ public class OrderRepository {
     int statusId = OrderStatusCommand.retrieveStatusId(CANCELED);
     Timestamp now = new Timestamp(System.currentTimeMillis());
     // Use a transaction
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // Update the order status
-        SqlUtils updateValues = new SqlUtils()
-            .add("canceled", true)
-            .add("canceled_date", now)
-            .add("status", statusId)
-            .add("modified", now);
-        SqlUtils where = new SqlUtils()
-            .add("order_id = ?", order.getId());
-        DB.update(connection, TABLE_NAME, updateValues, where);
-        // Mark the order items as canceled too
-        OrderItemRepository.markStatusAsCanceled(connection, order);
-        // @todo Append to the order_history (CANCELED)
-        // Finish the transaction
-        transaction.commit();
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Update the order status
+      SqlUtils updateValues = new SqlUtils()
+          .add("canceled", true)
+          .add("canceled_date", now)
+          .add("status", statusId)
+          .add("modified", now);
+      SqlUtils where = new SqlUtils()
+          .add("order_id = ?", order.getId());
+      DB.update(connection, TABLE_NAME, updateValues, where);
+      // Mark the order items as canceled too
+      OrderItemRepository.markStatusAsCanceled(connection, order);
+      // @todo Append to the order_history (CANCELED)
+      // Finish the transaction
+      transaction.commit();
       // Update the object
       order.setCanceled(true);
       order.setCanceledDate(now);
@@ -812,26 +801,24 @@ public class OrderRepository {
     int statusId = OrderStatusCommand.retrieveStatusId(REFUNDED);
     Timestamp now = new Timestamp(System.currentTimeMillis());
     // Use a transaction
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // Update the order status
-        SqlUtils updateValues = new SqlUtils()
-            .add("refunded", true)
-            .add("refunded_date", now)
-            .add("total_refunded = total_refunded + ?", amountRefunded)
-            .add("status", statusId)
-            .add("modified", new Timestamp(System.currentTimeMillis()));
-        SqlUtils where = new SqlUtils()
-            .add("order_id = ?", order.getId());
-        DB.update(connection, TABLE_NAME, updateValues, where);
-        // Mark the order items as refunded too
-        OrderItemRepository.markStatusAsRefunded(connection, order);
-        // @todo Append to the order_history (REFUNDED)
-        // Finish the transaction
-        transaction.commit();
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Update the order status
+      SqlUtils updateValues = new SqlUtils()
+          .add("refunded", true)
+          .add("refunded_date", now)
+          .add("total_refunded = total_refunded + ?", amountRefunded)
+          .add("status", statusId)
+          .add("modified", new Timestamp(System.currentTimeMillis()));
+      SqlUtils where = new SqlUtils()
+          .add("order_id = ?", order.getId());
+      DB.update(connection, TABLE_NAME, updateValues, where);
+      // Mark the order items as refunded too
+      OrderItemRepository.markStatusAsRefunded(connection, order);
+      // @todo Append to the order_history (REFUNDED)
+      // Finish the transaction
+      transaction.commit();
       // Update the object
       order.setRefunded(true);
       order.setRefundedDate(now);
@@ -850,7 +837,7 @@ public class OrderRepository {
     // Update the order status
     SqlUtils updateValues = new SqlUtils()
         .add("status", statusId)
-//        .add("shipped", true)
+        //        .add("shipped", true)
         .add("shipped_date", now)
         .add("modified", now);
     SqlUtils where = new SqlUtils()
@@ -927,8 +914,7 @@ public class OrderRepository {
             "total_amount AS \"Total\"",
             "-total_refunded AS \"Refunded\"",
             "promo_code AS \"Promo Code\"",
-            "payment_processor AS \"Processor\""
-        );
+            "payment_processor AS \"Processor\"");
     SqlJoins joins = new SqlJoins().add(STATUS_JOIN);
     // show paid orders, and only refunded ones that have shipped
     SqlUtils where = new SqlUtils()
@@ -971,8 +957,7 @@ public class OrderRepository {
             "subtotal_amount + shipping_amount + fee_amount - discount_amount AS \"total_sale\"",
             "tax_amount AS \"sales_tax\"",
             "total_amount AS \"Total\"",
-            "-total_refunded AS \"Refunded\""
-        );
+            "-total_refunded AS \"Refunded\"");
     SqlJoins joins = new SqlJoins().add(STATUS_JOIN);
     // show paid orders, and only refunded ones that have shipped
     SqlUtils where = new SqlUtils()

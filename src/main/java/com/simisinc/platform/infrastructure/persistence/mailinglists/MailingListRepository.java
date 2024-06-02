@@ -36,7 +36,7 @@ public class MailingListRepository {
   private static Log LOG = LogFactory.getLog(MailingListRepository.class);
 
   private static String TABLE_NAME = "mailing_lists";
-  private static String[] PRIMARY_KEY = new String[]{"list_id"};
+  private static String[] PRIMARY_KEY = new String[] { "list_id" };
 
   public static List<MailingList> findAll() {
     DataResult result = DB.selectAllFrom(
@@ -71,7 +71,8 @@ public class MailingListRepository {
     SqlUtils where = new SqlUtils()
         .add("show_online = true")
         .add("enabled = true")
-        .add("EXISTS (SELECT 1 FROM mailing_list_members WHERE list_id = mailing_lists.list_id AND email_id = ? AND is_valid = true)", emailId);
+        .add("EXISTS (SELECT 1 FROM mailing_list_members WHERE list_id = mailing_lists.list_id AND email_id = ? AND is_valid = true)",
+            emailId);
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
         where,
@@ -105,12 +106,11 @@ public class MailingListRepository {
 
   public static long countTotalMembers() {
     long count = -1;
-    String SQL_QUERY =
-        "SELECT SUM(member_count) AS member_count " +
-            "FROM mailing_lists ";
+    String SQL_QUERY = "SELECT SUM(member_count) AS member_count " +
+        "FROM mailing_lists ";
     try (Connection connection = DB.getConnection();
-         PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
-         ResultSet rs = pst.executeQuery()) {
+        PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
+        ResultSet rs = pst.executeQuery()) {
       if (rs.next()) {
         count = rs.getLong("member_count");
       }
@@ -167,18 +167,16 @@ public class MailingListRepository {
   }
 
   public static boolean remove(MailingList record) {
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // Delete the references
-        MailingListMemberRepository.removeAll(connection, record);
-        // Delete the record
-        DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("list_id = ?", record.getId()));
-        // Finish transaction
-        transaction.commit();
-        return true;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Delete the references
+      MailingListMemberRepository.removeAll(connection, record);
+      // Delete the record
+      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("list_id = ?", record.getId()));
+      // Finish transaction
+      transaction.commit();
+      return true;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }

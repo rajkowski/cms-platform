@@ -42,7 +42,7 @@ public class CartItemRepository {
   private static Log LOG = LogFactory.getLog(CartItemRepository.class);
 
   private static String TABLE_NAME = "cart_items";
-  private static String[] PRIMARY_KEY = new String[]{"item_id"};
+  private static String[] PRIMARY_KEY = new String[] { "item_id" };
 
   public static List<CartItem> findValidItemsByCartId(long cartId) {
     DataResult result = DB.selectAllFrom(
@@ -63,8 +63,8 @@ public class CartItemRepository {
         CartItemRepository::buildRecord);
   }
 
-
-  public static void addProductToCart(Connection connection, Cart cart, Product product, ProductSku productSku, BigDecimal quantity) throws SQLException {
+  public static void addProductToCart(Connection connection, Cart cart, Product product, ProductSku productSku, BigDecimal quantity)
+      throws SQLException {
     if (cart == null || productSku == null) {
       throw new SQLException("Invalid request");
     }
@@ -77,14 +77,14 @@ public class CartItemRepository {
         .add("each_amount", productSku.getPrice())
         .add("total_amount", productSku.getPrice().multiply(quantity))
         .add("product_name", product.getNameWithCaption())
-//    .add("product_type", product.get)
+        //    .add("product_type", product.get)
         .add("product_sku", productSku.getSku())
         .add("product_barcode", productSku.getBarcode())
         .add("is_preorder", false)
         .add("is_backordered", false)
         .add("is_removed", false)
-//    .add("created_by", )
-//    .add("modified_by", )
+    //    .add("created_by", )
+    //    .add("modified_by", )
     ;
     DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY);
   }
@@ -107,34 +107,32 @@ public class CartItemRepository {
 
   public static boolean removeItemFromCart(Cart cart, CartItem cartItem) {
     // Use a transaction
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // In a transaction (use the existing connection)
-        {
-          // Set as removed
-          SqlUtils update = new SqlUtils()
-              .add("is_removed", true)
-              .add("modified", new Timestamp(System.currentTimeMillis()));
-          SqlUtils where = new SqlUtils().add("item_id = ?", cartItem.getId());
-          DB.update(connection, TABLE_NAME, update, where);
-//          DataSource.deleteFrom(connection, TABLE_NAME, where);
-        }
-        {
-          // Update the cart's total_items, total_qty, subtotal_amount, modified
-          SqlUtils update = new SqlUtils()
-              .add("total_items = total_items - 1")
-              .add("total_qty = total_qty - " + cartItem.getQuantity())
-              .add("subtotal_amount = subtotal_amount - " + cartItem.getQuantity().multiply(cartItem.getEachAmount()))
-              .add("modified", new Timestamp(System.currentTimeMillis()));
-          SqlUtils where = new SqlUtils().add("cart_id = ?", cartItem.getCartId());
-          DB.update(connection, "carts", update, where);
-        }
-        // Finish the transaction
-        transaction.commit();
-        return true;
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // In a transaction (use the existing connection)
+      {
+        // Set as removed
+        SqlUtils update = new SqlUtils()
+            .add("is_removed", true)
+            .add("modified", new Timestamp(System.currentTimeMillis()));
+        SqlUtils where = new SqlUtils().add("item_id = ?", cartItem.getId());
+        DB.update(connection, TABLE_NAME, update, where);
+        //          DataSource.deleteFrom(connection, TABLE_NAME, where);
       }
+      {
+        // Update the cart's total_items, total_qty, subtotal_amount, modified
+        SqlUtils update = new SqlUtils()
+            .add("total_items = total_items - 1")
+            .add("total_qty = total_qty - " + cartItem.getQuantity())
+            .add("subtotal_amount = subtotal_amount - " + cartItem.getQuantity().multiply(cartItem.getEachAmount()))
+            .add("modified", new Timestamp(System.currentTimeMillis()));
+        SqlUtils where = new SqlUtils().add("cart_id = ?", cartItem.getCartId());
+        DB.update(connection, "carts", update, where);
+      }
+      // Finish the transaction
+      transaction.commit();
+      return true;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }

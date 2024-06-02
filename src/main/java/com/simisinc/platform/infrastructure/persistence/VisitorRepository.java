@@ -38,7 +38,7 @@ public class VisitorRepository {
   private static Log LOG = LogFactory.getLog(VisitorRepository.class);
 
   private static String TABLE_NAME = "visitors";
-  private static String[] PRIMARY_KEY = new String[]{"visitor_id"};
+  private static String[] PRIMARY_KEY = new String[] { "visitor_id" };
 
   public static List<Visitor> findAll() {
     DataResult result = DB.selectAllFrom(
@@ -68,18 +68,16 @@ public class VisitorRepository {
         .add("token", record.getToken())
         .add("session_id", record.getSessionId());
     // Use a transaction
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // In a transaction (use the existing connection)
-        record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
-        // Manage the related session
-        SessionRepository.updateVisitorId(connection, record);
-        // Finish the transaction
-        transaction.commit();
-        return record;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // In a transaction (use the existing connection)
+      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+      // Manage the related session
+      SessionRepository.updateVisitorId(connection, record);
+      // Finish the transaction
+      transaction.commit();
+      return record;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }

@@ -28,7 +28,7 @@ import java.util.Map;
  */
 public class ControllerSession implements Serializable {
 
-  final static long serialVersionUID = 8345648404174283569L;
+  private static final long serialVersionUID = 8345648404174283569L;
 
   private long created = System.currentTimeMillis();
   private Map<String, Object> widgetData = new HashMap<>();

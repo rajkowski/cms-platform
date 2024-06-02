@@ -16,6 +16,7 @@
 
 package com.simisinc.platform.application.email;
 
+import java.io.File;
 import java.net.URI;
 import java.net.URL;
 
@@ -28,6 +29,9 @@ import org.apache.commons.mail.ImageHtmlEmail;
 import org.apache.commons.mail.resolver.DataSourceUrlResolver;
 
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
+import com.simisinc.platform.application.cms.ImageUrlCommand;
+import com.simisinc.platform.application.filesystem.FileSystemCommand;
+import com.simisinc.platform.domain.model.cms.Image;
 
 /**
  * Prepares an official site email
@@ -52,6 +56,7 @@ public class EmailCommand {
     String mailUsername = LoadSitePropertyCommand.loadByName("mail.username");
     String mailPassword = LoadSitePropertyCommand.loadByName("mail.password");
     String mailSSL = LoadSitePropertyCommand.loadByName("mail.ssl");
+    String mailTLS = LoadSitePropertyCommand.loadByName("mail.tls");
 
     ImageHtmlEmail email = new ImageHtmlEmail();
     email.setCharset(EmailConstants.UTF_8);
@@ -63,8 +68,15 @@ public class EmailCommand {
       email.setAuthenticator(new DefaultAuthenticator(mailUsername, mailPassword));
     }
     if ("true".equals(mailSSL)) {
+      // SSL takes precedence in Apache Common Mail
       email.setSSLOnConnect(true);
+      email.setSslSmtpPort(String.valueOf(Integer.parseInt(mailPort)));
+      email.setSSLCheckServerIdentity(true);
+    } else if ("true".equals(mailTLS)) {
+      email.setStartTLSRequired(true);
+      email.setSSLCheckServerIdentity(true);
     }
+
     // @todo use the bounce address for tracking because emails can come from different systems and users
     // email.setBounceAddress("bounce@example.com");
 
@@ -76,6 +88,22 @@ public class EmailCommand {
       }
     } catch (Exception e) {
       LOG.error("Error setting from address: " + mailFromAddress);
+    }
+
+    // Embed the SiteLogo for the HTML's cid:sitelogo
+    String siteLogo = LoadSitePropertyCommand.loadByName("site.logo");
+    if (StringUtils.isNotBlank(siteLogo)) {
+      try {
+        Image record = ImageUrlCommand.decodeToImageRecord(siteLogo);
+        if (record != null) {
+          File file = FileSystemCommand.getFileServerRootPath(record.getFileServerPath());
+          if (file.isFile()) {
+            email.embed(file, "sitelogo");
+          }
+        }
+      } catch (Exception e) {
+        LOG.error("Could not embed logo: " + siteLogo, e);
+      }
     }
 
     // Define your base URL to resolve relative resource locations

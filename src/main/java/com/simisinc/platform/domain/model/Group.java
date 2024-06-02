@@ -28,6 +28,7 @@ public class Group extends Entity {
   private String name = null;
   private String uniqueId = null;
   private String description = null;
+  private String oAuthPath = null;
   private long userCount = 0;
 
   public Group() {
@@ -76,5 +77,13 @@ public class Group extends Entity {
 
   public void setUserCount(long userCount) {
     this.userCount = userCount;
+  }
+
+  public String getOAuthPath() {
+    return oAuthPath;
+  }
+
+  public void setOAuthPath(String oAuthPath) {
+    this.oAuthPath = oAuthPath;
   }
 }

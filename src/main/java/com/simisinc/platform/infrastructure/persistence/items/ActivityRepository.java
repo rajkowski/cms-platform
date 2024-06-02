@@ -41,8 +41,7 @@ public class ActivityRepository {
   private static Log LOG = LogFactory.getLog(ActivityRepository.class);
 
   private static String TABLE_NAME = "item_activity_stream";
-  private static String[] PRIMARY_KEY = new String[]{"activity_id"};
-
+  private static String[] PRIMARY_KEY = new String[] { "activity_id" };
 
   public static Activity save(Activity record) {
     if (record.getId() > -1) {
@@ -60,23 +59,20 @@ public class ActivityRepository {
         .add("created_by", record.getCreatedBy())
         .add("modified_by", record.getModifiedBy());
     // Use a transaction for related data
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // In a transaction (use the existing connection)
-        record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
-        // Finish the transaction
-        transaction.commit();
-        return record;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // In a transaction (use the existing connection)
+      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+      // Finish the transaction
+      transaction.commit();
+      return record;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
     LOG.error("An id was not set!");
     return null;
   }
-
 
   private static Activity update(Activity record) {
     SqlUtils updateValues = new SqlUtils()
@@ -93,17 +89,15 @@ public class ActivityRepository {
   }
 
   public static boolean remove(Activity record) {
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // Delete the references
-        // Delete the record
-        DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("activity_id = ?", record.getId()));
-        // Finish transaction
-        transaction.commit();
-        return true;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Delete the references
+      // Delete the record
+      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("activity_id = ?", record.getId()));
+      // Finish transaction
+      transaction.commit();
+      return true;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }

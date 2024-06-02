@@ -28,6 +28,7 @@ import org.apache.commons.logging.LogFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.InputStream;
@@ -122,6 +123,7 @@ public class WebContainerDesignerWidget extends GenericWidget {
       try {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
         factory.setXIncludeAware(false);
         factory.setExpandEntityReferences(false);
 

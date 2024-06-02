@@ -9,7 +9,7 @@
             "name": "ApplicationInfo",
             "request": "launch",
             "mainClass": "com.simisinc.platform.ApplicationInfo",
-            "projectName": "simis-cms"
+            "projectName": "cms-platform"
         }
     ]
 }

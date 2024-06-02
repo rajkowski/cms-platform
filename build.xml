@@ -2,7 +2,7 @@
 
 <project name="CMS Platform" default="build" basedir="." xmlns:jacoco="antlib:org.jacoco.ant">
 
-  <property name="project" value="simis-cms" />
+  <property name="project" value="cms-platform" />
   <property name="jdk" value="17" />
   <property name="fs" value="${file.separator}"/>
   <property name="lf" value="${line.separator}"/>
@@ -34,7 +34,7 @@
            classpath="${base.dir}/lib/style/checkstyle-10.12.5-all.jar"/>
 
   <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml">
-    <classpath path="${base.dir}/lib/tests/org.jacoco.ant-0.8.11-nodeps.jar"/>
+    <classpath path="${base.dir}/lib/tests/jacocoant-0.8.12.jar"/>
   </taskdef>
 
   <tstamp prefix="start">
@@ -68,7 +68,8 @@
   </target>
 
   <!-- Creates build directories -->
-  <!-- mvn dependency:copy-dependencies -DincludeScope=compile -DexcludeArtifactIds=commons-logging -DexcludeGroupIds=org.apache.tomcat,org.projectlombok,org.jetbrains.kotlin -->
+  <!-- mvn dependency:tree -->
+  <!-- mvn dependency:copy-dependencies -DincludeScope=compile -DexcludeArtifactIds=commons-logging -DexcludeGroupIds=org.apache.tomcat,org.projectlombok,org.jetbrains.kotlin -DoutputDirectory=${lib.dir}/maven -->
   <target name="prepare" depends="version">
     <mkdir dir="${build.dir}"/>
     <mkdir dir="${target.dir}"/>
@@ -96,7 +97,8 @@
   <target name="compile" depends="prepare">
     <javac srcdir="${src.dir}" source="${jdk}" target="${jdk}"
            destdir="${build.dir}"
-           debug="off"
+           debug="on"
+           debuglevel="lines,vars,source"
            deprecation="on"
            optimize="on"
            includeantruntime="false">
@@ -339,7 +341,7 @@
     <checkstyle config="checkstyle.xml"
                 failureProperty="checkstyle.failure"
                 failOnViolation="true">
-      <formatter type="xml" tofile="${target.dir}/checkstyle/checkstyle_report.xml"/>
+      <formatter type="xml" tofile="${target.dir}/checkstyle-result.xml"/>
       <fileset dir="${src.dir}" includes="**/*.java"/>
     </checkstyle>
   </target>
@@ -405,7 +407,7 @@
       <executiondata>
         <file file="${target.dir}/jacoco.exec"/>
       </executiondata>
-      <structure name="SimIS CMS">
+      <structure name="CMS Platform">
         <classfiles>
           <fileset dir="${build.dir}">
             <exclude name="**/*Test*.class"/>

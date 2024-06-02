@@ -26,7 +26,7 @@
   <h4><c:if test="${!empty icon}"><i class="fa ${icon}"></i> </c:if><c:out value="${title}"/></h4>
 </c:if>
 <%@include file="../page_messages.jspf" %>
-<script src="${ctx}/javascript/chartjs-4.4.1/chart.umd.min.js"></script>
+<script src="${ctx}/javascript/chartjs-4.4.3/chart.umd.js"></script>
 <style>
   .chart-overlay-text {
       position: absolute;

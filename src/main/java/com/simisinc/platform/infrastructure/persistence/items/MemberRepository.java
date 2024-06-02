@@ -39,7 +39,7 @@ public class MemberRepository {
   private static Log LOG = LogFactory.getLog(MemberRepository.class);
 
   private static String TABLE_NAME = "members";
-  private static String[] PRIMARY_KEY = new String[]{"member_id"};
+  private static String[] PRIMARY_KEY = new String[] { "member_id" };
 
   public static Member findById(long memberId) {
     if (memberId == -1) {
@@ -128,18 +128,16 @@ public class MemberRepository {
       }
     }
     // Use a transaction
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // In a transaction (use the existing connection)
-        record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
-        // Manage the roles
-        MemberRoleRepository.insertMemberRoleList(connection, record);
-        // Finish the transaction
-        transaction.commit();
-        return record;
-      }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // In a transaction (use the existing connection)
+      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+      // Manage the roles
+      MemberRoleRepository.insertMemberRoleList(connection, record);
+      // Finish the transaction
+      transaction.commit();
+      return record;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
@@ -150,8 +148,8 @@ public class MemberRepository {
   public static Member remove(Member record) {
     // Use a transaction
     try (Connection connection = DB.getConnection();
-         AutoStartTransaction a = new AutoStartTransaction(connection);
-         AutoRollback transaction = new AutoRollback(connection)) {
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
       // Manage the roles
       MemberRoleRepository.removeAll(connection, record);
       // Remove the record

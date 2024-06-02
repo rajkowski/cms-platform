@@ -49,7 +49,7 @@ public class OAuthHttpCommand {
     }
 
     String clientId = OAuthConfigurationCommand.getClientId();
-    String clientSecret = LoadSitePropertyCommand.loadByName("oauth.clientSecret");
+    String clientSecret = OAuthConfigurationCommand.getClientSecret();
     if (StringUtils.isAnyBlank(clientId, clientSecret)) {
       LOG.warn("Service is not configured, check oauth.clientId, oauth.clientSecret");
       return null;

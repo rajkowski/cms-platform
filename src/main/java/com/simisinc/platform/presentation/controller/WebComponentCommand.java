@@ -16,11 +16,11 @@
 
 package com.simisinc.platform.presentation.controller;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.io.Serializable;
 import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * Verifies a user's access to the specified web component
@@ -30,7 +30,7 @@ import java.util.List;
  */
 public class WebComponentCommand implements Serializable {
 
-  static final long serialVersionUID = 536435325324169646L;
+  private static final long serialVersionUID = 536435325324169646L;
   private static Log LOG = LogFactory.getLog(WebComponentCommand.class);
 
   public static boolean allowsUser(Page page, UserSession userSession) {

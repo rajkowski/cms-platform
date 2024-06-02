@@ -93,77 +93,75 @@ public class CustomerRepository {
 
   public static Customer add(Customer record) {
     // Use a transaction
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // In a transaction (use the existing connection)
-        SqlUtils insertValues = new SqlUtils()
-            .add("customer_unique_id", record.getUniqueId())
-            .add("email", record.getEmail())
-            .add("first_name", record.getFirstName())
-            .add("last_name", record.getLastName())
-            .add("organization", record.getOrganization())
-            .add("barcode", record.getBarcode())
-            /*
-             * .add("street_address", record.getStreet()) .add("address_line_2",
-             * record.getAddressLine2()) .add("address_line_3", record.getAddressLine3())
-             * .add("city", record.getCity()) .add("state", record.getState())
-             * .add("country", record.getCountry()) .add("postal_code",
-             * record.getPostalCode()) .add("county", record.getCounty())
-             */
-            .add("phone_number", record.getPhoneNumber())
-            .add("tax_id", record.getTaxId())
-            .add("remote_customer_id", record.getRemoteCustomerId())
-            .addIfExists("created_by", record.getCreatedBy(), -1)
-            .addIfExists("modified_by", record.getModifiedBy(), -1);
-        if (record.getBillingAddress() != null) {
-          insertValues.add("billing_first_name", record.getBillingAddress().getFirstName())
-              .add("billing_last_name", record.getBillingAddress().getLastName())
-              .add("billing_organization", record.getBillingAddress().getOrganization())
-              .add("billing_street_address", record.getBillingAddress().getStreet())
-              .add("billing_address_line_2", record.getBillingAddress().getAddressLine2())
-              .add("billing_address_line_3", record.getBillingAddress().getAddressLine3())
-              .add("billing_city", record.getBillingAddress().getCity())
-              .add("billing_state", record.getBillingAddress().getState())
-              .add("billing_country", record.getBillingAddress().getCountry())
-              .add("billing_postal_code", record.getBillingAddress().getPostalCode())
-              .add("billing_county", record.getBillingAddress().getCounty())
-              .add("billing_phone_number", record.getBillingAddress().getPhoneNumber());
-        }
-        if (record.getShippingAddress() != null) {
-          insertValues.add("shipping_first_name", record.getShippingAddress().getFirstName())
-              .add("shipping_last_name", record.getShippingAddress().getLastName())
-              .add("shipping_organization", record.getShippingAddress().getOrganization())
-              .add("shipping_street_address", record.getShippingAddress().getStreet())
-              .add("shipping_address_line_2", record.getShippingAddress().getAddressLine2())
-              .add("shipping_address_line_3", record.getShippingAddress().getAddressLine3())
-              .add("shipping_city", record.getShippingAddress().getCity())
-              .add("shipping_state", record.getShippingAddress().getState())
-              .add("shipping_country", record.getShippingAddress().getCountry())
-              .add("shipping_postal_code", record.getShippingAddress().getPostalCode())
-              .add("shipping_county", record.getShippingAddress().getCounty())
-              .add("shipping_phone_number", record.getShippingAddress().getPhoneNumber());
-        }
-        record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
-        {
-          // Generate a new customer unique id
-          LOG.debug("Updating customer unique id for id: " + record.getId());
-          SqlUtils update = new SqlUtils().add("customer_unique_id", SaveCustomerCommand.generateUniqueId(record));
-          SqlUtils where = new SqlUtils().add("customer_id = ?", record.getId());
-          DB.update(connection, TABLE_NAME, update, where);
-        }
-        if (record.getCartId() > 0) {
-          // Update the cart
-          LOG.debug("Updating cart " + record.getCartId() + " with the customer id");
-          SqlUtils update = new SqlUtils().add("customer_id", record.getId());
-          SqlUtils where = new SqlUtils().add("cart_id = ?", record.getCartId());
-          DB.update(connection, "carts", update, where);
-        }
-        // Finish the transaction
-        transaction.commit();
-        return record;
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // In a transaction (use the existing connection)
+      SqlUtils insertValues = new SqlUtils()
+          .add("customer_unique_id", record.getUniqueId())
+          .add("email", record.getEmail())
+          .add("first_name", record.getFirstName())
+          .add("last_name", record.getLastName())
+          .add("organization", record.getOrganization())
+          .add("barcode", record.getBarcode())
+          /*
+           * .add("street_address", record.getStreet()) .add("address_line_2",
+           * record.getAddressLine2()) .add("address_line_3", record.getAddressLine3())
+           * .add("city", record.getCity()) .add("state", record.getState())
+           * .add("country", record.getCountry()) .add("postal_code",
+           * record.getPostalCode()) .add("county", record.getCounty())
+           */
+          .add("phone_number", record.getPhoneNumber())
+          .add("tax_id", record.getTaxId())
+          .add("remote_customer_id", record.getRemoteCustomerId())
+          .addIfExists("created_by", record.getCreatedBy(), -1)
+          .addIfExists("modified_by", record.getModifiedBy(), -1);
+      if (record.getBillingAddress() != null) {
+        insertValues.add("billing_first_name", record.getBillingAddress().getFirstName())
+            .add("billing_last_name", record.getBillingAddress().getLastName())
+            .add("billing_organization", record.getBillingAddress().getOrganization())
+            .add("billing_street_address", record.getBillingAddress().getStreet())
+            .add("billing_address_line_2", record.getBillingAddress().getAddressLine2())
+            .add("billing_address_line_3", record.getBillingAddress().getAddressLine3())
+            .add("billing_city", record.getBillingAddress().getCity())
+            .add("billing_state", record.getBillingAddress().getState())
+            .add("billing_country", record.getBillingAddress().getCountry())
+            .add("billing_postal_code", record.getBillingAddress().getPostalCode())
+            .add("billing_county", record.getBillingAddress().getCounty())
+            .add("billing_phone_number", record.getBillingAddress().getPhoneNumber());
       }
+      if (record.getShippingAddress() != null) {
+        insertValues.add("shipping_first_name", record.getShippingAddress().getFirstName())
+            .add("shipping_last_name", record.getShippingAddress().getLastName())
+            .add("shipping_organization", record.getShippingAddress().getOrganization())
+            .add("shipping_street_address", record.getShippingAddress().getStreet())
+            .add("shipping_address_line_2", record.getShippingAddress().getAddressLine2())
+            .add("shipping_address_line_3", record.getShippingAddress().getAddressLine3())
+            .add("shipping_city", record.getShippingAddress().getCity())
+            .add("shipping_state", record.getShippingAddress().getState())
+            .add("shipping_country", record.getShippingAddress().getCountry())
+            .add("shipping_postal_code", record.getShippingAddress().getPostalCode())
+            .add("shipping_county", record.getShippingAddress().getCounty())
+            .add("shipping_phone_number", record.getShippingAddress().getPhoneNumber());
+      }
+      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+      {
+        // Generate a new customer unique id
+        LOG.debug("Updating customer unique id for id: " + record.getId());
+        SqlUtils update = new SqlUtils().add("customer_unique_id", SaveCustomerCommand.generateUniqueId(record));
+        SqlUtils where = new SqlUtils().add("customer_id = ?", record.getId());
+        DB.update(connection, TABLE_NAME, update, where);
+      }
+      if (record.getCartId() > 0) {
+        // Update the cart
+        LOG.debug("Updating cart " + record.getCartId() + " with the customer id");
+        SqlUtils update = new SqlUtils().add("customer_id", record.getId());
+        SqlUtils where = new SqlUtils().add("cart_id = ?", record.getCartId());
+        DB.update(connection, "carts", update, where);
+      }
+      // Finish the transaction
+      transaction.commit();
+      return record;
     } catch (SQLException | CheckDigitException se) {
       LOG.error("Exception: " + se.getMessage(), se);
     }
@@ -268,9 +266,9 @@ public class CustomerRepository {
     }
     LOG.debug("Updating the customer record");
     SqlUtils set = new SqlUtils()
-      .add("first_name", record.getFirstName())
-      .add("last_name", record.getLastName())
-      .add("email", record.getEmail());
+        .add("first_name", record.getFirstName())
+        .add("last_name", record.getLastName())
+        .add("email", record.getEmail());
     SqlUtils where = new SqlUtils().add("customer_id = ?", record.getId());
     DB.update(TABLE_NAME, set, where);
   }

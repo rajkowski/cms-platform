@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Description
+ * Details about the current user
  *
  * @author matt rajkowski
  * @created 4/9/18 8:32 AM
@@ -44,7 +44,7 @@ public class UserSession implements Serializable {
   public static final String WEB_SOURCE = "web";
   public static final String OAUTH_SOURCE = "oauth";
 
-  final static long serialVersionUID = 8345648404174283570L;
+  private static final long serialVersionUID = 8345648404174283570L;
   protected static Log LOG = LogFactory.getLog(UserSession.class);
 
   private String sessionId = null;
@@ -182,15 +182,19 @@ public class UserSession implements Serializable {
     return false;
   }
 
-  public boolean hasGroup(String uniqueId) {
+  public boolean hasGroup(String groupUniqueId) {
     if (groupList == null) {
       return false;
     }
-    if (StringUtils.isBlank(uniqueId)) {
+    if (StringUtils.isBlank(groupUniqueId)) {
       return false;
     }
     for (Group group : groupList) {
-      if (group.getUniqueId().equals(uniqueId)) {
+      if (group.getUniqueId().equals(groupUniqueId)) {
+        return true;
+      }
+      // If SSO is enabled, then also check against the "OAUTH" value in the group...
+      if (StringUtils.isNotBlank(group.getOAuthPath()) && group.getOAuthPath().equals(groupUniqueId)) {
         return true;
       }
     }

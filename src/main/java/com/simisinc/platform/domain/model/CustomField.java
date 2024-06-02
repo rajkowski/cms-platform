@@ -41,6 +41,11 @@ public class CustomField extends Entity {
   public CustomField() {
   }
 
+  public CustomField(String name, String label) {
+    this.name = name;
+    this.label = label;
+  }
+
   public CustomField(String name, String label, String value) {
     this.name = name;
     this.label = label;

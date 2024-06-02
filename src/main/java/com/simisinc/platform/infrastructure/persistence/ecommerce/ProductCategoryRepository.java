@@ -39,7 +39,7 @@ public class ProductCategoryRepository {
   private static Log LOG = LogFactory.getLog(ProductCategoryRepository.class);
 
   private static String TABLE_NAME = "lookup_product_categories";
-  private static String[] PRIMARY_KEY = new String[]{"category_id"};
+  private static String[] PRIMARY_KEY = new String[] { "category_id" };
 
   public static List<ProductCategory> findAll() {
     DataResult result = DB.selectAllFrom(
@@ -84,26 +84,24 @@ public class ProductCategoryRepository {
 
   public static ProductCategory add(ProductCategory record) {
     // Use a transaction
-    try {
-      try (Connection connection = DB.getConnection();
-           AutoStartTransaction a = new AutoStartTransaction(connection);
-           AutoRollback transaction = new AutoRollback(connection)) {
-        // In a transaction (use the existing connection)
-        SqlUtils insertValues = new SqlUtils()
-            .add("category_unique_id", record.getUniqueId())
-            .add("name", record.getName())
-            .add("description", record.getDescription())
-            .add("created_by", record.getCreatedBy(), -1)
-            .add("modified_by", record.getModifiedBy(), -1)
-            .add("enabled", record.getEnabled());
-        if (record.getDisplayOrder() > 0) {
-          insertValues.add("display_order", record.getDisplayOrder());
-        }
-        record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
-        // Finish the transaction
-        transaction.commit();
-        return record;
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // In a transaction (use the existing connection)
+      SqlUtils insertValues = new SqlUtils()
+          .add("category_unique_id", record.getUniqueId())
+          .add("name", record.getName())
+          .add("description", record.getDescription())
+          .add("created_by", record.getCreatedBy(), -1)
+          .add("modified_by", record.getModifiedBy(), -1)
+          .add("enabled", record.getEnabled());
+      if (record.getDisplayOrder() > 0) {
+        insertValues.add("display_order", record.getDisplayOrder());
       }
+      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+      // Finish the transaction
+      transaction.commit();
+      return record;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage(), se);
     }
@@ -124,7 +122,7 @@ public class ProductCategoryRepository {
     SqlUtils where = new SqlUtils()
         .add("category_id = ?", record.getId());
     if (DB.update(TABLE_NAME, updateValues, where)) {
-//      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
+      //      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
     }
     LOG.error("The update failed!");

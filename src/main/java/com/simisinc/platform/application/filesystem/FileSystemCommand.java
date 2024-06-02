@@ -69,7 +69,7 @@ public class FileSystemCommand {
       // @note this value is checked at system startup and will abort then
       LOG.error("system.configpath does not exist");
       LOG.info(
-          "HINT: INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('Configuration path', 'system.configpath', '/opt/simis/config')");
+          "HINT: INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('Configuration path', 'system.configpath', '/opt/cms-platform/config')");
       return null;
     }
     if (!serverConfigPath.endsWith(File.separator)) {
@@ -115,7 +115,7 @@ public class FileSystemCommand {
       // @note this value is checked at system startup and will abort then
       LOG.error("CMS_PATH environment variable can be set, or add 'system.filepath' to the database");
       LOG.info(
-          "HINT: INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('File server path', 'system.filepath', '/opt/simis/files')");
+          "HINT: INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('File server path', 'system.filepath', '/opt/cms-platform/files')");
       return null;
     }
     if (!serverRootPath.endsWith(File.separator)) {

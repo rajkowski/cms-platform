@@ -35,6 +35,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.InputStream;
@@ -225,6 +226,7 @@ public class WidgetBase {
     try {
       DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
       factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+      factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
       factory.setXIncludeAware(false);
       factory.setExpandEntityReferences(false);
 

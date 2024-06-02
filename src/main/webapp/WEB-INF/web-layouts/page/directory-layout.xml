@@ -34,6 +34,7 @@
         <widget name="itemsList">
           <showWhenEmpty>true</showWhenEmpty>
           <collectionUniqueId>${collection.uniqueId}</collectionUniqueId>
+          <view>table</view>
 <!--          <columns>3</columns>-->
 <!--          <limit>42</limit>-->
         </widget>
