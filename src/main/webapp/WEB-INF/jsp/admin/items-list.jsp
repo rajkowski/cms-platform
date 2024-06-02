@@ -20,7 +20,6 @@
 <%@ taglib prefix="group" uri="/WEB-INF/tlds/group-functions.tld" %>
 <%@ taglib prefix="collection" uri="/WEB-INF/tlds/collection-functions.tld" %>
 <%@ taglib prefix="category" uri="/WEB-INF/tlds/category-functions.tld" %>
-<jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="collection" class="com.simisinc.platform.domain.model.items.Collection" scope="request"/>
 <jsp:useBean id="categoryMap" class="java.util.HashMap" scope="request"/>
