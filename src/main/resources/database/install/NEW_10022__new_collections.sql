@@ -32,7 +32,8 @@ CREATE TABLE collections (
   menu_hover_bg_color VARCHAR(30) DEFAULT 'transparent',
   menu_hover_border_color VARCHAR(30) DEFAULT '#ff9900',
   field_values JSONB,
-  item_url_text VARCHAR(50)
+  item_url_text VARCHAR(50),
+  table_columns JSONB
 );
 CREATE INDEX collections_nm_idx ON collections(name);
 CREATE INDEX collections_ag_idx ON collections(has_allowed_groups);
