@@ -2,7 +2,7 @@
 
 <project name="CMS Platform" default="build" basedir="." xmlns:jacoco="antlib:org.jacoco.ant">
 
-  <property name="project" value="simis-cms" />
+  <property name="project" value="cms-platform" />
   <property name="jdk" value="17" />
   <property name="fs" value="${file.separator}"/>
   <property name="lf" value="${line.separator}"/>

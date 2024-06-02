@@ -1,6 +1,6 @@
-site_name: 'SimIS CMS TechDocs'
-site_description: 'Developer documentation for SimIS CMS'
-repo_url: https://github.com/SimisRnD/simis-cms
+site_name: 'CMS Platform TechDocs'
+site_description: 'Developer documentation for CMS Platform'
+repo_url: https://github.com/rajkowski/cms-platform
 edit_uri: tree/main/docs
 
 # You can test with: npx @techdocs/cli serve
