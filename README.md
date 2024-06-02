@@ -161,6 +161,7 @@ This project uses and licenses several technologies:
    Add to Calendar Buttons     MIT      Add to calendar                                   https://github.com/WebuddhaInc/add-to-calendar-buttons
    Payform                     License  Credit card form                                  https://github.com/jondavidjohn/payform
    Prism                       MIT      Highlighter                                       https://github.com/PrismJS/prism/
+   SortableJS                  MIT      Drag-and-drop lists                               https://github.com/SortableJS/Sortable
    Spectrum                    MIT      Color picker                                      https://github.com/bgrins/spectrum
    Superset-UI Embedded SDK    Apache   Visualizations and dashboards                     https://github.com/apache/superset
    Swiper                      MIT      Modern mobile touch slider                        https://github.com/nolimits4web/swiper

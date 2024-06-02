@@ -28,6 +28,7 @@
     "payform": "1.4.0",
     "prismjs": "1.29.0",
     "spectrum-colorpicker": "1.8.1",
+    "sortablejs": "1.15.2",
     "swiper": "11.0.5",
     "tinymce": "6.8.3"
   },
