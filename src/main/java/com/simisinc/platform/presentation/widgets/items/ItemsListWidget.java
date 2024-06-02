@@ -16,7 +16,14 @@
 
 package com.simisinc.platform.presentation.widgets.items;
 
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
+
+import com.simisinc.platform.application.items.CollectionTableColumnsCommand;
 import com.simisinc.platform.application.items.LoadCollectionCommand;
+import com.simisinc.platform.domain.model.CustomField;
 import com.simisinc.platform.domain.model.items.Category;
 import com.simisinc.platform.domain.model.items.Collection;
 import com.simisinc.platform.domain.model.items.Item;
@@ -27,9 +34,6 @@ import com.simisinc.platform.infrastructure.persistence.items.ItemSpecification;
 import com.simisinc.platform.presentation.controller.RequestConstants;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
-import org.apache.commons.lang3.StringUtils;
-
-import java.util.List;
 
 /**
  * Display a list of items using a specified layout
@@ -169,6 +173,13 @@ public class ItemsListWidget extends GenericWidget {
       }
     }
     context.getRequest().setAttribute("itemList", itemList);
+
+    if (TABLE_VIEW_JSP.equals(jsp)) {
+      // Determine the columns to display
+      Map<String, CustomField> tableColumnsList = CollectionTableColumnsCommand.createListFromSettings(collection,
+          context.getPreferences().get("columns"));
+      context.getRequest().setAttribute("tableColumnsList", tableColumnsList);
+    }
 
     // Standard request items
     context.getRequest().setAttribute("icon", context.getPreferences().get("icon"));
