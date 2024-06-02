@@ -182,6 +182,7 @@
   <widget name="collectionCategoriesList" class="com.simisinc.platform.presentation.widgets.admin.items.CollectionCategoriesListWidget" />
   <widget name="collectionCategoryForm" class="com.simisinc.platform.presentation.widgets.admin.items.CollectionCategoryFormWidget" />
   <widget name="collectionCustomFieldsForm" class="com.simisinc.platform.presentation.widgets.admin.items.CollectionCustomFieldsFormWidget" />
+  <widget name="collectionTableColumnsEditor" class="com.simisinc.platform.presentation.widgets.admin.items.CollectionTableColumnsEditorWidget" />
   <widget name="collectionRelationshipsList" class="com.simisinc.platform.presentation.widgets.admin.items.CollectionRelationshipsListWidget" />
   <widget name="collectionRelationshipForm" class="com.simisinc.platform.presentation.widgets.admin.items.CollectionRelationshipFormWidget" />
   <widget name="collectionItemsList" class="com.simisinc.platform.presentation.widgets.admin.items.CollectionItemsListWidget" />
