@@ -33,7 +33,7 @@
 <%@include file="../page_messages.jspf" %>
 <c:choose>
   <c:when test="${!empty itemList}">
-    <table>
+    <table class="stack">
       <thead>
       <tr>
         <c:if test="${userSession.hasRole('admin') || userSession.hasRole('data-manager')}">
