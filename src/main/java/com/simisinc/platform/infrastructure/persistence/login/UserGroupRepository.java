@@ -16,18 +16,22 @@
 
 package com.simisinc.platform.infrastructure.persistence.login;
 
-import com.simisinc.platform.domain.model.Group;
-import com.simisinc.platform.domain.model.User;
-import com.simisinc.platform.domain.model.login.UserGroup;
-import com.simisinc.platform.infrastructure.database.*;
-import com.simisinc.platform.infrastructure.persistence.GroupRepository;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.Group;
+import com.simisinc.platform.domain.model.User;
+import com.simisinc.platform.domain.model.login.UserGroup;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.persistence.GroupRepository;
 
 /**
  * Persists and retrieves user group objects
@@ -40,7 +44,7 @@ public class UserGroupRepository {
   private static Log LOG = LogFactory.getLog(UserGroupRepository.class);
 
   private static String TABLE_NAME = "user_groups";
-  private static String[] PRIMARY_KEY = new String[]{"user_group_id"};
+  private static String[] PRIMARY_KEY = new String[] { "user_group_id" };
 
   public static List<UserGroup> findAllByUserId(long userId) {
     if (userId == -1) {
@@ -109,6 +113,10 @@ public class UserGroupRepository {
     GroupRepository.removeUserCount(connection, user);
     // Delete the records
     return DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("user_id = ?", user.getId()));
+  }
+
+  public static void remove(Connection connection, Group group) throws SQLException {
+    DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("group_id = ?", group.getId()));
   }
 
   private static UserGroup buildRecord(ResultSet rs) {

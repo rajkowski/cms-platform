@@ -28,10 +28,13 @@ import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.domain.model.Group;
 import com.simisinc.platform.domain.model.User;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
 import com.simisinc.platform.infrastructure.database.DB;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.database.DataResult;
 import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.persistence.login.UserGroupRepository;
 
 /**
  * Persists and retrieves group objects
@@ -146,8 +149,21 @@ public class GroupRepository {
     return null;
   }
 
-  public static void remove(Group record) {
-    DB.deleteFrom(TABLE_NAME, new SqlUtils().add("group_id = ?", record.getId()));
+  public static boolean remove(Group record) {
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Delete the references
+      UserGroupRepository.remove(connection, record);
+      // Delete the record
+      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("group_id = ?", record.getId()));
+      // Finish transaction
+      transaction.commit();
+      return true;
+    } catch (SQLException se) {
+      LOG.error("SQLException: " + se.getMessage());
+    }
+    return false;
   }
 
   private static PreparedStatement createPreparedStatementForUserCount(Connection connection, long groupId, int value)
