@@ -97,4 +97,15 @@
     </section>
   </page>
 
+  <page name="/edit/*/geojson" itemUniqueId="/edit/*/geojson" title="Edit GeoJSON" role="admin,data-manager">
+    <section>
+      <column class="small-12 medium-9 small-order-2 medium-order-1 cell">
+        <widget name="editItemGeoJSON">
+          <title>Editing GeoJSON</title>
+          <uniqueId>${item.uniqueId}</uniqueId>
+        </widget>
+      </column>
+    </section>
+  </page>
+
 </pages>

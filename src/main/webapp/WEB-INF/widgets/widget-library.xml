@@ -132,6 +132,7 @@
   <widget name="addItemForm" class="com.simisinc.platform.presentation.widgets.items.CreateAnItemWidget" />
   <widget name="editItemButton" class="com.simisinc.platform.presentation.widgets.items.EditItemButtonWidget" />
   <widget name="editItemForm" class="com.simisinc.platform.presentation.widgets.items.EditItemFormWidget" />
+  <widget name="editItemGeoJSON" class="com.simisinc.platform.presentation.widgets.items.EditItemGeoJSONWidget" />
   <widget name="approveItemButton" class="com.simisinc.platform.presentation.widgets.items.ApproveItemButtonWidget" />
   <widget name="hideItemButton" class="com.simisinc.platform.presentation.widgets.items.HideItemButtonWidget" />
   <widget name="deleteItemButton" class="com.simisinc.platform.presentation.widgets.items.DeleteItemButtonWidget" />
