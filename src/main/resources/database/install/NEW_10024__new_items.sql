@@ -49,7 +49,8 @@ CREATE TABLE items (
   description_text TEXT,
   url_text VARCHAR(50),
   sync_date TIMESTAMP(3),
-  dataset_key_value VARCHAR(255)
+  dataset_key_value VARCHAR(255),
+  geojson JSONB
 );
 CREATE INDEX items_col_id_idx ON items(collection_id);
 CREATE INDEX items_uni_id_idx ON items(unique_id);
