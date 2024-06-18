@@ -174,6 +174,7 @@
               <a href="#"><i class="fa-fw fa fa-cog"></i></a>
               <ul class="submenu menu vertical">
                 <li><a href="${ctx}/edit/${item.uniqueId}?returnPage=/show/${item.uniqueId}">Edit Item Details</a></li>
+                <li><a href="${ctx}/edit/${item.uniqueId}/geojson?returnPage=/show/${item.uniqueId}">Edit Item GeoJSON</a></li>
                 <li><a href="${ctx}/show/${item.uniqueId}/settings">Edit Item Settings</a></li>
                 <li><a href="${ctx}/admin/collection-details?collectionId=${collection.id}">Edit Collection</a></li>
               </ul>
