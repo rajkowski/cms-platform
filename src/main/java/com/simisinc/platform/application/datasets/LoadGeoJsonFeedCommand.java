@@ -16,10 +16,11 @@
 
 package com.simisinc.platform.application.datasets;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.github.fge.jackson.JsonLoader;
-import com.simisinc.platform.application.DataException;
-import com.simisinc.platform.domain.model.datasets.Dataset;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.geojson.Feature;
@@ -27,10 +28,14 @@ import org.geojson.GeoJsonObject;
 import org.geojson.LngLatAlt;
 import org.geojson.Polygon;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.github.fge.jackson.JsonLoader;
+import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.domain.model.datasets.Dataset;
+import com.simisinc.platform.domain.model.items.Collection;
+import com.simisinc.platform.domain.model.items.Item;
+import com.simisinc.platform.infrastructure.persistence.items.ItemRepository;
+import com.simisinc.platform.infrastructure.persistence.items.ItemSpecification;
 
 /**
  * Reads in dataset rows from a GeoJSON dataset file
@@ -100,17 +105,64 @@ public class LoadGeoJsonFeedCommand {
       return recordList;
     }
     try {
-      JsonNode config = JsonLoader.fromFile(file);
-      Iterator<JsonNode> features = config.get("features").elements();
+      JsonNode json = JsonLoader.fromFile(file);
+      processFeatures(json, recordList, dataset.getColumnNamesList(), null);
+    } catch (Exception e) {
+      LOG.error("GeoJson Error: " + e.getMessage());
+      throw new DataException("File could not be read");
+    }
+    return recordList;
+  }
 
-      while (features.hasNext()) {
+  public static List<GeoJsonObject> loadRecords(Collection collection) throws DataException {
+    ItemSpecification specification = new ItemSpecification();
+    specification.setCollectionId(collection.getId());
+    specification.setHasGeoJSON(true);
+    List<Item> itemList = ItemRepository.findAll(specification, null);
+    List<GeoJsonObject> recordList = new ArrayList<>();
+    if (itemList == null || itemList.isEmpty()) {
+      return recordList;
+    }
+    for (Item item : itemList) {
+      try {
+        JsonNode json = JsonLoader.fromString(item.getGeoJSON());
+        processFeatures(json, recordList, null, item);
+      } catch (Exception e) {
+        LOG.info("Invalid geoJSON found for item: " + item.getUniqueId());
+      }
+    }
+    return recordList;
 
-        JsonNode thisFeature = features.next();
-        Feature record = new Feature();
+  }
 
-        // Determine the attributes
-        JsonNode attributes = thisFeature.get("attributes");
-        for (String column : dataset.getColumnNamesList()) {
+  private static void processFeatures(JsonNode json, List<GeoJsonObject> recordList, List<String> columnNames, Item item) {
+
+    Iterator<JsonNode> features = json.get("features").elements();
+
+    while (features.hasNext()) {
+
+      JsonNode thisFeature = features.next();
+      Feature record = new Feature();
+
+      // Give the feature a name
+      if (item != null) {
+        record.setProperty("NAME", item.getName());
+        record.setProperty("OBJECTID", item.getUniqueId());
+        if (item.hasGeoPoint()) {
+          record.setProperty("latitude", item.getLatitude());
+          record.setProperty("longitude", item.getLongitude());
+        }
+      }
+
+      // Determine the attributes or properties of the feature
+      if (columnNames != null) {
+        // Check the standard properties field
+        JsonNode attributes = thisFeature.get("properties");
+        if (!thisFeature.has("properties")) {
+          // Check ArcGIS/esri attributes
+          attributes = thisFeature.get("attributes");
+        }
+        for (String column : columnNames) {
           String nodeValue = "";
           if (attributes.has(column)) {
             nodeValue = attributes.get(column).asText();
@@ -120,44 +172,52 @@ public class LoadGeoJsonFeedCommand {
           }
           record.setProperty(column, nodeValue);
         }
-
-        // Determine the geometry
-        if (thisFeature.has("geometry")) {
-          JsonNode geometry = thisFeature.get("geometry");
-          if (geometry.has("rings")) {
-            JsonNode rings = geometry.get("rings");
-            if (rings.isContainerNode()) {
-              List<LngLatAlt> points = new ArrayList<>();
-              Iterator<JsonNode> polygonIterator = rings.elements().next().elements();
-              while (polygonIterator.hasNext()) {
-                Iterator<JsonNode> pointsIterator = polygonIterator.next().elements();
-                LngLatAlt point = new LngLatAlt(pointsIterator.next().asDouble(), pointsIterator.next().asDouble());
-                points.add(point);
-              }
-              Polygon polygon = new Polygon(points);
-              record.setGeometry(polygon);
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("Coordinates: " + points.size() + " and " + ((Polygon) record.getGeometry()).getExteriorRing().size());
-              }
-            }
-          }
-        }
-
-        // Determine the centroid
-        if (thisFeature.has("centroid")) {
-          JsonNode centroid = thisFeature.get("centroid");
-          if (centroid.has("x") && centroid.has("y")) {
-            record.setProperty("longitude", centroid.get("x").toString());
-            record.setProperty("latitude", centroid.get("y").toString());
-          }
-        }
-
-        recordList.add(record);
       }
-    } catch (Exception e) {
-      LOG.error("GeoJson Error: " + e.getMessage());
-      throw new DataException("File could not be read");
+
+      // Determine the geometry
+      if (thisFeature.has("geometry")) {
+        JsonNode geometry = thisFeature.get("geometry");
+        JsonNode coordinates = null;
+        if (geometry.has("coordinates")) {
+          coordinates = geometry.get("coordinates");
+        } else if (geometry.has("rings")) {
+          // Check ArcGIS/esri attributes
+          coordinates = geometry.get("rings");
+        }
+        if (coordinates == null) {
+          continue;
+        }
+        if (coordinates.isContainerNode()) {
+          List<LngLatAlt> points = new ArrayList<>();
+          Iterator<JsonNode> polygonIterator = coordinates.elements().next().elements();
+          while (polygonIterator.hasNext()) {
+            Iterator<JsonNode> pointsIterator = polygonIterator.next().elements();
+            LngLatAlt point = new LngLatAlt(pointsIterator.next().asDouble(), pointsIterator.next().asDouble());
+            points.add(point);
+          }
+          Polygon polygon = new Polygon(points);
+          record.setGeometry(polygon);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Coordinates: " + points.size() + " and " + ((Polygon) record.getGeometry()).getExteriorRing().size());
+          }
+        }
+      }
+
+      // Determine the centroid
+      if (thisFeature.has("centroid")) {
+        JsonNode centroid = thisFeature.get("centroid");
+        if (centroid.has("x") && centroid.has("y")) {
+          record.setProperty("longitude", centroid.get("x").toString());
+          record.setProperty("latitude", centroid.get("y").toString());
+        }
+      } else {
+        // Just use the first value
+        LngLatAlt coordinates = ((Polygon) record.getGeometry()).getExteriorRing().get(0);
+        record.setProperty("longitude", String.valueOf(coordinates.getLongitude()));
+        record.setProperty("latitude", String.valueOf(coordinates.getLatitude()));
+      }
+
+      recordList.add(record);
     }
-    return recordList;
   }
 }
