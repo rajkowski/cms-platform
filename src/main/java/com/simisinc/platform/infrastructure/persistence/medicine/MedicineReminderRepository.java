@@ -21,6 +21,8 @@ import com.simisinc.platform.domain.model.medicine.MedicineReminder;
 import com.simisinc.platform.domain.model.medicine.MedicineReminderRawData;
 import com.simisinc.platform.infrastructure.database.*;
 import com.simisinc.platform.presentation.controller.DataConstants;
+
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -150,6 +152,7 @@ public class MedicineReminderRepository {
         currentDay.append("on_sunday");
         break;
       default:
+        currentDay.append("on_invalid");
         break;
     }
 
@@ -186,6 +189,11 @@ public class MedicineReminderRepository {
   }
 
   public static void createMedicineReminders(long medicineId, Timestamp startDate, Timestamp endDate, DayOfWeek dayOfWeek) {
+    // Verify arguments
+    if (ObjectUtils.anyNull(startDate, endDate, dayOfWeek)) {
+      return;
+    }
+    
     // Load the rules to determine the daily reminders
     List<MedicineReminderRawData> records = null;
     try (Connection connection = DB.getConnection();

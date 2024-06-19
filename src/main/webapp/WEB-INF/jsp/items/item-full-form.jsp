@@ -22,7 +22,7 @@
 <jsp:useBean id="item" class="com.simisinc.platform.domain.model.items.Item" scope="request"/>
 <jsp:useBean id="categoryList" class="java.util.ArrayList" scope="request"/>
 <jsp:useBean id="cancelUrl" class="java.lang.String" scope="request"/>
-<script src="${ctx}/javascript/tinymce-6.8.2/tinymce.min.js"></script>
+<script src="${ctx}/javascript/tinymce-6.8.3/tinymce.min.js"></script>
 <script>
   tinymce.init({
     selector: '.html-field',
@@ -526,7 +526,7 @@
       </div>
     </div>
     </c:if>
-    <div class="button-container">
+    <div class="button-container gap">
       <input type="submit" class="button radius success" value="Save"/>
       <c:if test="${!empty cancelUrl}"><span class="button-gap"><a class="button radius secondary" href="${ctx}${cancelUrl}">Cancel</a></span></c:if>
     </div>

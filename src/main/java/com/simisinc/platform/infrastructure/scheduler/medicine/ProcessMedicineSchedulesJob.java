@@ -21,8 +21,6 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.util.List;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.jobrunr.jobs.annotations.Job;
 
 import com.simisinc.platform.domain.model.medicine.Medicine;
@@ -40,8 +38,6 @@ import com.simisinc.platform.infrastructure.scheduler.SchedulerManager;
  * @created 10/1/18 11:13 AM
  */
 public class ProcessMedicineSchedulesJob {
-
-  private static Log LOG = LogFactory.getLog(ProcessMedicineSchedulesJob.class);
 
   @Job(name = "Update medicine reminders based on schedules, approx 20 days out")
   public static void execute() {

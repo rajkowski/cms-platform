@@ -54,7 +54,7 @@
   <div class="cell small-12 clearfix">
     <div class="float-left size-125 card">
       <h4 class="no-gap">${recordList.size()}</h4>
-      <span class="subheader">Properties</span>
+      <span class="subheader">Locations</span>
     </div>
     <div class="float-left size-125 card">
       <h4 id="interstateDistance" class="no-gap">--</h4>
@@ -86,7 +86,7 @@
         <span class="input-group-label">
           <i class="fa fa-search"></i>
         </span>
-        <input class="input-group-field" type="text" id="searchText" placeholder="Search for a property" autocomplete="off">
+        <input class="input-group-field" type="text" id="searchText" placeholder="Search for a location" autocomplete="off">
       </div>
       <div class="input-group">
         <span class="input-group-label">
@@ -135,7 +135,7 @@
           <input type="button" class="button secondary" id="hubZone1" value="Yes" onclick="updateHubZone(1)">
         </div>
       </div>
-      <input type="submit" class="button success" value="Show Properties" />
+      <input type="submit" class="button success" value="Show Locations" />
       <input type="reset" class="button secondary" value="Reset Form" onClick="resetForm${widgetContext.uniqueId}()" />
     </form>
   </div>
@@ -144,7 +144,7 @@
       <table>
         <thead>
           <tr>
-            <th id="propertyTitle">Property</th>
+            <th id="propertyTitle">Location</th>
             <th colspan="2">Zoning</th>
           </tr>
         </thead>
@@ -192,7 +192,7 @@
     {
       "type": "Feature",
       "properties": {
-        "name": "<c:out value="${js:escape(feature.properties['SITE_ADDRE'])}" />",
+        "name": "<c:out value="${js:escape(feature.properties['NAME'])}" />",
         "objectId": "<c:out value="${js:escape(feature.properties['OBJECTID'])}" />",
         "acres": "<c:out value="${js:escape(feature.properties['ACRES'])}" />",
         "zoning": "<c:out value="${js:escape(feature.properties['ZONING'])}" />",
@@ -206,7 +206,7 @@
         "interstateDistance": "<c:out value="${js:escape(feature.properties['interstateDistance'])}" />",
         "portDistance": "<c:out value="${js:escape(feature.properties['portDistance'])}" />",
         "popupContent":
-          "<h5><c:out value="${js:escape(feature.properties['SITE_ADDRE'])}" /></h5>" +
+          "<h5><c:out value="${js:escape(feature.properties['NAME'])}" /></h5>" +
           "<p>" +
           <c:if test="${feature.properties.containsKey('StreetView')}">
           "<a class=\"small button success no-gap\" target=\"_blank\" href=\"<c:out value="${js:escape(feature.properties['StreetView'])}" />\">Street View</a>&nbsp;" +
@@ -519,16 +519,16 @@
       var newCell = newRow.insertCell(0);
       // var nameText = document.createTextNode(feature.name);
       // newCell.appendChild(nameText);
-      newCell.innerHTML = '<a href="javascript:centerMap${widgetContext.uniqueId}(' + feature.objectId + ',' + feature.latitude + ',' + feature.longitude + ')">' + feature.name + '</a>';
+      newCell.innerHTML = '<a href="javascript:centerMap${widgetContext.uniqueId}(\'' + feature.objectId + '\',' + feature.latitude + ',' + feature.longitude + ')">' + feature.name + '</a>';
 
       var newCell2 = newRow.insertCell(1);
       newCell2.innerHTML = '<small><span class="label radius">' + feature.zoning + '</span></small>';
 
       var newCell3 = newRow.insertCell(2);
-      newCell3.innerHTML = '<a href="javascript:centerMap${widgetContext.uniqueId}(' + feature.objectId + ',' + feature.latitude + ',' + feature.longitude + ')"><i class="fa fa-info-circle"></i></a>';
+      newCell3.innerHTML = '<a href="javascript:centerMap${widgetContext.uniqueId}(\'' + feature.objectId + '\',' + feature.latitude + ',' + feature.longitude + ')"><i class="fa fa-info-circle"></i></a>';
     }
 
-    document.getElementById('propertyTitle').textContent = 'Property (' + count + ')';
+    document.getElementById('propertyTitle').textContent = 'Locations (' + count + ')';
     document.getElementById('tableContainer').scrollTop = 0;
     tbody.parentNode.replaceChild(newTbody, tbody);
     return false;

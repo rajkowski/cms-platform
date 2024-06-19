@@ -23,9 +23,9 @@ CREATE TABLE site_properties (
 
 INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('SSL Required', 'system.ssl', 'true');
 INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('WWW Context', 'system.www.context', '/web-content');
-INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('Customizations path', 'system.customizations.filepath', '/opt/simis/customization');
-INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('File server path', 'system.filepath', '/opt/simis/files');
-INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('Configuration path', 'system.configpath', '/opt/simis/config');
+INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('Customizations path', 'system.customizations.filepath', '/opt/cms-platform/customization');
+INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('File server path', 'system.filepath', '/opt/cms-platform/files');
+INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('Configuration path', 'system.configpath', '/opt/cms-platform/config');
 
 -- Site
 
@@ -304,8 +304,8 @@ CREATE TABLE users (
   geom geometry(Point,4326),
   description TEXT,
   description_text TEXT,
-  image_url VARCHAR(255),
-  video_url VARCHAR(255),
+  image_url VARCHAR(512),
+  video_url VARCHAR(512),
   field_values JSONB
 );
 CREATE UNIQUE INDEX users_lc_email ON users (LOWER(email));
@@ -469,7 +469,7 @@ CREATE INDEX world_cit_pop_idx ON world_cities(population);
 -- CREATE INDEX world_cit_geom_gix ON world_cities USING GIST (geom);
 
 -- COPY world_cities(country,city,accent_city,region,latitude,longitude,population,geom)
--- FROM '/opt/simis/data/world_cities.csv' DELIMITER ',' CSV HEADER;
+-- FROM '/opt/cms-platform/data/world_cities.csv' DELIMITER ',' CSV HEADER;
 --
 -- UPDATE world_cities SET geom = ST_SetSRID(ST_MakePoint(latitude, longitude), 4326) WHERE latitude IS NOT NULL AND longitude IS NOT NULL AND geom IS NULL;
 -- UPDATE world_cities SET population = 0 WHERE population IS NULL;
@@ -537,7 +537,7 @@ CREATE TABLE zip_codes (
 CREATE INDEX zip_codes_code_idx ON zip_codes(code);
 
 -- COPY zip_codes
--- FROM '/opt/simis/data/zipcodes.csv' DELIMITER ',' CSV HEADER;
+-- FROM '/opt/cms-platform/data/zipcodes.csv' DELIMITER ',' CSV HEADER;
 --
 -- UPDATE zip_codes SET geom = ST_SetSRID(ST_MakePoint(latitude, longitude), 4326) WHERE latitude IS NOT NULL AND longitude IS NOT NULL AND geom IS NULL;
 

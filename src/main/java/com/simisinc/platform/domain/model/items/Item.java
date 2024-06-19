@@ -57,6 +57,7 @@ public class Item extends Entity {
   private Timestamp approved = null;
   private double latitude = 0.0;
   private double longitude = 0.0;
+  private String geoJSON = null;
   private String location = null;
   private String street = null;
   private String addressLine2 = null;
@@ -241,6 +242,14 @@ public class Item extends Entity {
 
   public void setLongitude(double longitude) {
     this.longitude = longitude;
+  }
+
+  public String getGeoJSON() {
+    return geoJSON;
+  }
+
+  public void setGeoJSON(String geoJSON) {
+    this.geoJSON = geoJSON;
   }
 
   public String getLocation() {

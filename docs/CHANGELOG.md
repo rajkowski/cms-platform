@@ -6,6 +6,19 @@ All notable changes to this project will be documented in this file. The format 
 
 - A static site generator allows an online and offline page renderer to output complete standalone SEO-compliant websites powered by Nginx
 
+## 2024-06-02
+
+- Added a visual column editor for collections so that table columns can be selected and arranged
+
+## 2024-04-13
+
+- Environment variables can provide a value for any Site Property
+- SSO using OIDC can parse the initial token response for both access and user id information, instead of a separate call
+- When using SSO with Azure EntraId and OIDC, the MS ActiveDirectory groups are found in the user id information
+- Additional logging in the console to explain and report on OIDC setup and configuration
+- Outgoing mail can be configured with TLS setting
+- Fixed adding a self-hosted logo graphic used on outgoing emails when the site was private
+
 ## 2024-03-07
 
 - Refactored FileSystem classes for OS compatibility

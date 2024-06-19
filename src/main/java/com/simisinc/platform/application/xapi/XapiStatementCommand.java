@@ -16,16 +16,17 @@
 
 package com.simisinc.platform.application.xapi;
 
-import com.simisinc.platform.domain.model.xapi.XapiStatement;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.apache.commons.jexl3.JexlContext;
 import org.apache.commons.jexl3.MapContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jeasy.flows.work.Expression;
 
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import com.simisinc.platform.domain.model.xapi.XapiStatement;
 
 /**
  * Methods for xAPI statements
@@ -46,7 +47,7 @@ public class XapiStatementCommand {
       Pattern pattern = Pattern.compile("\\{\\{(.*?)\\}\\}", Pattern.DOTALL);
       Matcher matcher = pattern.matcher(message);
       // Evaluate and replace the expressions with a result
-      StringBuffer sb = new StringBuffer();
+      StringBuilder sb = new StringBuilder();
       while (matcher.find()) {
         String expression = matcher.group(1).trim();
         LOG.debug("Expression found: " + expression);

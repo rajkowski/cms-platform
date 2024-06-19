@@ -29,7 +29,7 @@ CREATE TABLE items (
   start_date TIMESTAMP(3) DEFAULT NULL,
   end_date TIMESTAMP(3) DEFAULT NULL,
   expiration_date TIMESTAMP(3) DEFAULT NULL,
-  url VARCHAR(255),
+  url VARCHAR(512),
   barcode VARCHAR(1024),
   keywords VARCHAR(255),
   assigned_to BIGINT REFERENCES users(user_id),
@@ -37,7 +37,7 @@ CREATE TABLE items (
   dataset_id BIGINT,
   geom geometry(Point,4326),
   tsv TSVECTOR,
-  image_url VARCHAR(255),
+  image_url VARCHAR(512),
   category_id BIGINT REFERENCES categories(category_id),
   email VARCHAR(255),
   field_values JSONB,
@@ -49,7 +49,8 @@ CREATE TABLE items (
   description_text TEXT,
   url_text VARCHAR(50),
   sync_date TIMESTAMP(3),
-  dataset_key_value VARCHAR(255)
+  dataset_key_value VARCHAR(255),
+  geojson JSONB
 );
 CREATE INDEX items_col_id_idx ON items(collection_id);
 CREATE INDEX items_uni_id_idx ON items(unique_id);

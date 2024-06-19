@@ -34,8 +34,8 @@
 <jsp:useBean id="moodleTextColor" class="java.lang.String" scope="request"/>
 <%-- Full Calendar --%>
 <link rel="stylesheet" href="${ctx}/css/platform-calendar.css?v=<%= VERSION %>" />
-<script src="${ctx}/javascript/fullcalendar-6.1.10/moment-2.27.0.min.js"></script>
-<script src="${ctx}/javascript/fullcalendar-6.1.10/index.global.min.js"></script>
+<script src="${ctx}/javascript/fullcalendar-6.1.11/moment-2.27.0.min.js"></script>
+<script src="${ctx}/javascript/fullcalendar-6.1.11/index.global.min.js"></script>
 <%-- Render the widget --%>
 <div id="calendar-small"></div>
 <div id="tooltip-small" class="tooltip top align-center under-reveal" style="display:none"></div>

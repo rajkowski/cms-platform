@@ -200,6 +200,16 @@ public class WebPageXmlLayoutCommand {
               // Always return the base page for later expanding the item
               pageRef = pages.get("/show/*/not-configured");
             }
+          } else if ("edit".equals(pathArray[0])) {
+            if (doubleSlashIndex > -1) {
+              pageRef = locatePage("/edit/*" + pagePath.substring(doubleSlashIndex));
+            } else {
+              pageRef = pages.get("/edit/*");
+            }
+            if (pageRef == null) {
+              // Always return the base page for later expanding the item
+              pageRef = pages.get("/show/*/not-configured");
+            }
           } else {
             pageRef = locatePage(pagePath);
           }
@@ -238,7 +248,7 @@ public class WebPageXmlLayoutCommand {
       LOG.debug("Looking for alternate XML page (3): " + alternatePage);
       pageRef = pages.get(alternatePage);
     }
-    if (!pagePath.startsWith("/show/*")) {
+    if (!pagePath.startsWith("/show/*") && !pagePath.startsWith("/edit/*")) {
       // Look for /news/*
       if (pageRef == null && doubleSlashIndex > 1) {
         String alternatePage = pagePath.substring(0, doubleSlashIndex);

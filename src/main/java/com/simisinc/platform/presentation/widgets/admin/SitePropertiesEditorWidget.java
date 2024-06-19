@@ -26,10 +26,9 @@ import javax.servlet.jsp.jstl.core.Config;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.validator.routines.UrlValidator;
 
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
-import com.simisinc.platform.application.cms.ColorCommand;
+import com.simisinc.platform.application.admin.ValidateSitePropertyCommand;
 import com.simisinc.platform.domain.model.SiteProperty;
 import com.simisinc.platform.infrastructure.persistence.SitePropertyRepository;
 import com.simisinc.platform.presentation.controller.SqlTimestampConverter;
@@ -49,7 +48,6 @@ public class SitePropertiesEditorWidget extends GenericWidget {
   static String JSP = "/admin/site-properties-editor.jsp";
 
   static String PREFIX_PREFERENCE = "prefix";
-
 
   public WidgetContext execute(WidgetContext context) {
 
@@ -118,16 +116,11 @@ public class SitePropertiesEditorWidget extends GenericWidget {
         continue;
       }
       if ("url".equals(siteProperty.getType())) {
-        if (newValue.startsWith("http://localhost") || newValue.startsWith("https://localhost")) {
-          continue;
-        }
-        String[] schemes = {"http", "https"};
-        UrlValidator urlValidator = new UrlValidator(schemes);
-        if (!urlValidator.isValid(newValue)) {
+        if (!ValidateSitePropertyCommand.isValidUrl(newValue)) {
           context.setErrorMessage(siteProperty.getLabel() + " has an invalid URL");
         }
       } else if ("color".equals(siteProperty.getType())) {
-        if (!ColorCommand.isHexColor(newValue)) {
+        if (!ValidateSitePropertyCommand.isValidColor(newValue)) {
           context.setErrorMessage(siteProperty.getLabel() + " needs hex formatting value");
         }
       }

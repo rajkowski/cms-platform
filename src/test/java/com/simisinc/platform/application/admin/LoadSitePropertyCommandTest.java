@@ -151,4 +151,35 @@ class LoadSitePropertyCommandTest {
       Assertions.assertTrue(valueList.contains("Group-3"));
     }
   }
+
+  @Test
+  void testGetValueBasedOnEnvironment() {
+    SiteProperty siteProperty = new SiteProperty();
+    siteProperty.setName("site.url");
+    siteProperty.setType("url");
+
+    // Check local URLs
+    siteProperty.setValue("http://localhost:8080");
+    Assertions.assertEquals("http://localhost:8080", LoadSitePropertyCommand.getValueBasedOnEnvironment(siteProperty));
+
+    siteProperty.setValue("http://localhost");
+    Assertions.assertEquals("http://localhost", LoadSitePropertyCommand.getValueBasedOnEnvironment(siteProperty));
+
+    siteProperty.setValue("http://localhost:8080/cms");
+    Assertions.assertEquals("http://localhost:8080/cms", LoadSitePropertyCommand.getValueBasedOnEnvironment(siteProperty));
+
+    // Check URL with path
+    siteProperty.setValue("http://localhost/cms");
+    Assertions.assertEquals("http://localhost/cms", LoadSitePropertyCommand.getValueBasedOnEnvironment(siteProperty));
+
+    siteProperty.setValue("http://example.com/cms");
+    Assertions.assertEquals("http://example.com/cms", LoadSitePropertyCommand.getValueBasedOnEnvironment(siteProperty));
+
+    // Check invalid URLs
+    siteProperty.setValue("http://example.com1/cms\n");
+    Assertions.assertEquals("", LoadSitePropertyCommand.getValueBasedOnEnvironment(siteProperty));
+
+    siteProperty.setValue("ftp://example.com1/cms");
+    Assertions.assertEquals("", LoadSitePropertyCommand.getValueBasedOnEnvironment(siteProperty));
+  }
 }

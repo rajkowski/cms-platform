@@ -102,12 +102,17 @@ public class OAuthAccessTokenCommand {
         // Check for refresh token payload        
         oAuthToken.setRefreshToken(refreshToken);
       }
+      // Determine when the refresh token expires
       oAuthToken.setRefreshExpires(null);
       if (json.has("refresh_expires_in")) {
+        // use the new value
         oAuthToken.setRefreshExpiresIn(json.get("refresh_expires_in").asInt());
-      } else {
+      } else if (oAuthToken.getRefreshExpiresIn() > 0) {
         // extend any existing expiration
         oAuthToken.setRefreshExpiresIn(oAuthToken.getRefreshExpiresIn());
+      } else {
+        // when a refresh_expires_in value is not in the response, use 24 hours
+        oAuthToken.setRefreshExpiresIn(oAuthToken.getExpiresIn() + (24 * 60 * 60));
       }
       if (json.has("scope")) {
         oAuthToken.setScope(json.get("scope").asText());

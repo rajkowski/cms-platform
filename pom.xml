@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.simisinc</groupId>
-  <artifactId>simis-cms</artifactId>
-  <version>20240131.10000-SNAPSHOT</version>
+  <groupId>com.github.rajkowski</groupId>
+  <artifactId>cms-platform</artifactId>
+  <version>20240602.10000-SNAPSHOT</version>
   <name>CMS Platform</name>
   <url>https://github.com/rajkowski/cms-platform</url>
   <description>Agile, Enterprise, Open Source Content Management System (CMS) and Web Portal</description>
@@ -67,7 +67,7 @@
     <java-mail.version>1.6.2</java-mail.version>
     <jmail.version>1.5.1</jmail.version>
     <jna.version>5.8.0</jna.version>
-    <jobrunr.version>6.3.0</jobrunr.version>
+    <jobrunr.version>7.2.0</jobrunr.version>
     <johnzon.version>1.2.21</johnzon.version>
     <jsoup.version>1.16.1</jsoup.version>
     <jstl.version>1.2.5</jstl.version>

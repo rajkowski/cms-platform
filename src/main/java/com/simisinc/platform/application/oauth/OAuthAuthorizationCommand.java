@@ -68,7 +68,7 @@ public class OAuthAuthorizationCommand {
     String authorizationUrl = authEndpoint +
         "?client_id=" + UrlCommand.encodeUri(clientId) +
         "&response_type=code" +
-        "&scope=openid%20profile%20email" +
+        "&scope=openid%20profile%20email%20offline_access" +
         "&redirect_uri=" + UrlCommand.encodeUri(callback) +
         "&nonce=" + UrlCommand.encodeUri(state) +
         "&state=" + UrlCommand.encodeUri(state);

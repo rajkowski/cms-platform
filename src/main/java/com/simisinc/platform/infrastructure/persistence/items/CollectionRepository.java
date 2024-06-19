@@ -16,21 +16,33 @@
 
 package com.simisinc.platform.infrastructure.persistence.items;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.application.CollectionTableColumnsJSONCommand;
 import com.simisinc.platform.application.CustomFieldListJSONCommand;
 import com.simisinc.platform.application.items.LoadCollectionCommand;
 import com.simisinc.platform.domain.model.items.Collection;
 import com.simisinc.platform.domain.model.items.CollectionGroup;
 import com.simisinc.platform.domain.model.items.PrivacyType;
 import com.simisinc.platform.infrastructure.cache.CacheManager;
-import com.simisinc.platform.infrastructure.database.*;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlValue;
 import com.simisinc.platform.presentation.controller.DataConstants;
 import com.simisinc.platform.presentation.controller.UserSession;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import java.sql.*;
-import java.util.List;
 
 /**
  * Persists and retrieves collection objects
@@ -132,6 +144,25 @@ public class CollectionRepository {
           CustomFieldListJSONCommand.createJSONString(record.getCustomFieldList())));
     } else {
       updateValues.add(new SqlValue("field_values", SqlValue.JSONB_TYPE, null));
+    }
+    SqlUtils where = new SqlUtils().add("collection_id = ?", record.getId());
+    if (DB.update(TABLE_NAME, updateValues, where)) {
+      // Expire the cache
+      CacheManager.invalidateKey(CacheManager.COLLECTION_UNIQUE_ID_CACHE, record.getUniqueId());
+      return record;
+    }
+    LOG.error("The update failed!");
+    return null;
+  }
+
+  public static Collection updateTableColumns(Collection record) {
+    SqlUtils updateValues = new SqlUtils()
+        .add("modified", new Timestamp(System.currentTimeMillis()));
+    if (record.getTableColumnsList() != null && !record.getTableColumnsList().isEmpty()) {
+      updateValues.add(new SqlValue("table_columns", SqlValue.JSONB_TYPE,
+          CollectionTableColumnsJSONCommand.createJSONString(record.getTableColumnsList())));
+    } else {
+      updateValues.add(new SqlValue("table_columns", SqlValue.JSONB_TYPE, null));
     }
     SqlUtils where = new SqlUtils().add("collection_id = ?", record.getId());
     if (DB.update(TABLE_NAME, updateValues, where)) {
@@ -365,6 +396,7 @@ public class CollectionRepository {
       record.setMenuHoverBorderColor(rs.getString("menu_hover_border_color"));
       record.setCustomFieldList(CustomFieldListJSONCommand.populateFromJSONString(rs.getString("field_values")));
       record.setItemUrlText(rs.getString("item_url_text"));
+      record.setTableColumnsList(CollectionTableColumnsJSONCommand.populateFromJSONString(rs.getString("table_columns")));
       return record;
     } catch (SQLException se) {
       LOG.error("buildRecord", se);

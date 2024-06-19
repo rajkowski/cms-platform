@@ -159,7 +159,7 @@ public class PricingRuleCommand {
       // The discount is based on the eligible subtotal amount
       LOG.debug("Found subtotalPercent: " + pricingRule.getSubtotalPercent());
       double percent = pricingRule.getSubtotalPercent() / 100.0;
-      BigDecimal discount = eligibleAmount.multiply(new BigDecimal(percent)).setScale(2, RoundingMode.HALF_UP);
+      BigDecimal discount = eligibleAmount.multiply(BigDecimal.valueOf(percent)).setScale(2, RoundingMode.HALF_UP);
       if (LOG.isDebugEnabled()) {
         LOG.debug("Discount from percent is: " + discount.toPlainString());
       }

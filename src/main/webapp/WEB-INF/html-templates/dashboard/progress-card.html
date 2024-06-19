@@ -3,7 +3,7 @@
   <i th:if="${not #strings.isEmpty(icon)}" class="fa" th:classappend="${icon}"></i>
   [[${title}]]
 </h4>
-<script th:src="${#strings.concat(ctx, '/javascript/chartjs-4.4.1/chart.umd.min.js')}"></script>
+<script th:src="${#strings.concat(ctx, '/javascript/chartjs-4.4.3/chart.umd.js')}"></script>
 <style th:inline="css">
   .chart-overlay-text {
       position: absolute;

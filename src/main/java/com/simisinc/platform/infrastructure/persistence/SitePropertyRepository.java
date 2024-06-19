@@ -140,7 +140,7 @@ public class SitePropertyRepository {
       record.setValue(rs.getString("property_value"));
       record.setType(rs.getString("property_type"));
       // Override values from the system environment
-      record.setValue(LoadSitePropertyCommand.getValueBasedOnEnvironment(record.getName(), record.getValue()));
+      record.setValue(LoadSitePropertyCommand.getValueBasedOnEnvironment(record));
       return record;
     } catch (SQLException se) {
       LOG.error("buildRecord", se);
