@@ -2,10 +2,10 @@
 id: oauth
 title: OAuth Setup
 # prettier-ignore
-description: SimIS CMS can be configured for OAuth users, roles, and groups
+description: CMS Platform can be configured for OAuth users, roles, and groups
 ---
 
-SimIS CMS has built-in user logins and management. OAuth can be configured for validating user logins instead, and the OAuth provider can also provide roles and groups to be used within SimIS CMS.
+CMS Platform has built-in user logins and management. OAuth can be configured for validating user logins instead, and the OAuth provider can also provide roles and groups to be used within CMS Platform.
 
 Roles map to the built-in portal roles, such as System Administrator, Content Manager, and Data Manager. Web pages, specific widgets, and data directories can be limited to specific roles.
 
@@ -15,7 +15,7 @@ Groups map to the customized portal groups which users can be assigned to. Web p
 
 In OAuth Provider, configure the client and redirect URL, a dev example would be: `http://localhost:8080/oauth/callback`. Record the client id and secret.
 
-On SimIS CMS startup, configure the following environment variables:
+On CMS Platform startup, configure the following environment variables:
 
 The Site's URL, used in general places and redirects:
 
@@ -47,22 +47,22 @@ CMS_OAUTH_GROUP_LIST=group1, group-2, group_3
 In Keycloak:
 
 1. Create a realm or use an existing one
-2. Add a client: `simis-cms`
+2. Add a client: `cms-platform`
 
-In the SimIS CMS Database, if you're not using environment variables, configure the OAuth provider:
+In the CMS Platform Database, if you're not using environment variables, configure the OAuth provider:
 
 ```sql
 UPDATE site_properties SET property_value = 'true' WHERE property_name = 'oauth.enabled';
 UPDATE site_properties SET property_value = 'Keycloak' WHERE property_name = 'oauth.provider';
 UPDATE site_properties SET property_value = 'https://localhost/realms/example' WHERE property_name = 'oauth.serverUrl';
-UPDATE site_properties SET property_value = 'simis-cms' WHERE property_name = 'oauth.clientId';
+UPDATE site_properties SET property_value = 'cms-platform' WHERE property_name = 'oauth.clientId';
 UPDATE site_properties SET property_value = 'client-secret' WHERE property_name = 'oauth.clientSecret';
 UPDATE site_properties SET property_value = true WHERE property_name = 'oauth.redirectGuests';
 ```
 
-## OAuth Groups and Roles Mapping to SimIS CMS
+## OAuth Groups and Roles Mapping to CMS Platform
 
-Groups and roles can be created in Active Directory and Keycloak. During SSO, SimIS CMS can check the user's info and group memberships.
+Groups and roles can be created in Active Directory and Keycloak. During SSO, CMS Platform can check the user's info and group memberships.
 
 The following can be set using the environment variables above, or in the database...
 
@@ -73,7 +73,7 @@ For Keycloak:
 3. Create Client Mappers and Tokens: User Client Role (roles), Group Membership (groups)
 4. Create users and choose roles and groups for the user
 
-In the SimIS CMS Database, configure the roles mappings to existing SimIS roles:
+In the CMS Platform Database, configure the roles mappings to existing CMS Platform roles:
 
 ```sql
 UPDATE site_properties SET property_value = 'roles' WHERE property_name = 'oauth.role.attribute';
@@ -84,7 +84,7 @@ UPDATE lookup_role SET oauth_path = 'data-manager' where code = 'data-manager';
 UPDATE lookup_role SET oauth_path = 'ecommerce-manager' where code = 'ecommerce-manager';
 ```
 
-In the SimIS CMS Database, for new or existing groups you can configure the groups mappings:
+In the CMS Platform Database, for new or existing groups you can configure the groups mappings:
 
 ```sql
 UPDATE site_properties SET property_value = 'groups' WHERE property_name = 'oauth.group.attribute';

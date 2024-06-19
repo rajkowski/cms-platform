@@ -45,7 +45,7 @@
       </div>
     </div>
   </div>
-  <div class="button-container">
+  <div class="button-container gap">
     <c:choose>
       <c:when test="${!empty returnPage}">
         <a id="nextButton" href="${returnPage}" class="button radius secondary">Cancel</a>

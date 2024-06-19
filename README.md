@@ -2,11 +2,25 @@
 
 [![Java CI](https://github.com/rajkowski/cms-platform/actions/workflows/ant.yml/badge.svg)](https://github.com/rajkowski/cms-platform/actions/workflows/ant.yml)
 
-CMS Platform improves upon SimIS.
+CMS Platform improves upon SimIS CMS.
 
 What is SimIS CMS? [Agile, Enterprise, Open Source Content Management System (CMS) and Portal](https://www.simiscms.com).
 
 SimIS CMS comes out-of-the-box with modules, advanced security, easy setup, and powerful developer features. Use and configure what's there, and customize what's not. The flexible Open Source license lets you move beyond the technology to focus on delivering a quality website.
+
+## What's improved in CMS Platform?
+
+- It's well-maintained
+- You can publish your website as a completely static website
+  - Use CMS Platform's UI across your team to compose web changes including content, navigation, layout, Javascript, CSS, etc.
+  - Then publish static copies (without draft content) with features like:
+    - SEO naming conventions
+    - Redirects
+    - Caching
+    - PDF downloads
+    - Streaming videos
+- There's a refined Enterprise SSO integration with OAuth2 endpoint discovery and user groups
+- The site and deployment properties can be completely configured through environment variables
 
 ## Documentation
 
@@ -80,7 +94,7 @@ To log into a new site, add "/login" to the URL. Later, turn on the login settin
 
 ## Attribution
 
-Thank you to all those who have helped make SimIS CMS!
+Thank you to all those who have helped make CMS Platform!
 
 This project uses and licenses several technologies:
 
@@ -147,6 +161,7 @@ This project uses and licenses several technologies:
    Add to Calendar Buttons     MIT      Add to calendar                                   https://github.com/WebuddhaInc/add-to-calendar-buttons
    Payform                     License  Credit card form                                  https://github.com/jondavidjohn/payform
    Prism                       MIT      Highlighter                                       https://github.com/PrismJS/prism/
+   SortableJS                  MIT      Drag-and-drop lists                               https://github.com/SortableJS/Sortable
    Spectrum                    MIT      Color picker                                      https://github.com/bgrins/spectrum
    Superset-UI Embedded SDK    Apache   Visualizations and dashboards                     https://github.com/apache/superset
    Swiper                      MIT      Modern mobile touch slider                        https://github.com/nolimits4web/swiper

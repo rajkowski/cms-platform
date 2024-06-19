@@ -16,15 +16,17 @@
 
 package com.simisinc.platform.domain.model.items;
 
-import com.simisinc.platform.application.CustomFieldCommand;
-import com.simisinc.platform.domain.model.CustomField;
-import com.simisinc.platform.domain.model.Entity;
-import org.apache.commons.lang3.StringUtils;
-
 import java.sql.Timestamp;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
+
+import com.simisinc.platform.application.CustomFieldCommand;
+import com.simisinc.platform.application.items.CollectionTableColumnsCommand;
+import com.simisinc.platform.domain.model.CustomField;
+import com.simisinc.platform.domain.model.Entity;
 
 /**
  * A common category or directory for organizing items with customization and permissions
@@ -66,6 +68,7 @@ public class Collection extends Entity {
   private boolean showSearch = false;
   private boolean showListingsLink = false;
   private Map<String, CustomField> customFieldList = null;
+  private Map<String, CustomField> tableColumnsList = null;
   private String itemUrlText = null;
 
   public Collection() {
@@ -341,13 +344,31 @@ public class Collection extends Entity {
 
   public void addCustomField(CustomField customField) {
     if (customFieldList == null) {
-      customFieldList = new LinkedHashMap<String, CustomField>();
+      customFieldList = new LinkedHashMap<>();
     }
     CustomFieldCommand.addCustomFieldToList(customFieldList, customField);
   }
 
   public CustomField getCustomField(String name) {
     return CustomFieldCommand.getCustomField(customFieldList, name);
+  }
+
+  public void addTableColumn(CustomField customField) {
+    if (customField == null) {
+      return;
+    }
+    if (tableColumnsList == null) {
+      tableColumnsList = new LinkedHashMap<>();
+    }
+    CollectionTableColumnsCommand.addToList(tableColumnsList, customField);
+  }
+
+  public Map<String, CustomField> getTableColumnsList() {
+    return tableColumnsList;
+  }
+
+  public void setTableColumnsList(Map<String, CustomField> tableColumnsList) {
+    this.tableColumnsList = tableColumnsList;
   }
 
   public String getItemUrlText() {

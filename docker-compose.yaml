@@ -30,14 +30,14 @@ services:
       DB_SSL: "${DB_SSL:-false}"
       DB_USER: "${DB_USER:?err}"
       DB_PASSWORD: "${DB_PASSWORD:?err}"
-      DB_NAME: "${DB_NAME:-simis-cms}"
+      DB_NAME: "${DB_NAME:-cms-platform}"
     restart: on-failure
     depends_on:
       - db
     networks:
       - platform
     volumes:
-      - web-data:/opt/simis:delegated
+      - web-data:/opt/cms-platform:delegated
   
 volumes:
   db-data:

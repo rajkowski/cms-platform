@@ -107,6 +107,6 @@ public class ProgressCard extends Entity {
 
   public String getPercentComplete() {
     double percent = 100.0 * progress / maxValue;
-    return new BigDecimal(percent).setScale(2, RoundingMode.HALF_UP) + "%";
+    return BigDecimal.valueOf(percent).setScale(2, RoundingMode.HALF_UP) + "%";
   }
 }

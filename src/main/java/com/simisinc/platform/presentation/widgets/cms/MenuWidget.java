@@ -240,6 +240,9 @@ public class MenuWidget extends GenericWidget {
               addLink(context, linkList, "Edit Item Details",
                   "/edit/" + item.getUniqueId() + "?returnPage=/show/" + item.getUniqueId(), "fa fa-edit", container,
                   "admin");
+              addLink(context, linkList, "Edit Item GeoJSON",
+                  "/edit/" + item.getUniqueId() + "/geojson?returnPage=/show/" + item.getUniqueId(), "fa fa-edit", container,
+                  "admin");
               addLink(context, linkList, "Edit Item Settings", "/show/" + item.getUniqueId() + "/settings",
                   "fa fa-edit", container, "admin");
             }

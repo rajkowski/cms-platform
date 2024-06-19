@@ -111,7 +111,8 @@ public class ItemRepository {
         .add("approved", record.getApproved())
         .add("source", record.getSource())
         .add("sync_date", record.getDatasetSyncDate())
-        .add("dataset_key_value", record.getDatasetKeyValue());
+        .add("dataset_key_value", record.getDatasetKeyValue())
+        .add(new SqlValue("geojson", SqlValue.JSONB_TYPE, StringUtils.trimToNull(record.getGeoJSON())));
     if (record.hasGeoPoint()) {
       insertValues.add("latitude", record.getLatitude());
       insertValues.add("longitude", record.getLongitude());
@@ -259,6 +260,22 @@ public class ItemRepository {
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage(), se);
     }
+    return null;
+  }
+
+  public static Item updateGeoJSON(Item record) {
+    // If there are no coordinates, then determine the lat/long
+
+    // Overwrite the geoJSON
+    SqlUtils updateValues = new SqlUtils().add("modified", new Timestamp(System.currentTimeMillis()));
+    updateValues.add(new SqlValue("geojson", SqlValue.JSONB_TYPE, StringUtils.trimToNull(record.getGeoJSON())));
+    SqlUtils where = new SqlUtils().add("item_id = ?", record.getId());
+    if (DB.update(TABLE_NAME, updateValues, where)) {
+      // Expire the cache
+      //        CacheManager.invalidateKey(CacheManager.ITEM_UNIQUE_ID_CACHE, record.getUniqueId());
+      return record;
+    }
+    LOG.error("The update failed!");
     return null;
   }
 
@@ -492,6 +509,14 @@ public class ItemRepository {
           where.add("latitude = 0 AND longitude = 0");
         }
       }
+
+      if (specification.getHasGeoJSON() != DataConstants.UNDEFINED) {
+        if (specification.getHasGeoJSON() == DataConstants.TRUE) {
+          where.add("geojson IS NOT NULL");
+        } else {
+          where.add("geojson IS NULL");
+        }
+      }
     }
     return DB.selectAllFrom(
         TABLE_NAME, select, joins, where, orderBy, constraints, ItemRepository::buildRecord);
@@ -635,6 +660,7 @@ public class ItemRepository {
       record.setUrlText(rs.getString("url_text"));
       record.setDatasetSyncDate(rs.getTimestamp("sync_date"));
       record.setDatasetKeyValue(rs.getString("dataset_key_value"));
+      record.setGeoJSON(rs.getString("geojson"));
       // Other
       if (DB.hasColumn(rs, "highlight")) {
         record.setHighlight(rs.getString("highlight"));

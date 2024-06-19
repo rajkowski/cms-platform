@@ -1,1 +1,1 @@
-CREATE DATABASE "simis-cms";
+CREATE DATABASE "cms-platform";

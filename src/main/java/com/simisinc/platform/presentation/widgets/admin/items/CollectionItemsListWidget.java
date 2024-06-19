@@ -16,6 +16,12 @@
 
 package com.simisinc.platform.presentation.widgets.admin.items;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.simisinc.platform.application.items.CollectionTableColumnsCommand;
+import com.simisinc.platform.domain.model.CustomField;
 import com.simisinc.platform.domain.model.items.Category;
 import com.simisinc.platform.domain.model.items.Collection;
 import com.simisinc.platform.domain.model.items.Item;
@@ -27,10 +33,6 @@ import com.simisinc.platform.infrastructure.persistence.items.ItemSpecification;
 import com.simisinc.platform.presentation.controller.RequestConstants;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Description
@@ -50,7 +52,6 @@ public class CollectionItemsListWidget extends GenericWidget {
     context.getRequest().setAttribute("icon", context.getPreferences().get("icon"));
     context.getRequest().setAttribute("title", context.getPreferences().get("title"));
     context.getRequest().setAttribute("showPaging", context.getPreferences().getOrDefault("showPaging", "true"));
-    context.getRequest().setAttribute("columns", context.getPreferences().getOrDefault("columns", "all"));
 
     // Determine the parent collection
     long collectionId = context.getParameterAsLong("collectionId");
@@ -71,7 +72,7 @@ public class CollectionItemsListWidget extends GenericWidget {
     // Determine criteria
     ItemSpecification specification = new ItemSpecification();
     specification.setCollectionId(collection.getId());
-//    specification.setForUserId(context.getUserId());
+    //    specification.setForUserId(context.getUserId());
 
     // Use the categories in the request
     Map<Long, Category> categoryMap = new HashMap<>();
@@ -85,10 +86,14 @@ public class CollectionItemsListWidget extends GenericWidget {
     List<Item> itemList = ItemRepository.findAll(specification, constraints);
     context.getRequest().setAttribute("itemList", itemList);
 
+    // Determine the columns to display
+    Map<String, CustomField> tableColumnsList = CollectionTableColumnsCommand.createListFromSettings(collection,
+        context.getPreferences().get("columns"));
+    context.getRequest().setAttribute("tableColumnsList", tableColumnsList);
+
     // Show the JSP
     context.setJsp(JSP);
     return context;
   }
-
 
 }

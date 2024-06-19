@@ -239,6 +239,7 @@ public class WidgetBase {
     try {
       DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
       factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+      factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
       factory.setXIncludeAware(false);
       factory.setExpandEntityReferences(false);
 

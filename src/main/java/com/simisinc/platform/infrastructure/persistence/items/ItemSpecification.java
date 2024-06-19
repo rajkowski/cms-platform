@@ -45,6 +45,7 @@ public class ItemSpecification {
   private Long forUserId = -1L;
   private Long forMemberWithUserId = -1L;
   private int hasCoordinates = DataConstants.UNDEFINED;
+  private int hasGeoJSON = DataConstants.UNDEFINED;
   private boolean approvedOnly = false;
   private boolean unapprovedOnly = false;
   private long datasetId = -1L;
@@ -215,6 +216,18 @@ public class ItemSpecification {
 
   public void setHasCoordinates(boolean hasCoordinates) {
     this.hasCoordinates = (hasCoordinates ? DataConstants.TRUE : DataConstants.FALSE);
+  }
+
+  public int getHasGeoJSON() {
+    return hasGeoJSON;
+  }
+
+  public void setHasGeoJSON(int hasGeoJSON) {
+    this.hasGeoJSON = hasGeoJSON;
+  }
+
+  public void setHasGeoJSON(boolean hasGeoJSON) {
+    this.hasGeoJSON = (hasGeoJSON ? DataConstants.TRUE : DataConstants.FALSE);
   }
 
   public long getDatasetId() {

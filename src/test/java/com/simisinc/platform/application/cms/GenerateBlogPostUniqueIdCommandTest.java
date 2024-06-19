@@ -36,9 +36,9 @@ class GenerateBlogPostUniqueIdCommandTest {
       blogPostRepository.when(() -> BlogPostRepository.findByUniqueId(anyLong(), anyString())).thenReturn(null);
 
       BlogPost blogPost = new BlogPost();
-      blogPost.setTitle("SimIS CMS Has Been Updated With Tests");
+      blogPost.setTitle("CMS Platform Has Been Updated With Tests");
       String uniqueId = GenerateBlogPostUniqueIdCommand.generateUniqueId(null, blogPost);
-      Assertions.assertEquals("simis-cms-has-been-updated-with-tests", uniqueId);
+      Assertions.assertEquals("cms-platform-has-been-updated-with-tests", uniqueId);
     }
   }
 
@@ -48,11 +48,11 @@ class GenerateBlogPostUniqueIdCommandTest {
       blogPostRepository.when(() -> BlogPostRepository.findByUniqueId(anyLong(), anyString())).thenReturn(null);
 
       BlogPost previousBlogPost = new BlogPost();
-      previousBlogPost.setTitle("SimIS CMS Has Just Been Updated With Tests");
+      previousBlogPost.setTitle("CMS Platform Has Just Been Updated With Tests");
       BlogPost blogPost = new BlogPost();
-      blogPost.setTitle("SimIS CMS Has Been Updated With Tests");
+      blogPost.setTitle("CMS Platform Has Been Updated With Tests");
       String uniqueId = GenerateBlogPostUniqueIdCommand.generateUniqueId(previousBlogPost, blogPost);
-      Assertions.assertEquals("simis-cms-has-been-updated-with-tests", uniqueId);
+      Assertions.assertEquals("cms-platform-has-been-updated-with-tests", uniqueId);
     }
   }
 
