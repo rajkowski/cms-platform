@@ -47,6 +47,7 @@ public class FileSystemCommand {
   private static final String CMS_PATH = "CMS_PATH";
   private static String configPath = null;
   private static String filesPath = null;
+  private static String staticSitePath = null;
 
   /**
    * Return the static config path based on system environment and database settings
@@ -138,6 +139,52 @@ public class FileSystemCommand {
       }
     }
     return new File(serverRootPath);
+  }
+
+  /**
+   * Static site path
+   * 
+   * @return
+   */
+  public static String getFileServerStaticSitePathValue() {
+    // Check for the cached path
+    if (staticSitePath != null) {
+      return staticSitePath;
+    }
+    String serverRootPath = null;
+    if (System.getenv().containsKey(CMS_PATH)) {
+      serverRootPath = new File(System.getenv(CMS_PATH), "static-site").getPath();
+    }
+    if (StringUtils.isBlank(serverRootPath)) {
+      serverRootPath = LoadSitePropertyCommand.loadByName("system.staticsite.filepath");
+    }
+    if (StringUtils.isBlank(serverRootPath)) {
+      // @note this value is checked at system startup and will abort then
+      LOG.error("CMS_PATH environment variable can be set, or add 'system.staticsite.filepath' to the database");
+      LOG.info(
+          "HINT: INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('File server path', 'system.staticsite.filepath', '/opt/cms-platform/static-site')");
+      return null;
+    }
+    if (!serverRootPath.endsWith(File.separator)) {
+      serverRootPath += File.separator;
+    }
+    // Cache the path
+    staticSitePath = serverRootPath;
+    return staticSitePath;
+  }
+
+  /** Return a file reference for the static site path */
+  public static File getFileServerStaticSitePath(String... subdirectories) {
+    String serverStaticSitePath = getFileServerStaticSitePathValue();
+    if (StringUtils.isBlank(serverStaticSitePath)) {
+      return null;
+    }
+    if (subdirectories != null && subdirectories.length > 0) {
+      for (String subdirectory : subdirectories) {
+        serverStaticSitePath += subdirectory + File.separator;
+      }
+    }
+    return new File(serverStaticSitePath);
   }
 
   /**

@@ -69,7 +69,7 @@ public class WebContainerCommand implements Serializable {
   private static final String REQUEST_OBJECT = "REQUEST_OBJECT";
 
   public static PageResponse processWidgets(WebContainerContext webContainerContext, List<Section> sections,
-                                       ContainerRenderInfo containerRenderInfo, Map<String, String> coreData,
+      ContainerRenderInfo containerRenderInfo, Map<String, String> coreData,
       UserSession userSession, Map<String, String> themePropertyMap, HttpServletRequest httpRequest)
       throws Exception {
 
@@ -172,7 +172,8 @@ public class WebContainerCommand implements Serializable {
             }
           }
 
-          WidgetContext widgetContext = new WidgetContext(webContainerContext.getApplicationURL(), pageRequest, httpRequest, response, thisWidgetUniqueId,
+          WidgetContext widgetContext = new WidgetContext(webContainerContext.getApplicationURL(), pageRequest, httpRequest, response,
+              thisWidgetUniqueId,
               containerRenderInfo.getName());
           widgetContext.setParameterMap(pageRequest.getParameterMap());
           widgetContext.setCoreData(coreData);
@@ -467,19 +468,34 @@ public class WebContainerCommand implements Serializable {
           // If the method was a success, check for content
           String widgetContent = null;
           if (result != null) {
-            if (httpRequest != null && widgetContext.hasJsp()) {
+            // For the time being, render from the HTML template for non-HTTP requests only (CLI, Jobs, etc)
+            if (httpRequest == null && widgetContext.hasTemplate()) {
+              // Render the HTML Template content
+              String template = widgetContext.getTemplate();
+              if (template.startsWith("/")) {
+                template = template.substring(1);
+              }
+              LOG.debug("Using Template: /WEB-INF/html-templates/" + template);
+              Context ctx = new Context();
+              ctx.setVariables(widgetContext.getRequest().getAttributes());
+              widgetContent = PageTemplateEngine.useTemplateEngine().process(template, ctx).trim();
+            } else if (widgetContext.hasJsp()) {
               // Render the widget's JSP
-              // @todo if the JSP does not exist, a recursive loop occurs
               if (httpRequest != null) {
-              LOG.debug("Including JSP: /WEB-INF/jsp" + widgetContext.getJsp());
+                LOG.debug("Including JSP: /WEB-INF/jsp" + widgetContext.getJsp());
+                if (httpRequest.getServletContext().getResource("/WEB-INF/jsp" + widgetContext.getJsp()) == null) {
+                  // Register an error and skip the output
+                  LOG.error("JSP NOT FOUND: " + "/WEB-INF/jsp" + widgetContext.getJsp());
+                  continue;
+                }
                 // Map the pageRequest attributes to the http request for JSPs
                 for (String attribute : pageRequest.getAttributes().keySet()) {
                   httpRequest.setAttribute(attribute, pageRequest.getAttribute(attribute));
                 }
                 // Render the JSP content
-              WidgetResponseWrapper responseWrapper = new WidgetResponseWrapper(response);
+                WidgetResponseWrapper responseWrapper = new WidgetResponseWrapper(response);
                 httpRequest.getRequestDispatcher("/WEB-INF/jsp" + widgetContext.getJsp()).include(httpRequest, responseWrapper);
-              widgetContent = responseWrapper.getOutputAndClose();
+                widgetContent = responseWrapper.getOutputAndClose();
               }
             } else if (widgetContext.hasHtml()) {
               // Use the widget's generated HTML
