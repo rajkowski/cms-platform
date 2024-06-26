@@ -16,13 +16,11 @@
 
 package com.simisinc.platform.presentation.controller;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
@@ -41,6 +39,15 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.application.cms.UrlCommand;
 
 /**
  * Description
@@ -245,7 +252,7 @@ public class MultipartFileSender {
     response.reset();
     response.setBufferSize(DEFAULT_BUFFER_SIZE);
     response.setHeader("Content-Type", contentType);
-    response.setHeader("Content-Disposition", disposition + ";filename=\"" + filename + "\"");
+    response.setHeader("Content-Disposition", disposition + ";filename=\"" + UrlCommand.encodeUri(filename) + "\"");
     response.setHeader("Accept-Ranges", "bytes");
     response.setHeader("ETag", filename);
     response.setDateHeader("Last-Modified", lastModified);

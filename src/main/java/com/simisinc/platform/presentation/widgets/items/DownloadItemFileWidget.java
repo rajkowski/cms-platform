@@ -27,6 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.cms.UrlCommand;
 import com.simisinc.platform.application.filesystem.FileSystemCommand;
 import com.simisinc.platform.application.items.LoadCollectionCommand;
 import com.simisinc.platform.application.items.LoadItemCommand;
@@ -165,7 +166,7 @@ public class DownloadItemFileWidget extends GenericWidget {
       }
 
       // The file is being viewed (in a new window)
-      context.getResponse().setHeader("Content-Disposition", "inline; filename=" + record.getFilename() + ";");
+      context.getResponse().setHeader("Content-Disposition", "inline; filename=\"" + UrlCommand.encodeUri(record.getFilename()) + "\";");
 
       // Check for a last-modified header and return 304 if possible
       long headerValue = context.getRequest().getDateHeader("If-Modified-Since");
