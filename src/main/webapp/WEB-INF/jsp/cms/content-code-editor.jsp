@@ -17,7 +17,7 @@
 <jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="codeContent" class="java.lang.String" scope="request"/>
-<script src="${ctx}/javascript/tinymce-6.8.3/tinymce.min.js"></script>
+<script src="${ctx}/javascript/tinymce-6.8.4/tinymce.min.js"></script>
 <script>
 tinymce.init({
   selector: 'textarea',

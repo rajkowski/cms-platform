@@ -21,7 +21,7 @@
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="blog" class="com.simisinc.platform.domain.model.cms.Blog" scope="request"/>
 <jsp:useBean id="blogPost" class="com.simisinc.platform.domain.model.cms.BlogPost" scope="request"/>
-<script src="${ctx}/javascript/tinymce-6.8.3/tinymce.min.js"></script>
+<script src="${ctx}/javascript/tinymce-6.8.4/tinymce.min.js"></script>
 <script>
   tinymce.init({
     selector: 'textarea',
@@ -151,7 +151,7 @@
         <input type="file" id="imageFile" class="show-for-sr" onchange="SavePhoto(this)">
       </div>
       <div class="small-2 cell">
-        <img id="imageUrlPreview" src="<c:out value="${blogPost.imageUrl}"/>" style="max-height: 50px; max-width: 150px"/>
+        <img id="imageUrlPreview" alt="preview image" src="<c:out value="${blogPost.imageUrl}"/>" style="max-height: 50px; max-width: 150px"/>
       </div>
       <div class="small-2 cell text-right">
         <a class="button small primary radius no-gap" data-open="imageBrowserReveal">Browse Images</a>
