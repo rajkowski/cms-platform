@@ -65,7 +65,7 @@
     <java-activation.version>1.2.0</java-activation.version>
     <java-mail.version>1.6.2</java-mail.version>
     <jmail.version>1.5.1</jmail.version>
-    <jna.version>5.8.0</jna.version>
+    <jna.version>5.14.0</jna.version>
     <jobrunr.version>7.2.1</jobrunr.version>
     <johnzon.version>1.2.21</johnzon.version>
     <jsoup.version>1.16.1</jsoup.version>
