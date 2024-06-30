@@ -16,13 +16,14 @@
 
 package com.simisinc.platform.application.cms;
 
+import java.sql.Timestamp;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 import com.simisinc.platform.domain.model.User;
 import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.domain.model.cms.WebPageHit;
+import com.simisinc.platform.presentation.controller.PageRequest;
 import com.simisinc.platform.presentation.controller.UserSession;
-
-import java.sql.Timestamp;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Saves web page hit objects
@@ -35,11 +36,11 @@ public class SaveWebPageHitCommand {
   // Use a queue, so a single job can store the hits
   public static ConcurrentLinkedQueue<WebPageHit> queue = new ConcurrentLinkedQueue<>();
 
-  public static void saveHit(String ipAddress, String method, String pagePath, WebPage webPage, UserSession userSession) {
+  public static void saveHit(PageRequest pageRequest, WebPage webPage, UserSession userSession) {
     WebPageHit webPageHit = new WebPageHit();
-    webPageHit.setIpAddress(ipAddress);
-    webPageHit.setMethod(method);
-    webPageHit.setPagePath(pagePath);
+    webPageHit.setIpAddress(pageRequest.getRemoteAddr());
+    webPageHit.setMethod(pageRequest.getMethod());
+    webPageHit.setPagePath(pageRequest.getPagePath());
     if (webPage != null) {
       webPageHit.setWebPageId(webPage.getId());
     }
