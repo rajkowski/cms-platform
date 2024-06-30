@@ -430,14 +430,12 @@
     </junitreport>
   </target>
 
-  <!-- mvn dependency:tree -->
   <target name="mvn-tree">
     <exec executable="mvn">
       <arg value="dependency:tree" />
     </exec>
   </target>
 
-  <!-- mvn dependency:copy-dependencies -DincludeScope=compile -DexcludeArtifactIds=commons-logging -DexcludeGroupIds=org.apache.tomcat,org.projectlombok,org.jetbrains.kotlin,junit -DoutputDirectory=${lib.dir}/build -->
   <target name="mvn-dependencies">
     <exec executable="mvn">
       <arg value="dependency:copy-dependencies" />
