@@ -68,8 +68,6 @@
   </target>
 
   <!-- Creates build directories -->
-  <!-- mvn dependency:tree -->
-  <!-- mvn dependency:copy-dependencies -DincludeScope=compile -DexcludeArtifactIds=commons-logging -DexcludeGroupIds=org.apache.tomcat,org.projectlombok,org.jetbrains.kotlin -DoutputDirectory=${lib.dir}/maven -->
   <target name="prepare" depends="version">
     <mkdir dir="${build.dir}"/>
     <mkdir dir="${target.dir}"/>
@@ -432,10 +430,20 @@
     </junitreport>
   </target>
 
-  <target name="mvn-dependencies">
+  <target name="mvn-tree">
     <exec executable="mvn">
       <arg value="dependency:tree" />
-      <arg value="-DoutputType=dot" />
+    </exec>
+  </target>
+
+  <target name="mvn-dependencies">
+    <delete dir="${lib.dir}" />
+    <exec executable="mvn">
+      <arg value="dependency:copy-dependencies" />
+      <arg value="-DincludeScope=compile" />
+      <arg value="-DexcludeArtifactIds=commons-logging" />
+      <arg value="-DexcludeGroupIds=org.apache.tomcat,org.projectlombok,org.jetbrains.kotlin,junit" />
+      <arg value="-DoutputDirectory=${lib.dir}" />
     </exec>
   </target>
 

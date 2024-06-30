@@ -121,13 +121,11 @@ This project uses and licenses several technologies:
    JMail                       MIT      Email validator                                   https://github.com/RohanNagar/jmail
    Jobrunr                     LGPL     Job scheduler                                     https://github.com/jobrunr/jobrunr
    Johnzon                     Apache   Json processing                                   https://johnzon.apache.org
-   JSON Schema Validator       Apache   JSON schema validator                             https://github.com/networknt/json-schema-validator
    JSoup                       MIT      HTML cleansing                                    https://github.com/jhy/jsoup/
    JSTL                        Eclipse  Servlet tag library                               https://github.com/eclipse-ee4j/jstl-api
    libphonenumber              Apache   Phone number validation                           https://github.com/google/libphonenumber
    PostgreSQL                  BSD      Database driver                                   https://jdbc.postgresql.org
    Pushy                       MIT      Push notifications                                https://github.com/relayrides/pushy
-   RabbitMQ                    Apache   RabbitMQ java client library                      https://www.rabbitmq.com/java-client.html
    RestFB                      MIT      Facebook Graph API client                         https://github.com/restfb/restfb
    ROME                        Apache   RSS                                               https://github.com/rometools/rome
    SLF4j                       MIT      Logger                                            https://github.com/qos-ch/slf4j
@@ -174,7 +172,6 @@ This project uses and licenses several technologies:
    Jacoco                      Eclipse  Code coverage                                     https://github.com/jacoco/jacoco
    MeanBean                    Apache   JavaBean testing                                  https://github.com/meanbeanlib/meanbean
    Mockito                     MIT      Mocking framework                                 https://github.com/mockito/mockito
-   Testcontainers              MIT      Containers library for tests                      https://github.com/testcontainers/testcontainers-java
 
  Data:
 

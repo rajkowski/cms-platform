@@ -16,15 +16,16 @@
 
 package com.simisinc.platform.application;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.simisinc.platform.domain.model.App;
-import com.simisinc.platform.infrastructure.cache.CacheManager;
-import io.github.bucket4j.Bandwidth;
-import io.github.bucket4j.Bucket;
+import java.time.Duration;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.time.Duration;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.simisinc.platform.domain.model.App;
+import com.simisinc.platform.infrastructure.cache.CacheManager;
+
+import io.github.bucket4j.Bucket;
 
 /**
  * Methods for rate limiting
@@ -51,8 +52,9 @@ public class RateLimitCommand {
       bucket = (Bucket) cache.getIfPresent(username);
       if (bucket == null) {
         if (startWatching) {
-          Bandwidth limit = Bandwidth.simple(5, Duration.ofMinutes(30));
-          bucket = Bucket.builder().addLimit(limit).build();
+          bucket = Bucket.builder()
+              .addLimit(limit -> limit.capacity(5).refillGreedy(5, Duration.ofMinutes(30)))
+              .build();
           cache.put(username, bucket);
         }
         return true;
@@ -75,8 +77,9 @@ public class RateLimitCommand {
       bucket = (Bucket) cache.getIfPresent(ipAddress);
       if (bucket == null) {
         if (startWatching) {
-          Bandwidth limit = Bandwidth.simple(10, Duration.ofMinutes(30));
-          bucket = Bucket.builder().addLimit(limit).build();
+          bucket = Bucket.builder()
+              .addLimit(limit -> limit.capacity(10).refillGreedy(10, Duration.ofMinutes(30)))
+              .build();
           cache.put(ipAddress, bucket);
         }
         return true;
@@ -97,8 +100,9 @@ public class RateLimitCommand {
     synchronized (RateLimitCommand.class) {
       bucket = (Bucket) cache.getIfPresent(thisApp.getId());
       if (bucket == null) {
-        Bandwidth limit = Bandwidth.simple(1500, Duration.ofMinutes(15));
-        bucket = Bucket.builder().addLimit(limit).build();
+        bucket = Bucket.builder()
+            .addLimit(limit -> limit.capacity(1500).refillGreedy(1500, Duration.ofMinutes(15)))
+            .build();
         cache.put(thisApp.getId(), bucket);
       }
     }
@@ -118,8 +122,9 @@ public class RateLimitCommand {
     synchronized (RateLimitCommand.class) {
       bucket = (Bucket) cache.getIfPresent(thisApp.getId() + "-" + userId);
       if (bucket == null) {
-        Bandwidth limit = Bandwidth.simple(200, Duration.ofMinutes(15));
-        bucket = Bucket.builder().addLimit(limit).build();
+        bucket = Bucket.builder()
+            .addLimit(limit -> limit.capacity(200).refillGreedy(200, Duration.ofMinutes(15)))
+            .build();
         cache.put(thisApp.getId() + "-" + userId, bucket);
       }
     }
