@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.github.rajkowski</groupId>
   <artifactId>cms-platform</artifactId>
-  <version>20240602.10000-SNAPSHOT</version>
+  <version>20240617.10000-SNAPSHOT</version>
   <name>CMS Platform</name>
   <url>https://github.com/rajkowski/cms-platform</url>
   <description>Agile, Enterprise, Open Source Content Management System (CMS) and Web Portal</description>
@@ -36,10 +36,10 @@
     <mockito.version>5.7.0</mockito.version>
     <argon2.version>2.11</argon2.version>
     <args4j.version>2.33</args4j.version>
-    <bucket4j.version>8.9.0</bucket4j.version>
+    <bucket4j.version>8.13.1</bucket4j.version>
     <caffeine.version>3.1.8</caffeine.version>
     <apache-http.version>5.2.2</apache-http.version>
-    <classgraph.version>4.8.161</classgraph.version>
+    <classgraph.version>4.8.174</classgraph.version>
     <commons-beanutils.version>1.9.4</commons-beanutils.version>
     <commons-codec.version>1.16.0</commons-codec.version>
     <commons-collections4.version>4.4</commons-collections4.version>
@@ -52,7 +52,7 @@
     <commons-text.version>1.11.0</commons-text.version>
     <commons-validator.version>1.7</commons-validator.version>
     <easy-flows-playbook.version>0.6-SNAPSHOT</easy-flows-playbook.version>
-    <flexmark.version>0.64.0</flexmark.version>
+    <flexmark.version>0.64.8</flexmark.version>
     <flyway.version>10.9.1</flyway.version>
     <geoip2.version>4.0.1</geoip2.version>
     <geojson.version>1.14</geojson.version>
@@ -60,31 +60,30 @@
     <gson.version>2.10.1</gson.version>
     <hikaricp.version>5.0.1</hikaricp.version>
     <im4java.version>1.4.0</im4java.version>
-    <jackson.version>2.15.2</jackson.version>
-    <jackson-coreutils.version>1.0</jackson-coreutils.version>
-    <jackson-databind.version>2.15.2</jackson-databind.version>
+    <jackson.version>2.17.1</jackson.version>
+    <jackson-coreutils.version>1.8</jackson-coreutils.version>
     <java-activation.version>1.2.0</java-activation.version>
     <java-mail.version>1.6.2</java-mail.version>
     <jmail.version>1.5.1</jmail.version>
-    <jna.version>5.8.0</jna.version>
-    <jobrunr.version>7.2.0</jobrunr.version>
+    <jna.version>5.14.0</jna.version>
+    <jobrunr.version>7.2.1</jobrunr.version>
     <johnzon.version>1.2.21</johnzon.version>
     <jsoup.version>1.16.1</jsoup.version>
     <jstl.version>1.2.5</jstl.version>
     <libphonenumber.version>8.13.31</libphonenumber.version>
     <lombok.version>1.18.30</lombok.version>
-    <netty.version>4.1.101</netty.version>
+    <netty.version>4.1.104</netty.version>
+    <netty-tcnative.version>2.0.65</netty-tcnative.version>
     <postgresql.version>42.7.2</postgresql.version>
-    <pushy.version>0.15.2</pushy.version>
+    <pushy.version>0.15.4</pushy.version>
     <rabbitmq.version>5.18.0</rabbitmq.version>
     <resilience4j.version>2.1.0</resilience4j.version>
     <restfb.version>2023.17.0</restfb.version>
     <rome-rss.version>2.1.0</rome-rss.version>
     <slf4j.version>2.0.11</slf4j.version>
-    <square.version>24.0.0.20220921</square.version>
-    <okhttp.version>4.11.0</okhttp.version>
-    <stripe.version>22.26.0</stripe.version>
-    <testcontainers.version>1.18.3</testcontainers.version>
+    <square.version>40.1.0.20240604</square.version>
+    <okhttp.version>4.12.0</okhttp.version>
+    <stripe.version>22.31.0</stripe.version>
     <thymeleaf.version>3.1.2</thymeleaf.version>
     <timeago.version>3.0.1</timeago.version>
     <univocity.version>2.9.1</univocity.version>
@@ -112,7 +111,7 @@
     </dependency>
     <dependency>
       <groupId>com.bucket4j</groupId>
-      <artifactId>bucket4j-core</artifactId>
+      <artifactId>bucket4j_jdk17-core</artifactId>
       <version>${bucket4j.version}</version>
     </dependency>
     <dependency>
@@ -185,7 +184,7 @@
       <artifactId>easy-flows-playbook</artifactId>
       <version>${easy-flows-playbook.version}</version>
       <scope>system</scope>
-      <systemPath>${project.basedir}/lib/build/easy-flows/easy-flows-playbook-${easy-flows-playbook.version}.jar</systemPath>
+      <systemPath>${project.basedir}/lib/provided/easy-flows/easy-flows-playbook-${easy-flows-playbook.version}.jar</systemPath>
     </dependency>
     <dependency>
       <groupId>com.vladsch.flexmark</groupId>
@@ -201,8 +200,7 @@
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-database-postgresql</artifactId>
       <version>${flyway.version}</version>
-      <scope>runtime</scope>
-  </dependency>
+    </dependency>
     <dependency>
       <groupId>com.maxmind.geoip2</groupId>
       <artifactId>geoip2</artifactId>
@@ -213,7 +211,7 @@
       <artifactId>granule</artifactId>
       <version>${granule.version}</version>
       <scope>system</scope>
-      <systemPath>${project.basedir}/lib/build/granule/granule-${granule.version}.jar</systemPath>
+      <systemPath>${project.basedir}/lib/provided/granule/granule-${granule.version}.jar</systemPath>
     </dependency>
     <dependency>
       <groupId>de.grundid.opendatalab</groupId>
@@ -246,6 +244,11 @@
       <version>${netty.version}.Final</version>
     </dependency>
     <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-tcnative-classes</artifactId>
+      <version>${netty-tcnative.version}.Final</version>
+    </dependency>
+    <dependency>
       <groupId>com.eatthepath</groupId>
       <artifactId>pushy</artifactId>
       <version>${pushy.version}</version>
@@ -268,11 +271,16 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
-      <version>${jackson-databind.version}</version>
+      <version>${jackson.version}</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.datatype</groupId>
       <artifactId>jackson-datatype-jsr310</artifactId>
+      <version>${jackson.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.dataformat</groupId>
+      <artifactId>jackson-dataformat-toml</artifactId>
       <version>${jackson.version}</version>
     </dependency>
     <dependency>
@@ -471,18 +479,6 @@
       <groupId>com.tngtech.archunit</groupId>
       <artifactId>archunit-junit5</artifactId>
       <version>1.0.1</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>testcontainers</artifactId>
-      <version>${testcontainers.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>junit-jupiter</artifactId>
-      <version>${testcontainers.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>

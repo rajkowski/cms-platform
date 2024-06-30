@@ -38,12 +38,6 @@
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="Content-Language" content="en">
-  <!--
-  ========================================================================
-  SimIS CMS
-  https://www.simiscms.com
-  ========================================================================
-  -->
 <c:choose>
   <c:when test="${!empty sitePropertyMap['site.header.line1'] || userSession.hasRole('admin')}">
     <c:if test="${!empty themePropertyMap['theme.utilitybar.backgroundColor']}">

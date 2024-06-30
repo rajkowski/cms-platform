@@ -22,7 +22,7 @@ CREATE TABLE site_properties (
 -- System
 
 INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('SSL Required', 'system.ssl', 'true');
-INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('WWW Context', 'system.www.context', '/web-content');
+INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('WWW Context', 'system.www.context', '');
 INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('Customizations path', 'system.customizations.filepath', '/opt/cms-platform/customization');
 INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('File server path', 'system.filepath', '/opt/cms-platform/files');
 INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('Configuration path', 'system.configpath', '/opt/cms-platform/config');

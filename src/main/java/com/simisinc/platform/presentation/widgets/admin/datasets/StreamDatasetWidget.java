@@ -23,6 +23,7 @@ import java.io.OutputStream;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.cms.UrlCommand;
 import com.simisinc.platform.application.filesystem.FileSystemCommand;
 import com.simisinc.platform.domain.model.datasets.Dataset;
 import com.simisinc.platform.infrastructure.persistence.datasets.DatasetRepository;
@@ -72,7 +73,7 @@ public class StreamDatasetWidget extends GenericWidget {
     }
 
     // Set header info
-    context.getResponse().setHeader("Content-Disposition", "attachment; filename=\"" + record.getFilename() + "\"");
+    context.getResponse().setHeader("Content-Disposition", "attachment; filename=\"" + UrlCommand.encodeUri(record.getFilename()) + "\"");
     context.getResponse().setHeader("Content-Transfer-Encoding", "binary");
     context.getResponse().setContentType(record.getFileType());
     context.getResponse().setContentLength((int) file.length());

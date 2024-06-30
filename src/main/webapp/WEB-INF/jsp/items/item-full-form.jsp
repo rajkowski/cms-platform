@@ -22,7 +22,7 @@
 <jsp:useBean id="item" class="com.simisinc.platform.domain.model.items.Item" scope="request"/>
 <jsp:useBean id="categoryList" class="java.util.ArrayList" scope="request"/>
 <jsp:useBean id="cancelUrl" class="java.lang.String" scope="request"/>
-<script src="${ctx}/javascript/tinymce-6.8.3/tinymce.min.js"></script>
+<script src="${ctx}/javascript/tinymce-6.8.4/tinymce.min.js"></script>
 <script>
   tinymce.init({
     selector: '.html-field',
@@ -209,7 +209,7 @@
           </label>
         </div>
         <div class="small-4 cell">
-          <img id="imageUrlPreview" src="<c:out value="${item.imageUrl}"/>" style="max-height: 150px; max-width: 150px"/>
+          <img id="imageUrlPreview" alt="preview image" src="<c:out value="${item.imageUrl}"/>" style="max-height: 150px; max-width: 150px"/>
         </div>
       </div>
     </div>

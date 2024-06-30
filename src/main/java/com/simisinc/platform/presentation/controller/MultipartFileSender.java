@@ -46,6 +46,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.cms.UrlCommand;
+
 /**
  * Streams file content with HEAD and resume, and file ranges for video playback
  *
@@ -251,7 +253,7 @@ public class MultipartFileSender {
     response.reset();
     response.setBufferSize(DEFAULT_BUFFER_SIZE);
     response.setHeader("Content-Type", contentType);
-    response.setHeader("Content-Disposition", disposition + ";filename=\"" + filename + "\"");
+    response.setHeader("Content-Disposition", disposition + ";filename=\"" + UrlCommand.encodeUri(filename) + "\"");
     response.setHeader("Accept-Ranges", "bytes");
     response.setHeader("ETag", filename);
     response.setDateHeader("Last-Modified", lastModified);

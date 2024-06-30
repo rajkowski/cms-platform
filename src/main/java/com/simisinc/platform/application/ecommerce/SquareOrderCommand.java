@@ -337,7 +337,8 @@ public class SquareOrderCommand {
 
     // Create the Square Payment record
     CreatePaymentRequest.Builder createPaymentRequestBuilder = new CreatePaymentRequest.Builder(order.getPaymentToken(),
-        UUID.randomUUID().toString(), new Money(squareCentsAmount, "USD"))
+        UUID.randomUUID().toString())
+        .amountMoney(new Money(squareCentsAmount, "USD"))
         .orderId(order.getSquareOrderId())
         .referenceId(order.getUniqueId()) //Max 40 characters
         .buyerEmailAddress(order.getEmail())

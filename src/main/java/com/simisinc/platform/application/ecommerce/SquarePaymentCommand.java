@@ -107,12 +107,12 @@ public class SquarePaymentCommand {
     LOG.debug("Using square amount: " + squareCentsAmount);
 
     // Create the Square Payment record
-    CreatePaymentRequest createPaymentRequest =
-        new CreatePaymentRequest.Builder(order.getPaymentToken(), UUID.randomUUID().toString(), new Money(squareCentsAmount, "USD"))
-//            .orderId(squareOrderId?)
-            .referenceId(order.getUniqueId())
-            .buyerEmailAddress(order.getEmail())
-            .build();
+    CreatePaymentRequest createPaymentRequest = new CreatePaymentRequest.Builder(order.getPaymentToken(), UUID.randomUUID().toString())
+        .amountMoney(new Money(squareCentsAmount, "USD"))
+        //            .orderId(squareOrderId?)
+        .referenceId(order.getUniqueId())
+        .buyerEmailAddress(order.getEmail())
+        .build();
 
     try {
       // Create the JSON string
