@@ -37,8 +37,8 @@ class CardWidgetTest extends WidgetBase {
     CardWidget widget = new CardWidget();
     widget.execute(widgetContext);
 
-    Assertions.assertEquals("This is the title", request.getAttribute("title"));
-    Assertions.assertEquals("/link", request.getAttribute("link"));
+    Assertions.assertEquals("This is the title", pageRequest.getAttribute("title"));
+    Assertions.assertEquals("/link", pageRequest.getAttribute("link"));
     Assertions.assertEquals(CardWidget.JSP, widgetContext.getJsp());
   }
 }

@@ -16,16 +16,19 @@
 
 package com.simisinc.platform.application.cms;
 
-import com.simisinc.platform.infrastructure.cache.CacheManager;
-import com.simisinc.platform.presentation.controller.XMLFooterLoader;
-import com.simisinc.platform.presentation.controller.XMLHeaderLoader;
-import com.simisinc.platform.presentation.controller.Footer;
-import com.simisinc.platform.presentation.controller.Header;
+import java.net.URL;
+import java.util.Map;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import javax.servlet.ServletContext;
-import java.util.Map;
+import com.simisinc.platform.domain.model.cms.WebContainer;
+import com.simisinc.platform.infrastructure.cache.CacheManager;
+import com.simisinc.platform.infrastructure.persistence.cms.WebContainerRepository;
+import com.simisinc.platform.presentation.controller.Footer;
+import com.simisinc.platform.presentation.controller.Header;
+import com.simisinc.platform.presentation.controller.XMLFooterLoader;
+import com.simisinc.platform.presentation.controller.XMLHeaderLoader;
 
 /**
  * Loads header and footer objects
@@ -37,41 +40,65 @@ public class WebContainerLayoutCommand {
 
   private static Log LOG = LogFactory.getLog(WebContainerLayoutCommand.class);
 
-  public static Header retrieveHeader(ServletContext servletContext, Map<String, String> widgetLibrary) {
-    // Use the header preference?
-//    String layoutValue = LoadSitePropertyCommand.loadByName("theme.header.layout");
-//    if (!"default".equals(layoutValue)) {
-//      layout = layoutValue;
-//    }
-    Header header = (Header) CacheManager.getFromObjectCache(CacheManager.WEBSITE_HEADER);
+  public static Header retrieveHeader(Map<String, String> widgetLibrary, String layout, URL url) {
+    String cacheName = ("header.default".equals(layout) ? CacheManager.WEBSITE_HEADER
+        : CacheManager.WEBSITE_PLAIN_HEADER);
+    Header header = (Header) CacheManager.getFromObjectCache(cacheName);
     if (header == null) {
-      header = XMLHeaderLoader.retrieveHeader(servletContext, widgetLibrary, "header.default");
-      CacheManager.addToObjectCache(CacheManager.WEBSITE_HEADER, header);
+      header = retrieveHeaderFromDatabase(widgetLibrary, layout);
+      if (header == null) {
+        header = XMLHeaderLoader.loadFromURL(widgetLibrary, layout, url);
+      }
+      if (header == null) {
+        return null;
+      }
+      CacheManager.addToObjectCache(cacheName, header);
     }
     return header;
   }
 
-  public static Header retrievePlainHeader(ServletContext servletContext, Map<String, String> widgetLibrary) {
-    Header plainHeader = (Header) CacheManager.getFromObjectCache(CacheManager.WEBSITE_PLAIN_HEADER);
-    if (plainHeader == null) {
-      plainHeader = XMLHeaderLoader.retrieveHeader(servletContext, widgetLibrary, "header.plain");
-      CacheManager.addToObjectCache(CacheManager.WEBSITE_PLAIN_HEADER, plainHeader);
+  private static Header retrieveHeaderFromDatabase(Map<String, String> widgetLibrary, String layout) {
+    // Try the database
+    WebContainer container = WebContainerRepository.findByName(layout);
+    if (container == null) {
+      return null;
     }
-    return plainHeader;
+    try {
+      // Process the header document
+      return XMLHeaderLoader.addFromXml(container, widgetLibrary);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return null;
   }
 
-  public static Footer retrieveFooter(ServletContext servletContext, Map<String, String> widgetLibrary) {
+  public static Footer retrieveFooter(Map<String, String> widgetLibrary, String layout, URL url) {
     Footer footer = (Footer) CacheManager.getFromObjectCache(CacheManager.WEBSITE_FOOTER);
     if (footer == null) {
-      footer = XMLFooterLoader.retrieveFooter(servletContext, widgetLibrary, "footer.default");
+      footer = retrieveFooterFromDatabase(widgetLibrary, layout);
+      if (footer == null) {
+        footer = XMLFooterLoader.loadFromURL(widgetLibrary, layout, url);
+      }
+      if (footer == null) {
+        return null;
+      }
       CacheManager.addToObjectCache(CacheManager.WEBSITE_FOOTER, footer);
     }
     return footer;
   }
 
-  public static void populateCache(ServletContext servletContext, Map<String, String> widgetLibrary) {
-    retrieveHeader(servletContext, widgetLibrary);
-    retrievePlainHeader(servletContext, widgetLibrary);
-    retrieveFooter(servletContext, widgetLibrary);
+  private static Footer retrieveFooterFromDatabase(Map<String, String> widgetLibrary, String layout) {
+    // Try the database
+    WebContainer container = WebContainerRepository.findByName(layout);
+    if (container == null) {
+      return null;
+    }
+    try {
+      // Process the footer document
+      return XMLFooterLoader.addFromXml(container, widgetLibrary);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return null;
   }
 }

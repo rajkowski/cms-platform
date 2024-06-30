@@ -34,7 +34,7 @@ public class LogoutWidget extends GenericWidget {
 
   public WidgetContext execute(WidgetContext context) {
     // Log the user out
-    LogoutCommand.logout(context.getRequest(), context.getResponse());
+    LogoutCommand.logout(context.getSession(), context.getResponse(), context.isSecure());
 
     context.setJsp(JSP);
     return context;

@@ -62,7 +62,7 @@ public class CaptchaCommand {
 
     // Use the default service
     if (StringUtils.isBlank(service) || StringUtils.isBlank(siteKey)) {
-      String checkValue = (String) context.getRequest().getSession().getAttribute(SessionConstants.CAPTCHA_TEXT);
+      String checkValue = (String) context.getSession().getAttribute(SessionConstants.CAPTCHA_TEXT);
       String captcha = context.getParameter("captcha");
       if (StringUtils.isBlank(checkValue) || StringUtils.isBlank(captcha)) {
         return false;

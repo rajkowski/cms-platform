@@ -41,9 +41,9 @@ class AppsListWidgetTest extends WidgetBase {
 
     // Verify
     Assertions.assertEquals(ApisListWidget.JSP, widgetContext.getJsp());
-    Assertions.assertEquals("APIs", request.getAttribute("title"));
+    Assertions.assertEquals("APIs", pageRequest.getAttribute("title"));
 
-    List apiListRequest = (List) request.getAttribute("apiList");
+    List apiListRequest = (List) pageRequest.getAttribute("apiList");
     Assertions.assertNotNull(apiListRequest);
   }
 }

@@ -36,7 +36,7 @@ import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
 
 /**
- * Description
+ * Widget to manage theme properties
  *
  * @author matt rajkowski
  * @created 4/18/18 4:20 PM
@@ -140,7 +140,7 @@ public class SitePropertiesEditorWidget extends GenericWidget {
       String timezone = LoadSitePropertyCommand.loadByName("site.timezone");
       if (StringUtils.isNotBlank(timezone)) {
         // The format users see
-        Config.set(context.getRequest().getServletContext(), Config.FMT_TIME_ZONE, timezone);
+        Config.set(context.getServletContext(), Config.FMT_TIME_ZONE, timezone);
         // Replace the default converter
         SqlTimestampConverter converter = (SqlTimestampConverter) ConvertUtils.lookup(Timestamp.class);
         converter.setTimeZone(TimeZone.getTimeZone(ZoneId.of(timezone)));

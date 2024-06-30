@@ -105,7 +105,7 @@ public class MenuWidget extends GenericWidget {
 
     // @todo Add cart to menu
     // Track if the cart items are going to be shown
-//    boolean showCartItems = false;
+    //    boolean showCartItems = false;
 
     // Add links from the specified entriesList
     for (Map<String, String> valueMap : entriesList) {
@@ -132,10 +132,10 @@ public class MenuWidget extends GenericWidget {
             continue;
           }
           link = "/cart";
-//          showCartItems = true;
-//        } else if ("notifications".equals(type)) {
-//          link = "/notifications";
-//          showNotificationsItems = true;
+          //          showCartItems = true;
+          //        } else if ("notifications".equals(type)) {
+          //          link = "/notifications";
+          //          showNotificationsItems = true;
         }
 
         // Determine access requirements
@@ -186,7 +186,7 @@ public class MenuWidget extends GenericWidget {
         addProperty(context, properties, "icon", icon);
         addProperty(context, properties, "type", type);
         addProperty(context, properties, "icon-only", valueMap.get("icon-only"));
-        if (highlightActiveMenuItem && link.equals(context.getRequest().getRequestURI())) {
+        if (highlightActiveMenuItem && link.equals(context.getRequest().getPagePath())) {
           addProperty(context, properties, "active", "true");
         }
         linkList.add(properties);
@@ -251,8 +251,8 @@ public class MenuWidget extends GenericWidget {
                 "/admin/collection-details?collectionId=" + collection.getId(), "fa fa-info", container, "admin");
             addLink(context, linkList, "Collection Theme", "/admin/collection-theme?collectionId=" + collection.getId(),
                 "fa fa-swatchbook", container, "admin");
-//            addLink(context, linkList, "Collection CSS", "/admin/css-editor?collection=" + collection.getId() + "&returnPage=" + pagePath, "fa fa-css3", container, "admin");
-//            addLink(context, linkList, "Collection Layout", "/admin/web-page-designer?collection=" + collection.getId() + "&returnPage=" + pagePath, "fa fa-th-large", container, "admin");
+            //            addLink(context, linkList, "Collection CSS", "/admin/css-editor?collection=" + collection.getId() + "&returnPage=" + pagePath, "fa fa-css3", container, "admin");
+            //            addLink(context, linkList, "Collection Layout", "/admin/web-page-designer?collection=" + collection.getId() + "&returnPage=" + pagePath, "fa fa-th-large", container, "admin");
           }
 
           addDivider(context, linkList, container, "admin");
@@ -308,14 +308,14 @@ public class MenuWidget extends GenericWidget {
         BigDecimal runningTotal = new BigDecimal(0);
         for (CartItem cartItem : cartItemList) {
           ProductSku productSku = ProductSkuRepository.findById(cartItem.getSkuId());
-
+    
           // Prepare the entry for display
           CartEntry cartEntry = new CartEntry();
           cartEntry.setCartItem(cartItem);
           cartEntry.setProduct(LoadProductCommand.loadProductMetaDataById(productSku.getProductId()));
           cartEntry.setProductSku(productSku);
           cartEntryList.add(cartEntry);
-
+    
           // Track the running total
           runningTotal = runningTotal.add(productSku.getPrice().multiply(cartItem.getQuantity()));
         }
@@ -327,6 +327,7 @@ public class MenuWidget extends GenericWidget {
 
     // Show the JSP
     context.setJsp(JSP);
+    context.setTemplate(TEMPLATE);
     return context;
   }
 

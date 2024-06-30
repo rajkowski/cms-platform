@@ -105,24 +105,23 @@ class WorkflowTaskTest {
 
   }
 
-
   @Test
   void taskTest() {
 
-    String yaml =
-        "---\n" +
-            "- id: blog-post-published\n" +
-            "  vars:\n" +
-            "      user: '{{ event.user }}'\n" +
-            "      blogPost: '{{ event.blogPost }}'\n" +
-            "      api-key: api-value\n" +
-            "  workflow:\n" +
-            "      - history:\n" +
-            "        message: '_{{ user.fullName }}_ **{{ verb }}** a blog post: [{{ blogPost.title }}]({{ blogPost.link }})'\n" +
-            "        actor-id: '{{ user.id }}'\n" +
-            "        verb: published\n" +
-            "        object: blogPost\n" +
-            "        object-id: '{{ blogPost.id }}'\n";
+    String yaml = "---\n" +
+        "- id: blog-post-published\n" +
+        "  vars:\n" +
+        "      user: '{{ event.user }}'\n" +
+        "      blogPost: '{{ event.blogPost }}'\n" +
+        "      api-key: api-value\n" +
+        "  workflow:\n" +
+        "      - history:\n" +
+        "        message: '_{{ user.fullName }}_ **{{ verb }}** a blog post: [{{ blogPost.title }}]({{ blogPost.link }})'\n"
+        +
+        "        actor-id: '{{ user.id }}'\n" +
+        "        verb: published\n" +
+        "        object: blogPost\n" +
+        "        object-id: '{{ blogPost.id }}'\n";
 
     // Load the playbook(s)
     List<Playbook> playbookList = YamlReader.readPlaybooks(yaml);
@@ -194,7 +193,10 @@ class WorkflowTaskTest {
     String messageSnapshot = XapiStatementCommand.populateMessage(statement, workContext.getMap());
     statement.setMessageSnapshot(messageSnapshot);
 
-    Assertions.assertEquals("_{{ user.fullName }}_ **{{ verb }}** a blog post: [{{ blogPost.title }}]({{ blogPost.link }})", statement.getMessage());
-    Assertions.assertEquals("_First Last_ **published** a blog post: [Blog Post Title]({{ blogPost.link }})", statement.getMessageSnapshot());
+    Assertions.assertEquals(
+        "_{{ user.fullName }}_ **{{ verb }}** a blog post: [{{ blogPost.title }}]({{ blogPost.link }})",
+        statement.getMessage());
+    Assertions.assertEquals("_First Last_ **published** a blog post: [Blog Post Title]({{ blogPost.link }})",
+        statement.getMessageSnapshot());
   }
 }

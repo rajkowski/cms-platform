@@ -91,5 +91,19 @@ public class V71110__set_filepath extends BaseJavaMigration {
         pst.close();
       }
     }
+
+    {
+      // Set the customizations path
+      File staticSitePath = new File(basePath, "static-site");
+      PreparedStatement pst = connection.prepareStatement(
+          "UPDATE site_properties SET property_value = ? WHERE property_name = ?");
+      try {
+        pst.setString(1, staticSitePath.getPath());
+        pst.setString(2, "system.staticsite.filepath");
+        pst.execute();
+      } finally {
+        pst.close();
+      }
+    }
   }
 }

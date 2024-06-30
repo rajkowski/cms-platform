@@ -1,0 +1,17 @@
+<!--/* CMS Platform Template, 2024 */-->
+<!--/* @todo implement sub-menus */-->
+<div class="platform-menu-container" style="position: relative;">
+  <span th:if="${not #strings.isEmpty(title)}" class="menu-title padding-left-15" th:text="${title}">Title</span>
+  <ul th:id="${menuId}" class="dropdown menu" th:classappend="${menuClass}" data-dropdown-menu>
+    <!-- <ul class="menu vertical"> -->  <!-- when a new link['container'] -->
+      <li th:each="link, status : ${linkList}" th:class="${link['active']} ? 'active'">
+        <a th:if="${#strings.equals(link['type'], 'cart')}" id="menu-item-cart" th:href="${#strings.concat(ctx, '/cart')}" title="Your Shopping Cart is Empty"><i class="fa-solid fa-bag-shopping"></i></a>
+        <hr th:if="${#strings.equals(link['divider'], 'true')}" style="margin: .01rem auto;" />
+        <a th:if="${not #strings.equals(link['type'], 'cart')}" th:class="${link['class']}" th:classappend="${#strings.equals(wrap, 'true')} ? 'text-no-wrap'"
+          th:href="${#strings.concat(ctx, link['link'])}" th:target="${#strings.startsWith(link['link'], 'http://') || #strings.startsWith(link['link'], 'https://')} ? '_blank'">
+          <i th:if="${not #strings.isEmpty(link['icon'])}" class="fa-solid" th:classappend="${link['icon']}"></i> [[${link['name']}]]
+        </a>
+      </li>
+    <!-- </ul> -->
+  </ul>
+</div>

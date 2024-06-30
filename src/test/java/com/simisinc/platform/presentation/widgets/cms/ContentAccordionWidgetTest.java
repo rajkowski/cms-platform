@@ -16,6 +16,8 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
+import static org.mockito.AdditionalAnswers.returnsFirstArg;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
 
@@ -26,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
 import com.simisinc.platform.WidgetBase;
+import com.simisinc.platform.application.cms.ContentValuesCommand;
 import com.simisinc.platform.application.cms.LoadContentCommand;
 import com.simisinc.platform.domain.model.cms.AccordionSection;
 import com.simisinc.platform.domain.model.cms.Content;
@@ -113,12 +116,15 @@ class ContentAccordionWidgetTest extends WidgetBase {
     try (MockedStatic<LoadContentCommand> staticLoadContentCommand = mockStatic(LoadContentCommand.class)) {
       staticLoadContentCommand.when(() -> LoadContentCommand.loadContentByUniqueId(eq("hello-content")))
           .thenReturn(content);
-      ContentAccordionWidget contentWidget = new ContentAccordionWidget();
-      widgetContext = contentWidget.execute(widgetContext);
+      try (MockedStatic<ContentValuesCommand> staticContentValuesCommand = mockStatic(ContentValuesCommand.class)) {
+        staticContentValuesCommand.when(() -> ContentValuesCommand.replaceDynamicValues(anyString())).then(returnsFirstArg());
+        ContentAccordionWidget contentWidget = new ContentAccordionWidget();
+        widgetContext = contentWidget.execute(widgetContext);
+      }
     }
     Assertions.assertNotNull(widgetContext);
 
-    List<AccordionSection> sectionList = (List) request.getAttribute("sectionList");
+    List<AccordionSection> sectionList = (List) pageRequest.getAttribute("sectionList");
 
     Assertions.assertNotNull(sectionList);
     Assertions.assertEquals(2, sectionList.size());

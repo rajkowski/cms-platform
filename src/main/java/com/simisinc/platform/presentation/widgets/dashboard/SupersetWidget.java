@@ -56,14 +56,14 @@ public class SupersetWidget extends GenericWidget {
     context.getRequest().setAttribute("hideChartControls", hideChartControls ? "true" : "false");
 
     // Use a control session value to be used by Ajax
-    context.getRequest().getSession().setAttribute(SESSION_PREFIX + context.getUniqueId() + dashboardValue, context.getUniqueId());
+    context.getSession().setAttribute(SESSION_PREFIX + context.getUniqueId() + dashboardValue, context.getUniqueId());
 
     // Share the RLS with the Ajax request
     String rlsClause = context.getPreferences().get("clause");
     if (StringUtils.isNotBlank(rlsClause)) {
-      context.getRequest().getSession().setAttribute(SESSION_PREFIX + context.getUniqueId() + dashboardValue + "-rls-clause", rlsClause);
+      context.getSession().setAttribute(SESSION_PREFIX + context.getUniqueId() + dashboardValue + "-rls-clause", rlsClause);
     } else {
-      context.getRequest().getSession().removeAttribute(SESSION_PREFIX + context.getUniqueId() + dashboardValue + "-rls-clause");
+      context.getSession().removeAttribute(SESSION_PREFIX + context.getUniqueId() + dashboardValue + "-rls-clause");
     }
 
     context.setJsp(JSP);

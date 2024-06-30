@@ -16,27 +16,31 @@
 
 package com.simisinc.platform.rest.controller;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.flywaydb.core.internal.util.StringUtils;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Serializable;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import javax.servlet.ServletContext;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.FactoryConfigurationError;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Serializable;
-import java.util.*;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 /**
- * Description
+ * Processor for API services
  *
  * @author matt rajkowski
  * @created 7/17/18 2:11 PM
@@ -45,7 +49,7 @@ public class XMLServiceLoader implements Serializable {
 
   static final long serialVersionUID = 536435325324169646L;
   private static Log LOG = LogFactory.getLog(XMLServiceLoader.class);
-
+  // The available services
   private List<Map<String, String>> serviceLibrary = new ArrayList<>();
 
   public XMLServiceLoader() {
@@ -55,28 +59,17 @@ public class XMLServiceLoader implements Serializable {
     return serviceLibrary;
   }
 
-  public void addDirectory(ServletContext context, String directory) {
-    Set<String> files = context.getResourcePaths("/WEB-INF/" + directory);
-    for (String file : files) {
-      LOG.debug("Directory: " + directory + " found file: " + file);
-      try {
-        addFile(context, file);
-      } catch (Exception e) {
-        LOG.error("Could not parse file: " + file, e);
-      }
-    }
-  }
-
-  public void addFile(ServletContext context, String fileName) {
+  public void addFile(URL url) {
+    LOG.debug("Adding URL: " + url.toString());
     try {
-      Document document = parseDocument(fileName, context);
+      Document document = parseDocument(url);
       addServices(document);
     } catch (Exception e) {
       e.printStackTrace();
     }
   }
 
-  private Document parseDocument(String file, ServletContext context)
+  private Document parseDocument(URL url)
       throws FactoryConfigurationError, ParserConfigurationException, SAXException, IOException {
     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
     factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
@@ -85,7 +78,7 @@ public class XMLServiceLoader implements Serializable {
     factory.setExpandEntityReferences(false);
 
     DocumentBuilder builder = factory.newDocumentBuilder();
-    try (InputStream is = context.getResourceAsStream(file)) {
+    try (InputStream is = url.openStream()) {
       return builder.parse(is);
     }
   }
@@ -105,7 +98,7 @@ public class XMLServiceLoader implements Serializable {
       service.put("endpoint", endpoint);
       service.put("endpointValue", endpointValue);
       service.put("serviceClass", serviceClass);
-      if (StringUtils.hasText(method)) {
+      if (StringUtils.isNotBlank(method)) {
         service.put("method", method);
       }
       serviceLibrary.add(service);

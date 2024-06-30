@@ -503,6 +503,20 @@
   <build>
     <pluginManagement>
       <plugins>
+        <!--
+        <plugin>
+          <groupId>com.spotify.fmt</groupId>
+          <artifactId>fmt-maven-plugin</artifactId>
+          <version>2.22.1</version>
+          <executions>
+            <execution>
+              <goals>
+                <goal>format</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        -->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-checkstyle-plugin</artifactId>
@@ -609,19 +623,16 @@
         </executions>
       </plugin>
       -->
+      <!-- sling jspc requires web.xml and tlds to be moved to sourceDirectory, and JSPs need <%@ page session="true" %> -->
       <!--
       <plugin>
         <groupId>org.apache.sling</groupId>
         <artifactId>jspc-maven-plugin</artifactId>
-        <version>2.3.0</version>
+        <version>2.3.4</version>
         <configuration>
-          <sourceDirectories>
-            <directory>src/main/webapp/jsp</directory>
-          </sourceDirectories>
-          <resourceDirectories>
-            <directory>src/main/resources</directory>
-            <directory>src/main/webapp/WEB-INF</directory>
-          </resourceDirectories>
+          <sourceDirectory>src/main/webapp/WEB-INF/jsp</sourceDirectory>
+          <showSuccess>true</showSuccess>
+          <failOnError>true</failOnError>
         </configuration>
         <executions>
           <execution>
@@ -634,7 +645,8 @@
       </plugin>
       -->
       <!-- war and war:exploded -->
-      <!-- <plugin>
+      <!--
+      <plugin>
         <artifactId>maven-war-plugin</artifactId>
         <version>${maven-war-plugin.version}</version>
         <configuration>
@@ -651,7 +663,8 @@
             </resource>
           </webResources>
         </configuration>
-      </plugin> -->
+      </plugin>
+      -->
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>

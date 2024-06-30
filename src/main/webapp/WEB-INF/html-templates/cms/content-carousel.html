@@ -1,0 +1,36 @@
+<!--/* CMS Platform Template, 2024 */-->
+<!-- @todo validate page, finish data attributes -->
+<h4 th:if="${not #strings.isEmpty(title)}">
+  <i th:if="${not #strings.isEmpty(icon)}" class="fa" th:classappend="${icon}"></i>
+  [[${title}]]
+</h4>
+<div class="platform-content-container">  
+  <div class="orbit" th:classappend="${carouselClass}" role="region" data-orbit th:attr="aria-label=${carouselTitle}">
+
+    [[${dataOptions}]]
+
+    <div class="orbit-wrapper">
+      <div th:if="${#strings.equals(showControls, 'true') and #arrays.length(cardList) gt 1}" class="orbit-controls">
+        <button th:if="${#strings.equals(showLeftControl, 'true')}" class="orbit-previous"><span class="show-for-sr">Previous Slide</span>&#9664;&#xFE0E;</button>
+        <button th:if="${#strings.equals(showRightControl, 'true')}" class="orbit-next"><span class="show-for-sr">Next Slide</span>&#9654;&#xFE0E;</button>
+      </div>
+      <ul class="orbit-container">
+          <li th:each="card, cardStatus: ${cardList}" class="orbit-slide" th:classappend="${cardStatus.first} ? 'is-active'">
+            <figure class="orbit-figure">
+              <th:block th:if="${display eq 'images'}">
+                [(${#strings.concat('&lt;img class="orbit-image"', ' ', card, '&gt;')})]
+              </th:block>
+              <img th:if="${not #strings.equals(display, 'images') and carouselSize eq 'large'}" class="orbit-image" th:src="${#strings.concat(ctx, '/images/widgets/image-640-480.png')}" alt="background image" />
+              <img th:if="${not #strings.equals(display, 'images') and carouselSize eq 'medium'}" class="orbit-image" th:src="${#strings.concat(ctx, '/images/widgets/image-1952-850.png')}" alt="background image" />
+              <img th:if="${not #strings.equals(display, 'images') and carouselSize eq 'tiny'}" class="orbit-image" th:src="${#strings.concat(ctx, '/images/widgets/image-2034-690.png')}" alt="background image" />
+              <img th:if="${not #strings.equals(display, 'images') and #strings.isEmpty(carouselSize)}" class="orbit-image" th:src="${#strings.concat(ctx, '/images/widgets/image-640-240.png')}" alt="background image">
+              <figcaption th:if="${#strings.equals(display, 'text')}" class="orbit-caption" th:utext="${card}" />
+            </figure>
+          </li>
+      </ul>
+    </div>
+    <nav th:if="${#strings.equals(showBullets, 'true') and #arrays.length(cardList) gt 1}" class="orbit-bullets">
+      <button th:each="card, cardStatus: ${cardList}" data-slide="${cardStatus.index}" class="${cardStatus.first} ? 'is-active'"><span class="show-for-sr">Slide ${cardStatus.count}</span><span th:if="${cardStatus.first}" class="show-for-sr">Current Slide</span></button>
+    </nav>
+  </div>
+</div>

@@ -16,6 +16,8 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
+import static org.mockito.AdditionalAnswers.returnsFirstArg;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
@@ -27,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
 import com.simisinc.platform.WidgetBase;
+import com.simisinc.platform.application.cms.ContentValuesCommand;
 import com.simisinc.platform.application.cms.LoadContentCommand;
 import com.simisinc.platform.domain.model.cms.Content;
 import com.simisinc.platform.infrastructure.database.DB;
@@ -52,13 +55,16 @@ class ContentWidgetTest extends WidgetBase {
     try (MockedStatic<LoadContentCommand> staticLoadContentCommand = mockStatic(LoadContentCommand.class)) {
       staticLoadContentCommand.when(() -> LoadContentCommand.loadContentByUniqueId(eq("hello-content")))
           .thenReturn(content);
-      ContentWidget contentWidget = new ContentWidget();
-      widgetContext = contentWidget.execute(widgetContext);
+      try (MockedStatic<ContentValuesCommand> staticContentValuesCommand = mockStatic(ContentValuesCommand.class)) {
+        staticContentValuesCommand.when(() -> ContentValuesCommand.replaceDynamicValues(anyString())).then(returnsFirstArg());
+        ContentWidget contentWidget = new ContentWidget();
+        widgetContext = contentWidget.execute(widgetContext);
+      }
     }
     Assertions.assertNotNull(widgetContext);
     Assertions.assertTrue(widgetContext.hasJsp());
     Assertions.assertEquals(ContentWidget.JSP, widgetContext.getJsp());
-    Assertions.assertNotNull(request.getAttribute("contentHtml"));
+    Assertions.assertNotNull(pageRequest.getAttribute("contentHtml"));
   }
 
   @Test
@@ -81,14 +87,19 @@ class ContentWidgetTest extends WidgetBase {
           .thenReturn(content);
       staticLoadContentCommand.when(() -> LoadContentCommand.loadContentByUniqueId(eq("another-content")))
           .thenReturn(content2);
-      ContentWidget contentWidget = new ContentWidget();
-      widgetContext = contentWidget.execute(widgetContext);
+
+      try (MockedStatic<ContentValuesCommand> staticContentValuesCommand = mockStatic(ContentValuesCommand.class)) {
+        staticContentValuesCommand.when(() -> ContentValuesCommand.replaceDynamicValues(anyString())).then(returnsFirstArg());
+
+        ContentWidget contentWidget = new ContentWidget();
+        widgetContext = contentWidget.execute(widgetContext);
+      }
     }
     Assertions.assertNotNull(widgetContext);
     Assertions.assertTrue(widgetContext.hasJsp());
     Assertions.assertEquals(ContentWidget.JSP, widgetContext.getJsp());
-    Assertions.assertNotNull(request.getAttribute("contentHtml"));
-    String contentHtml = (String) request.getAttribute("contentHtml");
+    Assertions.assertNotNull(pageRequest.getAttribute("contentHtml"));
+    String contentHtml = (String) pageRequest.getAttribute("contentHtml");
     Assertions.assertTrue(contentHtml.contains("Hello"));
     Assertions.assertTrue(contentHtml.contains("This is additional content"));
   }

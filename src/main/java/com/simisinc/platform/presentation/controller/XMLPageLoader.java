@@ -16,9 +16,23 @@
 
 package com.simisinc.platform.presentation.controller;
 
-import com.simisinc.platform.domain.model.cms.WebPage;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Serializable;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.FactoryConfigurationError;
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.w3c.dom.Document;
@@ -26,23 +40,10 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import javax.servlet.ServletContext;
-import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.FactoryConfigurationError;
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Serializable;
-import java.net.URL;
-import java.util.*;
-import java.util.stream.Stream;
-
-import static java.util.stream.Collectors.toList;
+import com.simisinc.platform.domain.model.cms.WebPage;
 
 /**
- * Description
+ * Manages web pages and layouts for the web site
  *
  * @author matt rajkowski
  * @created 4/6/18 8:00 PM
@@ -82,9 +83,9 @@ public class XMLPageLoader implements Serializable {
     this.widgetLibrary = widgetLibrary;
   }
 
-  public void loadWidgetLibrary(ServletContext context, String fileName) {
+  public void loadWidgetLibrary(URL url) {
     try {
-      Document document = parseDocument(fileName, context);
+      Document document = parseDocument(url);
       loadWidgetLibrary(document);
     } catch (Exception e) {
       e.printStackTrace();
@@ -102,26 +103,31 @@ public class XMLPageLoader implements Serializable {
     }
   }
 
-  public synchronized void addDirectory(ServletContext context, String directory) {
-    Set<String> files = context.getResourcePaths("/WEB-INF/" + directory);
-    for (String file : files) {
+  public synchronized void addDirectory(File directory) throws MalformedURLException {
+    for (File file : directory.listFiles()) {
+      if (file.isDirectory()) {
+        addDirectory(file);
+        continue;
+      }
       LOG.debug("Directory: " + directory + " found file: " + file);
-      addFile(file);
+      addFile(file.toURI().toURL());
     }
   }
 
-  public synchronized void addFile(String fileName) {
-    files.add(new XMLPageLoaderFiles(fileName));
+  public synchronized void addFile(URL url) {
+    LOG.debug("Adding URL: " + url.toString());
+    files.add(new XMLPageLoaderFiles(url));
   }
 
-  public synchronized void load(ServletContext context) {
+  public synchronized void load() {
     try {
       for (XMLPageLoaderFiles file : files) {
-        URL url = context.getResource(file.getFile());
+        URL url = file.getUrl();
+        LOG.info("Checking URL: " + url.toString());
         long lastModified = url.openConnection().getLastModified();
         if (file.getLastModified() == -1 || (lastModified > 0 && lastModified > file.getLastModified())) {
-          LOG.info("Loading page layout: " + file.getFile());
-          Document document = parseDocument(file.getFile(), context);
+          LOG.info("Loading page layout: " + url.getPath());
+          Document document = parseDocument(url);
           loadAllPages(document);
           file.setLastModified(lastModified);
         }
@@ -131,7 +137,7 @@ public class XMLPageLoader implements Serializable {
     }
   }
 
-  private Document parseDocument(String file, ServletContext context)
+  private Document parseDocument(URL url)
       throws FactoryConfigurationError, ParserConfigurationException, SAXException, IOException {
     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
     factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
@@ -140,118 +146,29 @@ public class XMLPageLoader implements Serializable {
     factory.setExpandEntityReferences(false);
 
     DocumentBuilder builder = factory.newDocumentBuilder();
-    try (InputStream is = context.getResourceAsStream(file)) {
+    try (InputStream is = url.openStream()) {
       return builder.parse(is);
     }
   }
 
   public Page addFromXml(String pageName, WebPage webPage)
       throws FactoryConfigurationError, ParserConfigurationException, SAXException, IOException {
-    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-    factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-    factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-    factory.setXIncludeAware(false);
-    factory.setExpandEntityReferences(false);
-
-    DocumentBuilder builder = factory.newDocumentBuilder();
-    Document document = null;
-    try (InputStream is = IOUtils.toInputStream(webPage.getPageXml(), "UTF-8")) {
-      document = builder.parse(is);
-    }
-    NodeList pageTags = document.getElementsByTagName("page");
-    if (pageTags == null) {
-      pageTags = document.getElementsByTagName("service");
-    }
-    if (pageTags.getLength() > 0) {
-      Element pageTag = (Element) pageTags.item(0);
-      Page page = loadPage(document, pageTag);
-      page.setName(pageName);
-      if (StringUtils.isNotBlank(webPage.getTitle())) {
-        page.setTitle(webPage.getTitle());
-      }
-      if (StringUtils.isNotBlank(webPage.getKeywords())) {
-        page.setKeywords(webPage.getKeywords());
-      }
-      if (StringUtils.isNotBlank(webPage.getDescription())) {
-        page.setDescription(webPage.getDescription());
-      }
+    Page page = XMLPageFactory.createPage(pageName, webPage, widgetLibrary);
+    if (page != null) {
       pages.put(pageName, page);
-      LOG.debug("Created page: " + page.getName());
-      return page;
     }
-    return null;
+    return page;
   }
 
   private void loadAllPages(Document document) {
     NodeList pageTags = document.getElementsByTagName("page");
-    if (pageTags == null || pageTags.getLength() == 0) {
-      pageTags = document.getElementsByTagName("service");
-    }
+    LOG.info("Found page tags: " + pageTags.getLength());
     for (int i = 0; i < pageTags.getLength(); i++) {
       Element pageTag = (Element) pageTags.item(i);
-      Page p = loadPage(document, pageTag);
+      Page p = XMLPageFactory.parsePageDocument(document, pageTag, widgetLibrary);
       pages.put(p.getName(), p);
       LOG.debug("Found page: " + p.getName());
     }
   }
 
-  private Page loadPage(Document document, Element e) {
-    String aName = e.getAttribute("name");
-    if (e.hasAttribute("endpoint")) {
-      aName = e.getAttribute("endpoint");
-    }
-    if (aName.contains("{")) {
-      aName = aName.substring(0, aName.indexOf("{"));
-    }
-    String collectionUniqueId = e.getAttribute("collectionUniqueId");
-    String itemUniqueId = e.getAttribute("itemUniqueId");
-    Page page = new Page(aName, collectionUniqueId, itemUniqueId);
-    if (e.hasAttribute("title")) {
-      page.setTitle(e.getAttribute("title"));
-    }
-    if (e.hasAttribute("keywords")) {
-      page.setKeywords(e.getAttribute("keywords"));
-    }
-    if (e.hasAttribute("description")) {
-      page.setDescription(e.getAttribute("description"));
-    }
-    if (e.hasAttribute("role")) {
-      String aRoles = e.getAttribute("role");
-      if (aRoles.length() > 0) {
-        List<String> roles = Stream.of(aRoles.split(","))
-            .map(String::trim)
-            .collect(toList());
-        page.setRoles(roles);
-      }
-    }
-    if (e.hasAttribute("group")) {
-      String aGroups = e.getAttribute("group");
-      if (aGroups.length() > 0) {
-        List<String> groups = Stream.of(aGroups.split(","))
-            .map(String::trim)
-            .collect(toList());
-        page.setGroups(groups);
-      }
-    }
-    if (e.hasAttribute("class")) {
-      if (e.hasAttribute("endpoint")) {
-        /* @deprecated */
-        // An inline widget/service (to be moved to own loader)
-        String className = e.getAttribute("class");
-        Section section = new Section();
-        Column indirectColumn = new Column();
-        section.getColumns().add(indirectColumn);
-        page.getSections().add(section);
-        Widget widget = new Widget(aName);
-        widget.setWidgetClassName(className);
-        indirectColumn.getWidgets().add(widget);
-        widgetLibrary.put(aName, className);
-      } else {
-        // Applies the html class to the page
-        page.setCssClass(e.getAttribute("class"));
-      }
-    }
-    XMLContainerCommands.appendSections(document, page.getSections(), e.getChildNodes(), widgetLibrary);
-    return page;
-  }
 }

@@ -78,7 +78,7 @@ class WebPageDesignerWidgetTest extends WidgetBase {
           // Verify the output
           Assertions.assertEquals(WebPageDesignerWidget.TEMPLATES_JSP, widgetContext.getJsp());
 
-          List<WebPageTemplate> webPageTemplateListRequest = (List) request.getAttribute("webPageTemplateList");
+          List<WebPageTemplate> webPageTemplateListRequest = (List) pageRequest.getAttribute("webPageTemplateList");
           Assertions.assertEquals(2, webPageTemplateListRequest.size());
           Assertions.assertEquals("Template B", webPageTemplateListRequest.get(0).getName());
           Assertions.assertEquals("Template A", webPageTemplateListRequest.get(1).getName());
@@ -102,7 +102,7 @@ class WebPageDesignerWidgetTest extends WidgetBase {
     WebPageDesignerWidget widget = new WebPageDesignerWidget();
     widget.execute(widgetContext);
     Assertions.assertEquals(WebPageDesignerWidget.ACE_XML_EDITOR_JSP, widgetContext.getJsp());
-    Assertions.assertNotNull(request.getAttribute("webPage"));
+    Assertions.assertNotNull(pageRequest.getAttribute("webPage"));
   }
 
   @Test

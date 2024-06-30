@@ -16,6 +16,8 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
+import static org.mockito.AdditionalAnswers.returnsFirstArg;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
 
@@ -26,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
 import com.simisinc.platform.WidgetBase;
+import com.simisinc.platform.application.cms.ContentValuesCommand;
 import com.simisinc.platform.application.cms.LoadContentCommand;
 import com.simisinc.platform.domain.model.cms.Content;
 
@@ -49,12 +52,15 @@ class ContentCardsWidgetTest extends WidgetBase {
     try (MockedStatic<LoadContentCommand> staticLoadContentCommand = mockStatic(LoadContentCommand.class)) {
       staticLoadContentCommand.when(() -> LoadContentCommand.loadContentByUniqueId(eq("hello-content")))
           .thenReturn(content);
-      ContentCardsWidget contentWidget = new ContentCardsWidget();
-      widgetContext = contentWidget.execute(widgetContext);
+      try (MockedStatic<ContentValuesCommand> staticContentValuesCommand = mockStatic(ContentValuesCommand.class)) {
+        staticContentValuesCommand.when(() -> ContentValuesCommand.replaceDynamicValues(anyString())).then(returnsFirstArg());
+        ContentCardsWidget contentWidget = new ContentCardsWidget();
+        widgetContext = contentWidget.execute(widgetContext);
+      }
     }
     Assertions.assertNotNull(widgetContext);
 
-    List<String> cardList = (List) request.getAttribute("cardList");
+    List<String> cardList = (List) pageRequest.getAttribute("cardList");
     Assertions.assertNotNull(cardList);
     Assertions.assertEquals(2, cardList.size());
 

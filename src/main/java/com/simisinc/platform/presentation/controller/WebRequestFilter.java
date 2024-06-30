@@ -81,6 +81,7 @@ public class WebRequestFilter implements Filter {
   private boolean requireSSL = false;
   private Map<String, String> redirectMap = null;
 
+  @Override
   public void init(FilterConfig config) throws ServletException {
     LOG.info("WebRequestFilter starting up...");
     String startupSuccessful = (String) config.getServletContext().getAttribute(ContextConstants.STARTUP_SUCCESSFUL);
@@ -100,9 +101,12 @@ public class WebRequestFilter implements Filter {
     LoadBlockedIPListCommand.retrieveCachedIpAddressList();
   }
 
+  @Override
   public void destroy() {
+    
   }
 
+  @Override
   public void doFilter(ServletRequest request, ServletResponse servletResponse, FilterChain chain)
       throws ServletException, IOException {
 
@@ -159,7 +163,7 @@ public class WebRequestFilter implements Filter {
     // Handle logouts immediately
     if (resource.equals("/logout")) {
       // Log out of the system
-      LogoutCommand.logout((HttpServletRequest) request, ((HttpServletResponse) servletResponse));
+      LogoutCommand.logout(httpServletRequest.getSession(), ((HttpServletResponse) servletResponse), httpServletRequest.isSecure());
       // Redirect to OAuth Provider via the home page
       if (OAuthConfigurationCommand.isEnabled()) {
         do401(servletResponse);
@@ -451,7 +455,7 @@ public class WebRequestFilter implements Filter {
       User user = AuthenticateLoginCommand.getAuthenticatedUser(cookieUserToken);
       if (user == null) {
         // Logout
-        LogoutCommand.logout((HttpServletRequest) request, ((HttpServletResponse) servletResponse));
+        LogoutCommand.logout(httpServletRequest.getSession(), (HttpServletResponse) servletResponse, httpServletRequest.isSecure());
         // Return to login
         do302(servletResponse, "/login");
         return;

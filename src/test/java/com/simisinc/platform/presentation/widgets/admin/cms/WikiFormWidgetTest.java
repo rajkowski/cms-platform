@@ -52,7 +52,7 @@ class WikiFormWidgetTest extends WidgetBase {
     }
 
     // Verify
-    Wiki wikiRequest = (Wiki) request.getAttribute("wiki");
+    Wiki wikiRequest = (Wiki) pageRequest.getAttribute("wiki");
     Assertions.assertEquals(wiki.getId(), wikiRequest.getId());
     Assertions.assertEquals(WikiFormWidget.JSP, widgetContext.getJsp());
   }

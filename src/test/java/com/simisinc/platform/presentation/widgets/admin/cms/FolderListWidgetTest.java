@@ -59,8 +59,8 @@ class FolderListWidgetTest extends WidgetBase {
 
     // Verify
     Assertions.assertEquals(FolderListWidget.JSP, widgetContext.getJsp());
-    Assertions.assertEquals("Folders", request.getAttribute("title"));
-    List<Folder> folderListRequest = (List) request.getAttribute("folderList");
+    Assertions.assertEquals("Folders", pageRequest.getAttribute("title"));
+    List<Folder> folderListRequest = (List) pageRequest.getAttribute("folderList");
     Assertions.assertEquals(folder.getId(), folderListRequest.get(0).getId());
   }
 }

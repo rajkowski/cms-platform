@@ -16,8 +16,52 @@
 
 package com.simisinc.platform.presentation.controller;
 
+import static com.simisinc.platform.presentation.controller.RequestConstants.CONTEXT_PATH;
+import static com.simisinc.platform.presentation.controller.RequestConstants.FOOTER_RENDER_INFO;
+import static com.simisinc.platform.presentation.controller.RequestConstants.FOOTER_STICKY_LINKS;
+import static com.simisinc.platform.presentation.controller.RequestConstants.HEADER_RENDER_INFO;
+import static com.simisinc.platform.presentation.controller.RequestConstants.LOG_USER;
+import static com.simisinc.platform.presentation.controller.RequestConstants.MASTER_MENU_TAB_LIST;
+import static com.simisinc.platform.presentation.controller.RequestConstants.MASTER_WEB_PAGE;
+import static com.simisinc.platform.presentation.controller.RequestConstants.PAGE_BODY;
+import static com.simisinc.platform.presentation.controller.RequestConstants.PAGE_COLLECTION;
+import static com.simisinc.platform.presentation.controller.RequestConstants.PAGE_COLLECTION_CATEGORY;
+import static com.simisinc.platform.presentation.controller.RequestConstants.PAGE_RENDER_INFO;
+import static com.simisinc.platform.presentation.controller.RequestConstants.RENDER_TIME;
+import static com.simisinc.platform.presentation.controller.RequestConstants.SHOW_MAIN_MENU;
+import static javax.servlet.http.HttpServletResponse.SC_MOVED_PERMANENTLY;
+
+import java.math.BigDecimal;
+import java.net.URL;
+import java.sql.Timestamp;
+import java.time.ZoneId;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.TimeZone;
+
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.MultipartConfig;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.beanutils.ConvertUtils;
+import org.apache.commons.beanutils.converters.BigDecimalConverter;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
-import com.simisinc.platform.application.cms.*;
+import com.simisinc.platform.application.cms.LoadMenuTabsCommand;
+import com.simisinc.platform.application.cms.LoadStylesheetCommand;
+import com.simisinc.platform.application.cms.LoadTableOfContentsCommand;
+import com.simisinc.platform.application.cms.LoadWebPageCommand;
+import com.simisinc.platform.application.cms.SaveWebPageHitCommand;
+import com.simisinc.platform.application.cms.WebContainerLayoutCommand;
+import com.simisinc.platform.application.cms.WebPageXmlLayoutCommand;
 import com.simisinc.platform.application.items.LoadCategoryCommand;
 import com.simisinc.platform.application.items.LoadCollectionCommand;
 import com.simisinc.platform.application.items.LoadItemCommand;
@@ -29,25 +73,6 @@ import com.simisinc.platform.domain.model.items.Category;
 import com.simisinc.platform.domain.model.items.Collection;
 import com.simisinc.platform.domain.model.items.Item;
 import com.simisinc.platform.presentation.widgets.cms.WebContainerContext;
-import org.apache.commons.beanutils.ConvertUtils;
-import org.apache.commons.beanutils.converters.BigDecimalConverter;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.annotation.MultipartConfig;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.math.BigDecimal;
-import java.sql.Timestamp;
-import java.time.ZoneId;
-import java.util.*;
-
-import static com.simisinc.platform.presentation.controller.RequestConstants.*;
-import static javax.servlet.http.HttpServletResponse.SC_MOVED_PERMANENTLY;
 
 /**
  * Handles all web browser page requests
@@ -56,8 +81,8 @@ import static javax.servlet.http.HttpServletResponse.SC_MOVED_PERMANENTLY;
  * @created 4/6/18 9:22 AM
  */
 @MultipartConfig(fileSizeThreshold = 1024 * 1024 * 2, // 2MB
-    maxFileSize = 1024 * 1024 * 100,      // 100MB
-    maxRequestSize = 1024 * 1024 * 100)   // 100MB
+    maxFileSize = 1024 * 1024 * 100, // 100MB
+    maxRequestSize = 1024 * 1024 * 100) // 100MB
 public class PageServlet extends HttpServlet {
 
   private static Log LOG = LogFactory.getLog(PageServlet.class);
@@ -78,11 +103,25 @@ public class PageServlet extends HttpServlet {
 
     // Load the web page designs
     LOG.info("Loading the web page designs...");
-    Map<String, String> widgetLibrary = WebPageXmlLayoutCommand.init(config.getServletContext());
+    Map<String, String> widgetLibrary = null;
+    try {
+      widgetLibrary = WebPageXmlLayoutCommand.init(config.getServletContext());
+    } catch (Exception e) {
+      throw new ServletException(e);
+    }
 
     // Load the web containers
     LOG.info("Populating the header and footer containers...");
-    WebContainerLayoutCommand.populateCache(config.getServletContext(), widgetLibrary);
+    try {
+      WebContainerLayoutCommand.retrieveHeader(widgetLibrary, "header.default",
+          config.getServletContext().getResource("/WEB-INF/web-layouts/header/header-layout.xml"));
+      WebContainerLayoutCommand.retrieveHeader(widgetLibrary, "header.plain",
+          config.getServletContext().getResource("/WEB-INF/web-layouts/header/header-layout.xml"));
+      WebContainerLayoutCommand.retrieveFooter(widgetLibrary, "footer.default",
+          config.getServletContext().getResource("/WEB-INF/web-layouts/footer/footer-layout.xml"));
+    } catch (Exception e) {
+      throw new ServletException(e);
+    }
 
     // Instantiate the widgets
     LOG.info("Instantiating the widgets...");
@@ -137,7 +176,7 @@ public class PageServlet extends HttpServlet {
 
     if (LOG.isDebugEnabled()) {
       // Reload the configuration for any developer changes
-      WebPageXmlLayoutCommand.reloadPages(request.getServletContext());
+      WebPageXmlLayoutCommand.reloadPages();
     }
 
     long startRequestTime = System.currentTimeMillis();
@@ -155,19 +194,14 @@ public class PageServlet extends HttpServlet {
     response.setHeader("X-XSS-Protection", "1; mode=block");
 
     try {
-      // Determine the resource
-      String scheme = request.getScheme();
-      String serverName = request.getServerName();
-      int port = request.getServerPort();
-      String contextPath = request.getServletContext().getContextPath();
-      String requestURI = request.getRequestURI();
-      String pagePath = requestURI.substring(contextPath.length());
-      LOG.debug("Using resource: " + pagePath);
+      // Determine the resources
+      PageRequest pageRequest = new PageRequest(request);
 
       // Use the session data (created in WebRequestFilter)
-      ControllerSession controllerSession = (ControllerSession) request.getSession().getAttribute(SessionConstants.CONTROLLER);
+      ControllerSession controllerSession = (ControllerSession) request.getSession()
+          .getAttribute(SessionConstants.CONTROLLER);
 
-      // Confirm the servlet filter setup a user session
+      // Confirm that the servlet filter has setup a user session
       UserSession userSession = (UserSession) request.getSession().getAttribute(SessionConstants.USER);
       if (userSession == null) {
         LOG.debug("A user session is required, and it's set by the servlet filter");
@@ -175,27 +209,20 @@ public class PageServlet extends HttpServlet {
         return;
       }
 
-      if (!pagePath.startsWith("/assets")) {
+      // Update the page cache headers
+      if (!pageRequest.getPagePath().startsWith("/assets")) {
         response.setHeader("Pragma", "no-cache");
         response.setHeader("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate");
         response.setHeader("Expires", "-1");
       }
 
-      // Determine if this is a JSON service (shares similarities as a page)
-      /*
-      if (serviceInstances.containsKey(pagePath)) {
-        Object classRef = serviceInstances.get(pagePath);
-        WidgetContext widgetContext = createWidgetContext();
-      }
-      */
-
       // Always access the webPage record so it can be used downstream
-      WebPage webPage = LoadWebPageCommand.loadByLink(pagePath);
+      WebPage webPage = LoadWebPageCommand.loadByLink(pageRequest.getPagePath());
       if (webPage != null) {
         // Determine if this is a draft page
         if (webPage.getDraft()) {
           if (!userSession.hasRole("admin") && !userSession.hasRole("content-manager")) {
-            LOG.error("DRAFT FOUND, no access: " + pagePath + " " + request.getRemoteAddr());
+            LOG.error("DRAFT FOUND, no access: " + pageRequest.getPagePath() + " " + pageRequest.getRemoteAddr());
             controllerSession.clearAllWidgetData();
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
             return;
@@ -206,10 +233,7 @@ public class PageServlet extends HttpServlet {
         if (StringUtils.isNotBlank(redirectLocation)) {
           // Handle a redirect immediately
           if (!redirectLocation.startsWith("http:") && !redirectLocation.startsWith("https:")) {
-            redirectLocation =
-                scheme + "://" +
-                    serverName +
-                    (port != 80 ? ":" + port : "") +
+            redirectLocation = pageRequest.getBaseUrl() +
                     (redirectLocation.startsWith("/") ? "" : "/") +
                     redirectLocation;
           }
@@ -217,11 +241,12 @@ public class PageServlet extends HttpServlet {
           response.setStatus(SC_MOVED_PERMANENTLY);
           return;
         }
+        // @todo Not needed once pageRenderInfo has calculated title, keywords, description
         request.setAttribute(MASTER_WEB_PAGE, webPage);
       }
 
       // Determine the Page XML Layout for this request
-      Page pageRef = WebPageXmlLayoutCommand.retrievePageForRequest(webPage, pagePath);
+      Page pageRef = WebPageXmlLayoutCommand.retrievePageForRequest(webPage, pageRequest.getPagePath());
       Map<String, String> widgetLibrary = WebPageXmlLayoutCommand.getWidgetLibrary();
 
       // Load the properties
@@ -236,11 +261,12 @@ public class PageServlet extends HttpServlet {
       if (pageRef != null) {
         // Determine if this is a monitoring app
         if (request.getHeader("X-Monitor") == null) {
-          SaveWebPageHitCommand.saveHit(request.getRemoteAddr(), request.getMethod(), pagePath, webPage, userSession);
+          SaveWebPageHitCommand.saveHit(pageRequest.getRemoteAddr(), request.getMethod(), pageRequest.getPagePath(),
+              webPage, userSession);
         }
       }
 
-      // Allow content admins to see a page
+      // When the Page XML doesn't exist, allow content admins to see a page
       if (pageRef == null &&
           (userSession.hasRole("admin") ||
               userSession.hasRole("content-manager"))) {
@@ -251,22 +277,22 @@ public class PageServlet extends HttpServlet {
       if (!userSession.hasRole("admin") &&
           !userSession.hasRole("content-manager") &&
           "false".equals(sitePropertyMap.getOrDefault("site.online", "false"))) {
-        if ("/".equals(pagePath)) {
+        if ("/".equals(pageRequest.getPagePath())) {
           pageRef = WebPageXmlLayoutCommand.retrievePage("_new_install_");
-//        } else if (!"/login".equals(pagePath)) {
+          //        } else if (!"/login".equals(pagePath)) {
           // @todo implement and test this...
           // Redirect to /, except for login page
         }
       }
 
       // Looks like a new install (do after admin above)
-      if (pageRef == null && "/".equals(pagePath)) {
+      if (pageRef == null && "/".equals(pageRequest.getPagePath())) {
         pageRef = WebPageXmlLayoutCommand.retrievePage("_new_install_");
       }
 
       // Still no page? show an error
       if (pageRef == null) {
-        LOG.error("PAGE NOT FOUND: " + pagePath + " " + request.getRemoteAddr());
+        LOG.error("PAGE NOT FOUND: " + pageRequest.getPagePath() + " " + pageRequest.getRemoteAddr());
         controllerSession.clearAllWidgetData();
         response.sendError(HttpServletResponse.SC_NOT_FOUND);
         return;
@@ -274,16 +300,16 @@ public class PageServlet extends HttpServlet {
 
       // Verify the user has access to the page
       if (!WebComponentCommand.allowsUser(pageRef, userSession)) {
-        LOG.warn("PAGE NOT ALLOWED: " + pagePath + " " +
+        LOG.warn("PAGE NOT ALLOWED: " + pageRequest.getPagePath() + " " +
             (!pageRef.getRoles().isEmpty() ? "[roles=" + pageRef.getRoles().toString() + "]" + " " : "") +
             (!pageRef.getGroups().isEmpty() ? "[groups=" + pageRef.getGroups().toString() + "]" + " " : "") +
-            request.getRemoteAddr());
+            pageRequest.getRemoteAddr());
         controllerSession.clearAllWidgetData();
         response.sendError(HttpServletResponse.SC_NOT_FOUND);
         return;
       }
 
-      // Determine the core data to be used by local and remote widgets...
+      // Determine the system and user data to be used by local and remote widgets...
       Map<String, String> coreData = new HashMap<>();
       coreData.put("userId", String.valueOf(userSession.getUserId()));
 
@@ -297,7 +323,8 @@ public class PageServlet extends HttpServlet {
             String collectionIdValue = request.getParameter("collectionId");
             if (StringUtils.isNumeric(collectionIdValue)) {
               long collectionId = Long.parseLong(collectionIdValue);
-              thisCollection = LoadCollectionCommand.loadCollectionByIdForAuthorizedUser(collectionId, userSession.getUserId());
+              thisCollection = LoadCollectionCommand.loadCollectionByIdForAuthorizedUser(collectionId,
+                  userSession.getUserId());
               if (thisCollection != null) {
                 collectionUniqueId = thisCollection.getUniqueId();
               }
@@ -306,14 +333,16 @@ public class PageServlet extends HttpServlet {
             collectionUniqueId = request.getParameter("collectionUniqueId");
           }
         } else if (pageRef.getCollectionUniqueId().startsWith("/")) {
-          collectionUniqueId = requestURI.substring(pageRef.getCollectionUniqueId().indexOf("*"));
+          collectionUniqueId = pageRequest.getUri().substring(pageRef.getCollectionUniqueId().indexOf("*"));
         }
         if (!StringUtils.isBlank(collectionUniqueId)) {
           if (thisCollection == null) {
-            thisCollection = LoadCollectionCommand.loadCollectionByUniqueIdForAuthorizedUser(collectionUniqueId, userSession.getUserId());
+            thisCollection = LoadCollectionCommand.loadCollectionByUniqueIdForAuthorizedUser(collectionUniqueId,
+                userSession.getUserId());
           }
           if (thisCollection == null) {
-            LOG.error("COLLECTION NOT ALLOWED: " + pagePath + " [roles=" + pageRef.getRoles().toString() + "]");
+            LOG.error("COLLECTION NOT ALLOWED: " + pageRequest.getPagePath() + " [roles="
+                + pageRef.getRoles().toString() + "]");
             controllerSession.clearAllWidgetData();
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
             return;
@@ -328,7 +357,7 @@ public class PageServlet extends HttpServlet {
       if (pageRef.checkForItemUniqueId()) {
         String subTab = "";
         // Extract the item unique id
-        String itemUniqueId = requestURI.substring(pageRef.getItemUniqueId().indexOf("*"));
+        String itemUniqueId = pageRequest.getUri().substring(pageRef.getItemUniqueId().indexOf("*"));
         if (itemUniqueId.contains("/")) {
           subTab = "/_" + itemUniqueId.substring(itemUniqueId.indexOf("/") + 1) + "_";
           itemUniqueId = itemUniqueId.substring(0, itemUniqueId.indexOf("/"));
@@ -336,7 +365,8 @@ public class PageServlet extends HttpServlet {
         // User must be authorized here...
         thisItem = LoadItemCommand.loadItemByUniqueIdForAuthorizedUser(itemUniqueId, userSession.getUserId());
         if (thisItem == null) {
-          LOG.error("ITEM NOT ALLOWED: " + pagePath + " [roles=" + pageRef.getRoles().toString() + "]");
+          LOG.error(
+              "ITEM NOT ALLOWED: " + pageRequest.getPagePath() + " [roles=" + pageRef.getRoles().toString() + "]");
           controllerSession.clearAllWidgetData();
           response.sendError(HttpServletResponse.SC_NOT_FOUND);
           return;
@@ -350,8 +380,8 @@ public class PageServlet extends HttpServlet {
           LOG.debug("Added item's collection to coreData: " + thisCollection.getUniqueId());
           // Check for a collection customized page
           // @note plan for sub-tabs too
-          int slashIndex = pagePath.indexOf("/", 1);
-          String itemMethod = pagePath.substring(1, slashIndex);
+          int slashIndex = pageRequest.getPagePath().indexOf("/", 1);
+          String itemMethod = pageRequest.getPagePath().substring(1, slashIndex);
           String itemCollectionKey = "_" + itemMethod + "_" + thisCollection.getUniqueId() + "_" + subTab;
           LOG.debug("itemCollectionKey=" + itemCollectionKey);
           if (WebPageXmlLayoutCommand.containsPage(itemCollectionKey)) {
@@ -367,10 +397,10 @@ public class PageServlet extends HttpServlet {
       }
 
       // Setup the rendering info
-      PageRenderInfo pageRenderInfo = new PageRenderInfo(pageRef, pagePath);
+      PageRenderInfo pageRenderInfo = new PageRenderInfo(pageRef, pageRequest.getPagePath());
       if (pageRenderInfo.getName().startsWith("_")) {
         // Show the actual name from the request, not the template name
-        pageRenderInfo.setName(pagePath);
+        pageRenderInfo.setName(pageRequest.getPagePath());
       }
       if (thisCollection != null && thisItem != null) {
         pageRenderInfo.setTitle(thisItem.getName() + " | " + thisCollection.getName());
@@ -382,8 +412,20 @@ public class PageServlet extends HttpServlet {
           pageRenderInfo.setTitle(thisItem.getName());
         }
       }
-      if (webPage != null && StringUtils.isNotBlank(webPage.getImageUrl())) {
-        pageRenderInfo.setImageUrl(webPage.getImageUrl());
+      // HTML metadata (which can also be updated later via widgets)
+      if (webPage != null) {
+        if (StringUtils.isBlank(pageRenderInfo.getTitle())) {
+          pageRenderInfo.setTitle(webPage.getTitle());
+        }
+        if (StringUtils.isBlank(pageRenderInfo.getKeywords())) {
+          pageRenderInfo.setKeywords(webPage.getKeywords());
+        }
+        if (StringUtils.isBlank(pageRenderInfo.getDescription())) {
+          pageRenderInfo.setDescription(webPage.getDescription());
+        }
+        if (StringUtils.isNotBlank(webPage.getImageUrl())) {
+          pageRenderInfo.setImageUrl(webPage.getImageUrl());
+        }
       }
 
       // Finally... we have a page ready to be processed...
@@ -392,25 +434,30 @@ public class PageServlet extends HttpServlet {
       }
 
       // Create a context for processing the widgets
-      WebContainerContext webContainerContext = new WebContainerContext(request, response, controllerSession, widgetInstances, webPage, pageRef);
+      URL applicationUrl = request.getServletContext().getResource("/");
+      WebContainerContext webContainerContext = new WebContainerContext(applicationUrl, pageRequest, request, response,
+          controllerSession, widgetInstances, webPage, pageRef);
 
-      // Validate post/delete/action calls
+      // Validate post/delete/action calls (a specific widget is targeted)
       if (webContainerContext.isTargeted()) {
 
         // Verify a target widget exists
         String targetWidget = request.getParameter("widget");
         if (StringUtils.isEmpty(targetWidget)) {
-          LOG.error("DEVELOPER: TARGET WIDGET PARAMETER WAS NOT FOUND AND IS REQUIRED " + pagePath + " " + request.getRemoteAddr());
+          LOG.error(
+              "DEVELOPER: TARGET WIDGET PARAMETER WAS NOT FOUND AND IS REQUIRED " + pageRequest.getPagePath() + " "
+                  + pageRequest.getRemoteAddr());
           controllerSession.clearAllWidgetData();
           response.sendError(HttpServletResponse.SC_NOT_FOUND);
           return;
         }
         pageRenderInfo.setTargetWidget(targetWidget);
 
-        // Verify a token exists
+        // Verify a mandatory request token exists
         String formToken = request.getParameter("token");
         if (StringUtils.isEmpty(formToken)) {
-          LOG.error("DEVELOPER: A FORM TOKEN IS REQUIRED " + pagePath + " " + request.getRemoteAddr());
+          LOG.error(
+              "DEVELOPER: A FORM TOKEN IS REQUIRED " + pageRequest.getPagePath() + " " + pageRequest.getRemoteAddr());
           controllerSession.clearAllWidgetData();
           response.sendError(HttpServletResponse.SC_NOT_FOUND);
           return;
@@ -418,25 +465,32 @@ public class PageServlet extends HttpServlet {
       }
 
       // Render the page first
-      if (WebContainerCommand.processWidgets(webContainerContext, pageRef.getSections(), pageRenderInfo, coreData, contextPath, pagePath, userSession, themePropertyMap)) {
+      PageResponse pageResponse = WebContainerCommand.processWidgets(webContainerContext, pageRef.getSections(),
+          pageRenderInfo, coreData, userSession, themePropertyMap, request);
+      if (pageResponse.isHandled()) {
         // The widget processor handled the response, immediately return
         return;
       }
 
       // Render the header
-      Header requestHeader = null;
+      Header header = null;
       if (pageRenderInfo.getName().startsWith("/checkout")) {
-        requestHeader = WebContainerLayoutCommand.retrievePlainHeader(request.getServletContext(), widgetLibrary);
+        header = WebContainerLayoutCommand.retrieveHeader(widgetLibrary, "header.plain",
+            request.getServletContext().getResource("/WEB-INF/web-layouts/header/header-layout.xml"));
       } else {
-        requestHeader = WebContainerLayoutCommand.retrieveHeader(request.getServletContext(), widgetLibrary);
+        header = WebContainerLayoutCommand.retrieveHeader(widgetLibrary, "header.default",
+            request.getServletContext().getResource("/WEB-INF/web-layouts/header/header-layout.xml"));
       }
-      HeaderRenderInfo headerRenderInfo = new HeaderRenderInfo(requestHeader, pagePath);
-      WebContainerCommand.processWidgets(webContainerContext, requestHeader.getSections(), headerRenderInfo, coreData, contextPath, pagePath, userSession, themePropertyMap);
+      HeaderRenderInfo headerRenderInfo = new HeaderRenderInfo(header, pageRequest.getPagePath());
+      WebContainerCommand.processWidgets(webContainerContext, header.getSections(), headerRenderInfo, coreData,
+          userSession, themePropertyMap, request);
 
       // Render the footer
-      Footer footer = WebContainerLayoutCommand.retrieveFooter(request.getServletContext(), widgetLibrary);
-      FooterRenderInfo footerRenderInfo = new FooterRenderInfo(footer, pagePath);
-      WebContainerCommand.processWidgets(webContainerContext, footer.getSections(), footerRenderInfo, coreData, contextPath, pagePath, userSession, themePropertyMap);
+      Footer footer = WebContainerLayoutCommand.retrieveFooter(widgetLibrary, "footer.default",
+          request.getServletContext().getResource("/WEB-INF/web-layouts/footer/footer-layout.xml"));
+      FooterRenderInfo footerRenderInfo = new FooterRenderInfo(footer, pageRequest.getPagePath());
+      WebContainerCommand.processWidgets(webContainerContext, footer.getSections(), footerRenderInfo, coreData,
+          userSession, themePropertyMap, request);
 
       // Finalize the controller session (zero out the widget's session data)
       controllerSession.clearAllWidgetData();
@@ -481,7 +535,8 @@ public class PageServlet extends HttpServlet {
       request.setAttribute(RENDER_TIME, totalTime);
 
       // Start rendering the page
-      request.setAttribute(CONTEXT_PATH, contextPath);
+      LOG.debug("Page title: " + pageRenderInfo.getTitle());
+      request.setAttribute(CONTEXT_PATH, pageRequest.getContextPath());
       request.setAttribute(PAGE_RENDER_INFO, pageRenderInfo);
       if (thisCollection != null) {
         request.setAttribute(PAGE_COLLECTION, thisCollection);
@@ -510,7 +565,7 @@ public class PageServlet extends HttpServlet {
         request.getServletContext().getRequestDispatcher("/WEB-INF/jsp/embedded.jsp").forward(request, response);
       } else {
         if ("container".equals(request.getSession().getAttribute(SessionConstants.X_VIEW_MODE))) {
-          // For API content
+          // For embedded mobile and API content
           request.setAttribute(PAGE_BODY, "/WEB-INF/jsp/container-layout.jsp");
         } else {
           // For web content with a header and footer

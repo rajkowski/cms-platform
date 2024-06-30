@@ -67,11 +67,11 @@ class WikiListWidgetTest extends WidgetBase {
 
     // Verify
     Assertions.assertEquals(WikiListWidget.JSP, widgetContext.getJsp());
-    Assertions.assertEquals("Wikis", request.getAttribute("title"));
-    List<Wiki> wikiListRequest = (List) request.getAttribute("wikiList");
+    Assertions.assertEquals("Wikis", pageRequest.getAttribute("title"));
+    List<Wiki> wikiListRequest = (List) pageRequest.getAttribute("wikiList");
     Assertions.assertEquals(wiki.getId(), wikiListRequest.get(0).getId());
 
-    Map<Long, Long> wikiPageCount = (Map) request.getAttribute("wikiPageCount");
+    Map<Long, Long> wikiPageCount = (Map) pageRequest.getAttribute("wikiPageCount");
     Assertions.assertEquals(8L, wikiPageCount.get(wiki.getId()));
   }
 
