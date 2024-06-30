@@ -161,8 +161,15 @@ public class XMLPageLoader implements Serializable {
   }
 
   private void loadAllPages(Document document) {
+    // Check for pages and related json endpoints
     NodeList pageTags = document.getElementsByTagName("page");
-    LOG.info("Found page tags: " + pageTags.getLength());
+    if (pageTags == null || pageTags.getLength() == 0) {
+      pageTags = document.getElementsByTagName("service");
+      LOG.info("Found service tags: " + pageTags.getLength());
+    } else {
+      LOG.info("Found page tags: " + pageTags.getLength());
+    }
+    // From the XML, process into page objects
     for (int i = 0; i < pageTags.getLength(); i++) {
       Element pageTag = (Element) pageTags.item(i);
       Page p = XMLPageFactory.parsePageDocument(document, pageTag, widgetLibrary);

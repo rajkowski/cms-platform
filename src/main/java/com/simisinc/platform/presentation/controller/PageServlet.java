@@ -146,7 +146,7 @@ public class PageServlet extends HttpServlet {
         String serviceClass = xmlJsonServiceLoader.getServiceLibrary().get(endpoint);
         Object classRef = Class.forName(serviceClass).getDeclaredConstructor().newInstance();
         serviceInstances.put(endpoint, classRef);
-        LOG.info("Added service class: " + endpoint + " = " + serviceClass);
+        LOG.info("Added json endpoint class: " + endpoint + " = " + serviceClass);
       } catch (Exception e) {
         LOG.error("Class not found for '" + endpoint + "': " + e.getMessage());
       }
@@ -196,6 +196,7 @@ public class PageServlet extends HttpServlet {
     try {
       // Determine the resources
       PageRequest pageRequest = new PageRequest(request);
+      LOG.debug("Using resource: " + pageRequest.getPagePath());
 
       // Use the session data (created in WebRequestFilter)
       ControllerSession controllerSession = (ControllerSession) request.getSession()
@@ -234,8 +235,8 @@ public class PageServlet extends HttpServlet {
           // Handle a redirect immediately
           if (!redirectLocation.startsWith("http:") && !redirectLocation.startsWith("https:")) {
             redirectLocation = pageRequest.getBaseUrl() +
-                    (redirectLocation.startsWith("/") ? "" : "/") +
-                    redirectLocation;
+                (redirectLocation.startsWith("/") ? "" : "/") +
+                redirectLocation;
           }
           response.setHeader("Location", redirectLocation);
           response.setStatus(SC_MOVED_PERMANENTLY);
@@ -261,8 +262,7 @@ public class PageServlet extends HttpServlet {
       if (pageRef != null) {
         // Determine if this is a monitoring app
         if (request.getHeader("X-Monitor") == null) {
-          SaveWebPageHitCommand.saveHit(pageRequest.getRemoteAddr(), request.getMethod(), pageRequest.getPagePath(),
-              webPage, userSession);
+          SaveWebPageHitCommand.saveHit(pageRequest, webPage, userSession);
         }
       }
 
