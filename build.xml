@@ -437,6 +437,7 @@
   </target>
 
   <target name="mvn-dependencies">
+    <delete dir="${lib.dir}" />
     <exec executable="mvn">
       <arg value="dependency:copy-dependencies" />
       <arg value="-DincludeScope=compile" />
