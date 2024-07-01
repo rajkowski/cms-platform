@@ -88,6 +88,10 @@ public class XMLPageFactory implements Serializable {
 
   public static Page parsePageDocument(Document document, Element e, Map<String, String> widgetLibrary) {
     String aName = e.getAttribute("name");
+    if (e.hasAttribute("endpoint")) {
+      // Handle as a JSON endpoint
+      aName = e.getAttribute("endpoint");
+    }
     if (aName.contains("{")) {
       aName = aName.substring(0, aName.indexOf("{"));
     }
@@ -122,8 +126,23 @@ public class XMLPageFactory implements Serializable {
       }
     }
     if (e.hasAttribute("class")) {
-      // Applies the html class to the page
-      page.setCssClass(e.getAttribute("class"));
+      if (e.hasAttribute("endpoint")) {
+        // Handle as a JSON endpoint
+        /* @deprecated */
+        // An inline page widget/service (to be moved to own loader)
+        String className = e.getAttribute("class");
+        Section section = new Section();
+        Column indirectColumn = new Column();
+        section.getColumns().add(indirectColumn);
+        page.getSections().add(section);
+        Widget widget = new Widget(aName);
+        widget.setWidgetClassName(className);
+        indirectColumn.getWidgets().add(widget);
+        widgetLibrary.put(aName, className);
+      } else {
+        // Applies the html class to the page
+        page.setCssClass(e.getAttribute("class"));
+      }
     }
     XMLContainerCommands.appendSections(document, page.getSections(), e.getChildNodes(), widgetLibrary);
     return page;
