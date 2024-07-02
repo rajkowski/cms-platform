@@ -185,8 +185,6 @@ public class PageTemplateEngine {
       UserSession userSession = new UserSession();
       userSession.login(user);
 
-      // PageRequest pageRequest = new PageRequest(pageRenderInfo);
-
       // Generate a static web page
       Page pageRef = WebPageXmlLayoutCommand.retrievePageForRequest(webPage, webPage.getLink());
       if (pageRef == null) {
@@ -295,9 +293,9 @@ public class PageTemplateEngine {
       // Load the properties
       Map<String, String> systemPropertyMap = LoadSitePropertyCommand.loadAsMap("system");
       Map<String, String> sitePropertyMap = LoadSitePropertyCommand.loadAsMap("site");
-      // sitePropertyMap.put("site.login", "false");
-      // sitePropertyMap.put("site.cart", "false");
-      // sitePropertyMap.put("site.registrations", "false");
+      sitePropertyMap.put("site.login", "false");
+      sitePropertyMap.put("site.cart", "false");
+      sitePropertyMap.put("site.registrations", "false");
       Map<String, String> themePropertyMap = LoadSitePropertyCommand.loadAsMap("theme");
       Map<String, String> socialPropertyMap = LoadSitePropertyCommand.loadAsMap("social");
       Map<String, String> analyticsPropertyMap = LoadSitePropertyCommand.loadAsMap("analytics");

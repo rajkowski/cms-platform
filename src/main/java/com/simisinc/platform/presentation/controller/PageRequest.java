@@ -54,7 +54,6 @@ public class PageRequest implements Serializable {
   private Map<String, ArrayList<String>> headers = Collections.synchronizedMap(new CaseInsensitiveMap<String, ArrayList<String>>());
   private Map<String, String[]> parameterMap = null;
   private Map<String, Object> attributeMap = new ConcurrentHashMap<>();
-  // private HttpServletRequest request = null;
 
   public PageRequest(HttpServletRequest request) {
     this.method = request.getMethod();

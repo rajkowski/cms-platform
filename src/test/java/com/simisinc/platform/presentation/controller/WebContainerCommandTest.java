@@ -16,14 +16,13 @@
 
 package com.simisinc.platform.presentation.controller;
 
-import com.simisinc.platform.domain.model.User;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import javax.servlet.http.HttpServletRequest;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import com.simisinc.platform.domain.model.User;
 
 /**
  * @author matt rajkowski

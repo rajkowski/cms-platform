@@ -119,15 +119,12 @@ public class MakeStaticSiteCommand {
     LOG.info("Images: " + imageList.size());
     for (Image image : imageList) {
       // For example: assets/img/20200310012940-74/example-hero-fade.jpg
-      // @todo refactor for file.separator
       File sourceImage = new File(fileLibraryPath, image.getFileServerPath());
       if (!sourceImage.exists()) {
         LOG.warn("File not found: " + sourceImage);
         continue;
       }
-      // @todo refactor for file.separator
-      File targetImage = new File(sitePath,
-          "/assets/img/" + image.getWebPath() + "-" + image.getId() + "/" + image.getFilename());
+      File targetImage = new File(sitePath, "/assets/img/" + image.getWebPath() + "-" + image.getId() + "/" + image.getFilename());
       if (!targetImage.exists()) {
         FileUtils.copyFile(sourceImage, targetImage);
       }
@@ -292,10 +289,11 @@ public class MakeStaticSiteCommand {
     return true;
   }
 
+  /** Render the web page, save its HTML file and optional stylesheet file */
   public static int exportWebPage(WebPage webPage, File sitePath, File webAppPath) throws Exception {
 
     // Render the page and widgets
-    LOG.info("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+    LOG.debug("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
     String htmlPage = PageTemplateEngine.render(webPage, webAppPath);
     if (htmlPage == null) {
       LOG.warn("No content found for " + webPage.getLink());

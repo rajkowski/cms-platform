@@ -30,6 +30,7 @@ import com.simisinc.platform.domain.model.cms.WebPage;
  */
 public class WebPageMetadataCommand {
 
+  /** Describes the webpage */
   public static String getJSON(WebPage webPage, Stylesheet stylesheet, String webFileRoot, int contentLength) {
     // Output the web page meta-data json
     String webPageTitle = StringUtils.defaultString(webPage.getTitle());
