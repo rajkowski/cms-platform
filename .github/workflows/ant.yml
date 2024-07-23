@@ -23,6 +23,8 @@ jobs:
         java-version: 17
     - name: Compile the source
       run: ant -noinput -buildfile build.xml clean compile
+    - name: Check the code style
+      run: ant -noinput -buildfile build.xml checkstyle
     - name: Run unit tests
       run: ant -noinput -buildfile build.xml -lib lib/tests ci-test
     - name: Package the web application
