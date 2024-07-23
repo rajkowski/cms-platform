@@ -57,11 +57,13 @@ public class TemplateMessageResolver implements IMessageResolver {
   }
 
   /** {@inheritDoc} */
+  @Override
   public Integer getOrder() {
     return 0;
   }
 
   /** {@inheritDoc} */
+  @Override
   public String getName() {
     return "resolver";
   }
