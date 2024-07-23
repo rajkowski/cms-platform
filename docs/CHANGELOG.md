@@ -4,7 +4,11 @@ All notable changes to this project will be documented in this file. The format 
 
 ## Unreleased
 
-- A static site generator allows an online and offline page renderer to output complete standalone SEO-compliant websites powered by Nginx
+_No unreleased changes_
+
+## 2024-07-01
+
+- A static site generator allows an online and offline page renderer to output complete standalone SEO-compliant websites powered by Nginx. See `MakeStaticSiteApp` and set environment variables
 
 ## 2024-06-02
 
