@@ -30,11 +30,16 @@
     </classpath>
   </typedef>
 
-  <taskdef resource="com/puppycrawl/tools/checkstyle/ant/checkstyle-ant-task.properties"
-           classpath="${base.dir}/lib/style/checkstyle-10.12.5-all.jar"/>
+  <taskdef resource="com/puppycrawl/tools/checkstyle/ant/checkstyle-ant-task.properties">
+    <classpath>
+      <fileset dir="${base.dir}/lib/style" includes="*.jar"/>
+    </classpath>
+  </taskdef>
 
   <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml">
-    <classpath path="${base.dir}/lib/tests/jacocoant-0.8.12.jar"/>
+    <classpath>
+      <fileset dir="${base.dir}/lib/tests" includes="*.jar"/>
+    </classpath>
   </taskdef>
 
   <tstamp prefix="start">
