@@ -54,3 +54,6 @@ cspell.json
 
 # Draw.io
 *.bkp
+
+# Devcontainers
+.attach_pid*
