@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.RequestDispatcher;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -483,7 +484,8 @@ public class WebContainerCommand implements Serializable {
               // Render the widget's JSP
               if (httpRequest != null) {
                 LOG.debug("Including JSP: /WEB-INF/jsp" + widgetContext.getJsp());
-                if (httpRequest.getServletContext().getResource("/WEB-INF/jsp" + widgetContext.getJsp()) == null) {
+                RequestDispatcher requestDispatcher = httpRequest.getRequestDispatcher("/WEB-INF/jsp" + widgetContext.getJsp());
+                if (requestDispatcher == null) {
                   // Register an error and skip the output
                   LOG.error("JSP NOT FOUND: " + "/WEB-INF/jsp" + widgetContext.getJsp());
                   continue;
@@ -494,7 +496,7 @@ public class WebContainerCommand implements Serializable {
                 }
                 // Render the JSP content
                 WidgetResponseWrapper responseWrapper = new WidgetResponseWrapper(response);
-                httpRequest.getRequestDispatcher("/WEB-INF/jsp" + widgetContext.getJsp()).include(httpRequest, responseWrapper);
+                requestDispatcher.include(httpRequest, responseWrapper);
                 widgetContent = responseWrapper.getOutputAndClose();
               }
             } else if (widgetContext.hasHtml()) {
