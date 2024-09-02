@@ -16,22 +16,15 @@
 
 package com.simisinc.platform.application.medicine;
 
-import com.simisinc.platform.application.DataException;
-import com.simisinc.platform.application.items.LoadCollectionCommand;
-import com.simisinc.platform.application.items.LoadItemCommand;
-import com.simisinc.platform.domain.model.items.Collection;
-import com.simisinc.platform.domain.model.items.Item;
-import com.simisinc.platform.domain.model.medicine.Medicine;
-import com.simisinc.platform.domain.model.medicine.MedicineSchedule;
-import com.simisinc.platform.domain.model.medicine.Prescription;
-import com.simisinc.platform.infrastructure.persistence.medicine.MedicineReminderRepository;
-import com.simisinc.platform.infrastructure.persistence.medicine.MedicineRepository;
-import org.apache.commons.lang3.StringUtils;
+import java.sql.Timestamp;
+import java.time.LocalDate;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.sql.Timestamp;
-import java.time.LocalDate;
+import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.domain.model.medicine.Medicine;
+import com.simisinc.platform.infrastructure.persistence.medicine.MedicineReminderRepository;
 
 /**
  * Description
@@ -43,9 +36,9 @@ public class SaveMedicineRemindersCommand {
 
   private static Log LOG = LogFactory.getLog(SaveMedicineRemindersCommand.class);
 
-//  private static String DRUG_LIST_UNIQUE_ID = "drug-list";
-//  private static String CAREGIVERS_UNIQUE_ID = "caregivers";
-//  private static String INDIVIDUALS_UNIQUE_ID = "individuals";
+  //  private static String DRUG_LIST_UNIQUE_ID = "drug-list";
+  //  private static String CAREGIVERS_UNIQUE_ID = "caregivers";
+  //  private static String INDIVIDUALS_UNIQUE_ID = "individuals";
 
   public static void saveMedicineReminders(Medicine medicine) throws DataException {
     // Go forward several days...
