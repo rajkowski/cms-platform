@@ -30,7 +30,7 @@ public class SectionRenderInfo implements Serializable {
 
   static final long serialVersionUID = -8484048371911908893L;
 
-  private List<ColumnRenderInfo> columns = new ArrayList<ColumnRenderInfo>();
+  private List<ColumnRenderInfo> columns = new ArrayList<>();
   private boolean hasWidgets = false;
 
   // Output properties

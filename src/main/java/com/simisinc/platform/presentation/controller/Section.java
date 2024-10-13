@@ -31,10 +31,10 @@ public class Section implements Serializable {
   static final long serialVersionUID = -8484048371911908893L;
 
   // Layout and render properties
-  private List<Column> columns = new ArrayList<Column>();
-  private List<Section> sections = new ArrayList<Section>();
-  private List<String> roles = new ArrayList<String>();
-  private List<String> groups = new ArrayList<String>();
+  private List<Column> columns = new ArrayList<>();
+  private List<Section> sections = new ArrayList<>();
+  private List<String> roles = new ArrayList<>();
+  private List<String> groups = new ArrayList<>();
 
   // Output properties
   private String htmlId = null;
