@@ -1,21 +1,30 @@
-// A script to copy updated dependencies into the web application
+// A script to copy updated dependencies into the web application and update the version
 import fs from 'fs';
 import path from 'path';
 import packages from '../../../package.json';
-import web from '../../../web-packages.json';
+import web from '../webapp/WEB-INF/web-packages.json';
 
 // web.json record
 type WebDependency = {
-  name?: string;
+  package?: string;
+  version?: string;
   paths: string[];
 };
 
 // the combined package.json and web.json record
 type WebResource = {
   sourceDir: string;
+  targetName: string;
   targetDir: string;
   version: string;
   paths: string[];
+}
+
+// Determine the destination
+const webAppPath = path.join(process.cwd(), 'src', 'main', 'webapp', 'javascript');
+if (!isDirectory(webAppPath)) {
+  console.log('Web application directory not found: ' + webAppPath);
+  throw new Error('Web application directory not found: ' + webAppPath);
 }
 
 // For each web dependency, find the matching package dependency
@@ -25,38 +34,39 @@ Object.entries(dependencies).forEach(([key, value]) => {
   const resourceId = key as string;
   const webDependency = value as WebDependency;
   // Find and use the source package dependency
+  const packageId = webDependency.package || resourceId;
   const packageDependencies = Object.entries(packages.dependencies);
-  const packageDependency = packageDependencies.find(([key]) => key === resourceId);
+  const packageDependency = packageDependencies.find(([key]) => key === packageId);
   if (packageDependency) {
     const version = packageDependency[1];
     let webResource = {
-      "sourceDir": resourceId,
-      "targetDir": `${webDependency.name || resourceId}-${version}`,
+      "sourceDir": `${packageId}`,
+      "targetName": `${resourceId}`,
+      "targetDir": `${resourceId}-${version}`,
       "version": version,
       "paths": webDependency.paths
     }
     // Upgrade the packages in the web application
     try {
-      console.log('Updating: ' + resourceId + '==' + version);
-      copyWebResource(webResource);
-      deleteOldWebResources(webResource);
+      console.log('Resource: ' + resourceId + '==' + version);
+      copyWebResource(webAppPath, webResource);
+      deleteOldWebResources(webAppPath, webResource);
+      webDependency.version = version;
     } catch (error) {
       console.error('Error with package dependency ' + resourceId + ': ' + error);
     }
   }
+
+  // Save the file indicating the installed version
+  const file = path.join('src', 'main', 'webapp', 'WEB-INF', 'web-packages.json')
+  console.log('Writing latest versions... ' + file);
+  fs.writeFileSync(file, JSON.stringify(web, null, 2));
 });
 
-function copyWebResource(webResource: WebResource) {
+function copyWebResource(webAppPath: string, webResource: WebResource) {
   // Make sure the source has paths defined
   if (!webResource.paths.length) {
     throw new Error("Could not copy " + webResource.sourceDir);
-  }
-
-  // Determine the destination
-  const webAppPath = path.join(process.cwd(), 'src', 'main', 'webapp', 'javascript');
-  if (!isDirectory(webAppPath)) {
-    console.log('Web application directory not found: ' + webAppPath);
-    throw new Error('Web application directory not found: ' + webAppPath);
   }
 
   // Determine the target path
@@ -82,8 +92,21 @@ function copyWebResource(webResource: WebResource) {
   });
 }
 
-function deleteOldWebResources(webResource: WebResource) {
-  // console.log('  Deleting old directories of: ' + webResource.targetDir);
+function deleteOldWebResources(webAppPath: string, webResource: WebResource) {
+  fs.readdirSync(webAppPath, { withFileTypes: true }).forEach((entry) => {
+    const installedBasename = path.basename(entry.name);
+    const resourceBasename = path.basename(webResource.targetDir);
+    // Look for directories to delete which have the exact same name, but different version
+    if (entry.isDirectory() &&
+      installedBasename !== resourceBasename &&
+      installedBasename.startsWith(webResource.targetName) &&
+      installedBasename.substring(0, installedBasename.lastIndexOf('-')) === installedBasename.substring(0, resourceBasename.lastIndexOf('-'))) {
+      // Remove previous versions
+      const directoryToDelete = path.join(webAppPath, entry.name);
+      console.log('  *Deleting directory... ' + directoryToDelete);
+      fs.rmSync(directoryToDelete, { recursive: true });
+    }
+  });
 }
 
 function isFile(path: string) {
