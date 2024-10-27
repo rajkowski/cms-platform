@@ -1,9 +1,16 @@
 {
   "name": "cms-platform",
   "version": "1.1.0",
-  "description": "SimIS CMS: Agile, Enterprise, Open Source Content Management System (CMS) and Portal, frontend dependencies",
-  "author": "SimIS Inc.",
+  "description": "CMS Platform: Agile, Enterprise, Open Source Content Management System (CMS) and Portal, frontend dependencies",
+  "author": "Matt Rajkowski",
   "license": "Apache License 2.0",
+  "engines" : { 
+    "npm" : ">=9.6",
+    "node" : ">=18.17"
+  },
+  "scripts": {
+    "dependencies": "ts-node src/main/scripts/dependencies.ts"
+  },
   "dependencies": {
     "@superset-ui/embedded-sdk": "0.1.0-alpha.7",
     "ace-builds": "1.32.4",
@@ -38,6 +45,7 @@
     "jquery-gridmanager": "0.3.1"
   },
   "devDependencies": {
+    "ts-node": "10.9.2",
     "tinycolor2": "1.6.0"
   }
 }

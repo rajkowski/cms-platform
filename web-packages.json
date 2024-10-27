@@ -1,0 +1,22 @@
+{
+  "dependencies": {
+    "@superset-ui/embedded-sdk": {
+      "name": "superset-embedded-sdk",
+      "paths": [
+        "node_modules/@superset-ui/embedded-sdk/bundle"
+      ]
+    },
+    "ace-builds": {
+      "name": "ace",
+      "paths": [
+        "node_modules/ace-builds/src-min-noconflict"
+      ]
+    },
+    "mermaid": {
+      "paths": [
+        "node_modules/mermaid/dist/mermaid.js",
+        "node_modules/mermaid/dist/mermaid.min.js"
+      ]
+    }
+  }
+}

@@ -452,6 +452,18 @@
     </exec>
   </target>
 
+  <target name="node-dependencies">
+    <!-- Make sure packages are downloaded -->
+    <exec executable="npm">
+      <arg value="install" />
+    </exec>
+    <!-- Copy the packages into the codebase -->
+    <exec executable="npm">
+      <arg value="run" />
+      <arg value="dependencies" />
+    </exec>    
+  </target>
+
   <target name="snyk">
     <exec executable="snyk">
       <arg value="test" />
