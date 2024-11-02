@@ -88,7 +88,8 @@ public class MakeStaticSiteApp {
     FileTemplateResolver templateResolver = new FileTemplateResolver();
     Map<String, String> widgetLibrary = WebPageXmlLayoutCommand.init(webAppPath);
     PageTemplateEngine.startup(templateResolver,
-        webAppPath.getAbsolutePath() + File.separator + "WEB-INF" + File.separator + "html-templates" + File.separator, widgetLibrary);
+        webAppPath.getAbsolutePath() + File.separator + "WEB-INF" + File.separator + "html-templates" + File.separator, widgetLibrary,
+        new File(webAppPath.getAbsolutePath() + File.separator + "WEB-INF" + File.separator + "web-packages.json").toURI().toURL());
 
     // The dynamic website files
     Properties templateEngineProperties = new Properties();

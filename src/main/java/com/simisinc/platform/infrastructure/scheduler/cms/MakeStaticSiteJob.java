@@ -16,6 +16,7 @@
 
 package com.simisinc.platform.infrastructure.scheduler.cms;
 
+import java.net.URL;
 import java.util.Map;
 import java.util.Properties;
 
@@ -52,7 +53,8 @@ public class MakeStaticSiteJob {
     WebApplicationTemplateResolver templateResolver = new WebApplicationTemplateResolver(application);
     try {
       Map<String, String> widgetLibrary = WebPageXmlLayoutCommand.init(servletContext);
-      PageTemplateEngine.startup(templateResolver, "/WEB-INF/html-templates/", widgetLibrary);
+      URL webPackageFile = servletContext.getResource("/WEB-INF/web-packages.json");
+      PageTemplateEngine.startup(templateResolver, "/WEB-INF/html-templates/", widgetLibrary, webPackageFile);
     } catch (Exception e) {
       LOG.error("Exiting, the PageTemplateEngine did not properly startup so web requests will not be allowed!", e);
     }
