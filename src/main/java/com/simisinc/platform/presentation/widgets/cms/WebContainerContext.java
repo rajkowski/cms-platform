@@ -29,7 +29,7 @@ import com.simisinc.platform.presentation.controller.Page;
 import com.simisinc.platform.presentation.controller.PageRequest;
 
 /**
- * Description
+ * A context for processing the widgets
  *
  * @author matt rajkowski
  * @created 2/7/2021 6:02 PM

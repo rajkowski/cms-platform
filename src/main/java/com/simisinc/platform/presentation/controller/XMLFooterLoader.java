@@ -23,7 +23,6 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.net.URL;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 
 import javax.xml.XMLConstants;
@@ -56,10 +55,10 @@ public class XMLFooterLoader implements Serializable {
   public XMLFooterLoader() {
   }
 
-  public static Footer loadFromURL(Map<String, String> widgetLibrary, String layoutName, URL url) {
+  public static Footer loadFromURL(String layoutName, URL url) {
     try {
       Document document = parseDocument(url);
-      return parseDocument(document, layoutName, widgetLibrary);
+      return parseDocument(document, layoutName);
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -80,7 +79,7 @@ public class XMLFooterLoader implements Serializable {
     }
   }
 
-  public static Footer addFromXml(WebContainer webContainer, Map<String, String> widgetLibrary)
+  public static Footer addFromXml(WebContainer webContainer)
       throws FactoryConfigurationError, ParserConfigurationException, SAXException, IOException {
     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
     factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
@@ -93,10 +92,10 @@ public class XMLFooterLoader implements Serializable {
     try (InputStream is = IOUtils.toInputStream(webContainer.getContainerXml(), "UTF-8")) {
       document = builder.parse(is);
     }
-    return parseDocument(document, webContainer.getName(), widgetLibrary);
+    return parseDocument(document, webContainer.getName());
   }
 
-  private static Footer parseDocument(Document document, String layoutName, Map<String, String> widgetLibrary) {
+  private static Footer parseDocument(Document document, String layoutName) {
     NodeList containerTags = document.getElementsByTagName("footer");
     int numberOfLayouts = containerTags.getLength();
     if (numberOfLayouts == 0) {
@@ -116,7 +115,7 @@ public class XMLFooterLoader implements Serializable {
       }
     }
     if (container != null) {
-      Footer footer = parseContainer(document, container, widgetLibrary);
+      Footer footer = parseContainer(document, container);
       // @note set it back to the requested layout name regardless of what the document has
       footer.setName(layoutName);
       LOG.debug("Created footer: " + footer.getName());
@@ -125,7 +124,7 @@ public class XMLFooterLoader implements Serializable {
     return null;
   }
 
-  private static Footer parseContainer(Document document, Element container, Map<String, String> widgetLibrary) {
+  private static Footer parseContainer(Document document, Element container) {
     String layoutName = container.getAttribute("name");
     if (layoutName.contains("{")) {
       layoutName = layoutName.substring(0, layoutName.indexOf("{"));
@@ -153,7 +152,7 @@ public class XMLFooterLoader implements Serializable {
       // Applies the html class to the footer
       footer.setCssClass(container.getAttribute("class"));
     }
-    XMLContainerCommands.appendSections(document, footer.getSections(), container.getChildNodes(), widgetLibrary);
+    XMLContainerCommands.appendSections(document, footer.getSections(), container.getChildNodes());
     return footer;
   }
 }

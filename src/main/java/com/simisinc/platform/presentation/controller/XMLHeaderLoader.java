@@ -56,10 +56,10 @@ public class XMLHeaderLoader implements Serializable {
   public XMLHeaderLoader() {
   }
 
-  public static Header loadFromURL(Map<String, String> widgetLibrary, String layoutName, URL url) {
+  public static Header loadFromURL(String layoutName, URL url) {
     try {
       Document document = parseDocument(url);
-      return parseDocument(document, layoutName, widgetLibrary);
+      return parseDocument(document, layoutName);
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -80,7 +80,7 @@ public class XMLHeaderLoader implements Serializable {
     }
   }
 
-  public static Header addFromXml(WebContainer webContainer, Map<String, String> widgetLibrary)
+  public static Header addFromXml(WebContainer webContainer)
       throws FactoryConfigurationError, ParserConfigurationException, SAXException, IOException {
     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
     factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
@@ -93,10 +93,10 @@ public class XMLHeaderLoader implements Serializable {
     try (InputStream is = IOUtils.toInputStream(webContainer.getContainerXml(), "UTF-8")) {
       document = builder.parse(is);
     }
-    return parseDocument(document, webContainer.getName(), widgetLibrary);
+    return parseDocument(document, webContainer.getName());
   }
 
-  private static Header parseDocument(Document document, String layoutName, Map<String, String> widgetLibrary) {
+  private static Header parseDocument(Document document, String layoutName) {
     NodeList containerTags = document.getElementsByTagName("header");
     int numberOfLayouts = containerTags.getLength();
     if (numberOfLayouts == 0) {
@@ -116,7 +116,7 @@ public class XMLHeaderLoader implements Serializable {
       }
     }
     if (container != null) {
-      Header header = parseContainer(document, container, widgetLibrary);
+      Header header = parseContainer(document, container);
       // @note set it back to the requested layout name regardless of what the document has
       header.setName(layoutName);
       LOG.debug("Created header: " + header.getName());
@@ -125,7 +125,7 @@ public class XMLHeaderLoader implements Serializable {
     return null;
   }
 
-  private static Header parseContainer(Document document, Element container, Map<String, String> widgetLibrary) {
+  private static Header parseContainer(Document document, Element container) {
     String layoutName = container.getAttribute("name");
     if (layoutName.contains("{")) {
       layoutName = layoutName.substring(0, layoutName.indexOf("{"));
@@ -153,7 +153,7 @@ public class XMLHeaderLoader implements Serializable {
       // Applies the html class to the header
       header.setCssClass(container.getAttribute("class"));
     }
-    XMLContainerCommands.appendSections(document, header.getSections(), container.getChildNodes(), widgetLibrary);
+    XMLContainerCommands.appendSections(document, header.getSections(), container.getChildNodes());
     return header;
   }
 }

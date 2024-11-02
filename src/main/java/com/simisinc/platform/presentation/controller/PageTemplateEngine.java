@@ -54,6 +54,7 @@ import com.simisinc.platform.application.cms.LoadMenuTabsCommand;
 import com.simisinc.platform.application.cms.LoadStylesheetCommand;
 import com.simisinc.platform.application.cms.LoadTableOfContentsCommand;
 import com.simisinc.platform.application.cms.WebContainerLayoutCommand;
+import com.simisinc.platform.application.cms.WebPackageCommand;
 import com.simisinc.platform.application.cms.WebPageXmlLayoutCommand;
 import com.simisinc.platform.application.items.LoadCategoryCommand;
 import com.simisinc.platform.application.items.LoadCollectionCommand;
@@ -86,9 +87,12 @@ public class PageTemplateEngine {
   // Widget Cache
   private static Map<String, Object> widgetInstances = new HashMap<>();
 
+  // Web Packages
+  private static Map<String, WebPackage> webPackageList = null;
+
   /** Initialize the Thymeleaf renderer engine and widgets */
   public static boolean startup(AbstractConfigurableTemplateResolver templateResolver, String htmlTemplateLocation,
-      Map<String, String> widgetLibrary) {
+      Map<String, String> widgetLibrary, URL webPackageFile) {
 
     LOG.info("PageTemplateEngine starting up...");
 
@@ -99,6 +103,16 @@ public class PageTemplateEngine {
     templateResolver.setCacheable(false);
     templateEngine.setTemplateResolver(templateResolver);
     templateEngine.addMessageResolver(new TemplateMessageResolver());
+
+    // Load the frontend web resource catalog
+    try {
+      LOG.info("Loading web packages...");
+      webPackageList = WebPackageCommand.init(webPackageFile);
+      LOG.info("Added web packages: " + webPackageList.size());
+    } catch (Exception e) {
+      LOG.error("Web packages error:", e);
+      // throw new ServletException(e);
+    }
 
     // Instantiate the widgets
     if (!isInitialized()) {
@@ -362,19 +376,18 @@ public class PageTemplateEngine {
       }
 
       // Additional layouts
-      Map<String, String> widgetLibrary = WebPageXmlLayoutCommand.getWidgetLibrary();
       File webLayoutsPath = new File(webAppPath, Paths.get("WEB-INF", "web-layouts").toString());
 
       // Render the header based on the web page
       URL headerUrl = new File(webLayoutsPath, Paths.get("header", "header-layout.xml").toString()).toURI().toURL();
-      Header header = WebContainerLayoutCommand.retrieveHeader(widgetLibrary, "header.default", headerUrl);
+      Header header = WebContainerLayoutCommand.retrieveHeader("header.default", headerUrl);
       HeaderRenderInfo headerRenderInfo = new HeaderRenderInfo(header, webPage.getLink());
       WebContainerCommand.processWidgets(webContainerContext, header.getSections(), headerRenderInfo, coreData,
           userSession, themePropertyMap, null);
 
       // Render the footer
       URL footerUrl = new File(webLayoutsPath, Paths.get("footer", "footer-layout.xml").toString()).toURI().toURL();
-      Footer footer = WebContainerLayoutCommand.retrieveFooter(widgetLibrary, "footer.default", footerUrl);
+      Footer footer = WebContainerLayoutCommand.retrieveFooter("footer.default", footerUrl);
       FooterRenderInfo footerRenderInfo = new FooterRenderInfo(footer, webPage.getLink());
       WebContainerCommand.processWidgets(webContainerContext, footer.getSections(), footerRenderInfo, coreData,
           userSession, themePropertyMap, null);

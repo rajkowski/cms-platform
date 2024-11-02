@@ -127,11 +127,11 @@ public class PageServlet extends HttpServlet {
     // Load the web containers
     LOG.info("Populating the header and footer containers...");
     try {
-      WebContainerLayoutCommand.retrieveHeader(widgetLibrary, "header.default",
+      WebContainerLayoutCommand.retrieveHeader("header.default",
           config.getServletContext().getResource("/WEB-INF/web-layouts/header/header-layout.xml"));
-      WebContainerLayoutCommand.retrieveHeader(widgetLibrary, "header.plain",
+      WebContainerLayoutCommand.retrieveHeader("header.plain",
           config.getServletContext().getResource("/WEB-INF/web-layouts/header/header-layout.xml"));
-      WebContainerLayoutCommand.retrieveFooter(widgetLibrary, "footer.default",
+      WebContainerLayoutCommand.retrieveFooter("footer.default",
           config.getServletContext().getResource("/WEB-INF/web-layouts/footer/footer-layout.xml"));
     } catch (Exception e) {
       throw new ServletException(e);
@@ -196,6 +196,8 @@ public class PageServlet extends HttpServlet {
     long startRequestTime = System.currentTimeMillis();
 
     LOG.trace("Widget processor...");
+
+    // Prepare the HttpServletResponse content type, encoding, and security options
     response.setContentType("text/html");
     try {
       response.setCharacterEncoding("UTF-8");
@@ -208,7 +210,7 @@ public class PageServlet extends HttpServlet {
     response.setHeader("X-XSS-Protection", "1; mode=block");
 
     try {
-      // Determine the resources
+      // The PageRequest encapsulates and reduces the HttpServletRequest
       PageRequest pageRequest = new PageRequest(request);
       LOG.debug("Using resource: " + pageRequest.getPagePath());
 
@@ -224,14 +226,14 @@ public class PageServlet extends HttpServlet {
         return;
       }
 
-      // Update the page cache headers
+      // Update the HttpServletResponse page cache headers, except for assets
       if (!pageRequest.getPagePath().startsWith("/assets")) {
         response.setHeader("Pragma", "no-cache");
         response.setHeader("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate");
         response.setHeader("Expires", "-1");
       }
 
-      // Always access the webPage record so it can be used downstream
+      // Always access the WebPage record so it can be used downstream
       WebPage webPage = LoadWebPageCommand.loadByLink(pageRequest.getPagePath());
       if (webPage != null) {
         // Determine if this is a draft page
@@ -262,7 +264,6 @@ public class PageServlet extends HttpServlet {
 
       // Determine the Page XML Layout for this request
       Page pageRef = WebPageXmlLayoutCommand.retrievePageForRequest(webPage, pageRequest.getPagePath());
-      Map<String, String> widgetLibrary = WebPageXmlLayoutCommand.getWidgetLibrary();
 
       // Load the properties
       Map<String, String> systemPropertyMap = LoadSitePropertyCommand.loadAsMap("system");
@@ -489,10 +490,10 @@ public class PageServlet extends HttpServlet {
       // Render the header
       Header header = null;
       if (pageRenderInfo.getName().startsWith("/checkout")) {
-        header = WebContainerLayoutCommand.retrieveHeader(widgetLibrary, "header.plain",
+        header = WebContainerLayoutCommand.retrieveHeader("header.plain",
             request.getServletContext().getResource("/WEB-INF/web-layouts/header/header-layout.xml"));
       } else {
-        header = WebContainerLayoutCommand.retrieveHeader(widgetLibrary, "header.default",
+        header = WebContainerLayoutCommand.retrieveHeader("header.default",
             request.getServletContext().getResource("/WEB-INF/web-layouts/header/header-layout.xml"));
       }
       HeaderRenderInfo headerRenderInfo = new HeaderRenderInfo(header, pageRequest.getPagePath());
@@ -500,7 +501,7 @@ public class PageServlet extends HttpServlet {
           userSession, themePropertyMap, request);
 
       // Render the footer
-      Footer footer = WebContainerLayoutCommand.retrieveFooter(widgetLibrary, "footer.default",
+      Footer footer = WebContainerLayoutCommand.retrieveFooter("footer.default",
           request.getServletContext().getResource("/WEB-INF/web-layouts/footer/footer-layout.xml"));
       FooterRenderInfo footerRenderInfo = new FooterRenderInfo(footer, pageRequest.getPagePath());
       WebContainerCommand.processWidgets(webContainerContext, footer.getSections(), footerRenderInfo, coreData,

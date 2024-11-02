@@ -47,7 +47,7 @@ public class XMLContainerCommands implements Serializable {
   private static final long serialVersionUID = 536435325324169646L;
   private static Log LOG = LogFactory.getLog(XMLContainerCommands.class);
 
-  public static void appendSections(Document document, List<Section> sections, NodeList children, Map<String, String> widgetLibrary) {
+  public static void appendSections(Document document, List<Section> sections, NodeList children) {
     // Process the sections
     boolean isWellFormed = false;
     int len = children.getLength();
@@ -104,13 +104,13 @@ public class XMLContainerCommands implements Serializable {
       }
       sections.add(section);
       LOG.trace("Adding section");
-      appendColumns(document, section, section.getColumns(), child.getChildNodes(), widgetLibrary);
+      appendColumns(document, section, section.getColumns(), child.getChildNodes());
     }
 
     // Perform a 2nd pass on the children to see if there are widgets here (short form)
     if (!isWellFormed) {
       Column indirectColumn = new Column();
-      appendWidgets(document, indirectColumn, indirectColumn.getWidgets(), children, widgetLibrary);
+      appendWidgets(document, indirectColumn, indirectColumn.getWidgets(), children);
       if (!indirectColumn.getWidgets().isEmpty()) {
         LOG.trace("Adding indirect section");
         Section section = new Section();
@@ -119,7 +119,7 @@ public class XMLContainerCommands implements Serializable {
       } else {
         // Perform a 3rd pass on the children to see if there are columns here (short form)
         Section indirectSection = new Section();
-        appendColumns(document, indirectSection, indirectSection.getColumns(), children, widgetLibrary);
+        appendColumns(document, indirectSection, indirectSection.getColumns(), children);
         if (!indirectSection.getColumns().isEmpty()) {
           sections.add(indirectSection);
         }
@@ -127,8 +127,7 @@ public class XMLContainerCommands implements Serializable {
     }
   }
 
-  private static void appendColumns(Document document, Section sectionInfo, List<Column> columns, NodeList children,
-      Map<String, String> widgetLibrary) {
+  private static void appendColumns(Document document, Section sectionInfo, List<Column> columns, NodeList children) {
     // Process the columns
     int len = children.getLength();
     for (int i = 0; i < len; i++) {
@@ -189,20 +188,19 @@ public class XMLContainerCommands implements Serializable {
         }
         columns.add(column);
         LOG.trace("Adding column");
-        appendWidgets(document, column, column.getWidgets(), child.getChildNodes(), widgetLibrary);
+        appendWidgets(document, column, column.getWidgets(), child.getChildNodes());
       }
     }
     // Perform a 2nd pass on the children to see if there are widgets here (short form)
     Column indirectColumn = new Column();
-    appendWidgets(document, indirectColumn, indirectColumn.getWidgets(), children, widgetLibrary);
+    appendWidgets(document, indirectColumn, indirectColumn.getWidgets(), children);
     if (!indirectColumn.getWidgets().isEmpty()) {
       LOG.trace("Adding indirect column");
       columns.add(indirectColumn);
     }
   }
 
-  private static void appendWidgets(Document document, Column columnInfo, List<Widget> widgets, NodeList children,
-      Map<String, String> widgetLibrary) {
+  private static void appendWidgets(Document document, Column columnInfo, List<Widget> widgets, NodeList children) {
     int len = children.getLength();
     for (int i = 0; i < len; i++) {
       if (children.item(i).getNodeType() != Element.ELEMENT_NODE) {
@@ -275,10 +273,6 @@ public class XMLContainerCommands implements Serializable {
       }
       widget.setWidgetName(name);
       LOG.trace("Adding widget to layout: " + name);
-      if (widgetLibrary != null && widgetLibrary.containsKey(name)) {
-        LOG.trace("Found widget class: " + widgetLibrary.get(name));
-        widget.setWidgetClassName(widgetLibrary.get(name));
-      }
       widgets.add(widget);
       addWidgetPreferences(widget, child.getChildNodes());
     }

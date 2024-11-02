@@ -136,7 +136,6 @@ public class XMLPageFactory implements Serializable {
         section.getColumns().add(indirectColumn);
         page.getSections().add(section);
         Widget widget = new Widget(aName);
-        widget.setWidgetClassName(className);
         indirectColumn.getWidgets().add(widget);
         widgetLibrary.put(aName, className);
       } else {
@@ -144,7 +143,7 @@ public class XMLPageFactory implements Serializable {
         page.setCssClass(e.getAttribute("class"));
       }
     }
-    XMLContainerCommands.appendSections(document, page.getSections(), e.getChildNodes(), widgetLibrary);
+    XMLContainerCommands.appendSections(document, page.getSections(), e.getChildNodes());
     return page;
   }
 }

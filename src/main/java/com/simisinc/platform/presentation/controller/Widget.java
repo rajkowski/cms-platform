@@ -34,7 +34,6 @@ public class Widget implements Serializable {
 
   // Layout and render properties
   protected String widgetName = "";
-  protected String widgetClassName = "";
   private List<String> roles = new ArrayList<String>();
   private List<String> groups = new ArrayList<String>();
   protected Map<String, String> preferences = new HashMap<String, String>();
@@ -59,14 +58,6 @@ public class Widget implements Serializable {
 
   public void setWidgetName(String widgetName) {
     this.widgetName = widgetName;
-  }
-
-  public String getWidgetClassName() {
-    return widgetClassName;
-  }
-
-  public void setWidgetClassName(String widgetClassName) {
-    this.widgetClassName = widgetClassName;
   }
 
   public String getHtmlId() {

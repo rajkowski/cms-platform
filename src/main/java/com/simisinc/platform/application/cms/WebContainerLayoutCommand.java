@@ -17,7 +17,6 @@
 package com.simisinc.platform.application.cms;
 
 import java.net.URL;
-import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -40,14 +39,14 @@ public class WebContainerLayoutCommand {
 
   private static Log LOG = LogFactory.getLog(WebContainerLayoutCommand.class);
 
-  public static Header retrieveHeader(Map<String, String> widgetLibrary, String layout, URL url) {
+  public static Header retrieveHeader(String layout, URL url) {
     String cacheName = ("header.default".equals(layout) ? CacheManager.WEBSITE_HEADER
         : CacheManager.WEBSITE_PLAIN_HEADER);
     Header header = (Header) CacheManager.getFromObjectCache(cacheName);
     if (header == null) {
-      header = retrieveHeaderFromDatabase(widgetLibrary, layout);
+      header = retrieveHeaderFromDatabase(layout);
       if (header == null) {
-        header = XMLHeaderLoader.loadFromURL(widgetLibrary, layout, url);
+        header = XMLHeaderLoader.loadFromURL(layout, url);
       }
       if (header == null) {
         return null;
@@ -57,7 +56,7 @@ public class WebContainerLayoutCommand {
     return header;
   }
 
-  private static Header retrieveHeaderFromDatabase(Map<String, String> widgetLibrary, String layout) {
+  private static Header retrieveHeaderFromDatabase(String layout) {
     // Try the database
     WebContainer container = WebContainerRepository.findByName(layout);
     if (container == null) {
@@ -65,19 +64,19 @@ public class WebContainerLayoutCommand {
     }
     try {
       // Process the header document
-      return XMLHeaderLoader.addFromXml(container, widgetLibrary);
+      return XMLHeaderLoader.addFromXml(container);
     } catch (Exception e) {
       e.printStackTrace();
     }
     return null;
   }
 
-  public static Footer retrieveFooter(Map<String, String> widgetLibrary, String layout, URL url) {
+  public static Footer retrieveFooter(String layout, URL url) {
     Footer footer = (Footer) CacheManager.getFromObjectCache(CacheManager.WEBSITE_FOOTER);
     if (footer == null) {
-      footer = retrieveFooterFromDatabase(widgetLibrary, layout);
+      footer = retrieveFooterFromDatabase(layout);
       if (footer == null) {
-        footer = XMLFooterLoader.loadFromURL(widgetLibrary, layout, url);
+        footer = XMLFooterLoader.loadFromURL(layout, url);
       }
       if (footer == null) {
         return null;
@@ -87,7 +86,7 @@ public class WebContainerLayoutCommand {
     return footer;
   }
 
-  private static Footer retrieveFooterFromDatabase(Map<String, String> widgetLibrary, String layout) {
+  private static Footer retrieveFooterFromDatabase(String layout) {
     // Try the database
     WebContainer container = WebContainerRepository.findByName(layout);
     if (container == null) {
@@ -95,7 +94,7 @@ public class WebContainerLayoutCommand {
     }
     try {
       // Process the footer document
-      return XMLFooterLoader.addFromXml(container, widgetLibrary);
+      return XMLFooterLoader.addFromXml(container);
     } catch (Exception e) {
       e.printStackTrace();
     }

@@ -18,7 +18,9 @@ package com.simisinc.platform.presentation.controller;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * From the Page definition, the composed elements to be rendered for this request
@@ -42,6 +44,7 @@ public class PageRenderInfo implements ContainerRenderInfo, Serializable {
   private String imageUrl;
   private String pagePath;
   private String cssClass = null;
+  private Set<String> javascriptPackages = new LinkedHashSet<>();
 
   public PageRenderInfo() {
   }
