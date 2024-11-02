@@ -266,7 +266,9 @@
     <copy todir="${exploded.work.dir}/WEB-INF" preservelastmodified="true">
       <fileset dir="${web.dir}/WEB-INF">
         <include name="**/*.html"/>
+        <include name="**/*.json"/>
         <include name="**/*.xml"/>
+        <include name="**/*.yaml"/>
         <include name="**/*.yml"/>
         <include name="**/*.tld"/>
         <include name="**/*.mmdb"/>

@@ -61,6 +61,7 @@ import com.simisinc.platform.application.cms.LoadTableOfContentsCommand;
 import com.simisinc.platform.application.cms.LoadWebPageCommand;
 import com.simisinc.platform.application.cms.SaveWebPageHitCommand;
 import com.simisinc.platform.application.cms.WebContainerLayoutCommand;
+import com.simisinc.platform.application.cms.WebPackageCommand;
 import com.simisinc.platform.application.cms.WebPageXmlLayoutCommand;
 import com.simisinc.platform.application.items.LoadCategoryCommand;
 import com.simisinc.platform.application.items.LoadCollectionCommand;
@@ -93,12 +94,25 @@ public class PageServlet extends HttpServlet {
   // JSON Services
   private Map<String, Object> serviceInstances = new HashMap<>();
 
+  // Web Packages
+  private Map<String, WebPackage> webPackageList = null;
+
   public void init(ServletConfig config) throws ServletException {
 
     LOG.info("PageServlet starting up...");
     String startupSuccessful = (String) config.getServletContext().getAttribute(ContextConstants.STARTUP_SUCCESSFUL);
     if (!"true".equals(startupSuccessful)) {
       throw new ServletException("Startup failed due to previous error");
+    }
+
+    // Load the frontend web resource catalog
+    try {
+      LOG.info("Loading web packages...");
+      webPackageList = WebPackageCommand.init(config.getServletContext().getResource("/WEB-INF/web-packages.json"));
+      LOG.info("Added web packages: " + webPackageList.size());
+    } catch (Exception e) {
+      LOG.error("Web packages error:", e);
+      throw new ServletException(e);
     }
 
     // Load the web page designs
