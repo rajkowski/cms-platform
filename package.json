@@ -1,8 +1,9 @@
 {
   "name": "cms-platform",
+  "author": "Matt Rajkowski",
+  "homepage": "https://github.com/rajkowski/cms-platform",
   "version": "1.1.0",
   "description": "CMS Platform: Agile, Enterprise, Open Source Content Management System (CMS) and Portal, frontend dependencies",
-  "author": "Matt Rajkowski",
   "license": "Apache License 2.0",
   "engines" : { 
     "npm" : ">=9.6",

@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file. The format 
 
 ## Unreleased
 
-_No unreleased changes_
+- Web tags have been implemented so that frontend dependencies can be easily updated using NPM scripts without code changes in HTML web pages
 
 ## 2024-08-25
 

@@ -35,6 +35,8 @@ public class RequestConstants {
   public static final String MASTER_WEB_PAGE = "masterWebPage";
   public static final String FOOTER_STICKY_LINKS = "footerStickyLinks";
 
+  public static final String WEB_PACKAGE_LIST = "webPackageList";
+  
   public static final String CONTEXT_PATH = "ctx";
   public static final String WEB_PAGE_PATH = "pagePath";
 

@@ -362,8 +362,7 @@ public class PageTemplateEngine {
       // Create a context for processing the widgets
       URL applicationUrl = webAppPath.toURI().toURL();
       WebContainerContext webContainerContext = new WebContainerContext(applicationUrl, pageRequest, null,
-          controllerSession,
-          widgetInstances, webPage, pageRef);
+          controllerSession, widgetInstances, webPackageList, webPage, pageRef);
 
       // Render the page first
       PageResponse pageResponse = WebContainerCommand.processWidgets(webContainerContext, pageRef.getSections(),

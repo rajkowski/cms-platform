@@ -20,6 +20,7 @@ import static com.simisinc.platform.presentation.controller.RequestConstants.ERR
 import static com.simisinc.platform.presentation.controller.RequestConstants.MESSAGE_TEXT;
 import static com.simisinc.platform.presentation.controller.RequestConstants.SUCCESS_MESSAGE_TEXT;
 import static com.simisinc.platform.presentation.controller.RequestConstants.WARNING_MESSAGE_TEXT;
+import static com.simisinc.platform.presentation.controller.RequestConstants.WEB_PACKAGE_LIST;
 
 import java.io.PrintWriter;
 import java.io.Serializable;
@@ -490,6 +491,8 @@ public class WebContainerCommand implements Serializable {
                   LOG.error("JSP NOT FOUND: " + "/WEB-INF/jsp" + widgetContext.getJsp());
                   continue;
                 }
+                // Share the web packages
+                httpRequest.setAttribute(WEB_PACKAGE_LIST, webContainerContext.getWebPackageList());
                 // Map the pageRequest attributes to the http request for JSPs
                 for (String attribute : pageRequest.getAttributes().keySet()) {
                   httpRequest.setAttribute(attribute, pageRequest.getAttribute(attribute));

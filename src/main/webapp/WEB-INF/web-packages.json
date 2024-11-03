@@ -2,24 +2,37 @@
   "dependencies": {
     "superset-embedded-sdk": {
       "package": "@superset-ui/embedded-sdk",
+      "version": "0.1.0-alpha.7",
       "paths": [
         "node_modules/@superset-ui/embedded-sdk/bundle"
-      ],
-      "version": "0.1.0-alpha.7"
+      ]
     },
     "ace": {
       "package": "ace-builds",
+      "version": "1.32.4",
       "paths": [
         "node_modules/ace-builds/src-min-noconflict"
-      ],
-      "version": "1.32.4"
+      ]
     },
     "mermaid": {
+      "version": "10.9.1",
       "paths": [
         "node_modules/mermaid/dist/mermaid.js",
         "node_modules/mermaid/dist/mermaid.min.js"
-      ],
-      "version": "10.9.1"
+      ]
+    },
+    "swiper": {
+      "version": "11.0.5",
+      "paths": [
+        "node_modules/swiper/swiper-bundle.css",
+        "node_modules/swiper/swiper-bundle.js",
+        "node_modules/swiper/swiper-bundle.min.css",
+        "node_modules/swiper/swiper-bundle.min.js",
+        "node_modules/swiper/swiper-bundle.min.js.map",
+        "node_modules/swiper/swiper-bundle.min.mjs",
+        "node_modules/swiper/swiper-bundle.min.mjs.map",
+        "node_modules/swiper/swiper-bundle.mjs"
+      ]
     }
   }
 }

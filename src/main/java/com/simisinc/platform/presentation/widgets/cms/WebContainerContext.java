@@ -27,6 +27,7 @@ import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.presentation.controller.ControllerSession;
 import com.simisinc.platform.presentation.controller.Page;
 import com.simisinc.platform.presentation.controller.PageRequest;
+import com.simisinc.platform.presentation.controller.WebPackage;
 
 /**
  * A context for processing the widgets
@@ -50,19 +51,22 @@ public class WebContainerContext implements Serializable {
   private int method = METHOD_GET;
   private ControllerSession controllerSession = null;
   private Map<String, Object> widgetInstances = null;
+  private Map<String, WebPackage> webPackageList = null;
   private WebPage webPage = null;
   private Page page = null;
 
   private boolean embedded = false;
 
   public WebContainerContext(URL applicationUrl, PageRequest pageRequest, HttpServletRequest request,
-      ControllerSession controllerSession, Map<String, Object> widgetInstances, WebPage webPage, Page page) {
+      ControllerSession controllerSession, Map<String, Object> widgetInstances, Map<String, WebPackage> webPackageList,
+      WebPage webPage, Page page) {
 
     this.applicationUrl = applicationUrl;
     this.pageRequest = pageRequest;
     this.request = request;
     this.controllerSession = controllerSession;
     this.widgetInstances = widgetInstances;
+    this.webPackageList = webPackageList;
     this.webPage = webPage;
     this.page = page;
 
@@ -77,13 +81,14 @@ public class WebContainerContext implements Serializable {
 
   public WebContainerContext(URL applicationUrl, PageRequest pageRequest, HttpServletRequest request,
       HttpServletResponse response, ControllerSession controllerSession, Map<String, Object> widgetInstances,
-      WebPage webPage, Page page) {
+      Map<String, WebPackage> webPackageList, WebPage webPage, Page page) {
     this.applicationUrl = applicationUrl;
     this.pageRequest = pageRequest;
     this.request = request;
     this.response = response;
     this.controllerSession = controllerSession;
     this.widgetInstances = widgetInstances;
+    this.webPackageList = webPackageList;
     this.webPage = webPage;
     this.page = page;
 
@@ -114,6 +119,10 @@ public class WebContainerContext implements Serializable {
 
   public Map<String, Object> getWidgetInstances() {
     return widgetInstances;
+  }
+
+  public Map<String, WebPackage> getWebPackageList() {
+    return webPackageList;
   }
 
   public WebPage getWebPage() {

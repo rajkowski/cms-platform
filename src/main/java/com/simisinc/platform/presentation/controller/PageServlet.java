@@ -451,7 +451,7 @@ public class PageServlet extends HttpServlet {
       // Create a context for processing the widgets
       URL applicationUrl = request.getServletContext().getResource("/");
       WebContainerContext webContainerContext = new WebContainerContext(applicationUrl, pageRequest, request, response,
-          controllerSession, widgetInstances, webPage, pageRef);
+          controllerSession, widgetInstances, webPackageList, webPage, pageRef);
 
       // Validate post/delete/action calls (a specific widget is targeted)
       if (webContainerContext.isTargeted()) {

@@ -31,7 +31,7 @@
     <maven-cyclonedx-plugin.version>2.7.10</maven-cyclonedx-plugin.version>
     <maven-jacoco-plugin.version>0.8.12</maven-jacoco-plugin.version>
     <maven-war-plugin.version>3.4.0</maven-war-plugin.version>
-    <tomcat.version>9.0.86</tomcat.version>
+    <tomcat.version>9.0.96</tomcat.version>
     <junit.version>5.11.0</junit.version>
     <mockito.version>5.13.0</mockito.version>
     <argon2.version>2.11</argon2.version>
@@ -463,6 +463,12 @@
       <groupId>org.apache.taglibs</groupId>
       <artifactId>taglibs-standard-impl</artifactId>
       <version>${jstl.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.tomcat</groupId>
+      <artifactId>tomcat-jsp-api</artifactId>
+      <version>${tomcat.version}</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.tomcat</groupId>

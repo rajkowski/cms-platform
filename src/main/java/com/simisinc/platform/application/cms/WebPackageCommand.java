@@ -29,6 +29,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.github.fge.jackson.JsonLoader;
 import com.simisinc.platform.presentation.controller.WebPackage;
 
+/**
+ * Builds a list of frontend web packages from web-packages.json
+ *
+ * @author matt rajkowski
+ * @created 11/3/24 8:00 AM
+ */
 public class WebPackageCommand {
 
   private static Log LOG = LogFactory.getLog(WebPackageCommand.class);
