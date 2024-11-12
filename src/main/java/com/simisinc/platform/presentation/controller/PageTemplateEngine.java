@@ -102,17 +102,22 @@ public class PageTemplateEngine {
     templateResolver.setSuffix(".html");
     templateResolver.setCacheable(false);
     templateEngine.setTemplateResolver(templateResolver);
-    templateEngine.addMessageResolver(new TemplateMessageResolver());
 
-    // Load the frontend web resource catalog
+    // Load the frontend web resource catalog for handling web package tags
+    WebPackageResolver webPackageResolver = new WebPackageResolver();
     try {
       LOG.info("Loading web packages...");
       webPackageList = WebPackageCommand.init(webPackageFile);
       LOG.info("Added web packages: " + webPackageList.size());
+      webPackageResolver.setWebPackageList(webPackageList);
     } catch (Exception e) {
       LOG.error("Web packages error:", e);
       // throw new ServletException(e);
     }
+
+    // Add the Page Template Message Resolvers
+    templateEngine.addMessageResolver(webPackageResolver);
+    templateEngine.addMessageResolver(new TemplateMessageResolver());
 
     // Instantiate the widgets
     if (!isInitialized()) {

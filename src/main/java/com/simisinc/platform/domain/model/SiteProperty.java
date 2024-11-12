@@ -34,6 +34,11 @@ public class SiteProperty extends Entity {
   public SiteProperty() {
   }
 
+  public SiteProperty(String name, String value) {
+    this.name = name;
+    this.value = value;
+  }
+
   public int getId() {
     return id;
   }

@@ -39,7 +39,7 @@ public class TemplateMessageResolver implements IMessageResolver {
   /** {@inheritDoc} */
   @Override
   public String resolveMessage(ITemplateContext iTemplateContext, Class<?> aClass, String message, Object[] objects) {
-    LOG.debug("resolveMessage: " + message);
+    // <span th:text="#{user.name(${blogPost.createdBy})}">User Name</span>
     if ("user.name".equals(message)) {
       if (objects != null && objects.length == 1) {
         long userId = Long.parseLong(objects[0].toString());

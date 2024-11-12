@@ -12,6 +12,7 @@
     <meta th:if="${not #strings.isEmpty(pageRenderInfo.keywords)}" name="keywords" th:content="${pageRenderInfo.keywords}">
     <meta th:if="${not #strings.isEmpty(pageRenderInfo.description)}" name="description" th:content="${pageRenderInfo.description}">
     <meta th:if="${not #strings.isEmpty(pageRenderInfo.imageUrl)}" name="og:image" th:content="${pageRenderInfo.imageUrl}">
+    <!--/* Stylesheets before custom styles */-->
     <link rel="stylesheet" type="text/css" href="${ctx}/css/fontawesome-free-6.1.1-web/css/all.min.css" />
     <link rel="stylesheet" type="text/css" href="${ctx}/css/fontawesome-free-6.1.1-web/css/v4-shims.min.css" />
     <link rel="stylesheet" type="text/css" href="${ctx}/css/fontawesome-free-6.1.1-web/css/v5-font-face.min.css" />
@@ -19,8 +20,8 @@
     <link rel="stylesheet" type="text/css" href="${ctx}/css/foundation-6.8.1/motion-ui.min.css" />
     <link rel="stylesheet" type="text/css" href="${ctx}/css/animate-3.7.2/animate.min.css" />
     <link rel="stylesheet" type="text/css" href="${ctx}/css/foundation-datepicker-20180424/foundation-datepicker.min.css" />
-    <link rel="stylesheet" type="text/css" href="${ctx}/javascript/autocomplete-1.0.7/auto-complete.css" />
-    <link rel="stylesheet" type="text/css" href="${ctx}/javascript/swiper-11.0.5/swiper-bundle.min.css" />
+    <link rel="stylesheet" type="text/css" th:href="#{web.package('autocomplete', '/auto-complete.css')}" />
+    <link rel="stylesheet" type="text/css" th:href="#{web.package('swiper', '/swiper-bundle.min.css')}" />
     <link rel="stylesheet" type="text/css" th:href="${#strings.concat(ctx, '/css/platform.css?v=', VERSION)}" />
     <link rel="stylesheet" type="text/css" th:href="${#strings.concat(ctx, '/css/platform-ecommerce.css?v=', VERSION)}" />
     <style th:if="${not #strings.isEmpty(themePropertyMap['theme.body.text.color'])}">
@@ -110,11 +111,12 @@
         'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
         })(window,document,'script','dataLayer','[[${analyticsPropertyMap['analytics.google.tagmanager']}]]');</script>  
     </th:block>
-    <script src="${ctx}/javascript/jquery-3.7.1/jquery.min.js"></script>
-    <script src="${ctx}/javascript/foundation-datepicker-20180424/foundation-datepicker.min.js"></script>
-    <script src="${ctx}/javascript/autocomplete-1.0.7/auto-complete.js"></script>
-    <script src="${ctx}/javascript/js-cookie-3.0.5/js.cookie.min.js"></script>
-    <script src="${ctx}/javascript/swiper-11.0.5/swiper-bundle.min.js"></script>
+    <script th:src="#{web.package('jquery', '/jquery.min.js')}"></script>
+    <script th:src="#{web.package('foundation-datepicker', '/foundation-datepicker.min.js')}"></script>
+    <script th:src="#{web.package('autocomplete', '/auto-complete.js')}"></script>
+    <script th:src="#{web.package('js-cookie', '/js.cookie.min.js')}"></script>
+    <script th:src="#{web.package('swiper', '/swiper-bundle.min.js')}"></script>
+    <!--/* Javascript In Head */-->
   </head>
   <body th:id="${#strings.equals(pageRenderInfo.name, '/')} ? 'body-home'" th:class="${not #strings.isEmpty(pageRenderInfo.cssClass)} ? ${pageRenderInfo.cssClass}">
     <noscript th:if="${not #strings.isEmpty(analyticsPropertyMap['analytics.google.tagmanager']) and #strings.startsWith(analyticsPropertyMap['analytics.google.tagmanager'], 'GTM-')}">
