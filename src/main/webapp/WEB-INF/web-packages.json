@@ -27,6 +27,12 @@
     "foundation-datepicker": {
       "version": "20180424"
     },
+    "fullcalendar": {
+      "version": "6.1.15",
+      "paths": [
+        "node_modules/fullcalendar/index.global.min.js"
+      ]
+    },
     "jquery": {
       "package": "js-jquery",
       "version": "3.7.1",
@@ -47,6 +53,15 @@
       "paths": [
         "node_modules/mermaid/dist/mermaid.js",
         "node_modules/mermaid/dist/mermaid.min.js"
+      ]
+    },
+    "moment": {
+      "version": "2.30.1",
+      "paths": [
+        "node_modules/moment/min/moment.min.js",
+        "node_modules/moment/min/moment.min.js.map",
+        "node_modules/moment/min/locales.min.js",
+        "node_modules/moment/min/locales.min.js.map"
       ]
     },
     "prism": {

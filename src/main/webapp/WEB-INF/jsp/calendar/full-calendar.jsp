@@ -19,6 +19,7 @@
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="js" uri="/WEB-INF/tlds/javascript-escape.tld" %>
 <%@ taglib prefix="url" uri="/WEB-INF/tlds/url-functions.tld" %>
+<%@ taglib prefix="web" uri="/WEB-INF/tlds/web.tld" %>
 <jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="calendarList" class="java.util.ArrayList" scope="request"/>
@@ -32,10 +33,9 @@
 <jsp:useBean id="showMoodleEvents" class="java.lang.String" scope="request"/>
 <jsp:useBean id="moodleBackgroundColor" class="java.lang.String" scope="request"/>
 <jsp:useBean id="moodleTextColor" class="java.lang.String" scope="request"/>
-<%-- Full Calendar --%>
 <link rel="stylesheet" href="${ctx}/css/platform-calendar.css?v=<%= VERSION %>" />
-<script src="${ctx}/javascript/fullcalendar-6.1.11/moment-2.27.0.min.js"></script>
-<script src="${ctx}/javascript/fullcalendar-6.1.11/index.global.min.js"></script>
+<web:script package="moment" file="moment.min.js" />
+<web:script package="fullcalendar" file="index.global.min.js" />
 <c:if test="${(userSession.hasRole('admin') || userSession.hasRole('content-manager'))}">
 <style>
   .fc-day:hover{
