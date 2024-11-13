@@ -17,12 +17,13 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="js" uri="/WEB-INF/tlds/javascript-escape.tld" %>
+<%@ taglib prefix="web" uri="/WEB-INF/tlds/web.tld" %>
 <jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="tableColumnsValue" class="java.lang.String" scope="request"/>
 <jsp:useBean id="activeTableColumnsList" class="java.util.ArrayList" scope="request"/>
 <jsp:useBean id="inactiveTableColumnsList" class="java.util.ArrayList" scope="request"/>
-<script src="${ctx}/javascript/sortablejs-1.15.2/Sortable.min.js"></script>
+<web:script package="sortablejs" file="Sortable.min.js" />
 <style>
   .collection-fields-sortable-list .callout {
     padding: 2rem;

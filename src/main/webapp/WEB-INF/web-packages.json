@@ -94,6 +94,14 @@
         "node_modules/prismjs/themes/prism.min.css"
       ]
     },
+    "sortablejs": {
+      "version": "1.15.3",
+      "paths": [
+        "node_modules/sortablejs/LICENSE",
+        "node_modules/sortablejs/Sortable.js",
+        "node_modules/sortablejs/Sortable.min.js"
+      ]
+    },
     "swiper": {
       "version": "11.0.5",
       "paths": [
