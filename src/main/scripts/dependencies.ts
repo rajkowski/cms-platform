@@ -81,10 +81,19 @@ function copyWebResource(webAppPath: string, webResource: WebResource) {
 
   // Copy the directory contents and named files
   webResource.paths?.forEach((packagePath) => {
-    if (isDirectory(packagePath)) {
-      // Will copy the directory
-      console.log('  Copying directory ' + packagePath + ' to ' + targetPath);
+    if (isDirectory(packagePath) && packagePath.endsWith('/*')) {
+      // Will copy the contents of the directory
+      console.log('  Copying directory contents ' + packagePath + ' to ' + targetPath);
       copyDirectory(packagePath, targetPath);
+    } else if (isDirectory(packagePath)) {
+      // Will copy the directory
+      const newTargetPath = path.join(targetPath, path.basename(packagePath));
+      console.log('  Copying directory ' + packagePath + ' to ' + newTargetPath);
+      if (!exists(newTargetPath)) {
+        // Create the target directory. if it does not exist
+        fs.mkdirSync(newTargetPath);
+      }
+      copyDirectory(packagePath, newTargetPath);
     } else if (isFile(packagePath)) {
       // Will copy the file
       const targetFile = path.join(targetPath, path.basename(packagePath));
@@ -101,6 +110,7 @@ function deleteOldWebResources(webAppPath: string, webResource: WebResource) {
     // Look for directories to delete which have the exact same name, but different version
     if (entry.isDirectory() &&
       installedBasename !== resourceBasename &&
+      installedBasename.substring(installedBasename.lastIndexOf('-') + 1) !== 'plugins' &&
       installedBasename.startsWith(webResource.targetName) &&
       installedBasename.substring(0, installedBasename.lastIndexOf('-')) === installedBasename.substring(0, resourceBasename.lastIndexOf('-'))) {
       // Remove previous versions

@@ -20,6 +20,7 @@
 <%@ taglib prefix="text" uri="/WEB-INF/tlds/text-functions.tld" %>
 <%@ taglib prefix="url" uri="/WEB-INF/tlds/url-functions.tld" %>
 <%@ taglib prefix="number" uri="/WEB-INF/tlds/number-functions.tld" %>
+<%@ taglib prefix="web" uri="/WEB-INF/tlds/web.tld" %>
 <jsp:useBean id="dashboardValue" class="java.lang.String" scope="request"/>
 <jsp:useBean id="hideChartControls" class="java.lang.String" scope="request"/>
 <jsp:useBean id="hideChartTitle" class="java.lang.String" scope="request"/>
@@ -34,7 +35,7 @@
 </c:if>
 <div id="superset-container${widgetContext.uniqueId}" class="superset-dashboard-container">
 </div>
-<script src="${ctx}/javascript/superset-embedded-sdk-0.1.0-alpha.7/index.js"></script>
+<web:script package="superset-embedded-sdk" file="index.js" />
 <script>
   function fetchGuestTokenFromBackend${widgetContext.uniqueId}() {
     return new Promise(function (resolve, reject) {

@@ -14,10 +14,11 @@
   ~ limitations under the License.
   --%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="web" uri="/WEB-INF/tlds/web.tld" %>
 <jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="codeContent" class="java.lang.String" scope="request"/>
-<script src="${ctx}/javascript/tinymce-6.8.4/tinymce.min.js"></script>
+<web:script package="tinymce" file="tinymce.min.js" />
 <script>
 tinymce.init({
   selector: 'textarea',

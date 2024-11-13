@@ -4,18 +4,25 @@
       "package": "@superset-ui/embedded-sdk",
       "version": "0.1.0-alpha.7",
       "paths": [
-        "node_modules/@superset-ui/embedded-sdk/bundle"
+        "node_modules/@superset-ui/embedded-sdk/bundle/*"
       ]
     },
     "ace": {
       "package": "ace-builds",
       "version": "1.32.4",
       "paths": [
-        "node_modules/ace-builds/src-min-noconflict"
+        "node_modules/ace-builds/src-min-noconflict/*"
       ]
     },
     "autocomplete": {
       "version": "1.0.7"
+    },
+    "chartjs": {
+      "package": "chart.js",
+      "version": "4.4.3",
+      "paths": [
+        "node_modules/chart.js/dist/chart.umd.js"
+      ]
     },
     "foundation-datepicker": {
       "version": "20180424"
@@ -62,6 +69,20 @@
         "node_modules/swiper/swiper-bundle.min.mjs",
         "node_modules/swiper/swiper-bundle.min.mjs.map",
         "node_modules/swiper/swiper-bundle.mjs"
+      ]
+    },
+    "tinymce": {
+      "version": "6.8.5",
+      "paths": [
+        "node_modules/tinymce/tinymce.js",
+        "node_modules/tinymce/tinymce.min.js",
+        "node_modules/tinymce/tinymce.d.ts",
+        "node_modules/tinymce/license.txt",
+        "node_modules/tinymce/icons",
+        "node_modules/tinymce/models",
+        "node_modules/tinymce/plugins",
+        "node_modules/tinymce/skins",
+        "node_modules/tinymce/themes"
       ]
     }
   }

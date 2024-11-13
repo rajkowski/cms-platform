@@ -19,10 +19,11 @@
 <%@ taglib prefix="js" uri="/WEB-INF/tlds/javascript-escape.tld" %>
 <%@ taglib prefix="url" uri="/WEB-INF/tlds/url-functions.tld" %>
 <%@ taglib prefix="text" uri="/WEB-INF/tlds/text-functions.tld" %>
+<%@ taglib prefix="web" uri="/WEB-INF/tlds/web.tld" %>
 <jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="cancelUrl" class="java.lang.String" scope="request"/>
-<script src="${ctx}/javascript/tinymce-6.8.4/tinymce.min.js"></script>
+<web:script package="tinymce" file="tinymce.min.js" />
 <script>
   tinymce.init({
     selector: '.html-field',

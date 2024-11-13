@@ -16,6 +16,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="js" uri="/WEB-INF/tlds/javascript-escape.tld" %>
+<%@ taglib prefix="web" uri="/WEB-INF/tlds/web.tld" %>
 <jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="statisticsDataList" class="java.util.ArrayList" scope="request"/>
@@ -24,7 +25,7 @@
   <h4><c:if test="${!empty icon}"><i class="fa ${icon}"></i> </c:if><c:out value="${title}"/></h4>
 </c:if>
 <%@include file="../page_messages.jspf" %>
-<script src="${ctx}/javascript/chartjs-4.4.3/chart.umd.js"></script>
+<web:script package="chartjs" file="chart.umd.js" />
 <canvas id="myChart-${widgetContext.uniqueId}" width="200" height="100"></canvas>
 <script>
   var chartContext = document.getElementById("myChart-${widgetContext.uniqueId}").getContext('2d');
