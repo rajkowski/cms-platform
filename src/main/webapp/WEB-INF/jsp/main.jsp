@@ -93,7 +93,7 @@
     <link rel="stylesheet" type="text/css" href="${ctx}/css/foundation-6.8.1/motion-ui.min.css" />
     <link rel="stylesheet" type="text/css" href="${ctx}/css/animate-3.7.2/animate.min.css" />
     <link rel="stylesheet" type="text/css" href="${ctx}/css/foundation-datepicker-20180424/foundation-datepicker.min.css" />
-    <link rel="stylesheet" type="text/css" href="${ctx}/javascript/autocomplete-1.0.7/auto-complete.css" />
+    <web:stylesheet package="autocomplete" file="auto-complete.css" />
     <web:stylesheet package="swiper" file="swiper-bundle.min.css" />
     <web:stylesheets />
     <link rel="stylesheet" type="text/css" href="${ctx}/css/platform.css" />
@@ -246,10 +246,10 @@
     </c:if>
   </c:if>
   <g:compress>
-    <script src="${ctx}/javascript/jquery-3.7.1/jquery.min.js"></script>
-    <script src="${ctx}/javascript/foundation-datepicker-20180424/foundation-datepicker.min.js"></script>
-    <script src="${ctx}/javascript/autocomplete-1.0.7/auto-complete.js"></script>
-    <script src="${ctx}/javascript/js-cookie-3.0.5/js.cookie.min.js"></script>
+    <web:script package="jquery" file="jquery.min.js" />
+    <web:script package="foundation-datepicker" file="foundation-datepicker.min.js" />
+    <web:script package="autocomplete" file="auto-complete.js" />
+    <web:script package="js-cookie" file="js.cookie.min.js" />
     <web:script package="swiper" file="swiper-bundle.min.js" />
   </g:compress>
   <web:scripts />
@@ -475,7 +475,7 @@
   </script>
   <g:compress>
     <script src="${ctx}/javascript/foundation-6.8.1/what-input-5.2.6.min.js"></script>
-    <script src="${ctx}/javascript/foundation-6.8.1/foundation.min.js"></script>
+    <script src="${ctx}/javascript/foundation-6.8.1/foundation.min.js"></script>    
     <script>
       $(document).foundation();
       <%--

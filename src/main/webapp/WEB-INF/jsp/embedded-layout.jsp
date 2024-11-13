@@ -20,6 +20,7 @@
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="font" uri="/WEB-INF/tlds/font-functions.tld" %>
 <%@ taglib prefix="g" uri="http://granule.com/tags" %>
+<%@ taglib prefix="web" uri="/WEB-INF/tlds/web.tld" %>
 <jsp:useBean id="masterWebPage" class="com.simisinc.platform.domain.model.cms.WebPage" scope="request"/>
 <jsp:useBean id="pageRenderInfo" class="com.simisinc.platform.presentation.controller.PageRenderInfo" scope="request"/>
 <jsp:useBean id="systemPropertyMap" class="java.util.HashMap" scope="request"/>
@@ -62,8 +63,8 @@
     <link rel="stylesheet" type="text/css" href="${ctx}/css/foundation-6.8.1/motion-ui.min.css" />
     <link rel="stylesheet" type="text/css" href="${ctx}/css/animate-3.7.2/animate.min.css" />
     <link rel="stylesheet" type="text/css" href="${ctx}/css/foundation-datepicker-20180424/foundation-datepicker.min.css" />
-    <link rel="stylesheet" type="text/css" href="${ctx}/javascript/autocomplete-1.0.7/auto-complete.css" />
-    <link rel="stylesheet" type="text/css" href="${ctx}/javascript/swiper-11.0.5/swiper-bundle.min.css" />
+    <web:stylesheet package="autocomplete" file="auto-complete.css" />
+    <web:stylesheet package="swiper" file="swiper-bundle.min.css" />
     <link rel="stylesheet" type="text/css" href="${ctx}/css/platform.css" />
   </g:compress>
   <c:if test="${!empty themePropertyMap}">
@@ -141,10 +142,11 @@
   </c:if>
   <%-- Javascript before content--%>
   <g:compress>
-    <script src="${ctx}/javascript/jquery-3.7.1/jquery.min.js"></script>
-    <script src="${ctx}/javascript/foundation-datepicker-20180424/foundation-datepicker.min.js"></script>
-    <script src="${ctx}/javascript/autocomplete-1.0.7/auto-complete.js"></script>
-    <script src="${ctx}/javascript/js-cookie-3.0.5/js.cookie.min.js"></script>
+    <web:script package="jquery" file="jquery.min.js" />
+    <web:script package="foundation-datepicker" file="foundation-datepicker.min.js" />
+    <web:script package="autocomplete" file="auto-complete.js" />
+    <web:script package="js-cookie" file="js.cookie.min.js" />
+    <web:script package="swiper" file="swiper-bundle.min.js" />
   </g:compress>
 </head>
 <body<c:if test="${pageRenderInfo.name eq '/'}"> id="body-home"</c:if><c:if test="${!empty pageRenderInfo.cssClass}"> class="<c:out value="${pageRenderInfo.cssClass}" />"</c:if>>

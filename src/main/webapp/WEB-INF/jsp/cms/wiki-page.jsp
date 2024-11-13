@@ -17,16 +17,17 @@
 <%@ taglib prefix="date" uri="/WEB-INF/tlds/date-functions.tld" %>
 <%@ taglib prefix="font" uri="/WEB-INF/tlds/font-functions.tld" %>
 <%@ taglib prefix="user" uri="/WEB-INF/tlds/user-functions.tld" %>
+<%@ taglib prefix="web" uri="/WEB-INF/tlds/web.tld" %>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="contentHtml" class="java.lang.String" scope="request"/>
 <jsp:useBean id="wiki" class="com.simisinc.platform.domain.model.cms.Wiki" scope="request"/>
 <jsp:useBean id="wikiPage" class="com.simisinc.platform.domain.model.cms.WikiPage" scope="request"/>
 <jsp:useBean id="wikiLinkPrefix" class="java.lang.String" scope="request"/>
 <jsp:useBean id="mermaid" class="java.lang.String" scope="request"/>
-<link rel="stylesheet" href="${ctx}/javascript/prism-1.29.0/prism.css">
-<script src="${ctx}/javascript/prism-1.29.0/prism.min.js"></script>
+<web:stylesheet package="prism" file="prism.min.css" />
+<web:script package="prism" file="prism.js" />
 <c:if test="${mermaid eq 'true'}">
-<script src="${ctx}/javascript/mermaid-10.9.1/mermaid.min.js"></script>
+  <web:script package="mermaid" file="mermaid.min.js" />
 </c:if>
 <c:choose>
   <c:when test="${wiki.startingPage eq wikiPage.id && !empty title}">

@@ -30,13 +30,25 @@
       ]
     },
     "js-cookie": {
-      "version": "3.0.5"
+      "version": "3.0.5",
+      "paths": [
+        "node_modules/js-cookie/dist/js.cookie.min.js"
+      ]
     },
     "mermaid": {
       "version": "10.9.1",
       "paths": [
         "node_modules/mermaid/dist/mermaid.js",
         "node_modules/mermaid/dist/mermaid.min.js"
+      ]
+    },
+    "prism": {
+      "package": "prismjs",
+      "version": "1.29.0",
+      "paths": [
+        "node_modules/prismjs/prism.js",
+        "node_modules/prismjs/themes/prism.css",
+        "node_modules/prismjs/themes/prism.min.css"
       ]
     },
     "swiper": {

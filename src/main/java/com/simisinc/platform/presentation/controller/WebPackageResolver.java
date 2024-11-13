@@ -59,7 +59,7 @@ public class WebPackageResolver implements IMessageResolver {
         packageName = value.substring(0, value.indexOf("/"));
         path = value.substring(value.indexOf("/"));
       } else if (objects.length == 2) {
-        // Method 2: <link rel="stylesheet" type="text/css" th:href="#{web.package('swiper', '/swiper-bundle.min.css')}" />
+        // Method 2: <link rel="stylesheet" type="text/css" th:href="#{web.package('swiper', 'swiper-bundle.min.css')}" />
         packageName = objects[0].toString();
         path = objects[1].toString();
       }
@@ -69,7 +69,7 @@ public class WebPackageResolver implements IMessageResolver {
       }
       WebPackage webPackage = (webPackageList.get(packageName));
       if (webPackage != null) {
-        return iTemplateContext.getVariable("ctx") + "/javascript/" + webPackage.getName() + "-" + webPackage.getVersion() + path;
+        return iTemplateContext.getVariable("ctx") + "/javascript/" + webPackage.getName() + "-" + webPackage.getVersion() + "/" + path;
       }
       LOG.error("Package not found: " + packageName);
     }

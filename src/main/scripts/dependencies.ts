@@ -1,4 +1,3 @@
-// A script to copy updated dependencies into the web application and update the version
 import fs from 'fs';
 import path from 'path';
 import packages from '../../../package.json';
@@ -8,7 +7,7 @@ import web from '../webapp/WEB-INF/web-packages.json';
 type WebDependency = {
   package?: string;
   version?: string;
-  paths: string[];
+  paths?: string[];
 };
 
 // the combined package.json and web.json record
@@ -17,7 +16,7 @@ type WebResource = {
   targetName: string;
   targetDir: string;
   version: string;
-  paths: string[];
+  paths?: string[];
 }
 
 // Determine the destination
@@ -49,9 +48,13 @@ Object.entries(dependencies).forEach(([key, value]) => {
     // Upgrade the packages in the web application
     try {
       console.log('Resource: ' + resourceId + '==' + version);
-      copyWebResource(webAppPath, webResource);
-      deleteOldWebResources(webAppPath, webResource);
-      webDependency.version = version;
+      if (webResource.paths) {
+        copyWebResource(webAppPath, webResource);
+        deleteOldWebResources(webAppPath, webResource);
+        webDependency.version = version;
+      } else {
+        console.log('  Skipped.');
+      }
     } catch (error) {
       console.error('Error with package dependency ' + resourceId + ': ' + error);
     }
@@ -59,13 +62,12 @@ Object.entries(dependencies).forEach(([key, value]) => {
 
   // Save the file indicating the installed version
   const file = path.join('src', 'main', 'webapp', 'WEB-INF', 'web-packages.json')
-  console.log('Writing latest versions... ' + file);
   fs.writeFileSync(file, JSON.stringify(web, null, 2));
 });
 
 function copyWebResource(webAppPath: string, webResource: WebResource) {
   // Make sure the source has paths defined
-  if (!webResource.paths.length) {
+  if (!webResource.paths?.length) {
     throw new Error("Could not copy " + webResource.sourceDir);
   }
 
@@ -78,7 +80,7 @@ function copyWebResource(webAppPath: string, webResource: WebResource) {
   }
 
   // Copy the directory contents and named files
-  webResource.paths.forEach((packagePath) => {
+  webResource.paths?.forEach((packagePath) => {
     if (isDirectory(packagePath)) {
       // Will copy the directory
       console.log('  Copying directory ' + packagePath + ' to ' + targetPath);

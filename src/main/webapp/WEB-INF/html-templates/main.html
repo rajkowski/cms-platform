@@ -20,8 +20,8 @@
     <link rel="stylesheet" type="text/css" href="${ctx}/css/foundation-6.8.1/motion-ui.min.css" />
     <link rel="stylesheet" type="text/css" href="${ctx}/css/animate-3.7.2/animate.min.css" />
     <link rel="stylesheet" type="text/css" href="${ctx}/css/foundation-datepicker-20180424/foundation-datepicker.min.css" />
-    <link rel="stylesheet" type="text/css" th:href="#{web.package('autocomplete', '/auto-complete.css')}" />
-    <link rel="stylesheet" type="text/css" th:href="#{web.package('swiper', '/swiper-bundle.min.css')}" />
+    <link rel="stylesheet" type="text/css" th:href="#{web.package('autocomplete', 'auto-complete.css')}" />
+    <link rel="stylesheet" type="text/css" th:href="#{web.package('swiper', 'swiper-bundle.min.css')}" />
     <link rel="stylesheet" type="text/css" th:href="${#strings.concat(ctx, '/css/platform.css?v=', VERSION)}" />
     <link rel="stylesheet" type="text/css" th:href="${#strings.concat(ctx, '/css/platform-ecommerce.css?v=', VERSION)}" />
     <style th:if="${not #strings.isEmpty(themePropertyMap['theme.body.text.color'])}">
@@ -111,11 +111,11 @@
         'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
         })(window,document,'script','dataLayer','[[${analyticsPropertyMap['analytics.google.tagmanager']}]]');</script>  
     </th:block>
-    <script th:src="#{web.package('jquery', '/jquery.min.js')}"></script>
-    <script th:src="#{web.package('foundation-datepicker', '/foundation-datepicker.min.js')}"></script>
-    <script th:src="#{web.package('autocomplete', '/auto-complete.js')}"></script>
-    <script th:src="#{web.package('js-cookie', '/js.cookie.min.js')}"></script>
-    <script th:src="#{web.package('swiper', '/swiper-bundle.min.js')}"></script>
+    <script th:src="#{web.package('jquery', 'jquery.min.js')}"></script>
+    <script th:src="#{web.package('foundation-datepicker', 'foundation-datepicker.min.js')}"></script>
+    <script th:src="#{web.package('autocomplete', 'auto-complete.js')}"></script>
+    <script th:src="#{web.package('js-cookie', 'js.cookie.min.js')}"></script>
+    <script th:src="#{web.package('swiper', 'swiper-bundle.min.js')}"></script>
     <!--/* Javascript In Head */-->
   </head>
   <body th:id="${#strings.equals(pageRenderInfo.name, '/')} ? 'body-home'" th:class="${not #strings.isEmpty(pageRenderInfo.cssClass)} ? ${pageRenderInfo.cssClass}">
