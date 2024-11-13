@@ -44,6 +44,7 @@ public class WebPackageStylesheetTag extends SimpleTagSupport {
 
   private String packageName = null;
   private String file = null;
+  private String media = null;
 
   public void setPackage(String packageName) {
     this.packageName = packageName;
@@ -51,6 +52,10 @@ public class WebPackageStylesheetTag extends SimpleTagSupport {
 
   public void setFile(String file) {
     this.file = file;
+  }
+
+  public void setMedia(String media) {
+    this.media = media;
   }
 
   @Override
@@ -67,8 +72,14 @@ public class WebPackageStylesheetTag extends SimpleTagSupport {
     if (StringUtils.isNotEmpty(version)) {
       LOG.debug("WebPackage Stylesheet Requested: " + packageName + "==" + version + ": " + file);
       String ctx = (String) pageContext.getAttribute(CONTEXT_PATH, PageContext.REQUEST_SCOPE);
+      // Attributes
+      String mediaValue = "";
+      if (media != null) {
+        mediaValue = " media=\"" + media + "\"";
+      }
       JspWriter out = pageContext.getOut();
-      out.println("<link rel=\"stylesheet\" type=\"text/css\" href=\"" + ctx + "/javascript/" + packageName + "-" + version + "/" + file + "\" />");
+      out.println("<link rel=\"stylesheet\" type=\"text/css\" href=\"" + ctx + "/javascript/" + packageName + "-" + version + "/"
+          + file + "\"" + mediaValue + " />");
     } else {
       LOG.error("WebPackage Resource NOT FOUND: " + packageName + ": " + file);
     }

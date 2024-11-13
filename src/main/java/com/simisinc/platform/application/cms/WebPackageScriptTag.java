@@ -72,11 +72,12 @@ public class WebPackageScriptTag extends SimpleTagSupport {
     if (StringUtils.isNotEmpty(version)) {
       LOG.debug("WebPackage Script Requested: " + packageName + "==" + version + ": " + file);
       String ctx = (String) pageContext.getAttribute(CONTEXT_PATH, PageContext.REQUEST_SCOPE);
-      JspWriter out = pageContext.getOut();
+      // Attributes
       String charsetValue = "";
       if (charset != null) {
         charsetValue = " charset=\"" + charset + "\"";
       }
+      JspWriter out = pageContext.getOut();
       out.println(
           "<script src=\"" + ctx + "/javascript/" + packageName + "-" + version + "/" + file + "\"" + charsetValue + "></script>");
     } else {

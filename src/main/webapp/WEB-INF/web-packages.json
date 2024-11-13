@@ -48,6 +48,27 @@
         "node_modules/js-cookie/dist/js.cookie.min.js"
       ]
     },
+    "jspreadsheet": {
+      "package": "jspreadsheet-ce",
+      "version": "4.15.0",
+      "paths": [
+        "node_modules/jspreadsheet-ce/dist/index.js",
+        "node_modules/jspreadsheet-ce/dist/index.d.ts",
+        "node_modules/jspreadsheet-ce/dist/jspreadsheet.css",
+        "node_modules/jspreadsheet-ce/dist/jspreadsheet.datatables.css",
+        "node_modules/jspreadsheet-ce/dist/jspreadsheet.theme.css"
+      ]
+    },
+    "jsuites": {
+      "version": "5.7.2",
+      "paths": [
+        "node_modules/jsuites/dist/jsuites.css",
+        "node_modules/jsuites/dist/jsuites.d.ts",
+        "node_modules/jsuites/dist/jsuites.js",
+        "node_modules/jsuites/dist/jsuites.webcomponents.js",
+        "node_modules/jsuites/dist/types"
+      ]
+    },
     "mermaid": {
       "version": "11.4.0",
       "paths": [

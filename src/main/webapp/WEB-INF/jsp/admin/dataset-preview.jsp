@@ -18,14 +18,15 @@
 <%@ taglib prefix="js" uri="/WEB-INF/tlds/javascript-escape.tld" %>
 <%@ taglib prefix="url" uri="/WEB-INF/tlds/url-functions.tld" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="web" uri="/WEB-INF/tlds/web.tld" %>
 <jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="dataset" class="com.simisinc.platform.domain.model.datasets.Dataset" scope="request"/>
 <jsp:useBean id="sampleRows" class="java.util.ArrayList" scope="request"/>
-<script src="${ctx}/javascript/jspreadsheet-4.13.4/index.js"></script>
-<link rel="stylesheet" media="screen" href="${ctx}/javascript/jspreadsheet-4.13.4/jspreadsheet.css">
-<script src="${ctx}/javascript/jsuites-5.0.29/jsuites.min.js"></script>
-<link rel="stylesheet" media="screen" href="${ctx}/javascript/jsuites-5.0.29/jsuites.css">
+<web:script package="jspreadsheet" file="index.js" />
+<web:stylesheet package="jspreadsheet" file="jspreadsheet.css" media="screen" />
+<web:script package="jsuites" file="jsuites.js" />
+<web:stylesheet package="jsuites" file="jsuites.css" media="screen" />
 <c:if test="${!empty title}">
   <h4><c:if test="${!empty icon}"><i class="fa ${icon}"></i> </c:if><c:out value="${title}"/></h4>
 </c:if>
