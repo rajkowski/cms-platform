@@ -36,7 +36,7 @@
       ]
     },
     "mermaid": {
-      "version": "10.9.1",
+      "version": "11.4.0",
       "paths": [
         "node_modules/mermaid/dist/mermaid.js",
         "node_modules/mermaid/dist/mermaid.min.js"
