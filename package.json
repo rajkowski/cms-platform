@@ -10,7 +10,7 @@
     "node" : ">=18.17"
   },
   "scripts": {
-    "update": "ts-node src/main/scripts/dependencies.ts"
+    "postinstall": "ts-node src/main/scripts/dependencies.ts"
   },
   "dependencies": {
     "@superset-ui/embedded-sdk": "0.1.0-alpha.7",
