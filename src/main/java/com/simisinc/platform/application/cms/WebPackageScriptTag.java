@@ -44,6 +44,7 @@ public class WebPackageScriptTag extends SimpleTagSupport {
 
   private String packageName = null;
   private String file = null;
+  private String charset = null;
 
   public void setPackage(String packageName) {
     this.packageName = packageName;
@@ -51,6 +52,10 @@ public class WebPackageScriptTag extends SimpleTagSupport {
 
   public void setFile(String file) {
     this.file = file;
+  }
+
+  public void setCharset(String charset) {
+    this.charset = charset;
   }
 
   @Override
@@ -68,7 +73,12 @@ public class WebPackageScriptTag extends SimpleTagSupport {
       LOG.debug("WebPackage Script Requested: " + packageName + "==" + version + ": " + file);
       String ctx = (String) pageContext.getAttribute(CONTEXT_PATH, PageContext.REQUEST_SCOPE);
       JspWriter out = pageContext.getOut();
-      out.println("<script src=\"" + ctx + "/javascript/" + packageName + "-" + version + "/" + file + "\"></script>");
+      String charsetValue = "";
+      if (charset != null) {
+        charsetValue = " charset=\"" + charset + "\"";
+      }
+      out.println(
+          "<script src=\"" + ctx + "/javascript/" + packageName + "-" + version + "/" + file + "\"" + charsetValue + "></script>");
     } else {
       LOG.error("WebPackage Resource NOT FOUND: " + packageName + ": " + file);
     }
