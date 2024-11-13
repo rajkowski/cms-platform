@@ -17,13 +17,14 @@
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="js" uri="/WEB-INF/tlds/javascript-escape.tld" %>
+<%@ taglib prefix="web" uri="/WEB-INF/tlds/web.tld" %>
 <jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="collection" class="com.simisinc.platform.domain.model.items.Collection" scope="request"/>
 <jsp:useBean id="item" class="com.simisinc.platform.domain.model.items.Item" scope="request"/>
 <jsp:useBean id="cancelUrl" class="java.lang.String" scope="request"/>
-<script src="${ctx}/javascript/ace-1.32.4/ace.js" type="text/javascript" charset="utf-8"></script>
-<script src="${ctx}/javascript/ace-1.32.4/mode-json.js" type="text/javascript" charset="utf-8"></script>
+<web:script package="ace" file="ace.js" charset="utf-8" />
+<web:script package="ace" file="mode-json.js" charset="utf-8" />
 <style>
   #pageXml {
     right: 0;

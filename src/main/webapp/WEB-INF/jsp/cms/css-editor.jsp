@@ -16,14 +16,14 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="js" uri="/WEB-INF/tlds/javascript-escape.tld" %>
+<%@ taglib prefix="web" uri="/WEB-INF/tlds/web.tld" %>
 <jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="stylesheet" class="com.simisinc.platform.domain.model.cms.Stylesheet" scope="request"/>
 <jsp:useBean id="hasBundled" class="java.lang.String" scope="request"/>
 <jsp:useBean id="isBundled" class="java.lang.String" scope="request"/>
-<script src="${ctx}/javascript/ace-1.32.4/ace.js" type="text/javascript" charset="utf-8"></script>
-<script src="${ctx}/javascript/ace-1.32.4/mode-css.js" type="text/javascript" charset="utf-8"></script>
-<%--<script src="${ctx}/javascript/ace-1.32.4/ext-language_tools.js" type="text/javascript" charset="utf-8"></script>--%>
+<web:script package="ace" file="ace.js" charset="utf-8" />
+<web:script package="ace" file="mode-css.js" charset="utf-8" />
 <style>
   #stylesheetCss {
     right: 0;
