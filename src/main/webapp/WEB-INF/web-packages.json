@@ -69,6 +69,18 @@
         "node_modules/jsuites/dist/types"
       ]
     },
+    "leaflet": {
+      "version": "1.9.4",
+      "paths": [
+        "node_modules/leaflet/dist/*"
+      ]
+    },
+    "leaflet.markercluster": {
+      "version": "1.5.3",
+      "paths": [
+        "node_modules/leaflet.markercluster/dist/*"
+      ]
+    },
     "mermaid": {
       "version": "11.4.0",
       "paths": [

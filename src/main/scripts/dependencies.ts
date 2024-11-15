@@ -19,7 +19,7 @@ type WebResource = {
   paths?: string[];
 }
 
-// Determine the destination
+// Determine the web application's javascript folder
 const webAppPath = path.join(process.cwd(), 'src', 'main', 'webapp', 'javascript');
 if (!isDirectory(webAppPath)) {
   console.log('Web application directory not found: ' + webAppPath);
@@ -37,6 +37,7 @@ Object.entries(dependencies).forEach(([key, value]) => {
   const packageDependencies = Object.entries(packages.dependencies);
   const packageDependency = packageDependencies.find(([key]) => key === packageId);
   if (packageDependency) {
+    // Setup a context for copying the package dependencies into the webapp path
     const version = packageDependency[1];
     let webResource = {
       "sourceDir": `${packageId}`,
@@ -79,12 +80,15 @@ function copyWebResource(webAppPath: string, webResource: WebResource) {
     console.log('  Creating directory: ' + targetPath);
   }
 
-  // Copy the directory contents and named files
+  // Copy the node_modules directories and named files
   webResource.paths?.forEach((packagePath) => {
-    if (isDirectory(packagePath) && packagePath.endsWith('/*')) {
+    if (packagePath.endsWith('/*')) {
       // Will copy the contents of the directory
-      console.log('  Copying directory contents ' + packagePath + ' to ' + targetPath);
-      copyDirectory(packagePath, targetPath);
+      const newSourcePath = packagePath.substring(0, packagePath.lastIndexOf('/*'));
+      if (isDirectory(newSourcePath)) {
+        console.log('  Copying directory contents ' + newSourcePath + ' to ' + targetPath);
+        copyDirectory(newSourcePath, targetPath);
+      }
     } else if (isDirectory(packagePath)) {
       // Will copy the directory
       const newTargetPath = path.join(targetPath, path.basename(packagePath));

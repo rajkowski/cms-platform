@@ -17,6 +17,7 @@
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="js" uri="/WEB-INF/tlds/javascript-escape.tld" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="web" uri="/WEB-INF/tlds/web.tld" %>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="mapCredentials" class="com.simisinc.platform.domain.model.maps.MapCredentials" scope="request"/>
 <jsp:useBean id="latitude" class="java.lang.String" scope="request"/>
@@ -27,11 +28,11 @@
 <jsp:useBean id="markerTitle" class="java.lang.String" scope="request"/>
 <jsp:useBean id="markerText" class="java.lang.String" scope="request"/>
 <%-- Leaflet JS + Marker Cluster --%>
-<link rel="stylesheet" href="${ctx}/javascript/leaflet-1.9.4/leaflet.css" />
-<link rel="stylesheet" href="${ctx}/javascript/leaflet.markercluster-1.5.3/MarkerCluster.css" />
-<link rel="stylesheet" href="${ctx}/javascript/leaflet.markercluster-1.5.3/MarkerCluster.Default.css" />
-<script src="${ctx}/javascript/leaflet-1.9.4/leaflet.js"></script>
-<script src="${ctx}/javascript/leaflet.markercluster-1.5.3/leaflet.markercluster.js"></script>
+<web:stylesheet package="leaflet" file="leaflet.css" />
+<web:stylesheet package="leaflet.markercluster" file="MarkerCluster.css" />
+<web:stylesheet package="leaflet.markercluster" file="MarkerCluster.Default.css" />
+<web:script package="leaflet" file="leaflet.js" />
+<web:script package="leaflet.markercluster" file="leaflet.markercluster.js" />
 <%-- Render the widget --%>
 <c:if test="${!empty title}">
   <h4><c:if test="${!empty icon}"><i class="fa ${icon}"></i> </c:if><c:out value="${title}"/></h4>
