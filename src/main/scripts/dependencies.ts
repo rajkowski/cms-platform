@@ -53,8 +53,6 @@ Object.entries(dependencies).forEach(([key, value]) => {
         copyWebResource(webAppPath, webResource);
         deleteOldWebResources(webAppPath, webResource);
         webDependency.version = version;
-      } else {
-        console.log('  Skipped.');
       }
     } catch (error) {
       console.error('Error with package dependency ' + resourceId + ': ' + error);

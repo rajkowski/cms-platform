@@ -17,6 +17,13 @@ interface DropdownItem {
     color?: string;
 }
 
+interface Item {
+    /** Value of the selected item. */
+    id?: string | number;
+    /** Description of the item */
+    title?: string;
+}
+
 interface DropdownOptions {
     /** Endpoint to fetch data from a remote server */
     url?: string;
@@ -72,6 +79,10 @@ interface DropdownOptions {
     sortResults?: boolean;
     /** Indicates if the dropdown should automatically receive focus upon creation */
     autofocus?: boolean;
+    /** Custom prompt on insert new items */
+    prompt?: (addNewRow: (title: string, id: any) => void) => boolean;
+    /** Allow toggle values on single dropdowns. Default: true */
+    allowEmpty?: boolean;
 }
 
 interface ItemContainer {
@@ -85,7 +96,7 @@ interface ItemContainer {
 
 /** Toast Plugin */
 export type Dropdown = (el: HTMLElement, options: DropdownOptions) => {
-    /** Add a new item to the dropdown */
+    /** Add a new item to the dropdown. */
     add: (title: string, id: string|number) => DropdownItem;
     /** Append new data to the dropdown */
     appendData: (data: DropdownItem[]) => void

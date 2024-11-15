@@ -1,14 +1,12 @@
-(function webpackUniversalModuleDefinition(root, factory) {
-	if(typeof exports === 'object' && typeof module === 'object')
-		module.exports = factory();
-	else if(typeof define === 'function' && define.amd)
-		define([], factory);
-	else if(typeof exports === 'object')
-		exports["jSuites"] = factory();
-	else
-		root["jSuites"] = factory();
-})(this, function() {
-return /******/ (function() { // webpackBootstrap
+
+;(function (global, factory) {
+    typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+    typeof define === 'function' && define.amd ? define(factory) :
+    global.jSuites = factory();
+}(this, (function () {
+
+var jSuites;
+/******/ (function() { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
 /***/ 195:
@@ -369,6 +367,53 @@ __webpack_require__.d(__webpack_exports__, {
   "default": function() { return /* binding */ jsuites; }
 });
 
+;// CONCATENATED MODULE: ./src/utils/dictionary.js
+// Update dictionary
+var setDictionary = function(d) {
+    if (! document.dictionary) {
+        document.dictionary = {}
+    }
+    // Replace the key into the dictionary and append the new ones
+    var t = null;
+    var i = null;
+    var k = Object.keys(d);
+    for (i = 0; i < k.length; i++) {
+        document.dictionary[k[i]] = d[k[i]];
+    }
+}
+
+// Translate
+var translate = function(t) {
+    if (typeof(document) !== "undefined" && document.dictionary) {
+        return document.dictionary[t] || t;
+    } else {
+        return t;
+    }
+}
+
+
+/* harmony default export */ var dictionary = ({ setDictionary, translate });
+;// CONCATENATED MODULE: ./src/utils/tracking.js
+ const Tracking = function(component, state) {
+    if (state === true) {
+        window['jSuitesStateControl'] = window['jSuitesStateControl'].filter(function(v) {
+            return v !== null;
+        });
+
+        // Start after all events
+        setTimeout(function() {
+            window['jSuitesStateControl'].push(component);
+        }, 0);
+
+    } else {
+        var index = window['jSuitesStateControl'].indexOf(component);
+        if (index >= 0) {
+            window['jSuitesStateControl'].splice(index, 1);
+        }
+    }
+}
+
+/* harmony default export */ var tracking = (Tracking);
 ;// CONCATENATED MODULE: ./src/utils/helpers.js
 var Helpers = {};
 
@@ -528,183 +573,6 @@ Helpers.findElement = function(element, condition) {
 }
 
 /* harmony default export */ var helpers = (Helpers);
-;// CONCATENATED MODULE: ./src/utils/helpers.date.js
-
-
-function HelpersDate() {
-    var Component = {};
-
-    Component.now = function (date, dateOnly) {
-        var y = null;
-        var m = null;
-        var d = null;
-        var h = null;
-        var i = null;
-        var s = null;
-
-        if (Array.isArray(date)) {
-            y = date[0];
-            m = date[1];
-            d = date[2];
-            h = date[3];
-            i = date[4];
-            s = date[5];
-        } else {
-            if (! date) {
-                date = new Date();
-            }
-            y = date.getFullYear();
-            m = date.getMonth() + 1;
-            d = date.getDate();
-            h = date.getHours();
-            i = date.getMinutes();
-            s = date.getSeconds();
-        }
-
-        if (dateOnly == true) {
-            return helpers.two(y) + '-' + helpers.two(m) + '-' + helpers.two(d);
-        } else {
-            return helpers.two(y) + '-' + helpers.two(m) + '-' + helpers.two(d) + ' ' + helpers.two(h) + ':' + helpers.two(i) + ':' + helpers.two(s);
-        }
-    }
-
-    Component.toArray = function (value) {
-        var date = value.split(((value.indexOf('T') !== -1) ? 'T' : ' '));
-        var time = date[1];
-        var date = date[0].split('-');
-        var y = parseInt(date[0]);
-        var m = parseInt(date[1]);
-        var d = parseInt(date[2]);
-        var h = 0;
-        var i = 0;
-
-        if (time) {
-            time = time.split(':');
-            h = parseInt(time[0]);
-            i = parseInt(time[1]);
-        }
-        return [y, m, d, h, i, 0];
-    }
-
-    var excelInitialTime = Date.UTC(1900, 0, 0);
-    var excelLeapYearBug = Date.UTC(1900, 1, 29);
-    var millisecondsPerDay = 86400000;
-
-    /**
-     * Date to number
-     */
-    Component.dateToNum = function (jsDate) {
-        if (typeof (jsDate) === 'string') {
-            jsDate = new Date(jsDate + '  GMT+0');
-        }
-        var jsDateInMilliseconds = jsDate.getTime();
-        if (jsDateInMilliseconds >= excelLeapYearBug) {
-            jsDateInMilliseconds += millisecondsPerDay;
-        }
-        jsDateInMilliseconds -= excelInitialTime;
-
-        return jsDateInMilliseconds / millisecondsPerDay;
-    }
-
-    /**
-     * Number to date
-     *
-     * IMPORTANT: Excel incorrectly considers 1900 to be a leap year
-     */
-    Component.numToDate = function (excelSerialNumber) {
-        var jsDateInMilliseconds = excelInitialTime + excelSerialNumber * millisecondsPerDay;
-        if (jsDateInMilliseconds >= excelLeapYearBug) {
-            jsDateInMilliseconds -= millisecondsPerDay;
-        }
-
-        const d = new Date(jsDateInMilliseconds);
-
-        var date = [
-            d.getUTCFullYear(),
-            d.getUTCMonth() + 1,
-            d.getUTCDate(),
-            d.getUTCHours(),
-            d.getUTCMinutes(),
-            d.getUTCSeconds(),
-        ];
-
-        return Component.now(date);
-    }
-
-    // Jsuites calendar labels
-    Component.weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    Component.months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-    Component.weekdaysShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    Component.monthsShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-    return Component;
-}
-
-/* harmony default export */ var helpers_date = (HelpersDate());
-;// CONCATENATED MODULE: ./src/utils/dictionary.js
-
-
-// Update dictionary
-var setDictionary = function(d) {
-    if (! document.dictionary) {
-        document.dictionary = {}
-    }
-    // Replace the key into the dictionary and append the new ones
-    var t = null;
-    var i = null;
-    var k = Object.keys(d);
-    for (i = 0; i < k.length; i++) {
-        document.dictionary[k[i]] = d[k[i]];
-    }
-
-    // Translations
-    for (i = 0; i < helpers_date.weekdays.length; i++) {
-        t =  translate(helpers_date.weekdays[i]);
-        if (helpers_date.weekdays[i]) {
-            helpers_date.weekdays[i] = t;
-            helpers_date.weekdaysShort[i] = t.substr(0,3);
-        }
-    }
-    for (i = 0; i < helpers_date.months.length; i++) {
-        t = translate(helpers_date.months[i]);
-        if (t) {
-            helpers_date.months[i] = t;
-            helpers_date.monthsShort[i] = t.substr(0,3);
-        }
-    }
-}
-
-// Translate
-var translate = function(t) {
-    if (typeof(document) !== "undefined" && document.dictionary) {
-        return document.dictionary[t] || t;
-    } else {
-        return t;
-    }
-}
-
-
-/* harmony default export */ var dictionary = ({ setDictionary, translate });
-;// CONCATENATED MODULE: ./src/utils/tracking.js
-function Tracking(component, state) {
-    if (state == true) {
-        document.jsuitesComponents = document.jsuitesComponents.filter(function(v) {
-            return v !== null;
-        });
-
-        // Start after all events
-        setTimeout(function() {
-            document.jsuitesComponents.push(component);
-        }, 0);
-
-    } else {
-        var index = document.jsuitesComponents.indexOf(component);
-        if (index >= 0) {
-            document.jsuitesComponents.splice(index, 1);
-        }
-    }
-}
-
 ;// CONCATENATED MODULE: ./src/utils/path.js
 function Path(str, val, remove) {
     str = str.split('.');
@@ -777,37 +645,54 @@ function Sorting(el, options) {
     el.classList.add('jsorting');
 
     el.addEventListener('dragstart', function(e) {
-        var position = Array.prototype.indexOf.call(e.target.parentNode.children, e.target);
-        dragElement = {
-            element: e.target,
-            o: position,
-            d: position
+        let target = e.target;
+        if (target.nodeType === 3) {
+            if (target.parentNode.getAttribute('draggable') === 'true') {
+                target = target.parentNode;
+            } else {
+                e.preventDefault();
+                e.stopPropagation();
+                return;
+            }
         }
-        e.target.style.opacity = '0.25';
 
-        if (typeof(obj.options.ondragstart) == 'function') {
-            obj.options.ondragstart(el, e.target, e);
+        if (target.getAttribute('draggable') === 'true') {
+            let position = Array.prototype.indexOf.call(target.parentNode.children, target);
+            dragElement = {
+                element: target,
+                o: position,
+                d: position
+            }
+            target.style.opacity = '0.25';
+
+            if (typeof (obj.options.ondragstart) == 'function') {
+                obj.options.ondragstart(el, target, e);
+            }
+
+            e.dataTransfer.setDragImage(target,0,0);
         }
     });
 
     el.addEventListener('dragover', function(e) {
         e.preventDefault();
 
-        if (getElement(e.target) && dragElement) {
-            if (e.target.getAttribute('draggable') == 'true' && dragElement.element != e.target) {
-                if (! obj.options.direction) {
-                    var condition = e.target.clientHeight / 2 > e.offsetY;
-                } else {
-                    var condition = e.target.clientWidth / 2 > e.offsetX;
-                }
+        if (dragElement) {
+            if (getElement(e.target)) {
+                if (e.target.getAttribute('draggable') == 'true' && dragElement.element != e.target) {
+                    if (!obj.options.direction) {
+                        var condition = e.target.clientHeight / 2 > e.offsetY;
+                    } else {
+                        var condition = e.target.clientWidth / 2 > e.offsetX;
+                    }
 
-                if (condition) {
-                    e.target.parentNode.insertBefore(dragElement.element, e.target);
-                } else {
-                    e.target.parentNode.insertBefore(dragElement.element, e.target.nextSibling);
-                }
+                    if (condition) {
+                        e.target.parentNode.insertBefore(dragElement.element, e.target);
+                    } else {
+                        e.target.parentNode.insertBefore(dragElement.element, e.target.nextSibling);
+                    }
 
-                dragElement.d = Array.prototype.indexOf.call(e.target.parentNode.children, dragElement.element);
+                    dragElement.d = Array.prototype.indexOf.call(e.target.parentNode.children, dragElement.element);
+                }
             }
         }
     });
@@ -839,14 +724,16 @@ function Sorting(el, options) {
     el.addEventListener('drop', function(e) {
         e.preventDefault();
 
-        if (dragElement && (dragElement.o != dragElement.d)) {
-            if (typeof(obj.options.ondrop) == 'function') {
-                obj.options.ondrop(el, dragElement.o, dragElement.d, dragElement.element, e.target, e);
+        if (dragElement) {
+            if (dragElement.o !== dragElement.d) {
+                if (typeof (obj.options.ondrop) == 'function') {
+                    obj.options.ondrop(el, dragElement.o, dragElement.d, dragElement.element, e.target, e);
+                }
             }
-        }
 
-        dragElement.element.style.opacity = '';
-        dragElement = null;
+            dragElement.element.style.opacity = '';
+            dragElement = null;
+        }
     });
 
     var getElement = function(element) {
@@ -1061,7 +948,14 @@ function Ajax() {
 
         var httpRequest = new XMLHttpRequest();
         httpRequest.open(options.method, options.url, true);
-        httpRequest.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+        if (options.requestedWith) {
+            httpRequest.setRequestHeader('X-Requested-With', options.requestedWith);
+        } else {
+            if (options.requestedWith !== false) {
+                httpRequest.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            }
+        }
 
         // Content type
         if (options.contentType) {
@@ -1108,6 +1002,24 @@ function Ajax() {
 
         if (document.ajax && typeof(document.ajax.beforeSend) == 'function') {
             document.ajax.beforeSend(httpRequest);
+        }
+
+        httpRequest.onerror = function() {
+            if (options.error && typeof(options.error) == 'function') {
+                options.error({
+                    message: 'Network error: Unable to reach the server.',
+                    status: 0
+                });
+            }
+        }
+
+        httpRequest.ontimeout = function() {
+            if (options.error && typeof(options.error) == 'function') {
+                options.error({
+                    message: 'Request timed out after ' + httpRequest.timeout + 'ms.',
+                    status: 0
+                });
+            }
         }
 
         httpRequest.onload = function() {
@@ -1272,17 +1184,17 @@ function Animation() {
     
     Component.slideLeft = function (element, direction, done) {
         if (direction == true) {
-            element.classList.add('slide-left-in');
+            element.classList.add('jslide-left-in');
             setTimeout(function () {
-                element.classList.remove('slide-left-in');
+                element.classList.remove('jslide-left-in');
                 if (typeof (done) == 'function') {
                     done();
                 }
             }, 400);
         } else {
-            element.classList.add('slide-left-out');
+            element.classList.add('jslide-left-out');
             setTimeout(function () {
-                element.classList.remove('slide-left-out');
+                element.classList.remove('jslide-left-out');
                 if (typeof (done) == 'function') {
                     done();
                 }
@@ -1292,17 +1204,17 @@ function Animation() {
     
     Component.slideRight = function (element, direction, done) {
         if (direction === true) {
-            element.classList.add('slide-right-in');
+            element.classList.add('jslide-right-in');
             setTimeout(function () {
-                element.classList.remove('slide-right-in');
+                element.classList.remove('jslide-right-in');
                 if (typeof (done) == 'function') {
                     done();
                 }
             }, 400);
         } else {
-            element.classList.add('slide-right-out');
+            element.classList.add('jslide-right-out');
             setTimeout(function () {
-                element.classList.remove('slide-right-out');
+                element.classList.remove('jslide-right-out');
                 if (typeof (done) == 'function') {
                     done();
                 }
@@ -1312,17 +1224,17 @@ function Animation() {
     
     Component.slideTop = function (element, direction, done) {
         if (direction === true) {
-            element.classList.add('slide-top-in');
+            element.classList.add('jslide-top-in');
             setTimeout(function () {
-                element.classList.remove('slide-top-in');
+                element.classList.remove('jslide-top-in');
                 if (typeof (done) == 'function') {
                     done();
                 }
             }, 400);
         } else {
-            element.classList.add('slide-top-out');
+            element.classList.add('jslide-top-out');
             setTimeout(function () {
-                element.classList.remove('slide-top-out');
+                element.classList.remove('jslide-top-out');
                 if (typeof (done) == 'function') {
                     done();
                 }
@@ -1332,17 +1244,17 @@ function Animation() {
     
     Component.slideBottom = function (element, direction, done) {
         if (direction === true) {
-            element.classList.add('slide-bottom-in');
+            element.classList.add('jslide-bottom-in');
             setTimeout(function () {
-                element.classList.remove('slide-bottom-in');
+                element.classList.remove('jslide-bottom-in');
                 if (typeof (done) == 'function') {
                     done();
                 }
             }, 400);
         } else {
-            element.classList.add('slide-bottom-out');
+            element.classList.add('jslide-bottom-out');
             setTimeout(function () {
-                element.classList.remove('slide-bottom-out');
+                element.classList.remove('jslide-bottom-out');
                 if (typeof (done) == 'function') {
                     done();
                 }
@@ -1352,9 +1264,9 @@ function Animation() {
     
     Component.fadeIn = function (element, done) {
         element.style.display = '';
-        element.classList.add('fade-in');
+        element.classList.add('jfade-in');
         setTimeout(function () {
-            element.classList.remove('fade-in');
+            element.classList.remove('jfade-in');
             if (typeof (done) == 'function') {
                 done();
             }
@@ -1362,10 +1274,10 @@ function Animation() {
     }
     
     Component.fadeOut = function (element, done) {
-        element.classList.add('fade-out');
+        element.classList.add('jfade-out');
         setTimeout(function () {
             element.style.display = 'none';
-            element.classList.remove('fade-out');
+            element.classList.remove('jfade-out');
             if (typeof (done) == 'function') {
                 done();
             }
@@ -1376,6 +1288,149 @@ function Animation() {
 }
 
 /* harmony default export */ var animation = (Animation());
+;// CONCATENATED MODULE: ./src/utils/helpers.date.js
+
+
+
+function HelpersDate() {
+    var Component = {};
+
+    Component.now = function (date, dateOnly) {
+        var y = null;
+        var m = null;
+        var d = null;
+        var h = null;
+        var i = null;
+        var s = null;
+
+        if (Array.isArray(date)) {
+            y = date[0];
+            m = date[1];
+            d = date[2];
+            h = date[3];
+            i = date[4];
+            s = date[5];
+        } else {
+            if (! date) {
+                date = new Date();
+            }
+            y = date.getFullYear();
+            m = date.getMonth() + 1;
+            d = date.getDate();
+            h = date.getHours();
+            i = date.getMinutes();
+            s = date.getSeconds();
+        }
+
+        if (dateOnly == true) {
+            return helpers.two(y) + '-' + helpers.two(m) + '-' + helpers.two(d);
+        } else {
+            return helpers.two(y) + '-' + helpers.two(m) + '-' + helpers.two(d) + ' ' + helpers.two(h) + ':' + helpers.two(i) + ':' + helpers.two(s);
+        }
+    }
+
+    Component.toArray = function (value) {
+        var date = value.split(((value.indexOf('T') !== -1) ? 'T' : ' '));
+        var time = date[1];
+        var date = date[0].split('-');
+        var y = parseInt(date[0]);
+        var m = parseInt(date[1]);
+        var d = parseInt(date[2]);
+        var h = 0;
+        var i = 0;
+
+        if (time) {
+            time = time.split(':');
+            h = parseInt(time[0]);
+            i = parseInt(time[1]);
+        }
+        return [y, m, d, h, i, 0];
+    }
+
+    var excelInitialTime = Date.UTC(1900, 0, 0);
+    var excelLeapYearBug = Date.UTC(1900, 1, 29);
+    var millisecondsPerDay = 86400000;
+
+    /**
+     * Date to number
+     */
+    Component.dateToNum = function (jsDate) {
+        if (typeof (jsDate) === 'string') {
+            jsDate = new Date(jsDate + '  GMT+0');
+        }
+        var jsDateInMilliseconds = jsDate.getTime();
+        if (jsDateInMilliseconds >= excelLeapYearBug) {
+            jsDateInMilliseconds += millisecondsPerDay;
+        }
+        jsDateInMilliseconds -= excelInitialTime;
+
+        return jsDateInMilliseconds / millisecondsPerDay;
+    }
+
+    /**
+     * Number to date
+     *
+     * IMPORTANT: Excel incorrectly considers 1900 to be a leap year
+     */
+    Component.numToDate = function (excelSerialNumber) {
+        var jsDateInMilliseconds = excelInitialTime + excelSerialNumber * millisecondsPerDay;
+        if (jsDateInMilliseconds >= excelLeapYearBug) {
+            jsDateInMilliseconds -= millisecondsPerDay;
+        }
+
+        const d = new Date(jsDateInMilliseconds);
+
+        var date = [
+            d.getUTCFullYear(),
+            d.getUTCMonth() + 1,
+            d.getUTCDate(),
+            d.getUTCHours(),
+            d.getUTCMinutes(),
+            d.getUTCSeconds(),
+        ];
+
+        return Component.now(date);
+    }
+
+    let weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    let months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+    Object.defineProperty(Component, 'weekdays', {
+        get: function () {
+            return weekdays.map(function(v) {
+                return dictionary.translate(v);
+            });
+        },
+    });
+
+    Object.defineProperty(Component, 'weekdaysShort', {
+        get: function () {
+            return weekdays.map(function(v) {
+                return dictionary.translate(v).substring(0,3);
+            });
+        },
+    });
+
+    Object.defineProperty(Component, 'months', {
+        get: function () {
+            return months.map(function(v) {
+                return dictionary.translate(v);
+            });
+        },
+    });
+
+    Object.defineProperty(Component, 'monthsShort', {
+        get: function () {
+            return months.map(function(v) {
+                return dictionary.translate(v).substring(0,3);
+            });
+        },
+    });
+
+    return Component;
+}
+
+/* harmony default export */ var helpers_date = (HelpersDate());
 ;// CONCATENATED MODULE: ./src/plugins/mask.js
 
 
@@ -1387,6 +1442,8 @@ function Mask() {
         text: [ '@' ],
         // Currency tokens
         currency: [ '#(.{1})##0?(.{1}0+)?( ?;(.*)?)?', '#' ],
+        // Scientific
+        scientific: [ '0{1}(.{1}0+)?E{1}\\+0+' ],
         // Percentage
         percentage: [ '0{1}(.{1}0+)?%' ],
         // Number
@@ -1469,7 +1526,7 @@ function Mask() {
     }
 
     var isNumeric = function(t) {
-        return t === 'currency' || t === 'percentage' || t === 'numeric' ? true : false;
+        return t === 'currency' || t === 'percentage' || t === 'scientific' || t === 'numeric' ? true : false;
     }
 
     /**
@@ -2142,6 +2199,9 @@ function Mask() {
                 this.values[this.index] = '-' + this.values[this.index];
             }
         },
+        '0{1}(.{1}0+)?E{1}\\+0+': function(v) {
+            parser['0{1}(.{1}0+)?'].call(this, v);
+        },
         '0{1}(.{1}0+)?%': function(v) {
             parser['0{1}(.{1}0+)?'].call(this, v);
 
@@ -2253,7 +2313,7 @@ function Mask() {
         if (this.type == 'general') {
             var t = [].concat(tokens.general);
         } else {
-            var t = [].concat(tokens.currency, tokens.datetime, tokens.percentage, tokens.numeric, tokens.text, tokens.general);
+            var t = [].concat(tokens.currency, tokens.datetime, tokens.percentage, tokens.scientific, tokens.numeric, tokens.text, tokens.general);
         }
         // Expression to extract all tokens from the string
         var e = new RegExp(t.join('|'), 'gi');
@@ -2274,7 +2334,7 @@ function Mask() {
         } else if (this.type == 'datetime') {
             var types = [ 'numeric', 'datetime', 'general' ];
         } else {
-            var types = [ 'currency', 'percentage', 'numeric', 'general' ];
+            var types = [ 'currency', 'percentage', 'scientific', 'numeric', 'general' ];
         }
 
         // Found
@@ -2500,6 +2560,7 @@ function Mask() {
                         d[0] = d[0].replace('*', '\t');
                         d[0] = d[0].replace(new RegExp(/_-/g), '');
                         d[0] = d[0].replace(new RegExp(/_/g), '');
+                        d[0] = d[0].replace(new RegExp(/"/g), '');
                         d[0] = d[0].replace('##0.###','##0.000');
                         d[0] = d[0].replace('##0.##','##0.00');
                         d[0] = d[0].replace('##0.#','##0.0');
@@ -2586,7 +2647,7 @@ function Mask() {
                     // Extract the number
                     o.number = Extract.call(o, v);
                     // Keep the raw data as a property of the tag
-                    if (o.type == 'percentage' && v.indexOf('%') !== -1) {
+                    if (o.type == 'percentage' && (''+v).indexOf('%') !== -1) {
                         label = obj.adjustPrecision(o.number / 100);
                     } else {
                         label = o.number;
@@ -2735,10 +2796,16 @@ function Mask() {
             } else {
                 value = extractDate.call(o);
             }
+        } else if (type === 'scientific') {
+            value = v;
+            if (typeof(v) === 'string') {
+                value = Number(value);
+            }
+            var o = options;
         } else {
             value = Extract.call(options, v);
             // Percentage
-            if (type === 'percentage' && v.indexOf('%') !== -1) {
+            if (type === 'percentage' && (''+v).indexOf('%') !== -1) {
                 value /= 100;
             }
             var o = options;
@@ -2816,22 +2883,51 @@ function Mask() {
                 fillWithBlanks = true;
             }
         } else {
+            // Parse number
+            if (typeof(value) === 'string' && jSuites.isNumeric(value)) {
+                value = Number(value);
+            }
             // Percentage
             if (type === 'percentage') {
                 value = obj.adjustPrecision(value*100);
             }
+
             // Number of decimal places
             if (typeof(value) === 'number') {
                 var t = null;
-                if (options.mask && fullMask && ((''+value).indexOf('e') === -1)) {
+                if (options.mask && fullMask) {
                     var d = getDecimal.call(options, options.mask);
-                    if (options.mask.indexOf(d) !== -1) {
-                        d = options.mask.split(d);
-                        d = (''+d[1].match(/[0-9]+/g))
-                        d = d.length;
-                        t = value.toFixed(d);
+                    if (type === 'scientific') {
+                        if (options.mask.indexOf(d) !== -1) {
+                            let exp = options.mask.split('E');
+                            exp = exp[0].split(d);
+                            exp = ('' + exp[1].match(/[0-9]+/g))
+                            exp = exp.length;
+                            t = value.toExponential(exp);
+                        } else {
+                            t = value.toExponential(0);
+                        }
                     } else {
-                        t = value.toFixed(0);
+                        if (options.mask.indexOf(d) !== -1) {
+                            d = options.mask.split(d);
+                            d = (''+d[1].match(/[0-9]+/g))
+                            d = d.length;
+                            t = value.toFixed(d);
+                            let n = value.toString().split('.');
+                            let fraction = n[1];
+                            if (fraction && fraction.length > d && fraction[fraction.length-1] === '5') {
+                                t = parseFloat(n[0] + '.' + fraction + '1').toFixed(d);
+                            }
+                        } else {
+                            if (value.toString().indexOf(d) !== -1) {
+                                t = value.toFixed(0);
+                            }
+                        }
+
+                        // Handle scientific notation
+                        if ((''+t).indexOf('e') !== -1) {
+                            t = toPlainString(t);
+                        }
                     }
                 } else if (options.locale && fullMask) {
                     // Append zeros
@@ -2885,6 +2981,14 @@ function Mask() {
             }
         }
 
+        if (type === 'scientific') {
+            if (! fullMask) {
+                value = toPlainString(value);
+            } else {
+                return value;
+            }
+        }
+
         value = obj(value, options);
 
         // Numeric mask, number of zeros
@@ -2928,7 +3032,7 @@ function Mask() {
 
         var complete = false;
 
-        if (o.values.length === o.tokens.length && o.values[o.values.length - 1].length >= o.tokens[o.tokens.length - 1].length) {
+        if (o.values && o.values.length === o.tokens.length && o.values[o.values.length - 1].length >= o.tokens[o.tokens.length - 1].length) {
             complete = true;
         }
 
@@ -2951,7 +3055,11 @@ function Mask() {
 
         // Labels
         if (options && typeof (options) == 'object') {
-            var format = options.format;
+            if (options.format) {
+                var format = options.format;
+            } else if (options.mask) {
+                var format = options.mask;
+            }
         } else {
             var format = options;
         }
@@ -3034,7 +3142,9 @@ function Mask() {
 
             d = d[0].split('-');
 
-            if (d[0] && d[1] && d[2] && d[0] > 0 && d[1] > 0 && d[1] < 13 && d[2] > 0 && d[2] < 32) {
+            let day = new Date(d[0], d[1], 0).getDate();
+
+            if (d[0] && d[1] && d[2] && d[0] > 0 && d[1] > 0 && d[1] < 13 && d[2] > 0 && d[2] <= day) {
 
                 // Data
                 o.data = [d[0], d[1], d[2], h, m, s];
@@ -3151,6 +3261,7 @@ function Mask() {
 }
 
 /* harmony default export */ var mask = (Mask());
+
 ;// CONCATENATED MODULE: ./src/plugins/calendar.js
 
 
@@ -3299,7 +3410,7 @@ function Calendar() {
                     // Current
                     Component.current = obj;
                     // Start tracking
-                    Tracking(obj, true);
+                    tracking(obj, true);
                     // Create the days
                     obj.getDays();
                     // Render months
@@ -3380,11 +3491,9 @@ function Calendar() {
 
                     obj.setValue(value);
                 } else {
-                    if (obj.options.value) {
-                        let value = obj.options.value;
-                        obj.options.value = '';
-                        obj.setValue(value)
-                    }
+                    let value = obj.options.value || '';
+                    obj.options.value = null;
+                    obj.setValue(value)
                 }
 
                 // Events
@@ -3394,7 +3503,7 @@ function Calendar() {
                 // Hide
                 calendar.classList.remove('jcalendar-focus');
                 // Stop tracking
-                Tracking(obj, false);
+                tracking(obj, false);
                 // Current
                 Component.current = null;
             }
@@ -3545,10 +3654,12 @@ function Calendar() {
                 }
             }
 
-            obj.getDays();
-            // Render months
-            if (obj.options.type == 'year-month-picker') {
-                obj.getMonths();
+            if (obj.date) {
+                obj.getDays();
+                // Render months
+                if (obj.options.type == 'year-month-picker') {
+                    obj.getMonths();
+                }
             }
         }
 
@@ -4063,12 +4174,12 @@ function Calendar() {
                 }
             }
 
-            for (var i = 0; i < 24; i++) {
-                var element = document.createElement('option');
-                element.value = i;
-                element.innerHTML = helpers.two(i);
-                calendarSelectHour.appendChild(element);
-            }
+                for (var i = 0; i < 24; i++) {
+                    var element = document.createElement('option');
+                    element.value = i;
+                    element.innerHTML = helpers.two(i);
+                    calendarSelectHour.appendChild(element);
+                }
 
             calendarSelectMin = document.createElement('select');
             calendarSelectMin.className = 'jcalendar-select';
@@ -4406,23 +4517,25 @@ function Tabs(el, options) {
     var border = null;
 
     // Helpers
-    var setBorder = function(index) {
+    const setBorder = function(index) {
         if (obj.options.animation) {
-            var rect = obj.headers.children[index].getBoundingClientRect();
+            setTimeout(function() {
+                let rect = obj.headers.children[index].getBoundingClientRect();
 
-            if (obj.options.palette === 'modern') {
-                border.style.width = rect.width - 4 + 'px';
-                border.style.left = obj.headers.children[index].offsetLeft + 2 + 'px';
-            } else {
-                border.style.width = rect.width + 'px';
-                border.style.left = obj.headers.children[index].offsetLeft + 'px';
-            }
+                if (obj.options.palette === 'modern') {
+                    border.style.width = rect.width - 4 + 'px';
+                    border.style.left = obj.headers.children[index].offsetLeft + 2 + 'px';
+                } else {
+                    border.style.width = rect.width + 'px';
+                    border.style.left = obj.headers.children[index].offsetLeft + 'px';
+                }
 
-            if (obj.options.position === 'bottom') {
-                border.style.top = '0px';
-            } else {
-                border.style.bottom = '0px';
-            }
+                if (obj.options.position === 'bottom') {
+                    border.style.top = '0px';
+                } else {
+                    border.style.bottom = '0px';
+                }
+            }, 50);
         }
     }
 
@@ -4461,6 +4574,12 @@ function Tabs(el, options) {
 
     // Set value
     obj.open = function(index) {
+        // This is to force safari to update the children
+        const items = Array.from(obj.content.children);
+        if (! obj.content.children[index]) {
+            return;
+        }
+
         var previous = null;
         for (var i = 0; i < obj.headers.children.length; i++) {
             if (obj.headers.children[i].classList.contains('jtabs-selected')) {
@@ -4489,9 +4608,6 @@ function Tabs(el, options) {
         if (obj.options.hideHeaders == true && (obj.headers.children.length < 3 && obj.options.allowCreate == false)) {
             obj.headers.parentNode.style.display = 'none';
         } else {
-            // Set border
-            setBorder(index);
-
             obj.headers.parentNode.style.display = '';
 
             var x1 = obj.headers.children[index].offsetLeft;
@@ -4503,6 +4619,9 @@ function Tabs(el, options) {
                 // Out of the viewport
                 updateControls(x1 - 1);
             }
+
+            // Set border
+            setBorder(index);
         }
     }
 
@@ -4520,7 +4639,7 @@ function Tabs(el, options) {
             title = prompt('New title', obj.headers.children[i].innerText);
         }
         obj.headers.children[i].innerText = title;
-        obj.open(i);
+        setBorder(obj.getActive());
     }
 
     obj.create = function(title, url) {
@@ -4539,7 +4658,7 @@ function Tabs(el, options) {
             obj.options.oncreate(el, div)
         }
 
-        setBorder();
+        setBorder(obj.getActive());
 
         return div;
     }
@@ -4566,6 +4685,8 @@ function Tabs(el, options) {
     }
 
     obj.deleteElement = function(index) {
+        let current = obj.getActive();
+
         if (! obj.headers.children[index]) {
             return false;
         } else {
@@ -4573,14 +4694,19 @@ function Tabs(el, options) {
             obj.content.removeChild(obj.content.children[index]);
         }
 
-        obj.open(0);
+        if (current === index) {
+            obj.open(0);
+        } else {
+            let current = obj.getActive() || 0;
+            setBorder(current);
+        }
 
         if (typeof(obj.options.ondelete) == 'function') {
             obj.options.ondelete(el, index)
         }
     }
 
-    obj.appendElement = function(title, cb, openTab) {
+    obj.appendElement = function(title, cb, openTab, position) {
         if (! title) {
             var title = prompt('Title?', '');
         }
@@ -4588,13 +4714,25 @@ function Tabs(el, options) {
         if (title) {
             // Add content
             var div = document.createElement('div');
-            obj.content.appendChild(div);
 
             // Add headers
             var h = document.createElement('div');
             h.innerHTML = title;
             h.content = div;
-            obj.headers.insertBefore(h, obj.headers.lastChild);
+
+            if (typeof(position) === 'undefined') {
+                obj.content.appendChild(div);
+                obj.headers.insertBefore(h, obj.headers.lastChild);
+            } else {
+                let r = obj.content.children[position];
+                if (r) {
+                    obj.content.insertBefore(div, r);
+                } else {
+                    obj.content.appendChild(div);
+                }
+                r = obj.headers.children[position] || obj.headers.lastChild;
+                obj.headers.insertBefore(h, r);
+            }
 
             // Sortable
             if (obj.options.allowChangePosition) {
@@ -4620,10 +4758,10 @@ function Tabs(el, options) {
     obj.getActive = function() {
         for (var i = 0; i < obj.headers.children.length; i++) {
             if (obj.headers.children[i].classList.contains('jtabs-selected')) {
-                return i
+                return i;
             }
         }
-        return 0;
+        return false;
     }
 
     obj.updateContent = function(position, newContent) {
@@ -4643,7 +4781,7 @@ function Tabs(el, options) {
         setBorder();
     }
 
-    obj.updatePosition = function(f, t, ignoreEvents) {
+    obj.updatePosition = function(f, t, ignoreEvents, openTab) {
         // Ondrop update position of content
         if (f > t) {
             obj.content.insertBefore(obj.content.children[f], obj.content.children[t]);
@@ -4652,7 +4790,15 @@ function Tabs(el, options) {
         }
 
         // Open destination tab
-        obj.open(t);
+        if (openTab !== false) {
+            obj.open(t);
+        } else {
+            const activeIndex = obj.getActive();
+
+            if (t < activeIndex) {
+                obj.setBorder(activeIndex);
+            }
+        }
 
         // Call event
         if (! ignoreEvents && typeof(obj.options.onchangeposition) == 'function') {
@@ -4660,14 +4806,14 @@ function Tabs(el, options) {
         }
     }
 
-    obj.move = function(f, t, ignoreEvents) {
+    obj.move = function(f, t, ignoreEvents, openTab) {
         if (f > t) {
             obj.headers.insertBefore(obj.headers.children[f], obj.headers.children[t]);
         } else {
             obj.headers.insertBefore(obj.headers.children[f], obj.headers.children[t].nextSibling);
         }
 
-        obj.updatePosition(f, t, ignoreEvents);
+        obj.updatePosition(f, t, ignoreEvents, openTab);
     }
 
     obj.setBorder = setBorder;
@@ -5012,7 +5158,7 @@ function Color(el, options) {
     obj.open = function() {
         if (! container.classList.contains('jcolor-focus')) {
             // Start tracking
-            Tracking(obj, true);
+            tracking(obj, true);
 
             // Show color picker
             container.classList.add('jcolor-focus');
@@ -5087,7 +5233,7 @@ function Color(el, options) {
                 obj.options.onclose(el, obj);
             }
             // Stop  the object
-            Tracking(obj, false);
+            tracking(obj, false);
         }
 
         return obj.options.value;
@@ -5623,7 +5769,7 @@ function Contextmenu() {
             }
 
             // Add to the opened components monitor
-            Tracking(obj, true);
+            tracking(obj, true);
 
             // Show context menu
             el.classList.add('jcontextmenu-focus');
@@ -5681,7 +5827,7 @@ function Contextmenu() {
             if (el.classList.contains('jcontextmenu-focus')) {
                 el.classList.remove('jcontextmenu-focus');
             }
-            Tracking(obj, false);
+            tracking(obj, false);
         }
 
         /**
@@ -6070,6 +6216,8 @@ function Dropdown() {
                 onbeforesearch: null,
                 sortResults: false,
                 autofocus: false,
+                prompt: null,
+                allowEmpty: true,
             }
 
             // Loop through our object
@@ -6379,22 +6527,17 @@ function Dropdown() {
             }
         }
 
-        /**
-         * Add a new item
-         * @param {string} title - title of the new item
-         * @param {string} id - value/id of the new item
-         */
-        obj.add = function (title, id) {
-            if (!title) {
-                var current = obj.options.autocomplete == true ? obj.header.value : '';
-                var title = prompt(dictionary.translate('Add A New Option'), current);
-                if (!title) {
+        const add = function(title, id) {
+            if (! title) {
+                let current = obj.options.autocomplete == true ? obj.header.value : '';
+                title = prompt(dictionary.translate('Add A New Option'), current);
+                if (! title) {
                     return false;
                 }
             }
 
             // Id
-            if (!id) {
+            if (! id) {
                 id = helpers.guid();
             }
 
@@ -6413,7 +6556,7 @@ function Dropdown() {
 
             // Callback
             if (typeof (obj.options.onbeforeinsert) == 'function') {
-                var ret = obj.options.onbeforeinsert(obj, item);
+                let ret = obj.options.onbeforeinsert(obj, item);
                 if (ret === false) {
                     return false;
                 } else if (ret) {
@@ -6446,6 +6589,18 @@ function Dropdown() {
             }
 
             return item;
+        }
+
+        /**
+         * Add a new item
+         * @param {string} title - title of the new item
+         * @param {string} id - value/id of the new item
+         */
+        obj.add = function (title, id) {
+            if (typeof (obj.options.prompt) == 'function') {
+                return obj.options.prompt.call(obj, add);
+            }
+            return add(title, id);
         }
 
         /**
@@ -6793,7 +6948,9 @@ function Dropdown() {
                 if (!obj.options.multiple) {
                     // Update value
                     if (obj.items[index].selected) {
-                        obj.setValue(null);
+                        if (obj.options.allowEmpty !== false) {
+                            obj.setValue(null);
+                        }
                     } else {
                         obj.setValue(Value(index));
                     }
@@ -6950,7 +7107,7 @@ function Dropdown() {
                         synonym = synonym.join(' ');
                     }
 
-                    if (str == null || obj.items[i].selected == true || label.match(str) || title.match(str) || groupName.match(str) || synonym.match(str)) {
+                    if (str == null || obj.items[i].selected == true || label.toString().match(str) || title.match(str) || groupName.match(str) || synonym.match(str)) {
                         results.push(obj.items[i]);
                     }
                 }
@@ -7000,7 +7157,7 @@ function Dropdown() {
                 Component.current = obj;
 
                 // Start tracking
-                Tracking(obj, true);
+                tracking(obj, true);
 
                 // Add focus
                 el.classList.add('jdropdown-focus');
@@ -7089,7 +7246,7 @@ function Dropdown() {
                 // Remove focus
                 el.classList.remove('jdropdown-focus');
                 // Start tracking
-                Tracking(obj, false);
+                tracking(obj, false);
                 // Current dropdown
                 Component.current = null;
             }
@@ -7827,7 +7984,7 @@ function Picker(el, options) {
     obj.open = function() {
         if (! el.classList.contains('jpicker-focus')) {
             // Start tracking the element
-            Tracking(obj, true);
+            tracking(obj, true);
 
             // Open picker
             el.classList.add('jpicker-focus');
@@ -7873,7 +8030,7 @@ function Picker(el, options) {
             el.classList.remove('jpicker-focus');
 
             // Start tracking the element
-            Tracking(obj, false);
+            tracking(obj, false);
 
             if (typeof obj.options.onclose == 'function') {
                 obj.options.onclose(el, obj);
@@ -8171,13 +8328,13 @@ function Toolbar(el, options) {
 
         toolbarArrow.children[0].focus();
         // Start tracking
-        Tracking(obj, true);
+        tracking(obj, true);
     }
 
     obj.close = function() {
         toolbarArrow.classList.remove('jtoolbar-arrow-selected')
         // End tracking
-        Tracking(obj, false);
+        tracking(obj, false);
     }
 
     obj.refresh = function() {
@@ -8655,6 +8812,10 @@ function Editor() {
         }
 
         obj.addImage = function(src, asSnippet) {
+            if (! obj.options.acceptImages) {
+                return;
+            }
+
             if (! src) {
                 src = '';
             }
@@ -8785,86 +8946,85 @@ function Editor() {
             helpers.click(obj.file);
         }
 
-        // Elements to be removed
-        var remove = [
-            HTMLUnknownElement,
-            HTMLAudioElement,
-            HTMLEmbedElement,
-            HTMLIFrameElement,
-            HTMLTextAreaElement,
-            HTMLInputElement,
-            HTMLScriptElement
+        // Valid tags
+        const validTags = [
+            'html','body','address','span', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'b', 'i', 'blockquote',
+            'strong', 'em', 'ul', 'ol', 'li', 'a', 'code', 'pre', 'hr', 'br', 'img',
+            'figure', 'picture', 'figcaption', 'iframe', 'table', 'thead', 'tbody', 'tfoot', 'tr',
+            'th', 'td', 'caption', 'u', 'del', 'ins', 'sub', 'sup', 'small', 'mark',
+            'input', 'textarea', 'select', 'option', 'button', 'label', 'fieldset',
+            'legend', 'audio', 'video', 'abbr', 'cite', 'kbd', 'section', 'article',
+            'nav', 'aside', 'header', 'footer', 'main', 'details', 'summary', 'svg', 'line', 'source'
         ];
-
         // Valid properties
-        var validProperty = ['width', 'height', 'align', 'border', 'src', 'tabindex'];
-
+        const validProperty = ['width', 'height', 'align', 'border', 'src', 'tabindex'];
         // Valid CSS attributes
-        var validStyle = ['color', 'font-weight', 'font-size', 'background', 'background-color', 'margin'];
+        const validStyle = ['color', 'font-weight', 'font-size', 'background', 'background-color', 'margin'];
 
-        var parse = function(element) {
-           // Remove attributes
-           if (element.attributes && element.attributes.length) {
-               var image = null;
-               var style = null;
-               // Process style attribute
-               var elementStyle = element.getAttribute('style');
-               if (elementStyle) {
-                   style = [];
-                   var t = elementStyle.split(';');
-                   for (var j = 0; j < t.length; j++) {
-                       var v = t[j].trim().split(':');
-                       if (validStyle.indexOf(v[0].trim()) >= 0) {
-                           var k = v.shift();
-                           var v = v.join(':');
-                           style.push(k + ':' + v);
-                       }
-                   }
-               }
-               // Process image
-               if (element.tagName.toUpperCase() == 'IMG') {
-                   if (! obj.options.acceptImages || ! element.src) {
-                       element.parentNode.removeChild(element);
-                   } else {
-                       // Check if is data
-                       element.setAttribute('tabindex', '900');
-                       // Check attributes for persistence
-                       obj.addImage(element.src);
-                   }
-               }
-               // Remove attributes
-               var attr = [];
-               for (var i = 0; i < element.attributes.length; i++) {
-                   attr.push(element.attributes[i].name);
-               }
-               if (attr.length) {
-                   attr.forEach(function(v) {
-                       if (validProperty.indexOf(v) == -1) {
-                           element.removeAttribute(v);
-                       } else {
-                           // Protection XSS
-                           if (element.attributes[i].value.indexOf('<') !== -1) {
-                               element.attributes[i].value.replace('<', '&#60;');
-                           }
-                       }
-                   });
-               }
-               element.style = '';
-               // Add valid style
-               if (style && style.length) {
-                   element.setAttribute('style', style.join(';'));
-               }
-           }
-           // Parse children
-           if (element.children.length) {
-               for (var i = 0; i < element.children.length; i++) {
-                   parse(element.children[i]);
-               }
-           }
-
-           if (remove.indexOf(element.constructor) >= 0) {
-               element.remove();
-           }
+        const parse = function(element) {
+            // Remove elements that are not white-listed
+            if (element.tagName && validTags.indexOf(element.tagName.toLowerCase()) === -1) {
+                if (element.innerText) {
+                    element.innerHTML = element.innerText;
+                }
+            }
+            // Remove attributes
+            if (element.attributes && element.attributes.length) {
+                let style = null;
+                // Process style attribute
+                let elementStyle = element.getAttribute('style');
+                if (elementStyle) {
+                    style = [];
+                    let t = elementStyle.split(';');
+                    for (let j = 0; j < t.length; j++) {
+                        let v = t[j].trim().split(':');
+                        if (validStyle.indexOf(v[0].trim()) >= 0) {
+                            let k = v.shift();
+                            v = v.join(':');
+                            style.push(k + ':' + v);
+                        }
+                    }
+                }
+                // Process image
+                if (element.tagName.toUpperCase() === 'IMG') {
+                    if (! obj.options.acceptImages || !element.src) {
+                        element.parentNode.removeChild(element);
+                    } else {
+                        // Check if is data
+                        element.setAttribute('tabindex', '900');
+                        // Check attributes for persistence
+                        obj.addImage(element.src);
+                    }
+                }
+                // Remove attributes
+                let attr = [];
+                for (let i = 0; i < element.attributes.length; i++) {
+                    attr.push(element.attributes[i].name);
+                }
+                if (attr.length) {
+                    attr.forEach(function (v) {
+                        if (validProperty.indexOf(v) === -1) {
+                            element.removeAttribute(v);
+                        } else {
+                            // Protection XSS
+                            if (element.attributes && element.attributes[i] && element.attributes[i].value.indexOf('<') !== -1) {
+                                element.attributes[i].value.replace('<', '&#60;');
+                            }
+                        }
+                    });
+                }
+                element.style = '';
+                // Add valid style
+                if (style && style.length) {
+                    element.setAttribute('style', style.join(';'));
+                }
+            }
+            // Parse children
+            if (element.children.length) {
+                for (let i = element.children.length; i > 0; i--) {
+                    parse(element.children[i - 1]);
+                }
+            }
         }
 
         var select = function(e) {
@@ -8881,9 +9041,9 @@ function Editor() {
             var parser = new DOMParser();
             var d = parser.parseFromString(data, "text/html");
             parse(d);
-            var span = document.createElement('span');
-            span.innerHTML = d.firstChild.innerHTML;
-            return span;
+            var div = document.createElement('div');
+            div.innerHTML = d.firstChild.innerHTML;
+            return div;
         }
 
         var editorPaste = function(e) {
@@ -8914,7 +9074,7 @@ function Editor() {
                             html = html.map(function(v) {
                                 return '<div>' + v + '</div>';
                             });
-                            document.execCommand('insertHtml', false, html.join(''));
+                            document.execCommand('insertText', false, html.join(''));
                         }
                     } else {
                         var d = filter(html);
@@ -9585,6 +9745,7 @@ function Editor() {
 }
 
 /* harmony default export */ var editor = (Editor());
+
 ;// CONCATENATED MODULE: ./src/plugins/floating.js
 function Floating() {
     var Component = (function (el, options) {
@@ -9745,7 +9906,7 @@ function Validations() {
      */
 
     const isNumeric = function(num) {
-        return !isNaN(num) && num !== null && num !== '';
+        return !isNaN(num) && num !== null && (typeof num !== 'string' || num.trim() !== '');
     }
 
     const numberCriterias = {
@@ -9839,10 +10000,10 @@ function Validations() {
     // Component router
     const component = function(value, options) {
         if (typeof(component[options.type]) === 'function') {
-            if (options.allowBlank && value === '') {
+            if (options.allowBlank && (typeof value === 'undefined' || value === '' || value === null)) {
                 return true;
             }
-            return component[options.type](value, options);
+            return component[options.type].call(this, value, options);
         }
         return null;
     }
@@ -9861,21 +10022,17 @@ function Validations() {
         return data && data.trim() ? true : false;
     }
 
-    component.exist = function(data, options) {
-        return !!data.toString().trim();
-    }
-
-    component['not exist'] = function(data, options) {
-        return !data.toString().trim();
-    }
-
     component.empty = function(data) {
-        return !data.toString().trim();
+        return typeof data === 'undefined' || data === null || (typeof data === 'string' && !data.toString().trim());
     }
+
+    component['not exist'] = component.empty;
 
     component.notEmpty = function(data) {
-        return !!data.toString().trim();
+        return !component.empty(data);
     }
+
+    component.exist = component.notEmpty;
 
     component.number = function(data, options) {
        if (! isNumeric(data)) {
@@ -9999,7 +10156,9 @@ function Validations() {
     }
 
     component.text = function(data, options) {
-        if (typeof data !== 'string') {
+        if (typeof data === 'undefined' || data === null) {
+            data = '';
+        } else if (typeof data !== 'string') {
             return false;
         }
 
@@ -11691,6 +11850,7 @@ function Tags(el, options) {
             validation: null,
             onbeforepaste: null,
             onbeforechange: null,
+            onremoveitem: null,
             onlimit: null,
             onchange: null,
             onfocus: null,
@@ -11838,6 +11998,10 @@ function Tags(el, options) {
             obj.add('', true);
         } else {
             change();
+        }
+
+        if (typeof(obj.options.onremoveitem) == 'function') {
+            obj.options.onremoveitem(el, obj, node);
         }
     }
 
@@ -12005,7 +12169,7 @@ function Tags(el, options) {
 
     var createElement = function(label, value, node) {
         var div = document.createElement('div');
-        div.innerHTML = label ? label : '';
+        div.textContent = label ? label : '';
         if (value) {
             div.setAttribute('data-value', value);
         }
@@ -12682,22 +12846,22 @@ var sha512_default = /*#__PURE__*/__webpack_require__.n(sha512);
 
 
 
-var jSuites = {
+var jsuites_jSuites = {
     // Helpers
     ...dictionary,
     ...helpers,
     /** Current version */
-    version: '5.0.27',
+    version: '5.7.1',
     /** Bind new extensions to Jsuites */
     setExtensions: function(o) {
         if (typeof(o) == 'object') {
             var k = Object.keys(o);
             for (var i = 0; i < k.length; i++) {
-                jSuites[k[i]] = o[k[i]];
+                jsuites_jSuites[k[i]] = o[k[i]];
             }
         }
     },
-    tracking: Tracking,
+    tracking: tracking,
     path: Path,
     sorting: Sorting,
     lazyLoading: LazyLoading,
@@ -12728,8 +12892,8 @@ var jSuites = {
 }
 
 // Legacy
-jSuites.image = Upload;
-jSuites.image.create = function(data) {
+jsuites_jSuites.image = Upload;
+jsuites_jSuites.image.create = function(data) {
     var img = document.createElement('img');
     img.setAttribute('src', data.file);
     img.className = 'jfile';
@@ -12739,15 +12903,20 @@ jSuites.image.create = function(data) {
     return img;
 }
 
-jSuites.tracker = plugins_form;
-jSuites.loading = animation.loading;
-jSuites.sha512 = (sha512_default());
+jsuites_jSuites.tracker = plugins_form;
+jsuites_jSuites.loading = animation.loading;
+jsuites_jSuites.sha512 = (sha512_default());
 
 
 /** Core events */
 const Events = function() {
 
-    document.jsuitesComponents = [];
+    if (typeof(window['jSuitesStateControl']) === 'undefined') {
+        window['jSuitesStateControl'] = [];
+    } else {
+        // Do nothing
+        return;
+    }
 
     const find = function(DOMElement, component) {
         if (DOMElement[component.type] && DOMElement[component.type] == component) {
@@ -12763,10 +12932,11 @@ const Events = function() {
     }
 
     const isOpened = function(e) {
-        if (document.jsuitesComponents && document.jsuitesComponents.length > 0) {
-            for (var i = 0; i < document.jsuitesComponents.length; i++) {
-                if (document.jsuitesComponents[i] && ! find(e, document.jsuitesComponents[i])) {
-                    document.jsuitesComponents[i].close();
+        let state = window['jSuitesStateControl'];
+        if (state && state.length > 0) {
+            for (let i = 0; i < state.length; i++) {
+                if (state[i] && ! find(e, state[i])) {
+                    state[i].close();
                 }
             }
         }
@@ -12791,51 +12961,38 @@ const Events = function() {
     let tooltip = document.createElement('div')
     tooltip.classList.add('jtooltip');
 
+    const isWebcomponent = function(e) {
+        return e && (e.shadowRoot || (e.tagName && e.tagName.includes('-')));
+    }
+
+    const getElement = function(e) {
+        let d;
+        let element;
+        // Which component I am clicking
+        let path = e.path || (e.composedPath && e.composedPath());
+
+        // If path available get the first element in the chain
+        if (path) {
+            element = path[0];
+            // Adjustment sales force
+            if (element && isWebcomponent(element) && ! element.shadowRoot && e.toElement) {
+                element = e.toElement;
+            }
+        } else {
+            // Try to guess using the coordinates
+            if (e.target && isWebcomponent(e.target)) {
+                d = e.target.shadowRoot;
+            } else {
+                d = document;
+            }
+            // Get the first target element
+            element = d.elementFromPoint(x, y);
+        }
+        return element;
+    }
+
     // Events
     const mouseDown = function(e) {
-        // Check if this is the floating
-        var item = jSuites.findElement(e.target, 'jpanel');
-        // Jfloating found
-        if (item && ! item.classList.contains("readonly")) {
-            // Add focus to the chart container
-            item.focus();
-            // Keep the tracking information
-            var rect = e.target.getBoundingClientRect();
-            editorAction = {
-                e: item,
-                x: e.clientX,
-                y: e.clientY,
-                w: rect.width,
-                h: rect.height,
-                d: item.style.cursor,
-                resizing: item.style.cursor ? true : false,
-                actioned: false,
-            }
-
-            // Make sure width and height styling is OK
-            if (! item.style.width) {
-                item.style.width = rect.width + 'px';
-            }
-
-            if (! item.style.height) {
-                item.style.height = rect.height + 'px';
-            }
-
-            // Remove any selection from the page
-            var s = window.getSelection();
-            if (s.rangeCount) {
-                for (var i = 0; i < s.rangeCount; i++) {
-                    s.removeRange(s.getRangeAt(i));
-                }
-            }
-
-            e.preventDefault();
-            e.stopPropagation();
-        } else {
-            // No floating action found
-            editorAction = false;
-        }
-
         // Verify current components tracking
         if (e.changedTouches && e.changedTouches[0]) {
             var x = e.changedTouches[0].clientX;
@@ -12845,24 +13002,84 @@ const Events = function() {
             var y = e.clientY;
         }
 
-        // Which component I am clicking
-        var path = e.path || (e.composedPath && e.composedPath());
-
-        // If path available get the first element in the chain
-        if (path) {
-            element = path[0];
-        } else {
-            // Try to guess using the coordinates
-            if (e.target && e.target.shadowRoot) {
-                var d = e.target.shadowRoot;
-            } else {
-                var d = document;
+        let element = getElement(e);
+        // Editable
+        let editable = element && element.tagName === 'DIV' && element.getAttribute('contentEditable');
+        // Check if this is the floating
+        let item = jsuites_jSuites.findElement(element, 'jpanel');
+        // Jfloating found
+        if (item && ! item.classList.contains("readonly") && ! editable) {
+            // Keep the tracking information
+            let rect = item.getBoundingClientRect();
+            let angle = 0;
+            if (item.style.rotate) {
+                // Extract the angle value from the match and convert it to a number
+                angle = parseFloat(item.style.rotate);
             }
-            // Get the first target element
-            element = d.elementFromPoint(x, y);
+            let action = 'move';
+            if (element.getAttribute('data-action')) {
+                action = element.getAttribute('data-action');
+            } else {
+                if (item.style.cursor) {
+                    action = 'resize';
+                } else {
+                    item.style.cursor = 'move';
+                }
+            }
+
+            // Action
+            editorAction = {
+                action: action,
+                a: angle,
+                e: item,
+                x: x,
+                y: y,
+                l: rect.left,
+                t: rect.top,
+                b: rect.bottom,
+                r: rect.right,
+                w: rect.width,
+                h: rect.height,
+                d: item.style.cursor,
+                actioned: false,
+            }
+            // Make sure width and height styling is OK
+            if (! item.style.width) {
+                item.style.width = rect.width + 'px';
+            }
+            if (! item.style.height) {
+                item.style.height = rect.height + 'px';
+            }
+        } else {
+            // No floating action found
+            editorAction = false;
         }
 
         isOpened(element);
+
+        focus(e);
+    }
+
+    const calculateAngle = function(x1, y1, x2, y2, x3, y3) {
+        // Calculate dx and dy for the first line
+        const dx1 = x2 - x1;
+        const dy1 = y2 - y1;
+        // Calculate dx and dy for the second line
+        const dx2 = x3 - x1;
+        const dy2 = y3 - y1;
+        // Calculate the angle for the first line
+        let angle1 = Math.atan2(dy1, dx1);
+        // Calculate the angle for the second line
+        let angle2 = Math.atan2(dy2, dx2);
+        // Calculate the angle difference in radians
+        let angleDifference = angle2 - angle1;
+        // Convert the angle difference to degrees
+        angleDifference = angleDifference * (180 / Math.PI);
+        // Normalize the angle difference to be within [0, 360) degrees
+        if (angleDifference < 0) {
+            angleDifference += 360;
+        }
+        return angleDifference;
     }
 
     const mouseUp = function(e) {
@@ -12884,16 +13101,16 @@ const Events = function() {
 
     const mouseMove = function(e) {
         if (editorAction) {
-            var x = e.clientX || e.pageX;
-            var y = e.clientY || e.pageY;
+            let x = e.clientX || e.pageX;
+            let y = e.clientY || e.pageY;
+
+            if (state.x == null && state.y == null) {
+                state.x = x;
+                state.y = y;
+            }
 
             // Action on going
-            if (! editorAction.resizing) {
-                if (state.x == null && state.y == null) {
-                    state.x = x;
-                    state.y = y;
-                }
-
+            if (editorAction.action === 'move') {
                 var dx = x - state.x;
                 var dy = y - state.y;
                 var top = editorAction.e.offsetTop + dy;
@@ -12902,41 +13119,65 @@ const Events = function() {
                 // Update position
                 editorAction.e.style.top = top + 'px';
                 editorAction.e.style.left = left + 'px';
-                editorAction.e.style.cursor = "move";
-
-                state.x = x;
-                state.y = y;
-
 
                 // Update element
-                if (typeof(editorAction.e.refresh) == 'function') {
+                if (typeof (editorAction.e.refresh) == 'function') {
                     state.actioned = true;
                     editorAction.e.refresh('position', top, left);
                 }
-            } else {
-                var width = null;
-                var height = null;
+            } else if (editorAction.action === 'rotate') {
+                let ox = editorAction.l+editorAction.w/2;
+                let oy = editorAction.t+editorAction.h/2;
+                let angle = calculateAngle(ox, oy, editorAction.x, editorAction.y, x, y);
+                angle = angle + editorAction.a % 360;
+                angle = Math.round(angle / 2) * 2;
+                editorAction.e.style.rotate = `${angle}deg`;
+                // Update element
+                if (typeof (editorAction.e.refresh) == 'function') {
+                    state.actioned = true;
+                    editorAction.e.refresh('rotate', angle);
+                }
+            } else if (editorAction.action === 'resize') {
+                let top = null;
+                let left = null;
+                let width = null;
+                let height = null;
 
                 if (editorAction.d == 'e-resize' || editorAction.d == 'ne-resize' || editorAction.d == 'se-resize') {
-                    // Update width
-                    width = editorAction.w + (x - editorAction.x);
-                    editorAction.e.style.width = width + 'px';
+                    width = editorAction.e.offsetWidth + (x - state.x);
 
-                    // Update Height
                     if (e.shiftKey) {
-                        var newHeight = (x - editorAction.x) * (editorAction.h / editorAction.w);
-                        height = editorAction.h + newHeight;
-                        editorAction.e.style.height = height + 'px';
-                    } else {
-                        var newHeight = false;
+                        height = editorAction.e.offsetHeight + (x - state.x) * (editorAction.e.offsetHeight / editorAction.e.offsetWidth);
+                    }
+                } else if (editorAction.d === 'w-resize' || editorAction.d == 'nw-resize'|| editorAction.d == 'sw-resize') {
+                    left = editorAction.e.offsetLeft + (x - state.x);
+                    width = editorAction.e.offsetLeft + editorAction.e.offsetWidth - left;
+
+                    if (e.shiftKey) {
+                        height = editorAction.e.offsetHeight - (x - state.x) * (editorAction.e.offsetHeight / editorAction.e.offsetWidth);
                     }
                 }
 
-                if (! newHeight) {
-                    if (editorAction.d == 's-resize' || editorAction.d == 'se-resize' || editorAction.d == 'sw-resize') {
-                        height = editorAction.h + (y - editorAction.y);
-                        editorAction.e.style.height = height + 'px';
+                if (editorAction.d == 's-resize' || editorAction.d == 'se-resize' || editorAction.d == 'sw-resize') {
+                    if (! height) {
+                        height = editorAction.e.offsetHeight + (y - state.y);
                     }
+                } else if (editorAction.d === 'n-resize' || editorAction.d == 'ne-resize' || editorAction.d == 'nw-resize') {
+                    top = editorAction.e.offsetTop + (y - state.y);
+                    height = editorAction.e.offsetTop + editorAction.e.offsetHeight - top;
+                }
+
+                if (top) {
+                    editorAction.e.style.top = top + 'px';
+                }
+                if (left) {
+                    editorAction.e.style.left = left + 'px';
+                }
+                if (width) {
+                    editorAction.e.style.width = width + 'px';
+                }
+                if (height) {
+                    editorAction.e.style.height = height + 'px';
                 }
 
                 // Update element
@@ -12945,13 +13186,27 @@ const Events = function() {
                     editorAction.e.refresh('dimensions', width, height);
                 }
             }
+
+            state.x = x;
+            state.y = y;
         } else {
-            // Resizing action
-            var item = jSuites.findElement(e.target, 'jpanel');
+            let element = getElement(e);
+            // Resize action
+            let item = jsuites_jSuites.findElement(element, 'jpanel');
             // Found eligible component
             if (item) {
-                if (item.getAttribute('tabindex')) {
-                    var rect = item.getBoundingClientRect();
+                // Resizing action
+                let controls = item.classList.contains('jpanel-controls');
+                if (controls) {
+                    let position = element.getAttribute('data-position');
+                    if (position) {
+                        item.style.cursor = position;
+                    } else {
+                        item.style.cursor = '';
+                    }
+                } else if (item.getAttribute('tabindex')) {
+                    let rect = item.getBoundingClientRect();
+                    //console.log(e.clientY - rect.top, rect.width - (e.clientX - rect.left), cornerSize)
                     if (e.clientY - rect.top < cornerSize) {
                         if (rect.width - (e.clientX - rect.left) < cornerSize) {
                             item.style.cursor = 'ne-resize';
@@ -12980,8 +13235,49 @@ const Events = function() {
         }
     }
 
+    let position = ['n','ne','e','se','s','sw','w','nw','rotate'];
+    position.forEach(function(v, k) {
+        position[k] = document.createElement('div');
+        position[k].classList.add('jpanel-action');
+        if (v === 'rotate') {
+            position[k].setAttribute('data-action', 'rotate');
+        } else {
+            position[k].setAttribute('data-action', 'resize');
+            position[k].setAttribute('data-position', v + '-resize');
+        }
+    });
+
+    let currentElement;
+
+    const focus = function(e) {
+        let element = getElement(e);
+        // Check if this is the floating
+        let item = jsuites_jSuites.findElement(element, 'jpanel');
+        if (item && ! item.classList.contains("readonly") && item.classList.contains('jpanel-controls')) {
+            item.append(...position);
+
+            if (! item.classList.contains('jpanel-rotate')) {
+                position[position.length-1].remove();
+            }
+
+            currentElement = item;
+        } else {
+            blur(e);
+        }
+    }
+
+    const blur = function(e) {
+        if (currentElement) {
+            position.forEach(function(v) {
+                v.remove();
+            });
+            currentElement = null;
+        }
+    }
+
     const mouseOver = function(e) {
-        var message = e.target.getAttribute('data-tooltip');
+        let element = getElement(e);
+        var message = element.getAttribute('data-tooltip');
         if (message) {
             // Instructions
             tooltip.innerText = message;
@@ -13004,14 +13300,6 @@ const Events = function() {
         }
     }
 
-    const dblClick = function(e) {
-        var item = jSuites.findElement(e.target, 'jpanel');
-        if (item && typeof(item.dblclick) == 'function') {
-            // Create edition
-            item.dblclick(e);
-        }
-    }
-
     const contextMenu = function(e) {
         var item = document.activeElement;
         if (item && typeof(item.contextmenu) == 'function') {
@@ -13022,7 +13310,7 @@ const Events = function() {
             e.stopImmediatePropagation();
         } else {
             // Search for possible context menus
-            item = jSuites.findElement(e.target, function(o) {
+            item = jsuites_jSuites.findElement(e.target, function(o) {
                 return o.tagName && o.getAttribute('aria-contextmenu-id');
             });
 
@@ -13049,8 +13337,9 @@ const Events = function() {
             }
         }
 
-        if (document.jsuitesComponents && document.jsuitesComponents.length) {
-            item = document.jsuitesComponents[document.jsuitesComponents.length - 1]
+        let state = window['jSuitesStateControl'];
+        if (state && state.length > 0) {
+            item = state[state.length - 1];
             if (item) {
                 if (e.key === "Escape" && typeof(item.isOpened) == 'function' && typeof(item.close) == 'function') {
                     if (item.isOpened()) {
@@ -13065,28 +13354,29 @@ const Events = function() {
 
     const input = function(e) {
         if (e.target.getAttribute('data-mask') || e.target.mask) {
-            jSuites.mask(e);
+            jsuites_jSuites.mask(e);
         }
     }
 
+    document.addEventListener('focusin', focus);
     document.addEventListener('mouseup', mouseUp);
     document.addEventListener("mousedown", mouseDown);
     document.addEventListener('mousemove', mouseMove);
     document.addEventListener('mouseover', mouseOver);
-    document.addEventListener('dblclick', dblClick);
     document.addEventListener('keydown', keyDown);
     document.addEventListener('contextmenu', contextMenu);
     document.addEventListener('input', input);
 }
 
-if (typeof(document) !== "undefined" && ! document.jsuitesComponents) {
+if (typeof(document) !== "undefined") {
     Events();
 }
 
-/* harmony default export */ var jsuites = (jSuites);
+/* harmony default export */ var jsuites = (jsuites_jSuites);
 }();
-__webpack_exports__ = __webpack_exports__["default"];
-/******/ 	return __webpack_exports__;
+jSuites = __webpack_exports__["default"];
 /******/ })()
 ;
-});
+
+    return jSuites;
+})));

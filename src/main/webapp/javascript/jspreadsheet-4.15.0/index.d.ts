@@ -607,7 +607,7 @@ declare namespace jspreadsheet {
       colIndex: string | null,
       rowIndex: string | null,
       event: PointerEvent
-    ) => object[];
+    ) => object[] | null;
 
     /**
      * If true, copy and export will bring formula results. If false, it will bring formulas.
@@ -1386,7 +1386,7 @@ declare namespace jspreadsheet {
 
     /** Method to config custom script execution. NOTE: This does not work with lazyLoading, Pagination or Search options. */
     updateTable?: (
-      instance: JspreadsheetInstance,
+      instance: JspreadsheetInstanceElement,
       cell: HTMLTableCellElement,
       colIndex: number,
       rowIndex: number,
@@ -2164,7 +2164,7 @@ declare namespace jspreadsheet {
      * @param str - Data.
      * @param delimiter - CSV delimiter. Defaut: ",".
      */
-    parseCSV: (str: number, delimiter?: number) => string[][];
+    parseCSV: (str: string, delimiter?: number) => string[][];
 
     /**
      * Extract a number from a string.

@@ -14,6 +14,9 @@
         "node_modules/ace-builds/src-min-noconflict/*"
       ]
     },
+    "add-to-calendar-button": {
+      "version": "1.18.7"
+    },
     "autocomplete": {
       "version": "1.0.7"
     },
@@ -24,6 +27,18 @@
         "node_modules/chart.js/dist/chart.umd.js"
       ]
     },
+    "clipboard": {
+      "version": "2.0.11"
+    },
+    "codemirror": {
+      "version": "5.65.14"
+    },
+    "dragula": {
+      "version": "3.7.3"
+    },
+    "dropzone": {
+      "version": "5.9.3"
+    },
     "foundation-datepicker": {
       "version": "20180424"
     },
@@ -33,6 +48,9 @@
         "node_modules/fullcalendar/index.global.min.js"
       ]
     },
+    "imagesloaded": {
+      "version": "5.0.0"
+    },
     "jquery": {
       "package": "js-jquery",
       "version": "3.7.1",
@@ -41,6 +59,9 @@
         "node_modules/jquery/jquery.min.js",
         "node_modules/jquery/jquery.min.map"
       ]
+    },
+    "jquery-formatcurrency": {
+      "version": "1.6.3"
     },
     "js-cookie": {
       "version": "3.0.5",
@@ -81,6 +102,9 @@
         "node_modules/leaflet.markercluster/dist/*"
       ]
     },
+    "masonry-layout": {
+      "version": "4.2.2"
+    },
     "mermaid": {
       "version": "11.4.0",
       "paths": [
@@ -97,6 +121,9 @@
         "node_modules/moment/min/locales.min.js.map"
       ]
     },
+    "payform": {
+      "version": "1.4.0"
+    },
     "prism": {
       "package": "prismjs",
       "version": "1.29.0",
@@ -105,6 +132,9 @@
         "node_modules/prismjs/themes/prism.css",
         "node_modules/prismjs/themes/prism.min.css"
       ]
+    },
+    "spectrum-colorpicker": {
+      "version": "1.8.1"
     },
     "sortablejs": {
       "version": "1.15.3",

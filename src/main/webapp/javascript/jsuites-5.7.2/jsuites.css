@@ -1,8 +1,8 @@
 :root {
-    --button-color: #298BA8; 
-    --active-color: #007aff;
-    --safe-area-top: env(safe-area-inset-top);
-    --safe-area-bottom: env(safe-area-inset-bottom);
+    --jbutton-color: #298BA8; 
+    --jactive-color: #007aff;
+    --jsafe-area-top: env(safe-area-inset-top);
+    --jsafe-area-bottom: env(safe-area-inset-bottom);
 }
 
 [data-visible="false"], .row[data-visible="false"] {
@@ -88,8 +88,8 @@ div[data-before]:before {
     min-height: 180px;
 }
 
-.jupload:not(.input):before {
-    content: "\e2c3"; 
+.jupload:not(.input):empty:before {
+    content: "\e2c3";
     font-family: "Material Icons";
     font-size: 90px;
     color: #eee;
@@ -99,7 +99,6 @@ div[data-before]:before {
     align-items: center;
     justify-content: center;
     position: absolute;
-    z-index: -1;
 }
 
 .jupload-item {
@@ -154,7 +153,7 @@ div[data-before]:before {
     margin: 10px;
 
     display: block;
-    animation: fadeIn 0.5s;
+    animation: jfadeIn 0.5s;
     pointer-events: none;
 }
 
@@ -162,7 +161,7 @@ div[data-before]:before {
     display: none;
 }
 
-@keyframes fadeIn {
+@keyframes jfadeIn {
      0% {
           opacity: 0;
      }
@@ -170,6 +169,100 @@ div[data-before]:before {
           opacity: 1;
      }
 }
+
+.jpanel {
+    position: absolute;
+    box-sizing: border-box;
+    z-index: 10;
+}
+
+.jpanel:focus {
+    outline: 2px solid black;
+    outline-offset: -1px;
+}
+
+.jpanel-action {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background-color: white;
+    border:1px solid black;
+    box-sizing: border-box;
+    pointer-events: auto;
+    z-index: 1000;
+}
+
+.jpanel-action[data-position="n-resize"] {
+    top: -4px;
+    left: calc(50% - 4px);
+}
+
+.jpanel-action[data-position="ne-resize"] {
+    top: -4px;
+    left: calc(100% - 4px);
+}
+
+.jpanel-action[data-position="e-resize"] {
+    top: calc(50% - 4px);
+    left: calc(100% - 4px);
+}
+
+.jpanel-action[data-position="se-resize"] {
+    top: calc(100% - 4px);
+    left: calc(100% - 4px);
+}
+
+.jpanel-action[data-position="s-resize"] {
+    top: calc(100% - 4px);
+    left: calc(50% - 4px);
+}
+
+.jpanel-action[data-position="sw-resize"] {
+    top: calc(100% - 4px);
+    left: -4px;
+}
+
+.jpanel-action[data-position="w-resize"] {
+    top: calc(50% - 4px);
+    left: -4px;
+}
+
+.jpanel-action[data-position="nw-resize"] {
+    top: -4px;
+    left: -4px;
+}
+
+.jpanel-action[data-position="nw-resize"] {
+    top: -4px;
+    left: -4px;
+}
+
+.jpanel-action[data-action="rotate"] {
+    top: -50px;
+    left: calc(50% - 12px);
+    width: 24px;
+    height: 24px;
+    border: 0;
+    cursor: move;
+    background-color: transparent;
+}
+
+.jpanel-action[data-action="rotate"]:before {
+    content: 'refresh';
+    font-family: 'Material Icons';
+    font-size: 24px;
+}
+
+.jpanel-action[data-action="rotate"]:after {
+    position: absolute;
+    content: '';
+    bottom: -22px;
+    left: calc(50%);
+    width: 1px;
+    height: 28px;
+    background-color: black;
+}
+
 /** Loading */
 .jloading {
     position:fixed;
@@ -194,15 +287,15 @@ div[data-before]:before {
     border-top-color:transparent;
     border-width:4px;
     border-radius:50%;
-    -webkit-animation: spin .8s linear infinite;
-    animation: spin .8s linear infinite;
+    -webkit-animation: jspin .8s linear infinite;
+    animation: jspin .8s linear infinite;
 }
 
-.jloading.spin {
+.jloading.jspin {
     background-color:transparent;
 }
 
-.jloading.spin::after {
+.jloading.jspin::after {
     margin:0 auto;
     margin-top:80px;
     border-color:#aaa;
@@ -210,185 +303,185 @@ div[data-before]:before {
 }
 
 /** Animations **/
-.fade-in {
-    animation: fade-in 2s forwards;
+.jfade-in {
+    animation: jfade-in 2s forwards;
 }
 
-.fade-out {
-    animation: fade-out 1s forwards;
+.jfade-out {
+    animation: jfade-out 1s forwards;
 }
 
-.slide-left-in {
+.jslide-left-in {
     position: relative;
-    animation: slide-left-in 0.4s forwards;
+    animation: jslide-left-in 0.4s forwards;
 }
 
-.slide-left-out {
+.jslide-left-out {
     position: relative;
-    animation: slide-left-out 0.4s forwards;
+    animation: jslide-left-out 0.4s forwards;
 }
 
-.slide-right-in {
+.jslide-right-in {
     position: relative;
-    animation: slide-right-in 0.4s forwards;
+    animation: jslide-right-in 0.4s forwards;
 }
 
-.slide-right-out {
+.jslide-right-out {
     position: relative;
-    animation: slide-right-out 0.4s forwards;
+    animation: jslide-right-out 0.4s forwards;
 }
 
-.slide-top-in {
+.jslide-top-in {
     position: relative;
-    animation: slide-top-in 0.4s forwards;
+    animation: jslide-top-in 0.4s forwards;
 }
 
-.slide-top-out {
+.jslide-top-out {
     position: relative;
-    animation: slide-top-out 0.2s forwards;
+    animation: jslide-top-out 0.2s forwards;
 }
 
-.slide-bottom-in {
+.jslide-bottom-in {
     position: relative;
-    animation: slide-bottom-in 0.4s forwards;
+    animation: jslide-bottom-in 0.4s forwards;
 }
 
-.slide-bottom-out {
+.jslide-bottom-out {
     position: relative;
-    animation: slide-bottom-out 0.1s forwards;
+    animation: jslide-bottom-out 0.1s forwards;
 }
 
-.slide-left-in > div {
+.jslide-left-in > div {
     -webkit-transform: translateZ(0px);
     -webkit-transform: translate3d(0,0,0);
 }
 
-.slide-left-out > div {
+.jslide-left-out > div {
     -webkit-transform: translateZ(0px);
     -webkit-transform: translate3d(0,0,0);
 }
 
-.slide-right-in > div {
+.jslide-right-in > div {
     -webkit-transform: translateZ(0px);
     -webkit-transform: translate3d(0,0,0);
 }
 
-.slide-right-out > div {
+.jslide-right-out > div {
     -webkit-transform: translateZ(0px);
     -webkit-transform: translate3d(0,0,0);
 }
 
-.spin {
-    animation: spin 2s infinite linear;
+.jspin {
+    animation: jspin 2s infinite linear;
 }
 
 /** Fadein and Fadeout **/
-@keyframes fade-in {
+@keyframes jfade-in {
     0% { opacity: 0; }
     100% { opacity: 100; }
 }
 
-@-webkit-keyframes fade-in {
+@-webkit-keyframes jfade-in {
     0% { opacity: 0; }
     100% { opacity: 100; }
 }
 
-@keyframes fade-out {
+@keyframes jfade-out {
     0% { opacity: 100; }
     100% { opacity: 0; }
 }
 
-@-webkit-keyframes fade-out {
+@-webkit-keyframes jfade-out {
     0% { opacity: 100; }
     100% { opacity: 0; }
 }
 
 /** Keyframes Left to Right **/
-@keyframes slide-left-in {
+@keyframes jslide-left-in {
     0% { left: -100%; }
     100% { left: 0%; }
 }
 
-@-webkit-keyframes slide-left-in {
+@-webkit-keyframes jslide-left-in {
     0% { left: -100%; }
     100% { left: 0%; }
 }
     
-@keyframes slide-left-out {
+@keyframes jslide-left-out {
     0% { left: 0%; }
     100% { left: -100%; }
 }
 
-@-webkit-keyframes slide-left-out {
+@-webkit-keyframes jslide-left-out {
     0% { left: 0%; }
     100% { left: -100%; }
 }
 
 /** Keyframes Right to Left **/
-@keyframes slide-right-in {
+@keyframes jslide-right-in {
     0% { left: 100%; }
     100% { left: 0%; }
 }
 
-@-webkit-keyframes slide-right-in
+@-webkit-keyframes jslide-right-in
 {
     0% { left: 100%; }
     100% { left: 0%; }
 }
     
-@keyframes slide-right-out {
+@keyframes jslide-right-out {
     0% { left: 0%; }
     100% { left: 100%; }
 }
 
-@-webkit-keyframes slide-right-out {
+@-webkit-keyframes jslide-right-out {
     0% { left: 0%; }
     100% { left: 100%; }
 }
 
 /** Keyframes Top to Bottom **/
-@keyframes slide-top-in {
+@keyframes jslide-top-in {
     0% { transform: translateY(-100%); }
     100% { transform: translateY(0%); }
 }
 
-@-webkit-keyframes slide-top-in {
+@-webkit-keyframes jslide-top-in {
     0% { transform: translateY(-100%); }
     100% { -webkit-transform: translateY(0%); }
 }
     
-@keyframes slide-top-out {
+@keyframes jslide-top-out {
     0% { transform: translateY(0%); }
     100% { transform: translateY(-100%); }
 }
 
-@-webkit-keyframes slide-top-out {
+@-webkit-keyframes jslide-top-out {
     0% { -webkit-transform: translateY(0%); }
     100% { -webkit-transform: translateY(-100%); }
 }
 
 /** Keyframes Bottom to Top **/
-@keyframes slide-bottom-in {
+@keyframes jslide-bottom-in {
     0% { transform: translateY(100%); }
     100% { transform: translateY(0%); }
 }
 
-@-webkit-keyframes slide-bottom-in {
+@-webkit-keyframes jslide-bottom-in {
     0% { transform: translateY(100%); }
     100% { -webkit-transform: translateY(0%); }
 }
     
-@keyframes slide-bottom-out {
+@keyframes jslide-bottom-out {
     0% { transform: translateY(0%); }
     100% { transform: translateY(100%); }
 }
 
-@-webkit-keyframes slide-bottom-out {
+@-webkit-keyframes jslide-bottom-out {
     0% { -webkit-transform: translateY(0%); }
     100% { -webkit-transform: translateY(100%); }
 }
 
-@-webkit-keyframes spin {
+@-webkit-keyframes jspin {
     from {
         -webkit-transform:rotate(0deg);
     }
@@ -397,7 +490,7 @@ div[data-before]:before {
     }
 }
 
-@keyframes spin {
+@keyframes jspin {
     from {
         transform:rotate(0deg);
     }
@@ -564,7 +657,7 @@ div[data-before]:before {
 .jcalendar-reset, .jcalendar-confirm {
     text-transform:uppercase;
     cursor:pointer;
-    color: var(--active-color);
+    color: var(--jactive-color);
 }
 
 .jcalendar-controls {
@@ -669,7 +762,7 @@ div[data-before]:before {
 .jcolor-controls div {
     flex: 1;
     font-size: 1em;
-    color: var(--active-color);
+    color: var(--jactive-color);
     text-transform: uppercase;
     font-weight: bold;
     box-sizing: border-box;
@@ -995,7 +1088,7 @@ div[data-before]:before {
         width: 100vw;
         height: 260px;
         overflow: scroll;
-        animation: slide-bottom-in 0.4s forwards;
+        animation: jslide-bottom-in 0.4s forwards;
         padding-top: 0px;
     }
     .jcontextmenu div {
@@ -1121,7 +1214,7 @@ div[data-before]:before {
 .jdropdown-close {
     display:none;
     font-size:1em;
-    color: var(--active-color);
+    color: var(--jactive-color);
     text-transform:uppercase;
     text-align:right;
     padding:12px;
@@ -2044,7 +2137,7 @@ div[data-before]:before {
 
 @media (max-width: 800px) {
     .jnotification {
-        top: calc(0px + var(--safe-area-top));
+        top: calc(0px + var(--jsafe-area-top));
         width: 100%;
     }
     .jnotification-container {
@@ -2087,6 +2180,7 @@ div[data-before]:before {
     user-select: none;
     outline: none;
     position: relative;
+    min-height: 26px;
 }
 
 .jpicker-header {
@@ -2098,12 +2192,8 @@ div[data-before]:before {
     box-sizing: border-box;
     text-align: left;
     outline: none;
-
     line-height: 24px;
-    padding: 2px;
-    padding-left: 12px;
-    padding-right: 35px;
-    outline: none;
+    padding: 2px 35px 2px 12px;
     border-radius: 4px;
 }
 
@@ -2648,6 +2738,7 @@ div[data-before]:before {
     transition: all .2s cubic-bezier(0.4,0,0.2,1);
     transition-property: color,left,transform;
     display: none;
+    pointer-events: none;
 }
 
 .jtabs-animation .jtabs-border {
@@ -2746,7 +2837,7 @@ div[data-before]:before {
 }
 
 .jtags > div {
-    padding: 6px 22px 6px 10px;
+    padding: 3px 22px 3px 10px;
     font-size: 0.9em;
     position: relative;
     border-radius: 1px;
@@ -2763,13 +2854,11 @@ div[data-before]:before {
 .jtags > div::after {
     content: 'x';
     position: absolute;
-    top: 7px;
     right: 4px;
     width: 12px;
     height: 12px;
     cursor: pointer;
     font-size: 0.9em;
-    line-height: 1em;
     display: none;
 }
 
@@ -2887,7 +2976,7 @@ div[data-before]:before {
 }
 
 .jtoolbar-mobile .jtoolbar-selected a, .jtoolbar-mobile .jtoolbar-selected i, .jtoolbar-mobile .jtoolbar-selected span {
-    color:var(--active-color) !important;
+    color:var(--jactive-color) !important;
     background-color:transparent;
 }
 
