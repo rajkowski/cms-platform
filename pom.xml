@@ -73,7 +73,7 @@
     <jstl.version>1.2.5</jstl.version>
     <libphonenumber.version>8.13.31</libphonenumber.version>
     <lombok.version>1.18.30</lombok.version>
-    <netty.version>4.1.108.Final</netty.version>
+    <netty.version>4.1.115.Final</netty.version>
     <netty-tcnative.version>2.0.65.Final</netty-tcnative.version>
     <postgresql.version>42.7.2</postgresql.version>
     <pushy.version>0.15.4</pushy.version>
