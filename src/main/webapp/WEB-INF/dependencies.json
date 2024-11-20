@@ -31,7 +31,20 @@
       "version": "2.0.11"
     },
     "codemirror": {
-      "version": "5.65.14"
+      "version": "5.65.16",
+      "paths": [
+        "node_modules/codemirror/LICENSE",
+        "node_modules/codemirror/theme",
+        "node_modules/codemirror/lib/codemirror.css",
+        "node_modules/codemirror/lib/codemirror.js",
+        "node_modules/codemirror/mode/markdown/markdown.js",
+        "node_modules/codemirror/mode/xml/xml.js",
+        "node_modules/codemirror/addon/fold/xml-fold.js",
+        "node_modules/codemirror/addon/edit/closetag.js",
+        "node_modules/codemirror/addon/fold/markdown-fold.js",
+        "node_modules/codemirror/addon/edit/matchtags.js",
+        "node_modules/codemirror/addon/edit/trailingspace.js"
+      ]
     },
     "dragula": {
       "version": "3.7.3"
@@ -145,7 +158,7 @@
       ]
     },
     "swiper": {
-      "version": "11.0.5",
+      "version": "11.1.4",
       "paths": [
         "node_modules/swiper/swiper-bundle.css",
         "node_modules/swiper/swiper-bundle.js",

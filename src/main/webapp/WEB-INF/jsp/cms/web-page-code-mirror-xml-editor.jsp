@@ -17,17 +17,18 @@
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="js" uri="/WEB-INF/tlds/javascript-escape.tld" %>
 <%@ taglib prefix="g" uri="http://granule.com/tags" %>
+<%@ taglib prefix="web" uri="/WEB-INF/tlds/web.tld" %>
 <jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="webPage" class="com.simisinc.platform.domain.model.cms.WebPage" scope="request"/>
-<link rel="stylesheet" href="${ctx}/javascript/codemirror-5.65.14/codemirror.css">
-<link rel="stylesheet" href="${ctx}/javascript/codemirror-5.65.14/theme/one-dark.css">
+<web:stylesheet package="codemirror" file="codemirror.css" />
+<web:stylesheet package="codemirror" file="theme/one-dark.css" />
 <g:compress>
-  <script src="${ctx}/javascript/codemirror-5.65.14/codemirror.js"></script>
-  <script src="${ctx}/javascript/codemirror-5.65.14/xml-fold.js"></script>
-  <script src="${ctx}/javascript/codemirror-5.65.14/closetag.js"></script>
-  <script src="${ctx}/javascript/codemirror-5.65.14/matchtags.js"></script>
-  <script src="${ctx}/javascript/codemirror-5.65.14/xml.js"></script>
+  <web:script package="codemirror" file="codemirror.js" />
+  <web:script package="codemirror" file="xml-fold.js" />
+  <web:script package="codemirror" file="closetag.js" />
+  <web:script package="codemirror" file="matchtags.js" />
+  <web:script package="codemirror" file="xml.js" />
 </g:compress>
 <style>
   .CodeMirror {
