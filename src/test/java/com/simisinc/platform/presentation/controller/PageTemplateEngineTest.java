@@ -57,6 +57,7 @@ class PageTemplateEngineTest {
     systemPropertyList.add(new SiteProperty("system.filepath", "."));
     systemPropertyList.add(new SiteProperty("system.www.context", ""));
     systemPropertyList.add(new SiteProperty("site.name", "Test Site"));
+    systemPropertyList.add(new SiteProperty("maps.service.tiles", "openstreetmap"));
     return systemPropertyList;
   }
 
@@ -82,9 +83,16 @@ class PageTemplateEngineTest {
       try (MockedStatic<WebPageRepository> webPageRepository = mockStatic(WebPageRepository.class)) {
         // Determine a page to render
         List<WebPage> webPageList = new ArrayList<WebPage>();
+
+        // Define a Widget
         String htmlContent = "<h2>Hello</h2>";
-        String webPageXml = "<page><section><column><widget name=\"content\"><html><![CDATA[" + htmlContent
-            + "]]></html></widget></column></section></page>";
+        String contentWidget = "<widget name=\"content\"><html><![CDATA[" + htmlContent
+            + "]]></html></widget>";
+
+        String mapWidget = "<widget name=\"map\"><coordinates>10,10</coordinates></widget>";
+
+        // Define the Page XML
+        String webPageXml = "<page><section><column>" + contentWidget + mapWidget + "</column></section></page>";
         WebPage webPage = new WebPage("/test", webPageXml);
         webPage.setTitle("Testing");
         webPageList.add(webPage);
@@ -146,10 +154,13 @@ class PageTemplateEngineTest {
                   Assertions.assertNotNull(htmlPage);
                   // System.out.println(htmlPage);
                   Assertions.assertTrue(htmlPage.contains("<title>Testing | Test Site</title>"));
-                  Assertions.assertTrue(htmlPage.contains("<div class=\"platform-content\">" + htmlContent + "</div>"));
                   Assertions.assertFalse(htmlPage.contains("\"${") || htmlPage.contains("[${") || htmlPage.contains("#{"));
                   Assertions.assertFalse(htmlPage.contains("<link rel=\"stylesheet\" type=\"text/css\" href=\"\" />"));
                   Assertions.assertFalse(htmlPage.contains("<script src=\"\"></script>"));
+                  // Check widget output
+                  Assertions.assertTrue(htmlPage.contains("<div class=\"platform-content\">" + htmlContent + "</div>"));
+                  Assertions.assertTrue(htmlPage.contains("href=\"/javascript/leaflet"));
+                  Assertions.assertTrue(htmlPage.contains("src=\"/javascript/leaflet"));
                 }
               }
             }
