@@ -18,7 +18,7 @@ package com.simisinc.platform.presentation.controller;
 import java.io.Serializable;
 
 /**
- * Used for dynamically adding script and stylesheet tags to the web page; Web packages are defined in web-packages.json
+ * Used for dynamically adding script and stylesheet tags to the web page; Web packages are defined in dependencies.json
  *
  * @author matt rajkowski
  * @created 11/3/24 8:00 AM

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import packages from '../../../package.json';
-import web from '../webapp/WEB-INF/web-packages.json';
+import web from '../webapp/WEB-INF/dependencies.json';
 
 // web.json record
 type WebDependency = {
@@ -60,7 +60,7 @@ Object.entries(dependencies).forEach(([key, value]) => {
   }
 
   // Save the file indicating the installed version
-  const file = path.join('src', 'main', 'webapp', 'WEB-INF', 'web-packages.json')
+  const file = path.join('src', 'main', 'webapp', 'WEB-INF', 'dependencies.json')
   fs.writeFileSync(file, JSON.stringify(web, null, 2));
 });
 

@@ -108,7 +108,7 @@ public class PageServlet extends HttpServlet {
     // Load the frontend web resource catalog
     try {
       LOG.info("Loading web packages...");
-      webPackageList = WebPackageCommand.init(config.getServletContext().getResource("/WEB-INF/web-packages.json"));
+      webPackageList = WebPackageCommand.init(config.getServletContext().getResource("/WEB-INF/dependencies.json"));
       LOG.info("Added web packages: " + webPackageList.size());
     } catch (Exception e) {
       LOG.error("Web packages error:", e);

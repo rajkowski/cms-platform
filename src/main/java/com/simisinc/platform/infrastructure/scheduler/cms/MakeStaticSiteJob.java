@@ -53,7 +53,7 @@ public class MakeStaticSiteJob {
     WebApplicationTemplateResolver templateResolver = new WebApplicationTemplateResolver(application);
     try {
       Map<String, String> widgetLibrary = WebPageXmlLayoutCommand.init(servletContext);
-      URL webPackageFile = servletContext.getResource("/WEB-INF/web-packages.json");
+      URL webPackageFile = servletContext.getResource("/WEB-INF/dependencies.json");
       PageTemplateEngine.startup(templateResolver, "/WEB-INF/html-templates/", widgetLibrary, webPackageFile);
     } catch (Exception e) {
       LOG.error("Exiting, the PageTemplateEngine did not properly startup so web requests will not be allowed!", e);

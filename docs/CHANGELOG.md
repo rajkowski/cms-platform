@@ -2,9 +2,10 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the [Common Changelog](https://common-changelog.org/).
 
-## Unreleased
+## 2024-11-19
 
-- Web tags have been implemented so that frontend dependencies can be easily updated using NPM scripts without code changes in HTML web pages
+- Web tags have been implemented so that frontend dependencies in JSPs and Thymeleaf HTML are easily updated using the `npm install` script without code changes in web pages, check `package.json` and `dependencies.json`
+- Maven triggers precompilation of JSPs for the web application archive using `mvn package`
 
 ## 2024-08-25
 

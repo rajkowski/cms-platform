@@ -115,7 +115,7 @@ class PageTemplateEngineTest {
           boolean startupSuccess = PageTemplateEngine.startup(templateResolver,
               webAppPath.getAbsolutePath() + File.separator + "WEB-INF" + File.separator + "html-templates" + File.separator,
               widgetLibrary,
-              new File(webAppPath.getAbsolutePath() + File.separator + "WEB-INF" + File.separator + "web-packages.json").toURI()
+              new File(webAppPath.getAbsolutePath() + File.separator + "WEB-INF" + File.separator + "dependencies.json").toURI()
                   .toURL());
           Assertions.assertTrue(startupSuccess);
         } catch (MalformedURLException mue) {
