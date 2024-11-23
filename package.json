@@ -13,7 +13,7 @@
     "postinstall": "ts-node src/main/scripts/dependencies.ts"
   },
   "dependencies": {
-    "@superset-ui/embedded-sdk": "0.1.0-alpha.7",
+    "@superset-ui/embedded-sdk": "0.1.2",
     "ace-builds": "1.32.4",
     "add-to-calendar-button": "2.7.3",
     "chart.js": "4.4.3",
