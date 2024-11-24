@@ -17,10 +17,11 @@
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="js" uri="/WEB-INF/tlds/javascript-escape.tld" %>
 <%@ taglib prefix="group" uri="/WEB-INF/tlds/group-functions.tld" %>
+<%@ taglib prefix="web" uri="/WEB-INF/tlds/web.tld" %>
 <jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="folder" class="com.simisinc.platform.domain.model.cms.Folder" scope="request"/>
-<link rel="stylesheet" href="${ctx}/javascript/dropzone-5.9.3/dropzone.min.css" />
+<web:stylesheet package="dropzone" file="dropzone.min.css" />
 <c:if test="${!empty title}">
   <h4><c:if test="${!empty icon}"><i class="fa ${icon}"></i> </c:if><c:out value="${title}" /></h4>
 </c:if>
@@ -32,7 +33,7 @@
 <%--<form action="" method="post" enctype="multipart/form-data">--%>
   <%--<input type="file" name="file" />--%>
 <%--</form>--%>
-<script src="${ctx}/javascript/dropzone-5.9.3/dropzone.min.js"></script>
+<web:script package="dropzone" file="dropzone.min.js" />
 <script>
   Dropzone.options.myDropzone = {
     autoProcessQueue: false,

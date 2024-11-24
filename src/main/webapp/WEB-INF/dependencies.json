@@ -50,14 +50,14 @@
       "version": "3.7.3"
     },
     "dropzone": {
-      "package": "@deltablot/dropzone",
       "version": "5.9.3",
       "paths": [
-        "node_modules/@deltablot/dropzone/dist/basic.css",
-        "node_modules/@deltablot/dropzone/dist/dropzone.css",
-        "node_modules/@deltablot/dropzone/dist/dropzone.js",
-        "node_modules/@deltablot/dropzone/dist/dropzone-min.js",
-        "node_modules/@deltablot/dropzone/dist/dropzone-min.js.map"
+        "node_modules/dropzone/dist/basic.css",
+        "node_modules/dropzone/dist/dropzone.css",
+        "node_modules/dropzone/dist/dropzone.js",
+        "node_modules/dropzone/dist/min/basic.min.css",
+        "node_modules/dropzone/dist/min/dropzone.min.css",
+        "node_modules/dropzone/dist/min/dropzone.min.js"
       ]
     },
     "foundation-datepicker": {
