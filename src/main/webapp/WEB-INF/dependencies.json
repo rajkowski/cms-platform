@@ -2,14 +2,14 @@
   "dependencies": {
     "superset-embedded-sdk": {
       "package": "@superset-ui/embedded-sdk",
-      "version": "0.1.0-alpha.7",
+      "version": "0.1.2",
       "paths": [
         "node_modules/@superset-ui/embedded-sdk/bundle/*"
       ]
     },
     "ace": {
       "package": "ace-builds",
-      "version": "1.32.4",
+      "version": "1.36.5",
       "paths": [
         "node_modules/ace-builds/src-min-noconflict/*"
       ]
@@ -22,7 +22,7 @@
     },
     "chartjs": {
       "package": "chart.js",
-      "version": "4.4.3",
+      "version": "4.4.6",
       "paths": [
         "node_modules/chart.js/dist/chart.umd.js"
       ]
@@ -31,7 +31,7 @@
       "version": "2.0.11"
     },
     "codemirror": {
-      "version": "5.65.16",
+      "version": "5.65.18",
       "paths": [
         "node_modules/codemirror/LICENSE",
         "node_modules/codemirror/theme",
@@ -158,7 +158,7 @@
       ]
     },
     "swiper": {
-      "version": "11.1.4",
+      "version": "11.1.15",
       "paths": [
         "node_modules/swiper/swiper-bundle.css",
         "node_modules/swiper/swiper-bundle.js",
