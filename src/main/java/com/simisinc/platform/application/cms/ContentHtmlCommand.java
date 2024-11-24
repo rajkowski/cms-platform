@@ -205,7 +205,7 @@ public class ContentHtmlCommand {
 
   public static List<String> extractCardsFromHtml(WidgetContext context, String html, StringBuilder extraHTMLContent) {
     // Determine if cards are set by number across, or stacked across by size
-    String smallCardCount = context.getPreferences().get("smallCardCount");
+    String smallCardCount = context.getPreferences().getOrDefault("smallCardCount", "1");
     String mediumCardCount = context.getPreferences().get("mediumCardCount");
     String largeCardCount = context.getPreferences().get("largeCardCount");
     if (StringUtils.isNotBlank(smallCardCount)) {
