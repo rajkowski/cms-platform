@@ -22,6 +22,7 @@
 <%@ taglib prefix="text" uri="/WEB-INF/tlds/text-functions.tld" %>
 <%@ taglib prefix="url" uri="/WEB-INF/tlds/url-functions.tld" %>
 <%@ taglib prefix="number" uri="/WEB-INF/tlds/number-functions.tld" %>
+<%@ taglib prefix="web" uri="/WEB-INF/tlds/web.tld" %>
 <jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="fileItemList" class="java.util.ArrayList" scope="request"/>
@@ -30,7 +31,7 @@
 <g:compress>
   <link rel="stylesheet" type="text/css" href="${ctx}/css/${font:fontawesome()}/css/all.min.css" />
   <link rel="stylesheet" type="text/css" href="${ctx}/css/${font:fontawesome()}/css/v4-shims.min.css" />
-  <link rel="stylesheet" type="text/css" href="${ctx}/css/foundation-6.8.1/foundation.min.css" />
+  <web:stylesheet package="foundation-sites" file="foundation.min.css" />
 </g:compress>
 <h3>Videos</h3>
 <c:if test="${empty fileItemList}">

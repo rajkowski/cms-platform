@@ -55,6 +55,19 @@
     "foundation-datepicker": {
       "version": "20180424"
     },
+    "foundation-sites": {
+      "version": "6.9.0",
+      "paths": [
+        "node_modules/foundation-sites/dist/js/foundation.js",
+        "node_modules/foundation-sites/dist/js/foundation.js.map",
+        "node_modules/foundation-sites/dist/js/foundation.min.js",
+        "node_modules/foundation-sites/dist/js/foundation.min.js.map",
+        "node_modules/foundation-sites/dist/css/foundation.css",
+        "node_modules/foundation-sites/dist/css/foundation.css.ma",
+        "node_modules/foundation-sites/dist/css/foundation.min.css",
+        "node_modules/foundation-sites/dist/css/foundation.min.css.map"
+      ]
+    },
     "fullcalendar": {
       "version": "6.1.15",
       "paths": [
@@ -134,6 +147,15 @@
         "node_modules/moment/min/locales.min.js.map"
       ]
     },
+    "motion-ui": {
+      "version": "2.0.8",
+      "paths": [
+        "node_modules/motion-ui/dist/motion-ui.css",
+        "node_modules/motion-ui/dist/motion-ui.min.css",
+        "node_modules/motion-ui/dist/motion-ui.js",
+        "node_modules/motion-ui/dist/motion-ui.min.js"
+      ]
+    },
     "payform": {
       "version": "1.4.0"
     },
@@ -182,6 +204,14 @@
         "node_modules/tinymce/plugins",
         "node_modules/tinymce/skins",
         "node_modules/tinymce/themes"
+      ]
+    },
+    "what-input": {
+      "version": "5.2.12",
+      "paths": [
+        "node_modules/what-input/dist/what-input.js",
+        "node_modules/what-input/dist/what-input.min.js",
+        "node_modules/what-input/dist/what-input.min.js.map"
       ]
     }
   }

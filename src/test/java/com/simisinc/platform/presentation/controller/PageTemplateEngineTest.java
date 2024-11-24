@@ -154,6 +154,8 @@ class PageTemplateEngineTest {
                   Assertions.assertNotNull(htmlPage);
                   // System.out.println(htmlPage);
                   Assertions.assertTrue(htmlPage.contains("<title>Testing | Test Site</title>"));
+                  Assertions.assertTrue(htmlPage.contains("<script src=\"/javascript/foundation-sites-"));
+                  Assertions.assertTrue(htmlPage.contains("/foundation.min.js\"></script>"));
                   Assertions.assertFalse(htmlPage.contains("\"${") || htmlPage.contains("[${") || htmlPage.contains("#{"));
                   Assertions.assertFalse(htmlPage.contains("<link rel=\"stylesheet\" type=\"text/css\" href=\"\" />"));
                   Assertions.assertFalse(htmlPage.contains("<script src=\"\"></script>"));

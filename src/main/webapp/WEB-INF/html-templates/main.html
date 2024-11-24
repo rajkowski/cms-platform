@@ -16,8 +16,8 @@
     <link rel="stylesheet" type="text/css" href="${ctx}/css/fontawesome-free-6.1.1-web/css/all.min.css" />
     <link rel="stylesheet" type="text/css" href="${ctx}/css/fontawesome-free-6.1.1-web/css/v4-shims.min.css" />
     <link rel="stylesheet" type="text/css" href="${ctx}/css/fontawesome-free-6.1.1-web/css/v5-font-face.min.css" />
-    <link rel="stylesheet" type="text/css" href="${ctx}/css/foundation-6.8.1/foundation.min.css" />
-    <link rel="stylesheet" type="text/css" href="${ctx}/css/foundation-6.8.1/motion-ui.min.css" />
+    <link rel="stylesheet" type="text/css" th:href="#{web.package('foundation-sites', 'foundation.min.css')}" />
+    <link rel="stylesheet" type="text/css" th:href="#{web.package('motion-ui', 'motion-ui.min.css')}" />
     <link rel="stylesheet" type="text/css" href="${ctx}/css/animate-3.7.2/animate.min.css" />
     <link rel="stylesheet" type="text/css" href="${ctx}/css/foundation-datepicker-20180424/foundation-datepicker.min.css" />
     <link rel="stylesheet" type="text/css" th:href="#{web.package('autocomplete', 'auto-complete.css')}" />
@@ -192,8 +192,8 @@
       </div>
     </th:block>
     <!--/* Javascript after content */-->
-    <script src="${ctx}/javascript/foundation-6.8.1/what-input-5.2.6.min.js"></script>
-    <script src="${ctx}/javascript/foundation-6.8.1/foundation.min.js"></script>
+    <script th:src="#{web.package('what-input', 'what-input.min.js')}"></script>
+    <script th:src="#{web.package('foundation-sites', 'foundation.min.js')}"></script>
     <script th:inline="javascript">
       $(document).foundation();
       /*[# th:if="${not #strings.isEmpty(sitePropertyMap['site.confirmation']) and #strings.equals(sitePropertyMap['site.confirmation'], 'true')}" ]*/

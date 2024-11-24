@@ -30,6 +30,7 @@
   ~ limitations under the License.
   --%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="web" uri="/WEB-INF/tlds/web.tld" %>
 <!doctype html>
 <html class="no-js" lang="en" xml:lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -38,7 +39,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="Content-Language" content="en">
   <title>Page error</title>
-  <link rel="stylesheet" type="text/css" href="${ctx}/css/foundation-6.8.1/foundation.min.css" />
+  <web:stylesheet package="foundation-sites" file="foundation.min.css" />
   <style>
       body {
           background-color: white;
