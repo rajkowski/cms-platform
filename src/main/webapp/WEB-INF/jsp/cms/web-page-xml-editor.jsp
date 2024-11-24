@@ -166,7 +166,7 @@
   <showControls>true</showControls>
   <showPagination>true</showPagination>
   <loop>false</loop>
-  <autoplayDelay>1000</autoplayDelay>
+  <autoplayDelay>5000</autoplayDelay>
 </widget>
 </textarea>
   </div>
