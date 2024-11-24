@@ -50,7 +50,15 @@
       "version": "3.7.3"
     },
     "dropzone": {
-      "version": "5.9.3"
+      "package": "@deltablot/dropzone",
+      "version": "5.9.3",
+      "paths": [
+        "node_modules/@deltablot/dropzone/dist/basic.css",
+        "node_modules/@deltablot/dropzone/dist/dropzone.css",
+        "node_modules/@deltablot/dropzone/dist/dropzone.js",
+        "node_modules/@deltablot/dropzone/dist/dropzone-min.js",
+        "node_modules/@deltablot/dropzone/dist/dropzone-min.js.map"
+      ]
     },
     "foundation-datepicker": {
       "version": "20180424"

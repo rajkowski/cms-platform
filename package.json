@@ -5,14 +5,15 @@
   "version": "1.1.0",
   "description": "CMS Platform: Agile, Enterprise, Open Source Content Management System (CMS) and Portal, frontend dependencies",
   "license": "Apache License 2.0",
-  "engines" : { 
-    "npm" : ">=9.6",
-    "node" : ">=18.17"
+  "engines": {
+    "npm": ">=9.6",
+    "node": ">=18.17"
   },
   "scripts": {
     "postinstall": "ts-node src/main/scripts/dependencies.ts"
   },
   "dependencies": {
+    "@deltablot/dropzone": "5.9.3",
     "@superset-ui/embedded-sdk": "0.1.2",
     "ace-builds": "1.36.5",
     "add-to-calendar-button": "2.7.3",
@@ -20,7 +21,6 @@
     "clipboard": "2.0.11",
     "codemirror": "5.65.18",
     "dragula": "3.7.3",
-    "dropzone": "5.9.3",
     "foundation-datepicker": "1.5.6",
     "foundation-sites": "6.9.0",
     "fullcalendar": "6.1.15",
@@ -38,8 +38,8 @@
     "motion-ui": "2.0.8",
     "payform": "1.4.0",
     "prismjs": "1.29.0",
-    "spectrum-colorpicker": "1.8.1",
     "sortablejs": "1.15.4",
+    "spectrum-colorpicker": "1.8.1",
     "swiper": "11.1.15",
     "tinymce": "6.8.5",
     "what-input": "5.2.12"
@@ -49,7 +49,7 @@
     "jquery-gridmanager": "0.3.1"
   },
   "devDependencies": {
-    "ts-node": "10.9.2",
-    "tinycolor2": "1.6.0"
+    "tinycolor2": "1.6.0",
+    "ts-node": "10.9.2"
   }
 }
