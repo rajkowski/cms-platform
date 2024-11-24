@@ -32,6 +32,7 @@
     border: 1px solid #000000;
   }
   .collection-fields-sortable-list .card-divider {
+    cursor: pointer;
     padding: 0 1rem;
   }
 </style>

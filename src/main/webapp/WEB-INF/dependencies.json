@@ -150,7 +150,7 @@
       "version": "1.8.1"
     },
     "sortablejs": {
-      "version": "1.15.3",
+      "version": "1.15.4",
       "paths": [
         "node_modules/sortablejs/LICENSE",
         "node_modules/sortablejs/Sortable.js",
