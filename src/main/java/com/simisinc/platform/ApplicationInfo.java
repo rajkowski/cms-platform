@@ -38,6 +38,7 @@ public class ApplicationInfo {
    * Outputs the version from the command line
    * @param args
    */
+  @SuppressWarnings("java:S106")
   public static void main(String[] args) {
     System.out.println("Version: " + VERSION);
     System.out.println("Product: " + PRODUCT_NAME);
