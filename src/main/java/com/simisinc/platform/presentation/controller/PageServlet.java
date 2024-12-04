@@ -356,14 +356,13 @@ public class PageServlet extends HttpServlet {
                 userSession.getUserId());
           }
           if (thisCollection == null) {
-            LOG.error("COLLECTION NOT ALLOWED: " + pageRequest.getPagePath() + " [roles="
-                + pageRef.getRoles().toString() + "]");
+            LOG.error("COLLECTION NOT ALLOWED: " + pageRequest.getPagePath() + " [roles=" + pageRef.getRoles().toString() + "]");
             controllerSession.clearAllWidgetData();
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
             return;
           }
-          coreData.put("collectionUniqueId", collectionUniqueId);
-          LOG.debug("Added collection to coreData: " + collectionUniqueId);
+          coreData.put("collectionUniqueId", thisCollection.getUniqueId());
+          LOG.debug("Added collection to coreData: " + thisCollection.getUniqueId());
         }
       }
 

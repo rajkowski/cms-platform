@@ -479,9 +479,9 @@ public class WebRequestFilter implements Filter {
           if (userSession.getCart() == null) {
             CartCommand.createCart(userSession);
           }
-          userSession.getCart().setPromoCode(promoCode);
+          userSession.getCart().setPromoCode(pricingRule.getPromoCode());
           httpServletRequest.setAttribute(RequestConstants.PRICING_RULE, pricingRule);
-          LOG.debug("Found promo code overlay: " + promoCode);
+          LOG.debug("Found promo code overlay: " + pricingRule.getPromoCode());
         }
       }
       // If on the home page, and not an instant promo code, check if the site has a promo overlay

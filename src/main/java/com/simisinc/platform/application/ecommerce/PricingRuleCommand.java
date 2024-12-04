@@ -142,14 +142,16 @@ public class PricingRuleCommand {
     if (pricingRule.getMinimumSubtotal() != null && pricingRule.getMinimumSubtotal().compareTo(BigDecimal.ZERO) > 0) {
       // A minimum order amount is required for this discount
       if (eligibleAmount.compareTo(pricingRule.getMinimumSubtotal()) < 0) {
-        LOG.debug("Minimum eligible amount not met: " + pricingRule.getMinimumSubtotal().toPlainString() + " compared to " + eligibleAmount.toPlainString());
+        LOG.debug("Minimum eligible amount not met: " + pricingRule.getMinimumSubtotal().toPlainString() + " compared to "
+            + eligibleAmount.toPlainString());
         return null;
       }
     }
 
     if (pricingRule.getMinimumOrderQuantity() > 0) {
       if (eligibleAmountList.size() < pricingRule.getMinimumOrderQuantity()) {
-        LOG.debug("Minimum eligible order quantity not met: " + pricingRule.getMinimumOrderQuantity() + " required compared to " + eligibleAmountList.size());
+        LOG.debug("Minimum eligible order quantity not met: " + pricingRule.getMinimumOrderQuantity() + " required compared to "
+            + eligibleAmountList.size());
         return null;
       }
     }
