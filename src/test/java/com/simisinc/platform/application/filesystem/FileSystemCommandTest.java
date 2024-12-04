@@ -159,4 +159,16 @@ public class FileSystemCommandTest {
       Assertions.assertEquals(2, list.size());
     }
   }
+
+  @Test
+  void testGetFileChecksum() {
+    try (MockedStatic<CacheManager> cacheManager = mockStatic(CacheManager.class)) {
+      cacheManager.when(() -> CacheManager.getLoadingCache(anyString())).thenReturn(sitePropertyListCache);
+      File testResourcePath = FileSystemCommand.getFileServerConfigPath("src", "test", "resources");
+      File properties = new File(testResourcePath, "simple-list.csv");
+      String checksum = FileSystemCommand.getFileChecksum(properties);
+      Assertions.assertEquals(136, checksum.length());
+    }
+  }
+
 }
