@@ -22,7 +22,7 @@
     },
     "chartjs": {
       "package": "chart.js",
-      "version": "4.4.6",
+      "version": "4.4.7",
       "paths": [
         "node_modules/chart.js/dist/chart.umd.js"
       ]
@@ -115,7 +115,7 @@
       ]
     },
     "jsuites": {
-      "version": "5.7.2",
+      "version": "5.8.0",
       "paths": [
         "node_modules/jsuites/dist/jsuites.css",
         "node_modules/jsuites/dist/jsuites.d.ts",
@@ -140,7 +140,7 @@
       "version": "4.2.2"
     },
     "mermaid": {
-      "version": "11.4.0",
+      "version": "11.4.1",
       "paths": [
         "node_modules/mermaid/dist/mermaid.js",
         "node_modules/mermaid/dist/mermaid.min.js"
