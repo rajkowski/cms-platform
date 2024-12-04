@@ -10,6 +10,13 @@
             "request": "launch",
             "mainClass": "com.simisinc.platform.ApplicationInfo",
             "projectName": "cms-platform"
+        },
+        {
+            "type": "java",
+            "name": "MakeStaticSiteApp",
+            "request": "launch",
+            "mainClass": "com.simisinc.platform.MakeStaticSiteApp",
+            "projectName": "cms-platform"
         }
     ]
 }
