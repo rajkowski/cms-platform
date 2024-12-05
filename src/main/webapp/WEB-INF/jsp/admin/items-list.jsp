@@ -17,6 +17,7 @@
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="font" uri="/WEB-INF/tlds/font-functions.tld" %>
+<%@ taglib prefix="html" uri="/WEB-INF/tlds/html-functions.tld" %>
 <%@ taglib prefix="url" uri="/WEB-INF/tlds/url-functions.tld" %>
 <%@ taglib prefix="text" uri="/WEB-INF/tlds/text-functions.tld" %>
 <%@ taglib prefix="category" uri="/WEB-INF/tlds/category-functions.tld" %>
@@ -123,7 +124,7 @@
           </c:when>
           <c:when test="${tableColumn.value.name eq 'textDescription'}">
             <td>
-              <c:out value="${item.textDescription}" />
+              <c:out value="${html:text(item.description)}" />
             </td>
           </c:when>
           <c:when test="${tableColumn.value.name eq 'keywords'}">
