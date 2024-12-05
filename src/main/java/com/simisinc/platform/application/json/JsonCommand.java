@@ -16,13 +16,20 @@
 
 package com.simisinc.platform.application.json;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.text.StringEscapeUtils;
 
-import java.util.List;
-import java.util.Map;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Functinos for working with JSON data
@@ -38,10 +45,29 @@ public class JsonCommand {
     if (StringUtils.isBlank(value)) {
       return "";
     }
-    // return value.replaceAll("\"", "\\\\\"").trim();
+    // return value.replaceAll("\"", "\\"").trim();
     return StringEscapeUtils.escapeJson(value);
   }
 
+  /* Create a JsonNode object from a string */
+  public static JsonNode fromString(String jsonString) throws JsonProcessingException {
+    ObjectMapper mapper = new ObjectMapper();
+    return mapper.readTree(jsonString);
+  }
+
+  /* Create a JsonNode object from a URL's resource contents */
+  public static JsonNode fromURL(URL resource) throws IOException {
+    ObjectMapper mapper = new ObjectMapper();
+    return mapper.readTree(resource);
+  }
+
+  /* Create a JsonNode object from a file's contents */
+  public static JsonNode fromFile(File file) throws IOException {
+    ObjectMapper mapper = new ObjectMapper();
+    return mapper.readTree(file);
+  }
+
+  /* Create JSON string from nested String/Object pairs */
   public static StringBuilder createJsonNode(Map<String, Object> pairs) {
     StringBuilder sb = new StringBuilder();
     sb.append("{");
@@ -53,11 +79,11 @@ public class JsonCommand {
         continue;
       }
       // @note Consider empty values
-//      if (value instanceof String) {
-//        if (StringUtils.isBlank(String.valueOf(value))) {
-//          continue;
-//        }
-//      }
+      //      if (value instanceof String) {
+      //        if (StringUtils.isBlank(String.valueOf(value))) {
+      //          continue;
+      //        }
+      //      }
       // Append the name
       if (!isFirst) {
         sb.append(", ");

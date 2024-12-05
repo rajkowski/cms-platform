@@ -16,14 +16,17 @@
 
 package com.simisinc.platform.application.ecommerce;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.github.fge.jackson.JsonLoader;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.util.Iterator;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.simisinc.platform.application.json.JsonCommand;
 
 /**
  * Tests JSON functions
@@ -38,7 +41,7 @@ class JsonTest {
   @Test
   void jsonFromString() throws IOException {
 
-    JsonNode root = JsonLoader.fromString(JSON_VALUE);
+    JsonNode root = JsonCommand.fromString(JSON_VALUE);
     assertTrue(root.isArray());
     assertEquals(2, root.size());
 

@@ -23,9 +23,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.github.fge.jackson.JsonLoader;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.application.http.HttpGetCommand;
+import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.socialmedia.InstagramMedia;
 
 /**
@@ -83,7 +83,7 @@ public class InstagramCommand {
       }
       LOG.debug("Value: " + value);
 
-      JsonNode json = JsonLoader.fromString(value);
+      JsonNode json = JsonCommand.fromString(value);
       if (json.has("data")) {
         JsonNode data = json.get("data");
         if (data.isArray()) {
@@ -210,7 +210,7 @@ public class InstagramCommand {
       }
       LOG.debug("Value: " + value);
 
-      JsonNode json = JsonLoader.fromString(value);
+      JsonNode json = JsonCommand.fromString(value);
       LOG.debug("JSON Size: " + json.size());
 
       InstagramMedia instagramMedia = new InstagramMedia();

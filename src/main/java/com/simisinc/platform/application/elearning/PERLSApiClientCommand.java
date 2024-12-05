@@ -25,10 +25,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.github.fge.jackson.JsonLoader;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.application.http.HttpDownloadFileCommand;
 import com.simisinc.platform.application.http.HttpGetCommand;
+import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.login.OAuthToken;
 
 /**
@@ -159,7 +159,7 @@ public class PERLSApiClientCommand {
     }
 
     try {
-      JsonNode jsonNode = JsonLoader.fromString(body);
+      JsonNode jsonNode = JsonCommand.fromString(body);
 
       //      if (jsonNode.has("exception")) {
       //        LOG.warn("Exception: " + jsonNode.get("exception"));

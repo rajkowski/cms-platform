@@ -16,19 +16,20 @@
 
 package com.simisinc.platform.application.datasets;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.github.fge.jackson.JsonLoader;
-import com.simisinc.platform.application.DataException;
-import com.simisinc.platform.domain.model.datasets.Dataset;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.io.File;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.application.json.JsonCommand;
+import com.simisinc.platform.domain.model.datasets.Dataset;
 
 /**
  * Checks and processes GeoJSON files
@@ -72,7 +73,7 @@ public class ValidateGeoJsonDatasetCommand {
     // Determine the field names
     ArrayList<String> fieldNames = new ArrayList<>();
     try {
-      JsonNode config = JsonLoader.fromFile(datasetFile);
+      JsonNode config = JsonCommand.fromFile(datasetFile);
       Iterator<JsonNode> fields = config.get("fields").elements();
       while (fields.hasNext()) {
         JsonNode node = fields.next();
@@ -86,7 +87,7 @@ public class ValidateGeoJsonDatasetCommand {
     // Read the GeoJSON file for columns and row counts
     int rowCount = 0;
     try {
-      JsonNode config = JsonLoader.fromFile(datasetFile);
+      JsonNode config = JsonCommand.fromFile(datasetFile);
       Iterator<JsonNode> features = config.get("features").elements();
       while (features.hasNext()) {
         features.next();

@@ -23,7 +23,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.github.fge.jackson.JsonLoader;
+import com.simisinc.platform.application.json.JsonCommand;
 
 /**
  * Parses and validates JWTs
@@ -56,7 +56,7 @@ public class JWTCommand {
 
     // Return the payload
     try {
-      return JsonLoader.fromString(payload);
+      return JsonCommand.fromString(payload);
     } catch (Exception e) {
       LOG.debug("JsonLoad exception", e);
       return null;

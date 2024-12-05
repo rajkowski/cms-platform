@@ -26,7 +26,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.github.fge.jackson.JsonLoader;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.CustomField;
 
@@ -89,7 +88,7 @@ public class CollectionTableColumnsJSONCommand {
       return null;
     }
     try {
-      JsonNode config = JsonLoader.fromString(jsonValue);
+      JsonNode config = JsonCommand.fromString(jsonValue);
       if (!config.isArray()) {
         LOG.error("populateFromJSONString value is not an array");
         return null;

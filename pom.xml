@@ -63,7 +63,6 @@
     <hikaricp.version>5.0.1</hikaricp.version>
     <im4java.version>1.4.0</im4java.version>
     <jackson.version>2.17.1</jackson.version>
-    <jackson-coreutils.version>1.8</jackson-coreutils.version>
     <java-activation.version>1.2.0</java-activation.version>
     <java-mail.version>1.6.2</java-mail.version>
     <jmail.version>1.5.1</jmail.version>
@@ -294,11 +293,6 @@
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
       <version>${gson.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.github.fge</groupId>
-      <artifactId>jackson-coreutils</artifactId>
-      <version>${jackson-coreutils.version}</version>
     </dependency>
     <dependency>
       <groupId>javax.json.bind</groupId>

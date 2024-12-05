@@ -24,10 +24,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.github.fge.jackson.JsonLoader;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.application.http.HttpGetCommand;
 import com.simisinc.platform.application.http.HttpPostCommand;
+import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.login.OAuthToken;
 
 /**
@@ -71,7 +71,7 @@ public class OAuthHttpCommand {
     }
 
     try {
-      return JsonLoader.fromString(remoteContent);
+      return JsonCommand.fromString(remoteContent);
     } catch (Exception e) {
       LOG.error("oauthToken error", e);
     }
@@ -120,7 +120,7 @@ public class OAuthHttpCommand {
 
     // Return the content as JSON
     try {
-      return JsonLoader.fromString(remoteContent);
+      return JsonCommand.fromString(remoteContent);
     } catch (Exception e) {
       LOG.error("HttpPost", e);
     }
