@@ -61,14 +61,12 @@ public class WebPageDesignerWidget extends GenericWidget {
   static String DESIGNER_JSP = "/cms/web-page-designer.jsp";
   static String RAW_XML_JSP = "/cms/web-page-editor.jsp";
   static String ACE_XML_EDITOR_JSP = "/cms/web-page-xml-editor.jsp";
-  static String CODE_MIRROR_XML_EDITOR_JSP = "/cms/web-page-code-mirror-xml-editor.jsp";
 
   public WidgetContext execute(WidgetContext context) {
 
     // The default JSP
     // @note the ACE editor is unstable for XML, CPU gets out of control; might be fixed
     context.setJsp(ACE_XML_EDITOR_JSP);
-    // context.setJsp(CODE_MIRROR_XML_EDITOR_JSP);
 
     // See if an editor is specified
     String editor = context.getParameter("editor");
