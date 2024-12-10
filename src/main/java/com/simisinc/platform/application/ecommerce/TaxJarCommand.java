@@ -28,7 +28,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.github.fge.jackson.JsonLoader;
 import com.simisinc.platform.application.DataException;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.application.http.HttpPostCommand;
@@ -254,7 +253,7 @@ public class TaxJarCommand {
     }
 
     try {
-      JsonNode json = JsonLoader.fromString(remoteContent);
+      JsonNode json = JsonCommand.fromString(remoteContent);
 
       //      if (json.has("id") && json.has("status")) {
       // Update the record to mark it as 'synced'

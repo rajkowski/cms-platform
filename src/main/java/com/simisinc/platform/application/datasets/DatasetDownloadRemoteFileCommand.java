@@ -28,13 +28,13 @@ import org.apache.commons.logging.LogFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.github.fge.jackson.JsonLoader;
 import com.simisinc.platform.application.DataException;
 import com.simisinc.platform.application.admin.SaveTextFileCommand;
 import com.simisinc.platform.application.elearning.PERLSCourseListCommand;
 import com.simisinc.platform.application.filesystem.FileSystemCommand;
 import com.simisinc.platform.application.http.HttpDownloadFileCommand;
 import com.simisinc.platform.application.http.HttpGetCommand;
+import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.datasets.Dataset;
 import com.simisinc.platform.infrastructure.persistence.datasets.DatasetRepository;
 
@@ -173,7 +173,7 @@ public class DatasetDownloadRemoteFileCommand {
 
     try {
       // Check if there's additional pages (jsonPagingPath) and then download each
-      JsonNode json = JsonLoader.fromString(content);
+      JsonNode json = JsonCommand.fromString(content);
 
       // Advance to the records path, if known
       JsonNode jsonRecordsNode = null;
@@ -238,7 +238,7 @@ public class DatasetDownloadRemoteFileCommand {
     }
 
     // Access the new records and append them to the original json
-    JsonNode nextJson = JsonLoader.fromString(content);
+    JsonNode nextJson = JsonCommand.fromString(content);
     JsonNode newRecordsJson = null;
 
     // Advance to the records path, if known

@@ -16,14 +16,6 @@
 
 package com.simisinc.platform.application.datasets;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.github.fge.jackson.JsonLoader;
-import com.simisinc.platform.application.json.JsonCommand;
-import com.simisinc.platform.domain.model.datasets.Dataset;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.io.File;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -31,6 +23,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
 import java.util.regex.Pattern;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.simisinc.platform.application.json.JsonCommand;
+import com.simisinc.platform.domain.model.datasets.Dataset;
 
 /**
  * Determines 'columns' when working with datasets
@@ -58,7 +58,7 @@ public class DatasetColumnJSONCommand {
 
     try {
       // Load the file
-      JsonNode json = JsonLoader.fromFile(file);
+      JsonNode json = JsonCommand.fromFile(file);
       // Advance to the records path, if known
       String[] recordsPath = recordsPathValue.split("/");
       for (String fieldName : recordsPath) {
@@ -126,7 +126,8 @@ public class DatasetColumnJSONCommand {
         String fieldOptions = record.getFieldOptions()[i];
         if (StringUtils.isNotBlank(fieldOptions)) {
           sb.append(",");
-          sb.append("\"").append("options").append("\"").append(":").append("\"").append(JsonCommand.toJson(fieldOptions)).append("\"");
+          sb.append("\"").append("options").append("\"").append(":").append("\"").append(JsonCommand.toJson(fieldOptions))
+              .append("\"");
         }
       }
       sb.append("}");
@@ -162,7 +163,7 @@ public class DatasetColumnJSONCommand {
       // {"column": "LanguageEvalDate", "title":"EvaluationDate", "options": "equals(\"201601\")"},
       // {"column": "EvalMethod"}
       // ]
-      JsonNode config = JsonLoader.fromString(jsonValue);
+      JsonNode config = JsonCommand.fromString(jsonValue);
       if (!config.isArray()) {
         LOG.error("populateFromColumnConfig value is not an array");
         return;
@@ -324,5 +325,3 @@ public class DatasetColumnJSONCommand {
     return s.replace("\r\n", "\n").replace('\r', '\n');
   }
 }
-
-

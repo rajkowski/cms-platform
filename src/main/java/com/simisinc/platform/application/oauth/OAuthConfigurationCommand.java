@@ -21,9 +21,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.github.fge.jackson.JsonLoader;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.application.http.HttpGetCommand;
+import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.infrastructure.cache.CacheManager;
 
 /**
@@ -132,7 +132,7 @@ public class OAuthConfigurationCommand {
         return null;
       }
       try {
-        json = JsonLoader.fromString(responseValue);
+        json = JsonCommand.fromString(responseValue);
         CacheManager.addToObjectCache(OAUTH_CONFIGURATION_CACHE_NAME, json);
       } catch (Exception e) {
         LOG.error("HttpPost", e);

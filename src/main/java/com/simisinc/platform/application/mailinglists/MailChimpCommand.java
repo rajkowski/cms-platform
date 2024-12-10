@@ -26,7 +26,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.github.fge.jackson.JsonLoader;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.application.http.HttpGetCommand;
 import com.simisinc.platform.application.http.HttpPatchCommand;
@@ -140,7 +139,7 @@ public class MailChimpCommand {
 
       // Return the json data
       LOG.debug("HttpGet Value: " + remoteContent);
-      JsonNode json = JsonLoader.fromString(remoteContent);
+      JsonNode json = JsonCommand.fromString(remoteContent);
       if (json.has("id")) {
         LOG.debug("HttpGet Found member");
         return json;
@@ -313,7 +312,7 @@ public class MailChimpCommand {
       LOG.debug("REMOTE TEXT: " + remoteContent);
     }
     try {
-      JsonNode json = JsonLoader.fromString(remoteContent);
+      JsonNode json = JsonCommand.fromString(remoteContent);
       if (json.has("id") && json.has("status")) {
         // Update the record to mark it as 'synced'
         EmailRepository.markSynced(emailAddress);
@@ -365,7 +364,7 @@ public class MailChimpCommand {
       LOG.debug("HttpPatch REMOTE TEXT: " + remoteContent);
     }
     try {
-      JsonNode json = JsonLoader.fromString(remoteContent);
+      JsonNode json = JsonCommand.fromString(remoteContent);
       if (json.has("id") && json.has("status")) {
         // Update the record to mark it as 'synced'
         EmailRepository.markSynced(emailAddress);

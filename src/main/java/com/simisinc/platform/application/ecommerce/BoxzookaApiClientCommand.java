@@ -24,12 +24,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.github.fge.jackson.JsonLoader;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.application.http.HttpDeleteCommand;
 import com.simisinc.platform.application.http.HttpGetCommand;
 import com.simisinc.platform.application.http.HttpPostCommand;
 import com.simisinc.platform.application.http.HttpPutCommand;
+import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.ecommerce.Order;
 
 /**
@@ -101,7 +101,7 @@ public class BoxzookaApiClientCommand {
     }
 
     try {
-      return JsonLoader.fromString(remoteContent);
+      return JsonCommand.fromString(remoteContent);
     } catch (Exception e) {
       LOG.error("sendBoxzookaHttpRequest", e);
     }
@@ -147,7 +147,7 @@ public class BoxzookaApiClientCommand {
 
     // Return the content as JSON
     try {
-      return JsonLoader.fromString(remoteContent);
+      return JsonCommand.fromString(remoteContent);
     } catch (Exception e) {
       LOG.error("sendBoxzookaHttpGet", e);
     }
@@ -193,7 +193,7 @@ public class BoxzookaApiClientCommand {
 
     // Return the content as JSON
     try {
-      return JsonLoader.fromString(remoteContent);
+      return JsonCommand.fromString(remoteContent);
     } catch (Exception e) {
       LOG.error("sendBoxzookaHttpGet", e);
     }

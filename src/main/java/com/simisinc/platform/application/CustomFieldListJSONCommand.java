@@ -16,19 +16,19 @@
 
 package com.simisinc.platform.application;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.github.fge.jackson.JsonLoader;
-import com.simisinc.platform.application.cms.FormFieldCommand;
-import com.simisinc.platform.application.json.JsonCommand;
-import com.simisinc.platform.domain.model.CustomField;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.simisinc.platform.application.cms.FormFieldCommand;
+import com.simisinc.platform.application.json.JsonCommand;
+import com.simisinc.platform.domain.model.CustomField;
 
 /**
  * Encodes and decodes custom fields
@@ -127,7 +127,7 @@ public class CustomFieldListJSONCommand {
       return null;
     }
     try {
-      JsonNode config = JsonLoader.fromString(jsonValue);
+      JsonNode config = JsonCommand.fromString(jsonValue);
       if (!config.isArray()) {
         LOG.error("populateFromJSONString value is not an array");
         return null;

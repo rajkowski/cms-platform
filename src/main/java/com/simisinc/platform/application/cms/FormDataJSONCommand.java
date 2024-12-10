@@ -16,19 +16,19 @@
 
 package com.simisinc.platform.application.cms;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.github.fge.jackson.JsonLoader;
-import com.simisinc.platform.application.json.JsonCommand;
-import com.simisinc.platform.domain.model.cms.FormData;
-import com.simisinc.platform.domain.model.cms.FormField;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.simisinc.platform.application.json.JsonCommand;
+import com.simisinc.platform.domain.model.cms.FormData;
+import com.simisinc.platform.domain.model.cms.FormField;
 
 /**
  * Encodes and decodes custom form fields
@@ -55,10 +55,14 @@ public class FormDataJSONCommand {
       ++count;
       sb.append("{");
       sb.append("\"").append("id").append("\"").append(":").append(count).append(",");
-      sb.append("\"").append("label").append("\"").append(":").append("\"").append(JsonCommand.toJson(formField.getLabel())).append("\"").append(",");
-      sb.append("\"").append("name").append("\"").append(":").append("\"").append(JsonCommand.toJson(formField.getName())).append("\"").append(",");
-      sb.append("\"").append("type").append("\"").append(":").append("\"").append(JsonCommand.toJson(formField.getType())).append("\"").append(",");
-      sb.append("\"").append("value").append("\"").append(":").append("\"").append(JsonCommand.toJson(formField.getUserValue())).append("\"");
+      sb.append("\"").append("label").append("\"").append(":").append("\"").append(JsonCommand.toJson(formField.getLabel()))
+          .append("\"").append(",");
+      sb.append("\"").append("name").append("\"").append(":").append("\"").append(JsonCommand.toJson(formField.getName())).append("\"")
+          .append(",");
+      sb.append("\"").append("type").append("\"").append(":").append("\"").append(JsonCommand.toJson(formField.getType())).append("\"")
+          .append(",");
+      sb.append("\"").append("value").append("\"").append(":").append("\"").append(JsonCommand.toJson(formField.getUserValue()))
+          .append("\"");
       sb.append("}");
     }
     if (sb.length() == 0) {
@@ -78,7 +82,7 @@ public class FormDataJSONCommand {
       return;
     }
     try {
-      JsonNode config = JsonLoader.fromString(jsonValue);
+      JsonNode config = JsonCommand.fromString(jsonValue);
       if (!config.isArray()) {
         LOG.error("populateFromJSONString value is not an array");
         return;

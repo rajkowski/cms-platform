@@ -22,8 +22,8 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.github.fge.jackson.JsonLoader;
 import com.simisinc.platform.application.CustomFieldListJSONCommand;
+import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.CustomField;
 import com.simisinc.platform.domain.model.items.Collection;
 import com.simisinc.platform.infrastructure.persistence.items.CollectionRepository;
@@ -65,7 +65,7 @@ public class CollectionCustomFieldsFormWidget extends GenericWidget {
       json = CustomFieldListJSONCommand.createJSONString(collection.getCustomFieldList());
     }
     try {
-      JsonNode root = JsonLoader.fromString(json);
+      JsonNode root = JsonCommand.fromString(json);
       json = root.toPrettyString();
     } catch (Exception e) {
       context.setErrorMessage(e.getMessage());

@@ -26,7 +26,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.github.fge.jackson.JsonLoader;
+import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.presentation.controller.WebPackage;
 
 /**
@@ -46,7 +46,7 @@ public class WebPackageCommand {
       throw new IOException("Resource not found");
     }
     Map<String, WebPackage> webPackageMap = new LinkedHashMap<>();
-    JsonNode json = JsonLoader.fromURL(resource);
+    JsonNode json = JsonCommand.fromURL(resource);
     if (json == null) {
       throw new IOException("Invalid resource");
     }

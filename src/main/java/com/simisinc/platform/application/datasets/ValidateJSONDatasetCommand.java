@@ -16,18 +16,19 @@
 
 package com.simisinc.platform.application.datasets;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.github.fge.jackson.JsonLoader;
-import com.simisinc.platform.application.DataException;
-import com.simisinc.platform.domain.model.datasets.Dataset;
+import java.io.File;
+import java.nio.file.Files;
+import java.util.List;
+
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.util.List;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.application.json.JsonCommand;
+import com.simisinc.platform.domain.model.datasets.Dataset;
 
 /**
  * Checks and processes JSON files
@@ -70,7 +71,7 @@ public class ValidateJSONDatasetCommand {
     // Read the file for columns and row counts
     JsonNode json = null;
     try {
-      json = JsonLoader.fromFile(datasetFile);
+      json = JsonCommand.fromFile(datasetFile);
 
       // If an array, use the document node
       if (StringUtils.isBlank(datasetBean.getRecordsPath())) {

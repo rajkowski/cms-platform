@@ -16,20 +16,25 @@
 
 package com.simisinc.platform.application.datasets;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.github.fge.jackson.JsonLoader;
-import com.simisinc.platform.application.DataException;
-import com.simisinc.platform.domain.model.datasets.Dataset;
+import static com.simisinc.platform.application.datasets.DatasetFieldOptionCommand.applyOptionsToField;
+import static com.simisinc.platform.application.datasets.DatasetFieldOptionCommand.isSkipped;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.io.File;
-import java.util.*;
-import java.util.regex.Pattern;
-
-import static com.simisinc.platform.application.datasets.DatasetFieldOptionCommand.applyOptionsToField;
-import static com.simisinc.platform.application.datasets.DatasetFieldOptionCommand.isSkipped;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.application.json.JsonCommand;
+import com.simisinc.platform.domain.model.datasets.Dataset;
 
 /**
  * Reads in dataset rows from a JSON dataset file
@@ -70,7 +75,7 @@ public class LoadJsonCommand {
       }
 
       // Load the file
-      JsonNode json = JsonLoader.fromFile(file);
+      JsonNode json = JsonCommand.fromFile(file);
 
       // Find the start of the records
       String[] recordsPath = dataset.getRecordsPath().split("/");
@@ -216,7 +221,7 @@ public class LoadJsonCommand {
     try {
       String[] recordsPath = dataset.getRecordsPath().split("/");
       // Load the file
-      JsonNode json = JsonLoader.fromFile(file);
+      JsonNode json = JsonCommand.fromFile(file);
       // Find the start of the records
       for (String fieldName : recordsPath) {
         if (json.has(fieldName)) {

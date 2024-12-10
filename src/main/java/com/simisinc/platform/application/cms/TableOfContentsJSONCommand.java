@@ -16,19 +16,19 @@
 
 package com.simisinc.platform.application.cms;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.github.fge.jackson.JsonLoader;
-import com.simisinc.platform.application.json.JsonCommand;
-import com.simisinc.platform.domain.model.cms.TableOfContents;
-import com.simisinc.platform.domain.model.cms.TableOfContentsLink;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.simisinc.platform.application.json.JsonCommand;
+import com.simisinc.platform.domain.model.cms.TableOfContents;
+import com.simisinc.platform.domain.model.cms.TableOfContentsLink;
 
 /**
  * Handles JSON values, typically used for preferences and attributes
@@ -55,7 +55,8 @@ public class TableOfContentsJSONCommand {
       ++count;
       sb.append("{");
       sb.append("\"").append("id").append("\"").append(":").append(count).append(",");
-      sb.append("\"").append("name").append("\"").append(":").append("\"").append(JsonCommand.toJson(link.getName())).append("\"").append(",");
+      sb.append("\"").append("name").append("\"").append(":").append("\"").append(JsonCommand.toJson(link.getName())).append("\"")
+          .append(",");
       sb.append("\"").append("link").append("\"").append(":").append("\"").append(JsonCommand.toJson(link.getLink())).append("\"");
       sb.append("}");
     }
@@ -76,7 +77,7 @@ public class TableOfContentsJSONCommand {
       return;
     }
     try {
-      JsonNode config = JsonLoader.fromString(jsonValue);
+      JsonNode config = JsonCommand.fromString(jsonValue);
       if (!config.isArray()) {
         LOG.error("populateFromJSONString value is not an array");
         return;

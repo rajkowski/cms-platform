@@ -24,10 +24,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.github.fge.jackson.JsonLoader;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.application.http.HttpGetCommand;
 import com.simisinc.platform.application.http.HttpPostCommand;
+import com.simisinc.platform.application.json.JsonCommand;
 
 /**
  * Commands for working with Square
@@ -77,7 +77,7 @@ public class SquareApiClientCommand {
     }
 
     try {
-      return JsonLoader.fromString(remoteContent);
+      return JsonCommand.fromString(remoteContent);
     } catch (Exception e) {
       LOG.error("sendSquareHttpPost json", e);
     }
@@ -124,7 +124,7 @@ public class SquareApiClientCommand {
 
     // Return the content as JSON
     try {
-      return JsonLoader.fromString(remoteContent);
+      return JsonCommand.fromString(remoteContent);
     } catch (Exception e) {
       LOG.error("sendSquareHttpGet", e);
     }

@@ -116,7 +116,6 @@ This project uses and licenses several technologies:
    HikariCP                    Apache   High performance database connection pooling      https://github.com/brettwooldridge/HikariCP
    im4java                     LGPL     Interface to ImageMagick and GraphicsMagick       http://im4java.sourceforge.net
    Jackson                     Apache   Json Parser                                       https://github.com/FasterXML/jackson
-   Jackson Core Utils          LGPL     Json Parser Utility                               https://github.com/fge/jackson-coreutils
    JavaMail                    CDDL     Mail library                                      https://javaee.github.io/javamail/
    JMail                       MIT      Email validator                                   https://github.com/RohanNagar/jmail
    Jobrunr                     LGPL     Job scheduler                                     https://github.com/jobrunr/jobrunr

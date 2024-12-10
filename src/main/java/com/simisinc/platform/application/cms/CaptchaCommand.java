@@ -35,9 +35,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.github.fge.jackson.JsonLoader;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.application.http.HttpPostCommand;
+import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.presentation.controller.SessionConstants;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 
@@ -109,7 +109,7 @@ public class CaptchaCommand {
       LOG.debug("REMOTE TEXT: " + remoteContent);
     }
     try {
-      JsonNode json = JsonLoader.fromString(remoteContent);
+      JsonNode json = JsonCommand.fromString(remoteContent);
       if (json.has("success")) {
         String success = json.get("success").asText();
         if ("true".equals(success)) {

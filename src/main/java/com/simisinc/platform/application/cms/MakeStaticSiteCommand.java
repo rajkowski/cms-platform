@@ -27,11 +27,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.github.fge.jackson.JsonLoader;
 import com.granule.CSSFastMin;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.application.admin.SaveTextFileCommand;
 import com.simisinc.platform.application.filesystem.FileSystemCommand;
+import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.Blog;
 import com.simisinc.platform.domain.model.cms.BlogPost;
 import com.simisinc.platform.domain.model.cms.Content;
@@ -283,7 +283,7 @@ public class MakeStaticSiteCommand {
 
     // Write out the JSON
     String metadata = WebPageMetadataCommand.getJSON(webPage, stylesheet, webPageRoot, contentLength);
-    JsonNode webPageJsonData = JsonLoader.fromString(metadata);
+    JsonNode webPageJsonData = JsonCommand.fromString(metadata);
     SaveTextFileCommand.save(webPageJsonData.toPrettyString() + "\n", new File(webPagesPath, webPageRoot + ".json"));
 
     return true;

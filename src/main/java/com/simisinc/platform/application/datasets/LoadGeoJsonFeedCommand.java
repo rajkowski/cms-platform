@@ -29,8 +29,8 @@ import org.geojson.LngLatAlt;
 import org.geojson.Polygon;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.github.fge.jackson.JsonLoader;
 import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.datasets.Dataset;
 import com.simisinc.platform.domain.model.items.Collection;
 import com.simisinc.platform.domain.model.items.Item;
@@ -69,7 +69,7 @@ public class LoadGeoJsonFeedCommand {
       return rows;
     }
     try {
-      JsonNode config = JsonLoader.fromFile(file);
+      JsonNode config = JsonCommand.fromFile(file);
       Iterator<JsonNode> features = config.get("features").elements();
       for (int i = 0; i < maxRowCountToReturn; i++) {
         if (!features.hasNext()) {
@@ -105,7 +105,7 @@ public class LoadGeoJsonFeedCommand {
       return recordList;
     }
     try {
-      JsonNode json = JsonLoader.fromFile(file);
+      JsonNode json = JsonCommand.fromFile(file);
       processFeatures(json, recordList, dataset.getColumnNamesList(), null);
     } catch (Exception e) {
       LOG.error("GeoJson Error: " + e.getMessage());
@@ -125,7 +125,7 @@ public class LoadGeoJsonFeedCommand {
     }
     for (Item item : itemList) {
       try {
-        JsonNode json = JsonLoader.fromString(item.getGeoJSON());
+        JsonNode json = JsonCommand.fromString(item.getGeoJSON());
         processFeatures(json, recordList, null, item);
       } catch (Exception e) {
         LOG.info("Invalid geoJSON found for item: " + item.getUniqueId());

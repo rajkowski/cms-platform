@@ -24,10 +24,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.github.fge.jackson.JsonLoader;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.application.http.HttpGetCommand;
 import com.simisinc.platform.application.http.HttpPostCommand;
+import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.login.OAuthToken;
 
 /**
@@ -100,7 +100,7 @@ public class SupersetApiClientCommand {
       LOG.debug("REMOTE TEXT: " + remoteContent);
     }
     try {
-      return JsonLoader.fromString(remoteContent);
+      return JsonCommand.fromString(remoteContent);
     } catch (Exception e) {
       LOG.error("sendHttpPost", e);
     }
@@ -165,7 +165,7 @@ public class SupersetApiClientCommand {
     Map<String, String> headers = new HashMap<>();
     headers.put("Accept", "application/json");
     headers.put("Content-Type", "application/json");
-    
+
     String remoteContent = HttpGetCommand.execute(url, headers);
 
     // Check for content
@@ -176,7 +176,7 @@ public class SupersetApiClientCommand {
 
     // Check for an exception
     try {
-      JsonNode jsonNode = JsonLoader.fromString(remoteContent);
+      JsonNode jsonNode = JsonCommand.fromString(remoteContent);
       if (jsonNode.has("exception")) {
         LOG.warn("Exception: " + jsonNode.get("exception"));
         return null;
