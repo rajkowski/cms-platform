@@ -99,7 +99,7 @@
       ]
     },
     "jsuites": {
-      "version": "5.8.0",
+      "version": "5.8.2",
       "paths": [
         "node_modules/jsuites/dist/jsuites.css",
         "node_modules/jsuites/dist/jsuites.d.ts",
