@@ -9,7 +9,7 @@
     },
     "ace": {
       "package": "ace-builds",
-      "version": "1.36.5",
+      "version": "1.37.4",
       "paths": [
         "node_modules/ace-builds/src-min-noconflict/*"
       ]
@@ -99,7 +99,7 @@
       ]
     },
     "jsuites": {
-      "version": "5.8.2",
+      "version": "5.8.4",
       "paths": [
         "node_modules/jsuites/dist/jsuites.css",
         "node_modules/jsuites/dist/jsuites.d.ts",
@@ -172,7 +172,7 @@
       ]
     },
     "swiper": {
-      "version": "11.1.15",
+      "version": "11.2.1",
       "paths": [
         "node_modules/swiper/swiper-bundle.css",
         "node_modules/swiper/swiper-bundle.js",
