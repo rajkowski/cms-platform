@@ -45,6 +45,8 @@ public class WebPackageScriptTag extends SimpleTagSupport {
   private String packageName = null;
   private String file = null;
   private String charset = null;
+  private String async = null;
+  private String defer = null;
 
   public void setPackage(String packageName) {
     this.packageName = packageName;
@@ -56,6 +58,14 @@ public class WebPackageScriptTag extends SimpleTagSupport {
 
   public void setCharset(String charset) {
     this.charset = charset;
+  }
+
+  public void setAsync(String async) {
+    this.async = async;
+  }
+
+  public void setDefer(String defer) {
+    this.defer = defer;
   }
 
   @Override
@@ -77,9 +87,18 @@ public class WebPackageScriptTag extends SimpleTagSupport {
       if (charset != null) {
         charsetValue = " charset=\"" + charset + "\"";
       }
+      String asyncValue = "";
+      if (async != null && "true".equals(async)) {
+        asyncValue = " async";
+      }
+      String deferValue = "";
+      if (defer != null && "true".equals(defer)) {
+        deferValue = " defer";
+      }
+      // Output the script tag
       JspWriter out = pageContext.getOut();
       out.println(
-          "<script src=\"" + ctx + "/javascript/" + packageName + "-" + version + "/" + file + "\"" + charsetValue + "></script>");
+          "<script src=\"" + ctx + "/javascript/" + packageName + "-" + version + "/" + file + "\"" + charsetValue + asyncValue + deferValue + "></script>");
     } else {
       LOG.error("WebPackage Resource NOT FOUND: " + packageName + ": " + file);
     }
