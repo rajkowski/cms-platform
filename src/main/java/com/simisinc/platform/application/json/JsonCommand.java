@@ -106,6 +106,8 @@ public class JsonCommand {
         sb.append("]");
       } else if (value instanceof String) {
         sb.append("\"").append(toJson((String) value)).append("\"");
+      } else if (value instanceof Boolean) {
+        sb.append((boolean) value ? "true" : "false");
       } else if (value instanceof Map) {
         sb.append(createJsonNode((Map) value));
       } else {
