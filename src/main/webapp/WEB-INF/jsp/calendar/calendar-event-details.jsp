@@ -21,13 +21,14 @@
 <%@ taglib prefix="font" uri="/WEB-INF/tlds/font-functions.tld" %>
 <%@ taglib prefix="js" uri="/WEB-INF/tlds/javascript-escape.tld" %>
 <%@ taglib prefix="url" uri="/WEB-INF/tlds/url-functions.tld" %>
+<%@ taglib prefix="web" uri="/WEB-INF/tlds/web.tld" %>
+<jsp:useBean id="sitePropertyMap" class="java.util.HashMap" scope="request"/>
 <jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="calendar" class="com.simisinc.platform.domain.model.cms.Calendar" scope="request"/>
 <jsp:useBean id="calendarEvent" class="com.simisinc.platform.domain.model.cms.CalendarEvent" scope="request"/>
 <%@include file="../page_messages.jspf" %>
-<script src="${ctx}/javascript/add-to-calendar-0.1.0/add-to-calendar.js?v=<%= VERSION %>"></script>
-<link rel="stylesheet" id="add-to-calendar-css" href="${ctx}/javascript/add-to-calendar-0.1.0/add-to-calendar.css?v=<%= VERSION %>" />
+<web:script package="add-to-calendar-button" file="atcb.js" async="true" defer="true" />
 <div class="platform-calendar-details-container">
 <c:if test="${!empty title}">
   <div class="platform-calendar-title text-center">
@@ -96,36 +97,23 @@
     <c:if test="${!empty calendarEvent.location}">
       <p class="platform-calendar-event-location"><i class="fa fa-map-marker fa-fw"></i> <c:out value="${calendarEvent.location}" /></p>
     </c:if>
-    <div class="add-to-calendar" style="margin-left: 24px">
-      <span class="icon">far fa-calendar-plus</span>
-      <span class="timezone"><c:out value="${timezone}"/></span>
-      <c:choose>
-        <c:when test="${calendarEvent.allDay}">
-          <span class="allday">true</span>
-          <span class="start"><fmt:formatDate pattern="MM/dd/yyyy" value="${calendarEvent.startDate}" /></span>
-          <span class="end"><fmt:formatDate pattern="MM/dd/yyyy" value="${calendarEvent.endDate}" /></span>
-          <span class="outlookStart"><fmt:formatDate pattern="yyyy-MM-dd" value="${calendarEvent.startDate}" /></span>
-          <span class="outlookEnd"><fmt:formatDate pattern="yyyy-MM-dd" value="${date:adjustDays(calendarEvent.endDate, 1)}" /></span>
-        </c:when>
-        <c:otherwise>
-          <span class="start"><fmt:formatDate pattern="MM/dd/yyyy hh:mm a" value="${calendarEvent.startDate}" /></span>
-          <span class="end"><fmt:formatDate pattern="MM/dd/yyyy hh:mm a" value="${calendarEvent.endDate}" /></span>
-          <span class="outlookStart"><fmt:formatDate pattern="yyyy-MM-dd'T'HH:mm:00XXX" value="${calendarEvent.startDate}" /></span>
-          <span class="outlookEnd"><fmt:formatDate pattern="yyyy-MM-dd'T'HH:mm:00XXX" value="${calendarEvent.endDate}" /></span>
-        </c:otherwise>
-      </c:choose>
-      <span class="title"><c:out value="${calendarEvent.title}" /></span>
-      <c:if test="${!empty calendarEvent.summary}">
-        <span class="description"><c:out value="${calendarEvent.summary}" /><c:if test="${!empty calendarEvent.detailsUrl}">
-
-<c:out value="${calendarEvent.detailsUrl}" /></c:if><c:if test="${!empty calendarEvent.signUpUrl}">
-
-<c:out value="${calendarEvent.signUpUrl}" /></c:if></span>
-      </c:if>
+    <add-to-calendar-button
+      name="<c:out value="${calendarEvent.title}" />"
+      options="'Apple','Google','Microsoft365','Outlook.com'"
       <c:if test="${!empty calendarEvent.location}">
-        <span class="location"><c:out value="${calendarEvent.location}" /></span>
+        location="<c:out value="${calendarEvent.location}" />"
       </c:if>
-    </div>
+      startDate="<fmt:formatDate pattern="yyyy-MM-dd" value="${calendarEvent.startDate}" />"
+      endDate="<fmt:formatDate pattern="yyyy-MM-dd" value="${calendarEvent.endDate}" />"
+      <c:if test="${!calendarEvent.allDay}">
+        startTime="<fmt:formatDate pattern="HH:mm" value="${calendarEvent.startDate}" />"
+        endTime="<fmt:formatDate pattern="HH:mm" value="${calendarEvent.endDate}" />"
+      </c:if>
+      timeZone="<c:out value="${timezone}"/>"
+      <c:if test="${!empty detailsForCalendarButton}">
+        description="<c:out value="${detailsForCalendarButton}" />"
+      </c:if>
+      hideBranding="true"></add-to-calendar-button>
     <c:if test="${!empty calendarEvent.summary}">
       <p class="platform-calendar-event-summary"><c:out value="${calendarEvent.summary}" /></p>
     </c:if>

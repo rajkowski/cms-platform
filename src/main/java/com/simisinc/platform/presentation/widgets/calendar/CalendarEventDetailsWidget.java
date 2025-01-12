@@ -16,14 +16,16 @@
 
 package com.simisinc.platform.presentation.widgets.calendar;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.application.cms.LoadCalendarCommand;
 import com.simisinc.platform.application.cms.UrlCommand;
 import com.simisinc.platform.domain.model.cms.Calendar;
 import com.simisinc.platform.domain.model.cms.CalendarEvent;
 import com.simisinc.platform.infrastructure.persistence.cms.CalendarEventRepository;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
 import com.simisinc.platform.presentation.controller.WidgetContext;
+import com.simisinc.platform.presentation.widgets.GenericWidget;
 
 /**
  * Description
@@ -63,6 +65,27 @@ public class CalendarEventDetailsWidget extends GenericWidget {
     // Set Add-To-Calendar requirements
     String timezone = LoadSitePropertyCommand.loadByName("site.timezone");
     context.getRequest().setAttribute("timezone", timezone);
+
+    // Set Add-to-Calendar-Button requirements
+    StringBuilder description = new StringBuilder();
+    if (StringUtils.isNotEmpty(calendarEvent.getSummary())) {
+      description.append(calendarEvent.getSummary());
+    }
+    if (StringUtils.isNotBlank(calendarEvent.getDetailsUrl())) {
+      if (!description.isEmpty()) {
+        description.append("[br][br]");
+      }
+      description.append("[url]").append(calendarEvent.getDetailsUrl()).append("|Details[/url]");
+    }
+    if (StringUtils.isNotEmpty(calendarEvent.getSignUpUrl())) {
+      if (!description.isEmpty()) {
+        description.append("[br][br]");
+      }
+      description.append("[url]").append(calendarEvent.getSignUpUrl()).append("|Sign Up[/url]");
+    }
+    if (!description.isEmpty()) {
+      context.getRequest().setAttribute("detailsForCalendarButton", description.toString());
+    }
 
     // Determine the view
     context.getRequest().setAttribute("returnPage", UrlCommand.getValidReturnPage(context.getParameter("returnPage")));
