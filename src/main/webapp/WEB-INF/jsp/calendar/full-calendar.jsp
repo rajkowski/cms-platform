@@ -170,7 +170,7 @@
             $.getJSON("${ctx}/json/calendarEvent?id=" + info.event.id, function(data) {
               document.getElementById('formTitle').innerHTML = "Update an Event";
               document.getElementById('id').value = data.id;
-              document.getElementById('eventLinkInput').value = '${ctx}/calendar-event/' + info.event.uniqueId + '?returnPage=${widgetContext.uri}';
+              document.getElementById('eventLinkInput').value = '${ctx}/calendar-event/' + info.event.extendedProps.uniqueId + '?returnPage=${widgetContext.uri}';
               if ($('#calendarId').is('input, select')) {
                 $("#calendarId").val(data.calendarId);
               } else {
