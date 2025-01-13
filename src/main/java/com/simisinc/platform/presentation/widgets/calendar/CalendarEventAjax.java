@@ -16,17 +16,21 @@
 
 package com.simisinc.platform.presentation.widgets.calendar;
 
+import java.text.SimpleDateFormat;
+import java.time.ZoneId;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
+
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.CalendarEvent;
 import com.simisinc.platform.infrastructure.persistence.cms.CalendarEventRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.CalendarEventSpecification;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.infrastructure.persistence.cms.CalendarRepository;
 import com.simisinc.platform.presentation.controller.WidgetContext;
-import org.apache.commons.lang3.StringUtils;
-
-import java.text.SimpleDateFormat;
-import java.time.ZoneId;
-import java.util.List;
+import com.simisinc.platform.presentation.widgets.GenericWidget;
 
 /**
  * Returns the specified event
@@ -68,33 +72,39 @@ public class CalendarEventAjax extends GenericWidget {
       if (sb.length() > 0) {
         sb.append(",");
       }
-      sb.append("{");
-      sb.append("\"id\":").append(calendarEvent.getId()).append(",");
-      sb.append("\"calendarId\":").append(calendarEvent.getCalendarId()).append(",");
+      // Prepare the calendar event object
+      Map<String, Object> props = new HashMap<>();
+      props.put("id", calendarEvent.getId());
+      props.put("uniqueId", calendarEvent.getUniqueId());
+      props.put("title", calendarEvent.getTitle());
+      props.put("calendarId", calendarEvent.getCalendarId());
       if (calendarEvent.getAllDay()) {
-        sb.append("\"allDay\":").append("true").append(",");
+        props.put("allDay", true);
       }
+      // 2018-12-09T16:00:00+00:00
       String startDate = new SimpleDateFormat("yyyy-MM-dd").format(calendarEvent.getStartDate());
       String endDate = new SimpleDateFormat("yyyy-MM-dd").format(calendarEvent.getEndDate());
-      String startDateHours = new SimpleDateFormat("HH:mm").format(calendarEvent.getStartDate());
-      String endDateHours = new SimpleDateFormat("HH:mm").format(calendarEvent.getEndDate());
-      // 2018-12-09T16:00:00+00:00
-      sb.append("\"start\":\"").append(startDate).append("T").append(startDateHours).append(":00").append(offset).append("\",");
-      sb.append("\"end\":\"").append(endDate).append("T").append(endDateHours).append(":00").append(offset).append("\",");
+      String startDateHoursMinutes = new SimpleDateFormat("HH:mm").format(calendarEvent.getStartDate());
+      String endDateHoursMinutes = new SimpleDateFormat("HH:mm").format(calendarEvent.getEndDate());
+      props.put("start", startDate + "T" + startDateHoursMinutes + ":00" + offset);
+      props.put("end", endDate + "T" + endDateHoursMinutes + ":00" + offset);
       if (calendarEvent.getDetailsUrl() != null) {
-        sb.append("\"detailsUrl\":\"").append(JsonCommand.toJson(calendarEvent.getDetailsUrl())).append("\",");
+        props.put("detailsUrl", calendarEvent.getDetailsUrl());
       }
       if (calendarEvent.getSignUpUrl() != null) {
-        sb.append("\"signUpUrl\":\"").append(JsonCommand.toJson(calendarEvent.getSignUpUrl())).append("\",");
+        props.put("signUpUrl", calendarEvent.getSignUpUrl());
       }
       if (StringUtils.isNotEmpty(calendarEvent.getSummary())) {
-        sb.append("\"description\":\"").append(JsonCommand.toJson(calendarEvent.getSummary())).append("\",");
+        props.put("description", calendarEvent.getSummary());
       }
       if (StringUtils.isNotEmpty(calendarEvent.getLocation())) {
-        sb.append("\"location\":\"").append(JsonCommand.toJson(calendarEvent.getLocation())).append("\",");
+        props.put("location", calendarEvent.getLocation());
       }
-      sb.append("\"title\":\"").append(JsonCommand.toJson(calendarEvent.getTitle())).append("\"");
-      sb.append("}");
+      String color = CalendarRepository.findById(calendarEvent.getCalendarId()).getColor();
+      if (color != null) {
+        props.put("color", color);
+      }
+      sb.append(JsonCommand.createJsonNode(props));
     }
     context.setJson(sb.toString());
     return context;
