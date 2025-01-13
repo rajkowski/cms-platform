@@ -16,17 +16,18 @@
 
 package com.simisinc.platform.presentation.widgets.calendar;
 
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
+import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.simisinc.platform.application.elearning.ElearningCommand;
 import com.simisinc.platform.application.elearning.MoodleCalendarEventListCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.User;
 import com.simisinc.platform.domain.model.elearning.Event;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import java.time.format.DateTimeFormatter;
-import java.util.Date;
-import java.util.List;
 
 /**
  * Retrieves a Moodle calendar and provides a JSON response

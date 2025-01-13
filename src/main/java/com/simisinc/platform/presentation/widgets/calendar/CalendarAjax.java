@@ -16,18 +16,19 @@
 
 package com.simisinc.platform.presentation.widgets.calendar;
 
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
-
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.time.*;
-import java.time.format.DateTimeFormatter;
-import java.util.Date;
-
 import static com.simisinc.platform.presentation.widgets.calendar.CalendarAjaxEvents.addCalendarEvents;
 import static com.simisinc.platform.presentation.widgets.calendar.CalendarAjaxHolidays.addHolidays;
 import static com.simisinc.platform.presentation.widgets.calendar.CalendarAjaxMoodleEvents.addMoodleEvents;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
+
+import com.simisinc.platform.presentation.controller.WidgetContext;
+import com.simisinc.platform.presentation.widgets.GenericWidget;
 
 /**
  * Provides the colors and values for the calendar
@@ -96,4 +97,3 @@ public class CalendarAjax extends GenericWidget {
     return dateFormat.parse(value + (value.contains(" 00:00") ? "" : " 00:00"));
   }
 }
-

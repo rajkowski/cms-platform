@@ -16,16 +16,14 @@
 
 package com.simisinc.platform.presentation.widgets.calendar;
 
+import java.time.LocalDate;
+import java.util.Date;
+import java.util.List;
+
 import com.simisinc.platform.application.calendar.HolidaysCommand;
 import com.simisinc.platform.application.cms.LocalDateCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.Holiday;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import java.time.LocalDate;
-import java.util.Date;
-import java.util.List;
 
 /**
  * Retrieves a US Holiday calendar and provides a JSON response
@@ -34,8 +32,6 @@ import java.util.List;
  * @created 1/22/19 12:12 PM
  */
 public class CalendarAjaxHolidays {
-
-  private static Log LOG = LogFactory.getLog(CalendarAjaxHolidays.class);
 
   protected static void addHolidays(Date startDate, Date endDate, StringBuilder sb) {
     // Add holidays
