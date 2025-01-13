@@ -16,21 +16,24 @@
 
 package com.simisinc.platform.presentation.widgets.calendar;
 
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.time.ZoneId;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.Calendar;
 import com.simisinc.platform.domain.model.cms.CalendarEvent;
 import com.simisinc.platform.infrastructure.persistence.cms.CalendarEventRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.CalendarEventSpecification;
 import com.simisinc.platform.infrastructure.persistence.cms.CalendarRepository;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
-import java.time.ZoneId;
-import java.util.Date;
-import java.util.List;
 
 /**
  * Retrieves calendars and provides a JSON response
@@ -78,44 +81,58 @@ public class CalendarAjaxEvents {
         if (sb.length() > 0) {
           sb.append(",");
         }
-        sb.append("{");
-        sb.append("\"id\":").append(calendarEvent.getId()).append(",");
-        sb.append("\"uniqueId\":\"").append(JsonCommand.toJson(calendarEvent.getUniqueId())).append("\",");
-        String startDateValue = new SimpleDateFormat("yyyy-MM-dd").format(calendarEvent.getStartDate());
-        String endDateValue = new SimpleDateFormat("yyyy-MM-dd").format(calendarEvent.getEndDate());
-        if (calendarEvent.getAllDay()) {
-          sb.append("\"allDay\":").append("true").append(",");
-          sb.append("\"start\":\"").append(startDateValue).append("\",");
-          sb.append("\"end\":\"").append(endDateValue).append("T24:00").append("\",");
-        } else {
-          String startDateHours = new SimpleDateFormat("HH:mm").format(calendarEvent.getStartDate());
-          String endDateHours = new SimpleDateFormat("HH:mm").format(calendarEvent.getEndDate());
-          sb.append("\"start\":\"").append(startDateValue).append("T").append(startDateHours).append(":00").append(offset).append("\",");
-          sb.append("\"end\":\"").append(endDateValue).append("T").append(endDateHours).append(":00").append(offset).append("\",");
-        }
-        if (calendarEvent.getDetailsUrl() != null) {
-          sb.append("\"detailsUrl\":\"").append(JsonCommand.toJson(calendarEvent.getDetailsUrl())).append("\",");
-        }
-        if (calendarEvent.getSignUpUrl() != null) {
-          sb.append("\"signUpUrl\":\"").append(JsonCommand.toJson(calendarEvent.getSignUpUrl())).append("\",");
-        }
         String color = getColor(calendarList, calendarEvent);
-        if (color != null) {
-          sb.append("\"color\":\"").append(JsonCommand.toJson(color)).append("\",");
-        }
-        if (StringUtils.isNotEmpty(calendarEvent.getSummary())) {
-          sb.append("\"description\":\"").append(JsonCommand.toJson(calendarEvent.getSummary())).append("\",");
-        }
-        if (StringUtils.isNotEmpty(calendarEvent.getLocation())) {
-          sb.append("\"location\":\"").append(JsonCommand.toJson(calendarEvent.getLocation())).append("\",");
-        }
-        sb.append("\"title\":\"").append(JsonCommand.toJson(calendarEvent.getTitle())).append("\"");
-        sb.append("}");
+        sb.append(calendarEventToJson(calendarEvent, offset, color));
       }
     }
   }
 
-  private static String getColor(List<Calendar> calendarList, CalendarEvent calendarEvent) {
+  private static String calendarEventToJson(CalendarEvent calendarEvent, String offset, String color) {
+    // Prepare the calendar event object
+    Map<String, Object> props = new HashMap<>();
+    props.put("id", calendarEvent.getId());
+    props.put("title", calendarEvent.getTitle());
+    if (calendarEvent.getAllDay()) {
+      props.put("allDay", true);
+    }
+    // 2018-12-09T16:00:00+00:00
+    String startDate = new SimpleDateFormat("yyyy-MM-dd").format(calendarEvent.getStartDate());
+    String endDate = new SimpleDateFormat("yyyy-MM-dd").format(calendarEvent.getEndDate());
+    String startDateHoursMinutes = new SimpleDateFormat("HH:mm").format(calendarEvent.getStartDate());
+    String endDateHoursMinutes = new SimpleDateFormat("HH:mm").format(calendarEvent.getEndDate());
+    if (calendarEvent.getAllDay()) {
+      // Requied for viewing to extend to the end of the day, otherwise the view uses the day before
+      props.put("start", startDate);
+      props.put("end", endDate + "T24:00");
+    } else {
+      props.put("start", startDate + "T" + startDateHoursMinutes + ":00" + offset);
+      props.put("end", endDate + "T" + endDateHoursMinutes + ":00" + offset);
+    }
+
+    // Add extended properties
+    Map<String, Object> extendedProps = new HashMap<>();
+    extendedProps.put("uniqueId", calendarEvent.getUniqueId());
+    extendedProps.put("calendarId", calendarEvent.getCalendarId());
+    if (calendarEvent.getDetailsUrl() != null) {
+      extendedProps.put("detailsUrl", calendarEvent.getDetailsUrl());
+    }
+    if (calendarEvent.getSignUpUrl() != null) {
+      extendedProps.put("signUpUrl", calendarEvent.getSignUpUrl());
+    }
+    if (StringUtils.isNotEmpty(calendarEvent.getSummary())) {
+      extendedProps.put("description", calendarEvent.getSummary());
+    }
+    if (StringUtils.isNotEmpty(calendarEvent.getLocation())) {
+      extendedProps.put("location", calendarEvent.getLocation());
+    }
+    if (color != null) {
+      extendedProps.put("color", color);
+    }
+    props.put("extendedProps", extendedProps);
+    return JsonCommand.createJsonNode(props).toString();
+  }
+
+  public static String getColor(List<Calendar> calendarList, CalendarEvent calendarEvent) {
     for (Calendar calendar : calendarList) {
       if (calendarEvent.getCalendarId().equals(calendar.getId())) {
         return calendar.getColor();
