@@ -155,7 +155,7 @@ This project uses and licenses several technologies:
    MarkerCluster               Apache   Clusters for Leaflet                              https://github.com/Leaflet/Leaflet.markercluster
    Masonry                     MIT      UI Layout                                         https://github.com/desandro/masonry
    Mermaid                     MIT      Diagramming and charting                          https://github.com/mermaid-js/mermaid
-   Add to Calendar Buttons     MIT      Add to calendar                                   https://github.com/WebuddhaInc/add-to-calendar-buttons
+   Add to Calendar Button      Elastic  Add to calendar                                   https://github.com/add2cal/add-to-calendar-button
    Payform                     License  Credit card form                                  https://github.com/jondavidjohn/payform
    Prism                       MIT      Highlighter                                       https://github.com/PrismJS/prism/
    SortableJS                  MIT      Drag-and-drop lists                               https://github.com/SortableJS/Sortable
