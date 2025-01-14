@@ -52,7 +52,7 @@
     <commons-lang3.version>3.17.0</commons-lang3.version>
     <commons-text.version>1.13.0</commons-text.version>
     <commons-validator.version>1.9.0</commons-validator.version>
-    <easy-flows-playbook.version>0.6-SNAPSHOT</easy-flows-playbook.version>
+    <easy-flows-playbooks.version>0.7-SNAPSHOT</easy-flows-playbooks.version>
     <flexmark.version>0.64.8</flexmark.version>
     <flyway.version>11.1.1</flyway.version>
     <geoip2.version>4.2.1</geoip2.version>
@@ -179,11 +179,11 @@
       <version>${commons-validator.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.jeasy.flows</groupId>
-      <artifactId>easy-flows-playbook</artifactId>
-      <version>${easy-flows-playbook.version}</version>
+      <groupId>com.github.rajkowski</groupId>
+      <artifactId>easy-flows-playbooks</artifactId>
+      <version>${easy-flows-playbooks.version}</version>
       <scope>system</scope>
-      <systemPath>${project.basedir}/lib/provided/easy-flows/easy-flows-playbook-${easy-flows-playbook.version}.jar</systemPath>
+      <systemPath>${project.basedir}/lib/provided/easy-flows-playbooks/easy-flows-playbooks-${easy-flows-playbooks.version}.jar</systemPath>
     </dependency>
     <dependency>
       <groupId>com.vladsch.flexmark</groupId>
