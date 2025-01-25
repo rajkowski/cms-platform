@@ -38,7 +38,7 @@
     <args4j.version>2.37</args4j.version>
     <bucket4j.version>8.14.0</bucket4j.version>
     <byte-buddy.version>1.15.1</byte-buddy.version>
-    <caffeine.version>3.1.8</caffeine.version>
+    <caffeine.version>3.2.0</caffeine.version>
     <apache-http.version>5.3.2</apache-http.version>
     <classgraph.version>4.8.174</classgraph.version>
     <commons-beanutils.version>1.10.0</commons-beanutils.version>
@@ -66,7 +66,7 @@
     <java-mail.version>1.6.2</java-mail.version>
     <jmail.version>1.6.3</jmail.version>
     <jna.version>5.14.0</jna.version>
-    <jobrunr.version>7.3.2</jobrunr.version>
+    <jobrunr.version>7.4.0</jobrunr.version>
     <johnzon.version>2.0.1</johnzon.version>
     <jsoup.version>1.18.3</jsoup.version>
     <jstl.version>1.2.5</jstl.version>
