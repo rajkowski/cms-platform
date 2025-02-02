@@ -1,5 +1,5 @@
 /**
- * Swiper 11.2.1
+ * Swiper 11.2.2
  * Most modern mobile touch slider and framework with hardware accelerated transitions
  * https://swiperjs.com
  *
@@ -7,7 +7,7 @@
  *
  * Released under the MIT License
  *
- * Released on: January 10, 2025
+ * Released on: January 31, 2025
  */
 
 var Swiper = (function () {
@@ -1981,6 +1981,11 @@ var Swiper = (function () {
       }
       return true;
     }
+    const browser = getBrowser();
+    const isSafari = browser.isSafari;
+    if (isVirtual && !initial && isSafari && swiper.isElement) {
+      swiper.virtual.update(false, false, slideIndex);
+    }
     swiper.setTransition(speed);
     swiper.setTranslate(translate);
     swiper.updateActiveIndex(slideIndex);
@@ -2154,8 +2159,9 @@ var Swiper = (function () {
     }
     const normalizedTranslate = normalize(translate);
     const normalizedSnapGrid = snapGrid.map(val => normalize(val));
+    const isFreeMode = params.freeMode && params.freeMode.enabled;
     let prevSnap = snapGrid[normalizedSnapGrid.indexOf(normalizedTranslate) - 1];
-    if (typeof prevSnap === 'undefined' && params.cssMode) {
+    if (typeof prevSnap === 'undefined' && (params.cssMode || isFreeMode)) {
       let prevSnapIndex;
       snapGrid.forEach((snap, snapIndex) => {
         if (normalizedTranslate >= snap) {
@@ -2164,7 +2170,7 @@ var Swiper = (function () {
         }
       });
       if (typeof prevSnapIndex !== 'undefined') {
-        prevSnap = snapGrid[prevSnapIndex > 0 ? prevSnapIndex - 1 : prevSnapIndex];
+        prevSnap = isFreeMode ? snapGrid[prevSnapIndex] : snapGrid[prevSnapIndex > 0 ? prevSnapIndex - 1 : prevSnapIndex];
       }
     }
     let prevIndex = 0;
@@ -2909,7 +2915,7 @@ var Swiper = (function () {
     }
     let loopFixed;
     new Date().getTime();
-    if (data.isMoved && data.allowThresholdMove && prevTouchesDirection !== swiper.touchesDirection && isLoop && allowLoopFix && Math.abs(diff) >= 1) {
+    if (params._loopSwapReset !== false && data.isMoved && data.allowThresholdMove && prevTouchesDirection !== swiper.touchesDirection && isLoop && allowLoopFix && Math.abs(diff) >= 1) {
       Object.assign(touches, {
         startX: pageX,
         startY: pageY,
@@ -4453,7 +4459,7 @@ var Swiper = (function () {
       }
       return slideEl;
     }
-    function update(force, beforeInit) {
+    function update(force, beforeInit, forceActiveIndex) {
       const {
         slidesPerView,
         slidesPerGroup,
@@ -4478,7 +4484,7 @@ var Swiper = (function () {
       if (!swiper.params.cssMode) {
         swiper.updateActiveIndex();
       }
-      const activeIndex = swiper.activeIndex || 0;
+      const activeIndex = typeof forceActiveIndex === 'undefined' ? swiper.activeIndex || 0 : forceActiveIndex;
       let offsetProp;
       if (swiper.rtlTranslate) offsetProp = 'right';else offsetProp = swiper.isHorizontal() ? 'left' : 'top';
       let slidesAfter;
@@ -9750,14 +9756,17 @@ var Swiper = (function () {
       setTransition,
       perspective: () => true,
       overwriteParams: () => ({
+        _loopSwapReset: false,
         watchSlidesProgress: true,
+        loopAdditionalSlides: 3,
+        centeredSlides: true,
         virtualTranslate: !swiper.params.cssMode
       })
     });
   }
 
   /**
-   * Swiper 11.2.1
+   * Swiper 11.2.2
    * Most modern mobile touch slider and framework with hardware accelerated transitions
    * https://swiperjs.com
    *
@@ -9765,7 +9774,7 @@ var Swiper = (function () {
    *
    * Released under the MIT License
    *
-   * Released on: January 10, 2025
+   * Released on: January 31, 2025
    */
 
 
