@@ -36,8 +36,7 @@ public class ReplaceFilePathCommand {
   /**
    * Update file values in content
    *
-   * @param content
-   * @param value
+   * @param originalContent
    * @return
    */
   public static String updateFileReferences(String originalContent) {

@@ -105,8 +105,7 @@ public class LoadSitePropertyCommand {
   /**
    * For a given site property, an environment variable is checked based on the format CMS_SITE_PROPERTY
    * 
-   * @param name
-   * @param defaultValue
+   * @param siteProperty
    * @return
    */
   public static String getValueBasedOnEnvironment(SiteProperty siteProperty) {

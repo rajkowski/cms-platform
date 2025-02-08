@@ -38,7 +38,7 @@ public class ThemeValuesCommand {
 
   /**
    * Replace all theme properties in the given content
-   * @param name
+   * @param content
    */
   public static String replaceThemeDynamicValues(String content) {
     // Use the list of the current properties

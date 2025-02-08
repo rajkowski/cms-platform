@@ -37,8 +37,7 @@ public class ReplaceImagePathCommand {
   /**
    * Update image values in content
    *
-   * @param blogPost
-   * @param value
+   * @param originalContent
    * @return
    */
   public static String updateImageReferences(String originalContent) {

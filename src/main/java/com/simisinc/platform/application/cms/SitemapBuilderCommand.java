@@ -50,8 +50,8 @@ public class SitemapBuilderCommand {
    * Generate the xml for the given web page
    * @param xml
    * @param siteUrl
-   * @param link
-   * @param lastModified
+   * @param webPage
+   * @param sdf
    */
   public static void appendUrlXml(StringBuilder xml, String siteUrl, WebPage webPage, SimpleDateFormat sdf) {
     String link = webPage.getLink();

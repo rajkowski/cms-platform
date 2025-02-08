@@ -128,7 +128,6 @@ public class CaptchaCommand {
    * https://github.com/javalite/javalite/blob/master/activeweb/src/main/java/org/javalite/activeweb/Captcha.java
    *
    * @param text expects string size eight (8) or less characters.
-   * @return byte array that is a PNG image generated with text displayed.
    */
   public static void generateImage(String text, OutputStream out) throws Exception {
 
