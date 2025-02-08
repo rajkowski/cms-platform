@@ -71,6 +71,7 @@ public class ContextListener implements ServletContextListener {
 
     // System properties
     System.setProperty("java.awt.headless", "true");
+    System.setProperty("REDGATE_DISABLE_TELEMETRY", "true");
 
     // Monitor the success
     boolean isSuccessful = true;
