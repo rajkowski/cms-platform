@@ -16,18 +16,27 @@
 
 package com.simisinc.platform.infrastructure.persistence.login;
 
-import com.simisinc.platform.domain.model.User;
-import com.simisinc.platform.domain.model.dashboard.StatisticsData;
-import com.simisinc.platform.domain.model.login.UserLogin;
-import com.simisinc.platform.infrastructure.database.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.sql.*;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
+import com.simisinc.platform.domain.model.User;
+import com.simisinc.platform.domain.model.dashboard.StatisticsData;
+import com.simisinc.platform.domain.model.login.UserLogin;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves user login objects
@@ -40,11 +49,11 @@ public class UserLoginRepository {
   private static Log LOG = LogFactory.getLog(UserLoginRepository.class);
 
   private static String TABLE_NAME = "user_logins";
-  private static String[] PRIMARY_KEY = new String[]{"login_id"};
+  private static String[] PRIMARY_KEY = new String[] { "login_id" };
 
   private static DataResult query(UserLoginSpecification specification, DataConstraints constraints) {
     SqlUtils select = new SqlUtils();
-    SqlUtils where = new SqlUtils();
+    SqlWhere where = DB.WHERE();
     SqlUtils orderBy = new SqlUtils();
     if (specification != null) {
       where.addIfExists("user_id = ?", specification.getUserId(), -1);
@@ -76,23 +85,23 @@ public class UserLoginRepository {
   }
 
   public static long queryTodaysLoginCount(long userId) {
-    SqlUtils where = new SqlUtils();
-    where.add("user_id = ?", userId);
-    where.add("created >= ?", Timestamp.valueOf(LocalDate.now().atStartOfDay()));
-    return DB.selectCountFrom(TABLE_NAME, where);
+    return DB.selectCountFrom(
+        TABLE_NAME,
+        DB.WHERE()
+            .add("user_id = ?", userId)
+            .add("created >= ?", Timestamp.valueOf(LocalDate.now().atStartOfDay())));
   }
 
   public static List<StatisticsData> findUniqueDailyLogins(int daysToLimit) {
-    String SQL_QUERY =
-        "SELECT DATE_TRUNC('day', day)::VARCHAR(10) AS date_column, COUNT(DISTINCT(user_id)) AS daily_count " +
-            "FROM (SELECT generate_series(NOW() - INTERVAL '" + daysToLimit + " days', NOW(), INTERVAL '1 day')::date) d(day) " +
-            "LEFT JOIN user_logins ON DATE_TRUNC('day', created) = DATE_TRUNC('day', day) " +
-            "GROUP BY d.day " +
-            "ORDER BY d.day";
+    String SQL_QUERY = "SELECT DATE_TRUNC('day', day)::VARCHAR(10) AS date_column, COUNT(DISTINCT(user_id)) AS daily_count " +
+        "FROM (SELECT generate_series(NOW() - INTERVAL '" + daysToLimit + " days', NOW(), INTERVAL '1 day')::date) d(day) " +
+        "LEFT JOIN user_logins ON DATE_TRUNC('day', created) = DATE_TRUNC('day', day) " +
+        "GROUP BY d.day " +
+        "ORDER BY d.day";
     List<StatisticsData> records = null;
     try (Connection connection = DB.getConnection();
-         PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
-         ResultSet rs = pst.executeQuery()) {
+        PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
+        ResultSet rs = pst.executeQuery()) {
       records = new ArrayList<>();
       while (rs.next()) {
         StatisticsData data = new StatisticsData();
@@ -107,16 +116,15 @@ public class UserLoginRepository {
   }
 
   public static List<StatisticsData> findUniqueMonthlyLogins(int monthsLimit) {
-    String SQL_QUERY =
-        "SELECT DATE_TRUNC('month', month)::VARCHAR(10) AS date_column, COUNT(DISTINCT(user_id)) AS monthly_count " +
-            "FROM (SELECT generate_series(NOW() - INTERVAL '" + monthsLimit + " months', NOW(), INTERVAL '1 month')::date) d(month) " +
-            "LEFT JOIN user_logins ON DATE_TRUNC('month', created) = DATE_TRUNC('month', month) " +
-            "GROUP BY d.month " +
-            "ORDER BY d.month";
+    String SQL_QUERY = "SELECT DATE_TRUNC('month', month)::VARCHAR(10) AS date_column, COUNT(DISTINCT(user_id)) AS monthly_count " +
+        "FROM (SELECT generate_series(NOW() - INTERVAL '" + monthsLimit + " months', NOW(), INTERVAL '1 month')::date) d(month) " +
+        "LEFT JOIN user_logins ON DATE_TRUNC('month', created) = DATE_TRUNC('month', month) " +
+        "GROUP BY d.month " +
+        "ORDER BY d.month";
     List<StatisticsData> records = null;
     try (Connection connection = DB.getConnection();
-         PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
-         ResultSet rs = pst.executeQuery()) {
+        PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
+        ResultSet rs = pst.executeQuery()) {
       records = new ArrayList<>();
       while (rs.next()) {
         StatisticsData data = new StatisticsData();
@@ -131,9 +139,9 @@ public class UserLoginRepository {
   }
 
   public static UserLogin save(UserLogin record) {
-//    if (record.getId() > -1) {
-//      return update(record);
-//    }
+    //    if (record.getId() > -1) {
+    //      return update(record);
+    //    }
     return add(record);
   }
 
@@ -153,7 +161,7 @@ public class UserLoginRepository {
   }
 
   public static int removeAll(Connection connection, User user) throws SQLException {
-    return DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("user_id = ?", user.getId()));
+    return DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("user_id = ?", user.getId()));
   }
 
   private static UserLogin buildRecord(ResultSet rs) {

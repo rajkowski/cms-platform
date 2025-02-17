@@ -16,15 +16,19 @@
 
 package com.simisinc.platform.infrastructure.persistence;
 
-import com.simisinc.platform.domain.model.DatabaseVersion;
-import com.simisinc.platform.infrastructure.database.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.List;
+import com.simisinc.platform.domain.model.DatabaseVersion;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves database version objects
@@ -37,7 +41,7 @@ public class DatabaseVersionRepository {
   private static Log LOG = LogFactory.getLog(DatabaseVersionRepository.class);
 
   private static String TABLE_NAME = "database_version";
-  private static String[] PRIMARY_KEY = new String[]{"version_id"};
+  private static String[] PRIMARY_KEY = new String[] { "version_id" };
 
   public static long count() {
     return DB.selectCountFrom(TABLE_NAME);
@@ -49,7 +53,7 @@ public class DatabaseVersionRepository {
     }
     return (DatabaseVersion) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("version = ?", version),
+        DB.WHERE("version = ?", version),
         DatabaseVersionRepository::buildRecord);
   }
 

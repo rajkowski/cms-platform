@@ -16,16 +16,15 @@
 
 package com.simisinc.platform.application.ecommerce;
 
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+
 import com.simisinc.platform.domain.model.ecommerce.Order;
 import com.simisinc.platform.domain.model.ecommerce.OrderItem;
 import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
 import com.simisinc.platform.infrastructure.persistence.ecommerce.OrderItemRepository;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import java.util.List;
 
 /**
  * Determines the status of an order
@@ -48,13 +47,12 @@ public class OrderStatusCommand {
   public static final String RETURNED = "RETURNED";
   public static final String REFUNDED = "REFUNDED";
 
-  private static Log LOG = LogFactory.getLog(OrderStatusCommand.class);
-
   public static int retrieveStatusId(String code) {
     if (StringUtils.isBlank(code)) {
       return -1;
     }
-    SqlUtils where = new SqlUtils().add("LOWER(code) = ?", code.toLowerCase());
+    SqlWhere where = DB.WHERE()
+        .add("LOWER(code) = ?", code.toLowerCase());
     return (int) DB.selectFunction("status_id", "lookup_order_status", where);
   }
 
@@ -62,16 +60,17 @@ public class OrderStatusCommand {
     if (statusId == -1) {
       return null;
     }
-    SqlUtils where = new SqlUtils().add("status_id = ?", statusId);
-    return DB.selectStringValue("title", "lookup_order_status", where);
+    return DB.selectStringValue("title", "lookup_order_status", DB.WHERE("status_id = ?", statusId));
   }
 
   public static String currentStatus(int statusId) {
     if (statusId == -1) {
       return null;
     }
-    SqlUtils where = new SqlUtils().add("status_id = ?", statusId);
-    String code = DB.selectStringValue("code", "lookup_order_status", where).toUpperCase();
+    String code = DB.selectStringValue(
+        "code",
+        "lookup_order_status",
+        DB.WHERE("status_id = ?", statusId)).toUpperCase();
     if (CREATED.equals(code)) {
       return "New order";
     } else if (PAID.equals(code)) {

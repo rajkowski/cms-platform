@@ -16,15 +16,24 @@
 
 package com.simisinc.platform.infrastructure.persistence.mailinglists;
 
-import com.simisinc.platform.domain.model.mailinglists.Email;
-import com.simisinc.platform.infrastructure.database.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
+import com.simisinc.platform.domain.model.mailinglists.Email;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves email objects
@@ -37,15 +46,16 @@ public class EmailRepository {
   private static Log LOG = LogFactory.getLog(EmailRepository.class);
 
   private static String TABLE_NAME = "emails";
-  private static String[] PRIMARY_KEY = new String[]{"email_id"};
+  private static String[] PRIMARY_KEY = new String[] { "email_id" };
 
   private static DataResult query(EmailSpecification specification, DataConstraints constraints) {
     SqlUtils select = new SqlUtils();
-    SqlUtils where = new SqlUtils();
+    SqlWhere where = DB.WHERE();
     SqlUtils orderBy = new SqlUtils();
     if (specification != null) {
       if (specification.getMailingListId() > -1) {
-        where.add("EXISTS (SELECT 1 FROM mailing_list_members WHERE email_id = emails.email_id AND list_id = ?)", specification.getMailingListId());
+        where.add("EXISTS (SELECT 1 FROM mailing_list_members WHERE email_id = emails.email_id AND list_id = ?)",
+            specification.getMailingListId());
       }
       if (StringUtils.isNotBlank(specification.getMatchesEmail())) {
         where.add("LOWER(email) = LOWER(?)", specification.getMatchesEmail().trim());
@@ -79,8 +89,7 @@ public class EmailRepository {
   public static Email findById(long emailId) {
     return (Email) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("email_id = ?", emailId),
+        DB.WHERE("email_id = ?", emailId),
         EmailRepository::buildRecord);
   }
 
@@ -90,8 +99,7 @@ public class EmailRepository {
     }
     return (Email) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("LOWER(email) = ?", email.trim().toLowerCase()),
+        DB.WHERE("LOWER(email) = ?", email.trim().toLowerCase()),
         EmailRepository::buildRecord);
   }
 
@@ -105,17 +113,16 @@ public class EmailRepository {
   }
 
   public static List<Email> findDailyUniqueLocations(int daysToLimit) {
-    String SQL_QUERY =
-        "SELECT DISTINCT continent, country, state, city, latitude, longitude " +
-            "FROM emails " +
-            "WHERE country IS NOT NULL " +
-            "AND created > NOW() - INTERVAL '" + daysToLimit + " days' " +
-            "AND latitude IS NOT NULL " +
-            "ORDER BY continent, country, state, city, latitude, longitude";
+    String SQL_QUERY = "SELECT DISTINCT continent, country, state, city, latitude, longitude " +
+        "FROM emails " +
+        "WHERE country IS NOT NULL " +
+        "AND created > NOW() - INTERVAL '" + daysToLimit + " days' " +
+        "AND latitude IS NOT NULL " +
+        "ORDER BY continent, country, state, city, latitude, longitude";
     List<Email> records = null;
     try (Connection connection = DB.getConnection();
-         PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
-         ResultSet rs = pst.executeQuery()) {
+        PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
+        ResultSet rs = pst.executeQuery()) {
       records = new ArrayList<>();
       while (rs.next()) {
         Email data = new Email();
@@ -164,8 +171,8 @@ public class EmailRepository {
         .addIfExists("last_order", record.getLastOrder())
         .add("number_of_orders", record.getNumberOfOrders())
         .add("total_spent", record.getTotalSpent())
-        // @todo tags
-        ;
+    // @todo tags
+    ;
     record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
@@ -183,12 +190,10 @@ public class EmailRepository {
         .add("modified", new Timestamp(System.currentTimeMillis()))
         .add("subscribed", record.getSubscribed())
         .add("unsubscribed", record.getUnsubscribed())
-        // @todo tags
-        ;
-    SqlUtils where = new SqlUtils()
-        .add("email = ?", record.getEmail().trim().toLowerCase());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
-//      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
+    // @todo tags
+    ;
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("email = ?", record.getEmail().trim().toLowerCase()))) {
+      //      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
     }
     LOG.error("The update failed!");
@@ -200,19 +205,15 @@ public class EmailRepository {
       return;
     }
     String set = "sync_date = CURRENT_TIMESTAMP";
-    SqlUtils where = new SqlUtils()
-        .add("email_id = ?", record.getId());
-    DB.update(TABLE_NAME, set, where);
+    DB.update(TABLE_NAME, set, DB.WHERE("email_id = ?", record.getId()));
   }
 
   public static void markNotSynced(Email record) {
     if (record == null || record.getId() == -1) {
       return;
     }
-    String set = "sync_date = NULL";
-    SqlUtils where = new SqlUtils()
-        .add("email_id = ?", record.getId());
-    DB.update(TABLE_NAME, set, where);
+    String setValues = "sync_date = NULL";
+    DB.update(TABLE_NAME, setValues, DB.WHERE("email_id = ?", record.getId()));
   }
 
   private static Email buildRecord(ResultSet rs) {

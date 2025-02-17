@@ -16,12 +16,7 @@
 
 package com.simisinc.platform.infrastructure.persistence.ecommerce;
 
-import com.simisinc.platform.domain.model.ecommerce.PricingRule;
-import com.simisinc.platform.infrastructure.database.*;
-import com.simisinc.platform.presentation.controller.DataConstants;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import static java.util.stream.Collectors.toList;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -32,7 +27,19 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.toList;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.ecommerce.PricingRule;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
+import com.simisinc.platform.presentation.controller.DataConstants;
 
 /**
  * Persists and retrieves pricing rule objects
@@ -48,9 +55,9 @@ public class PricingRuleRepository {
   private static String[] PRIMARY_KEY = new String[] { "rule_id" };
 
   private static DataResult query(PricingRuleSpecification specification, DataConstraints constraints) {
-    SqlUtils where = null;
+    SqlWhere where = null;
     if (specification != null) {
-      where = new SqlUtils();
+      where = DB.WHERE();
       if (StringUtils.isNotBlank(specification.getCountryCode())) {
         where.add("valid_country_code IS NULL OR valid_country_code = ?", specification.getCountryCode());
       }
@@ -107,7 +114,7 @@ public class PricingRuleRepository {
   public static PricingRule findById(long ruleId) {
     return (PricingRule) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("rule_id = ?", ruleId),
+        DB.WHERE("rule_id = ?", ruleId),
         PricingRuleRepository::buildRecord);
   }
 
@@ -189,9 +196,7 @@ public class PricingRuleRepository {
         .add("valid_country_code", record.getCountryCode())
         .add("modified_by", record.getModifiedBy(), -1)
         .add("modified", new Timestamp(System.currentTimeMillis()));
-    SqlUtils where = new SqlUtils()
-        .add("rule_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("rule_id = ?", record.getId()))) {
       //      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
     }

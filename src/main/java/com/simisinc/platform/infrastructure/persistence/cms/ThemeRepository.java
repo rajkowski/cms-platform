@@ -16,18 +16,24 @@
 
 package com.simisinc.platform.infrastructure.persistence.cms;
 
-import com.simisinc.platform.application.cms.ThemeJSONCommand;
-import com.simisinc.platform.domain.model.SiteProperty;
-import com.simisinc.platform.domain.model.cms.Theme;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.application.cms.ThemeJSONCommand;
+import com.simisinc.platform.domain.model.SiteProperty;
+import com.simisinc.platform.domain.model.cms.Theme;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlValue;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves theme objects
@@ -40,21 +46,19 @@ public class ThemeRepository {
   private static Log LOG = LogFactory.getLog(ThemeRepository.class);
 
   private static String TABLE_NAME = "themes";
-  private static String[] PRIMARY_KEY = new String[]{"theme_id"};
+  private static String[] PRIMARY_KEY = new String[] { "theme_id" };
 
   public static Theme findByName(String name) {
     return (Theme) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("LOWER(name) = ?", name.toLowerCase()),
+        DB.WHERE("LOWER(name) = ?", name.toLowerCase()),
         ThemeRepository::buildRecord);
   }
 
   public static Theme findById(long id) {
     return (Theme) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("theme_id = ?", id),
+        DB.WHERE("theme_id = ?", id),
         ThemeRepository::buildRecord);
   }
 
@@ -97,9 +101,7 @@ public class ThemeRepository {
         .add("name", record.getName())
         .add("modified", new Timestamp(System.currentTimeMillis()));
     updateValues.add(new SqlValue("entries", SqlValue.JSONB_TYPE, ThemeJSONCommand.createJSONString(record)));
-    SqlUtils where = new SqlUtils()
-        .add("theme_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("theme_id = ?", record.getId()))) {
       return record;
     }
     LOG.error("The update failed!");
@@ -107,7 +109,7 @@ public class ThemeRepository {
   }
 
   public static void remove(Theme record) {
-    DB.deleteFrom(TABLE_NAME, new SqlUtils().add("theme_id = ?", record.getId()));
+    DB.deleteFrom(TABLE_NAME, DB.WHERE("theme_id = ?", record.getId()));
   }
 
   private static Theme buildRecord(ResultSet rs) {

@@ -16,17 +16,23 @@
 
 package com.simisinc.platform.infrastructure.persistence.ecommerce;
 
-import com.simisinc.platform.domain.model.ecommerce.ProductCategory;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.ecommerce.ProductCategory;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves product category objects
@@ -59,8 +65,7 @@ public class ProductCategoryRepository {
     }
     return (ProductCategory) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("category_id = ?", categoryId),
+        DB.WHERE("category_id = ?", categoryId),
         ProductCategoryRepository::buildRecord);
   }
 
@@ -70,8 +75,7 @@ public class ProductCategoryRepository {
     }
     return (ProductCategory) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("upper(category_unique_id) = ?", uniqueId.toUpperCase()),
+        DB.WHERE("UPPER(category_unique_id) = ?", uniqueId.toUpperCase()),
         ProductCategoryRepository::buildRecord);
   }
 
@@ -119,9 +123,7 @@ public class ProductCategoryRepository {
     if (record.getDisplayOrder() > 0) {
       updateValues.add("display_order", record.getDisplayOrder());
     }
-    SqlUtils where = new SqlUtils()
-        .add("category_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("category_id = ?", record.getId()))) {
       //      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
     }
@@ -130,7 +132,7 @@ public class ProductCategoryRepository {
   }
 
   public static boolean remove(ProductCategory record) {
-    return DB.deleteFrom(TABLE_NAME, new SqlUtils().add("category_id = ?", record.getId())) > 0;
+    return DB.deleteFrom(TABLE_NAME, DB.WHERE("category_id = ?", record.getId())) > 0;
   }
 
   private static ProductCategory buildRecord(ResultSet rs) {

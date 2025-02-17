@@ -16,21 +16,28 @@
 
 package com.simisinc.platform.infrastructure.persistence.medicine;
 
-import com.simisinc.platform.domain.model.items.Item;
-import com.simisinc.platform.domain.model.medicine.Medicine;
-import com.simisinc.platform.domain.model.medicine.MedicineSchedule;
-import com.simisinc.platform.domain.model.medicine.Prescription;
-import com.simisinc.platform.infrastructure.database.*;
-import com.simisinc.platform.presentation.controller.DataConstants;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.items.Item;
+import com.simisinc.platform.domain.model.medicine.Medicine;
+import com.simisinc.platform.domain.model.medicine.MedicineSchedule;
+import com.simisinc.platform.domain.model.medicine.Prescription;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
+import com.simisinc.platform.presentation.controller.DataConstants;
 
 /**
  * Persists and retrieves medicine objects
@@ -118,8 +125,6 @@ public class MedicineRepository {
         .add("condition", StringUtils.trimToNull(record.getCondition()))
         .add("comments", StringUtils.trimToNull(record.getComments()))
         .add("modified_by", record.getModifiedBy());
-    SqlUtils where = new SqlUtils()
-        .add("medicine_id = ?", record.getId());
     // Use a transaction
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
@@ -143,7 +148,7 @@ public class MedicineRepository {
         }
       }
       // Update this record
-      DB.update(connection, TABLE_NAME, updateValues, where);
+      DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("medicine_id = ?", record.getId()));
       // Finish the transaction
       transaction.commit();
       return record;
@@ -165,7 +170,7 @@ public class MedicineRepository {
       MedicineTimeRepository.removeAll(connection, record);
       MedicineScheduleRepository.removeAll(connection, record);
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("medicine_id = ?", record.getId()));
+      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("medicine_id = ?", record.getId()));
       // Finish transaction
       transaction.commit();
       return true;
@@ -183,7 +188,7 @@ public class MedicineRepository {
     //    MedicineTimeRepository.removeAll(connection, item);
     //    MedicineScheduleRepository.removeAll(connection, item);
     // Delete the records
-    DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("individual_id = ?", item.getId()));
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("individual_id = ?", item.getId()));
   }
 
   public static boolean markAsSuspended(Medicine record) {
@@ -197,9 +202,7 @@ public class MedicineRepository {
           .add("modified", timestamp)
           .add("suspended_by", record.getModifiedBy())
           .add("suspended", timestamp);
-      SqlUtils where = new SqlUtils()
-          .add("medicine_id = ?", record.getId());
-      DB.update(connection, TABLE_NAME, updateValues, where);
+      DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("medicine_id = ?", record.getId()));
       // Finish transaction
       transaction.commit();
       return true;
@@ -220,9 +223,7 @@ public class MedicineRepository {
           .add("modified", timestamp)
           .add("suspended_by", -1L, -1L)
           .add("suspended", (Timestamp) null);
-      SqlUtils where = new SqlUtils()
-          .add("medicine_id = ?", record.getId());
-      DB.update(connection, TABLE_NAME, updateValues, where);
+      DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("medicine_id = ?", record.getId()));
       // Finish transaction
       transaction.commit();
       return true;
@@ -243,9 +244,7 @@ public class MedicineRepository {
           .add("modified", timestamp)
           .add("archived_by", record.getModifiedBy())
           .add("archived", timestamp);
-      SqlUtils where = new SqlUtils()
-          .add("medicine_id = ?", record.getId());
-      DB.update(connection, TABLE_NAME, updateValues, where);
+      DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("medicine_id = ?", record.getId()));
       // Finish transaction
       transaction.commit();
       return true;
@@ -257,7 +256,7 @@ public class MedicineRepository {
 
   private static DataResult query(MedicineSpecification specification, DataConstraints constraints) {
     SqlUtils select = new SqlUtils();
-    SqlUtils where = new SqlUtils();
+    SqlWhere where = DB.WHERE();
     SqlUtils orderBy = new SqlUtils();
     if (specification != null) {
       where
@@ -285,7 +284,8 @@ public class MedicineRepository {
       return null;
     }
     return (Medicine) DB.selectRecordFrom(
-        TABLE_NAME, new SqlUtils().add("medicine_id = ?", id),
+        TABLE_NAME,
+        DB.WHERE("medicine_id = ?", id),
         MedicineRepository::buildRecord);
   }
 

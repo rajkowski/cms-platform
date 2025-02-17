@@ -16,16 +16,22 @@
 
 package com.simisinc.platform.infrastructure.persistence;
 
-import com.simisinc.platform.domain.model.Visitor;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.Visitor;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves visitor objects
@@ -58,8 +64,7 @@ public class VisitorRepository {
     }
     return (Visitor) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("token = ?", visitorUniqueId),
+        DB.WHERE("token = ?", visitorUniqueId),
         VisitorRepository::buildRecord);
   }
 

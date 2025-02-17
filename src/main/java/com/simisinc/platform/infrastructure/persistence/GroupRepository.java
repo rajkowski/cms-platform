@@ -55,7 +55,7 @@ public class GroupRepository {
     }
     return (Group) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("group_id = ?", id),
+        DB.WHERE("group_id = ?", id),
         GroupRepository::buildRecord);
   }
 
@@ -64,7 +64,8 @@ public class GroupRepository {
       return null;
     }
     return (Group) DB.selectRecordFrom(
-        TABLE_NAME, new SqlUtils().add("unique_id = ?", uniqueId),
+        TABLE_NAME,
+        DB.WHERE("unique_id = ?", uniqueId),
         GroupRepository::buildRecord);
   }
 
@@ -73,7 +74,8 @@ public class GroupRepository {
       return null;
     }
     return (Group) DB.selectRecordFrom(
-        TABLE_NAME, new SqlUtils().add("oauth_path = ?", oAuthPath),
+        TABLE_NAME,
+        DB.WHERE("oauth_path = ?", oAuthPath),
         GroupRepository::buildRecord);
   }
 
@@ -83,7 +85,7 @@ public class GroupRepository {
     }
     return (Group) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("LOWER(name) = ?", name.toLowerCase().trim()),
+        DB.WHERE("LOWER(name) = ?", name.toLowerCase().trim()),
         GroupRepository::buildRecord);
   }
 
@@ -91,11 +93,9 @@ public class GroupRepository {
     if (userId == -1) {
       return null;
     }
-    SqlUtils where = new SqlUtils()
-        .add("EXISTS (SELECT 1 FROM user_groups WHERE group_id = groups.group_id AND user_id = ?)", userId);
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        where,
+        DB.WHERE("EXISTS (SELECT 1 FROM user_groups WHERE group_id = groups.group_id AND user_id = ?)", userId),
         new DataConstraints().setDefaultColumnToSortBy("group_id").setUseCount(false),
         GroupRepository::buildRecord);
     if (result.hasRecords()) {
@@ -140,9 +140,7 @@ public class GroupRepository {
         .add("unique_id", StringUtils.trimToNull(record.getUniqueId()))
         .add("description", StringUtils.trimToNull(record.getDescription()))
         .addIfExists("oauth_path", record.getOAuthPath());
-    SqlUtils where = new SqlUtils()
-        .add("group_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("group_id = ?", record.getId()))) {
       return record;
     }
     LOG.error("The update failed!");
@@ -156,7 +154,7 @@ public class GroupRepository {
       // Delete the references
       UserGroupRepository.remove(connection, record);
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("group_id = ?", record.getId()));
+      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("group_id = ?", record.getId()));
       // Finish transaction
       transaction.commit();
       return true;

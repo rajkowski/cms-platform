@@ -46,6 +46,7 @@ import com.simisinc.platform.infrastructure.database.DataResult;
 import com.simisinc.platform.infrastructure.database.SqlJoins;
 import com.simisinc.platform.infrastructure.database.SqlUtils;
 import com.simisinc.platform.infrastructure.database.SqlValue;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
 import com.simisinc.platform.infrastructure.persistence.medicine.MedicineRepository;
 import com.simisinc.platform.presentation.controller.DataConstants;
 import com.simisinc.platform.presentation.controller.UserSession;
@@ -200,7 +201,6 @@ public class ItemRepository {
     } else {
       updateValues.add(new SqlValue("field_values", SqlValue.JSONB_TYPE, null));
     }
-    SqlUtils where = new SqlUtils().add("item_id = ?", record.getId());
 
     // Use the previous records for updates
     Item previousRecord = ItemRepository.findById(record.getId());
@@ -212,7 +212,7 @@ public class ItemRepository {
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
       // In a transaction (use the existing connection)
-      DB.update(connection, TABLE_NAME, updateValues, where);
+      DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("item_id = ?", record.getId()));
 
       // If the master categoryId does not match, then update the category id counts
       if (previousRecord.getCategoryId() != record.getCategoryId()) {
@@ -269,8 +269,7 @@ public class ItemRepository {
     // Overwrite the geoJSON
     SqlUtils updateValues = new SqlUtils().add("modified", new Timestamp(System.currentTimeMillis()));
     updateValues.add(new SqlValue("geojson", SqlValue.JSONB_TYPE, StringUtils.trimToNull(record.getGeoJSON())));
-    SqlUtils where = new SqlUtils().add("item_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("item_id = ?", record.getId()))) {
       // Expire the cache
       //        CacheManager.invalidateKey(CacheManager.ITEM_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
@@ -305,7 +304,7 @@ public class ItemRepository {
         CategoryRepository.updateItemCount(connection, record.getCategoryId(), -1);
         MedicineRepository.removeAll(connection, record);
         // Delete the record
-        DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("item_id = ?", record.getId()));
+        DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("item_id = ?", record.getId()));
         // Finish transaction
         transaction.commit();
       }
@@ -331,28 +330,24 @@ public class ItemRepository {
     SqlUtils updateValues = new SqlUtils()
         .add("approved", new Timestamp(System.currentTimeMillis()))
         .add("approved_by", user.getId());
-    SqlUtils where = new SqlUtils()
-        .add("item_id = ?", record.getId());
-    DB.update(TABLE_NAME, updateValues, where);
+    DB.update(TABLE_NAME, updateValues, DB.WHERE("item_id = ?", record.getId()));
   }
 
   public static void removeItemApproval(Item record, User user) {
     SqlUtils updateValues = new SqlUtils()
         .add("approved", (Timestamp) null)
         .add("approved_by", -1, -1);
-    SqlUtils where = new SqlUtils()
-        .add("item_id = ?", record.getId());
-    DB.update(TABLE_NAME, updateValues, where);
+    DB.update(TABLE_NAME, updateValues, DB.WHERE("item_id = ?", record.getId()));
   }
 
   public static void removeAll(Connection connection, Collection record) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("collection_id = ?", record.getId()));
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("collection_id = ?", record.getId()));
   }
 
   private static DataResult query(ItemSpecification specification, DataConstraints constraints) {
     SqlUtils select = new SqlUtils();
     SqlJoins joins = new SqlJoins();
-    SqlUtils where = new SqlUtils();
+    SqlWhere where = DB.WHERE();
     SqlUtils orderBy = new SqlUtils();
     if (specification != null) {
 
@@ -528,7 +523,7 @@ public class ItemRepository {
     }
     return (Item) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("item_id = ?", id),
+        DB.WHERE("item_id = ?", id),
         ItemRepository::buildRecord);
   }
 
@@ -538,7 +533,7 @@ public class ItemRepository {
     }
     return (Item) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("unique_id = ?", uniqueId),
+        DB.WHERE("unique_id = ?", uniqueId),
         ItemRepository::buildRecord);
   }
 
@@ -552,7 +547,8 @@ public class ItemRepository {
       return null;
     }
     return (Item) DB.selectRecordFrom(
-        TABLE_NAME, new SqlUtils()
+        TABLE_NAME,
+        DB.WHERE()
             .add("item_id = ?", itemId)
             .add("collection_id = ?", collectionId),
         ItemRepository::buildRecord);
@@ -567,7 +563,8 @@ public class ItemRepository {
       return null;
     }
     return (Item) DB.selectRecordFrom(
-        TABLE_NAME, new SqlUtils()
+        TABLE_NAME,
+        DB.WHERE()
             .add("unique_id = ?", uniqueId)
             .add("collection_id = ?", collectionId),
         ItemRepository::buildRecord);
@@ -583,7 +580,8 @@ public class ItemRepository {
       return null;
     }
     return (Item) DB.selectRecordFrom(
-        TABLE_NAME, new SqlUtils()
+        TABLE_NAME,
+        DB.WHERE()
             .add("LOWER(name) = ?", name.trim().toLowerCase())
             .add("collection_id = ?", collectionId),
         ItemRepository::buildRecord);
@@ -598,7 +596,8 @@ public class ItemRepository {
       return null;
     }
     return (Item) DB.selectRecordFrom(
-        TABLE_NAME, new SqlUtils()
+        TABLE_NAME,
+        DB.WHERE()
             .add("dataset_key_value = ?", datasetKeyValue)
             .add("dataset_id = ?", datasetId),
         ItemRepository::buildRecord);

@@ -16,17 +16,21 @@
 
 package com.simisinc.platform.infrastructure.persistence.items;
 
-import com.simisinc.platform.domain.model.items.Item;
-import com.simisinc.platform.domain.model.items.ItemFolder;
-import com.simisinc.platform.domain.model.items.ItemFolderCategory;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.items.Item;
+import com.simisinc.platform.domain.model.items.ItemFolder;
+import com.simisinc.platform.domain.model.items.ItemFolderCategory;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves item folder category objects
@@ -39,7 +43,7 @@ public class ItemFolderCategoryRepository {
   private static Log LOG = LogFactory.getLog(ItemFolderCategoryRepository.class);
 
   private static String TABLE_NAME = "item_folder_categories";
-  private static String[] PRIMARY_KEY = new String[]{"category_id"};
+  private static String[] PRIMARY_KEY = new String[] { "category_id" };
 
   public static ItemFolderCategory findById(long id) {
     if (id == -1) {
@@ -47,7 +51,7 @@ public class ItemFolderCategoryRepository {
     }
     return (ItemFolderCategory) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("category_id = ?", id),
+        DB.WHERE("category_id = ?", id),
         ItemFolderCategoryRepository::buildRecord);
   }
 
@@ -55,11 +59,9 @@ public class ItemFolderCategoryRepository {
     if (folderId == -1) {
       return null;
     }
-    SqlUtils where = new SqlUtils()
-        .add("folder_id = ?", folderId);
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        where,
+        DB.WHERE("folder_id = ?", folderId),
         new DataConstraints().setDefaultColumnToSortBy("category_id").setUseCount(false),
         ItemFolderCategoryRepository::buildRecord);
     if (result.hasRecords()) {
@@ -128,23 +130,21 @@ public class ItemFolderCategoryRepository {
         updateValues
             .add("name", category.getName())
             .add("enabled", category.getEnabled());
-        SqlUtils where = new SqlUtils();
-        where.add("category_id = ?", category.getId());
-        DB.update(connection, TABLE_NAME, updateValues, where);
+        DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("category_id = ?", category.getId()));
       }
     }
   }
 
   public static void removeAll(Connection connection, Item item) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("item_id = ?", item.getId()));
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("item_id = ?", item.getId()));
   }
 
   public static void removeAll(Connection connection, ItemFolder folder) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("folder_id = ?", folder.getId()));
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("folder_id = ?", folder.getId()));
   }
 
   public static void remove(Connection connection, ItemFolderCategory folderCategory) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("category_id = ?", folderCategory.getId()));
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("category_id = ?", folderCategory.getId()));
   }
 
   private static ItemFolderCategory buildRecord(ResultSet rs) {

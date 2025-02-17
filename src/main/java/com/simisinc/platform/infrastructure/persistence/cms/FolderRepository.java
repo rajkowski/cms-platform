@@ -16,19 +16,30 @@
 
 package com.simisinc.platform.infrastructure.persistence.cms;
 
-import com.simisinc.platform.domain.model.cms.Folder;
-import com.simisinc.platform.domain.model.cms.FolderCategory;
-import com.simisinc.platform.domain.model.cms.FolderGroup;
-import com.simisinc.platform.domain.model.items.PrivacyType;
-import com.simisinc.platform.infrastructure.database.*;
-import com.simisinc.platform.presentation.controller.DataConstants;
-import com.simisinc.platform.presentation.controller.UserSession;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.sql.*;
-import java.util.List;
+import com.simisinc.platform.domain.model.cms.Folder;
+import com.simisinc.platform.domain.model.cms.FolderCategory;
+import com.simisinc.platform.domain.model.cms.FolderGroup;
+import com.simisinc.platform.domain.model.items.PrivacyType;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
+import com.simisinc.platform.presentation.controller.DataConstants;
+import com.simisinc.platform.presentation.controller.UserSession;
 
 /**
  * Persists and retrieves folder objects
@@ -103,13 +114,12 @@ public class FolderRepository {
     }
     updateValues.add("has_allowed_groups", record.getFolderGroupList() != null && !record.getFolderGroupList().isEmpty());
     updateValues.add("has_categories", record.getFolderCategoryList() != null && !record.getFolderCategoryList().isEmpty());
-    SqlUtils where = new SqlUtils().add("folder_id = ?", record.getId());
     // Use a transaction
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
       // In a transaction (use the existing connection)
-      DB.update(connection, TABLE_NAME, updateValues, where);
+      DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("folder_id = ?", record.getId()));
       // Manage the access groups
       FolderGroupRepository.removeAll(connection, record);
       FolderGroupRepository.insertFolderGroupList(connection, record);
@@ -138,7 +148,7 @@ public class FolderRepository {
       FolderGroupRepository.removeAll(connection, record);
       FolderCategoryRepository.removeAll(connection, record);
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("folder_id = ?", record.getId()));
+      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("folder_id = ?", record.getId()));
       // Finish transaction
       transaction.commit();
       // Invalidate the cache
@@ -152,9 +162,9 @@ public class FolderRepository {
   }
 
   private static DataResult query(FolderSpecification specification, DataConstraints constraints) {
-    SqlUtils where = null;
+    SqlWhere where = null;
     if (specification != null) {
-      where = new SqlUtils()
+      where = DB.WHERE()
           .addIfExists("folder_id = ?", specification.getId(), -1)
           .addIfExists("folder_unique_id = ?", specification.getUniqueId());
       if (specification.getName() != null) {
@@ -183,7 +193,7 @@ public class FolderRepository {
     }
     Folder folder = (Folder) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("folder_id = ?", id),
+        DB.WHERE("folder_id = ?", id),
         FolderRepository::buildRecord);
     populateRelatedData(folder);
     return folder;
@@ -195,7 +205,7 @@ public class FolderRepository {
     }
     Folder folder = (Folder) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("folder_unique_id = ?", uniqueId),
+        DB.WHERE("folder_unique_id = ?", uniqueId),
         FolderRepository::buildRecord);
     populateRelatedData(folder);
     return folder;
@@ -207,7 +217,7 @@ public class FolderRepository {
     }
     Folder folder = (Folder) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("LOWER(name) = ?", name.toLowerCase()),
+        DB.WHERE("LOWER(name) = ?", name.toLowerCase()),
         FolderRepository::buildRecord);
     populateRelatedData(folder);
     return folder;

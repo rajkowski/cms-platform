@@ -16,18 +16,22 @@
 
 package com.simisinc.platform.infrastructure.persistence.items;
 
-import com.simisinc.platform.domain.model.items.CollectionRole;
-import com.simisinc.platform.domain.model.items.Item;
-import com.simisinc.platform.domain.model.items.Member;
-import com.simisinc.platform.domain.model.items.MemberRole;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.items.CollectionRole;
+import com.simisinc.platform.domain.model.items.Item;
+import com.simisinc.platform.domain.model.items.Member;
+import com.simisinc.platform.domain.model.items.MemberRole;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Properties for querying objects from the member role repository
@@ -40,18 +44,17 @@ public class MemberRoleRepository {
   private static Log LOG = LogFactory.getLog(MemberRoleRepository.class);
 
   private static String TABLE_NAME = "member_roles";
-  private static String[] PRIMARY_KEY = new String[]{"member_role_id"};
+  private static String[] PRIMARY_KEY = new String[] { "member_role_id" };
 
   public static List<MemberRole> findAllByUserIdAndItemId(long userId, long itemId) {
     if (userId == -1) {
       return null;
     }
-    SqlUtils where = new SqlUtils()
-        .add("user_id = ?", userId)
-        .add("item_id = ?", itemId);
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        where,
+        DB.WHERE()
+            .add("user_id = ?", userId)
+            .add("item_id = ?", itemId),
         new DataConstraints().setDefaultColumnToSortBy("member_role_id"),
         MemberRoleRepository::buildRecord);
     if (result.hasRecords()) {
@@ -105,11 +108,11 @@ public class MemberRoleRepository {
 
   public static int removeAll(Connection connection, Member member) throws SQLException {
     // Delete the records
-    return DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("member_id = ?", member.getId()));
+    return DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("member_id = ?", member.getId()));
   }
 
   public static void removeAll(Connection connection, Item item) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("item_id = ?", item.getId()));
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("item_id = ?", item.getId()));
   }
 
   private static MemberRole buildRecord(ResultSet rs) {

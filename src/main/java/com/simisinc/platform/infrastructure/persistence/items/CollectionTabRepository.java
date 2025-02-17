@@ -16,18 +16,24 @@
 
 package com.simisinc.platform.infrastructure.persistence.items;
 
-import com.simisinc.platform.domain.model.items.Collection;
-import com.simisinc.platform.domain.model.items.CollectionTab;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.items.Collection;
+import com.simisinc.platform.domain.model.items.CollectionTab;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves colleciton tab objects
@@ -46,11 +52,9 @@ public class CollectionTabRepository {
     if (collectionId == -1) {
       return null;
     }
-    SqlUtils where = new SqlUtils()
-        .add("collection_id = ?", collectionId);
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        where,
+        DB.WHERE("collection_id = ?", collectionId),
         new DataConstraints().setDefaultColumnToSortBy("tab_order,name").setUseCount(false),
         CollectionTabRepository::buildRecord);
     if (result.hasRecords()) {
@@ -125,20 +129,19 @@ public class CollectionTabRepository {
         .add("enabled", record.getEnabled())
         .add("page_xml", record.getPageXml())
         .add("role_id_list", record.getRoleIdList());
-    SqlUtils where = new SqlUtils().add("tab_id = ?", record.getId());
     // In a transaction (use the existing connection)
-    if (DB.update(connection, TABLE_NAME, updateValues, where)) {
+    if (DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("tab_id = ?", record.getId()))) {
       return record;
     }
     return null;
   }
 
   private static void remove(Connection connection, CollectionTab record) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("tab_id = ?", record.getId()));
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("tab_id = ?", record.getId()));
   }
 
   public static void removeAll(Connection connection, Collection collection) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("collection_id = ?", collection.getId()));
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("collection_id = ?", collection.getId()));
   }
 
   private static CollectionTab buildRecord(ResultSet rs) {

@@ -41,6 +41,7 @@ import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.database.DataResult;
 import com.simisinc.platform.infrastructure.database.SqlUtils;
 import com.simisinc.platform.infrastructure.database.SqlValue;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
 import com.simisinc.platform.presentation.controller.DataConstants;
 import com.simisinc.platform.presentation.controller.UserSession;
 
@@ -115,13 +116,12 @@ public class CollectionRepository {
         .add("show_search", record.getShowSearch())
         .add("item_url_text", StringUtils.trimToNull(record.getItemUrlText()))
         .add("modified", new Timestamp(System.currentTimeMillis()));
-    SqlUtils where = new SqlUtils().add("collection_id = ?", record.getId());
     // Use a transaction
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
       // In a transaction (use the existing connection)
-      DB.update(connection, TABLE_NAME, updateValues, where);
+      DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("collection_id = ?", record.getId()));
       // Manage the access groups
       CollectionGroupRepository.removeAll(connection, record);
       CollectionGroupRepository.insertCollectionGroupList(connection, record);
@@ -145,8 +145,7 @@ public class CollectionRepository {
     } else {
       updateValues.add(new SqlValue("field_values", SqlValue.JSONB_TYPE, null));
     }
-    SqlUtils where = new SqlUtils().add("collection_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("collection_id = ?", record.getId()))) {
       // Expire the cache
       CacheManager.invalidateKey(CacheManager.COLLECTION_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
@@ -164,8 +163,7 @@ public class CollectionRepository {
     } else {
       updateValues.add(new SqlValue("table_columns", SqlValue.JSONB_TYPE, null));
     }
-    SqlUtils where = new SqlUtils().add("collection_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("collection_id = ?", record.getId()))) {
       // Expire the cache
       CacheManager.invalidateKey(CacheManager.COLLECTION_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
@@ -188,8 +186,7 @@ public class CollectionRepository {
         .add("menu_hover_bg_color", record.getMenuHoverBgColor())
         .add("menu_hover_border_color", record.getMenuHoverBorderColor())
         .add("modified", new Timestamp(System.currentTimeMillis()));
-    SqlUtils where = new SqlUtils().add("collection_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("collection_id = ?", record.getId()))) {
       // Expire the cache
       CacheManager.invalidateKey(CacheManager.COLLECTION_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
@@ -214,7 +211,7 @@ public class CollectionRepository {
       CategoryRepository.removeAll(connection, record);
       CollectionRelationshipRepository.removeAll(connection, record);
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("collection_id = ?", record.getId()));
+      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("collection_id = ?", record.getId()));
       // Finish transaction
       transaction.commit();
       // Invalidate the cache
@@ -228,9 +225,9 @@ public class CollectionRepository {
   }
 
   private static DataResult query(CollectionSpecification specification, DataConstraints constraints) {
-    SqlUtils where = null;
+    SqlWhere where = null;
     if (specification != null) {
-      where = new SqlUtils()
+      where = DB.WHERE()
           .addIfExists("collection_id = ?", specification.getId(), -1)
           .addIfExists("unique_id = ?", specification.getUniqueId());
       if (specification.getName() != null) {
@@ -259,7 +256,7 @@ public class CollectionRepository {
     }
     Collection collection = (Collection) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("collection_id = ?", id),
+        DB.WHERE("collection_id = ?", id),
         CollectionRepository::buildRecord);
     populateRelatedData(collection);
     return collection;
@@ -271,7 +268,7 @@ public class CollectionRepository {
     }
     Collection collection = (Collection) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("unique_id = ?", uniqueId),
+        DB.WHERE("unique_id = ?", uniqueId),
         CollectionRepository::buildRecord);
     populateRelatedData(collection);
     return collection;
@@ -283,7 +280,7 @@ public class CollectionRepository {
     }
     Collection collection = (Collection) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("LOWER(name) = ?", name.toLowerCase()),
+        DB.WHERE("LOWER(name) = ?", name.toLowerCase()),
         CollectionRepository::buildRecord);
     populateRelatedData(collection);
     return collection;

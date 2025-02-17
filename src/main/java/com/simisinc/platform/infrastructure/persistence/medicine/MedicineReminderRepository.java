@@ -16,22 +16,33 @@
 
 package com.simisinc.platform.infrastructure.persistence.medicine;
 
-import com.simisinc.platform.domain.model.medicine.Medicine;
-import com.simisinc.platform.domain.model.medicine.MedicineReminder;
-import com.simisinc.platform.domain.model.medicine.MedicineReminderRawData;
-import com.simisinc.platform.infrastructure.database.*;
-import com.simisinc.platform.presentation.controller.DataConstants;
-
-import org.apache.commons.lang3.ObjectUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.time.DayOfWeek;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+
+import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.medicine.Medicine;
+import com.simisinc.platform.domain.model.medicine.MedicineReminder;
+import com.simisinc.platform.domain.model.medicine.MedicineReminderRawData;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlJoins;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
+import com.simisinc.platform.presentation.controller.DataConstants;
 
 /**
  * Persists and retrieves medicine reminder objects
@@ -48,13 +59,13 @@ public class MedicineReminderRepository {
 
   private static DataResult query(MedicineReminderSpecification specification, DataConstraints constraints) {
     SqlJoins joins = new SqlJoins();
-    SqlUtils where = null;
+    SqlWhere where = null;
     if (specification != null) {
 
       joins.add("LEFT JOIN medicines medicines ON (medicine_reminders.medicine_id = medicines.medicine_id)");
       joins.add("LEFT JOIN medicine_schedule sched ON (medicine_reminders.schedule_id = sched.schedule_id)");
 
-      where = new SqlUtils()
+      where = DB.WHERE()
           .addIfExists("reminder_id = ?", specification.getId(), -1)
           .addIfExists("medicine_reminders.individual_id = ?", specification.getIndividualId(), -1)
           .addIfExists("medicine_reminders.medicine_id = ?", specification.getMedicineId(), -1);
@@ -122,7 +133,8 @@ public class MedicineReminderRepository {
       return null;
     }
     return (MedicineReminder) DB.selectRecordFrom(
-        TABLE_NAME, new SqlUtils().add("reminder_id = ?", id),
+        TABLE_NAME,
+        DB.WHERE("reminder_id = ?", id),
         MedicineReminderRepository::buildRecord);
   }
 
@@ -193,7 +205,7 @@ public class MedicineReminderRepository {
     if (ObjectUtils.anyNull(startDate, endDate, dayOfWeek)) {
       return;
     }
-    
+
     // Load the rules to determine the daily reminders
     List<MedicineReminderRawData> records = null;
     try (Connection connection = DB.getConnection();
@@ -242,7 +254,7 @@ public class MedicineReminderRepository {
 
   private static void removeMedicineReminders(Connection connection, long medicineId, Timestamp startDate, Timestamp endDate)
       throws SQLException {
-    SqlUtils deleteWhere = new SqlUtils()
+    SqlWhere deleteWhere = DB.WHERE()
         .add("medicine_id = ?", medicineId)
         .add("reminder_date >= ?", startDate)
         .add("reminder_date < ?", endDate);
@@ -250,26 +262,22 @@ public class MedicineReminderRepository {
   }
 
   public static void removeAll(Connection connection, Medicine record) throws SQLException {
-    SqlUtils where = new SqlUtils();
-    where.add("medicine_id = ?", record.getId());
-    DB.deleteFrom(connection, TABLE_NAME, where);
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("medicine_id = ?", record.getId()));
   }
 
   public static void markAsTaken(Connection connection, long reminderId, Timestamp takenTimestamp) throws SQLException {
     SqlUtils updateValues = new SqlUtils()
         .add("was_taken", true)
         .add("logged", takenTimestamp);
-    SqlUtils where = new SqlUtils()
-        .add("reminder_id = ?", reminderId);
-    DB.update(connection, TABLE_NAME, updateValues, where);
+    DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("reminder_id = ?", reminderId));
   }
 
   public static void markAsSkipped(Connection connection, long reminderId) throws SQLException {
-    SqlUtils updateValues = new SqlUtils()
-        .add("was_skipped", true);
-    SqlUtils where = new SqlUtils()
-        .add("reminder_id = ?", reminderId);
-    DB.update(connection, TABLE_NAME, updateValues, where);
+    DB.update(
+        connection,
+        TABLE_NAME,
+        new SqlUtils().add("was_skipped", true),
+        DB.WHERE("reminder_id = ?", reminderId));
   }
 
   private static MedicineReminder buildRecord(ResultSet rs) {

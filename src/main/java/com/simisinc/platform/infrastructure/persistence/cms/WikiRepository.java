@@ -16,17 +16,24 @@
 
 package com.simisinc.platform.infrastructure.persistence.cms;
 
-import com.simisinc.platform.domain.model.cms.Wiki;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.cms.Wiki;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves wiki objects
@@ -42,9 +49,9 @@ public class WikiRepository {
   private static String[] PRIMARY_KEY = new String[] { "wiki_id" };
 
   private static DataResult query(WikiSpecification specification, DataConstraints constraints) {
-    SqlUtils where = null;
+    SqlWhere where = null;
     if (specification != null) {
-      where = new SqlUtils()
+      where = DB.WHERE()
           .addIfExists("wiki_id = ?", specification.getId(), -1)
           .addIfExists("wiki_unique_id = ?", specification.getUniqueId());
     }
@@ -57,8 +64,7 @@ public class WikiRepository {
     }
     return (Wiki) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("wiki_id = ?", wikiId),
+        DB.WHERE("wiki_id = ?", wikiId),
         WikiRepository::buildRecord);
   }
 
@@ -68,8 +74,7 @@ public class WikiRepository {
     }
     return (Wiki) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("wiki_unique_id = ?", wikiUniqueId),
+        DB.WHERE("wiki_unique_id = ?", wikiUniqueId),
         WikiRepository::buildRecord);
   }
 
@@ -114,8 +119,7 @@ public class WikiRepository {
         // @todo Create the first revision entry
         // Update the reference
         SqlUtils update = new SqlUtils().add("starting_page", wikiPageId);
-        SqlUtils where = new SqlUtils().add("wiki_id = ?", record.getId());
-        DB.update(connection, TABLE_NAME, update, where);
+        DB.update(connection, TABLE_NAME, update, DB.WHERE("wiki_id = ?", record.getId()));
       }
       // Finish the transaction
       transaction.commit();
@@ -136,9 +140,7 @@ public class WikiRepository {
         .add("starting_page", record.getStartingPage())
         .add("modified_by", record.getModifiedBy())
         .add("modified", new Timestamp(System.currentTimeMillis()));
-    SqlUtils where = new SqlUtils()
-        .add("wiki_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("wiki_id = ?", record.getId()))) {
       //      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
     }
@@ -153,7 +155,7 @@ public class WikiRepository {
       // Delete the references
       WikiPageRepository.removeAll(connection, record);
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("wiki_id = ?", record.getId()));
+      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("wiki_id = ?", record.getId()));
       // Finish transaction
       transaction.commit();
       return true;

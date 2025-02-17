@@ -16,15 +16,21 @@
 
 package com.simisinc.platform.infrastructure.persistence.ecommerce;
 
-import com.simisinc.platform.domain.model.ecommerce.ShippingCountry;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.ecommerce.ShippingCountry;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves shipping country objects
@@ -54,15 +60,14 @@ public class ShippingCountryRepository {
   public static ShippingCountry findById(long countryId) {
     return (ShippingCountry) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("country_id = ?", countryId),
+        DB.WHERE("country_id = ?", countryId),
         ShippingCountryRepository::buildRecord);
   }
 
   public static ShippingCountry findByEnabledCountry(String name) {
     return (ShippingCountry) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
+        DB.WHERE()
             .add("LOWER(title) = ?", name.toLowerCase())
             .add("enabled = ?", true),
         ShippingCountryRepository::buildRecord);
@@ -106,9 +111,7 @@ public class ShippingCountryRepository {
         .add("enabled", record.getEnabled());
     // .add("modified_by", record.getModifiedBy(), -1)
     // .add("modified", new Timestamp(System.currentTimeMillis()));
-    SqlUtils where = new SqlUtils()
-        .add("country_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("country_id = ?", record.getId()))) {
       // CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
     }

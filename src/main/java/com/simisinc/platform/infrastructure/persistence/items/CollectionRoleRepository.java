@@ -16,18 +16,22 @@
 
 package com.simisinc.platform.infrastructure.persistence.items;
 
-import com.simisinc.platform.domain.model.items.Collection;
-import com.simisinc.platform.domain.model.items.CollectionRole;
-import com.simisinc.platform.domain.model.items.Member;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.items.Collection;
+import com.simisinc.platform.domain.model.items.CollectionRole;
+import com.simisinc.platform.domain.model.items.Member;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves collection role objects
@@ -40,7 +44,7 @@ public class CollectionRoleRepository {
   private static Log LOG = LogFactory.getLog(CollectionRoleRepository.class);
 
   private static String TABLE_NAME = "lookup_collection_role";
-  private static String[] PRIMARY_KEY = new String[]{"role_id"};
+  private static String[] PRIMARY_KEY = new String[] { "role_id" };
 
   public static CollectionRole findById(long id) {
     if (id == -1) {
@@ -48,7 +52,7 @@ public class CollectionRoleRepository {
     }
     return (CollectionRole) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("role_id = ?", id),
+        DB.WHERE("role_id = ?", id),
         CollectionRoleRepository::buildRecord);
   }
 
@@ -58,7 +62,7 @@ public class CollectionRoleRepository {
     }
     return (CollectionRole) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("code = ?", code),
+        DB.WHERE("code = ?", code),
         CollectionRoleRepository::buildRecord);
   }
 
@@ -66,10 +70,9 @@ public class CollectionRoleRepository {
     if (collectionId == -1) {
       return null;
     }
-    SqlUtils where = new SqlUtils().add("collection_id IS NULL OR collection_id = ?", collectionId);
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        where,
+        DB.WHERE("collection_id IS NULL OR collection_id = ?", collectionId),
         new DataConstraints().setDefaultColumnToSortBy("level,role_id").setUseCount(false),
         CollectionRoleRepository::buildRecord);
     if (result.hasRecords()) {
@@ -82,11 +85,10 @@ public class CollectionRoleRepository {
     if (member.getItemId() == -1 || member.getUserId() == -1) {
       return null;
     }
-    SqlUtils where = new SqlUtils()
-        .add("EXISTS (SELECT 1 FROM member_roles WHERE role_id = lookup_collection_role.role_id AND item_id = ? AND user_id = ?)", new Long[]{member.getItemId(), member.getUserId()});
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        where,
+        DB.WHERE("EXISTS (SELECT 1 FROM member_roles WHERE role_id = lookup_collection_role.role_id AND item_id = ? AND user_id = ?)",
+            new Long[] { member.getItemId(), member.getUserId() }),
         new DataConstraints().setDefaultColumnToSortBy("role_id").setUseCount(false),
         CollectionRoleRepository::buildRecord);
     if (result.hasRecords()) {
@@ -130,9 +132,7 @@ public class CollectionRoleRepository {
         .add("code", StringUtils.trimToNull(record.getCode()))
         .add("title", StringUtils.trimToNull(record.getTitle()))
         .add("archived", record.getArchived());
-    SqlUtils where = new SqlUtils()
-        .add("role_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("role_id = ?", record.getId()))) {
       return record;
     }
     LOG.error("The update failed!");
@@ -140,15 +140,15 @@ public class CollectionRoleRepository {
   }
 
   public static void remove(CollectionRole record) {
-    DB.deleteFrom(TABLE_NAME, new SqlUtils().add("role_id = ?", record.getId()));
+    DB.deleteFrom(TABLE_NAME, DB.WHERE("role_id = ?", record.getId()));
   }
 
   public static void remove(Collection record) {
-    DB.deleteFrom(TABLE_NAME, new SqlUtils().add("collection_id = ?", record.getId()));
+    DB.deleteFrom(TABLE_NAME, DB.WHERE("collection_id = ?", record.getId()));
   }
 
   public static void removeAll(Connection connection, Collection collection) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("collection_id = ?", collection.getId()));
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("collection_id = ?", collection.getId()));
   }
 
   private static CollectionRole buildRecord(ResultSet rs) {

@@ -16,17 +16,23 @@
 
 package com.simisinc.platform.infrastructure.persistence.medicine;
 
-import com.simisinc.platform.domain.model.medicine.Medicine;
-import com.simisinc.platform.domain.model.medicine.MedicineSchedule;
-import com.simisinc.platform.domain.model.medicine.MedicineTime;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.medicine.Medicine;
+import com.simisinc.platform.domain.model.medicine.MedicineSchedule;
+import com.simisinc.platform.domain.model.medicine.MedicineTime;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves medicine time objects
@@ -89,9 +95,7 @@ public class MedicineTimeRepository {
         .add("hour", record.getHour())
         .add("minute", record.getMinute())
         .add("quantity", record.getQuantity());
-    SqlUtils where = new SqlUtils()
-        .add("time_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("time_id = ?", record.getId()))) {
       return record;
     }
     LOG.error("The update failed!");
@@ -122,7 +126,7 @@ public class MedicineTimeRepository {
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("time_id = ?", record.getId()));
+      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("time_id = ?", record.getId()));
       // Finish transaction
       transaction.commit();
       return true;
@@ -133,15 +137,11 @@ public class MedicineTimeRepository {
   }
 
   public static void removeAll(Connection connection, MedicineSchedule record) throws SQLException {
-    SqlUtils where = new SqlUtils();
-    where.add("schedule_id = ?", record.getId());
-    DB.deleteFrom(connection, TABLE_NAME, where);
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("schedule_id = ?", record.getId()));
   }
 
   public static void removeAll(Connection connection, Medicine record) throws SQLException {
-    SqlUtils where = new SqlUtils();
-    where.add("medicine_id = ?", record.getId());
-    DB.deleteFrom(connection, TABLE_NAME, where);
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("medicine_id = ?", record.getId()));
   }
 
   public static MedicineTime findById(long id) {
@@ -149,7 +149,8 @@ public class MedicineTimeRepository {
       return null;
     }
     return (MedicineTime) DB.selectRecordFrom(
-        TABLE_NAME, new SqlUtils().add("time_id = ?", id),
+        TABLE_NAME,
+        DB.WHERE("time_id = ?", id),
         MedicineTimeRepository::buildRecord);
   }
 
@@ -157,11 +158,9 @@ public class MedicineTimeRepository {
     if (medicineId == -1) {
       return null;
     }
-    SqlUtils where = new SqlUtils()
-        .add("medicine_id = ?", medicineId);
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        where,
+        DB.WHERE("medicine_id = ?", medicineId),
         new DataConstraints().setDefaultColumnToSortBy("time_id").setUseCount(false),
         MedicineTimeRepository::buildRecord);
     if (result.hasRecords()) {

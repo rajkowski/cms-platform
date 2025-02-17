@@ -16,6 +16,28 @@
 
 package com.simisinc.platform.infrastructure.persistence.ecommerce;
 
+import static com.simisinc.platform.application.ecommerce.OrderCommand.generateUniqueId;
+import static com.simisinc.platform.application.ecommerce.OrderStatusCommand.CANCELED;
+import static com.simisinc.platform.application.ecommerce.OrderStatusCommand.PARTIALLY_PREPARED;
+import static com.simisinc.platform.application.ecommerce.OrderStatusCommand.PARTIALLY_SHIPPED;
+import static com.simisinc.platform.application.ecommerce.OrderStatusCommand.PREPARING;
+import static com.simisinc.platform.application.ecommerce.OrderStatusCommand.REFUNDED;
+import static com.simisinc.platform.application.ecommerce.OrderStatusCommand.SHIPPED;
+
+import java.io.File;
+import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.simisinc.platform.application.ecommerce.OrderItemCommand;
 import com.simisinc.platform.application.ecommerce.OrderStatusCommand;
 import com.simisinc.platform.domain.model.Session;
@@ -25,20 +47,15 @@ import com.simisinc.platform.domain.model.ecommerce.Address;
 import com.simisinc.platform.domain.model.ecommerce.CartItem;
 import com.simisinc.platform.domain.model.ecommerce.Order;
 import com.simisinc.platform.domain.model.ecommerce.OrderItem;
-import com.simisinc.platform.infrastructure.database.*;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlJoins;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
 import com.simisinc.platform.presentation.controller.DataConstants;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import java.io.File;
-import java.math.BigDecimal;
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-
-import static com.simisinc.platform.application.ecommerce.OrderCommand.generateUniqueId;
-import static com.simisinc.platform.application.ecommerce.OrderStatusCommand.*;
 
 /**
  * Persists and retrieves order objects
@@ -55,9 +72,9 @@ public class OrderRepository {
   private static String STATUS_JOIN = "LEFT JOIN lookup_order_status los ON (orders.status = los.status_id)";
 
   private static DataResult query(OrderSpecification specification, DataConstraints constraints) {
-    SqlUtils where = null;
+    SqlWhere where = null;
     if (specification != null) {
-      where = new SqlUtils()
+      where = DB.WHERE()
           .addIfExists("order_id = ?", specification.getId(), -1)
           .addIfExists("customer_id = ?", specification.getCustomerId(), -1)
           .addIfExists("LOWER(email) = ?", specification.getEmail() != null ? specification.getEmail().toLowerCase() : null)
@@ -103,16 +120,14 @@ public class OrderRepository {
   public static Order findById(long orderId) {
     return (Order) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("order_id = ?", orderId),
+        DB.WHERE("order_id = ?", orderId),
         OrderRepository::buildRecord);
   }
 
   public static Order findByUniqueId(String orderUniqueId) {
     return (Order) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("order_unique_id = ?", orderUniqueId),
+        DB.WHERE("order_unique_id = ?", orderUniqueId),
         OrderRepository::buildRecord);
   }
 
@@ -449,8 +464,7 @@ public class OrderRepository {
         SqlUtils update = new SqlUtils()
             .add("order_id", record.getId())
             .add("order_date", new Timestamp(System.currentTimeMillis()));
-        SqlUtils where = new SqlUtils().add("cart_id = ?", record.getCartId());
-        DB.update(connection, "carts", update, where);
+        DB.update(connection, "carts", update, DB.WHERE("cart_id = ?", record.getCartId()));
       }
       // Make a copy of the cart items
       if (cartItemList != null && !cartItemList.isEmpty()) {
@@ -576,17 +590,14 @@ public class OrderRepository {
             .add("shipping_latitude", 0d, 0d)
             .add("shipping_longitude", 0d, 0d);
       }
-      SqlUtils where = new SqlUtils()
-          .add("order_id = ?", record.getId());
-      if (DB.update(connection, TABLE_NAME, updateValues, where)) {
+      if (DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("order_id = ?", record.getId()))) {
         // The order was successfully charged, disable the cart
         if (record.getPaid()) {
           // Update the cart reference so it cannot be reused
           SqlUtils cartUpdate = new SqlUtils()
               .add("enabled", false)
               .add("order_date", new Timestamp(System.currentTimeMillis()));
-          SqlUtils cartWhere = new SqlUtils().add("cart_id = ?", record.getCartId());
-          DB.update(connection, "carts", cartUpdate, cartWhere);
+          DB.update(connection, "carts", cartUpdate, DB.WHERE("cart_id = ?", record.getCartId()));
 
           // @todo Append to the order_history (PAID)
 
@@ -735,9 +746,7 @@ public class OrderRepository {
         .add("processing_date", now)
         .add("status", statusId)
         .add("modified", now);
-    SqlUtils where = new SqlUtils()
-        .add("order_id = ?", order.getId());
-    DB.update(TABLE_NAME, updateValues, where);
+    DB.update(TABLE_NAME, updateValues, DB.WHERE("order_id = ?", order.getId()));
     // @todo Append to the order_history (PREPARING)
     // Update the object
     order.setModified(now);
@@ -754,9 +763,7 @@ public class OrderRepository {
     SqlUtils updateValues = new SqlUtils()
         .add("status", statusId)
         .add("modified", now);
-    SqlUtils where = new SqlUtils()
-        .add("order_id = ?", order.getId());
-    DB.update(TABLE_NAME, updateValues, where);
+    DB.update(TABLE_NAME, updateValues, DB.WHERE("order_id = ?", order.getId()));
     // @todo Append to the order_history (PARTIALLY_PREPARED)
     // Update the object
     order.setModified(now);
@@ -778,9 +785,7 @@ public class OrderRepository {
           .add("canceled_date", now)
           .add("status", statusId)
           .add("modified", now);
-      SqlUtils where = new SqlUtils()
-          .add("order_id = ?", order.getId());
-      DB.update(connection, TABLE_NAME, updateValues, where);
+      DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("order_id = ?", order.getId()));
       // Mark the order items as canceled too
       OrderItemRepository.markStatusAsCanceled(connection, order);
       // @todo Append to the order_history (CANCELED)
@@ -811,9 +816,7 @@ public class OrderRepository {
           .add("total_refunded = total_refunded + ?", amountRefunded)
           .add("status", statusId)
           .add("modified", new Timestamp(System.currentTimeMillis()));
-      SqlUtils where = new SqlUtils()
-          .add("order_id = ?", order.getId());
-      DB.update(connection, TABLE_NAME, updateValues, where);
+      DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("order_id = ?", order.getId()));
       // Mark the order items as refunded too
       OrderItemRepository.markStatusAsRefunded(connection, order);
       // @todo Append to the order_history (REFUNDED)
@@ -840,9 +843,7 @@ public class OrderRepository {
         //        .add("shipped", true)
         .add("shipped_date", now)
         .add("modified", now);
-    SqlUtils where = new SqlUtils()
-        .add("order_id = ?", order.getId());
-    DB.update(TABLE_NAME, updateValues, where);
+    DB.update(TABLE_NAME, updateValues, DB.WHERE("order_id = ?", order.getId()));
     // @todo Append to the order_history (PARTIALLY_SHIPPED)
     // Update the object
     order.setModified(now);
@@ -864,9 +865,7 @@ public class OrderRepository {
         .add("shipped", true)
         .add("shipped_date", order.getShippedDate())
         .add("modified", now);
-    SqlUtils where = new SqlUtils()
-        .add("order_id = ?", order.getId());
-    DB.update(TABLE_NAME, updateValues, where);
+    DB.update(TABLE_NAME, updateValues, DB.WHERE("order_id = ?", order.getId()));
     // @todo Append to the order_history (SHIPPED)
     // Update the object
     order.setModified(now);
@@ -883,7 +882,7 @@ public class OrderRepository {
     // Update unlinked orders
     SqlUtils updateValues = new SqlUtils()
         .add("created_by", user.getId());
-    SqlUtils where = new SqlUtils()
+    SqlWhere where = DB.WHERE()
         .add("created_by IS NULL")
         .add("LOWER(email) = LOWER(?)", user.getEmail());
     DB.update(TABLE_NAME, updateValues, where);
@@ -917,7 +916,7 @@ public class OrderRepository {
             "payment_processor AS \"Processor\"");
     SqlJoins joins = new SqlJoins().add(STATUS_JOIN);
     // show paid orders, and only refunded ones that have shipped
-    SqlUtils where = new SqlUtils()
+    SqlWhere where = DB.WHERE()
         .add("live_mode = ?", true)
         .add("paid = ?", true)
         .add("canceled = ?", false)
@@ -960,7 +959,7 @@ public class OrderRepository {
             "-total_refunded AS \"Refunded\"");
     SqlJoins joins = new SqlJoins().add(STATUS_JOIN);
     // show paid orders, and only refunded ones that have shipped
-    SqlUtils where = new SqlUtils()
+    SqlWhere where = DB.WHERE()
         .add("live_mode = ?", true)
         .add("paid = ?", true)
         .add("canceled = ?", false)

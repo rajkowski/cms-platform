@@ -16,16 +16,23 @@
 
 package com.simisinc.platform.infrastructure.persistence.xapi;
 
-import com.simisinc.platform.domain.model.xapi.XapiStatement;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.xapi.XapiStatement;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves experience api (xAPI) statement objects
@@ -40,10 +47,10 @@ public class XapiStatementRepository {
   private static String TABLE_NAME = "xapi_statements";
   private static String[] PRIMARY_KEY = new String[] { "statement_id" };
 
-  private static SqlUtils createWhereStatement(XapiStatementSpecification specification) {
-    SqlUtils where = null;
+  private static SqlWhere createWhereStatement(XapiStatementSpecification specification) {
+    SqlWhere where = null;
     if (specification != null) {
-      where = new SqlUtils()
+      where = DB.WHERE()
           .addIfExists("statement_id = ?", specification.getId(), -1)
           .addIfExists("actor_id = ?", specification.getActorId(), -1)
           .addIfExists("verb = ?", specification.getVerb())
@@ -53,7 +60,7 @@ public class XapiStatementRepository {
   }
 
   private static DataResult query(XapiStatementSpecification specification, DataConstraints constraints) {
-    SqlUtils where = createWhereStatement(specification);
+    SqlWhere where = createWhereStatement(specification);
     return DB.selectAllFrom(TABLE_NAME, where, constraints, XapiStatementRepository::buildRecord);
   }
 
@@ -63,8 +70,7 @@ public class XapiStatementRepository {
     }
     return (XapiStatement) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("statement_id = ?", statementId),
+        DB.WHERE("statement_id = ?", statementId),
         XapiStatementRepository::buildRecord);
   }
 
@@ -126,9 +132,7 @@ public class XapiStatementRepository {
         .add("item_context", record.getContextItemId(), -1)
         .add("project_context", record.getContextProjectId(), -1)
         .add("issue_context", record.getContextIssueId(), -1);
-    SqlUtils where = new SqlUtils()
-        .add("statement_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("statement_id = ?", record.getId()))) {
       // CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
     }
@@ -142,7 +146,7 @@ public class XapiStatementRepository {
         AutoRollback transaction = new AutoRollback(connection)) {
       // Delete the references
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("statement_id = ?", record.getId()));
+      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("statement_id = ?", record.getId()));
       // Finish transaction
       transaction.commit();
       return true;

@@ -16,16 +16,22 @@
 
 package com.simisinc.platform.infrastructure.persistence.ecommerce;
 
-import com.simisinc.platform.domain.model.ecommerce.SalesTaxNexusAddress;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.ecommerce.SalesTaxNexusAddress;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves sales tax nexus address objects
@@ -55,8 +61,7 @@ public class SalesTaxNexusAddressRepository {
   public static SalesTaxNexusAddress findById(long addressId) {
     return (SalesTaxNexusAddress) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("address_id = ?", addressId),
+        DB.WHERE("address_id = ?", addressId),
         SalesTaxNexusAddressRepository::buildRecord);
   }
 
@@ -72,7 +77,7 @@ public class SalesTaxNexusAddressRepository {
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("address_id = ?", record.getId()));
+      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("address_id = ?", record.getId()));
       // Finish transaction
       transaction.commit();
       return true;
@@ -122,9 +127,7 @@ public class SalesTaxNexusAddressRepository {
         .add("longitude", record.getLongitude())
         .add("modified_by", record.getModifiedBy())
         .add("modified", new Timestamp(System.currentTimeMillis()));
-    SqlUtils where = new SqlUtils()
-        .add("address_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("address_id = ?", record.getId()))) {
       // CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
     }

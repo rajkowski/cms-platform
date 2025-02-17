@@ -16,19 +16,26 @@
 
 package com.simisinc.platform.infrastructure.persistence.items;
 
-import com.simisinc.platform.domain.model.items.Activity;
-import com.simisinc.platform.domain.model.items.Collection;
-import com.simisinc.platform.domain.model.items.Item;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.items.Activity;
+import com.simisinc.platform.domain.model.items.Collection;
+import com.simisinc.platform.domain.model.items.Item;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves activity objects
@@ -79,9 +86,7 @@ public class ActivityRepository {
         .add("message_text", StringUtils.trimToNull(record.getMessageText()))
         .add("modified_by", record.getModifiedBy())
         .add("modified", new Timestamp(System.currentTimeMillis()));
-    SqlUtils where = new SqlUtils()
-        .add("activity_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("activity_id = ?", record.getId()))) {
       return record;
     }
     LOG.error("The update failed!");
@@ -94,7 +99,7 @@ public class ActivityRepository {
         AutoRollback transaction = new AutoRollback(connection)) {
       // Delete the references
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("activity_id = ?", record.getId()));
+      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("activity_id = ?", record.getId()));
       // Finish transaction
       transaction.commit();
       return true;
@@ -105,16 +110,16 @@ public class ActivityRepository {
   }
 
   public static void removeAll(Connection connection, Item record) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("item_id = ?", record.getId()));
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("item_id = ?", record.getId()));
   }
 
   public static void removeAll(Connection connection, Collection record) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("collection_id = ?", record.getId()));
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("collection_id = ?", record.getId()));
   }
 
   private static DataResult query(ActivitySpecification specification, DataConstraints constraints) {
     SqlUtils select = new SqlUtils();
-    SqlUtils where = new SqlUtils();
+    SqlWhere where = DB.WHERE();
     SqlUtils orderBy = new SqlUtils();
     if (specification != null) {
       where
@@ -140,7 +145,8 @@ public class ActivityRepository {
       return null;
     }
     return (Activity) DB.selectRecordFrom(
-        TABLE_NAME, new SqlUtils().add("activity_id = ?", id),
+        TABLE_NAME,
+        DB.WHERE("activity_id = ?", id),
         ActivityRepository::buildRecord);
   }
 

@@ -16,16 +16,21 @@
 
 package com.simisinc.platform.infrastructure.persistence;
 
-import com.simisinc.platform.domain.model.App;
-import com.simisinc.platform.infrastructure.cache.CacheManager;
-import com.simisinc.platform.infrastructure.database.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.List;
+import com.simisinc.platform.domain.model.App;
+import com.simisinc.platform.infrastructure.cache.CacheManager;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves app objects
@@ -38,16 +43,14 @@ public class AppRepository {
   private static Log LOG = LogFactory.getLog(AppRepository.class);
 
   private static String TABLE_NAME = "apps";
-  private static String[] PRIMARY_KEY = new String[]{"app_id"};
+  private static String[] PRIMARY_KEY = new String[] { "app_id" };
 
   private static DataResult query(AppSpecification specification, DataConstraints constraints) {
-    SqlUtils where = null;
+    SqlWhere where = null;
     if (specification != null) {
-      where = new SqlUtils()
-          .addIfExists("app_id = ?", specification.getId(), -1);
-      if (specification.getPublicKey() != null) {
-        where.add("public_key = ?", specification.getPublicKey());
-      }
+      where = DB.WHERE()
+          .addIfExists("app_id = ?", specification.getId(), -1)
+          .addIfExists("public_key = ?", specification.getPublicKey());
     }
     return DB.selectAllFrom(TABLE_NAME, where, constraints, AppRepository::buildRecord);
   }
@@ -58,7 +61,7 @@ public class AppRepository {
     }
     return (App) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("public_key = ?", publicKey),
+        DB.WHERE("public_key = ?", publicKey),
         AppRepository::buildRecord);
   }
 
@@ -68,7 +71,7 @@ public class AppRepository {
     }
     return (App) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("app_id = ?", id),
+        DB.WHERE("app_id = ?", id),
         AppRepository::buildRecord);
   }
 
@@ -111,9 +114,7 @@ public class AppRepository {
     SqlUtils updateValues = new SqlUtils()
         .add("name", StringUtils.trimToNull(record.getName()))
         .add("summary", StringUtils.trimToNull(record.getSummary()));
-    SqlUtils where = new SqlUtils()
-        .add("app_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("app_id = ?", record.getId()))) {
       CacheManager.invalidateKey(CacheManager.APP_CACHE, record.getPublicKey());
       return record;
     }

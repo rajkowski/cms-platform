@@ -45,7 +45,7 @@ public class UserTokenRepository {
   private static Log LOG = LogFactory.getLog(UserTokenRepository.class);
 
   private static String TABLE_NAME = "user_tokens";
-  private static String[] PRIMARY_KEY = new String[]{"token_id"};
+  private static String[] PRIMARY_KEY = new String[] { "token_id" };
 
   public static UserToken findByToken(String token) {
     if (StringUtils.isBlank(token)) {
@@ -53,8 +53,7 @@ public class UserTokenRepository {
     }
     return (UserToken) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("token = ?", token),
+        DB.WHERE("token = ?", token),
         UserTokenRepository::buildRecord);
   }
 
@@ -89,7 +88,7 @@ public class UserTokenRepository {
       return;
     }
     OAuthTokenRepository.remove(userToken);
-    DB.deleteFrom(TABLE_NAME, new SqlUtils().add("token_id = ?", userToken.getId()));
+    DB.deleteFrom(TABLE_NAME, DB.WHERE("token_id = ?", userToken.getId()));
   }
 
   public static void removeAll(long userId) {
@@ -97,25 +96,23 @@ public class UserTokenRepository {
       return;
     }
     OAuthTokenRepository.removeAll(userId);
-    DB.deleteFrom(TABLE_NAME, new SqlUtils().add("user_id = ?", userId));
+    DB.deleteFrom(TABLE_NAME, DB.WHERE("user_id = ?", userId));
   }
 
   public static int removeAll(Connection connection, User user) throws SQLException {
     OAuthTokenRepository.removeAll(connection, user);
-    return DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("user_id = ?", user.getId()));
+    return DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("user_id = ?", user.getId()));
   }
 
   public static void extendTokenExpiration(String token, int seconds) {
     SqlUtils updateValues = new SqlUtils()
         .add("expires", new Timestamp(System.currentTimeMillis() + (seconds * 1000L)));
-    SqlUtils where = new SqlUtils()
-        .add("token = ?", token);
-    DB.update(TABLE_NAME, updateValues, where);
+    DB.update(TABLE_NAME, updateValues, DB.WHERE("token = ?", token));
   }
 
   public static void deleteOldTokens() {
     OAuthTokenRepository.deleteOldTokens();
-    DB.deleteFrom(TABLE_NAME, new SqlUtils().add("expires < NOW() - INTERVAL '1 day'"));
+    DB.deleteFrom(TABLE_NAME, DB.WHERE("expires < NOW() - INTERVAL '1 day'"));
   }
 
   private static UserToken buildRecord(ResultSet rs) {

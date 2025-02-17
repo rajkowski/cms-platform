@@ -16,17 +16,24 @@
 
 package com.simisinc.platform.infrastructure.persistence.cms;
 
-import com.simisinc.platform.domain.model.cms.Blog;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.cms.Blog;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves blog objects
@@ -42,9 +49,9 @@ public class BlogRepository {
   private static String[] PRIMARY_KEY = new String[] { "blog_id" };
 
   private static DataResult query(BlogSpecification specification, DataConstraints constraints) {
-    SqlUtils where = null;
+    SqlWhere where = null;
     if (specification != null) {
-      where = new SqlUtils()
+      where = DB.WHERE()
           .addIfExists("blog_id = ?", specification.getId(), -1)
           .addIfExists("blog_unique_id = ?", specification.getUniqueId());
     }
@@ -57,8 +64,7 @@ public class BlogRepository {
     }
     return (Blog) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("blog_id = ?", blogId),
+        DB.WHERE("blog_id = ?", blogId),
         BlogRepository::buildRecord);
   }
 
@@ -68,8 +74,7 @@ public class BlogRepository {
     }
     return (Blog) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("blog_unique_id = ?", blogUniqueId),
+        DB.WHERE("blog_unique_id = ?", blogUniqueId),
         BlogRepository::buildRecord);
   }
 
@@ -117,9 +122,7 @@ public class BlogRepository {
         .add("enabled", record.getEnabled())
         .add("modified_by", record.getModifiedBy())
         .add("modified", new Timestamp(System.currentTimeMillis()));
-    SqlUtils where = new SqlUtils()
-        .add("blog_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("blog_id = ?", record.getId()))) {
       //      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
     }
@@ -134,7 +137,7 @@ public class BlogRepository {
       // Delete the references
       BlogPostRepository.removeAll(connection, record);
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("blog_id = ?", record.getId()));
+      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("blog_id = ?", record.getId()));
       // Finish transaction
       transaction.commit();
       return true;

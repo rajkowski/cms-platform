@@ -16,18 +16,30 @@
 
 package com.simisinc.platform.infrastructure.persistence.cms;
 
-import com.simisinc.platform.domain.model.cms.FileItem;
-import com.simisinc.platform.domain.model.cms.Folder;
-import com.simisinc.platform.domain.model.cms.SubFolder;
-import com.simisinc.platform.infrastructure.database.*;
-import com.simisinc.platform.presentation.controller.DataConstants;
-import com.simisinc.platform.presentation.controller.UserSession;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.sql.*;
-import java.util.List;
+import com.simisinc.platform.domain.model.cms.FileItem;
+import com.simisinc.platform.domain.model.cms.Folder;
+import com.simisinc.platform.domain.model.cms.SubFolder;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlJoins;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
+import com.simisinc.platform.presentation.controller.DataConstants;
+import com.simisinc.platform.presentation.controller.UserSession;
 
 /**
  * Persists and retrieves file item objects
@@ -45,12 +57,10 @@ public class FileItemRepository {
   private static DataResult query(FileSpecification specification, DataConstraints constraints) {
     SqlUtils select = new SqlUtils();
     SqlJoins joins = new SqlJoins();
-    SqlUtils where = new SqlUtils();
+    SqlWhere where = DB.WHERE();
     SqlUtils orderBy = new SqlUtils();
     if (specification != null) {
-
       joins.add("LEFT JOIN folders ON (files.folder_id = folders.folder_id)");
-
       where
           .addIfExists("file_id = ?", specification.getId(), -1)
           .addIfExists("folders.folder_id = ?", specification.getFolderId(), -1)
@@ -124,7 +134,7 @@ public class FileItemRepository {
     }
     return (FileItem) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("file_id = ?", id),
+        DB.WHERE("file_id = ?", id),
         FileItemRepository::buildRecord);
   }
 
@@ -219,9 +229,7 @@ public class FileItemRepository {
           .add("expiration_date", record.getExpirationDate())
           .add("privacy_type", record.getPrivacyType());
       //        .add("default_token", StringUtils.trimToNull(record.getDefaultToken()));
-      SqlUtils where = new SqlUtils()
-          .add("file_id = ?", record.getId());
-      if (DB.update(connection, TABLE_NAME, updateValues, where)) {
+      if (DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("file_id = ?", record.getId()))) {
         // Update related records
         FileVersionRepository.update(connection, record);
         // Update the folder count
@@ -270,9 +278,7 @@ public class FileItemRepository {
           .add("expiration_date", record.getExpirationDate())
           .add("privacy_type", record.getPrivacyType())
           .add("default_token", StringUtils.trimToNull(record.getDefaultToken()));
-      SqlUtils where = new SqlUtils()
-          .add("file_id = ?", record.getId());
-      if (DB.update(connection, TABLE_NAME, updateValues, where)) {
+      if (DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("file_id = ?", record.getId()))) {
         // Update related records
         FileVersionRepository.update(connection, record);
         // Update the folder counts
@@ -300,7 +306,7 @@ public class FileItemRepository {
       FolderRepository.updateFileCount(connection, record.getFolderId(), -1);
       SubFolderRepository.updateFileCount(connection, record.getSubFolderId(), -1);
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("file_id = ?", record.getId()));
+      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("file_id = ?", record.getId()));
       // Finish transaction
       transaction.commit();
       return true;
@@ -311,11 +317,11 @@ public class FileItemRepository {
   }
 
   public static void removeAll(Connection connection, Folder record) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("folder_id = ?", record.getId()));
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("folder_id = ?", record.getId()));
   }
 
   public static int removeAll(Connection connection, SubFolder record) throws SQLException {
-    return DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("sub_folder_id = ?", record.getId()));
+    return DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("sub_folder_id = ?", record.getId()));
   }
 
   private static PreparedStatement createPreparedStatementForUpdateDownloadCount(Connection connection, FileItem record)

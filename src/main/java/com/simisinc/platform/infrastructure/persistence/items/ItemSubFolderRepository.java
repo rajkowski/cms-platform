@@ -16,20 +16,28 @@
 
 package com.simisinc.platform.infrastructure.persistence.items;
 
-import com.simisinc.platform.domain.model.items.Item;
-import com.simisinc.platform.domain.model.items.ItemFolder;
-import com.simisinc.platform.domain.model.items.ItemSubFolder;
-import com.simisinc.platform.infrastructure.database.*;
-import com.simisinc.platform.presentation.controller.DataConstants;
-import com.simisinc.platform.presentation.controller.UserSession;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.items.Item;
+import com.simisinc.platform.domain.model.items.ItemFolder;
+import com.simisinc.platform.domain.model.items.ItemSubFolder;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlJoins;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
+import com.simisinc.platform.presentation.controller.DataConstants;
+import com.simisinc.platform.presentation.controller.UserSession;
 
 /**
  * Persists and retrieves item sub-folder objects
@@ -47,7 +55,7 @@ public class ItemSubFolderRepository {
   private static DataResult query(ItemSubFolderSpecification specification, DataConstraints constraints) {
     SqlUtils select = new SqlUtils();
     SqlJoins joins = new SqlJoins();
-    SqlUtils where = new SqlUtils();
+    SqlWhere where = DB.WHERE();
     SqlUtils orderBy = new SqlUtils();
     if (specification != null) {
 
@@ -100,7 +108,7 @@ public class ItemSubFolderRepository {
     }
     return (ItemSubFolder) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("sub_folder_id = ?", id),
+        DB.WHERE("sub_folder_id = ?", id),
         ItemSubFolderRepository::buildRecord);
   }
 
@@ -119,9 +127,12 @@ public class ItemSubFolderRepository {
 
   public static List<Long> queryDistinctStartDateAsYearForFolder(ItemFolder folder) {
     String SQL_FIELDS = "DISTINCT(EXTRACT(YEAR FROM start_date)) AS year";
-    SqlUtils where = new SqlUtils().add("folder_id = ?", folder.getId());
     SqlUtils orderBy = new SqlUtils().add("year DESC");
-    return DB.selectFunctionAsLongList(SQL_FIELDS, TABLE_NAME, where, orderBy);
+    return DB.selectFunctionAsLongList(
+        SQL_FIELDS,
+        TABLE_NAME,
+        DB.WHERE("folder_id = ?", folder.getId()),
+        orderBy);
   }
 
   public static ItemSubFolder save(ItemSubFolder record) {
@@ -172,9 +183,7 @@ public class ItemSubFolderRepository {
           .add("modified_by", record.getModifiedBy())
           .add("start_date", record.getStartDate())
           .add("end_date", record.getEndDate());
-      SqlUtils where = new SqlUtils()
-          .add("sub_folder_id = ?", record.getId());
-      if (DB.update(connection, TABLE_NAME, updateValues, where)) {
+      if (DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("sub_folder_id = ?", record.getId()))) {
         // Finish transaction
         transaction.commit();
         return record;
@@ -196,7 +205,7 @@ public class ItemSubFolderRepository {
       // Update the folder count
       ItemFolderRepository.updateFileCount(connection, record.getFolderId(), -deleteCount);
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("sub_folder_id = ?", record.getId()));
+      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("sub_folder_id = ?", record.getId()));
       // Finish transaction
       transaction.commit();
       return true;
@@ -207,18 +216,18 @@ public class ItemSubFolderRepository {
   }
 
   public static void removeAll(Connection connection, Item record) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("item_id = ?", record.getId()));
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("item_id = ?", record.getId()));
   }
 
   public static void removeAll(Connection connection, ItemFolder record) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("folder_id = ?", record.getId()));
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("folder_id = ?", record.getId()));
   }
 
   public static boolean updateFileCount(Connection connection, long subFolderId, int value) throws SQLException {
     // Update the totals
     SqlUtils update = new SqlUtils()
         .add("file_count = file_count + " + value);
-    SqlUtils where = new SqlUtils().add("sub_folder_id = ?", subFolderId);
+    SqlWhere where = DB.WHERE("sub_folder_id = ?", subFolderId);
     return DB.update(connection, TABLE_NAME, update, where);
   }
 
@@ -226,7 +235,7 @@ public class ItemSubFolderRepository {
     // Update the totals
     SqlUtils update = new SqlUtils()
         .add("file_count = file_count + " + value);
-    SqlUtils where = new SqlUtils().add("sub_folder_id IN (SELECT sub_folder_id FROM files WHERE file_id = ?)", fileId);
+    SqlWhere where = DB.WHERE("sub_folder_id IN (SELECT sub_folder_id FROM files WHERE file_id = ?)", fileId);
     return DB.update(connection, TABLE_NAME, update, where);
   }
 

@@ -16,19 +16,23 @@
 
 package com.simisinc.platform.infrastructure.persistence.items;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.simisinc.platform.domain.model.Group;
 import com.simisinc.platform.domain.model.items.Item;
 import com.simisinc.platform.domain.model.items.ItemFolder;
 import com.simisinc.platform.domain.model.items.ItemFolderGroup;
 import com.simisinc.platform.domain.model.items.PrivacyType;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.List;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves item folder group objects
@@ -41,17 +45,15 @@ public class ItemFolderGroupRepository {
   private static Log LOG = LogFactory.getLog(ItemFolderGroupRepository.class);
 
   private static String TABLE_NAME = "item_folder_groups";
-  private static String[] PRIMARY_KEY = new String[]{"allowed_id"};
+  private static String[] PRIMARY_KEY = new String[] { "allowed_id" };
 
   public static List<ItemFolderGroup> findAllByFolderId(long folderId) {
     if (folderId == -1) {
       return null;
     }
-    SqlUtils where = new SqlUtils()
-        .add("folder_id = ?", folderId);
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        where,
+        DB.WHERE("folder_id = ?", folderId),
         new DataConstraints().setDefaultColumnToSortBy("allowed_id").setUseCount(false),
         ItemFolderGroupRepository::buildRecord);
     if (result.hasRecords()) {
@@ -101,25 +103,25 @@ public class ItemFolderGroupRepository {
           .add("folder_id", folder.getId())
           .add("group_id", allowedGroup.getGroupId())
           .add("privacy_type", allowedGroup.getPrivacyType())
-          .add("view_all", (allowedGroup.getPrivacyType() == PrivacyType.PUBLIC || allowedGroup.getPrivacyType() == PrivacyType.PUBLIC_READ_ONLY))
+          .add("view_all",
+              (allowedGroup.getPrivacyType() == PrivacyType.PUBLIC || allowedGroup.getPrivacyType() == PrivacyType.PUBLIC_READ_ONLY))
           .add("add_permission", allowedGroup.getAddPermission())
           .add("edit_permission", allowedGroup.getEditPermission())
-          .add("delete_permission", allowedGroup.getDeletePermission())
-      ;
+          .add("delete_permission", allowedGroup.getDeletePermission());
       DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY);
     }
   }
 
   public static void removeAll(Connection connection, Item item) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("item_id = ?", item.getId()));
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("item_id = ?", item.getId()));
   }
 
   public static void removeAll(Connection connection, ItemFolder folder) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("folder_id = ?", folder.getId()));
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("folder_id = ?", folder.getId()));
   }
 
   public static void removeAll(Connection connection, Group group) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("group_id = ?", group.getId()));
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("group_id = ?", group.getId()));
   }
 
   private static ItemFolderGroup buildRecord(ResultSet rs) {

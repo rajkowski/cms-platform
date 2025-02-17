@@ -16,24 +16,35 @@
 
 package com.simisinc.platform.infrastructure.persistence;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.simisinc.platform.domain.model.Role;
 import com.simisinc.platform.domain.model.User;
 import com.simisinc.platform.domain.model.dashboard.StatisticsData;
-import com.simisinc.platform.infrastructure.database.*;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
 import com.simisinc.platform.infrastructure.persistence.ecommerce.OrderRepository;
 import com.simisinc.platform.infrastructure.persistence.login.UserGroupRepository;
 import com.simisinc.platform.infrastructure.persistence.login.UserLoginRepository;
 import com.simisinc.platform.infrastructure.persistence.login.UserRoleRepository;
 import com.simisinc.platform.infrastructure.persistence.login.UserTokenRepository;
 import com.simisinc.platform.presentation.controller.DataConstants;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 
 /**
  * Persists and retrieves user objects
@@ -50,7 +61,7 @@ public class UserRepository {
 
   private static DataResult query(UserSpecification specification, DataConstraints constraints) {
     SqlUtils select = new SqlUtils();
-    SqlUtils where = new SqlUtils();
+    SqlWhere where = DB.WHERE();
     SqlUtils orderBy = new SqlUtils();
     if (specification != null) {
       where.addIfExists("user_id = ?", specification.getId(), -1);
@@ -94,7 +105,8 @@ public class UserRepository {
       return null;
     }
     return (User) DB.selectRecordFrom(
-        TABLE_NAME, new SqlUtils().add("unique_id = ?", uniqueId),
+        TABLE_NAME,
+        DB.WHERE("unique_id = ?", uniqueId),
         UserRepository::buildRecord);
   }
 
@@ -104,8 +116,7 @@ public class UserRepository {
     }
     return (User) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("LOWER(username) = ?", username.toLowerCase()),
+        DB.WHERE("LOWER(username) = ?", username.toLowerCase()),
         UserRepository::buildRecord);
   }
 
@@ -115,8 +126,7 @@ public class UserRepository {
     }
     return (User) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("user_id = ?", userId),
+        DB.WHERE("user_id = ?", userId),
         UserRepository::buildRecord);
   }
 
@@ -126,8 +136,7 @@ public class UserRepository {
     }
     return (User) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("account_token = ?", token),
+        DB.WHERE("account_token = ?", token),
         UserRepository::buildRecord);
   }
 
@@ -137,8 +146,7 @@ public class UserRepository {
     }
     return (User) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("LOWER(email) = ?", email.toLowerCase()),
+        DB.WHERE("LOWER(email) = ?", email.toLowerCase()),
         UserRepository::buildRecord);
   }
 
@@ -314,14 +322,12 @@ public class UserRepository {
       updateValues.add("longitude", 0L, 0L);
       updateValues.addGeomPoint("geom", 0, 0);
     }
-    SqlUtils where = new SqlUtils()
-        .add("user_id = ?", record.getId());
     // Use a transaction
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
       // In a transaction (use the existing connection)
-      DB.update(connection, TABLE_NAME, updateValues, where);
+      DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("user_id = ?", record.getId()));
       // Manage the access groups
       UserGroupRepository.removeAll(connection, record);
       UserGroupRepository.insertUserGroupList(connection, record);
@@ -343,9 +349,7 @@ public class UserRepository {
         .add("validated", occurred)
         .add("account_token", (String) null)
         .add("modified", occurred);
-    SqlUtils where = new SqlUtils()
-        .add("user_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("user_id = ?", record.getId()))) {
       // Updated related records
       OrderRepository.updateUserOrders(record);
       return record;
@@ -359,9 +363,7 @@ public class UserRepository {
         .add("password", record.getPassword())
         .add("account_token", (String) null)
         .add("modified", new Timestamp(System.currentTimeMillis()));
-    SqlUtils where = new SqlUtils()
-        .add("user_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("user_id = ?", record.getId()))) {
       // Invalidate user_tokens since there is a new password
       UserTokenRepository.removeAll(record.getId());
       return record;
@@ -375,9 +377,7 @@ public class UserRepository {
     SqlUtils updateValues = new SqlUtils()
         .add("account_token", newToken)
         .add("modified", new Timestamp(System.currentTimeMillis()));
-    SqlUtils where = new SqlUtils()
-        .add("user_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("user_id = ?", record.getId()))) {
       record.setAccountToken(newToken);
       return record;
     }
@@ -389,9 +389,7 @@ public class UserRepository {
     SqlUtils updateValues = new SqlUtils()
         .add("enabled", false)
         .add("modified", new Timestamp(System.currentTimeMillis()));
-    SqlUtils where = new SqlUtils()
-        .add("user_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("user_id = ?", record.getId()))) {
       return record;
     }
     LOG.error("suspendAccount failed!");
@@ -402,9 +400,7 @@ public class UserRepository {
     SqlUtils updateValues = new SqlUtils()
         .add("enabled", true)
         .add("modified", new Timestamp(System.currentTimeMillis()));
-    SqlUtils where = new SqlUtils()
-        .add("user_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("user_id = ?", record.getId()))) {
       return record;
     }
     LOG.error("restoreAccount failed!");
@@ -424,7 +420,7 @@ public class UserRepository {
       UserTokenRepository.removeAll(connection, record);
       UserLoginRepository.removeAll(connection, record);
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("user_id = ?", record.getId()));
+      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("user_id = ?", record.getId()));
       // Finish transaction
       transaction.commit();
       return true;

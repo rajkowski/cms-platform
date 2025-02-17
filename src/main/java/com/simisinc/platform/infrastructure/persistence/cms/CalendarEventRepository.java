@@ -16,19 +16,26 @@
 
 package com.simisinc.platform.infrastructure.persistence.cms;
 
-import com.simisinc.platform.domain.model.cms.Calendar;
-import com.simisinc.platform.domain.model.cms.CalendarEvent;
-import com.simisinc.platform.infrastructure.database.*;
-import com.simisinc.platform.presentation.controller.DataConstants;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.cms.Calendar;
+import com.simisinc.platform.domain.model.cms.CalendarEvent;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
+import com.simisinc.platform.presentation.controller.DataConstants;
 
 /**
  * Persists and retrieves calendar event objects
@@ -43,38 +50,39 @@ public class CalendarEventRepository {
   private static String TABLE_NAME = "calendar_events";
   private static String[] PRIMARY_KEY = new String[] { "event_id" };
 
-  private static SqlUtils createWhereStatement(CalendarEventSpecification specification) {
-    SqlUtils where = new SqlUtils();
-    if (specification != null) {
-      where
-          .addIfExists("event_id = ?", specification.getId(), -1)
-          .addIfExists("calendar_id = ?", specification.getCalendarId(), -1)
-          .addIfExists("event_unique_id = ?", specification.getUniqueId());
-      if (specification.getPublishedOnly() != DataConstants.UNDEFINED) {
-        if (specification.getPublishedOnly() == DataConstants.TRUE) {
-          where.add("published IS NOT NULL");
-        } else {
-          where.add("published IS NULL");
-        }
+  private static SqlWhere createWhereStatement(CalendarEventSpecification specification) {
+    SqlWhere where = DB.WHERE();
+    if (specification == null) {
+      return where;
+    }
+    where
+        .addIfExists("event_id = ?", specification.getId(), -1)
+        .addIfExists("calendar_id = ?", specification.getCalendarId(), -1)
+        .addIfExists("event_unique_id = ?", specification.getUniqueId());
+    if (specification.getPublishedOnly() != DataConstants.UNDEFINED) {
+      if (specification.getPublishedOnly() == DataConstants.TRUE) {
+        where.add("published IS NOT NULL");
+      } else {
+        where.add("published IS NULL");
       }
-      if (specification.getStartingDateRange() != null && specification.getEndingDateRange() != null) {
-        where.add("((start_date >= ? AND start_date < ?) OR (end_date >= ? AND end_date < ?))",
-            new Timestamp[] { specification.getStartingDateRange(), specification.getEndingDateRange(),
-                specification.getStartingDateRange(), specification.getEndingDateRange() });
-      } else if (specification.getStartingDateRange() != null) {
-        where.add("start_date >= ?",
-            new Timestamp[] { specification.getStartingDateRange() });
-      } else if (specification.getEndingDateRange() != null) {
-        where.add("(start_date < ? AND end_date < ?)",
-            new Timestamp[] { specification.getEndingDateRange(), specification.getEndingDateRange() });
-      }
+    }
+    if (specification.getStartingDateRange() != null && specification.getEndingDateRange() != null) {
+      where.add("((start_date >= ? AND start_date < ?) OR (end_date >= ? AND end_date < ?))",
+          new Timestamp[] { specification.getStartingDateRange(), specification.getEndingDateRange(),
+              specification.getStartingDateRange(), specification.getEndingDateRange() });
+    } else if (specification.getStartingDateRange() != null) {
+      where.add("start_date >= ?",
+          new Timestamp[] { specification.getStartingDateRange() });
+    } else if (specification.getEndingDateRange() != null) {
+      where.add("(start_date < ? AND end_date < ?)",
+          new Timestamp[] { specification.getEndingDateRange(), specification.getEndingDateRange() });
     }
     return where;
   }
 
   private static DataResult query(CalendarEventSpecification specification, DataConstraints constraints) {
     SqlUtils select = new SqlUtils();
-    SqlUtils where = createWhereStatement(specification);
+    SqlWhere where = createWhereStatement(specification);
     SqlUtils orderBy = null;
 
     if (specification != null) {
@@ -102,7 +110,7 @@ public class CalendarEventRepository {
     }
     return (CalendarEvent) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
+        DB.WHERE()
             .add("calendar_id = ?", calendarId)
             .add("event_unique_id = ?", eventUniqueId),
         CalendarEventRepository::buildRecord);
@@ -114,8 +122,7 @@ public class CalendarEventRepository {
     }
     return (CalendarEvent) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("event_unique_id = ?", eventUniqueId),
+        DB.WHERE("event_unique_id = ?", eventUniqueId),
         CalendarEventRepository::buildRecord);
   }
 
@@ -125,8 +132,7 @@ public class CalendarEventRepository {
     }
     return (CalendarEvent) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("event_id = ?", calendarEventId),
+        DB.WHERE("event_id = ?", calendarEventId),
         CalendarEventRepository::buildRecord);
   }
 
@@ -144,8 +150,7 @@ public class CalendarEventRepository {
   }
 
   public static long findCount(CalendarEventSpecification specification) {
-    SqlUtils where = createWhereStatement(specification);
-    return DB.selectCountFrom(TABLE_NAME, where);
+    return DB.selectCountFrom(TABLE_NAME, createWhereStatement(specification));
   }
 
   public static CalendarEvent save(CalendarEvent record) {
@@ -199,9 +204,7 @@ public class CalendarEventRepository {
         .add("modified", new Timestamp(System.currentTimeMillis()))
         .add("published", record.getPublished())
         .add("archived", record.getArchived());
-    SqlUtils where = new SqlUtils()
-        .add("event_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("event_id = ?", record.getId()))) {
       //      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
     }
@@ -218,7 +221,7 @@ public class CalendarEventRepository {
       //        CollectionRepository.updateItemCount(connection, record.getCollectionId(), -1);
       //        CategoryRepository.updateItemCount(connection, record.getCategoryId(), -1);
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("event_id = ?", record.getId()));
+      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("event_id = ?", record.getId()));
       // Finish transaction
       transaction.commit();
       return true;
@@ -229,9 +232,7 @@ public class CalendarEventRepository {
   }
 
   public static void removeAll(Connection connection, Calendar calendar) throws SQLException {
-    SqlUtils where = new SqlUtils();
-    where.add("calendar_id = ?", calendar.getId());
-    DB.deleteFrom(connection, TABLE_NAME, where);
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("calendar_id = ?", calendar.getId()));
   }
 
   private static CalendarEvent buildRecord(ResultSet rs) {

@@ -16,16 +16,24 @@
 
 package com.simisinc.platform.infrastructure.persistence.ecommerce;
 
-import com.simisinc.platform.domain.model.ecommerce.ShippingRate;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.ecommerce.ShippingRate;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlJoins;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves shipping rate objects
@@ -45,7 +53,7 @@ public class ShippingRateRepository {
   private static DataResult query(ShippingRateSpecification specification, DataConstraints constraints) {
     SqlUtils select = new SqlUtils().add(ADDITIONAL_SELECT);
     SqlJoins joins = new SqlJoins().add(JOIN);
-    SqlUtils where = new SqlUtils();
+    SqlWhere where = DB.WHERE();
     // Use the specification to find the best matching rate for the given address
     if (specification != null) {
       if (StringUtils.isNotBlank(specification.getCountryCode())) {
@@ -107,7 +115,7 @@ public class ShippingRateRepository {
         TABLE_NAME,
         select,
         joins,
-        new SqlUtils().add("rate_id = ?", shippingRateId),
+        DB.WHERE("rate_id = ?", shippingRateId),
         ShippingRateRepository::buildRecord);
   }
 
@@ -163,9 +171,7 @@ public class ShippingRateRepository {
         .add("exclude_skus", record.getExcludeSkus());
     // .add("modified_by", record.getModifiedBy(), -1)
     // .add("modified", new Timestamp(System.currentTimeMillis()));
-    SqlUtils where = new SqlUtils()
-        .add("rate_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("rate_id = ?", record.getId()))) {
       // CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
     }
@@ -174,7 +180,7 @@ public class ShippingRateRepository {
   }
 
   public static boolean remove(ShippingRate record) {
-    return DB.deleteFrom(TABLE_NAME, new SqlUtils().add("rate_id = ?", record.getId())) > 0;
+    return DB.deleteFrom(TABLE_NAME, DB.WHERE("rate_id = ?", record.getId())) > 0;
   }
 
   private static ShippingRate buildRecord(ResultSet rs) {
