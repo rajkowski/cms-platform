@@ -16,20 +16,26 @@
 
 package com.simisinc.platform.infrastructure.persistence.ecommerce;
 
-import com.simisinc.platform.domain.model.ecommerce.Cart;
-import com.simisinc.platform.domain.model.ecommerce.CartItem;
-import com.simisinc.platform.domain.model.ecommerce.Product;
-import com.simisinc.platform.domain.model.ecommerce.ProductSku;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.ecommerce.Cart;
+import com.simisinc.platform.domain.model.ecommerce.CartItem;
+import com.simisinc.platform.domain.model.ecommerce.Product;
+import com.simisinc.platform.domain.model.ecommerce.ProductSku;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves cart item objects
@@ -47,9 +53,8 @@ public class CartItemRepository {
   public static List<CartItem> findValidItemsByCartId(long cartId) {
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("is_removed = ?", false)
-            .add("cart_id = ?", cartId),
+        DB.WHERE("is_removed = ?", false)
+            .AND("cart_id = ?", cartId),
         new DataConstraints().setDefaultColumnToSortBy("item_id").setUseCount(false),
         CartItemRepository::buildRecord);
     return (List<CartItem>) result.getRecords();
@@ -58,8 +63,7 @@ public class CartItemRepository {
   public static CartItem findById(long itemId) {
     return (CartItem) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("item_id = ?", itemId),
+        DB.WHERE("item_id = ?", itemId),
         CartItemRepository::buildRecord);
   }
 
@@ -100,8 +104,7 @@ public class CartItemRepository {
           .add("each_amount", cartItem.getEachAmount())
           .add("total_amount", cartItem.getTotalAmount())
           .add("is_removed", cartItem.getRemoved());
-      SqlUtils where = new SqlUtils().add("item_id = ?", cartItem.getId());
-      DB.update(connection, TABLE_NAME, setValues, where);
+      DB.update(connection, TABLE_NAME, setValues, DB.WHERE("item_id = ?", cartItem.getId()));
     }
   }
 
@@ -116,19 +119,17 @@ public class CartItemRepository {
         SqlUtils update = new SqlUtils()
             .add("is_removed", true)
             .add("modified", new Timestamp(System.currentTimeMillis()));
-        SqlUtils where = new SqlUtils().add("item_id = ?", cartItem.getId());
-        DB.update(connection, TABLE_NAME, update, where);
+        DB.update(connection, TABLE_NAME, update, DB.WHERE("item_id = ?", cartItem.getId()));
         //          DataSource.deleteFrom(connection, TABLE_NAME, where);
       }
       {
         // Update the cart's total_items, total_qty, subtotal_amount, modified
-        SqlUtils update = new SqlUtils()
+        SqlUtils updateValues = new SqlUtils()
             .add("total_items = total_items - 1")
             .add("total_qty = total_qty - " + cartItem.getQuantity())
             .add("subtotal_amount = subtotal_amount - " + cartItem.getQuantity().multiply(cartItem.getEachAmount()))
             .add("modified", new Timestamp(System.currentTimeMillis()));
-        SqlUtils where = new SqlUtils().add("cart_id = ?", cartItem.getCartId());
-        DB.update(connection, "carts", update, where);
+        DB.update(connection, "carts", updateValues, DB.WHERE("cart_id = ?", cartItem.getCartId()));
       }
       // Finish the transaction
       transaction.commit();
@@ -143,8 +144,7 @@ public class CartItemRepository {
     SqlUtils setValues = new SqlUtils();
     setValues
         .add("quantity_free", cartItem.getQuantityFree());
-    SqlUtils where = new SqlUtils().add("item_id = ?", cartItem.getId());
-    DB.update(TABLE_NAME, setValues, where);
+    DB.update(TABLE_NAME, setValues, DB.WHERE("item_id = ?", cartItem.getId()));
   }
 
   public static void resetQuantityFree(Cart cart) {
@@ -154,8 +154,7 @@ public class CartItemRepository {
     SqlUtils setValues = new SqlUtils();
     setValues
         .add("quantity_free", new BigDecimal(0));
-    SqlUtils where = new SqlUtils().add("cart_id = ?", cart.getId());
-    DB.update(TABLE_NAME, setValues, where);
+    DB.update(TABLE_NAME, setValues, DB.WHERE("cart_id = ?", cart.getId()));
   }
 
   private static CartItem buildRecord(ResultSet rs) {

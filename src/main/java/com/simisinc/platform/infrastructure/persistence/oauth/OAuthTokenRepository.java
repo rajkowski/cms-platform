@@ -51,9 +51,8 @@ public class OAuthTokenRepository {
     }
     return (OAuthToken) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("user_id = ?", userId)
-            .add("user_token_id = ?", userTokenId),
+        DB.WHERE("user_id = ?", userId)
+            .AND("user_token_id = ?", userTokenId),
         OAuthTokenRepository::buildRecord);
   }
 
@@ -94,9 +93,7 @@ public class OAuthTokenRepository {
         .add("refresh_expires_in", record.getRefreshExpiresIn())
         .add("expires", record.getExpires())
         .add("refresh_expires", record.getRefreshExpires());
-    SqlUtils where = new SqlUtils()
-        .add("token_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("token_id = ?", record.getId()))) {
       return record;
     }
     LOG.error("The update failed!");
@@ -104,20 +101,21 @@ public class OAuthTokenRepository {
   }
 
   public static int remove(UserToken userToken) {
-    return DB.deleteFrom(TABLE_NAME, new SqlUtils().add("user_token_id = ?", userToken.getId()));
+    return DB.deleteFrom(TABLE_NAME, DB.WHERE("user_token_id = ?", userToken.getId()));
   }
 
   public static int removeAll(long userId) {
-    return DB.deleteFrom(TABLE_NAME, new SqlUtils().add("user_id = ?", userId));
+    return DB.deleteFrom(TABLE_NAME, DB.WHERE("user_id = ?", userId));
   }
 
   public static int removeAll(Connection connection, User user) throws SQLException {
-    return DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("user_id = ?", user.getId()));
+    return DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("user_id = ?", user.getId()));
   }
 
   public static void deleteOldTokens() {
-    DB.deleteFrom(TABLE_NAME,
-        new SqlUtils().add("refresh_expires IS NOT NULL AND refresh_expires < NOW() - INTERVAL '1 day'"));
+    DB.deleteFrom(
+        TABLE_NAME,
+        DB.WHERE("refresh_expires IS NOT NULL AND refresh_expires < NOW() - INTERVAL '1 day'"));
   }
 
   private static OAuthToken buildRecord(ResultSet rs) {

@@ -16,12 +16,11 @@
 
 package com.simisinc.platform.infrastructure.persistence.ecommerce;
 
-import com.simisinc.platform.application.ecommerce.OrderStatusCommand;
-import com.simisinc.platform.domain.model.ecommerce.Order;
-import com.simisinc.platform.domain.model.ecommerce.OrderItem;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import static com.simisinc.platform.application.ecommerce.OrderStatusCommand.CANCELED;
+import static com.simisinc.platform.application.ecommerce.OrderStatusCommand.PAID;
+import static com.simisinc.platform.application.ecommerce.OrderStatusCommand.PREPARING;
+import static com.simisinc.platform.application.ecommerce.OrderStatusCommand.REFUNDED;
+import static com.simisinc.platform.application.ecommerce.OrderStatusCommand.SHIPPED;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -29,7 +28,18 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
 
-import static com.simisinc.platform.application.ecommerce.OrderStatusCommand.*;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.application.ecommerce.OrderStatusCommand;
+import com.simisinc.platform.domain.model.ecommerce.Order;
+import com.simisinc.platform.domain.model.ecommerce.OrderItem;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves order item objects
@@ -42,13 +52,12 @@ public class OrderItemRepository {
   private static Log LOG = LogFactory.getLog(OrderItemRepository.class);
 
   private static String TABLE_NAME = "order_items";
-  private static String[] PRIMARY_KEY = new String[]{"item_id"};
+  private static String[] PRIMARY_KEY = new String[] { "item_id" };
 
   public static List<OrderItem> findItemsByOrderId(long orderId) {
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("order_id = ?", orderId),
+        DB.WHERE("order_id = ?", orderId),
         new DataConstraints().setDefaultColumnToSortBy("item_id").setUseCount(false),
         OrderItemRepository::buildRecord);
     return (List<OrderItem>) result.getRecords();
@@ -57,15 +66,14 @@ public class OrderItemRepository {
   public static OrderItem findById(long itemId) {
     return (OrderItem) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("item_id = ?", itemId),
+        DB.WHERE("item_id = ?", itemId),
         OrderItemRepository::buildRecord);
   }
 
   public static OrderItem add(OrderItem record) throws SQLException {
     try (Connection connection = DB.getConnection();
-         AutoStartTransaction a = new AutoStartTransaction(connection);
-         AutoRollback transaction = new AutoRollback(connection)) {
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
       // Save it
       add(connection, record);
       // Finish the transaction
@@ -163,9 +171,7 @@ public class OrderItemRepository {
         .add("payment_date", paymentDate)
         .add("status", statusId)
         .add("modified", now);
-    SqlUtils where = new SqlUtils()
-        .add("item_id = ?", orderItem.getId());
-    DB.update(connection, TABLE_NAME, updateValues, where);
+    DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("item_id = ?", orderItem.getId()));
     // @todo Append to the order_history (PAID)
     // Update the object
     orderItem.setModified(now);
@@ -184,9 +190,7 @@ public class OrderItemRepository {
         .add("processing_date", now)
         .add("status", statusId)
         .add("modified", now);
-    SqlUtils where = new SqlUtils()
-        .add("item_id = ?", orderItem.getId());
-    DB.update(TABLE_NAME, updateValues, where);
+    DB.update(TABLE_NAME, updateValues, DB.WHERE("item_id = ?", orderItem.getId()));
     // @todo Append to the order_history (PREPARING)
     // Update the object
     orderItem.setModified(now);
@@ -205,9 +209,7 @@ public class OrderItemRepository {
         .add("shipped_date", now)
         .add("status", statusId)
         .add("modified", now);
-    SqlUtils where = new SqlUtils()
-        .add("item_id = ?", orderItem.getId());
-    DB.update(TABLE_NAME, updateValues, where);
+    DB.update(TABLE_NAME, updateValues, DB.WHERE("item_id = ?", orderItem.getId()));
     // @todo Append to the order_history (SHIPPED)
     // Update the object
     orderItem.setModified(now);
@@ -226,9 +228,7 @@ public class OrderItemRepository {
         .add("canceled_date", now)
         .add("status", statusId)
         .add("modified", now);
-    SqlUtils where = new SqlUtils()
-        .add("order_id = ?", order.getId());
-    DB.update(connection, TABLE_NAME, updateValues, where);
+    DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("order_id = ?", order.getId()));
   }
 
   public static void markStatusAsRefunded(Connection connection, Order order) throws SQLException {
@@ -241,8 +241,6 @@ public class OrderItemRepository {
         .add("refunded_date", now)
         .add("status", statusId)
         .add("modified", now);
-    SqlUtils where = new SqlUtils()
-        .add("order_id = ?", order.getId());
-    DB.update(connection, TABLE_NAME, updateValues, where);
+    DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("order_id = ?", order.getId()));
   }
 }

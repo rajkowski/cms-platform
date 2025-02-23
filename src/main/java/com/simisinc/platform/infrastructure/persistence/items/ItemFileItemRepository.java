@@ -16,19 +16,31 @@
 
 package com.simisinc.platform.infrastructure.persistence.items;
 
-import com.simisinc.platform.domain.model.items.Item;
-import com.simisinc.platform.domain.model.items.ItemFileItem;
-import com.simisinc.platform.domain.model.items.ItemFolder;
-import com.simisinc.platform.domain.model.items.ItemSubFolder;
-import com.simisinc.platform.infrastructure.database.*;
-import com.simisinc.platform.presentation.controller.DataConstants;
-import com.simisinc.platform.presentation.controller.UserSession;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.sql.*;
-import java.util.List;
+import com.simisinc.platform.domain.model.items.Item;
+import com.simisinc.platform.domain.model.items.ItemFileItem;
+import com.simisinc.platform.domain.model.items.ItemFolder;
+import com.simisinc.platform.domain.model.items.ItemSubFolder;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlJoins;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
+import com.simisinc.platform.presentation.controller.DataConstants;
+import com.simisinc.platform.presentation.controller.UserSession;
 
 /**
  * Persists and retrieves item file item objects
@@ -46,23 +58,23 @@ public class ItemFileItemRepository {
   private static DataResult query(ItemFileSpecification specification, DataConstraints constraints) {
     SqlUtils select = new SqlUtils();
     SqlJoins joins = new SqlJoins();
-    SqlUtils where = new SqlUtils();
+    SqlWhere where = DB.WHERE();
     SqlUtils orderBy = new SqlUtils();
     if (specification != null) {
 
       joins.add("LEFT JOIN item_folders ON (item_files.folder_id = item_folders.folder_id)");
 
       where
-          .addIfExists("file_id = ?", specification.getId(), -1)
-          .addIfExists("item_files.item_id = ?", specification.getItemId(), -1)
-          .addIfExists("item_folders.folder_id = ?", specification.getFolderId(), -1)
-          .addIfExists("sub_folder_id = ?", specification.getSubFolderId(), -1)
-          .addIfExists("barcode = ?", specification.getBarcode());
+          .andAddIfHasValue("file_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("item_files.item_id = ?", specification.getItemId(), -1)
+          .andAddIfHasValue("item_folders.folder_id = ?", specification.getFolderId(), -1)
+          .andAddIfHasValue("sub_folder_id = ?", specification.getSubFolderId(), -1)
+          .andAddIfHasValue("barcode = ?", specification.getBarcode());
       if (specification.getFilename() != null) {
-        where.add("LOWER(item_files.filename) = ?", specification.getFilename().trim().toLowerCase());
+        where.AND("LOWER(item_files.filename) = ?", specification.getFilename().trim().toLowerCase());
       }
       if (specification.getFileType() != null) {
-        where.add("LOWER(item_files.file_type) = ?", specification.getFileType().trim().toLowerCase());
+        where.AND("LOWER(item_files.file_type) = ?", specification.getFileType().trim().toLowerCase());
       }
       if (specification.getMatchesName() != null) {
         String likeValue = specification.getMatchesName().trim()
@@ -70,16 +82,16 @@ public class ItemFileItemRepository {
             .replace("%", "!%")
             .replace("_", "!_")
             .replace("[", "![");
-        where.add("LOWER(item_files.title) LIKE LOWER(?) ESCAPE '!'", likeValue + "%");
+        where.AND("LOWER(item_files.title) LIKE LOWER(?) ESCAPE '!'", likeValue + "%");
       }
       if (specification.getWithinLastDays() > 0) {
-        where.add("item_files.created > NOW() - INTERVAL '" + specification.getWithinLastDays() + " days'");
+        where.AND("item_files.created > NOW() - INTERVAL '" + specification.getWithinLastDays() + " days'");
       }
       if (specification.getInASubFolder() != DataConstants.UNDEFINED) {
         if (specification.getInASubFolder() == DataConstants.TRUE) {
-          where.add("sub_folder_id IS NOT NULL");
+          where.AND("sub_folder_id IS NOT NULL");
         } else {
-          where.add("sub_folder_id IS NULL");
+          where.AND("sub_folder_id IS NULL");
         }
       }
 
@@ -87,10 +99,10 @@ public class ItemFileItemRepository {
       // User must be in a user group with folder access
       if (specification.getForUserId() != DataConstants.UNDEFINED) {
         if (specification.getForUserId() == UserSession.GUEST_ID) {
-          where.add("item_folders.allows_guests = true");
+          where.AND("item_folders.allows_guests = true");
         } else {
           // For logged out and logged in users
-          where.add(
+          where.AND(
               "(allows_guests = true " +
                   "OR (has_allowed_groups = true " +
                   "AND EXISTS (SELECT 1 FROM item_folder_groups WHERE item_folder_groups.folder_id = item_folders.folder_id AND view_all = true "
@@ -105,7 +117,7 @@ public class ItemFileItemRepository {
       // Use the search engine
       if (StringUtils.isNotBlank(specification.getSearchName())) {
         select.add("ts_rank_cd(tsv, websearch_to_tsquery('item_file_stem', ?)) AS rank", specification.getSearchName().trim());
-        where.add("tsv @@ websearch_to_tsquery('item_file_stem', ?)", specification.getSearchName().trim());
+        where.AND("tsv @@ websearch_to_tsquery('item_file_stem', ?)", specification.getSearchName().trim());
         // Override the order by for rank first
         orderBy.add("rank DESC, file_id");
       }
@@ -120,7 +132,7 @@ public class ItemFileItemRepository {
     }
     return (ItemFileItem) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("file_id = ?", id),
+        DB.WHERE("file_id = ?", id),
         ItemFileItemRepository::buildRecord);
   }
 
@@ -216,9 +228,7 @@ public class ItemFileItemRepository {
           .add("expiration_date", record.getExpirationDate())
           .add("privacy_type", record.getPrivacyType());
       //        .add("default_token", StringUtils.trimToNull(record.getDefaultToken()));
-      SqlUtils where = new SqlUtils()
-          .add("file_id = ?", record.getId());
-      if (DB.update(connection, TABLE_NAME, updateValues, where)) {
+      if (DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("file_id = ?", record.getId()))) {
         // Update related records
         ItemFileVersionRepository.update(connection, record);
         // Update the folder count
@@ -268,9 +278,7 @@ public class ItemFileItemRepository {
           .add("expiration_date", record.getExpirationDate())
           .add("privacy_type", record.getPrivacyType())
           .add("default_token", StringUtils.trimToNull(record.getDefaultToken()));
-      SqlUtils where = new SqlUtils()
-          .add("file_id = ?", record.getId());
-      if (DB.update(connection, TABLE_NAME, updateValues, where)) {
+      if (DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("file_id = ?", record.getId()))) {
         // Update related records
         ItemFileVersionRepository.update(connection, record);
         // Update the folder counts
@@ -298,7 +306,7 @@ public class ItemFileItemRepository {
       ItemFolderRepository.updateFileCount(connection, record.getFolderId(), -1);
       ItemSubFolderRepository.updateFileCount(connection, record.getSubFolderId(), -1);
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("file_id = ?", record.getId()));
+      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("file_id = ?", record.getId()));
       // Finish transaction
       transaction.commit();
       // @note file cleanup is done in the command, consider moving here
@@ -310,15 +318,15 @@ public class ItemFileItemRepository {
   }
 
   public static void removeAll(Connection connection, Item record) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("item_id = ?", record.getId()));
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("item_id = ?", record.getId()));
   }
 
   public static void removeAll(Connection connection, ItemFolder record) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("folder_id = ?", record.getId()));
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("folder_id = ?", record.getId()));
   }
 
   public static int removeAll(Connection connection, ItemSubFolder record) throws SQLException {
-    return DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("sub_folder_id = ?", record.getId()));
+    return DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("sub_folder_id = ?", record.getId()));
   }
 
   private static PreparedStatement createPreparedStatementForUpdateDownloadCount(Connection connection, ItemFileItem record)

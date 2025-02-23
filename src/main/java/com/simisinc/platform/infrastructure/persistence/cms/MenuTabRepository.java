@@ -16,17 +16,23 @@
 
 package com.simisinc.platform.infrastructure.persistence.cms;
 
-import com.simisinc.platform.domain.model.cms.MenuTab;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.cms.MenuTab;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves menu tab objects
@@ -47,8 +53,7 @@ public class MenuTabRepository {
     }
     return (MenuTab) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("menu_tab_id = ?", id),
+        DB.WHERE("menu_tab_id = ?", id),
         MenuTabRepository::buildRecord);
   }
 
@@ -58,8 +63,7 @@ public class MenuTabRepository {
     }
     return (MenuTab) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("link = ?", link),
+        DB.WHERE("link = ?", link),
         MenuTabRepository::buildRecord);
   }
 
@@ -75,9 +79,8 @@ public class MenuTabRepository {
   public static List<MenuTab> findAllActive() {
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("draft = ?", false)
-            .add("enabled = ?", true),
+        DB.WHERE("draft = ?", false)
+            .AND("enabled = ?", true),
         new DataConstraints().setDefaultColumnToSortBy("tab_order").setUseCount(false),
         MenuTabRepository::buildRecord);
     return (List<MenuTab>) result.getRecords();
@@ -122,9 +125,7 @@ public class MenuTabRepository {
         .add("draft", record.isDraft())
         .add("enabled", record.isEnabled())
         .add("comments", StringUtils.trimToNull(record.getComments()));
-    SqlUtils where = new SqlUtils()
-        .add("menu_tab_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("menu_tab_id = ?", record.getId()))) {
       return record;
     }
     LOG.error("The update failed!");
@@ -138,7 +139,7 @@ public class MenuTabRepository {
       // Delete the references
       MenuItemRepository.removeAll(connection, record);
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("menu_tab_id = ?", record.getId()));
+      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("menu_tab_id = ?", record.getId()));
       // Finish transaction
       transaction.commit();
       return true;

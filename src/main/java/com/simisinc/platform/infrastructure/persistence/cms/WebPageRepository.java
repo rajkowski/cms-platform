@@ -16,20 +16,22 @@
 
 package com.simisinc.platform.infrastructure.persistence.cms;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.simisinc.platform.application.cms.WebPageXmlLayoutCommand;
 import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.infrastructure.database.DB;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.database.DataResult;
 import com.simisinc.platform.infrastructure.database.SqlUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.util.List;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves web page objects
@@ -42,24 +44,24 @@ public class WebPageRepository {
   private static Log LOG = LogFactory.getLog(WebPageRepository.class);
 
   private static String TABLE_NAME = "web_pages";
-  private static String[] PRIMARY_KEY = new String[]{"web_page_id"};
+  private static String[] PRIMARY_KEY = new String[] { "web_page_id" };
 
-  private static SqlUtils createWhereStatement(WebPageSpecification specification) {
-    SqlUtils where = null;
+  private static SqlWhere createWhereStatement(WebPageSpecification specification) {
+    SqlWhere where = null;
     if (specification != null) {
-      where = new SqlUtils()
-          .addIfExists("LOWER(link) = ?", specification.getLink())
-          .addIfDataConstantExists("enabled = ?", specification.getEnabled())
-          .addIfDataConstantExists("draft = ?", specification.getDraft())
-          .addIfDataConstantExists("searchable = ?", specification.getSearchable())
-          .addIfDataConstantExists("show_in_sitemap = ?", specification.getInSitemap())
-          .addIfDataConstantExists("has_redirect = ?", specification.getHasRedirect());
+      where = DB.WHERE()
+          .andAddIfHasValue("LOWER(link) = ?", specification.getLink())
+          .andAddIfDataConstantExists("enabled = ?", specification.getEnabled())
+          .andAddIfDataConstantExists("draft = ?", specification.getDraft())
+          .andAddIfDataConstantExists("searchable = ?", specification.getSearchable())
+          .andAddIfDataConstantExists("show_in_sitemap = ?", specification.getInSitemap())
+          .andAddIfDataConstantExists("has_redirect = ?", specification.getHasRedirect());
     }
     return where;
   }
 
   private static DataResult query(WebPageSpecification specification, DataConstraints constraints) {
-    SqlUtils where = createWhereStatement(specification);
+    SqlWhere where = createWhereStatement(specification);
     return DB.selectAllFrom(TABLE_NAME, where, constraints, WebPageRepository::buildRecord);
   }
 
@@ -69,7 +71,7 @@ public class WebPageRepository {
     }
     return (WebPage) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("web_page_id = ?", id),
+        DB.WHERE("web_page_id = ?", id),
         WebPageRepository::buildRecord);
   }
 
@@ -79,7 +81,7 @@ public class WebPageRepository {
     }
     return (WebPage) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("LOWER(link) = ?", link),
+        DB.WHERE("LOWER(link) = ?", link),
         WebPageRepository::buildRecord);
   }
 
@@ -163,9 +165,7 @@ public class WebPageRepository {
         .add("has_redirect", StringUtils.trimToNull(record.getRedirectUrl()) != null)
         .add("sitemap_priority", record.getSitemapPriority())
         .add("sitemap_changefreq", StringUtils.trimToNull(record.getSitemapChangeFrequency()));
-    SqlUtils where = new SqlUtils()
-        .add("web_page_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("web_page_id = ?", record.getId()))) {
       // Force the page(s) to re-cache
       if (previousRecord != null) {
         WebPageXmlLayoutCommand.removeCustomPage(previousRecord.getLink());
@@ -182,9 +182,10 @@ public class WebPageRepository {
       return;
     }
     // Handle publishing and making sure there is content to publish
-    String set = "page_xml = draft_page_xml, draft_page_xml = null, draft = false";
-    SqlUtils where = new SqlUtils().add("draft_page_xml IS NOT NULL AND web_page_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, set, where)) {
+    if (DB.update(
+        TABLE_NAME,
+        "page_xml = draft_page_xml, draft_page_xml = null, draft = false",
+        DB.WHERE("draft_page_xml IS NOT NULL AND web_page_id = ?", record.getId()))) {
       // Force the page to re-cache
       WebPageXmlLayoutCommand.removeCustomPage(record.getLink());
     }
@@ -194,9 +195,7 @@ public class WebPageRepository {
     SqlUtils updateValues = new SqlUtils()
         .add("modified", new Timestamp(System.currentTimeMillis()))
         .add("modified_by", userId);
-    SqlUtils where = new SqlUtils()
-        .add("web_page_id = ?", record.getId());
-    DB.update(TABLE_NAME, updateValues, where);
+    DB.update(TABLE_NAME, updateValues, DB.WHERE("web_page_id = ?", record.getId()));
     // Now update the record for additional workflows
     record.setModifiedBy(userId);
   }
@@ -205,16 +204,15 @@ public class WebPageRepository {
     if (record == null || record.getId() == -1) {
       return;
     }
-    String set = "draft_page_xml = null, draft = false";
-    SqlUtils where = new SqlUtils().add("web_page_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, set, where)) {
+    String setValues = "draft_page_xml = null, draft = false";
+    if (DB.update(TABLE_NAME, setValues, DB.WHERE("web_page_id = ?", record.getId()))) {
       // Force the page to re-cache
       WebPageXmlLayoutCommand.removeCustomPage(record.getLink());
     }
   }
 
   public static void remove(WebPage record) {
-    DB.deleteFrom(TABLE_NAME, new SqlUtils().add("web_page_id = ?", record.getId()));
+    DB.deleteFrom(TABLE_NAME, DB.WHERE("web_page_id = ?", record.getId()));
     // Force the page to re-cache
     WebPageXmlLayoutCommand.removeCustomPage(record.getLink());
   }

@@ -16,17 +16,21 @@
 
 package com.simisinc.platform.infrastructure.persistence.login;
 
-import com.simisinc.platform.domain.model.Role;
-import com.simisinc.platform.domain.model.User;
-import com.simisinc.platform.domain.model.login.UserRole;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.Role;
+import com.simisinc.platform.domain.model.User;
+import com.simisinc.platform.domain.model.login.UserRole;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves user role objects
@@ -39,17 +43,15 @@ public class UserRoleRepository {
   private static Log LOG = LogFactory.getLog(UserRoleRepository.class);
 
   private static String TABLE_NAME = "user_roles";
-  private static String[] PRIMARY_KEY = new String[]{"user_role_id"};
+  private static String[] PRIMARY_KEY = new String[] { "user_role_id" };
 
   public static List<UserRole> findAllByUserId(long userId) {
     if (userId == -1) {
       return null;
     }
-    SqlUtils where = new SqlUtils()
-        .add("user_id = ?", userId);
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        where,
+        DB.WHERE("user_id = ?", userId),
         new DataConstraints().setDefaultColumnToSortBy("user_role_id").setUseCount(false),
         UserRoleRepository::buildRecord);
     if (result.hasRecords()) {
@@ -96,7 +98,7 @@ public class UserRoleRepository {
   }
 
   public static void removeAll(Connection connection, User user) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("user_id = ?", user.getId()));
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("user_id = ?", user.getId()));
   }
 
   private static UserRole buildRecord(ResultSet rs) {

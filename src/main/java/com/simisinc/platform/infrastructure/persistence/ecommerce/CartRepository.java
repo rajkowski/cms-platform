@@ -16,18 +16,28 @@
 
 package com.simisinc.platform.infrastructure.persistence.ecommerce;
 
-import com.simisinc.platform.domain.model.ecommerce.*;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.ecommerce.Cart;
+import com.simisinc.platform.domain.model.ecommerce.CartItem;
+import com.simisinc.platform.domain.model.ecommerce.Product;
+import com.simisinc.platform.domain.model.ecommerce.ProductSku;
+import com.simisinc.platform.domain.model.ecommerce.ShippingRate;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves cart objects
@@ -57,8 +67,7 @@ public class CartRepository {
   public static Cart findById(long cartId) {
     return (Cart) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("cart_id = ?", cartId),
+        DB.WHERE("cart_id = ?", cartId),
         CartRepository::buildRecord);
   }
 
@@ -68,10 +77,9 @@ public class CartRepository {
     }
     return (Cart) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("cart_unique_id = ?", token)
-            .add("(expires IS NULL OR expires > ?)", new Timestamp(System.currentTimeMillis()))
-            .add("enabled = ?", true),
+        DB.WHERE("cart_unique_id = ?", token)
+            .AND("(expires IS NULL OR expires > ?)", new Timestamp(System.currentTimeMillis()))
+            .AND("enabled = ?", true),
         CartRepository::buildRecord);
   }
 
@@ -119,8 +127,7 @@ public class CartRepository {
           .add("total_qty = total_qty + " + quantity)
           .add("subtotal_amount = subtotal_amount + " + productSku.getPrice().multiply(quantity))
           .add("modified", new Timestamp(System.currentTimeMillis()));
-      SqlUtils where = new SqlUtils().add("cart_id = ?", cart.getId());
-      DB.update(connection, TABLE_NAME, update, where);
+      DB.update(connection, TABLE_NAME, update, DB.WHERE("cart_id = ?", cart.getId()));
       // Finish the transaction
       transaction.commit();
       return true;
@@ -146,8 +153,7 @@ public class CartRepository {
           .add("total_qty", cart.getTotalQty())
           .add("subtotal_amount", cart.getSubtotalAmount())
           .add("modified", new Timestamp(System.currentTimeMillis()));
-      SqlUtils where = new SqlUtils().add("cart_id = ?", cart.getId());
-      DB.update(connection, TABLE_NAME, update, where);
+      DB.update(connection, TABLE_NAME, update, DB.WHERE("cart_id = ?", cart.getId()));
       // Finish the transaction
       transaction.commit();
       return true;
@@ -171,8 +177,7 @@ public class CartRepository {
           .add("promo_code", cart.getPromoCode())
           .add("pricing_rule_1", cart.getPricingRuleId(), -1)
           .add("modified", new Timestamp(System.currentTimeMillis()));
-      SqlUtils where = new SqlUtils().add("cart_id = ?", cart.getId());
-      DB.update(connection, TABLE_NAME, update, where);
+      DB.update(connection, TABLE_NAME, update, DB.WHERE("cart_id = ?", cart.getId()));
       // Finish the transaction
       transaction.commit();
       return true;
@@ -206,8 +211,7 @@ public class CartRepository {
           .add("tax_amount", cart.getTaxAmount())
           .add("tax_rate", cart.getTaxRate())
           .add("modified", new Timestamp(System.currentTimeMillis()));
-      SqlUtils where = new SqlUtils().add("cart_id = ?", cart.getId());
-      DB.update(connection, TABLE_NAME, update, where);
+      DB.update(connection, TABLE_NAME, update, DB.WHERE("cart_id = ?", cart.getId()));
       // Finish the transaction
       transaction.commit();
       return true;
@@ -221,9 +225,7 @@ public class CartRepository {
     SqlUtils updateValues = new SqlUtils()
         .add("customer_id", cart.getCustomerId(), -1)
         .add("modified", new Timestamp(System.currentTimeMillis()));
-    SqlUtils where = new SqlUtils()
-        .add("cart_id = ?", cart.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("cart_id = ?", cart.getId()))) {
       return cart;
     }
     LOG.error("updateCustomer failed!");

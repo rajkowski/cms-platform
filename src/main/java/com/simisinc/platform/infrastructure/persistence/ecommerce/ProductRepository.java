@@ -16,20 +16,28 @@
 
 package com.simisinc.platform.infrastructure.persistence.ecommerce;
 
-import com.simisinc.platform.application.ecommerce.ProductJSONCommand;
-import com.simisinc.platform.domain.model.ecommerce.Product;
-import com.simisinc.platform.domain.model.ecommerce.ProductSku;
-import com.simisinc.platform.infrastructure.database.*;
-import com.simisinc.platform.presentation.controller.DataConstants;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.application.ecommerce.ProductJSONCommand;
+import com.simisinc.platform.domain.model.ecommerce.Product;
+import com.simisinc.platform.domain.model.ecommerce.ProductSku;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlValue;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
+import com.simisinc.platform.presentation.controller.DataConstants;
 
 /**
  * Persists and retrieves product objects
@@ -45,11 +53,11 @@ public class ProductRepository {
   private static String[] PRIMARY_KEY = new String[] { "product_id" };
 
   private static DataResult query(ProductSpecification specification, DataConstraints constraints) {
-    SqlUtils where = null;
+    SqlWhere where = null;
     if (specification != null) {
-      where = new SqlUtils()
-          .addIfExists("products.product_id = ?", specification.getId(), -1)
-          .addIfExists("products.product_unique_id = ?", specification.getProductUniqueId());
+      where = DB.WHERE()
+          .andAddIfHasValue("products.product_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("products.product_unique_id = ?", specification.getProductUniqueId());
       if (specification.getWithProductUniqueIdList() != null && !specification.getWithProductUniqueIdList().isEmpty()) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < specification.getWithProductUniqueIdList().size(); i++) {
@@ -59,18 +67,18 @@ public class ProductRepository {
           sb.append("?");
         }
         if (sb.length() > 0) {
-          where.add("products.product_unique_id IN (" + sb.toString() + ")",
+          where.AND("products.product_unique_id IN (" + sb.toString() + ")",
               specification.getWithProductUniqueIdList().toArray(new String[0]));
         }
       }
       if (specification.getIsForSale() != DataConstants.UNDEFINED) {
         if (specification.getIsForSale() == DataConstants.TRUE) {
-          where.add("products.enabled = true");
+          where.AND("products.enabled = true");
           // @todo add the dates
           // today >= activeDate
           // today < deactivateOnDate
           // has a product_sku with at least 1 visible sku.getEnabled()
-          where.add("EXISTS (SELECT 1 FROM product_skus WHERE product_id = products.product_id AND enabled = "
+          where.AND("EXISTS (SELECT 1 FROM product_skus WHERE product_id = products.product_id AND enabled = "
               + (specification.getIsForSale() == DataConstants.TRUE ? "true" : "false") + ")");
         }
       }
@@ -105,7 +113,7 @@ public class ProductRepository {
     }
     Product product = (Product) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("product_id = ?", id),
+        DB.WHERE("product_id = ?", id),
         ProductRepository::buildRecord);
     if (includeRelatedData) {
       populateRelatedData(product);
@@ -119,7 +127,7 @@ public class ProductRepository {
     }
     Product product = (Product) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("LOWER(name) = ?", name.toLowerCase()),
+        DB.WHERE("LOWER(name) = ?", name.toLowerCase()),
         ProductRepository::buildRecord);
     populateRelatedData(product);
     return product;
@@ -131,7 +139,7 @@ public class ProductRepository {
     }
     Product product = (Product) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("product_unique_id = ?", uniqueId),
+        DB.WHERE("product_unique_id = ?", uniqueId),
         ProductRepository::buildRecord);
     populateRelatedData(product);
     return product;
@@ -141,11 +149,9 @@ public class ProductRepository {
     if (StringUtils.isBlank(sku)) {
       return null;
     }
-    SqlUtils where = new SqlUtils()
-        .add("EXISTS (SELECT 1 FROM product_skus WHERE product_id = products.product_id AND sku = ?)", sku.toUpperCase().trim());
     Product product = (Product) DB.selectRecordFrom(
         TABLE_NAME,
-        where,
+        DB.WHERE("EXISTS (SELECT 1 FROM product_skus WHERE product_id = products.product_id AND sku = ?)", sku.toUpperCase().trim()),
         ProductRepository::buildRecord);
     populateRelatedData(product);
     return product;
@@ -168,7 +174,7 @@ public class ProductRepository {
       // Delete the references
       ProductSkuRepository.removeAll(connection, record);
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("product_id = ?", record.getId()));
+      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("product_id = ?", record.getId()));
       // Finish transaction
       transaction.commit();
       return true;
@@ -264,13 +270,12 @@ public class ProductRepository {
         .add("modified_by", record.getModifiedBy())
         .add("modified", new Timestamp(System.currentTimeMillis()));
     updateValues.add(new SqlValue("sku_attributes", SqlValue.JSONB_TYPE, ProductJSONCommand.createJSONString(record)));
-    SqlUtils where = new SqlUtils().add("product_id = ?", record.getId());
     // Use a transaction
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
       // In a transaction (use the existing connection)
-      DB.update(connection, TABLE_NAME, updateValues, where);
+      DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("product_id = ?", record.getId()));
       // Manage the Product SKUs
       ProductSkuRepository.saveProductSKUList(connection, record);
       // Finish the transaction
@@ -286,9 +291,7 @@ public class ProductRepository {
     SqlUtils updateValues = new SqlUtils()
         .add("square_catalog_id", squareCatalogId)
         .add("modified", new Timestamp(System.currentTimeMillis()));
-    SqlUtils where = new SqlUtils()
-        .add("product_id = ?", productId);
-    DB.update(TABLE_NAME, updateValues, where);
+    DB.update(TABLE_NAME, updateValues, DB.WHERE("product_id = ?", productId));
     return true;
   }
 

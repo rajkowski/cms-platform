@@ -32,7 +32,6 @@ import com.simisinc.platform.infrastructure.cache.CacheManager;
 import com.simisinc.platform.infrastructure.database.DB;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves site property objects
@@ -53,14 +52,14 @@ public class SitePropertyRepository {
     }
     return (SiteProperty) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("property_name = ?", name),
+        DB.WHERE("property_name = ?", name),
         SitePropertyRepository::buildRecord);
   }
 
   public static List<SiteProperty> findAllByPrefix(String prefix) {
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        new SqlUtils().add("property_name LIKE ?", prefix + ".%"),
+        DB.WHERE("property_name LIKE ?", prefix + ".%"),
         new DataConstraints().setDefaultColumnToSortBy("property_order, property_name").setUseCount(false),
         SitePropertyRepository::buildRecord);
     if (result.hasRecords()) {

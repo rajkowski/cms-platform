@@ -16,6 +16,19 @@
 
 package com.simisinc.platform.infrastructure.persistence.ecommerce;
 
+import java.io.File;
+import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.simisinc.platform.application.cms.DateCommand;
 import com.simisinc.platform.application.ecommerce.ProductInventoryCommand;
 import com.simisinc.platform.application.ecommerce.ProductSkuJSONCommand;
@@ -23,16 +36,13 @@ import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.ecommerce.Product;
 import com.simisinc.platform.domain.model.ecommerce.ProductSku;
 import com.simisinc.platform.domain.model.ecommerce.ProductSkuAttribute;
-import com.simisinc.platform.infrastructure.database.*;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlValue;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
 import com.simisinc.platform.presentation.controller.DataConstants;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import java.io.File;
-import java.math.BigDecimal;
-import java.sql.*;
-import java.util.List;
 
 /**
  * Persists and retrieves product sku objects
@@ -52,19 +62,18 @@ public class ProductSkuRepository {
 
   private static DataResult query(ProductSkuSpecification specification, DataConstraints constraints) {
     SqlUtils select = new SqlUtils().add(ADDITIONAL_SELECT);
-    SqlJoins joins = new SqlJoins().add(JOIN);
-    SqlUtils where = null;
+    SqlWhere where = null;
     if (specification != null) {
-      where = new SqlUtils()
-          .addIfExists("sku_id = ?", specification.getId(), -1)
-          .addIfExists("sku = ?", specification.getSku())
-          .addIfExists("product_skus.product_id = ?", specification.getProductId(), -1)
-          .addIfExists("products.product_unique_id = ?", specification.getProductUniqueId());
+      where = DB.WHERE()
+          .andAddIfHasValue("sku_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("sku = ?", specification.getSku())
+          .andAddIfHasValue("product_skus.product_id = ?", specification.getProductId(), -1)
+          .andAddIfHasValue("products.product_unique_id = ?", specification.getProductUniqueId());
       if (specification.getIsNotId() != -1) {
-        where.add("sku_id <> ?", specification.getIsNotId());
+        where.AND("sku_id <> ?", specification.getIsNotId());
       }
       if (specification.getShowOnline() != DataConstants.UNDEFINED) {
-        where.add("product_skus.enabled = " + (specification.getShowOnline() == DataConstants.TRUE ? "true" : "false"));
+        where.AND("product_skus.enabled = " + (specification.getShowOnline() == DataConstants.TRUE ? "true" : "false"));
       }
       if (specification.getWithProductSkuAttributeList() != null && !specification.getWithProductSkuAttributeList().isEmpty()) {
         // SELECT * FROM product_skus WHERE attributes @> '[{"name":"attribute0", "value":"0.5 oz"}]' AND attributes @> '[{"name":"attribute1", "value":"Jasmine"}]';
@@ -84,11 +93,18 @@ public class ProductSkuRepository {
           sb.append("}");
         }
         if (sb.length() > 0) {
-          where.add("attributes @> '[" + sb.toString() + "]'");
+          where.AND("attributes @> '[" + sb.toString() + "]'");
         }
       }
     }
-    return DB.selectAllFrom(TABLE_NAME, select, joins, where, null, constraints, ProductSkuRepository::buildRecord);
+    return DB.selectAllFrom(
+        TABLE_NAME,
+        select,
+        DB.JOIN(JOIN),
+        where,
+        null,
+        constraints,
+        ProductSkuRepository::buildRecord);
   }
 
   public static List<ProductSku> findAll(ProductSkuSpecification specification, DataConstraints constraints) {
@@ -105,12 +121,11 @@ public class ProductSkuRepository {
       return null;
     }
     SqlUtils select = new SqlUtils().add(ADDITIONAL_SELECT);
-    SqlJoins joins = new SqlJoins().add(JOIN);
     return (ProductSku) DB.selectRecordFrom(
         TABLE_NAME,
         select,
-        joins,
-        new SqlUtils().add("sku_id = ?", id),
+        DB.JOIN(JOIN),
+        DB.WHERE("sku_id = ?", id),
         ProductSkuRepository::buildRecord);
   }
 
@@ -119,15 +134,12 @@ public class ProductSkuRepository {
       return null;
     }
     SqlUtils select = new SqlUtils().add(ADDITIONAL_SELECT);
-    SqlJoins joins = new SqlJoins().add(JOIN);
-    SqlUtils where = new SqlUtils()
-        .add("product_skus.product_id = ?", productId);
 
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
         select,
-        joins,
-        where,
+        DB.JOIN(JOIN),
+        DB.WHERE("product_skus.product_id = ?", productId),
         null,
         new DataConstraints().setDefaultColumnToSortBy("sku_id").setUseCount(false),
         ProductSkuRepository::buildRecord);
@@ -156,11 +168,11 @@ public class ProductSkuRepository {
   }
 
   public static void remove(ProductSku record) {
-    DB.deleteFrom(TABLE_NAME, new SqlUtils().add("sku_id = ?", record.getId()));
+    DB.deleteFrom(TABLE_NAME, DB.WHERE("sku_id = ?", record.getId()));
   }
 
   public static void removeAll(Connection connection, Product product) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("product_id = ?", product.getId()));
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("product_id = ?", product.getId()));
   }
 
   public static ProductSku save(Connection connection, ProductSku record) throws SQLException {
@@ -240,9 +252,7 @@ public class ProductSkuRepository {
       // state is not being used, so set the value
       updateValues.add("inventory_qty", record.getInventoryQty(), 0);
     }
-    SqlUtils where = new SqlUtils()
-        .add("sku_id = ?", record.getId());
-    if (DB.update(connection, TABLE_NAME, updateValues, where)) {
+    if (DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("sku_id = ?", record.getId()))) {
       return record;
     }
     LOG.error("The update failed!");
@@ -275,9 +285,7 @@ public class ProductSkuRepository {
     SqlUtils updateValues = new SqlUtils()
         .add("square_variation_id", squareVariationId)
         .add("modified", new Timestamp(System.currentTimeMillis()));
-    SqlUtils where = new SqlUtils()
-        .add("sku_id = ?", productSkuId);
-    DB.update(TABLE_NAME, updateValues, where);
+    DB.update(TABLE_NAME, updateValues, DB.WHERE("sku_id = ?", productSkuId));
     return true;
   }
 
@@ -347,8 +355,14 @@ public class ProductSkuRepository {
   }
 
   public static void export(DataConstraints constraints, File file) {
-    SqlUtils selectFields = new SqlUtils()
-        .addNames(
+    // Use the specification to filter results
+    if (constraints == null) {
+      constraints = new DataConstraints();
+    }
+    constraints.setDefaultColumnToSortBy("sku");
+    DB.exportToCsvAllFrom(
+        TABLE_NAME,
+        DB.SELECT(
             "sku AS \"SKU\"",
             "products.name AS \"Name\"",
             "products.caption AS \"Caption\"",
@@ -358,14 +372,10 @@ public class ProductSkuRepository {
             "products.description AS \"Description\"",
             // "short_description AS \"ShortDescription\"",
             "barcode AS \"UPC\"",
-            "product_skus.enabled AS \"Enabled\"");
-    SqlJoins joins = new SqlJoins().add(JOIN);
-    SqlUtils where = new SqlUtils();
-    // Use the specification to filter results
-    if (constraints == null) {
-      constraints = new DataConstraints();
-    }
-    constraints.setDefaultColumnToSortBy("sku");
-    DB.exportToCsvAllFrom(TABLE_NAME, selectFields, joins, where, null, constraints, file);
+            "product_skus.enabled AS \"Enabled\""),
+        DB.JOIN(JOIN),
+        DB.WHERE(),
+        null,
+        constraints, file);
   }
 }

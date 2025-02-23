@@ -16,18 +16,23 @@
 
 package com.simisinc.platform.infrastructure.persistence.cms;
 
-import com.simisinc.platform.application.cms.HtmlCommand;
-import com.simisinc.platform.domain.model.cms.Content;
-import com.simisinc.platform.infrastructure.cache.CacheManager;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.application.cms.HtmlCommand;
+import com.simisinc.platform.domain.model.cms.Content;
+import com.simisinc.platform.infrastructure.cache.CacheManager;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves content objects
@@ -40,20 +45,22 @@ public class ContentRepository {
   private static Log LOG = LogFactory.getLog(ContentRepository.class);
 
   private static String TABLE_NAME = "content";
-  private static String[] PRIMARY_KEY = new String[]{"content_id"};
+  private static String[] PRIMARY_KEY = new String[] { "content_id" };
 
   private static DataResult query(ContentSpecification specification, DataConstraints constraints) {
     SqlUtils select = new SqlUtils();
-    SqlUtils where = null;
+    SqlWhere where = null;
     SqlUtils orderBy = null;
     if (specification != null) {
-      where = new SqlUtils()
-          .addIfExists("content_id = ?", specification.getId(), -1)
-          .addIfExists("content_unique_id = ?", specification.getUniqueId());
+      where = DB.WHERE()
+          .andAddIfHasValue("content_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("content_unique_id = ?", specification.getUniqueId());
       if (StringUtils.isNotBlank(specification.getSearchTerm())) {
-        select.add("ts_headline('english', content_text, websearch_to_tsquery('content_stem', ?), 'StartSel=${b}, StopSel=${/b}, MaxWords=30, MinWords=15, ShortWord=3, HighlightAll=FALSE, MaxFragments=2, FragmentDelimiter=\" ... \"') AS highlight", specification.getSearchTerm().trim());
+        select.add(
+            "ts_headline('english', content_text, websearch_to_tsquery('content_stem', ?), 'StartSel=${b}, StopSel=${/b}, MaxWords=30, MinWords=15, ShortWord=3, HighlightAll=FALSE, MaxFragments=2, FragmentDelimiter=\" ... \"') AS highlight",
+            specification.getSearchTerm().trim());
         select.add("ts_rank_cd(tsv, websearch_to_tsquery('content_stem', ?)) AS rank", specification.getSearchTerm().trim());
-        where.add("tsv @@ websearch_to_tsquery('content_stem', ?)", specification.getSearchTerm().trim());
+        where.AND("tsv @@ websearch_to_tsquery('content_stem', ?)", specification.getSearchTerm().trim());
         // Override the order by for rank first
         orderBy = new SqlUtils();
         orderBy.add("rank DESC, content_id");
@@ -68,8 +75,7 @@ public class ContentRepository {
     }
     return (Content) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("content_unique_id = ?", contentUniqueId),
+        DB.WHERE("content_unique_id = ?", contentUniqueId),
         ContentRepository::buildRecord);
   }
 
@@ -119,9 +125,9 @@ public class ContentRepository {
         .add("draft_content", StringUtils.trimToNull(record.getDraftContent()))
         .add("modified_by", record.getModifiedBy())
         .add("modified", new Timestamp(System.currentTimeMillis()));
-    SqlUtils where = new SqlUtils()
-        .add("content_unique_id = ?", StringUtils.trimToNull(record.getUniqueId()));
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME,
+        updateValues,
+        DB.WHERE("content_unique_id = ?", StringUtils.trimToNull(record.getUniqueId())))) {
       CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
     }
@@ -138,8 +144,10 @@ public class ContentRepository {
     updateValues.add("content = draft_content");
     updateValues.add("draft_content = null");
     updateValues.add("content_text", HtmlCommand.text(StringUtils.trimToNull(record.getContent())));
-    SqlUtils where = new SqlUtils().add("draft_content IS NOT NULL AND content_unique_id = ?", record.getUniqueId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(
+        TABLE_NAME,
+        updateValues,
+        DB.WHERE("draft_content IS NOT NULL AND content_unique_id = ?", record.getUniqueId()))) {
       CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
     }
   }
@@ -148,9 +156,11 @@ public class ContentRepository {
     if (record == null || StringUtils.isBlank(record.getUniqueId())) {
       return;
     }
-    String set = "draft_content = null";
-    SqlUtils where = new SqlUtils().add("content_unique_id = ?", record.getUniqueId());
-    if (DB.update(TABLE_NAME, set, where)) {
+    String updateValues = "draft_content = null";
+    if (DB.update(
+        TABLE_NAME,
+        updateValues,
+        DB.WHERE("content_unique_id = ?", record.getUniqueId()))) {
       CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
     }
   }

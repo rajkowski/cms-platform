@@ -16,18 +16,24 @@
 
 package com.simisinc.platform.infrastructure.persistence.cms;
 
-import com.simisinc.platform.application.cms.FormDataJSONCommand;
-import com.simisinc.platform.domain.model.cms.FormData;
-import com.simisinc.platform.infrastructure.database.*;
-import com.simisinc.platform.presentation.controller.DataConstants;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.application.cms.FormDataJSONCommand;
+import com.simisinc.platform.domain.model.cms.FormData;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlValue;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
+import com.simisinc.platform.presentation.controller.DataConstants;
 
 /**
  * Persists and retrieves form data objects
@@ -40,42 +46,42 @@ public class FormDataRepository {
   private static Log LOG = LogFactory.getLog(FormDataRepository.class);
 
   private static String TABLE_NAME = "form_data";
-  private static String[] PRIMARY_KEY = new String[]{"form_data_id"};
+  private static String[] PRIMARY_KEY = new String[] { "form_data_id" };
 
   private static DataResult query(FormDataSpecification specification, DataConstraints constraints) {
-    SqlUtils where = null;
+    SqlWhere where = null;
     if (specification != null) {
-      where = new SqlUtils()
-          .addIfExists("form_data_id = ?", specification.getId(), -1)
-          .addIfExists("form_unique_id = ?", specification.getFormUniqueId())
-          .addIfExists("session_id = ?", specification.getSessionId())
-          .addIfExists("claimed_by = ?", specification.getClaimedBy(), -1L);
+      where = DB.WHERE()
+          .andAddIfHasValue("form_data_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("form_unique_id = ?", specification.getFormUniqueId())
+          .andAddIfHasValue("session_id = ?", specification.getSessionId())
+          .andAddIfHasValue("claimed_by = ?", specification.getClaimedBy(), -1L);
       if (specification.getFlaggedAsSpam() != DataConstants.UNDEFINED) {
         if (specification.getFlaggedAsSpam() == DataConstants.TRUE) {
-          where.add("flagged_as_spam = true");
+          where.AND("flagged_as_spam = true");
         } else {
-          where.add("flagged_as_spam = false");
+          where.AND("flagged_as_spam = false");
         }
       }
       if (specification.getClaimed() != DataConstants.UNDEFINED) {
         if (specification.getClaimed() == DataConstants.TRUE) {
-          where.add("claimed IS NOT NULL");
+          where.AND("claimed IS NOT NULL");
         } else {
-          where.add("claimed IS NULL");
+          where.AND("claimed IS NULL");
         }
       }
       if (specification.getDismissed() != DataConstants.UNDEFINED) {
         if (specification.getDismissed() == DataConstants.TRUE) {
-          where.add("dismissed IS NOT NULL");
+          where.AND("dismissed IS NOT NULL");
         } else {
-          where.add("dismissed IS NULL");
+          where.AND("dismissed IS NULL");
         }
       }
       if (specification.getProcessed() != DataConstants.UNDEFINED) {
         if (specification.getProcessed() == DataConstants.TRUE) {
-          where.add("processed IS NOT NULL");
+          where.AND("processed IS NOT NULL");
         } else {
-          where.add("processed IS NULL");
+          where.AND("processed IS NULL");
         }
       }
     }
@@ -88,8 +94,7 @@ public class FormDataRepository {
     }
     return (FormData) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("form_data_id = ?", formDataId),
+        DB.WHERE("form_data_id = ?", formDataId),
         FormDataRepository::buildRecord);
   }
 
@@ -138,9 +143,7 @@ public class FormDataRepository {
     SqlUtils updateValues = new SqlUtils()
         .add("modified_by", record.getModifiedBy())
         .add("modified", new Timestamp(System.currentTimeMillis()));
-    SqlUtils where = new SqlUtils()
-        .add("form_data_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("form_data_id = ?", record.getId()))) {
       return record;
     }
     LOG.error("The update failed!");
@@ -152,9 +155,7 @@ public class FormDataRepository {
     SqlUtils updateValues = new SqlUtils()
         .add("dismissed", timestamp)
         .add("dismissed_by", userId);
-    SqlUtils where = new SqlUtils()
-        .add("form_data_id = ?", record.getId());
-    boolean updated = DB.update(TABLE_NAME, updateValues, where);
+    boolean updated = DB.update(TABLE_NAME, updateValues, DB.WHERE("form_data_id = ?", record.getId()));
     if (updated) {
       // Update the record for additional workflows
       record.setDismissed(timestamp);
@@ -168,10 +169,9 @@ public class FormDataRepository {
     SqlUtils updateValues = new SqlUtils()
         .add("claimed", timestamp)
         .add("claimed_by", userId);
-    SqlUtils where = new SqlUtils()
-        .add("form_data_id = ?", record.getId())
-        .add("claimed IS NULL");
-    boolean updated = DB.update(TABLE_NAME, updateValues, where);
+    boolean updated = DB.update(TABLE_NAME, updateValues,
+        DB.WHERE("form_data_id = ?", record.getId())
+            .AND("claimed IS NULL"));
     if (updated) {
       // Update the record for additional workflows
       record.setClaimed(timestamp);
@@ -190,9 +190,7 @@ public class FormDataRepository {
         .add("processed", timestamp)
         .add("processed_by", userId)
         .addIfExists("processed_system", system);
-    SqlUtils where = new SqlUtils()
-        .add("form_data_id = ?", record.getId());
-    boolean updated = DB.update(TABLE_NAME, updateValues, where);
+    boolean updated = DB.update(TABLE_NAME, updateValues, DB.WHERE("form_data_id = ?", record.getId()));
     if (updated) {
       // Update the record for additional workflows
       record.setProcessed(timestamp);

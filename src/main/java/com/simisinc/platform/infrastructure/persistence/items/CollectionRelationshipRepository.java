@@ -16,16 +16,20 @@
 
 package com.simisinc.platform.infrastructure.persistence.items;
 
-import com.simisinc.platform.domain.model.items.Collection;
-import com.simisinc.platform.domain.model.items.CollectionRelationship;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.items.Collection;
+import com.simisinc.platform.domain.model.items.CollectionRelationship;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves collection relationship objects
@@ -38,18 +42,16 @@ public class CollectionRelationshipRepository {
   private static Log LOG = LogFactory.getLog(CollectionRelationshipRepository.class);
 
   private static String TABLE_NAME = "collection_relationships";
-  private static String[] PRIMARY_KEY = new String[]{"relationship_id"};
+  private static String[] PRIMARY_KEY = new String[] { "relationship_id" };
 
   public static List<CollectionRelationship> findAllParentsByCollectionId(long collectionId) {
     if (collectionId == -1) {
       return null;
     }
-    SqlUtils where = new SqlUtils()
-        .add("related_collection_id = ?", collectionId)
-        .add("collection_id != related_collection_id");
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        where,
+        DB.WHERE("related_collection_id = ?", collectionId)
+            .AND("collection_id != related_collection_id"),
         new DataConstraints().setDefaultColumnToSortBy("relationship_id"),
         CollectionRelationshipRepository::buildRecord);
     if (result.hasRecords()) {
@@ -62,12 +64,10 @@ public class CollectionRelationshipRepository {
     if (collectionId == -1) {
       return null;
     }
-    SqlUtils where = new SqlUtils()
-        .add("collection_id = ?", collectionId)
-        .add("related_collection_id = ?", collectionId);
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        where,
+        DB.WHERE("collection_id = ?", collectionId)
+            .AND("related_collection_id = ?", collectionId),
         new DataConstraints().setDefaultColumnToSortBy("relationship_id"),
         CollectionRelationshipRepository::buildRecord);
     if (result.hasRecords()) {
@@ -80,12 +80,10 @@ public class CollectionRelationshipRepository {
     if (collectionId == -1) {
       return null;
     }
-    SqlUtils where = new SqlUtils()
-        .add("collection_id = ?", collectionId)
-        .add("collection_id != related_collection_id");
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        where,
+        DB.WHERE("collection_id = ?", collectionId)
+            .AND("collection_id != related_collection_id"),
         new DataConstraints().setDefaultColumnToSortBy("relationship_id"),
         CollectionRelationshipRepository::buildRecord);
     if (result.hasRecords()) {
@@ -100,7 +98,7 @@ public class CollectionRelationshipRepository {
     }
     CollectionRelationship relationship = (CollectionRelationship) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("relationship_id = ?", relationshipId),
+        DB.WHERE("relationship_id = ?", relationshipId),
         CollectionRelationshipRepository::buildRecord);
     return relationship;
   }
@@ -131,9 +129,7 @@ public class CollectionRelationshipRepository {
     SqlUtils updateValues = new SqlUtils()
         .add("is_active", record.getIsActive())
         .add("modified_by", record.getModifiedBy());
-    SqlUtils where = new SqlUtils()
-        .add("relationship_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("relationship_id = ?", record.getId()))) {
       return record;
     }
     LOG.error("The update failed!");
@@ -141,16 +137,16 @@ public class CollectionRelationshipRepository {
   }
 
   public static void remove(CollectionRelationship collectionRelationship) {
-    DB.deleteFrom(TABLE_NAME, new SqlUtils().add("relationship_id = ?", collectionRelationship.getId()));
+    DB.deleteFrom(TABLE_NAME, DB.WHERE("relationship_id = ?", collectionRelationship.getId()));
   }
 
   public static void remove(Connection connection, CollectionRelationship collectionRelationship) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("relationship_id = ?", collectionRelationship.getId()));
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("relationship_id = ?", collectionRelationship.getId()));
   }
 
   public static void removeAll(Connection connection, Collection collection) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("collection_id = ?", collection.getId()));
-    DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("related_collection_id = ?", collection.getId()));
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("collection_id = ?", collection.getId()));
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("related_collection_id = ?", collection.getId()));
   }
 
   private static CollectionRelationship buildRecord(ResultSet rs) {

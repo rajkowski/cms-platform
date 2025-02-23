@@ -45,7 +45,8 @@ public class LockManager {
     SqlUtils insertValues = new SqlUtils()
         .add("name", name)
         .add(new SqlValue("locked_at", SqlValue.AS_IS, "CURRENT_TIMESTAMP"))
-        .add(new SqlValue("lock_until", SqlValue.AS_IS, "CURRENT_TIMESTAMP - INTERVAL '10 SECONDS' + INTERVAL '" + duration.toString() + "'"))
+        .add(new SqlValue("lock_until", SqlValue.AS_IS,
+            "CURRENT_TIMESTAMP - INTERVAL '10 SECONDS' + INTERVAL '" + duration.toString() + "'"))
         .add("uuid", uuid);
 
     String onConflict = "ON CONFLICT (name) " +
@@ -66,11 +67,9 @@ public class LockManager {
     // Expire right away
     SqlUtils updateValues = new SqlUtils()
         .add(new SqlValue("lock_until", SqlValue.AS_IS, "CURRENT_TIMESTAMP"));
-
-    SqlUtils where = new SqlUtils()
-        .add("name = ?", name)
-        .add("uuid = ?", uuid);
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues,
+        DB.WHERE("name = ?", name)
+            .AND("uuid = ?", uuid))) {
       return true;
     }
     return false;

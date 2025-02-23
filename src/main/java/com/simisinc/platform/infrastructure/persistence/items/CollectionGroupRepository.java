@@ -16,18 +16,22 @@
 
 package com.simisinc.platform.infrastructure.persistence.items;
 
-import com.simisinc.platform.domain.model.Group;
-import com.simisinc.platform.domain.model.items.Collection;
-import com.simisinc.platform.domain.model.items.CollectionGroup;
-import com.simisinc.platform.domain.model.items.PrivacyType;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.Group;
+import com.simisinc.platform.domain.model.items.Collection;
+import com.simisinc.platform.domain.model.items.CollectionGroup;
+import com.simisinc.platform.domain.model.items.PrivacyType;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves collection group objects
@@ -40,17 +44,15 @@ public class CollectionGroupRepository {
   private static Log LOG = LogFactory.getLog(CollectionGroupRepository.class);
 
   private static String TABLE_NAME = "collection_groups";
-  private static String[] PRIMARY_KEY = new String[]{"allowed_id"};
+  private static String[] PRIMARY_KEY = new String[] { "allowed_id" };
 
   public static List<CollectionGroup> findAllByCollectionId(long collectionId) {
     if (collectionId == -1) {
       return null;
     }
-    SqlUtils where = new SqlUtils()
-        .add("collection_id = ?", collectionId);
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        where,
+        DB.WHERE("collection_id = ?", collectionId),
         new DataConstraints().setDefaultColumnToSortBy("allowed_id").setUseCount(false),
         CollectionGroupRepository::buildRecord);
     if (result.hasRecords()) {
@@ -101,18 +103,17 @@ public class CollectionGroupRepository {
           .add("view_all", allowedGroup.getPrivacyType() != PrivacyType.PRIVATE)
           .add("add_permission", allowedGroup.getAddPermission())
           .add("edit_permission", allowedGroup.getEditPermission())
-          .add("delete_permission", allowedGroup.getDeletePermission())
-      ;
+          .add("delete_permission", allowedGroup.getDeletePermission());
       DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY);
     }
   }
 
   public static void removeAll(Connection connection, Collection collection) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("collection_id = ?", collection.getId()));
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("collection_id = ?", collection.getId()));
   }
 
   public static void removeAll(Connection connection, Group group) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("group_id = ?", group.getId()));
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("group_id = ?", group.getId()));
   }
 
   private static CollectionGroup buildRecord(ResultSet rs) {

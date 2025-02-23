@@ -16,15 +16,26 @@
 
 package com.simisinc.platform.infrastructure.persistence.items;
 
-import com.simisinc.platform.domain.model.items.Category;
-import com.simisinc.platform.domain.model.items.Collection;
-import com.simisinc.platform.infrastructure.database.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.sql.*;
-import java.util.List;
+import com.simisinc.platform.domain.model.items.Category;
+import com.simisinc.platform.domain.model.items.Collection;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves category objects
@@ -45,8 +56,7 @@ public class CategoryRepository {
     }
     return (Category) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("category_id = ?", id),
+        DB.WHERE("category_id = ?", id),
         CategoryRepository::buildRecord);
   }
 
@@ -56,9 +66,8 @@ public class CategoryRepository {
     }
     return (Category) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("collection_id = ?", collectionId)
-            .add("unique_id = ?", uniqueId),
+        DB.WHERE("collection_id = ?", collectionId)
+            .AND("unique_id = ?", uniqueId),
         CategoryRepository::buildRecord);
   }
 
@@ -71,9 +80,8 @@ public class CategoryRepository {
     }
     return (Category) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("collection_id = ?", collectionId)
-            .add("LOWER(name) = ?", name.trim().toLowerCase()),
+        DB.WHERE("collection_id = ?", collectionId)
+            .AND("LOWER(name) = ?", name.trim().toLowerCase()),
         CategoryRepository::buildRecord);
   }
 
@@ -81,12 +89,9 @@ public class CategoryRepository {
     if (itemId == -1) {
       return null;
     }
-    SqlUtils where = new SqlUtils()
-        .add("EXISTS (SELECT 1 FROM item_categories WHERE category_id = categories.category_id AND item_id = ?)",
-            itemId);
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        where,
+        DB.WHERE("EXISTS (SELECT 1 FROM item_categories WHERE category_id = categories.category_id AND item_id = ?)", itemId),
         new DataConstraints().setDefaultColumnToSortBy("name").setUseCount(false),
         CategoryRepository::buildRecord);
     return (List<Category>) result.getRecords();
@@ -100,10 +105,9 @@ public class CategoryRepository {
     if (collectionId == -1) {
       return null;
     }
-    SqlUtils where = new SqlUtils();
-    where.add("collection_id = ?", collectionId);
+    SqlWhere where = DB.WHERE("collection_id = ?", collectionId);
     if (basedOnItems) {
-      where.add("item_count > 0");
+      where.AND("item_count > 0");
       //      where.add("EXISTS (SELECT 1 FROM items WHERE category_id = items.category_id AND collection_id = ?)", collectionId);
     }
     DataResult result = DB.selectAllFrom(
@@ -142,7 +146,7 @@ public class CategoryRepository {
       // Update pointers
       CollectionRepository.updateCategoryCount(connection, record.getCollectionId(), -1);
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("category_id = ?", record.getId()));
+      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("category_id = ?", record.getId()));
       // Finish transaction
       transaction.commit();
       return true;
@@ -153,7 +157,7 @@ public class CategoryRepository {
   }
 
   public static void removeAll(Connection connection, Collection record) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("collection_id = ?", record.getId()));
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("collection_id = ?", record.getId()));
   }
 
   private static Category insert(Category record) {
@@ -193,9 +197,7 @@ public class CategoryRepository {
         .add("header_bg_color", StringUtils.trimToNull(record.getHeaderBgColor()))
         .add("item_url_text", StringUtils.trimToNull(record.getItemUrlText()))
         .add("modified", new Timestamp(System.currentTimeMillis()));
-    SqlUtils where = new SqlUtils()
-        .add("category_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("category_id = ?", record.getId()))) {
       return record;
     }
     LOG.error("The update failed!");

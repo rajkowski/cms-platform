@@ -50,11 +50,9 @@ public class UserGroupRepository {
     if (userId == -1) {
       return null;
     }
-    SqlUtils where = new SqlUtils()
-        .add("user_id = ?", userId);
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        where,
+        DB.WHERE("user_id = ?", userId),
         new DataConstraints().setDefaultColumnToSortBy("user_group_id").setUseCount(false),
         UserGroupRepository::buildRecord);
     if (result.hasRecords()) {
@@ -112,11 +110,11 @@ public class UserGroupRepository {
     // For each group the user is in, adjust the group count
     GroupRepository.removeUserCount(connection, user);
     // Delete the records
-    return DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("user_id = ?", user.getId()));
+    return DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("user_id = ?", user.getId()));
   }
 
   public static void remove(Connection connection, Group group) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("group_id = ?", group.getId()));
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("group_id = ?", group.getId()));
   }
 
   private static UserGroup buildRecord(ResultSet rs) {

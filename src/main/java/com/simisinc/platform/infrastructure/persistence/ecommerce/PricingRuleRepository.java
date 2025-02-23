@@ -16,12 +16,7 @@
 
 package com.simisinc.platform.infrastructure.persistence.ecommerce;
 
-import com.simisinc.platform.domain.model.ecommerce.PricingRule;
-import com.simisinc.platform.infrastructure.database.*;
-import com.simisinc.platform.presentation.controller.DataConstants;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import static java.util.stream.Collectors.toList;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -32,7 +27,19 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.toList;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.ecommerce.PricingRule;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
+import com.simisinc.platform.presentation.controller.DataConstants;
 
 /**
  * Persists and retrieves pricing rule objects
@@ -48,28 +55,28 @@ public class PricingRuleRepository {
   private static String[] PRIMARY_KEY = new String[] { "rule_id" };
 
   private static DataResult query(PricingRuleSpecification specification, DataConstraints constraints) {
-    SqlUtils where = null;
+    SqlWhere where = null;
     if (specification != null) {
-      where = new SqlUtils();
+      where = DB.WHERE();
       if (StringUtils.isNotBlank(specification.getCountryCode())) {
-        where.add("valid_country_code IS NULL OR valid_country_code = ?", specification.getCountryCode());
+        where.AND("valid_country_code IS NULL OR valid_country_code = ?", specification.getCountryCode());
       }
       if (StringUtils.isNotBlank(specification.getPromoCode())) {
-        where.add("upper(promo_code) = ?", specification.getPromoCode().toUpperCase());
+        where.AND("upper(promo_code) = ?", specification.getPromoCode().toUpperCase());
       }
       if (specification.getEnabled() != DataConstants.UNDEFINED) {
-        where.add("enabled = ?", specification.getEnabled() == DataConstants.TRUE);
+        where.AND("enabled = ?", specification.getEnabled() == DataConstants.TRUE);
       }
       if (specification.getIsValidToday() == DataConstants.TRUE) {
-        where.add("(from_date IS NULL OR from_date <= CURRENT_TIMESTAMP)");
-        where.add("(to_date IS NULL OR to_date > CURRENT_TIMESTAMP)");
+        where.AND("(from_date IS NULL OR from_date <= CURRENT_TIMESTAMP)");
+        where.AND("(to_date IS NULL OR to_date > CURRENT_TIMESTAMP)");
       }
       if (specification.getHasPromoCode() != DataConstants.UNDEFINED) {
-        where.add("promo_code IS NULL OR promo_code = ''");
+        where.AND("promo_code IS NULL OR promo_code = ''");
       }
       if (StringUtils.isNotBlank(specification.getIncludesSku())) {
         // @todo use a JSON field type to improve accuracy
-        where.add("LOWER(valid_skus) LIKE LOWER(?) ESCAPE '!'", "%" + specification.getIncludesSku().toLowerCase() + "%");
+        where.AND("LOWER(valid_skus) LIKE LOWER(?) ESCAPE '!'", "%" + specification.getIncludesSku().toLowerCase() + "%");
       }
     }
     return DB.selectAllFrom(TABLE_NAME, where, constraints, PricingRuleRepository::buildRecord);
@@ -107,7 +114,7 @@ public class PricingRuleRepository {
   public static PricingRule findById(long ruleId) {
     return (PricingRule) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("rule_id = ?", ruleId),
+        DB.WHERE("rule_id = ?", ruleId),
         PricingRuleRepository::buildRecord);
   }
 
@@ -189,9 +196,7 @@ public class PricingRuleRepository {
         .add("valid_country_code", record.getCountryCode())
         .add("modified_by", record.getModifiedBy(), -1)
         .add("modified", new Timestamp(System.currentTimeMillis()));
-    SqlUtils where = new SqlUtils()
-        .add("rule_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("rule_id = ?", record.getId()))) {
       //      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
     }

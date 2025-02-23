@@ -16,21 +16,29 @@
 
 package com.simisinc.platform.infrastructure.persistence;
 
-import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
-import com.simisinc.platform.domain.model.Session;
-import com.simisinc.platform.domain.model.Visitor;
-import com.simisinc.platform.domain.model.dashboard.StatisticsData;
-import com.simisinc.platform.infrastructure.database.*;
-import com.simisinc.platform.presentation.controller.UserSession;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
+import com.simisinc.platform.domain.model.Session;
+import com.simisinc.platform.domain.model.Visitor;
+import com.simisinc.platform.domain.model.dashboard.StatisticsData;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.presentation.controller.UserSession;
 
 /**
  * Persists and retrieves session objects
@@ -43,7 +51,7 @@ public class SessionRepository {
   private static Log LOG = LogFactory.getLog(SessionRepository.class);
 
   private static String TABLE_NAME = "sessions";
-  private static String[] PRIMARY_KEY = new String[]{"id"};
+  private static String[] PRIMARY_KEY = new String[] { "id" };
 
   public static Session findBySessionId(long sessionId) {
     if (sessionId == -1) {
@@ -51,8 +59,7 @@ public class SessionRepository {
     }
     return (Session) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("session_id = ?", sessionId),
+        DB.WHERE("session_id = ?", sessionId),
         SessionRepository::buildRecord);
   }
 
@@ -69,18 +76,17 @@ public class SessionRepository {
   }
 
   public static List<Session> findDailyUniqueLocations(int daysToLimit) {
-    String SQL_QUERY =
-        "SELECT DISTINCT continent, country, state, city, latitude, longitude " +
-            "FROM sessions " +
-            "WHERE country IS NOT NULL " +
-            "AND created > NOW() - INTERVAL '" + daysToLimit + " days' " +
-            "AND latitude IS NOT NULL " +
-            "AND is_bot = false " +
-            "ORDER BY continent, country, state, city, latitude, longitude";
+    String SQL_QUERY = "SELECT DISTINCT continent, country, state, city, latitude, longitude " +
+        "FROM sessions " +
+        "WHERE country IS NOT NULL " +
+        "AND created > NOW() - INTERVAL '" + daysToLimit + " days' " +
+        "AND latitude IS NOT NULL " +
+        "AND is_bot = false " +
+        "ORDER BY continent, country, state, city, latitude, longitude";
     List<Session> records = null;
     try (Connection connection = DB.getConnection();
-         PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
-         ResultSet rs = pst.executeQuery()) {
+        PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
+        ResultSet rs = pst.executeQuery()) {
       records = new ArrayList<>();
       while (rs.next()) {
         Session data = new Session();
@@ -100,11 +106,11 @@ public class SessionRepository {
 
   public static long countDistinctSessions(Timestamp startDate, Timestamp endDate) {
     // Query the data, skip some things
-    SqlUtils where = new SqlUtils()
-        .add("created >= ?", startDate)
-        .add("created < ?", endDate)
-        .add("is_bot = ?", false);
-    return DB.selectCountFrom(TABLE_NAME, where);
+    return DB.selectCountFrom(
+        TABLE_NAME,
+        DB.WHERE("created >= ?", startDate)
+            .AND("created < ?", endDate)
+            .AND("is_bot = ?", false));
   }
 
   public static long countSessionsToday() {
@@ -113,13 +119,12 @@ public class SessionRepository {
     String today = new SimpleDateFormat("yyyy-MM-dd").format(timestamp);
 
     long count = -1;
-    String SQL_QUERY =
-        "SELECT unique_sessions AS session_count " +
-            "FROM web_page_hit_snapshots " +
-            "WHERE date_value = '" + today + "'";
+    String SQL_QUERY = "SELECT unique_sessions AS session_count " +
+        "FROM web_page_hit_snapshots " +
+        "WHERE date_value = '" + today + "'";
     try (Connection connection = DB.getConnection();
-         PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
-         ResultSet rs = pst.executeQuery()) {
+        PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
+        ResultSet rs = pst.executeQuery()) {
       if (rs.next()) {
         count = rs.getLong("session_count");
       }
@@ -131,14 +136,13 @@ public class SessionRepository {
 
   public static long countOnlineNow() {
     long count = -1;
-    String SQL_QUERY =
-        "SELECT COUNT(DISTINCT(session_id)) AS session_count " +
-            "FROM web_page_hits " +
-            "WHERE hit_date > NOW() - INTERVAL '20 minutes' " +
-            "AND NOT EXISTS (SELECT 1 FROM sessions WHERE session_id = web_page_hits.session_id AND is_bot = TRUE)";
+    String SQL_QUERY = "SELECT COUNT(DISTINCT(session_id)) AS session_count " +
+        "FROM web_page_hits " +
+        "WHERE hit_date > NOW() - INTERVAL '20 minutes' " +
+        "AND NOT EXISTS (SELECT 1 FROM sessions WHERE session_id = web_page_hits.session_id AND is_bot = TRUE)";
     try (Connection connection = DB.getConnection();
-         PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
-         ResultSet rs = pst.executeQuery()) {
+        PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
+        ResultSet rs = pst.executeQuery()) {
       if (rs.next()) {
         count = rs.getLong("session_count");
       }
@@ -148,7 +152,8 @@ public class SessionRepository {
     return count;
   }
 
-  private static PreparedStatement createPreparedStatementTopReferrals(Connection connection, int value, char intervalType, int recordLimit) throws SQLException {
+  private static PreparedStatement createPreparedStatementTopReferrals(Connection connection, int value, char intervalType,
+      int recordLimit) throws SQLException {
 
     // Filter out the site to remove self-referrals
     // Handles: http://[www.], https://[www.], [www.]
@@ -182,27 +187,24 @@ public class SessionRepository {
       siteUrl6 = siteUrl4.substring(siteUrl4.indexOf("://") + 3);
     }
 
-    String SQL_QUERY =
-        "SELECT referer, count(referer) AS referer_count " +
-            "FROM sessions " +
-            "WHERE created > NOW() - INTERVAL '" + value + " " +
-            (intervalType == 'y' ? "years" :
-                (intervalType == 'm' ? "months" :
-                    (intervalType == 'w' ? "weeks" :
-                        (intervalType == 'h' ? "hours" :
-                            "days")))) +
-            "' " +
-            "AND LOWER(referer) NOT LIKE 'http://localhost%' " +
-            "AND LOWER(referer) NOT LIKE LOWER(?) " +
-            "AND LOWER(referer) NOT LIKE LOWER(?) " +
-            "AND LOWER(referer) NOT LIKE LOWER(?) " +
-            "AND LOWER(referer) NOT LIKE LOWER(?) " +
-            "AND LOWER(referer) NOT LIKE LOWER(?) " +
-            "AND LOWER(referer) NOT LIKE LOWER(?) " +
-            "AND is_bot = false " +
-            "GROUP BY referer " +
-            "ORDER BY referer_count desc " +
-            "LIMIT " + recordLimit;
+    String SQL_QUERY = "SELECT referer, count(referer) AS referer_count " +
+        "FROM sessions " +
+        "WHERE created > NOW() - INTERVAL '" + value + " " +
+        (intervalType == 'y' ? "years"
+            : (intervalType == 'm' ? "months" : (intervalType == 'w' ? "weeks" : (intervalType == 'h' ? "hours" : "days"))))
+        +
+        "' " +
+        "AND LOWER(referer) NOT LIKE 'http://localhost%' " +
+        "AND LOWER(referer) NOT LIKE LOWER(?) " +
+        "AND LOWER(referer) NOT LIKE LOWER(?) " +
+        "AND LOWER(referer) NOT LIKE LOWER(?) " +
+        "AND LOWER(referer) NOT LIKE LOWER(?) " +
+        "AND LOWER(referer) NOT LIKE LOWER(?) " +
+        "AND LOWER(referer) NOT LIKE LOWER(?) " +
+        "AND is_bot = false " +
+        "GROUP BY referer " +
+        "ORDER BY referer_count desc " +
+        "LIMIT " + recordLimit;
     PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
     pst.setString(1, siteUrl + "%");
     pst.setString(2, siteUrl2 + "%");
@@ -216,8 +218,8 @@ public class SessionRepository {
   public static List<StatisticsData> findTopReferrals(int value, char intervalType, int recordLimit) {
     List<StatisticsData> records = null;
     try (Connection connection = DB.getConnection();
-         PreparedStatement pst = createPreparedStatementTopReferrals(connection, value, intervalType, recordLimit);
-         ResultSet rs = pst.executeQuery()) {
+        PreparedStatement pst = createPreparedStatementTopReferrals(connection, value, intervalType, recordLimit);
+        ResultSet rs = pst.executeQuery()) {
       records = new ArrayList<>();
       while (rs.next()) {
         StatisticsData data = new StatisticsData();
@@ -269,18 +271,19 @@ public class SessionRepository {
     if (record.getId() == -1 || record.getSessionId() == null) {
       return;
     }
-    SqlUtils set = new SqlUtils().add("visitor_id", record.getId());
-    SqlUtils where = new SqlUtils().add("session_id = ?", record.getSessionId());
-    DB.update(connection, TABLE_NAME, set, where);
+    SqlUtils setValues = new SqlUtils().add("visitor_id", record.getId());
+    DB.update(connection,
+        TABLE_NAME,
+        setValues,
+        DB.WHERE("session_id = ?", record.getSessionId()));
   }
 
   public static void updateVisitorId(UserSession userSession, Visitor visitor) {
     if (userSession == null || userSession.getSessionId() == null || visitor == null || visitor.getId() == -1) {
       return;
     }
-    SqlUtils set = new SqlUtils().add("visitor_id", visitor.getId());
-    SqlUtils where = new SqlUtils().add("session_id = ?", userSession.getSessionId());
-    DB.update(TABLE_NAME, set, where);
+    SqlUtils setValues = new SqlUtils().add("visitor_id", visitor.getId());
+    DB.update(TABLE_NAME, setValues, DB.WHERE("session_id = ?", userSession.getSessionId()));
   }
 
   private static Session buildRecord(ResultSet rs) {

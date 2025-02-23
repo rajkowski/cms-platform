@@ -16,17 +16,25 @@
 
 package com.simisinc.platform.infrastructure.persistence.medicine;
 
-import com.simisinc.platform.domain.model.medicine.Medicine;
-import com.simisinc.platform.domain.model.medicine.MedicineLog;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.medicine.Medicine;
+import com.simisinc.platform.domain.model.medicine.MedicineLog;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlJoins;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves medicine log objects
@@ -43,20 +51,20 @@ public class MedicineLogRepository {
 
   private static DataResult query(MedicineLogSpecification specification, DataConstraints constraints) {
     SqlJoins joins = new SqlJoins();
-    SqlUtils where = null;
+    SqlWhere where = null;
     if (specification != null) {
 
       joins.add("LEFT JOIN medicines medicines ON (medicine_log.medicine_id = medicines.medicine_id)");
 
-      where = new SqlUtils()
-          .addIfExists("log_id = ?", specification.getId(), -1)
-          .addIfExists("medicine_log.individual_id = ?", specification.getIndividualId(), -1)
-          .addIfExists("medicine_log.medicine_id = ?", specification.getMedicineId(), -1);
+      where = DB.WHERE()
+          .andAddIfHasValue("log_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("medicine_log.individual_id = ?", specification.getIndividualId(), -1)
+          .andAddIfHasValue("medicine_log.medicine_id = ?", specification.getMedicineId(), -1);
       if (specification.getMinDate() != null) {
-        where.add("administered >= ?", specification.getMinDate());
+        where.AND("administered >= ?", specification.getMinDate());
       }
       if (specification.getMaxDate() != null) {
-        where.add("administered < ?", specification.getMaxDate());
+        where.AND("administered < ?", specification.getMaxDate());
       }
       if (specification.getIndividualsList() != null && !specification.getIndividualsList().isEmpty()) {
         StringBuilder sb = new StringBuilder();
@@ -66,7 +74,7 @@ public class MedicineLogRepository {
           }
           sb.append(id);
         }
-        where.add("medicine_log.individual_id IN (" + sb.toString() + ")");
+        where.AND("medicine_log.individual_id IN (" + sb.toString() + ")");
       }
     }
     return DB.selectAllFrom(TABLE_NAME, joins, where, constraints, MedicineLogRepository::buildRecord);
@@ -86,7 +94,8 @@ public class MedicineLogRepository {
       return null;
     }
     return (MedicineLog) DB.selectRecordFrom(
-        TABLE_NAME, new SqlUtils().add("log_id = ?", id),
+        TABLE_NAME,
+        DB.WHERE("log_id = ?", id),
         MedicineLogRepository::buildRecord);
   }
 
@@ -159,15 +168,14 @@ public class MedicineLogRepository {
   }
 
   public static void removeAll(Connection connection, Medicine record) throws SQLException {
-    SqlUtils where = new SqlUtils();
-    where.add("medicine_id = ?", record.getId());
-    DB.deleteFrom(connection, TABLE_NAME, where);
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("medicine_id = ?", record.getId()));
   }
 
   public static void removeReferences(Connection connection, Medicine record) throws SQLException {
-    SqlUtils update = new SqlUtils().add("reminder_id", -1L, -1L);
-    SqlUtils where = new SqlUtils().add("medicine_id = ?", record.getId());
-    DB.update(connection, TABLE_NAME, update, where);
+    DB.update(connection,
+        TABLE_NAME,
+        new SqlUtils().add("reminder_id", -1L, -1L),
+        DB.WHERE("medicine_id = ?", record.getId()));
   }
 
   public static boolean remove(MedicineLog record) {
@@ -177,7 +185,7 @@ public class MedicineLogRepository {
           AutoRollback transaction = new AutoRollback(connection)) {
         // Delete the references
         // Delete the record
-        DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("log_id = ?", record.getId()));
+        DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("log_id = ?", record.getId()));
         // Finish transaction
         transaction.commit();
         return true;

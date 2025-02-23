@@ -16,18 +16,24 @@
 
 package com.simisinc.platform.infrastructure.persistence.cms;
 
-import com.simisinc.platform.domain.model.dashboard.StatisticsData;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.persistence.SessionRepository;
-import com.simisinc.platform.domain.model.cms.WebPageHit;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.cms.WebPageHit;
+import com.simisinc.platform.domain.model.dashboard.StatisticsData;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
+import com.simisinc.platform.infrastructure.persistence.SessionRepository;
 
 /**
  * Persists and retrieves web page hit objects
@@ -90,14 +96,14 @@ public class WebPageHitRepository {
     String startDateValue = new SimpleDateFormat("yyyy-MM-dd").format(startDate);
 
     // Query the data, skip some things
-    SqlUtils where = new SqlUtils()
-        .add("hit_date >= ?", startDate)
-        .add("hit_date < ?", endDate)
-        .add("page_path NOT LIKE ?", "/admin%")
-        .add("page_path NOT LIKE ?", "/assets%")
-        .add("page_path NOT LIKE ?", "/json%")
-        .add("page_path NOT LIKE ?", "%/*")
-        .add("NOT EXISTS (SELECT 1 FROM sessions WHERE session_id = web_page_hits.session_id AND is_bot = TRUE)");
+    SqlWhere where = DB.WHERE()
+        .AND("hit_date >= ?", startDate)
+        .AND("hit_date < ?", endDate)
+        .AND("page_path NOT LIKE ?", "/admin%")
+        .AND("page_path NOT LIKE ?", "/assets%")
+        .AND("page_path NOT LIKE ?", "/json%")
+        .AND("page_path NOT LIKE ?", "%/*")
+        .AND("NOT EXISTS (SELECT 1 FROM sessions WHERE session_id = web_page_hits.session_id AND is_bot = TRUE)");
     long webPageHitCount = DB.selectCountFrom(TABLE_NAME, where);
 
     long uniqueSessionCount = SessionRepository.countDistinctSessions(startDate, endDate);
@@ -118,7 +124,7 @@ public class WebPageHitRepository {
   }
 
   public static void deleteOldWebHits() {
-    DB.deleteFrom(TABLE_NAME, new SqlUtils().add("hit_date < NOW() - INTERVAL '365 days'"));
+    DB.deleteFrom(TABLE_NAME, DB.WHERE("hit_date < NOW() - INTERVAL '365 days'"));
   }
 
   public static List<StatisticsData> findDailyWebHits(int daysToLimit) {

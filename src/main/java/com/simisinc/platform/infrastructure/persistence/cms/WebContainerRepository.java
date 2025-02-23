@@ -16,16 +16,20 @@
 
 package com.simisinc.platform.infrastructure.persistence.cms;
 
-import com.simisinc.platform.domain.model.cms.WebContainer;
-import com.simisinc.platform.infrastructure.cache.CacheManager;
-import com.simisinc.platform.infrastructure.database.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.List;
+import com.simisinc.platform.domain.model.cms.WebContainer;
+import com.simisinc.platform.infrastructure.cache.CacheManager;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves web container objects
@@ -38,7 +42,7 @@ public class WebContainerRepository {
   private static Log LOG = LogFactory.getLog(WebContainerRepository.class);
 
   private static String TABLE_NAME = "web_containers";
-  private static String[] PRIMARY_KEY = new String[]{"container_id"};
+  private static String[] PRIMARY_KEY = new String[] { "container_id" };
 
   public static WebContainer findById(long id) {
     if (id == -1) {
@@ -46,7 +50,7 @@ public class WebContainerRepository {
     }
     return (WebContainer) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("container_id = ?", id),
+        DB.WHERE("container_id = ?", id),
         WebContainerRepository::buildRecord);
   }
 
@@ -56,14 +60,14 @@ public class WebContainerRepository {
     }
     return (WebContainer) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("container_name = ?", name),
+        DB.WHERE("container_name = ?", name),
         WebContainerRepository::buildRecord);
   }
 
   public static List<WebContainer> findAllByPrefix(String prefix) {
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        new SqlUtils().add("container_name LIKE ?", prefix + ".%"),
+        DB.WHERE("container_name LIKE ?", prefix + ".%"),
         new DataConstraints().setDefaultColumnToSortBy("container_name").setUseCount(false),
         WebContainerRepository::buildRecord);
     if (result.hasRecords()) {
@@ -115,9 +119,7 @@ public class WebContainerRepository {
         .add("draft", record.getDraft())
         .add("container_xml", StringUtils.trimToNull(record.getContainerXml()))
         .add("draft_xml", StringUtils.trimToNull(record.getDraftXml()));
-    SqlUtils where = new SqlUtils()
-        .add("container_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("container_id = ?", record.getId()))) {
       // Invalidate the cache
       if (record.getName().startsWith("header")) {
         CacheManager.invalidateObjectCacheKey(CacheManager.WEBSITE_HEADER);

@@ -16,15 +16,20 @@
 
 package com.simisinc.platform.infrastructure.persistence.ecommerce;
 
-import com.simisinc.platform.domain.model.ecommerce.USSalesTaxRate;
-import com.simisinc.platform.infrastructure.database.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.List;
+import com.simisinc.platform.domain.model.ecommerce.USSalesTaxRate;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves US sales tax rates objects
@@ -40,18 +45,18 @@ public class USSalesTaxRatesRepository {
 
   private static DataResult query(USSalesTaxRatesSpecification specification, DataConstraints constraints) {
     SqlUtils select = new SqlUtils();
-    SqlUtils where = new SqlUtils();
+    SqlWhere where = DB.WHERE();
     SqlUtils orderBy = new SqlUtils();
     if (specification != null) {
       if (specification.getStateAbbreviation() != null) {
-        where.add("state = ?", specification.getStateAbbreviation().toUpperCase());
+        where.AND("state = ?", specification.getStateAbbreviation().toUpperCase());
       }
       if (specification.getZipCode() != null) {
         String zipCode = specification.getZipCode();
         if (zipCode.length() > 5) {
           zipCode = zipCode.substring(0, 5);
         }
-        where.add("zip_code = ?", zipCode);
+        where.AND("zip_code = ?", zipCode);
       }
     }
     return DB.selectAllFrom(
@@ -74,14 +79,13 @@ public class USSalesTaxRatesRepository {
     if (StringUtils.isBlank(zipCode)) {
       return null;
     }
-    SqlUtils where = new SqlUtils();
-    where.add("state = ?", state.toUpperCase());
     if (zipCode.length() > 5) {
       zipCode = zipCode.substring(0, 5);
     }
-    where.add("zip_code = ?", zipCode);
     return (USSalesTaxRate) DB.selectRecordFrom(
-        TABLE_NAME, where,
+        TABLE_NAME,
+        DB.WHERE("state = ?", state.toUpperCase())
+            .AND("zip_code = ?", zipCode),
         USSalesTaxRatesRepository::buildRecord);
   }
 
@@ -89,10 +93,9 @@ public class USSalesTaxRatesRepository {
     if (StringUtils.isBlank(state)) {
       return null;
     }
-    SqlUtils where = new SqlUtils();
-    where.add("state = ?", state.toUpperCase());
     return (USSalesTaxRate) DB.selectRecordFrom(
-        TABLE_NAME, where,
+        TABLE_NAME,
+        DB.WHERE("state = ?", state.toUpperCase()),
         USSalesTaxRatesRepository::buildRecord);
   }
 

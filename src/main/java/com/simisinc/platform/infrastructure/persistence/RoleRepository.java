@@ -16,18 +16,18 @@
 
 package com.simisinc.platform.infrastructure.persistence;
 
-import com.simisinc.platform.domain.model.Role;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.List;
+import com.simisinc.platform.domain.model.Role;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
 
 /**
  * Persists and retrieves role objects
@@ -46,7 +46,8 @@ public class RoleRepository {
       return null;
     }
     return (Role) DB.selectRecordFrom(
-        TABLE_NAME, new SqlUtils().add("code = ?", code),
+        TABLE_NAME,
+        DB.WHERE("code = ?", code),
         RoleRepository::buildRecord);
   }
 
@@ -55,7 +56,8 @@ public class RoleRepository {
       return null;
     }
     return (Role) DB.selectRecordFrom(
-        TABLE_NAME, new SqlUtils().add("oauth_path = ?", oAuthPath),
+        TABLE_NAME,
+        DB.WHERE("oauth_path = ?", oAuthPath),
         RoleRepository::buildRecord);
   }
 
@@ -64,7 +66,8 @@ public class RoleRepository {
       return null;
     }
     return (Role) DB.selectRecordFrom(
-        TABLE_NAME, new SqlUtils().add("role_id = ?", id),
+        TABLE_NAME,
+        DB.WHERE("role_id = ?", id),
         RoleRepository::buildRecord);
   }
 
@@ -72,11 +75,9 @@ public class RoleRepository {
     if (userId == -1) {
       return null;
     }
-    SqlUtils where = new SqlUtils()
-        .add("EXISTS (SELECT 1 FROM user_roles WHERE role_id = lookup_role.role_id AND user_id = ?)", userId);
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        where,
+        DB.WHERE("EXISTS (SELECT 1 FROM user_roles WHERE role_id = lookup_role.role_id AND user_id = ?)", userId),
         new DataConstraints().setDefaultColumnToSortBy("role_id").setUseCount(false),
         RoleRepository::buildRecord);
     if (result.hasRecords()) {

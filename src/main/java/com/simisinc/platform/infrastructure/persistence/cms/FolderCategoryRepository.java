@@ -16,16 +16,20 @@
 
 package com.simisinc.platform.infrastructure.persistence.cms;
 
-import com.simisinc.platform.domain.model.cms.Folder;
-import com.simisinc.platform.domain.model.cms.FolderCategory;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.cms.Folder;
+import com.simisinc.platform.domain.model.cms.FolderCategory;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves folder category objects
@@ -38,7 +42,7 @@ public class FolderCategoryRepository {
   private static Log LOG = LogFactory.getLog(FolderCategoryRepository.class);
 
   private static String TABLE_NAME = "folder_categories";
-  private static String[] PRIMARY_KEY = new String[]{"category_id"};
+  private static String[] PRIMARY_KEY = new String[] { "category_id" };
 
   public static FolderCategory findById(long id) {
     if (id == -1) {
@@ -46,7 +50,7 @@ public class FolderCategoryRepository {
     }
     return (FolderCategory) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("category_id = ?", id),
+        DB.WHERE("category_id = ?", id),
         FolderCategoryRepository::buildRecord);
   }
 
@@ -54,11 +58,9 @@ public class FolderCategoryRepository {
     if (folderId == -1) {
       return null;
     }
-    SqlUtils where = new SqlUtils()
-        .add("folder_id = ?", folderId);
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        where,
+        DB.WHERE("folder_id = ?", folderId),
         new DataConstraints().setDefaultColumnToSortBy("category_id").setUseCount(false),
         FolderCategoryRepository::buildRecord);
     if (result.hasRecords()) {
@@ -126,19 +128,17 @@ public class FolderCategoryRepository {
         updateValues
             .add("name", category.getName())
             .add("enabled", category.getEnabled());
-        SqlUtils where = new SqlUtils();
-        where.add("category_id = ?", category.getId());
-        DB.update(connection, TABLE_NAME, updateValues, where);
+        DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("category_id = ?", category.getId()));
       }
     }
   }
 
   public static void removeAll(Connection connection, Folder folder) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("folder_id = ?", folder.getId()));
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("folder_id = ?", folder.getId()));
   }
 
   public static void remove(Connection connection, FolderCategory folderCategory) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("category_id = ?", folderCategory.getId()));
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("category_id = ?", folderCategory.getId()));
   }
 
   private static FolderCategory buildRecord(ResultSet rs) {

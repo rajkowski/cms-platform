@@ -16,19 +16,23 @@
 
 package com.simisinc.platform.infrastructure.persistence.cms;
 
-import com.simisinc.platform.domain.model.cms.MenuItem;
-import com.simisinc.platform.domain.model.cms.MenuTab;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.cms.MenuItem;
+import com.simisinc.platform.domain.model.cms.MenuTab;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves menu item objects
@@ -38,7 +42,7 @@ import java.util.List;
  */
 public class MenuItemRepository {
 
-  private static final String[] PRIMARY_KEY = new String[]{"menu_item_id"};
+  private static final String[] PRIMARY_KEY = new String[] { "menu_item_id" };
   private static String TABLE_NAME = "menu_items";
 
   private static Log LOG = LogFactory.getLog(MenuItemRepository.class);
@@ -49,8 +53,7 @@ public class MenuItemRepository {
     }
     return (MenuItem) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("menu_item_id = ?", id),
+        DB.WHERE("menu_item_id = ?", id),
         MenuItemRepository::buildRecord);
   }
 
@@ -60,8 +63,7 @@ public class MenuItemRepository {
     }
     return (MenuItem) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("link = ?", link),
+        DB.WHERE("link = ?", link),
         MenuItemRepository::buildRecord);
   }
 
@@ -77,20 +79,19 @@ public class MenuItemRepository {
   public static List<MenuItem> findAllByMenuTab(MenuTab menuTab) {
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("menu_tab_id = ?", menuTab.getId()),
+        DB.WHERE("menu_tab_id = ?", menuTab.getId()),
         new DataConstraints().setDefaultColumnToSortBy("item_order, menu_item_id").setUseCount(false),
         MenuItemRepository::buildRecord);
     return (List<MenuItem>) result.getRecords();
   }
 
-  private static PreparedStatement createPreparedStatementAllActiveByMenuTab(Connection connection, MenuTab menuTab) throws SQLException {
-    String SQL_QUERY =
-        "SELECT * " +
-            "FROM menu_items " +
-            "WHERE draft = ? AND enabled = ? " +
-            "AND menu_tab_id = ? " +
-            "ORDER BY item_order, menu_item_id";
+  private static PreparedStatement createPreparedStatementAllActiveByMenuTab(Connection connection, MenuTab menuTab)
+      throws SQLException {
+    String SQL_QUERY = "SELECT * " +
+        "FROM menu_items " +
+        "WHERE draft = ? AND enabled = ? " +
+        "AND menu_tab_id = ? " +
+        "ORDER BY item_order, menu_item_id";
     PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
     pst.setBoolean(1, false);
     pst.setBoolean(2, true);
@@ -101,8 +102,8 @@ public class MenuItemRepository {
   public static List<MenuItem> findAllActiveByMenuTab(MenuTab menuTab) {
     List<MenuItem> records = null;
     try (Connection connection = DB.getConnection();
-         PreparedStatement pst = createPreparedStatementAllActiveByMenuTab(connection, menuTab);
-         ResultSet rs = pst.executeQuery()) {
+        PreparedStatement pst = createPreparedStatementAllActiveByMenuTab(connection, menuTab);
+        ResultSet rs = pst.executeQuery()) {
       records = new ArrayList<>();
       while (rs.next()) {
         records.add(buildRecord(rs));
@@ -152,9 +153,7 @@ public class MenuItemRepository {
         .add("draft", record.isDraft())
         .add("enabled", record.isEnabled())
         .add("comments", StringUtils.trimToNull(record.getComments()));
-    SqlUtils where = new SqlUtils()
-        .add("menu_item_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("menu_item_id = ?", record.getId()))) {
       return record;
     }
     LOG.error("The update failed!");
@@ -162,18 +161,17 @@ public class MenuItemRepository {
   }
 
   public static boolean remove(MenuItem record) {
-    return (DB.deleteFrom(TABLE_NAME, new SqlUtils().add("menu_item_id = ?", record.getId())) > 0);
+    return (DB.deleteFrom(TABLE_NAME, DB.WHERE("menu_item_id = ?", record.getId())) > 0);
   }
 
   public static void removeAll(Connection connection, MenuTab record) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("menu_tab_id = ?", record.getId()));
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("menu_tab_id = ?", record.getId()));
   }
 
   private static PreparedStatement createPreparedStatementNextTabOrder(Connection connection, MenuTab menuTab) throws SQLException {
-    String SQL_QUERY =
-        "SELECT max(item_order) " +
-            "FROM menu_items " +
-            "WHERE menu_tab_id = ?";
+    String SQL_QUERY = "SELECT max(item_order) " +
+        "FROM menu_items " +
+        "WHERE menu_tab_id = ?";
     PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
     pst.setLong(1, menuTab.getId());
     return pst;
@@ -182,8 +180,8 @@ public class MenuItemRepository {
   public static int getNextTabOrder(MenuTab menuTab) {
     int maxId = 0;
     try (Connection connection = DB.getConnection();
-         PreparedStatement pst = createPreparedStatementNextTabOrder(connection, menuTab);
-         ResultSet rs = pst.executeQuery()) {
+        PreparedStatement pst = createPreparedStatementNextTabOrder(connection, menuTab);
+        ResultSet rs = pst.executeQuery()) {
       if (rs.next()) {
         maxId = rs.getInt(1) + 1;
       }
@@ -206,7 +204,7 @@ public class MenuItemRepository {
       record.setPageDescription(rs.getString("page_description"));
       record.setDraft(rs.getBoolean("draft"));
       record.setEnabled(rs.getBoolean("enabled"));
-//    record.setRoleIdList(rs.getString("role_id_list"));
+      //    record.setRoleIdList(rs.getString("role_id_list"));
       record.setComments(rs.getString("comments"));
       return record;
     } catch (SQLException se) {

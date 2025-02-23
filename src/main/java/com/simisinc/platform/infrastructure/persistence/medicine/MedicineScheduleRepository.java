@@ -16,16 +16,22 @@
 
 package com.simisinc.platform.infrastructure.persistence.medicine;
 
-import com.simisinc.platform.domain.model.medicine.Medicine;
-import com.simisinc.platform.domain.model.medicine.MedicineSchedule;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.medicine.Medicine;
+import com.simisinc.platform.domain.model.medicine.MedicineSchedule;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves medicine schedule objects
@@ -113,9 +119,7 @@ public class MedicineScheduleRepository {
         .add("end_date", record.getEndDate())
         .add("comments", record.getNotes())
         .add("modified_by", record.getModifiedBy());
-    SqlUtils where = new SqlUtils()
-        .add("schedule_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("schedule_id = ?", record.getId()))) {
       return record;
     }
     LOG.error("The update failed!");
@@ -127,7 +131,7 @@ public class MedicineScheduleRepository {
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("schedule_id = ?", record.getId()));
+      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("schedule_id = ?", record.getId()));
       // Finish transaction
       transaction.commit();
       return true;
@@ -138,9 +142,7 @@ public class MedicineScheduleRepository {
   }
 
   public static void removeAll(Connection connection, Medicine record) throws SQLException {
-    SqlUtils where = new SqlUtils();
-    where.add("medicine_id = ?", record.getId());
-    DB.deleteFrom(connection, TABLE_NAME, where);
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("medicine_id = ?", record.getId()));
   }
 
   public static MedicineSchedule findById(long id) {
@@ -148,7 +150,8 @@ public class MedicineScheduleRepository {
       return null;
     }
     return (MedicineSchedule) DB.selectRecordFrom(
-        TABLE_NAME, new SqlUtils().add("schedule_id = ?", id),
+        TABLE_NAME,
+        DB.WHERE("schedule_id = ?", id),
         MedicineScheduleRepository::buildRecord);
   }
 
@@ -157,7 +160,8 @@ public class MedicineScheduleRepository {
       return null;
     }
     return (MedicineSchedule) DB.selectRecordFrom(
-        TABLE_NAME, new SqlUtils().add("medicine_id = ?", medicineId),
+        TABLE_NAME,
+        DB.WHERE("medicine_id = ?", medicineId),
         MedicineScheduleRepository::buildRecord);
   }
 
@@ -165,11 +169,9 @@ public class MedicineScheduleRepository {
     if (medicineId == -1) {
       return null;
     }
-    SqlUtils where = new SqlUtils()
-        .add("medicine_id = ?", medicineId);
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        where,
+        DB.WHERE("medicine_id = ?", medicineId),
         new DataConstraints().setDefaultColumnToSortBy("schedule_id").setUseCount(false),
         MedicineScheduleRepository::buildRecord);
     if (result.hasRecords()) {

@@ -51,7 +51,51 @@ public class DB {
     return DataSource.getDataSource().getConnection();
   }
 
-  private static PreparedStatement createPreparedStatement(Connection connection, String sqlQuery, SqlUtils where)
+  public static SqlUtils SELECT(String... fieldNames) {
+    return new SqlUtils().addNames(fieldNames);
+  }
+
+  public static SqlJoins JOIN(String value) {
+    return new SqlJoins().add(value);
+  }
+
+  public static SqlWhere WHERE() {
+    return new SqlWhere();
+  }
+
+  public static SqlWhere WHERE(String clause) {
+    return new SqlWhere().AND(clause);
+  }
+
+  public static SqlWhere WHERE(String clause, long value) {
+    return new SqlWhere().AND(clause, value);
+  }
+
+  public static SqlWhere WHERE(String name, Long[] value) {
+    return new SqlWhere().AND(new SqlValue(name, value));
+  }
+
+  public static SqlWhere WHERE(String clause, int value) {
+    return new SqlWhere().AND(clause, value);
+  }
+
+  public static SqlWhere WHERE(String clause, String value) {
+    return new SqlWhere().AND(clause, value);
+  }
+
+  public static SqlWhere WHERE(String clause, boolean value) {
+    return new SqlWhere().AND(clause, value);
+  }
+
+  public static SqlWhere WHERE(String name, Timestamp value) {
+    return new SqlWhere().AND(name, value);
+  }
+
+  public static SqlWhere WHERE(String name, Timestamp[] value) {
+    return new SqlWhere().AND(name, value);
+  }
+
+  private static PreparedStatement createPreparedStatement(Connection connection, String sqlQuery, SqlWhere where)
       throws SQLException {
     PreparedStatement pst = connection.prepareStatement(sqlQuery);
     prepareValues(pst, where);
@@ -78,10 +122,28 @@ public class DB {
   }
 
   private static int prepareValues(PreparedStatement pst, SqlUtils sqlUtils, int fieldIdx) throws SQLException {
-    if (sqlUtils == null || sqlUtils.getValues().isEmpty()) {
+    if (sqlUtils == null || sqlUtils.getValues() == null || sqlUtils.getValues().isEmpty()) {
       return fieldIdx;
     }
-    for (SqlValue sqlValue : sqlUtils.getValues()) {
+    return prepareValues(pst, sqlUtils.getValues(), fieldIdx);
+  }
+
+  private static int prepareValues(PreparedStatement pst, SqlWhere sqlWhere) throws SQLException {
+    return prepareValues(pst, sqlWhere, 0);
+  }
+
+  private static int prepareValues(PreparedStatement pst, SqlWhere sqlWhere, int fieldIdx) throws SQLException {
+    if (sqlWhere == null || sqlWhere.getValues() == null || sqlWhere.getValues().isEmpty()) {
+      return fieldIdx;
+    }
+    return prepareValues(pst, sqlWhere.getValues(), fieldIdx);
+  }
+
+  private static int prepareValues(PreparedStatement pst, List<SqlValue> sqlValues, int fieldIdx) throws SQLException {
+    if (sqlValues == null || sqlValues.isEmpty()) {
+      return fieldIdx;
+    }
+    for (SqlValue sqlValue : sqlValues) {
       if (!sqlValue.hasValue()) {
         continue;
       }
@@ -180,7 +242,7 @@ public class DB {
     return selectCountFrom(tableName, null);
   }
 
-  public static long selectCountFrom(String tableName, SqlUtils where) {
+  public static long selectCountFrom(String tableName, SqlWhere where) {
     return selectFunction("COUNT(*)", tableName, where);
   }
 
@@ -213,7 +275,7 @@ public class DB {
     return nextVal;
   }
 
-  public static long selectFunction(String sql, String tableName, SqlUtils where) {
+  public static long selectFunction(String sql, String tableName, SqlWhere where) {
     // Construct the where clause
     StringBuilder whereSb = createWhereClause(where);
     long value = 0;
@@ -240,7 +302,7 @@ public class DB {
     return value;
   }
 
-  public static List<Long> selectFunctionAsLongList(String sqlFields, String tableName, SqlUtils where,
+  public static List<Long> selectFunctionAsLongList(String sqlFields, String tableName, SqlWhere where,
       SqlUtils orderBy) {
 
     // Prepare the query
@@ -271,7 +333,7 @@ public class DB {
     return records;
   }
 
-  public static String selectStringValue(String sql, String tableName, SqlUtils where) {
+  public static String selectStringValue(String sql, String tableName, SqlWhere where) {
     // Construct the where clause
     StringBuilder whereSb = createWhereClause(where);
     String value = null;
@@ -289,11 +351,11 @@ public class DB {
     return value;
   }
 
-  public static Object selectRecordFrom(String tableName, SqlUtils where, Function<ResultSet, Entity> buildRecord) {
+  public static Object selectRecordFrom(String tableName, SqlWhere where, Function<ResultSet, Entity> buildRecord) {
     return selectRecordFrom(tableName, null, null, where, buildRecord);
   }
 
-  public static Object selectRecordFrom(String tableName, SqlUtils select, SqlJoins joins, SqlUtils where,
+  public static Object selectRecordFrom(String tableName, SqlUtils select, SqlJoins joins, SqlWhere where,
       Function<ResultSet, Entity> buildRecord) {
     // Construct the where clause
     StringBuilder joinsSb = createJoins(joins);
@@ -333,22 +395,22 @@ public class DB {
     return null;
   }
 
-  public static DataResult selectAllFrom(String tableName, SqlUtils where, DataConstraints constraints,
+  public static DataResult selectAllFrom(String tableName, SqlWhere where, DataConstraints constraints,
       Function<ResultSet, Entity> buildRecord) {
     return selectAllFrom(tableName, null, null, where, null, constraints, buildRecord);
   }
 
-  public static DataResult selectAllFrom(String tableName, SqlJoins joins, SqlUtils where, DataConstraints constraints,
+  public static DataResult selectAllFrom(String tableName, SqlJoins joins, SqlWhere where, DataConstraints constraints,
       Function<ResultSet, Entity> buildRecord) {
     return selectAllFrom(tableName, null, joins, where, null, constraints, buildRecord);
   }
 
-  public static DataResult selectAllFrom(String tableName, SqlUtils select, SqlUtils where, SqlUtils orderBy,
+  public static DataResult selectAllFrom(String tableName, SqlUtils select, SqlWhere where, SqlUtils orderBy,
       DataConstraints constraints, Function<ResultSet, Entity> buildRecord) {
     return selectAllFrom(tableName, select, null, where, orderBy, constraints, buildRecord);
   }
 
-  public static DataResult selectAllFrom(String tableName, SqlUtils select, SqlJoins joins, SqlUtils where,
+  public static DataResult selectAllFrom(String tableName, SqlUtils select, SqlJoins joins, SqlWhere where,
       SqlUtils orderBy, DataConstraints constraints, Function<ResultSet, Entity> buildRecord) {
 
     // Determine the max records based on the where conditions
@@ -480,25 +542,26 @@ public class DB {
     return joinsSb;
   }
 
-  private static StringBuilder createWhereClause(SqlUtils where) {
+  private static StringBuilder createWhereClause(SqlWhere where) {
     StringBuilder whereSb = new StringBuilder();
-    if (where != null && !where.getValues().isEmpty()) {
-      whereSb.append(" WHERE ");
-      boolean isFirst = true;
-      for (SqlValue sqlValue : where.getValues()) {
-        if (!isFirst) {
-          whereSb.append(" AND ");
-        }
-        // Add the clause, but make sure to isolate the ANDs with ORs
-        String clause = sqlValue.getFieldOrClause();
-        if (clause.contains(" OR ") && !clause.contains("(")) {
-          whereSb.append("(").append(clause).append(")");
-        } else {
-          whereSb.append(clause);
-        }
-        if (isFirst) {
-          isFirst = false;
-        }
+    if (where == null || where.getValues() == null || where.getValues().isEmpty()) {
+      return whereSb;
+    }
+    whereSb.append(" WHERE ");
+    boolean isFirst = true;
+    for (SqlValue sqlValue : where.getValues()) {
+      if (!isFirst) {
+        whereSb.append(" AND ");
+      }
+      // Add the clause, but make sure to isolate the ANDs with ORs
+      String clause = sqlValue.getFieldOrClause();
+      if (clause.contains(" OR ") && !clause.contains("(")) {
+        whereSb.append("(").append(clause).append(")");
+      } else {
+        whereSb.append(clause);
+      }
+      if (isFirst) {
+        isFirst = false;
       }
     }
     return whereSb;
@@ -636,7 +699,7 @@ public class DB {
     return "(" + fieldNamesSb.toString() + ") VALUES (" + valuesSb.toString() + ")";
   }
 
-  public static boolean update(String tableName, SqlUtils updateValues, SqlUtils where) {
+  public static boolean update(String tableName, SqlUtils updateValues, SqlWhere where) {
     try (Connection connection = getConnection();
         PreparedStatement pst = createPreparedStatementForUpdate(connection, tableName, updateValues, where)) {
       if (pst.executeUpdate() > 0) {
@@ -648,7 +711,7 @@ public class DB {
     return false;
   }
 
-  public static boolean update(Connection connection, String tableName, SqlUtils updateValues, SqlUtils where)
+  public static boolean update(Connection connection, String tableName, SqlUtils updateValues, SqlWhere where)
       throws SQLException {
     try (PreparedStatement pst = createPreparedStatementForUpdate(connection, tableName, updateValues, where)) {
       if (pst.executeUpdate() > 0) {
@@ -660,7 +723,7 @@ public class DB {
     return false;
   }
 
-  public static boolean update(String tableName, String statement, SqlUtils where) {
+  public static boolean update(String tableName, String statement, SqlWhere where) {
     try (Connection connection = getConnection();
         PreparedStatement pst = createPreparedStatementForUpdate(connection, tableName, statement, where)) {
       if (pst.executeUpdate() > 0) {
@@ -673,7 +736,7 @@ public class DB {
   }
 
   private static PreparedStatement createPreparedStatementForUpdate(Connection connection, String tableName,
-      String statement, SqlUtils where) throws SQLException {
+      String statement, SqlWhere where) throws SQLException {
     if (statement == null) {
       return null;
     }
@@ -686,7 +749,7 @@ public class DB {
   }
 
   private static PreparedStatement createPreparedStatementForUpdate(Connection connection, String tableName,
-      SqlUtils updateValues, SqlUtils where) throws SQLException {
+      SqlUtils updateValues, SqlWhere where) throws SQLException {
     if (updateValues == null) {
       return null;
     }
@@ -701,7 +764,7 @@ public class DB {
   }
 
   private static PreparedStatement createPreparedStatement(Connection connection, String sqlQuery,
-      SqlUtils selectOrUpdate, SqlUtils where, SqlUtils orderBy) throws SQLException {
+      SqlUtils selectOrUpdate, SqlWhere where, SqlUtils orderBy) throws SQLException {
     PreparedStatement pst = connection.prepareStatement(sqlQuery);
     int fieldIdx = prepareValues(pst, selectOrUpdate);
     fieldIdx = prepareValues(pst, where, fieldIdx);
@@ -739,7 +802,7 @@ public class DB {
     return fieldNamesSb.toString();
   }
 
-  public static int deleteFrom(String tableName, SqlUtils where) {
+  public static int deleteFrom(String tableName, SqlWhere where) {
     try (Connection connection = getConnection();
         PreparedStatement pst = createPreparedStatementForDelete(connection, tableName, where)) {
       return pst.executeUpdate();
@@ -749,7 +812,7 @@ public class DB {
     return -1;
   }
 
-  public static int deleteFrom(Connection connection, String tableName, SqlUtils where) throws SQLException {
+  public static int deleteFrom(Connection connection, String tableName, SqlWhere where) throws SQLException {
     try (PreparedStatement pst = createPreparedStatementForDelete(connection, tableName, where)) {
       return pst.executeUpdate();
     } catch (SQLException se) {
@@ -758,7 +821,7 @@ public class DB {
   }
 
   private static PreparedStatement createPreparedStatementForDelete(Connection connection, String tableName,
-      SqlUtils where) throws SQLException {
+      SqlWhere where) throws SQLException {
 
     // Construct the where clause
     StringBuilder whereSb = createWhereClause(where);
@@ -833,7 +896,7 @@ public class DB {
     return sb.toString();
   }
 
-  public static void exportToCsvAllFrom(String tableName, SqlUtils selectFields, SqlJoins joins, SqlUtils where,
+  public static void exportToCsvAllFrom(String tableName, SqlUtils selectFields, SqlJoins joins, SqlWhere where,
       SqlUtils orderBy, DataConstraints constraints, File file) {
 
     StringBuilder joinsSb = createJoins(joins);

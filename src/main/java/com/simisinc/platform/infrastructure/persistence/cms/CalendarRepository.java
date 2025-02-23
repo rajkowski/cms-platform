@@ -16,17 +16,24 @@
 
 package com.simisinc.platform.infrastructure.persistence.cms;
 
-import com.simisinc.platform.domain.model.cms.Calendar;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.cms.Calendar;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves calendar objects
@@ -42,11 +49,11 @@ public class CalendarRepository {
   private static String[] PRIMARY_KEY = new String[] { "calendar_id" };
 
   private static DataResult query(CalendarSpecification specification, DataConstraints constraints) {
-    SqlUtils where = null;
+    SqlWhere where = null;
     if (specification != null) {
-      where = new SqlUtils()
-          .addIfExists("calendar_id = ?", specification.getId(), -1)
-          .addIfExists("calendar_unique_id = ?", specification.getUniqueId());
+      where = DB.WHERE()
+          .andAddIfHasValue("calendar_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("calendar_unique_id = ?", specification.getUniqueId());
     }
     return DB.selectAllFrom(TABLE_NAME, where, constraints, CalendarRepository::buildRecord);
   }
@@ -57,8 +64,7 @@ public class CalendarRepository {
     }
     return (Calendar) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("calendar_id = ?", calendarId),
+        DB.WHERE("calendar_id = ?", calendarId),
         CalendarRepository::buildRecord);
   }
 
@@ -68,8 +74,7 @@ public class CalendarRepository {
     }
     return (Calendar) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("calendar_unique_id = ?", calendarUniqueId),
+        DB.WHERE("calendar_unique_id = ?", calendarUniqueId),
         CalendarRepository::buildRecord);
   }
 
@@ -119,9 +124,7 @@ public class CalendarRepository {
         .add("enabled", record.getEnabled())
         .add("modified_by", record.getModifiedBy())
         .add("modified", new Timestamp(System.currentTimeMillis()));
-    SqlUtils where = new SqlUtils()
-        .add("calendar_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("calendar_id = ?", record.getId()))) {
       //      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
     }
@@ -136,7 +139,7 @@ public class CalendarRepository {
       // Delete the references
       CalendarEventRepository.removeAll(connection, record);
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("calendar_id = ?", record.getId()));
+      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("calendar_id = ?", record.getId()));
       // Finish transaction
       transaction.commit();
       return true;

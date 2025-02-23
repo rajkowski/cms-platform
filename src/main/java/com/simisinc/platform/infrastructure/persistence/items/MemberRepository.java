@@ -16,17 +16,23 @@
 
 package com.simisinc.platform.infrastructure.persistence.items;
 
-import com.simisinc.platform.domain.model.items.Item;
-import com.simisinc.platform.domain.model.items.Member;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.items.Item;
+import com.simisinc.platform.domain.model.items.Member;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves member objects
@@ -47,7 +53,7 @@ public class MemberRepository {
     }
     Member member = (Member) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("member_id = ?", memberId),
+        DB.WHERE("member_id = ?", memberId),
         MemberRepository::buildRecord);
     return member;
   }
@@ -56,11 +62,9 @@ public class MemberRepository {
     if (userId == -1) {
       return null;
     }
-    SqlUtils where = new SqlUtils()
-        .add("user_id = ?", userId);
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        where,
+        DB.WHERE("user_id = ?", userId),
         new DataConstraints().setDefaultColumnToSortBy("member_id"),
         MemberRepository::buildRecord);
     if (result.hasRecords()) {
@@ -73,11 +77,9 @@ public class MemberRepository {
     if (itemId == -1) {
       return null;
     }
-    SqlUtils where = new SqlUtils()
-        .add("item_id = ?", itemId);
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        where,
+        DB.WHERE("item_id = ?", itemId),
         new DataConstraints().setDefaultColumnToSortBy("member_id"),
         MemberRepository::buildRecord);
     if (result.hasRecords()) {
@@ -90,13 +92,11 @@ public class MemberRepository {
     if (itemId == -1 || userId < 1) {
       return false;
     }
-    SqlUtils where = new SqlUtils()
-        .add("item_id = ?", itemId)
-        .add("user_id = ?", userId)
-        .add("approved = ?", true);
     long count = DB.selectCountFrom(
         TABLE_NAME,
-        where);
+        DB.WHERE("item_id = ?", itemId)
+            .AND("user_id = ?", userId)
+            .AND("approved = ?", true));
     return (count > 0);
   }
 
@@ -164,11 +164,11 @@ public class MemberRepository {
   }
 
   public static void remove(Connection connection, Member member) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("member_id = ?", member.getId()));
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("member_id = ?", member.getId()));
   }
 
   public static void removeAll(Connection connection, Item item) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("item_id = ?", item.getId()));
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("item_id = ?", item.getId()));
   }
 
   private static Member buildRecord(ResultSet rs) {

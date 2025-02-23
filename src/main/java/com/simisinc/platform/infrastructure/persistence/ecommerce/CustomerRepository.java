@@ -16,20 +16,27 @@
 
 package com.simisinc.platform.infrastructure.persistence.ecommerce;
 
-import com.simisinc.platform.application.ecommerce.SaveCustomerCommand;
-import com.simisinc.platform.domain.model.ecommerce.Address;
-import com.simisinc.platform.domain.model.ecommerce.Customer;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.commons.validator.routines.checkdigit.CheckDigitException;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.commons.validator.routines.checkdigit.CheckDigitException;
+
+import com.simisinc.platform.application.ecommerce.SaveCustomerCommand;
+import com.simisinc.platform.domain.model.ecommerce.Address;
+import com.simisinc.platform.domain.model.ecommerce.Customer;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves customer objects
@@ -45,26 +52,31 @@ public class CustomerRepository {
   private static String[] PRIMARY_KEY = new String[] { "customer_id" };
 
   private static DataResult query(CustomerSpecification specification, DataConstraints constraints) {
-    SqlUtils where = null;
+    SqlWhere where = null;
     if (specification != null) {
-      where = new SqlUtils().addIfExists("customer_id = ?", specification.getId(), -1).addIfExists("LOWER(email) = ?",
-          specification.getEmail() != null ? specification.getEmail().toLowerCase() : null);
+      where = DB.WHERE()
+          .andAddIfHasValue("customer_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("LOWER(email) = ?",
+              specification.getEmail() != null ? specification.getEmail().toLowerCase() : null);
       if (StringUtils.isNotBlank(specification.getUniqueId())) {
-        where.add("(LOWER(customer_unique_id) = LOWER(?) OR LOWER(customer_unique_id) LIKE LOWER(?))",
-            new String[] { specification.getUniqueId(), specification.getUniqueId() + "%" });
+        where
+            .AND("(LOWER(customer_unique_id) = LOWER(?) OR LOWER(customer_unique_id) LIKE LOWER(?))",
+                new String[] { specification.getUniqueId(), specification.getUniqueId() + "%" });
       }
       if (StringUtils.isNotBlank(specification.getOrderNumber())) {
-        where.add(
-            "EXISTS (SELECT 1 FROM orders WHERE customers.customer_id = orders.customer_id AND LOWER(order_unique_id) = ?)",
-            specification.getOrderNumber().toLowerCase());
+        where
+            .AND("EXISTS (SELECT 1 FROM orders WHERE customers.customer_id = orders.customer_id AND LOWER(order_unique_id) = ?)",
+                specification.getOrderNumber().toLowerCase());
       }
       if (StringUtils.isNotBlank(specification.getPhoneNumber())) {
-        where.add("phone_number = ?", specification.getPhoneNumber());
+        where
+            .AND("phone_number = ?", specification.getPhoneNumber());
       }
       if (StringUtils.isNotBlank(specification.getName())) {
-        where.add(
-            "(LOWER(concat_ws(' ', first_name, last_name)) LIKE LOWER(?) ESCAPE '!' OR LOWER(concat_ws(' ', shipping_first_name, shipping_last_name)) LIKE LOWER(?) ESCAPE '!')",
-            new String[] { "%" + specification.getName() + "%", "%" + specification.getName() + "%" });
+        where
+            .AND(
+                "(LOWER(concat_ws(' ', first_name, last_name)) LIKE LOWER(?) ESCAPE '!' OR LOWER(concat_ws(' ', shipping_first_name, shipping_last_name)) LIKE LOWER(?) ESCAPE '!')",
+                new String[] { "%" + specification.getName() + "%", "%" + specification.getName() + "%" });
       }
     }
     return DB.selectAllFrom(TABLE_NAME, where, constraints, CustomerRepository::buildRecord);
@@ -80,7 +92,9 @@ public class CustomerRepository {
   }
 
   public static Customer findById(long customerId) {
-    return (Customer) DB.selectRecordFrom(TABLE_NAME, new SqlUtils().add("customer_id = ?", customerId),
+    return (Customer) DB.selectRecordFrom(
+        TABLE_NAME,
+        DB.WHERE("customer_id = ?", customerId),
         CustomerRepository::buildRecord);
   }
 
@@ -149,15 +163,13 @@ public class CustomerRepository {
         // Generate a new customer unique id
         LOG.debug("Updating customer unique id for id: " + record.getId());
         SqlUtils update = new SqlUtils().add("customer_unique_id", SaveCustomerCommand.generateUniqueId(record));
-        SqlUtils where = new SqlUtils().add("customer_id = ?", record.getId());
-        DB.update(connection, TABLE_NAME, update, where);
+        DB.update(connection, TABLE_NAME, update, DB.WHERE("customer_id = ?", record.getId()));
       }
       if (record.getCartId() > 0) {
         // Update the cart
         LOG.debug("Updating cart " + record.getCartId() + " with the customer id");
-        SqlUtils update = new SqlUtils().add("customer_id", record.getId());
-        SqlUtils where = new SqlUtils().add("cart_id = ?", record.getCartId());
-        DB.update(connection, "carts", update, where);
+        SqlUtils updateValues = new SqlUtils().add("customer_id", record.getId());
+        DB.update(connection, "carts", updateValues, DB.WHERE("cart_id = ?", record.getCartId()));
       }
       // Finish the transaction
       transaction.commit();
@@ -249,8 +261,7 @@ public class CustomerRepository {
           .add("shipping_county", (String) null)
           .add("shipping_phone_number", (String) null);
     }
-    SqlUtils where = new SqlUtils().add("customer_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("customer_id = ?", record.getId()))) {
       // CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE,
       // record.getUniqueId());
       return record;
@@ -269,8 +280,7 @@ public class CustomerRepository {
         .add("first_name", record.getFirstName())
         .add("last_name", record.getLastName())
         .add("email", record.getEmail());
-    SqlUtils where = new SqlUtils().add("customer_id = ?", record.getId());
-    DB.update(TABLE_NAME, set, where);
+    DB.update(TABLE_NAME, set, DB.WHERE("customer_id = ?", record.getId()));
   }
 
   private static Customer buildRecord(ResultSet rs) {

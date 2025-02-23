@@ -35,6 +35,7 @@ import com.simisinc.platform.infrastructure.database.DB;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.database.DataResult;
 import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
 import com.simisinc.platform.presentation.controller.DataConstants;
 
 /**
@@ -50,34 +51,34 @@ public class BlogPostRepository {
   private static String TABLE_NAME = "blog_posts";
   private static String[] PRIMARY_KEY = new String[] { "post_id" };
 
-  private static SqlUtils createWhereStatement(BlogPostSpecification specification) {
-    SqlUtils where = null;
+  private static SqlWhere createWhereStatement(BlogPostSpecification specification) {
+    SqlWhere where = null;
     if (specification != null) {
-      where = new SqlUtils()
-          .addIfExists("post_id = ?", specification.getId(), -1)
-          .addIfExists("blog_id = ?", specification.getBlogId(), -1)
-          .addIfExists("post_unique_id = ?", specification.getUniqueId());
+      where = DB.WHERE()
+          .andAddIfHasValue("post_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("blog_id = ?", specification.getBlogId(), -1)
+          .andAddIfHasValue("post_unique_id = ?", specification.getUniqueId());
       if (specification.getPublishedOnly() != DataConstants.UNDEFINED) {
         if (specification.getPublishedOnly() == DataConstants.TRUE) {
-          where.add("published IS NOT NULL");
+          where.AND("published IS NOT NULL");
         } else {
-          where.add("published IS NULL");
+          where.AND("published IS NULL");
         }
       }
       if (specification.getStartDateIsBeforeNow() != DataConstants.UNDEFINED) {
         if (specification.getStartDateIsBeforeNow() == DataConstants.TRUE) {
           // Show the ones which are active
-          where.add("start_date <= NOW()");
+          where.AND("start_date <= NOW()");
         }
       }
       if (specification.getIsWithinEndDate() != DataConstants.UNDEFINED) {
         if (specification.getIsWithinEndDate() == DataConstants.TRUE) {
           // Show the non-expiring and unexpired
-          where.add("(end_date IS NULL OR end_date >= NOW())");
+          where.AND("(end_date IS NULL OR end_date >= NOW())");
         }
       }
       if (StringUtils.isNotBlank(specification.getSearchTerm())) {
-        where.add("tsv @@ websearch_to_tsquery('content_stem', ?)", specification.getSearchTerm().trim());
+        where.AND("tsv @@ websearch_to_tsquery('content_stem', ?)", specification.getSearchTerm().trim());
       }
     }
     return where;
@@ -85,7 +86,7 @@ public class BlogPostRepository {
 
   private static DataResult query(BlogPostSpecification specification, DataConstraints constraints) {
     SqlUtils select = new SqlUtils();
-    SqlUtils where = createWhereStatement(specification);
+    SqlWhere where = createWhereStatement(specification);
     SqlUtils orderBy = null;
     if (specification != null && StringUtils.isNotBlank(specification.getSearchTerm())) {
       select.add(
@@ -105,9 +106,8 @@ public class BlogPostRepository {
     }
     return (BlogPost) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("blog_id = ?", blogId)
-            .add("post_unique_id = ?", postUniqueId),
+        DB.WHERE("blog_id = ?", blogId)
+            .AND("post_unique_id = ?", postUniqueId),
         BlogPostRepository::buildRecord);
   }
 
@@ -117,8 +117,7 @@ public class BlogPostRepository {
     }
     return (BlogPost) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("post_id = ?", blogPostId),
+        DB.WHERE("post_id = ?", blogPostId),
         BlogPostRepository::buildRecord);
   }
 
@@ -136,8 +135,7 @@ public class BlogPostRepository {
   }
 
   public static long findCount(BlogPostSpecification specification) {
-    SqlUtils where = createWhereStatement(specification);
-    return DB.selectCountFrom(TABLE_NAME, where);
+    return DB.selectCountFrom(TABLE_NAME, createWhereStatement(specification));
   }
 
   public static BlogPost save(BlogPost record) {
@@ -186,9 +184,8 @@ public class BlogPostRepository {
         .add("archived", record.getArchived())
         .add("start_date", record.getStartDate())
         .add("end_date", record.getEndDate());
-    SqlUtils where = new SqlUtils()
-        .add("post_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues,
+        DB.WHERE("post_id = ?", record.getId()))) {
       //      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
     }
@@ -205,7 +202,7 @@ public class BlogPostRepository {
       //        CollectionRepository.updateItemCount(connection, record.getCollectionId(), -1);
       //        CategoryRepository.updateItemCount(connection, record.getCategoryId(), -1);
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("post_id = ?", record.getId()));
+      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("post_id = ?", record.getId()));
       // Finish transaction
       transaction.commit();
       return true;
@@ -216,9 +213,7 @@ public class BlogPostRepository {
   }
 
   public static void removeAll(Connection connection, Blog blog) throws SQLException {
-    SqlUtils where = new SqlUtils();
-    where.add("blog_id = ?", blog.getId());
-    DB.deleteFrom(connection, TABLE_NAME, where);
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("blog_id = ?", blog.getId()));
   }
 
   private static BlogPost buildRecord(ResultSet rs) {

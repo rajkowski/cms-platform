@@ -16,16 +16,31 @@
 
 package com.simisinc.platform.infrastructure.persistence.items;
 
-import com.simisinc.platform.domain.model.items.*;
-import com.simisinc.platform.infrastructure.database.*;
-import com.simisinc.platform.presentation.controller.DataConstants;
-import com.simisinc.platform.presentation.controller.UserSession;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.sql.*;
-import java.util.List;
+import com.simisinc.platform.domain.model.items.Item;
+import com.simisinc.platform.domain.model.items.ItemFolder;
+import com.simisinc.platform.domain.model.items.ItemFolderCategory;
+import com.simisinc.platform.domain.model.items.ItemFolderGroup;
+import com.simisinc.platform.domain.model.items.PrivacyType;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
+import com.simisinc.platform.presentation.controller.DataConstants;
+import com.simisinc.platform.presentation.controller.UserSession;
 
 /**
  * Persists and retrieves item folder objects
@@ -101,13 +116,12 @@ public class ItemFolderRepository {
     }
     updateValues.add("has_allowed_groups", record.getFolderGroupList() != null && !record.getFolderGroupList().isEmpty());
     updateValues.add("has_categories", record.getFolderCategoryList() != null && !record.getFolderCategoryList().isEmpty());
-    SqlUtils where = new SqlUtils().add("folder_id = ?", record.getId());
     // Use a transaction
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
       // In a transaction (use the existing connection)
-      DB.update(connection, TABLE_NAME, updateValues, where);
+      DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("folder_id = ?", record.getId()));
       // Manage the access groups
       ItemFolderGroupRepository.removeAll(connection, record);
       ItemFolderGroupRepository.insertFolderGroupList(connection, record);
@@ -125,7 +139,7 @@ public class ItemFolderRepository {
   }
 
   public static void removeAll(Connection connection, Item item) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("item_id = ?", item.getId()));
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("item_id = ?", item.getId()));
   }
 
   // Remove
@@ -140,7 +154,7 @@ public class ItemFolderRepository {
       ItemFolderGroupRepository.removeAll(connection, record);
       ItemFolderCategoryRepository.removeAll(connection, record);
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("folder_id = ?", record.getId()));
+      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("folder_id = ?", record.getId()));
       // Finish transaction
       transaction.commit();
       // Invalidate the cache
@@ -154,21 +168,21 @@ public class ItemFolderRepository {
   }
 
   private static DataResult query(ItemFolderSpecification specification, DataConstraints constraints) {
-    SqlUtils where = null;
+    SqlWhere where = null;
     if (specification != null) {
-      where = new SqlUtils()
-          .addIfExists("item_id = ?", specification.getItemId(), -1)
-          .addIfExists("folder_id = ?", specification.getId(), -1)
-          .addIfExists("folder_unique_id = ?", specification.getUniqueId());
+      where = DB.WHERE()
+          .andAddIfHasValue("item_id = ?", specification.getItemId(), -1)
+          .andAddIfHasValue("folder_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("folder_unique_id = ?", specification.getUniqueId());
       if (specification.getName() != null) {
-        where.add("LOWER(name) = ?", specification.getName().toLowerCase());
+        where.AND("LOWER(name) = ?", specification.getName().toLowerCase());
       }
       if (specification.getForUserId() != DataConstants.UNDEFINED) {
         if (specification.getForUserId() == UserSession.GUEST_ID) {
-          where.add("allows_guests = true");
+          where.AND("allows_guests = true");
         } else {
           // For logged out and logged in users
-          where.add(
+          where.AND(
               "(allows_guests = true " +
                   "OR (has_allowed_groups = true " +
                   "AND EXISTS (SELECT 1 FROM item_folder_groups WHERE folder_id = item_folders.folder_id " +
@@ -186,7 +200,7 @@ public class ItemFolderRepository {
     }
     ItemFolder folder = (ItemFolder) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("folder_id = ?", id),
+        DB.WHERE("folder_id = ?", id),
         ItemFolderRepository::buildRecord);
     populateRelatedData(folder);
     return folder;
@@ -201,9 +215,8 @@ public class ItemFolderRepository {
     }
     ItemFolder folder = (ItemFolder) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("folder_unique_id = ?", uniqueId)
-            .add("item_id", itemId),
+        DB.WHERE("folder_unique_id = ?", uniqueId)
+            .AND("item_id", itemId),
         ItemFolderRepository::buildRecord);
     populateRelatedData(folder);
     return folder;
@@ -218,9 +231,8 @@ public class ItemFolderRepository {
     }
     ItemFolder folder = (ItemFolder) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("LOWER(name) = ?", name.toLowerCase())
-            .add("item_id = ?", itemId),
+        DB.WHERE("LOWER(name) = ?", name.toLowerCase())
+            .AND("item_id = ?", itemId),
         ItemFolderRepository::buildRecord);
     populateRelatedData(folder);
     return folder;

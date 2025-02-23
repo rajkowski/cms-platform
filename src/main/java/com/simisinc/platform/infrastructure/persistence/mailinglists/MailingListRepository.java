@@ -16,14 +16,24 @@
 
 package com.simisinc.platform.infrastructure.persistence.mailinglists;
 
-import com.simisinc.platform.domain.model.mailinglists.MailingList;
-import com.simisinc.platform.infrastructure.database.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.sql.*;
-import java.util.List;
+import com.simisinc.platform.domain.model.mailinglists.MailingList;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves mailing list objects
@@ -53,9 +63,8 @@ public class MailingListRepository {
   public static List<MailingList> findOnlineLists() {
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("show_online = true")
-            .add("enabled = true"),
+        DB.WHERE("show_online = true")
+            .AND("enabled = true"),
         new DataConstraints().setDefaultColumnToSortBy("list_order, name"),
         MailingListRepository::buildRecord);
     if (result.hasRecords()) {
@@ -68,14 +77,13 @@ public class MailingListRepository {
     if (emailId <= 0) {
       return null;
     }
-    SqlUtils where = new SqlUtils()
-        .add("show_online = true")
-        .add("enabled = true")
-        .add("EXISTS (SELECT 1 FROM mailing_list_members WHERE list_id = mailing_lists.list_id AND email_id = ? AND is_valid = true)",
-            emailId);
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        where,
+        DB.WHERE("show_online = true")
+            .AND("enabled = true")
+            .AND(
+                "EXISTS (SELECT 1 FROM mailing_list_members WHERE list_id = mailing_lists.list_id AND email_id = ? AND is_valid = true)",
+                emailId),
         null,
         MailingListRepository::buildRecord);
     if (result.hasRecords()) {
@@ -90,7 +98,7 @@ public class MailingListRepository {
     }
     return (MailingList) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("list_id = ?", id),
+        DB.WHERE("list_id = ?", id),
         MailingListRepository::buildRecord);
   }
 
@@ -100,7 +108,7 @@ public class MailingListRepository {
     }
     return (MailingList) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("LOWER(name) = ?", name.toLowerCase().trim()),
+        DB.WHERE("LOWER(name) = ?", name.toLowerCase().trim()),
         MailingListRepository::buildRecord);
   }
 
@@ -157,9 +165,7 @@ public class MailingListRepository {
         .add("enabled", record.getEnabled())
         .add("modified_by", record.getModifiedBy())
         .add("modified", new Timestamp(System.currentTimeMillis()));
-    SqlUtils where = new SqlUtils()
-        .add("list_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("list_id = ?", record.getId()))) {
       return record;
     }
     LOG.error("The update failed!");
@@ -173,7 +179,7 @@ public class MailingListRepository {
       // Delete the references
       MailingListMemberRepository.removeAll(connection, record);
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("list_id = ?", record.getId()));
+      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("list_id = ?", record.getId()));
       // Finish transaction
       transaction.commit();
       return true;

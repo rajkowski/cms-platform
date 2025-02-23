@@ -16,15 +16,15 @@
 
 package com.simisinc.platform.infrastructure.persistence.maps;
 
-import com.simisinc.platform.domain.model.maps.ZipCode;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import com.simisinc.platform.domain.model.maps.ZipCode;
+import com.simisinc.platform.infrastructure.database.DB;
 
 /**
  * Persists and retrieves zip code objects
@@ -45,10 +45,9 @@ public class ZipCodeRepository {
     if (code.length() != 5) {
       return null;
     }
-    SqlUtils where = new SqlUtils();
-    where.add("code = ?", code);
     return (ZipCode) DB.selectRecordFrom(
-        TABLE_NAME, where,
+        TABLE_NAME,
+        DB.WHERE("code = ?", code),
         ZipCodeRepository::buildRecord);
   }
 

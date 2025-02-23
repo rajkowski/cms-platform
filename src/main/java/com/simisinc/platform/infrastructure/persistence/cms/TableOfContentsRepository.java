@@ -16,18 +16,24 @@
 
 package com.simisinc.platform.infrastructure.persistence.cms;
 
-import com.simisinc.platform.application.cms.TableOfContentsJSONCommand;
-import com.simisinc.platform.domain.model.cms.TableOfContents;
-import com.simisinc.platform.infrastructure.cache.CacheManager;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.application.cms.TableOfContentsJSONCommand;
+import com.simisinc.platform.domain.model.cms.TableOfContents;
+import com.simisinc.platform.infrastructure.cache.CacheManager;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlValue;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves table of contents objects
@@ -40,14 +46,14 @@ public class TableOfContentsRepository {
   private static Log LOG = LogFactory.getLog(TableOfContentsRepository.class);
 
   private static String TABLE_NAME = "table_of_contents";
-  private static String[] PRIMARY_KEY = new String[]{"toc_id"};
+  private static String[] PRIMARY_KEY = new String[] { "toc_id" };
 
   private static DataResult query(TableOfContentsSpecification specification, DataConstraints constraints) {
-    SqlUtils where = null;
+    SqlWhere where = null;
     if (specification != null) {
-      where = new SqlUtils()
-          .addIfExists("toc_id = ?", specification.getId(), -1)
-          .addIfExists("toc_unique_id = ?", specification.getTocUniqueId());
+      where = DB.WHERE()
+          .andAddIfHasValue("toc_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("toc_unique_id = ?", specification.getTocUniqueId());
     }
     return DB.selectAllFrom(TABLE_NAME, where, constraints, TableOfContentsRepository::buildRecord);
   }
@@ -58,8 +64,7 @@ public class TableOfContentsRepository {
     }
     return (TableOfContents) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("toc_unique_id = ?", tocUniqueId),
+        DB.WHERE("toc_unique_id = ?", tocUniqueId),
         TableOfContentsRepository::buildRecord);
   }
 
@@ -99,9 +104,7 @@ public class TableOfContentsRepository {
         .add("modified_by", record.getModifiedBy())
         .add("modified", new Timestamp(System.currentTimeMillis()));
     updateValues.add(new SqlValue("entries", SqlValue.JSONB_TYPE, TableOfContentsJSONCommand.createJSONString(record)));
-    SqlUtils where = new SqlUtils()
-        .add("toc_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("toc_id = ?", record.getId()))) {
       // Expire the cache
       CacheManager.invalidateKey(CacheManager.TABLE_OF_CONTENTS_UNIQUE_ID_CACHE, record.getTocUniqueId());
       return record;

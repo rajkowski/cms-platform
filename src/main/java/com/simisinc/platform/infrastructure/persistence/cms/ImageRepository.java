@@ -16,15 +16,20 @@
 
 package com.simisinc.platform.infrastructure.persistence.cms;
 
-import com.simisinc.platform.domain.model.cms.Image;
-import com.simisinc.platform.infrastructure.database.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.List;
+import com.simisinc.platform.domain.model.cms.Image;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves image objects
@@ -40,16 +45,16 @@ public class ImageRepository {
   private static String[] PRIMARY_KEY = new String[] { "image_id" };
 
   private static DataResult query(ImageSpecification specification, DataConstraints constraints) {
-    SqlUtils where = null;
+    SqlWhere where = null;
     if (specification != null) {
-      where = new SqlUtils()
-          .addIfExists("image_id = ?", specification.getId(), -1)
-          .addIfExists("created_by = ?", specification.getCreatedBy(), -1);
+      where = DB.WHERE()
+          .andAddIfHasValue("image_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("created_by = ?", specification.getCreatedBy(), -1);
       if (specification.getFilename() != null) {
-        where.add("LOWER(filename) = ?", specification.getFilename().toLowerCase());
+        where.AND("LOWER(filename) = ?", specification.getFilename().toLowerCase());
       }
       if (specification.getFileType() != null) {
-        where.add("LOWER(file_type) = ?", specification.getFileType().toLowerCase());
+        where.AND("LOWER(file_type) = ?", specification.getFileType().toLowerCase());
       }
     }
     return DB.selectAllFrom(TABLE_NAME, where, constraints, ImageRepository::buildRecord);
@@ -61,7 +66,7 @@ public class ImageRepository {
     }
     return (Image) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("image_id = ?", id),
+        DB.WHERE("image_id = ?", id),
         ImageRepository::buildRecord);
   }
 
@@ -69,12 +74,10 @@ public class ImageRepository {
     if (StringUtils.isBlank(versionWebPath) || id == -1) {
       return null;
     }
-    SqlUtils where = new SqlUtils()
-        .add("web_path = ?", versionWebPath)
-        .add("image_id = ?", id);
     return (Image) DB.selectRecordFrom(
         TABLE_NAME,
-        where,
+        DB.WHERE("web_path = ?", versionWebPath)
+            .AND("image_id = ?", id),
         ImageRepository::buildRecord);
   }
 
@@ -119,9 +122,7 @@ public class ImageRepository {
   private static Image update(Image record) {
     SqlUtils updateValues = new SqlUtils()
         .add("processed", record.getProcessed());
-    SqlUtils where = new SqlUtils()
-        .add("image_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("image_id = ?", record.getId()))) {
       return record;
     }
     LOG.error("The update failed!");
@@ -129,7 +130,7 @@ public class ImageRepository {
   }
 
   public static void remove(Image record) {
-    DB.deleteFrom(TABLE_NAME, new SqlUtils().add("image_id = ?", record.getId()));
+    DB.deleteFrom(TABLE_NAME, DB.WHERE("image_id = ?", record.getId()));
   }
 
   private static Image buildRecord(ResultSet rs) {

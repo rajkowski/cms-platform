@@ -16,19 +16,26 @@
 
 package com.simisinc.platform.infrastructure.persistence;
 
-import com.simisinc.platform.application.CustomFieldListJSONCommand;
-import com.simisinc.platform.application.cms.HtmlCommand;
-import com.simisinc.platform.domain.model.UserProfile;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.application.CustomFieldListJSONCommand;
+import com.simisinc.platform.application.cms.HtmlCommand;
+import com.simisinc.platform.domain.model.UserProfile;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlValue;
 
 /**
  * Persists and retrieves user profile objects
@@ -45,10 +52,14 @@ public class UserProfileRepository {
 
   private static DataResult query(UserSpecification specification, DataConstraints constraints) {
     SqlUtils select = new SqlUtils();
-    SqlUtils where = new SqlUtils();
     SqlUtils orderBy = new SqlUtils();
     return DB.selectAllFrom(
-        TABLE_NAME, select, where, orderBy, constraints, UserProfileRepository::buildRecord);
+        TABLE_NAME,
+        select,
+        DB.WHERE(),
+        orderBy,
+        constraints,
+        UserProfileRepository::buildRecord);
   }
 
   public static UserProfile findByUniqueId(String uniqueId) {
@@ -56,7 +67,8 @@ public class UserProfileRepository {
       return null;
     }
     return (UserProfile) DB.selectRecordFrom(
-        TABLE_NAME, new SqlUtils().add("unique_id = ?", uniqueId),
+        TABLE_NAME,
+        DB.WHERE("unique_id = ?", uniqueId),
         UserProfileRepository::buildRecord);
   }
 
@@ -66,8 +78,7 @@ public class UserProfileRepository {
     }
     return (UserProfile) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("user_id = ?", userId),
+        DB.WHERE("user_id = ?", userId),
         UserProfileRepository::buildRecord);
   }
 
@@ -124,14 +135,15 @@ public class UserProfileRepository {
     } else {
       updateValues.add(new SqlValue("field_values", SqlValue.JSONB_TYPE, null));
     }
-    SqlUtils where = new SqlUtils()
-        .add("user_id = ?", record.getId());
     // Use a transaction
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
       // In a transaction (use the existing connection)
-      DB.update(connection, TABLE_NAME, updateValues, where);
+      DB.update(connection,
+          TABLE_NAME,
+          updateValues,
+          DB.WHERE("user_id = ?", record.getId()));
       // Finish the transaction
       transaction.commit();
       return record;

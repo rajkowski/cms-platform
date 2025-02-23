@@ -16,15 +16,21 @@
 
 package com.simisinc.platform.infrastructure.persistence.ecommerce;
 
-import com.simisinc.platform.domain.model.ecommerce.ShippingMethod;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.ecommerce.ShippingMethod;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves shipping method objects
@@ -54,8 +60,7 @@ public class ShippingMethodRepository {
   public static ShippingMethod findById(long methodId) {
     return (ShippingMethod) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("method_id = ?", methodId),
+        DB.WHERE("method_id = ?", methodId),
         ShippingMethodRepository::buildRecord);
   }
 
@@ -97,9 +102,7 @@ public class ShippingMethodRepository {
         .add("enabled", record.getEnabled());
     //        .add("modified_by", record.getModifiedBy(), -1)
     //        .add("modified", new Timestamp(System.currentTimeMillis()));
-    SqlUtils where = new SqlUtils()
-        .add("method_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("method_id = ?", record.getId()))) {
       //      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
     }

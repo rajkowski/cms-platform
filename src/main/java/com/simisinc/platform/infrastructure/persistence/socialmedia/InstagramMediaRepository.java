@@ -16,17 +16,24 @@
 
 package com.simisinc.platform.infrastructure.persistence.socialmedia;
 
-import com.simisinc.platform.application.cms.HtmlCommand;
-import com.simisinc.platform.domain.model.socialmedia.InstagramMedia;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.application.cms.HtmlCommand;
+import com.simisinc.platform.domain.model.socialmedia.InstagramMedia;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves Instagram media objects
@@ -47,8 +54,7 @@ public class InstagramMediaRepository {
     }
     return (InstagramMedia) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("graph_id = ?", graphId),
+        DB.WHERE("graph_id = ?", graphId),
         InstagramMediaRepository::buildRecord);
   }
 
@@ -61,10 +67,10 @@ public class InstagramMediaRepository {
       constraints = new DataConstraints();
     }
     constraints.setDefaultColumnToSortBy("created DESC");
-    SqlUtils where = null;
+    SqlWhere where = null;
     if (specification != null) {
-      where = new SqlUtils()
-          .addIfExists("media_type = ?", specification.getMediaType());
+      where = DB.WHERE()
+          .andAddIfHasValue("media_type = ?", specification.getMediaType());
     }
     DataResult result = DB.selectAllFrom(TABLE_NAME, where, constraints, InstagramMediaRepository::buildRecord);
     return (List<InstagramMedia>) result.getRecords();
@@ -103,9 +109,7 @@ public class InstagramMediaRepository {
         .add("caption", HtmlCommand.text(StringUtils.trimToNull(record.getCaption())))
         .add("short_code", StringUtils.trimToNull(record.getShortCode()))
         .add("timestamp", StringUtils.trimToNull(record.getTimestamp()));
-    SqlUtils where = new SqlUtils()
-        .add("id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("id = ?", record.getId()))) {
       // CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
     }
@@ -122,7 +126,7 @@ public class InstagramMediaRepository {
       // CollectionRepository.updateItemCount(connection, record.getCollectionId(), -1);
       // CategoryRepository.updateItemCount(connection, record.getCategoryId(), -1);
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("id = ?", record.getId()));
+      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("id = ?", record.getId()));
       // Finish transaction
       transaction.commit();
       return true;

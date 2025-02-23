@@ -16,18 +16,23 @@
 
 package com.simisinc.platform.infrastructure.persistence.items;
 
-import com.simisinc.platform.domain.model.items.Category;
-import com.simisinc.platform.domain.model.items.Collection;
-import com.simisinc.platform.domain.model.items.Item;
-import com.simisinc.platform.domain.model.items.ItemCategory;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.items.Category;
+import com.simisinc.platform.domain.model.items.Collection;
+import com.simisinc.platform.domain.model.items.Item;
+import com.simisinc.platform.domain.model.items.ItemCategory;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves item category objects
@@ -40,8 +45,7 @@ public class ItemCategoryRepository {
   private static Log LOG = LogFactory.getLog(ItemCategoryRepository.class);
 
   private static String TABLE_NAME = "item_categories";
-  private static String[] PRIMARY_KEY = new String[]{"id"};
-
+  private static String[] PRIMARY_KEY = new String[] { "id" };
 
   public static ItemCategory save(ItemCategory record) {
     if (record.getId() > -1) {
@@ -93,36 +97,30 @@ public class ItemCategoryRepository {
   }
 
   public static void removeAll(Connection connection, Item item) throws SQLException {
-    SqlUtils where = new SqlUtils();
-    where.add("item_id = ?", item.getId());
-    DB.deleteFrom(connection, TABLE_NAME, where);
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("item_id = ?", item.getId()));
   }
 
   public static void removeAll(Connection connection, Category category) throws SQLException {
-    SqlUtils where = new SqlUtils();
-    where.add("category_id = ?", category.getId());
-    DB.deleteFrom(connection, TABLE_NAME, where);
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("category_id = ?", category.getId()));
   }
 
   public static void removeAll(Connection connection, Collection collection) throws SQLException {
-    SqlUtils where = new SqlUtils();
-    where.add("collection_id = ?", collection.getId());
-    DB.deleteFrom(connection, TABLE_NAME, where);
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("collection_id = ?", collection.getId()));
   }
 
   public static void removeItemCategoryId(Connection connection, Item item, long categoryId) throws SQLException {
-    SqlUtils where = new SqlUtils();
-    where.add("item_id = ?", item.getId());
-    where.add("category_id = ?", categoryId);
-    DB.deleteFrom(connection, TABLE_NAME, where);
+    DB.deleteFrom(connection,
+        TABLE_NAME,
+        DB.WHERE("item_id = ?", item.getId())
+            .AND("category_id = ?", categoryId));
   }
 
   private static DataResult query(ItemCategorySpecification specification, DataConstraints constraints) {
     SqlUtils select = new SqlUtils();
-    SqlUtils where = new SqlUtils();
+    SqlWhere where = DB.WHERE();
     SqlUtils orderBy = new SqlUtils();
     if (specification != null) {
-      where.addIfExists("item_id = ?", specification.getItemId(), -1);
+      where.andAddIfHasValue("item_id = ?", specification.getItemId(), -1);
     }
     return DB.selectAllFrom(
         TABLE_NAME, select, where, orderBy, constraints, ItemCategoryRepository::buildRecord);
@@ -133,7 +131,8 @@ public class ItemCategoryRepository {
       return null;
     }
     return (ItemCategory) DB.selectRecordFrom(
-        TABLE_NAME, new SqlUtils().add("id = ?", id),
+        TABLE_NAME,
+        DB.WHERE("id = ?", id),
         ItemCategoryRepository::buildRecord);
   }
 
@@ -155,7 +154,7 @@ public class ItemCategoryRepository {
     }
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        new SqlUtils().add("item_id = ?", itemId),
+        DB.WHERE("item_id = ?", itemId),
         null,
         ItemCategoryRepository::buildRecord);
     return (List<ItemCategory>) result.getRecords();

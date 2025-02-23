@@ -16,16 +16,21 @@
 
 package com.simisinc.platform.infrastructure.persistence.ecommerce;
 
-import com.simisinc.platform.domain.model.ecommerce.FulfillmentOption;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.ecommerce.FulfillmentOption;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves fulfillment option objects
@@ -41,8 +46,11 @@ public class FulfillmentOptionRepository {
   private static String[] PRIMARY_KEY = new String[] { "fulfillment_id" };
 
   public static List<FulfillmentOption> findAll() {
-    SqlUtils where = new SqlUtils().add("enabled = ?", true);
-    DataResult result = DB.selectAllFrom(TABLE_NAME, where, null, FulfillmentOptionRepository::buildRecord);
+    DataResult result = DB.selectAllFrom(
+        TABLE_NAME,
+        DB.WHERE("enabled = ?", true),
+        null,
+        FulfillmentOptionRepository::buildRecord);
     List<FulfillmentOption> recordList = (List<FulfillmentOption>) result.getRecords();
     return recordList;
   }
@@ -53,7 +61,7 @@ public class FulfillmentOptionRepository {
     }
     return (FulfillmentOption) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("fulfillment_id = ?", id),
+        DB.WHERE("fulfillment_id = ?", id),
         FulfillmentOptionRepository::buildRecord);
   }
 
@@ -63,7 +71,7 @@ public class FulfillmentOptionRepository {
     }
     return (FulfillmentOption) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("code = ?", code),
+        DB.WHERE("code = ?", code),
         FulfillmentOptionRepository::buildRecord);
   }
 
@@ -72,7 +80,7 @@ public class FulfillmentOptionRepository {
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("fulfillment_id = ?", record.getId()));
+      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("fulfillment_id = ?", record.getId()));
       // Finish transaction
       transaction.commit();
       return true;
@@ -118,13 +126,12 @@ public class FulfillmentOptionRepository {
         .add("title", StringUtils.trimToNull(record.getTitle()))
         .add("enabled", record.getEnabled())
         .add("overrides_others", record.getOverridesOthers());
-    SqlUtils where = new SqlUtils().add("fulfillment_id = ?", record.getId());
     // Use a transaction
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
       // In a transaction (use the existing connection)
-      DB.update(connection, TABLE_NAME, updateValues, where);
+      DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("fulfillment_id = ?", record.getId()));
       // Finish the transaction
       transaction.commit();
       return record;

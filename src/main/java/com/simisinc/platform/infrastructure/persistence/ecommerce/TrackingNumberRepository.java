@@ -16,16 +16,22 @@
 
 package com.simisinc.platform.infrastructure.persistence.ecommerce;
 
-import com.simisinc.platform.domain.model.ecommerce.TrackingNumber;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.ecommerce.TrackingNumber;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves tracking number objects
@@ -43,24 +49,23 @@ public class TrackingNumberRepository {
   public static TrackingNumber findById(long trackingId) {
     return (TrackingNumber) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils()
-            .add("tracking_id = ?", trackingId),
+        DB.WHERE("tracking_id = ?", trackingId),
         TrackingNumberRepository::buildRecord);
   }
 
   public static List<TrackingNumber> findAllForOrderId(long orderId) {
-    SqlUtils where = new SqlUtils()
-        .add("order_id = ?", orderId);
-    DataResult result = DB.selectAllFrom(TABLE_NAME, where,
-        new DataConstraints().setDefaultColumnToSortBy("created").setUseCount(false), TrackingNumberRepository::buildRecord);
+    DataResult result = DB.selectAllFrom(
+        TABLE_NAME,
+        DB.WHERE("order_id = ?", orderId),
+        new DataConstraints().setDefaultColumnToSortBy("created").setUseCount(false),
+        TrackingNumberRepository::buildRecord);
     return (List<TrackingNumber>) result.getRecords();
   }
 
   public static boolean exists(TrackingNumber record) {
-    SqlUtils where = new SqlUtils()
-        .add("order_id = ?", record.getOrderId())
-        .add("tracking_number = ?", StringUtils.trimToNull(record.getTrackingNumber()));
-    return DB.selectCountFrom(TABLE_NAME, where) > 0;
+    return DB.selectCountFrom(TABLE_NAME,
+        DB.WHERE("order_id = ?", record.getOrderId())
+            .AND("tracking_number = ?", StringUtils.trimToNull(record.getTrackingNumber()))) > 0;
   }
 
   public static TrackingNumber save(TrackingNumber record) {
@@ -112,9 +117,7 @@ public class TrackingNumberRepository {
           .addIfExists("delivery_date", record.getDeliveryDate())
           .add("cart_item_id_list", StringUtils.trimToNull(record.getCartItemIdList()))
           .add("order_item_id_list", StringUtils.trimToNull(record.getOrderItemIdList()));
-      SqlUtils where = new SqlUtils()
-          .add("tracking_id = ?", record.getId());
-      if (DB.update(connection, TABLE_NAME, updateValues, where)) {
+      if (DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("tracking_id = ?", record.getId()))) {
         // Maintain an updated field in the order table
         updateOrderField(connection, record);
         // Finish the transaction
@@ -137,9 +140,7 @@ public class TrackingNumberRepository {
             "FROM order_tracking_numbers AS tn " +
             "WHERE tn.order_id = ?" +
             ") AS sub_q", record.getOrderId());
-    SqlUtils where = new SqlUtils()
-        .add("orders.order_id = ?", record.getOrderId());
-    DB.update(connection, "orders", update, where);
+    DB.update(connection, "orders", update, DB.WHERE("orders.order_id = ?", record.getOrderId()));
   }
 
   private static TrackingNumber buildRecord(ResultSet rs) {

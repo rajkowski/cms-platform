@@ -16,17 +16,23 @@
 
 package com.simisinc.platform.infrastructure.persistence;
 
-import com.simisinc.platform.domain.model.BlockedIP;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.io.File;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.BlockedIP;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves blocked IP objects
@@ -64,7 +70,7 @@ public class BlockedIPRepository {
     }
     return (BlockedIP) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("block_list_id = ?", id),
+        DB.WHERE("block_list_id = ?", id),
         BlockedIPRepository::buildRecord);
   }
 
@@ -74,7 +80,7 @@ public class BlockedIPRepository {
     }
     return (BlockedIP) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("ip_address = ?", ipAddress),
+        DB.WHERE("ip_address = ?", ipAddress),
         BlockedIPRepository::buildRecord);
   }
 
@@ -102,9 +108,7 @@ public class BlockedIPRepository {
     SqlUtils updateValues = new SqlUtils()
         .add("ip_address", StringUtils.trimToNull(record.getIpAddress()))
         .addIfExists("reason", StringUtils.trimToNull(record.getReason()));
-    SqlUtils where = new SqlUtils()
-        .add("block_list_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("block_list_id = ?", record.getId()))) {
       //      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
     }
@@ -121,7 +125,7 @@ public class BlockedIPRepository {
       //        CollectionRepository.updateItemCount(connection, record.getCollectionId(), -1);
       //        CategoryRepository.updateItemCount(connection, record.getCategoryId(), -1);
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("block_list_id = ?", record.getId()));
+      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("block_list_id = ?", record.getId()));
       // Finish transaction
       transaction.commit();
       return true;
@@ -146,16 +150,16 @@ public class BlockedIPRepository {
   }
 
   public static void export(DataConstraints constraints, File file) {
-    SqlUtils selectFields = new SqlUtils()
-        .addNames(
-            "ip_address AS \"IP Address\"",
-            "created AS \"Date\"",
-            "reason AS \"Reason\"");
     // Use the specification to filter results
     if (constraints == null) {
       constraints = new DataConstraints();
     }
     constraints.setDefaultColumnToSortBy("block_list_id");
-    DB.exportToCsvAllFrom(TABLE_NAME, selectFields, null, null, null, constraints, file);
+    DB.exportToCsvAllFrom(TABLE_NAME,
+        DB.SELECT(
+            "ip_address AS \"IP Address\"",
+            "created AS \"Date\"",
+            "reason AS \"Reason\""),
+        null, null, null, constraints, file);
   }
 }

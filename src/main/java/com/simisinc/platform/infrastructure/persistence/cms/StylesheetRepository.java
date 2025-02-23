@@ -16,19 +16,25 @@
 
 package com.simisinc.platform.infrastructure.persistence.cms;
 
-import com.simisinc.platform.application.cms.LoadStylesheetCommand;
-import com.simisinc.platform.domain.model.cms.Stylesheet;
-import com.simisinc.platform.infrastructure.cache.CacheManager;
-import com.simisinc.platform.infrastructure.database.*;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.application.cms.LoadStylesheetCommand;
+import com.simisinc.platform.domain.model.cms.Stylesheet;
+import com.simisinc.platform.infrastructure.cache.CacheManager;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
+import com.simisinc.platform.infrastructure.database.DB;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves style sheet objects
@@ -49,14 +55,14 @@ public class StylesheetRepository {
     }
     return (Stylesheet) DB.selectRecordFrom(
         TABLE_NAME,
-        new SqlUtils().add("stylesheet_id = ?", id),
+        DB.WHERE("stylesheet_id = ?", id),
         StylesheetRepository::buildRecord);
   }
 
   public static Stylesheet findByWebPageId(long webPageId) {
     return (Stylesheet) DB.selectRecordFrom(
         TABLE_NAME,
-        (webPageId > 0 ? new SqlUtils().add("web_page_id = ?", webPageId) : new SqlUtils().add("web_page_id IS NULL")),
+        (webPageId > 0 ? DB.WHERE("web_page_id = ?", webPageId) : DB.WHERE("web_page_id IS NULL")),
         StylesheetRepository::buildRecord);
   }
 
@@ -106,9 +112,7 @@ public class StylesheetRepository {
     SqlUtils updateValues = new SqlUtils()
         .add("css", StringUtils.trimToNull(record.getCss()))
         .add("modified", modified);
-    SqlUtils where = new SqlUtils()
-        .add("stylesheet_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("stylesheet_id = ?", record.getId()))) {
       CacheManager.invalidateKey(CacheManager.STYLESHEET_WEB_PAGE_ID_CACHE, record.getWebPageId());
       LoadStylesheetCommand.markStylesheetExists(record.getWebPageId(), true);
       record.setModified(modified);
@@ -127,7 +131,7 @@ public class StylesheetRepository {
       // CollectionRepository.updateItemCount(connection, record.getCollectionId(), -1);
       // CategoryRepository.updateItemCount(connection, record.getCategoryId(), -1);
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, new SqlUtils().add("stylesheet_id = ?", record.getId()));
+      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("stylesheet_id = ?", record.getId()));
       // Finish transaction
       transaction.commit();
       CacheManager.invalidateKey(CacheManager.STYLESHEET_WEB_PAGE_ID_CACHE, record.getWebPageId());
