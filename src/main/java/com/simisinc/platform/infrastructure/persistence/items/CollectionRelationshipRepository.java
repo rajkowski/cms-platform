@@ -30,7 +30,6 @@ import com.simisinc.platform.infrastructure.database.DB;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.database.DataResult;
 import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves collection relationship objects
@@ -49,12 +48,10 @@ public class CollectionRelationshipRepository {
     if (collectionId == -1) {
       return null;
     }
-    SqlWhere where = DB.WHERE()
-        .add("related_collection_id = ?", collectionId)
-        .add("collection_id != related_collection_id");
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        where,
+        DB.WHERE("related_collection_id = ?", collectionId)
+            .AND("collection_id != related_collection_id"),
         new DataConstraints().setDefaultColumnToSortBy("relationship_id"),
         CollectionRelationshipRepository::buildRecord);
     if (result.hasRecords()) {
@@ -67,12 +64,10 @@ public class CollectionRelationshipRepository {
     if (collectionId == -1) {
       return null;
     }
-    SqlWhere where = DB.WHERE()
-        .add("collection_id = ?", collectionId)
-        .add("related_collection_id = ?", collectionId);
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        where,
+        DB.WHERE("collection_id = ?", collectionId)
+            .AND("related_collection_id = ?", collectionId),
         new DataConstraints().setDefaultColumnToSortBy("relationship_id"),
         CollectionRelationshipRepository::buildRecord);
     if (result.hasRecords()) {
@@ -85,12 +80,10 @@ public class CollectionRelationshipRepository {
     if (collectionId == -1) {
       return null;
     }
-    SqlWhere where = DB.WHERE()
-        .add("collection_id = ?", collectionId)
-        .add("collection_id != related_collection_id");
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        where,
+        DB.WHERE("collection_id = ?", collectionId)
+            .AND("collection_id != related_collection_id"),
         new DataConstraints().setDefaultColumnToSortBy("relationship_id"),
         CollectionRelationshipRepository::buildRecord);
     if (result.hasRecords()) {

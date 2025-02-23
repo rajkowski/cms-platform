@@ -51,9 +51,8 @@ public class OAuthTokenRepository {
     }
     return (OAuthToken) DB.selectRecordFrom(
         TABLE_NAME,
-        DB.WHERE()
-            .add("user_id = ?", userId)
-            .add("user_token_id = ?", userTokenId),
+        DB.WHERE("user_id = ?", userId)
+            .AND("user_token_id = ?", userTokenId),
         OAuthTokenRepository::buildRecord);
   }
 

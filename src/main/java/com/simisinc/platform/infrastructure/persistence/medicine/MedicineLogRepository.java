@@ -57,14 +57,14 @@ public class MedicineLogRepository {
       joins.add("LEFT JOIN medicines medicines ON (medicine_log.medicine_id = medicines.medicine_id)");
 
       where = DB.WHERE()
-          .addIfExists("log_id = ?", specification.getId(), -1)
-          .addIfExists("medicine_log.individual_id = ?", specification.getIndividualId(), -1)
-          .addIfExists("medicine_log.medicine_id = ?", specification.getMedicineId(), -1);
+          .andAddIfHasValue("log_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("medicine_log.individual_id = ?", specification.getIndividualId(), -1)
+          .andAddIfHasValue("medicine_log.medicine_id = ?", specification.getMedicineId(), -1);
       if (specification.getMinDate() != null) {
-        where.add("administered >= ?", specification.getMinDate());
+        where.AND("administered >= ?", specification.getMinDate());
       }
       if (specification.getMaxDate() != null) {
-        where.add("administered < ?", specification.getMaxDate());
+        where.AND("administered < ?", specification.getMaxDate());
       }
       if (specification.getIndividualsList() != null && !specification.getIndividualsList().isEmpty()) {
         StringBuilder sb = new StringBuilder();
@@ -74,7 +74,7 @@ public class MedicineLogRepository {
           }
           sb.append(id);
         }
-        where.add("medicine_log.individual_id IN (" + sb.toString() + ")");
+        where.AND("medicine_log.individual_id IN (" + sb.toString() + ")");
       }
     }
     return DB.selectAllFrom(TABLE_NAME, joins, where, constraints, MedicineLogRepository::buildRecord);

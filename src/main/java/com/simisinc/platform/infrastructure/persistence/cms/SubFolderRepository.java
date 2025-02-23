@@ -61,17 +61,17 @@ public class SubFolderRepository {
       joins.add("LEFT JOIN folders ON (sub_folders.folder_id = folders.folder_id)");
 
       where
-          .addIfExists("sub_folder_id = ?", specification.getId(), -1)
-          .addIfExists("folders.folder_id = ?", specification.getFolderId(), -1);
+          .andAddIfHasValue("sub_folder_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("folders.folder_id = ?", specification.getFolderId(), -1);
 
       // For user id
       // User must be in a user group with folder access
       if (specification.getForUserId() != DataConstants.UNDEFINED) {
         if (specification.getForUserId() == UserSession.GUEST_ID) {
-          where.add("folders.allows_guests = true");
+          where.AND("folders.allows_guests = true");
         } else {
           // For logged out and logged in users
-          where.add(
+          where.AND(
               "(allows_guests = true " +
                   "OR (has_allowed_groups = true " +
                   "AND EXISTS (SELECT 1 FROM folder_groups WHERE folder_groups.folder_id = folders.folder_id AND view_all = true " +
@@ -84,14 +84,14 @@ public class SubFolderRepository {
 
       if (specification.getHasFiles() != DataConstants.UNDEFINED) {
         if (specification.getHasFiles() == DataConstants.TRUE) {
-          where.add("sub_folders.file_count > 0");
+          where.AND("sub_folders.file_count > 0");
         } else {
-          where.add("sub_folders.file_count = 0");
+          where.AND("sub_folders.file_count = 0");
         }
       }
 
       if (specification.getYear() > 0) {
-        where.add("EXTRACT(YEAR FROM start_date) = ?", specification.getYear());
+        where.AND("EXTRACT(YEAR FROM start_date) = ?", specification.getYear());
       }
 
     }

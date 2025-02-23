@@ -150,16 +150,16 @@ public class BlockedIPRepository {
   }
 
   public static void export(DataConstraints constraints, File file) {
-    SqlUtils selectFields = new SqlUtils()
-        .addNames(
-            "ip_address AS \"IP Address\"",
-            "created AS \"Date\"",
-            "reason AS \"Reason\"");
     // Use the specification to filter results
     if (constraints == null) {
       constraints = new DataConstraints();
     }
     constraints.setDefaultColumnToSortBy("block_list_id");
-    DB.exportToCsvAllFrom(TABLE_NAME, selectFields, null, null, null, constraints, file);
+    DB.exportToCsvAllFrom(TABLE_NAME,
+        DB.SELECT(
+            "ip_address AS \"IP Address\"",
+            "created AS \"Date\"",
+            "reason AS \"Reason\""),
+        null, null, null, constraints, file);
   }
 }

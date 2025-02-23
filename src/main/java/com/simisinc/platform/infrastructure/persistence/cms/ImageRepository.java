@@ -48,13 +48,13 @@ public class ImageRepository {
     SqlWhere where = null;
     if (specification != null) {
       where = DB.WHERE()
-          .addIfExists("image_id = ?", specification.getId(), -1)
-          .addIfExists("created_by = ?", specification.getCreatedBy(), -1);
+          .andAddIfHasValue("image_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("created_by = ?", specification.getCreatedBy(), -1);
       if (specification.getFilename() != null) {
-        where.add("LOWER(filename) = ?", specification.getFilename().toLowerCase());
+        where.AND("LOWER(filename) = ?", specification.getFilename().toLowerCase());
       }
       if (specification.getFileType() != null) {
-        where.add("LOWER(file_type) = ?", specification.getFileType().toLowerCase());
+        where.AND("LOWER(file_type) = ?", specification.getFileType().toLowerCase());
       }
     }
     return DB.selectAllFrom(TABLE_NAME, where, constraints, ImageRepository::buildRecord);
@@ -74,12 +74,10 @@ public class ImageRepository {
     if (StringUtils.isBlank(versionWebPath) || id == -1) {
       return null;
     }
-    SqlWhere where = DB.WHERE()
-        .add("web_path = ?", versionWebPath)
-        .add("image_id = ?", id);
     return (Image) DB.selectRecordFrom(
         TABLE_NAME,
-        where,
+        DB.WHERE("web_path = ?", versionWebPath)
+            .AND("image_id = ?", id),
         ImageRepository::buildRecord);
   }
 

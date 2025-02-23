@@ -77,10 +77,9 @@ public class CartRepository {
     }
     return (Cart) DB.selectRecordFrom(
         TABLE_NAME,
-        DB.WHERE()
-            .add("cart_unique_id = ?", token)
-            .add("(expires IS NULL OR expires > ?)", new Timestamp(System.currentTimeMillis()))
-            .add("enabled = ?", true),
+        DB.WHERE("cart_unique_id = ?", token)
+            .AND("(expires IS NULL OR expires > ?)", new Timestamp(System.currentTimeMillis()))
+            .AND("enabled = ?", true),
         CartRepository::buildRecord);
   }
 

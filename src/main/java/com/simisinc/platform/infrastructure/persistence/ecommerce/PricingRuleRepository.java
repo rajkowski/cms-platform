@@ -59,24 +59,24 @@ public class PricingRuleRepository {
     if (specification != null) {
       where = DB.WHERE();
       if (StringUtils.isNotBlank(specification.getCountryCode())) {
-        where.add("valid_country_code IS NULL OR valid_country_code = ?", specification.getCountryCode());
+        where.AND("valid_country_code IS NULL OR valid_country_code = ?", specification.getCountryCode());
       }
       if (StringUtils.isNotBlank(specification.getPromoCode())) {
-        where.add("upper(promo_code) = ?", specification.getPromoCode().toUpperCase());
+        where.AND("upper(promo_code) = ?", specification.getPromoCode().toUpperCase());
       }
       if (specification.getEnabled() != DataConstants.UNDEFINED) {
-        where.add("enabled = ?", specification.getEnabled() == DataConstants.TRUE);
+        where.AND("enabled = ?", specification.getEnabled() == DataConstants.TRUE);
       }
       if (specification.getIsValidToday() == DataConstants.TRUE) {
-        where.add("(from_date IS NULL OR from_date <= CURRENT_TIMESTAMP)");
-        where.add("(to_date IS NULL OR to_date > CURRENT_TIMESTAMP)");
+        where.AND("(from_date IS NULL OR from_date <= CURRENT_TIMESTAMP)");
+        where.AND("(to_date IS NULL OR to_date > CURRENT_TIMESTAMP)");
       }
       if (specification.getHasPromoCode() != DataConstants.UNDEFINED) {
-        where.add("promo_code IS NULL OR promo_code = ''");
+        where.AND("promo_code IS NULL OR promo_code = ''");
       }
       if (StringUtils.isNotBlank(specification.getIncludesSku())) {
         // @todo use a JSON field type to improve accuracy
-        where.add("LOWER(valid_skus) LIKE LOWER(?) ESCAPE '!'", "%" + specification.getIncludesSku().toLowerCase() + "%");
+        where.AND("LOWER(valid_skus) LIKE LOWER(?) ESCAPE '!'", "%" + specification.getIncludesSku().toLowerCase() + "%");
       }
     }
     return DB.selectAllFrom(TABLE_NAME, where, constraints, PricingRuleRepository::buildRecord);

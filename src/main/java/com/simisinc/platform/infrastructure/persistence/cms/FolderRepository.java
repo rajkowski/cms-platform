@@ -165,17 +165,17 @@ public class FolderRepository {
     SqlWhere where = null;
     if (specification != null) {
       where = DB.WHERE()
-          .addIfExists("folder_id = ?", specification.getId(), -1)
-          .addIfExists("folder_unique_id = ?", specification.getUniqueId());
+          .andAddIfHasValue("folder_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("folder_unique_id = ?", specification.getUniqueId());
       if (specification.getName() != null) {
-        where.add("LOWER(name) = ?", specification.getName().toLowerCase());
+        where.AND("LOWER(name) = ?", specification.getName().toLowerCase());
       }
       if (specification.getForUserId() != DataConstants.UNDEFINED) {
         if (specification.getForUserId() == UserSession.GUEST_ID) {
-          where.add("allows_guests = true");
+          where.AND("allows_guests = true");
         } else {
           // For logged out and logged in users
-          where.add(
+          where.AND(
               "(allows_guests = true " +
                   "OR (has_allowed_groups = true " +
                   "AND EXISTS (SELECT 1 FROM folder_groups WHERE folder_id = folders.folder_id " +

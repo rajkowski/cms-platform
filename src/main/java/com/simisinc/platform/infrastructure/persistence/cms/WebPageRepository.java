@@ -50,12 +50,12 @@ public class WebPageRepository {
     SqlWhere where = null;
     if (specification != null) {
       where = DB.WHERE()
-          .addIfExists("LOWER(link) = ?", specification.getLink())
-          .addIfDataConstantExists("enabled = ?", specification.getEnabled())
-          .addIfDataConstantExists("draft = ?", specification.getDraft())
-          .addIfDataConstantExists("searchable = ?", specification.getSearchable())
-          .addIfDataConstantExists("show_in_sitemap = ?", specification.getInSitemap())
-          .addIfDataConstantExists("has_redirect = ?", specification.getHasRedirect());
+          .andAddIfHasValue("LOWER(link) = ?", specification.getLink())
+          .andAddIfDataConstantExists("enabled = ?", specification.getEnabled())
+          .andAddIfDataConstantExists("draft = ?", specification.getDraft())
+          .andAddIfDataConstantExists("searchable = ?", specification.getSearchable())
+          .andAddIfDataConstantExists("show_in_sitemap = ?", specification.getInSitemap())
+          .andAddIfDataConstantExists("has_redirect = ?", specification.getHasRedirect());
     }
     return where;
   }

@@ -67,9 +67,8 @@ public class ShippingCountryRepository {
   public static ShippingCountry findByEnabledCountry(String name) {
     return (ShippingCountry) DB.selectRecordFrom(
         TABLE_NAME,
-        DB.WHERE()
-            .add("LOWER(title) = ?", name.toLowerCase())
-            .add("enabled = ?", true),
+        DB.WHERE("LOWER(title) = ?", name.toLowerCase())
+            .AND("enabled = ?", true),
         ShippingCountryRepository::buildRecord);
   }
 

@@ -79,9 +79,8 @@ public class MenuTabRepository {
   public static List<MenuTab> findAllActive() {
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        DB.WHERE()
-            .add("draft = ?", false)
-            .add("enabled = ?", true),
+        DB.WHERE("draft = ?", false)
+            .AND("enabled = ?", true),
         new DataConstraints().setDefaultColumnToSortBy("tab_order").setUseCount(false),
         MenuTabRepository::buildRecord);
     return (List<MenuTab>) result.getRecords();

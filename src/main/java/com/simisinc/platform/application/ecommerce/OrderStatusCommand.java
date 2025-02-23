@@ -23,7 +23,6 @@ import org.apache.commons.lang3.StringUtils;
 import com.simisinc.platform.domain.model.ecommerce.Order;
 import com.simisinc.platform.domain.model.ecommerce.OrderItem;
 import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 import com.simisinc.platform.infrastructure.persistence.ecommerce.OrderItemRepository;
 
 /**
@@ -51,9 +50,8 @@ public class OrderStatusCommand {
     if (StringUtils.isBlank(code)) {
       return -1;
     }
-    SqlWhere where = DB.WHERE()
-        .add("LOWER(code) = ?", code.toLowerCase());
-    return (int) DB.selectFunction("status_id", "lookup_order_status", where);
+    return (int) DB.selectFunction("status_id", "lookup_order_status",
+        DB.WHERE("LOWER(code) = ?", code.toLowerCase()));
   }
 
   public static String status(int statusId) {

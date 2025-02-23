@@ -62,15 +62,15 @@ public class FileItemRepository {
     if (specification != null) {
       joins.add("LEFT JOIN folders ON (files.folder_id = folders.folder_id)");
       where
-          .addIfExists("file_id = ?", specification.getId(), -1)
-          .addIfExists("folders.folder_id = ?", specification.getFolderId(), -1)
-          .addIfExists("sub_folder_id = ?", specification.getSubFolderId(), -1)
-          .addIfExists("barcode = ?", specification.getBarcode());
+          .andAddIfHasValue("file_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("folders.folder_id = ?", specification.getFolderId(), -1)
+          .andAddIfHasValue("sub_folder_id = ?", specification.getSubFolderId(), -1)
+          .andAddIfHasValue("barcode = ?", specification.getBarcode());
       if (specification.getFilename() != null) {
-        where.add("LOWER(files.filename) = ?", specification.getFilename().trim().toLowerCase());
+        where.AND("LOWER(files.filename) = ?", specification.getFilename().trim().toLowerCase());
       }
       if (specification.getFileType() != null) {
-        where.add("LOWER(files.file_type) = ?", specification.getFileType().trim().toLowerCase());
+        where.AND("LOWER(files.file_type) = ?", specification.getFileType().trim().toLowerCase());
       }
       if (specification.getMatchesName() != null) {
         String likeValue = specification.getMatchesName().trim()
@@ -78,16 +78,16 @@ public class FileItemRepository {
             .replace("%", "!%")
             .replace("_", "!_")
             .replace("[", "![");
-        where.add("LOWER(files.title) LIKE LOWER(?) ESCAPE '!'", likeValue + "%");
+        where.AND("LOWER(files.title) LIKE LOWER(?) ESCAPE '!'", likeValue + "%");
       }
       if (specification.getWithinLastDays() > 0) {
-        where.add("files.created > NOW() - INTERVAL '" + specification.getWithinLastDays() + " days'");
+        where.AND("files.created > NOW() - INTERVAL '" + specification.getWithinLastDays() + " days'");
       }
       if (specification.getInASubFolder() != DataConstants.UNDEFINED) {
         if (specification.getInASubFolder() == DataConstants.TRUE) {
-          where.add("sub_folder_id IS NOT NULL");
+          where.AND("sub_folder_id IS NOT NULL");
         } else {
-          where.add("sub_folder_id IS NULL");
+          where.AND("sub_folder_id IS NULL");
         }
       }
 
@@ -95,10 +95,10 @@ public class FileItemRepository {
       // User must be in a user group with folder access
       if (specification.getForUserId() != DataConstants.UNDEFINED) {
         if (specification.getForUserId() == UserSession.GUEST_ID) {
-          where.add("folders.allows_guests = true");
+          where.AND("folders.allows_guests = true");
         } else {
           // For logged out and logged in users
-          where.add(
+          where.AND(
               "(allows_guests = true " +
                   "OR (has_allowed_groups = true " +
                   "AND EXISTS (SELECT 1 FROM folder_groups WHERE folder_groups.folder_id = folders.folder_id AND view_all = true " +
@@ -111,7 +111,7 @@ public class FileItemRepository {
 
       // For versionWebPath
       if (specification.getVersionWebPath() != null) {
-        where.add(
+        where.AND(
             "(web_path = ? OR EXISTS (SELECT 1 FROM file_versions WHERE file_versions.web_path = ? AND file_versions.file_id = ?))",
             new Object[] { specification.getVersionWebPath(), specification.getVersionWebPath(), specification.getId() });
       }
@@ -119,7 +119,7 @@ public class FileItemRepository {
       // Use the search engine
       if (StringUtils.isNotBlank(specification.getSearchName())) {
         select.add("ts_rank_cd(tsv, websearch_to_tsquery('file_stem', ?)) AS rank", specification.getSearchName().trim());
-        where.add("tsv @@ websearch_to_tsquery('file_stem', ?)", specification.getSearchName().trim());
+        where.AND("tsv @@ websearch_to_tsquery('file_stem', ?)", specification.getSearchName().trim());
         // Override the order by for rank first
         orderBy.add("rank DESC, file_id");
       }

@@ -56,7 +56,7 @@ public class UserLoginRepository {
     SqlWhere where = DB.WHERE();
     SqlUtils orderBy = new SqlUtils();
     if (specification != null) {
-      where.addIfExists("user_id = ?", specification.getUserId(), -1);
+      where.andAddIfHasValue("user_id = ?", specification.getUserId(), -1);
     }
     return DB.selectAllFrom(
         TABLE_NAME, select, where, orderBy, constraints, UserLoginRepository::buildRecord);
@@ -87,9 +87,8 @@ public class UserLoginRepository {
   public static long queryTodaysLoginCount(long userId) {
     return DB.selectCountFrom(
         TABLE_NAME,
-        DB.WHERE()
-            .add("user_id = ?", userId)
-            .add("created >= ?", Timestamp.valueOf(LocalDate.now().atStartOfDay())));
+        DB.WHERE("user_id = ?", userId)
+            .AND("created >= ?", Timestamp.valueOf(LocalDate.now().atStartOfDay())));
   }
 
   public static List<StatisticsData> findUniqueDailyLogins(int daysToLimit) {

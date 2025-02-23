@@ -52,8 +52,8 @@ public class WikiRepository {
     SqlWhere where = null;
     if (specification != null) {
       where = DB.WHERE()
-          .addIfExists("wiki_id = ?", specification.getId(), -1)
-          .addIfExists("wiki_unique_id = ?", specification.getUniqueId());
+          .andAddIfHasValue("wiki_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("wiki_unique_id = ?", specification.getUniqueId());
     }
     return DB.selectAllFrom(TABLE_NAME, where, constraints, WikiRepository::buildRecord);
   }

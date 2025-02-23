@@ -33,7 +33,6 @@ import com.simisinc.platform.infrastructure.database.DB;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.database.DataResult;
 import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves member objects
@@ -93,13 +92,11 @@ public class MemberRepository {
     if (itemId == -1 || userId < 1) {
       return false;
     }
-    SqlWhere where = DB.WHERE()
-        .add("item_id = ?", itemId)
-        .add("user_id = ?", userId)
-        .add("approved = ?", true);
     long count = DB.selectCountFrom(
         TABLE_NAME,
-        where);
+        DB.WHERE("item_id = ?", itemId)
+            .AND("user_id = ?", userId)
+            .AND("approved = ?", true));
     return (count > 0);
   }
 

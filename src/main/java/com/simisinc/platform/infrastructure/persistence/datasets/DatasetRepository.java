@@ -33,7 +33,6 @@ import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.database.DataResult;
 import com.simisinc.platform.infrastructure.database.SqlUtils;
 import com.simisinc.platform.infrastructure.database.SqlValue;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves dataset objects
@@ -76,12 +75,10 @@ public class DatasetRepository {
     if (StringUtils.isBlank(versionWebPath) || id == -1) {
       return null;
     }
-    SqlWhere where = DB.WHERE()
-        .add("web_path = ?", versionWebPath)
-        .add("dataset_id = ?", id);
     return (Dataset) DB.selectRecordFrom(
         TABLE_NAME,
-        where,
+        DB.WHERE("web_path = ?", versionWebPath)
+            .AND("dataset_id = ?", id),
         DatasetRepository::buildRecord);
   }
 
@@ -95,16 +92,14 @@ public class DatasetRepository {
   }
 
   public static List<Dataset> findAllScheduledForDownload() {
-    SqlWhere where = DB.WHERE();
-    where.add("schedule_enabled = ?", true)
-        .add("schedule_frequency IS NOT NULL")
-        .add("source_url IS NOT NULL")
-        .add("CURRENT_TIMESTAMP > last_download + schedule_frequency")
-        .add("queue_date IS NULL OR CURRENT_TIMESTAMP > queue_date + queue_interval")
-        .add("queue_status = " + STATUS_READY);
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        where,
+        DB.WHERE("schedule_enabled = ?", true)
+            .AND("schedule_frequency IS NOT NULL")
+            .AND("source_url IS NOT NULL")
+            .AND("CURRENT_TIMESTAMP > last_download + schedule_frequency")
+            .AND("queue_date IS NULL OR CURRENT_TIMESTAMP > queue_date + queue_interval")
+            .AND("queue_status = " + STATUS_READY),
         new DataConstraints().setDefaultColumnToSortBy("queue_status"),
         DatasetRepository::buildRecord);
     return (List<Dataset>) result.getRecords();
@@ -286,10 +281,9 @@ public class DatasetRepository {
         .add("queue_date = CURRENT_TIMESTAMP")
         .add("queue_attempts = queue_attempts + 1")
         .add("schedule_last_run = CURRENT_TIMESTAMP");
-    SqlWhere where = DB.WHERE()
-        .add("dataset_id = ?", record.getId())
-        .add("queue_status = ?", STATUS_READY);
-    return DB.update(TABLE_NAME, updateValues, where);
+    return DB.update(TABLE_NAME, updateValues,
+        DB.WHERE("dataset_id = ?", record.getId())
+            .AND("queue_status = ?", STATUS_READY));
   }
 
   public static boolean markAsUnqueued(Dataset record) {

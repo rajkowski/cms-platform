@@ -354,21 +354,21 @@ public class ItemRepository {
       joins.add("LEFT JOIN collections ON (items.collection_id = collections.collection_id)");
 
       where
-          .addIfExists("item_id = ?", specification.getId(), -1)
-          .addIfExists("item_id <> ?", specification.getExcludeId(), -1)
-          .addIfExists("items.unique_id = ?", specification.getUniqueId())
-          .addIfExists("collections.collection_id = ?", specification.getCollectionId(), -1)
-          .addIfExists("barcode = ?", specification.getBarcode())
-          .addIfExists("dataset_id = ?", specification.getDatasetId(), -1)
-          .addIfExists("sync_date < ?", specification.getDatasetSyncTimestampThreshold());
+          .andAddIfHasValue("item_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("item_id <> ?", specification.getExcludeId(), -1)
+          .andAddIfHasValue("items.unique_id = ?", specification.getUniqueId())
+          .andAddIfHasValue("collections.collection_id = ?", specification.getCollectionId(), -1)
+          .andAddIfHasValue("barcode = ?", specification.getBarcode())
+          .andAddIfHasValue("dataset_id = ?", specification.getDatasetId(), -1)
+          .andAddIfHasValue("sync_date < ?", specification.getDatasetSyncTimestampThreshold());
 
       if (specification.getApprovedOnly()) {
-        where.add("approved is not null");
+        where.AND("approved is not null");
       } else if (specification.getUnapprovedOnly()) {
-        where.add("approved is null");
+        where.AND("approved is null");
       }
       if (specification.getName() != null) {
-        where.add("LOWER(items.name) = ?", specification.getName().trim().toLowerCase());
+        where.AND("LOWER(items.name) = ?", specification.getName().trim().toLowerCase());
       }
       if (specification.getMatchesName() != null) {
         String likeValue = specification.getMatchesName().trim()
@@ -376,11 +376,11 @@ public class ItemRepository {
             .replace("%", "!%")
             .replace("_", "!_")
             .replace("[", "![");
-        where.add("LOWER(items.name) LIKE LOWER(?) ESCAPE '!'", likeValue + "%");
+        where.AND("LOWER(items.name) LIKE LOWER(?) ESCAPE '!'", likeValue + "%");
       }
       if (specification.getCategoryId() > -1) {
         //where.add("category_id = ?", specification.getCategoryId(), -1);
-        where.add("EXISTS (SELECT 1 FROM item_categories WHERE item_id = items.item_id AND category_id = ?)",
+        where.AND("EXISTS (SELECT 1 FROM item_categories WHERE item_id = items.item_id AND category_id = ?)",
             specification.getCategoryId());
       }
 
@@ -390,10 +390,10 @@ public class ItemRepository {
       if (specification.getForUserId() != DataConstants.UNDEFINED) {
         if (specification.getForUserId() == UserSession.GUEST_ID) {
           // For logged out users
-          where.add("collections.allows_guests = true");
+          where.AND("collections.allows_guests = true");
         } else {
           // For logged out and logged in users
-          where.add(
+          where.AND(
               "(collections.allows_guests = true " +
                   "OR (has_allowed_groups = true " +
                   "AND EXISTS (SELECT 1 FROM collection_groups WHERE collection_groups.collection_id = collections.collection_id AND view_all = true "
@@ -411,7 +411,7 @@ public class ItemRepository {
       // User must be a member of the item
       if (specification.getForMemberWithUserId() != DataConstants.UNDEFINED) {
         // For logged in users
-        where.add(
+        where.AND(
             "EXISTS (SELECT 1 FROM members WHERE items.item_id = members.item_id AND user_id = ? AND approved IS NOT NULL)",
             specification.getForMemberWithUserId());
       }
@@ -421,7 +421,7 @@ public class ItemRepository {
         // Skip the SELECT COUNT(*), it causes slowdowns due to coordinate issue
         constraints.setUseCount(false);
         // Skip items without a location
-        where.add("geom IS NOT NULL");
+        where.AND("geom IS NOT NULL");
         // Determine if there is a region to search within
         String value = specification.getSearchLocation();
         if (StringUtils.isNumeric(value) && value.length() == 5) {
@@ -469,7 +469,7 @@ public class ItemRepository {
             "ts_headline('english', items.name || ' ' || coalesce(keywords,'') || ' ' || coalesce(summary,''), websearch_to_tsquery('title_stem', ?), 'StartSel=${b}, StopSel=${/b}, MaxWords=30, MinWords=15, ShortWord=3, HighlightAll=FALSE, MaxFragments=2, FragmentDelimiter=\" ... \"') AS highlight",
             specification.getSearchName().trim());
         select.add("ts_rank_cd(tsv, websearch_to_tsquery('title_stem', ?)) AS rank", specification.getSearchName().trim());
-        where.add("tsv @@ websearch_to_tsquery('title_stem', ?)", specification.getSearchName().trim());
+        where.AND("tsv @@ websearch_to_tsquery('title_stem', ?)", specification.getSearchName().trim());
         // Override the order by for rank first
         orderBy.add("rank DESC, item_id");
       }
@@ -477,7 +477,7 @@ public class ItemRepository {
       // Find items nearby
       if (specification.getNearItemId() > DataConstants.UNDEFINED) {
         constraints.setUseCount(false);
-        where.add("geom IS NOT NULL");
+        where.AND("geom IS NOT NULL");
         if (specification.getWithinMeters() > 0) {
           // @note currently slow
           //          where.add("ST_DWithin(geom::geography, (SELECT geom::geography FROM items WHERE item_id = ?), " + specification.getWithinMeters() + ")", specification.getNearItemId());
@@ -488,9 +488,9 @@ public class ItemRepository {
 
       if (specification.hasGeoPoint()) {
         constraints.setUseCount(false);
-        where.add("geom IS NOT NULL");
+        where.AND("geom IS NOT NULL");
         if (specification.getWithinMeters() > 0) {
-          where.add("ST_DWithin(geom::geography, ST_SetSRID(ST_MakePoint(" + specification.getLatitude() + ","
+          where.AND("ST_DWithin(geom::geography, ST_SetSRID(ST_MakePoint(" + specification.getLatitude() + ","
               + specification.getLongitude() + "), 4326)::geography, " + specification.getWithinMeters() + ")");
         }
         orderBy.add("geom <-> ST_SetSRID(ST_MakePoint(" + specification.getLatitude() + ","
@@ -499,17 +499,17 @@ public class ItemRepository {
 
       if (specification.getHasCoordinates() != DataConstants.UNDEFINED) {
         if (specification.getHasCoordinates() == DataConstants.TRUE) {
-          where.add("latitude <> 0 AND longitude <> 0");
+          where.AND("latitude <> 0 AND longitude <> 0");
         } else {
-          where.add("latitude = 0 AND longitude = 0");
+          where.AND("latitude = 0 AND longitude = 0");
         }
       }
 
       if (specification.getHasGeoJSON() != DataConstants.UNDEFINED) {
         if (specification.getHasGeoJSON() == DataConstants.TRUE) {
-          where.add("geojson IS NOT NULL");
+          where.AND("geojson IS NOT NULL");
         } else {
-          where.add("geojson IS NULL");
+          where.AND("geojson IS NULL");
         }
       }
     }
@@ -548,9 +548,8 @@ public class ItemRepository {
     }
     return (Item) DB.selectRecordFrom(
         TABLE_NAME,
-        DB.WHERE()
-            .add("item_id = ?", itemId)
-            .add("collection_id = ?", collectionId),
+        DB.WHERE("item_id = ?", itemId)
+            .AND("collection_id = ?", collectionId),
         ItemRepository::buildRecord);
   }
 
@@ -564,9 +563,8 @@ public class ItemRepository {
     }
     return (Item) DB.selectRecordFrom(
         TABLE_NAME,
-        DB.WHERE()
-            .add("unique_id = ?", uniqueId)
-            .add("collection_id = ?", collectionId),
+        DB.WHERE("unique_id = ?", uniqueId)
+            .AND("collection_id = ?", collectionId),
         ItemRepository::buildRecord);
   }
 
@@ -582,8 +580,8 @@ public class ItemRepository {
     return (Item) DB.selectRecordFrom(
         TABLE_NAME,
         DB.WHERE()
-            .add("LOWER(name) = ?", name.trim().toLowerCase())
-            .add("collection_id = ?", collectionId),
+            .AND("LOWER(name) = ?", name.trim().toLowerCase())
+            .AND("collection_id = ?", collectionId),
         ItemRepository::buildRecord);
   }
 
@@ -597,9 +595,8 @@ public class ItemRepository {
     }
     return (Item) DB.selectRecordFrom(
         TABLE_NAME,
-        DB.WHERE()
-            .add("dataset_key_value = ?", datasetKeyValue)
-            .add("dataset_id = ?", datasetId),
+        DB.WHERE("dataset_key_value = ?", datasetKeyValue)
+            .AND("dataset_id = ?", datasetId),
         ItemRepository::buildRecord);
   }
 

@@ -55,30 +55,30 @@ public class BlogPostRepository {
     SqlWhere where = null;
     if (specification != null) {
       where = DB.WHERE()
-          .addIfExists("post_id = ?", specification.getId(), -1)
-          .addIfExists("blog_id = ?", specification.getBlogId(), -1)
-          .addIfExists("post_unique_id = ?", specification.getUniqueId());
+          .andAddIfHasValue("post_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("blog_id = ?", specification.getBlogId(), -1)
+          .andAddIfHasValue("post_unique_id = ?", specification.getUniqueId());
       if (specification.getPublishedOnly() != DataConstants.UNDEFINED) {
         if (specification.getPublishedOnly() == DataConstants.TRUE) {
-          where.add("published IS NOT NULL");
+          where.AND("published IS NOT NULL");
         } else {
-          where.add("published IS NULL");
+          where.AND("published IS NULL");
         }
       }
       if (specification.getStartDateIsBeforeNow() != DataConstants.UNDEFINED) {
         if (specification.getStartDateIsBeforeNow() == DataConstants.TRUE) {
           // Show the ones which are active
-          where.add("start_date <= NOW()");
+          where.AND("start_date <= NOW()");
         }
       }
       if (specification.getIsWithinEndDate() != DataConstants.UNDEFINED) {
         if (specification.getIsWithinEndDate() == DataConstants.TRUE) {
           // Show the non-expiring and unexpired
-          where.add("(end_date IS NULL OR end_date >= NOW())");
+          where.AND("(end_date IS NULL OR end_date >= NOW())");
         }
       }
       if (StringUtils.isNotBlank(specification.getSearchTerm())) {
-        where.add("tsv @@ websearch_to_tsquery('content_stem', ?)", specification.getSearchTerm().trim());
+        where.AND("tsv @@ websearch_to_tsquery('content_stem', ?)", specification.getSearchTerm().trim());
       }
     }
     return where;
@@ -106,9 +106,8 @@ public class BlogPostRepository {
     }
     return (BlogPost) DB.selectRecordFrom(
         TABLE_NAME,
-        DB.WHERE()
-            .add("blog_id = ?", blogId)
-            .add("post_unique_id = ?", postUniqueId),
+        DB.WHERE("blog_id = ?", blogId)
+            .AND("post_unique_id = ?", postUniqueId),
         BlogPostRepository::buildRecord);
   }
 
@@ -185,8 +184,8 @@ public class BlogPostRepository {
         .add("archived", record.getArchived())
         .add("start_date", record.getStartDate())
         .add("end_date", record.getEndDate());
-    SqlWhere where = DB.WHERE("post_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues,
+        DB.WHERE("post_id = ?", record.getId()))) {
       //      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
     }

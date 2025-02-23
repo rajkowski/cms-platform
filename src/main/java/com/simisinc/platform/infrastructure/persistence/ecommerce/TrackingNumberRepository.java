@@ -32,7 +32,6 @@ import com.simisinc.platform.infrastructure.database.DB;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.database.DataResult;
 import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves tracking number objects
@@ -64,10 +63,9 @@ public class TrackingNumberRepository {
   }
 
   public static boolean exists(TrackingNumber record) {
-    SqlWhere where = DB.WHERE()
-        .add("order_id = ?", record.getOrderId())
-        .add("tracking_number = ?", StringUtils.trimToNull(record.getTrackingNumber()));
-    return DB.selectCountFrom(TABLE_NAME, where) > 0;
+    return DB.selectCountFrom(TABLE_NAME,
+        DB.WHERE("order_id = ?", record.getOrderId())
+            .AND("tracking_number = ?", StringUtils.trimToNull(record.getTrackingNumber()))) > 0;
   }
 
   public static TrackingNumber save(TrackingNumber record) {

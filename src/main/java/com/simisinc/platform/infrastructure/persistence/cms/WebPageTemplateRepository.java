@@ -47,7 +47,7 @@ public class WebPageTemplateRepository {
   private static DataResult query(WebPageTemplateSpecification specification, DataConstraints constraints) {
     SqlWhere where = null;
     if (specification != null) {
-      where = DB.WHERE().addIfExists("template_id = ?", specification.getId(), -1);
+      where = DB.WHERE().andAddIfHasValue("template_id = ?", specification.getId(), -1);
     }
     return DB.selectAllFrom(TABLE_NAME, where, constraints, WebPageTemplateRepository::buildRecord);
   }

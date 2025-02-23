@@ -52,36 +52,36 @@ public class FormDataRepository {
     SqlWhere where = null;
     if (specification != null) {
       where = DB.WHERE()
-          .addIfExists("form_data_id = ?", specification.getId(), -1)
-          .addIfExists("form_unique_id = ?", specification.getFormUniqueId())
-          .addIfExists("session_id = ?", specification.getSessionId())
-          .addIfExists("claimed_by = ?", specification.getClaimedBy(), -1L);
+          .andAddIfHasValue("form_data_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("form_unique_id = ?", specification.getFormUniqueId())
+          .andAddIfHasValue("session_id = ?", specification.getSessionId())
+          .andAddIfHasValue("claimed_by = ?", specification.getClaimedBy(), -1L);
       if (specification.getFlaggedAsSpam() != DataConstants.UNDEFINED) {
         if (specification.getFlaggedAsSpam() == DataConstants.TRUE) {
-          where.add("flagged_as_spam = true");
+          where.AND("flagged_as_spam = true");
         } else {
-          where.add("flagged_as_spam = false");
+          where.AND("flagged_as_spam = false");
         }
       }
       if (specification.getClaimed() != DataConstants.UNDEFINED) {
         if (specification.getClaimed() == DataConstants.TRUE) {
-          where.add("claimed IS NOT NULL");
+          where.AND("claimed IS NOT NULL");
         } else {
-          where.add("claimed IS NULL");
+          where.AND("claimed IS NULL");
         }
       }
       if (specification.getDismissed() != DataConstants.UNDEFINED) {
         if (specification.getDismissed() == DataConstants.TRUE) {
-          where.add("dismissed IS NOT NULL");
+          where.AND("dismissed IS NOT NULL");
         } else {
-          where.add("dismissed IS NULL");
+          where.AND("dismissed IS NULL");
         }
       }
       if (specification.getProcessed() != DataConstants.UNDEFINED) {
         if (specification.getProcessed() == DataConstants.TRUE) {
-          where.add("processed IS NOT NULL");
+          where.AND("processed IS NOT NULL");
         } else {
-          where.add("processed IS NULL");
+          where.AND("processed IS NULL");
         }
       }
     }
@@ -169,10 +169,9 @@ public class FormDataRepository {
     SqlUtils updateValues = new SqlUtils()
         .add("claimed", timestamp)
         .add("claimed_by", userId);
-    SqlWhere where = DB.WHERE()
-        .add("form_data_id = ?", record.getId())
-        .add("claimed IS NULL");
-    boolean updated = DB.update(TABLE_NAME, updateValues, where);
+    boolean updated = DB.update(TABLE_NAME, updateValues,
+        DB.WHERE("form_data_id = ?", record.getId())
+            .AND("claimed IS NULL"));
     if (updated) {
       // Update the record for additional workflows
       record.setClaimed(timestamp);

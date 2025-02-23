@@ -52,7 +52,6 @@ import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
 import com.simisinc.platform.infrastructure.database.DB;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlJoins;
 import com.simisinc.platform.infrastructure.database.SqlUtils;
 import com.simisinc.platform.infrastructure.database.SqlWhere;
 import com.simisinc.platform.presentation.controller.DataConstants;
@@ -75,43 +74,43 @@ public class OrderRepository {
     SqlWhere where = null;
     if (specification != null) {
       where = DB.WHERE()
-          .addIfExists("order_id = ?", specification.getId(), -1)
-          .addIfExists("customer_id = ?", specification.getCustomerId(), -1)
-          .addIfExists("LOWER(email) = ?", specification.getEmail() != null ? specification.getEmail().toLowerCase() : null)
-          .addIfExists("created_by = ?", specification.getCreatedBy(), -1);
+          .andAddIfHasValue("order_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("customer_id = ?", specification.getCustomerId(), -1)
+          .andAddIfHasValue("LOWER(email) = ?", specification.getEmail() != null ? specification.getEmail().toLowerCase() : null)
+          .andAddIfHasValue("created_by = ?", specification.getCreatedBy(), -1);
       if (StringUtils.isNotBlank(specification.getUniqueId())) {
-        where.add("(LOWER(order_unique_id) = LOWER(?) OR LOWER(order_unique_id) LIKE LOWER(?))",
+        where.AND("(LOWER(order_unique_id) = LOWER(?) OR LOWER(order_unique_id) LIKE LOWER(?))",
             new String[] { specification.getUniqueId(), specification.getUniqueId() + "%" });
       }
       if (StringUtils.isNotBlank(specification.getCustomerNumber())) {
-        where.add(
+        where.AND(
             "EXISTS (SELECT 1 FROM customers WHERE orders.customer_id = customers.customer_id AND LOWER(customer_unique_id) = ?)",
             specification.getCustomerNumber().toLowerCase());
       }
       if (StringUtils.isNotBlank(specification.getPhoneNumber())) {
-        where.add("(billing_phone_number = ? OR shipping_phone_number = ?)",
+        where.AND("(billing_phone_number = ? OR shipping_phone_number = ?)",
             new String[] { specification.getPhoneNumber(), specification.getPhoneNumber() });
       }
       if (StringUtils.isNotBlank(specification.getName())) {
-        where.add(
+        where.AND(
             "(LOWER(concat_ws(' ', first_name, last_name)) LIKE LOWER(?) ESCAPE '!' OR LOWER(concat_ws(' ', shipping_first_name, shipping_last_name)) LIKE LOWER(?) ESCAPE '!')",
             new String[] { "%" + specification.getName() + "%", "%" + specification.getName() + "%" });
       }
       if (specification.getShowSandbox() != DataConstants.UNDEFINED) {
-        where.add("live_mode = ?", specification.getShowSandbox() == DataConstants.FALSE);
+        where.AND("live_mode = ?", specification.getShowSandbox() == DataConstants.FALSE);
       }
       if (specification.getShowIncompleteOrders() != DataConstants.UNDEFINED) {
         // Completed orders have paid = true
-        where.add("paid = ?", specification.getShowIncompleteOrders() == DataConstants.FALSE);
+        where.AND("paid = ?", specification.getShowIncompleteOrders() == DataConstants.FALSE);
       }
       if (specification.getShowCanceledOrders() != DataConstants.UNDEFINED) {
-        where.add("canceled = ?", specification.getShowCanceledOrders() == DataConstants.TRUE);
+        where.AND("canceled = ?", specification.getShowCanceledOrders() == DataConstants.TRUE);
       }
       if (specification.getShowProcessedOrders() != DataConstants.UNDEFINED) {
-        where.add("processed = ?", specification.getShowProcessedOrders() == DataConstants.TRUE);
+        where.AND("processed = ?", specification.getShowProcessedOrders() == DataConstants.TRUE);
       }
       if (specification.getShowShippedOrders() != DataConstants.UNDEFINED) {
-        where.add("shipped = ?", specification.getShowShippedOrders() == DataConstants.TRUE);
+        where.AND("shipped = ?", specification.getShowShippedOrders() == DataConstants.TRUE);
       }
     }
     return DB.selectAllFrom(TABLE_NAME, where, constraints, OrderRepository::buildRecord);
@@ -883,15 +882,21 @@ public class OrderRepository {
     SqlUtils updateValues = new SqlUtils()
         .add("created_by", user.getId());
     SqlWhere where = DB.WHERE()
-        .add("created_by IS NULL")
-        .add("LOWER(email) = LOWER(?)", user.getEmail());
+        .AND("created_by IS NULL")
+        .AND("LOWER(email) = LOWER(?)", user.getEmail());
     DB.update(TABLE_NAME, updateValues, where);
     // @todo Append to the order_history (USER ASSOCIATED)
   }
 
   public static void export(DataConstraints constraints, File file) {
-    SqlUtils selectFields = new SqlUtils()
-        .addNames(
+    // show paid orders, and only refunded ones that have shipped
+    // Use the specification to filter results
+    if (constraints == null) {
+      constraints = new DataConstraints();
+    }
+    constraints.setDefaultColumnToSortBy("order_id");
+    DB.exportToCsvAllFrom(TABLE_NAME,
+        DB.SELECT(
             "order_unique_id AS \"Order Number\"",
             "live_mode AS \"Live Mode\"",
             "payment_date AS \"Date Ordered\"",
@@ -913,25 +918,24 @@ public class OrderRepository {
             "total_amount AS \"Total\"",
             "-total_refunded AS \"Refunded\"",
             "promo_code AS \"Promo Code\"",
-            "payment_processor AS \"Processor\"");
-    SqlJoins joins = new SqlJoins().add(STATUS_JOIN);
+            "payment_processor AS \"Processor\""),
+        DB.JOIN(STATUS_JOIN),
+        DB.WHERE("live_mode = ?", true)
+            .AND("paid = ?", true)
+            .AND("canceled = ?", false)
+            .AND("(refunded = false OR (refunded = true and shipped = true))"),
+        null, constraints, file);
+  }
+
+  public static void exportForTaxJar(DataConstraints constraints, File file) {
     // show paid orders, and only refunded ones that have shipped
-    SqlWhere where = DB.WHERE()
-        .add("live_mode = ?", true)
-        .add("paid = ?", true)
-        .add("canceled = ?", false)
-        .add("(refunded = false OR (refunded = true and shipped = true))");
     // Use the specification to filter results
     if (constraints == null) {
       constraints = new DataConstraints();
     }
     constraints.setDefaultColumnToSortBy("order_id");
-    DB.exportToCsvAllFrom(TABLE_NAME, selectFields, joins, where, null, constraints, file);
-  }
-
-  public static void exportForTaxJar(DataConstraints constraints, File file) {
-    SqlUtils selectFields = new SqlUtils()
-        .addNames(
+    DB.exportToCsvAllFrom(TABLE_NAME,
+        DB.SELECT(
             "'web' AS provider", // web/Square/etc.
             "charge_token AS \"order_id\"",
             "'Order' AS transaction_type", // Order or Refund
@@ -956,19 +960,12 @@ public class OrderRepository {
             "subtotal_amount + shipping_amount + fee_amount - discount_amount AS \"total_sale\"",
             "tax_amount AS \"sales_tax\"",
             "total_amount AS \"Total\"",
-            "-total_refunded AS \"Refunded\"");
-    SqlJoins joins = new SqlJoins().add(STATUS_JOIN);
-    // show paid orders, and only refunded ones that have shipped
-    SqlWhere where = DB.WHERE()
-        .add("live_mode = ?", true)
-        .add("paid = ?", true)
-        .add("canceled = ?", false)
-        .add("(refunded = false OR (refunded = true and shipped = true))");
-    // Use the specification to filter results
-    if (constraints == null) {
-      constraints = new DataConstraints();
-    }
-    constraints.setDefaultColumnToSortBy("order_id");
-    DB.exportToCsvAllFrom(TABLE_NAME, selectFields, joins, where, null, constraints, file);
+            "-total_refunded AS \"Refunded\""),
+        DB.JOIN(STATUS_JOIN),
+        DB.WHERE("live_mode = ?", true)
+            .AND("paid = ?", true)
+            .AND("canceled = ?", false)
+            .AND("(refunded = false OR (refunded = true and shipped = true))"),
+        null, constraints, file);
   }
 }

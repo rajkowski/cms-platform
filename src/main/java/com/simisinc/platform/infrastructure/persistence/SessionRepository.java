@@ -108,10 +108,9 @@ public class SessionRepository {
     // Query the data, skip some things
     return DB.selectCountFrom(
         TABLE_NAME,
-        DB.WHERE()
-            .add("created >= ?", startDate)
-            .add("created < ?", endDate)
-            .add("is_bot = ?", false));
+        DB.WHERE("created >= ?", startDate)
+            .AND("created < ?", endDate)
+            .AND("is_bot = ?", false));
   }
 
   public static long countSessionsToday() {

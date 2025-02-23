@@ -97,13 +97,13 @@ public class WebPageHitRepository {
 
     // Query the data, skip some things
     SqlWhere where = DB.WHERE()
-        .add("hit_date >= ?", startDate)
-        .add("hit_date < ?", endDate)
-        .add("page_path NOT LIKE ?", "/admin%")
-        .add("page_path NOT LIKE ?", "/assets%")
-        .add("page_path NOT LIKE ?", "/json%")
-        .add("page_path NOT LIKE ?", "%/*")
-        .add("NOT EXISTS (SELECT 1 FROM sessions WHERE session_id = web_page_hits.session_id AND is_bot = TRUE)");
+        .AND("hit_date >= ?", startDate)
+        .AND("hit_date < ?", endDate)
+        .AND("page_path NOT LIKE ?", "/admin%")
+        .AND("page_path NOT LIKE ?", "/assets%")
+        .AND("page_path NOT LIKE ?", "/json%")
+        .AND("page_path NOT LIKE ?", "%/*")
+        .AND("NOT EXISTS (SELECT 1 FROM sessions WHERE session_id = web_page_hits.session_id AND is_bot = TRUE)");
     long webPageHitCount = DB.selectCountFrom(TABLE_NAME, where);
 
     long uniqueSessionCount = SessionRepository.countDistinctSessions(startDate, endDate);

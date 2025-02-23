@@ -52,8 +52,8 @@ public class TableOfContentsRepository {
     SqlWhere where = null;
     if (specification != null) {
       where = DB.WHERE()
-          .addIfExists("toc_id = ?", specification.getId(), -1)
-          .addIfExists("toc_unique_id = ?", specification.getTocUniqueId());
+          .andAddIfHasValue("toc_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("toc_unique_id = ?", specification.getTocUniqueId());
     }
     return DB.selectAllFrom(TABLE_NAME, where, constraints, TableOfContentsRepository::buildRecord);
   }

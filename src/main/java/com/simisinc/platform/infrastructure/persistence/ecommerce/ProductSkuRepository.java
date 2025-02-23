@@ -65,15 +65,15 @@ public class ProductSkuRepository {
     SqlWhere where = null;
     if (specification != null) {
       where = DB.WHERE()
-          .addIfExists("sku_id = ?", specification.getId(), -1)
-          .addIfExists("sku = ?", specification.getSku())
-          .addIfExists("product_skus.product_id = ?", specification.getProductId(), -1)
-          .addIfExists("products.product_unique_id = ?", specification.getProductUniqueId());
+          .andAddIfHasValue("sku_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("sku = ?", specification.getSku())
+          .andAddIfHasValue("product_skus.product_id = ?", specification.getProductId(), -1)
+          .andAddIfHasValue("products.product_unique_id = ?", specification.getProductUniqueId());
       if (specification.getIsNotId() != -1) {
-        where.add("sku_id <> ?", specification.getIsNotId());
+        where.AND("sku_id <> ?", specification.getIsNotId());
       }
       if (specification.getShowOnline() != DataConstants.UNDEFINED) {
-        where.add("product_skus.enabled = " + (specification.getShowOnline() == DataConstants.TRUE ? "true" : "false"));
+        where.AND("product_skus.enabled = " + (specification.getShowOnline() == DataConstants.TRUE ? "true" : "false"));
       }
       if (specification.getWithProductSkuAttributeList() != null && !specification.getWithProductSkuAttributeList().isEmpty()) {
         // SELECT * FROM product_skus WHERE attributes @> '[{"name":"attribute0", "value":"0.5 oz"}]' AND attributes @> '[{"name":"attribute1", "value":"Jasmine"}]';
@@ -93,7 +93,7 @@ public class ProductSkuRepository {
           sb.append("}");
         }
         if (sb.length() > 0) {
-          where.add("attributes @> '[" + sb.toString() + "]'");
+          where.AND("attributes @> '[" + sb.toString() + "]'");
         }
       }
     }
@@ -355,8 +355,14 @@ public class ProductSkuRepository {
   }
 
   public static void export(DataConstraints constraints, File file) {
-    SqlUtils selectFields = new SqlUtils()
-        .addNames(
+    // Use the specification to filter results
+    if (constraints == null) {
+      constraints = new DataConstraints();
+    }
+    constraints.setDefaultColumnToSortBy("sku");
+    DB.exportToCsvAllFrom(
+        TABLE_NAME,
+        DB.SELECT(
             "sku AS \"SKU\"",
             "products.name AS \"Name\"",
             "products.caption AS \"Caption\"",
@@ -366,15 +372,7 @@ public class ProductSkuRepository {
             "products.description AS \"Description\"",
             // "short_description AS \"ShortDescription\"",
             "barcode AS \"UPC\"",
-            "product_skus.enabled AS \"Enabled\"");
-    // Use the specification to filter results
-    if (constraints == null) {
-      constraints = new DataConstraints();
-    }
-    constraints.setDefaultColumnToSortBy("sku");
-    DB.exportToCsvAllFrom(
-        TABLE_NAME,
-        selectFields,
+            "product_skus.enabled AS \"Enabled\""),
         DB.JOIN(JOIN),
         DB.WHERE(),
         null,

@@ -66,9 +66,8 @@ public class CategoryRepository {
     }
     return (Category) DB.selectRecordFrom(
         TABLE_NAME,
-        DB.WHERE()
-            .add("collection_id = ?", collectionId)
-            .add("unique_id = ?", uniqueId),
+        DB.WHERE("collection_id = ?", collectionId)
+            .AND("unique_id = ?", uniqueId),
         CategoryRepository::buildRecord);
   }
 
@@ -81,9 +80,8 @@ public class CategoryRepository {
     }
     return (Category) DB.selectRecordFrom(
         TABLE_NAME,
-        DB.WHERE()
-            .add("collection_id = ?", collectionId)
-            .add("LOWER(name) = ?", name.trim().toLowerCase()),
+        DB.WHERE("collection_id = ?", collectionId)
+            .AND("LOWER(name) = ?", name.trim().toLowerCase()),
         CategoryRepository::buildRecord);
   }
 
@@ -109,7 +107,7 @@ public class CategoryRepository {
     }
     SqlWhere where = DB.WHERE("collection_id = ?", collectionId);
     if (basedOnItems) {
-      where.add("item_count > 0");
+      where.AND("item_count > 0");
       //      where.add("EXISTS (SELECT 1 FROM items WHERE category_id = items.category_id AND collection_id = ?)", collectionId);
     }
     DataResult result = DB.selectAllFrom(

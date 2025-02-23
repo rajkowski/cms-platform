@@ -64,18 +64,16 @@ public class MailingListMemberRepository {
       DB.update(
           TABLE_NAME,
           updateValues,
-          DB.WHERE()
-              .add("list_id = ?", mailingList.getId())
-              .add("email_id = ?", email.getId()));
+          DB.WHERE("list_id = ?", mailingList.getId())
+              .AND("email_id = ?", email.getId()));
     }
   }
 
   public static void remove(Email email, MailingList mailingList) {
     int count = DB.deleteFrom(
         TABLE_NAME,
-        DB.WHERE()
-            .add("email_id = ?", email.getId())
-            .add("list_id = ?", mailingList.getId()));
+        DB.WHERE("email_id = ?", email.getId())
+            .AND("list_id = ?", mailingList.getId()));
     if (count > 0) {
       // Update the related count
       String setValues = "member_count = member_count - 1";
@@ -98,14 +96,24 @@ public class MailingListMemberRepository {
     DB.update(
         TABLE_NAME,
         updateValues,
-        DB.WHERE()
-            .add("list_id = ?", mailingList.getId())
-            .add("email_id = ?", email.getId()));
+        DB.WHERE("list_id = ?", mailingList.getId())
+            .AND("email_id = ?", email.getId()));
   }
 
   public static void export(MailingListMemberSpecification specification, DataConstraints constraints, File file) {
-    SqlUtils selectFields = new SqlUtils()
-        .addNames(
+    SqlWhere where = DB.WHERE();
+    // Use the specification to filter results
+    if (specification != null) {
+      if (specification.getMailingListId() > -1) {
+        where.AND("mailing_list_members.list_id = ?", specification.getMailingListId());
+      }
+    }
+    if (constraints == null) {
+      constraints = new DataConstraints();
+    }
+    constraints.setDefaultColumnToSortBy("mailing_list_members.created");
+    DB.exportToCsvAllFrom(TABLE_NAME,
+        DB.SELECT(
             "mailing_lists.name AS list",
             "email",
             "first_name",
@@ -114,18 +122,8 @@ public class MailingListMemberRepository {
             "mailing_list_members.created AS subscribed",
             "mailing_list_members.unsubscribed AS unsubscribed",
             "emails.unsubscribed AS ref_unsubscribed",
-            "is_valid");
-    SqlWhere where = DB.WHERE();
-    // Use the specification to filter results
-    if (specification != null) {
-      if (specification.getMailingListId() > -1) {
-        where.add("mailing_list_members.list_id = ?", specification.getMailingListId());
-      }
-    }
-    if (constraints == null) {
-      constraints = new DataConstraints();
-    }
-    constraints.setDefaultColumnToSortBy("mailing_list_members.created");
-    DB.exportToCsvAllFrom(TABLE_NAME, selectFields, DB.JOIN(JOIN), where, null, constraints, file);
+            "is_valid"),
+        DB.JOIN(JOIN),
+        where, null, constraints, file);
   }
 }

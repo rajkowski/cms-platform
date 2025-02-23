@@ -52,10 +52,10 @@ public class FileVersionRepository {
     SqlWhere where = null;
     if (specification != null) {
       where = DB.WHERE()
-          .addIfExists("version_id = ?", specification.getId(), -1)
-          .addIfExists("file_id = ?", specification.getFileId(), -1)
-          .addIfExists("folder_id = ?", specification.getFolderId(), -1)
-          .addIfExists("sub_folder_id = ?", specification.getSubFolderId(), -1);
+          .andAddIfHasValue("version_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("file_id = ?", specification.getFileId(), -1)
+          .andAddIfHasValue("folder_id = ?", specification.getFolderId(), -1)
+          .andAddIfHasValue("sub_folder_id = ?", specification.getSubFolderId(), -1);
     }
     return DB.selectAllFrom(TABLE_NAME, where, constraints, FileVersionRepository::buildRecord);
   }

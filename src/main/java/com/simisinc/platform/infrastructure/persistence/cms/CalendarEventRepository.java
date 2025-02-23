@@ -56,25 +56,25 @@ public class CalendarEventRepository {
       return where;
     }
     where
-        .addIfExists("event_id = ?", specification.getId(), -1)
-        .addIfExists("calendar_id = ?", specification.getCalendarId(), -1)
-        .addIfExists("event_unique_id = ?", specification.getUniqueId());
+        .andAddIfHasValue("event_id = ?", specification.getId(), -1)
+        .andAddIfHasValue("calendar_id = ?", specification.getCalendarId(), -1)
+        .andAddIfHasValue("event_unique_id = ?", specification.getUniqueId());
     if (specification.getPublishedOnly() != DataConstants.UNDEFINED) {
       if (specification.getPublishedOnly() == DataConstants.TRUE) {
-        where.add("published IS NOT NULL");
+        where.AND("published IS NOT NULL");
       } else {
-        where.add("published IS NULL");
+        where.AND("published IS NULL");
       }
     }
     if (specification.getStartingDateRange() != null && specification.getEndingDateRange() != null) {
-      where.add("((start_date >= ? AND start_date < ?) OR (end_date >= ? AND end_date < ?))",
+      where.AND("((start_date >= ? AND start_date < ?) OR (end_date >= ? AND end_date < ?))",
           new Timestamp[] { specification.getStartingDateRange(), specification.getEndingDateRange(),
               specification.getStartingDateRange(), specification.getEndingDateRange() });
     } else if (specification.getStartingDateRange() != null) {
-      where.add("start_date >= ?",
+      where.AND("start_date >= ?",
           new Timestamp[] { specification.getStartingDateRange() });
     } else if (specification.getEndingDateRange() != null) {
-      where.add("(start_date < ? AND end_date < ?)",
+      where.AND("(start_date < ? AND end_date < ?)",
           new Timestamp[] { specification.getEndingDateRange(), specification.getEndingDateRange() });
     }
     return where;
@@ -88,7 +88,7 @@ public class CalendarEventRepository {
     if (specification != null) {
       if (StringUtils.isNotBlank(specification.getSearchTerm())) {
         select.add("ts_rank_cd(tsv, websearch_to_tsquery('title_stem', ?)) AS rank", specification.getSearchTerm().trim());
-        where.add("tsv @@ websearch_to_tsquery('title_stem', ?)", specification.getSearchTerm().trim());
+        where.AND("tsv @@ websearch_to_tsquery('title_stem', ?)", specification.getSearchTerm().trim());
         // Override the order by for rank first
         orderBy = new SqlUtils();
         if (specification.getStartingDateRange() != null) {
@@ -110,9 +110,8 @@ public class CalendarEventRepository {
     }
     return (CalendarEvent) DB.selectRecordFrom(
         TABLE_NAME,
-        DB.WHERE()
-            .add("calendar_id = ?", calendarId)
-            .add("event_unique_id = ?", eventUniqueId),
+        DB.WHERE("calendar_id = ?", calendarId)
+            .AND("event_unique_id = ?", eventUniqueId),
         CalendarEventRepository::buildRecord);
   }
 

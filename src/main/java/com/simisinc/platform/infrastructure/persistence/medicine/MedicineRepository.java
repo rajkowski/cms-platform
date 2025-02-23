@@ -260,19 +260,19 @@ public class MedicineRepository {
     SqlUtils orderBy = new SqlUtils();
     if (specification != null) {
       where
-          .addIfExists("medicine_id >= ?", specification.getMinMedicineId(), -1)
-          .addIfExists("medicine_id = ?", specification.getId(), -1)
-          .addIfExists("individual_id = ?", specification.getIndividualId(), -1)
-          .addIfExists("barcode = ?", specification.getBarcode());
+          .andAddIfHasValue("medicine_id >= ?", specification.getMinMedicineId(), -1)
+          .andAddIfHasValue("medicine_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("individual_id = ?", specification.getIndividualId(), -1)
+          .andAddIfHasValue("barcode = ?", specification.getBarcode());
       if (specification.getArchivedOnly() == DataConstants.TRUE) {
-        where.add("archived IS NOT NULL");
+        where.AND("archived IS NOT NULL");
       } else if (specification.getArchivedOnly() == DataConstants.FALSE) {
-        where.add("archived IS NULL");
+        where.AND("archived IS NULL");
       }
       if (specification.getSuspendedOnly() == DataConstants.TRUE) {
-        where.add("suspended IS NOT NULL");
+        where.AND("suspended IS NOT NULL");
       } else if (specification.getSuspendedOnly() == DataConstants.FALSE) {
-        where.add("suspended IS NULL");
+        where.AND("suspended IS NULL");
       }
     }
     return DB.selectAllFrom(

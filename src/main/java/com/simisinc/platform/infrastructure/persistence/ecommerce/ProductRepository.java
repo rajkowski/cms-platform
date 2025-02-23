@@ -56,8 +56,8 @@ public class ProductRepository {
     SqlWhere where = null;
     if (specification != null) {
       where = DB.WHERE()
-          .addIfExists("products.product_id = ?", specification.getId(), -1)
-          .addIfExists("products.product_unique_id = ?", specification.getProductUniqueId());
+          .andAddIfHasValue("products.product_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("products.product_unique_id = ?", specification.getProductUniqueId());
       if (specification.getWithProductUniqueIdList() != null && !specification.getWithProductUniqueIdList().isEmpty()) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < specification.getWithProductUniqueIdList().size(); i++) {
@@ -67,18 +67,18 @@ public class ProductRepository {
           sb.append("?");
         }
         if (sb.length() > 0) {
-          where.add("products.product_unique_id IN (" + sb.toString() + ")",
+          where.AND("products.product_unique_id IN (" + sb.toString() + ")",
               specification.getWithProductUniqueIdList().toArray(new String[0]));
         }
       }
       if (specification.getIsForSale() != DataConstants.UNDEFINED) {
         if (specification.getIsForSale() == DataConstants.TRUE) {
-          where.add("products.enabled = true");
+          where.AND("products.enabled = true");
           // @todo add the dates
           // today >= activeDate
           // today < deactivateOnDate
           // has a product_sku with at least 1 visible sku.getEnabled()
-          where.add("EXISTS (SELECT 1 FROM product_skus WHERE product_id = products.product_id AND enabled = "
+          where.AND("EXISTS (SELECT 1 FROM product_skus WHERE product_id = products.product_id AND enabled = "
               + (specification.getIsForSale() == DataConstants.TRUE ? "true" : "false") + ")");
         }
       }

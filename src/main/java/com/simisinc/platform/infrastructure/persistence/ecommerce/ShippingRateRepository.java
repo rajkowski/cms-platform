@@ -57,15 +57,15 @@ public class ShippingRateRepository {
     // Use the specification to find the best matching rate for the given address
     if (specification != null) {
       if (StringUtils.isNotBlank(specification.getCountryCode())) {
-        where.add("country_code = ?", specification.getCountryCode());
+        where.AND("country_code = ?", specification.getCountryCode());
       }
       if (StringUtils.isNotBlank(specification.getRegion()) && StringUtils.isNotBlank(specification.getPostalCode())) {
         String region = specification.getRegion();
         String postalCode = specification.getPostalCode();
         if ("*".equals(region) && "*".equals(postalCode)) {
           // Non-specific, fall-back
-          where.add("postal_code = '*'");
-          where.add("region = '*'");
+          where.AND("postal_code = '*'");
+          where.AND("region = '*'");
         } else {
           // Location specific and non-specific
           if ("US".equals(specification.getCountryCode())) {
@@ -76,22 +76,22 @@ public class ShippingRateRepository {
           // Determine the region setting
           if (specification.getSpecificRegionOnly()) {
             // Look for a specific region (like Alaska, Hawaii)
-            where.add("(postal_code = ? OR (postal_code = '*' AND region = ?))", new String[] { postalCode, region });
+            where.AND("(postal_code = ? OR (postal_code = '*' AND region = ?))", new String[] { postalCode, region });
           } else {
             // Use any generic region
-            where.add("(postal_code = ? OR (postal_code = '*' AND region = ?) OR (postal_code = '*' AND region = '*'))",
+            where.AND("(postal_code = ? OR (postal_code = '*' AND region = ?) OR (postal_code = '*' AND region = '*'))",
                 new String[] { postalCode, region });
           }
         }
       }
       if (specification.getOrderSubtotal() != null) {
-        where.add("min_subtotal <= ?", specification.getOrderSubtotal());
+        where.AND("min_subtotal <= ?", specification.getOrderSubtotal());
       }
       if (specification.getPackageTotalWeightOz() >= 0) {
-        where.add("min_weight_oz <= ?", specification.getPackageTotalWeightOz());
+        where.AND("min_weight_oz <= ?", specification.getPackageTotalWeightOz());
       }
       if (specification.getEnabledOnly()) {
-        where.add("lookup_shipping_method.enabled = ?", true);
+        where.AND("lookup_shipping_method.enabled = ?", true);
       }
       constraints.setDefaultColumnToSortBy("postal_code, region, shipping_method, shipping_fee");
     }

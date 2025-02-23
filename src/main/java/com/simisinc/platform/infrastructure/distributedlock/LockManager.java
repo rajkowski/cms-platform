@@ -24,7 +24,6 @@ import org.apache.commons.logging.LogFactory;
 import com.simisinc.platform.infrastructure.database.DB;
 import com.simisinc.platform.infrastructure.database.SqlUtils;
 import com.simisinc.platform.infrastructure.database.SqlValue;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * A distributed lock implementation
@@ -68,10 +67,9 @@ public class LockManager {
     // Expire right away
     SqlUtils updateValues = new SqlUtils()
         .add(new SqlValue("lock_until", SqlValue.AS_IS, "CURRENT_TIMESTAMP"));
-    SqlWhere where = DB.WHERE()
-        .add("name = ?", name)
-        .add("uuid = ?", uuid);
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues,
+        DB.WHERE("name = ?", name)
+            .AND("uuid = ?", uuid))) {
       return true;
     }
     return false;

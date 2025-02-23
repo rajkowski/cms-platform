@@ -49,13 +49,13 @@ public class WorldCityRepository {
     SqlUtils orderBy = new SqlUtils();
     if (specification != null) {
       if (specification.getCity() != null) {
-        where.add("city = ?", specification.getCity().toLowerCase());
+        where.AND("city = ?", specification.getCity().toLowerCase());
       }
       if (specification.getRegion() != null) {
-        where.add("region = ?", specification.getRegion().toUpperCase());
+        where.AND("region = ?", specification.getRegion().toUpperCase());
       }
       if (specification.getSearchCity() != null) {
-        where.add("city LIKE ?", specification.getSearchCity().toLowerCase() + "%");
+        where.AND("city LIKE ?", specification.getSearchCity().toLowerCase() + "%");
       }
     }
     return DB.selectAllFrom(
@@ -76,12 +76,12 @@ public class WorldCityRepository {
       return null;
     }
     SqlWhere where = DB.WHERE();
-    where.add("city = ?", city.toLowerCase());
+    where.AND("city = ?", city.toLowerCase());
     if (region != null) {
-      where.add("region = ?", region.toUpperCase());
+      where.AND("region = ?", region.toUpperCase());
     }
     if (country != null) {
-      where.add("country = ?", country.toLowerCase());
+      where.AND("country = ?", country.toLowerCase());
     }
     return (WorldCity) DB.selectRecordFrom(
         TABLE_NAME,

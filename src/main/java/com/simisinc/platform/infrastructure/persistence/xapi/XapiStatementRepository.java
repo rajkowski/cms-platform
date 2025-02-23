@@ -51,10 +51,10 @@ public class XapiStatementRepository {
     SqlWhere where = null;
     if (specification != null) {
       where = DB.WHERE()
-          .addIfExists("statement_id = ?", specification.getId(), -1)
-          .addIfExists("actor_id = ?", specification.getActorId(), -1)
-          .addIfExists("verb = ?", specification.getVerb())
-          .addIfExists("object = ?", specification.getObject());
+          .andAddIfHasValue("statement_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("actor_id = ?", specification.getActorId(), -1)
+          .andAddIfHasValue("verb = ?", specification.getVerb())
+          .andAddIfHasValue("object = ?", specification.getObject());
     }
     return where;
   }

@@ -53,11 +53,11 @@ public class WikiPageRepository {
     SqlWhere where = null;
     if (specification != null) {
       where = DB.WHERE()
-          .addIfExists("wiki_page_id = ?", specification.getId(), -1)
-          .addIfExists("wiki_id = ?", specification.getWikiId(), -1)
-          .addIfExists("page_unique_id = ?", specification.getUniqueId());
+          .andAddIfHasValue("wiki_page_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("wiki_id = ?", specification.getWikiId(), -1)
+          .andAddIfHasValue("page_unique_id = ?", specification.getUniqueId());
       if (specification.getStartingDateRange() != null && specification.getEndingDateRange() != null) {
-        where.add("((start_date >= ? AND start_date < ?) OR (end_date >= ? AND end_date < ?))",
+        where.AND("((start_date >= ? AND start_date < ?) OR (end_date >= ? AND end_date < ?))",
             new Timestamp[] { specification.getStartingDateRange(), specification.getEndingDateRange(),
                 specification.getStartingDateRange(), specification.getEndingDateRange() });
       }
@@ -77,8 +77,8 @@ public class WikiPageRepository {
     return (WikiPage) DB.selectRecordFrom(
         TABLE_NAME,
         DB.WHERE()
-            .add("wiki_id = ?", wikiId)
-            .add("page_unique_id = ?", pageUniqueId.toLowerCase()),
+            .AND("wiki_id = ?", wikiId)
+            .AND("page_unique_id = ?", pageUniqueId.toLowerCase()),
         WikiPageRepository::buildRecord);
   }
 

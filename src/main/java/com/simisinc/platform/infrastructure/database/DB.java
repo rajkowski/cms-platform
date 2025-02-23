@@ -51,6 +51,10 @@ public class DB {
     return DataSource.getDataSource().getConnection();
   }
 
+  public static SqlUtils SELECT(String... fieldNames) {
+    return new SqlUtils().addNames(fieldNames);
+  }
+
   public static SqlJoins JOIN(String value) {
     return new SqlJoins().add(value);
   }
@@ -60,27 +64,35 @@ public class DB {
   }
 
   public static SqlWhere WHERE(String clause) {
-    return new SqlWhere().add(clause);
+    return new SqlWhere().AND(clause);
   }
 
   public static SqlWhere WHERE(String clause, long value) {
-    return new SqlWhere().add(clause, value);
+    return new SqlWhere().AND(clause, value);
   }
 
   public static SqlWhere WHERE(String name, Long[] value) {
-    return new SqlWhere().add(new SqlValue(name, value));
+    return new SqlWhere().AND(new SqlValue(name, value));
   }
 
   public static SqlWhere WHERE(String clause, int value) {
-    return new SqlWhere().add(clause, value);
+    return new SqlWhere().AND(clause, value);
   }
 
   public static SqlWhere WHERE(String clause, String value) {
-    return new SqlWhere().add(clause, value);
+    return new SqlWhere().AND(clause, value);
   }
 
   public static SqlWhere WHERE(String clause, boolean value) {
-    return new SqlWhere().add(clause, value);
+    return new SqlWhere().AND(clause, value);
+  }
+
+  public static SqlWhere WHERE(String name, Timestamp value) {
+    return new SqlWhere().AND(name, value);
+  }
+
+  public static SqlWhere WHERE(String name, Timestamp[] value) {
+    return new SqlWhere().AND(name, value);
   }
 
   private static PreparedStatement createPreparedStatement(Connection connection, String sqlQuery, SqlWhere where)

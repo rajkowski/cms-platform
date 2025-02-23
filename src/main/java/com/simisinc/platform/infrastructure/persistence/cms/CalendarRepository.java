@@ -52,8 +52,8 @@ public class CalendarRepository {
     SqlWhere where = null;
     if (specification != null) {
       where = DB.WHERE()
-          .addIfExists("calendar_id = ?", specification.getId(), -1)
-          .addIfExists("calendar_unique_id = ?", specification.getUniqueId());
+          .andAddIfHasValue("calendar_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("calendar_unique_id = ?", specification.getUniqueId());
     }
     return DB.selectAllFrom(TABLE_NAME, where, constraints, CalendarRepository::buildRecord);
   }

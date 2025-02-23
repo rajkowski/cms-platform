@@ -66,43 +66,43 @@ public class MedicineReminderRepository {
       joins.add("LEFT JOIN medicine_schedule sched ON (medicine_reminders.schedule_id = sched.schedule_id)");
 
       where = DB.WHERE()
-          .addIfExists("reminder_id = ?", specification.getId(), -1)
-          .addIfExists("medicine_reminders.individual_id = ?", specification.getIndividualId(), -1)
-          .addIfExists("medicine_reminders.medicine_id = ?", specification.getMedicineId(), -1);
+          .andAddIfHasValue("reminder_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("medicine_reminders.individual_id = ?", specification.getIndividualId(), -1)
+          .andAddIfHasValue("medicine_reminders.medicine_id = ?", specification.getMedicineId(), -1);
       if (specification.getMinDate() != null) {
-        where.add("reminder_date >= ?", specification.getMinDate());
+        where.AND("reminder_date >= ?", specification.getMinDate());
       }
       if (specification.getMaxDate() != null) {
-        where.add("reminder_date < ?", specification.getMaxDate());
+        where.AND("reminder_date < ?", specification.getMaxDate());
       }
       if (specification.getReminderIsAfterNow() != DataConstants.UNDEFINED) {
         if (specification.getReminderIsAfterNow() == DataConstants.TRUE) {
           // Show the ones which are active
-          where.add("reminder_date >= NOW()");
+          where.AND("reminder_date >= NOW()");
         }
       }
       if (specification.getIsWithinEndDate() != DataConstants.UNDEFINED) {
         if (specification.getIsWithinEndDate() == DataConstants.TRUE) {
           // Show the non-expiring and unexpired
-          where.add("(sched.end_date IS NULL OR sched.end_date >= NOW())");
+          where.AND("(sched.end_date IS NULL OR sched.end_date >= NOW())");
         }
       }
       if (specification.getIsSuspended() != DataConstants.UNDEFINED) {
         if (specification.getIsSuspended() == DataConstants.TRUE) {
           // Show suspended only
-          where.add("medicines.suspended IS NOT NULL");
+          where.AND("medicines.suspended IS NOT NULL");
         } else {
           // Show the non-suspended only
-          where.add("medicines.suspended IS NULL");
+          where.AND("medicines.suspended IS NULL");
         }
       }
       if (specification.getIsArchived() != DataConstants.UNDEFINED) {
         if (specification.getIsArchived() == DataConstants.TRUE) {
           // Show archived only
-          where.add("medicines.archived IS NOT NULL");
+          where.AND("medicines.archived IS NOT NULL");
         } else {
           // Show the active only
-          where.add("medicines.archived IS NULL");
+          where.AND("medicines.archived IS NULL");
         }
       }
       if (specification.getIndividualsList() != null && !specification.getIndividualsList().isEmpty()) {
@@ -113,7 +113,7 @@ public class MedicineReminderRepository {
           }
           sb.append(id);
         }
-        where.add("medicine_reminders.individual_id IN (" + sb.toString() + ")");
+        where.AND("medicine_reminders.individual_id IN (" + sb.toString() + ")");
       }
     }
     return DB.selectAllFrom(TABLE_NAME, joins, where, constraints, MedicineReminderRepository::buildRecord);
@@ -254,11 +254,11 @@ public class MedicineReminderRepository {
 
   private static void removeMedicineReminders(Connection connection, long medicineId, Timestamp startDate, Timestamp endDate)
       throws SQLException {
-    SqlWhere deleteWhere = DB.WHERE()
-        .add("medicine_id = ?", medicineId)
-        .add("reminder_date >= ?", startDate)
-        .add("reminder_date < ?", endDate);
-    DB.deleteFrom(connection, TABLE_NAME, deleteWhere);
+    DB.deleteFrom(connection,
+        TABLE_NAME,
+        DB.WHERE("medicine_id = ?", medicineId)
+            .AND("reminder_date >= ?", startDate)
+            .AND("reminder_date < ?", endDate));
   }
 
   public static void removeAll(Connection connection, Medicine record) throws SQLException {

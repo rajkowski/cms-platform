@@ -54,11 +54,11 @@ public class EmailRepository {
     SqlUtils orderBy = new SqlUtils();
     if (specification != null) {
       if (specification.getMailingListId() > -1) {
-        where.add("EXISTS (SELECT 1 FROM mailing_list_members WHERE email_id = emails.email_id AND list_id = ?)",
+        where.AND("EXISTS (SELECT 1 FROM mailing_list_members WHERE email_id = emails.email_id AND list_id = ?)",
             specification.getMailingListId());
       }
       if (StringUtils.isNotBlank(specification.getMatchesEmail())) {
-        where.add("LOWER(email) = LOWER(?)", specification.getMatchesEmail().trim());
+        where.AND("LOWER(email) = LOWER(?)", specification.getMatchesEmail().trim());
       }
       if (StringUtils.isNotBlank(specification.getMatchesName())) {
         // Like matching on a name
@@ -67,7 +67,7 @@ public class EmailRepository {
             .replace("%", "!%")
             .replace("_", "!_")
             .replace("[", "![");
-        where.add("LOWER(concat_ws(' ', first_name, last_name)) LIKE LOWER(?) ESCAPE '!'", "%" + likeValue + "%");
+        where.AND("LOWER(concat_ws(' ', first_name, last_name)) LIKE LOWER(?) ESCAPE '!'", "%" + likeValue + "%");
       }
     }
     return DB.selectAllFrom(

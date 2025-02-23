@@ -228,17 +228,17 @@ public class CollectionRepository {
     SqlWhere where = null;
     if (specification != null) {
       where = DB.WHERE()
-          .addIfExists("collection_id = ?", specification.getId(), -1)
-          .addIfExists("unique_id = ?", specification.getUniqueId());
+          .andAddIfHasValue("collection_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("unique_id = ?", specification.getUniqueId());
       if (specification.getName() != null) {
-        where.add("LOWER(name) = ?", specification.getName().toLowerCase());
+        where.AND("LOWER(name) = ?", specification.getName().toLowerCase());
       }
       if (specification.getForUserId() != DataConstants.UNDEFINED) {
         if (specification.getForUserId() == UserSession.GUEST_ID) {
-          where.add("allows_guests = true");
+          where.AND("allows_guests = true");
         } else {
           // For logged out and logged in users
-          where.add(
+          where.AND(
               "(allows_guests = true " +
                   "OR (has_allowed_groups = true " +
                   "AND EXISTS (SELECT 1 FROM collection_groups WHERE collection_id = collections.collection_id " +

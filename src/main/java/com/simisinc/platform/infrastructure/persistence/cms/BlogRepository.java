@@ -52,8 +52,8 @@ public class BlogRepository {
     SqlWhere where = null;
     if (specification != null) {
       where = DB.WHERE()
-          .addIfExists("blog_id = ?", specification.getId(), -1)
-          .addIfExists("blog_unique_id = ?", specification.getUniqueId());
+          .andAddIfHasValue("blog_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("blog_unique_id = ?", specification.getUniqueId());
     }
     return DB.selectAllFrom(TABLE_NAME, where, constraints, BlogRepository::buildRecord);
   }

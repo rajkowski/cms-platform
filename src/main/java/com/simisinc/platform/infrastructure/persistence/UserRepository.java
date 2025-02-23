@@ -64,27 +64,27 @@ public class UserRepository {
     SqlWhere where = DB.WHERE();
     SqlUtils orderBy = new SqlUtils();
     if (specification != null) {
-      where.addIfExists("user_id = ?", specification.getId(), -1);
+      where.andAddIfHasValue("user_id = ?", specification.getId(), -1);
       if (specification.getRoleId() > -1) {
-        where.add("EXISTS (SELECT 1 FROM user_roles WHERE user_id = users.user_id AND role_id = ?)", specification.getRoleId());
+        where.AND("EXISTS (SELECT 1 FROM user_roles WHERE user_id = users.user_id AND role_id = ?)", specification.getRoleId());
       }
       if (specification.getGroupId() > -1) {
-        where.add("EXISTS (SELECT 1 FROM user_groups WHERE user_id = users.user_id AND group_id = ?)", specification.getGroupId());
+        where.AND("EXISTS (SELECT 1 FROM user_groups WHERE user_id = users.user_id AND group_id = ?)", specification.getGroupId());
       }
       if (specification.getIsEnabled() != DataConstants.UNDEFINED) {
-        where.add("enabled = ?", specification.getIsEnabled() == DataConstants.TRUE);
+        where.AND("enabled = ?", specification.getIsEnabled() == DataConstants.TRUE);
       }
       if (specification.getIsVerified() != DataConstants.UNDEFINED) {
         if (specification.getIsVerified() == DataConstants.TRUE) {
-          where.add("validated IS NOT NULL");
+          where.AND("validated IS NOT NULL");
         } else {
-          where.add("validated IS NULL");
+          where.AND("validated IS NULL");
         }
       }
       if (specification.getMatchesName() != null) {
         if (specification.getMatchesName().contains("@")) {
           // Exact match on an email
-          where.add("LOWER(email) = LOWER(?)", specification.getMatchesName().trim());
+          where.AND("LOWER(email) = LOWER(?)", specification.getMatchesName().trim());
         } else {
           // Like matching on a name
           String likeValue = specification.getMatchesName().trim()
@@ -92,7 +92,7 @@ public class UserRepository {
               .replace("%", "!%")
               .replace("_", "!_")
               .replace("[", "![");
-          where.add("LOWER(concat_ws(' ', first_name, last_name, nickname)) LIKE LOWER(?) ESCAPE '!'", "%" + likeValue + "%");
+          where.AND("LOWER(concat_ws(' ', first_name, last_name, nickname)) LIKE LOWER(?) ESCAPE '!'", "%" + likeValue + "%");
         }
       }
     }

@@ -52,9 +52,8 @@ public class MemberRoleRepository {
     }
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        DB.WHERE()
-            .add("user_id = ?", userId)
-            .add("item_id = ?", itemId),
+        DB.WHERE("user_id = ?", userId)
+            .AND("item_id = ?", itemId),
         new DataConstraints().setDefaultColumnToSortBy("member_role_id"),
         MemberRoleRepository::buildRecord);
     if (result.hasRecords()) {

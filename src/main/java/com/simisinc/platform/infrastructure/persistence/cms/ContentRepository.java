@@ -53,14 +53,14 @@ public class ContentRepository {
     SqlUtils orderBy = null;
     if (specification != null) {
       where = DB.WHERE()
-          .addIfExists("content_id = ?", specification.getId(), -1)
-          .addIfExists("content_unique_id = ?", specification.getUniqueId());
+          .andAddIfHasValue("content_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("content_unique_id = ?", specification.getUniqueId());
       if (StringUtils.isNotBlank(specification.getSearchTerm())) {
         select.add(
             "ts_headline('english', content_text, websearch_to_tsquery('content_stem', ?), 'StartSel=${b}, StopSel=${/b}, MaxWords=30, MinWords=15, ShortWord=3, HighlightAll=FALSE, MaxFragments=2, FragmentDelimiter=\" ... \"') AS highlight",
             specification.getSearchTerm().trim());
         select.add("ts_rank_cd(tsv, websearch_to_tsquery('content_stem', ?)) AS rank", specification.getSearchTerm().trim());
-        where.add("tsv @@ websearch_to_tsquery('content_stem', ?)", specification.getSearchTerm().trim());
+        where.AND("tsv @@ websearch_to_tsquery('content_stem', ?)", specification.getSearchTerm().trim());
         // Override the order by for rank first
         orderBy = new SqlUtils();
         orderBy.add("rank DESC, content_id");

@@ -109,10 +109,10 @@ public class ItemCategoryRepository {
   }
 
   public static void removeItemCategoryId(Connection connection, Item item, long categoryId) throws SQLException {
-    SqlWhere where = DB.WHERE()
-        .add("item_id = ?", item.getId())
-        .add("category_id = ?", categoryId);
-    DB.deleteFrom(connection, TABLE_NAME, where);
+    DB.deleteFrom(connection,
+        TABLE_NAME,
+        DB.WHERE("item_id = ?", item.getId())
+            .AND("category_id = ?", categoryId));
   }
 
   private static DataResult query(ItemCategorySpecification specification, DataConstraints constraints) {
@@ -120,7 +120,7 @@ public class ItemCategoryRepository {
     SqlWhere where = DB.WHERE();
     SqlUtils orderBy = new SqlUtils();
     if (specification != null) {
-      where.addIfExists("item_id = ?", specification.getItemId(), -1);
+      where.andAddIfHasValue("item_id = ?", specification.getItemId(), -1);
     }
     return DB.selectAllFrom(
         TABLE_NAME, select, where, orderBy, constraints, ItemCategoryRepository::buildRecord);

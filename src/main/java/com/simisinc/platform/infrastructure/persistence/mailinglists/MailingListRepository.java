@@ -34,7 +34,6 @@ import com.simisinc.platform.infrastructure.database.DB;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.database.DataResult;
 import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves mailing list objects
@@ -64,9 +63,8 @@ public class MailingListRepository {
   public static List<MailingList> findOnlineLists() {
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        DB.WHERE()
-            .add("show_online = true")
-            .add("enabled = true"),
+        DB.WHERE("show_online = true")
+            .AND("enabled = true"),
         new DataConstraints().setDefaultColumnToSortBy("list_order, name"),
         MailingListRepository::buildRecord);
     if (result.hasRecords()) {
@@ -79,14 +77,13 @@ public class MailingListRepository {
     if (emailId <= 0) {
       return null;
     }
-    SqlWhere where = DB.WHERE()
-        .add("show_online = true")
-        .add("enabled = true")
-        .add("EXISTS (SELECT 1 FROM mailing_list_members WHERE list_id = mailing_lists.list_id AND email_id = ? AND is_valid = true)",
-            emailId);
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        where,
+        DB.WHERE("show_online = true")
+            .AND("enabled = true")
+            .AND(
+                "EXISTS (SELECT 1 FROM mailing_list_members WHERE list_id = mailing_lists.list_id AND email_id = ? AND is_valid = true)",
+                emailId),
         null,
         MailingListRepository::buildRecord);
     if (result.hasRecords()) {

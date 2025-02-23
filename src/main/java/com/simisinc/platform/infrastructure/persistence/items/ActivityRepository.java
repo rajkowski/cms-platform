@@ -123,17 +123,17 @@ public class ActivityRepository {
     SqlUtils orderBy = new SqlUtils();
     if (specification != null) {
       where
-          .addIfExists("item_id = ?", specification.getItemId(), -1)
-          .addIfExists("collection_id = ?", specification.getCollectionId(), -1)
-          .addIfExists("created_by = ?", specification.getCreatedBy(), -1);
+          .andAddIfHasValue("item_id = ?", specification.getItemId(), -1)
+          .andAddIfHasValue("collection_id = ?", specification.getCollectionId(), -1)
+          .andAddIfHasValue("created_by = ?", specification.getCreatedBy(), -1);
       if (specification.getActivityType() != null) {
-        where.add("upper(activity_type) = ?", specification.getActivityType().trim().toUpperCase());
+        where.AND("upper(activity_type) = ?", specification.getActivityType().trim().toUpperCase());
       }
       if (specification.getMinTimestamp() > 0) {
-        where.add("created >= ?", new Timestamp(specification.getMinTimestamp()));
+        where.AND("created >= ?", new Timestamp(specification.getMinTimestamp()));
       }
       if (specification.getMaxTimestamp() > 0) {
-        where.add("created <= ?", new Timestamp(specification.getMaxTimestamp()));
+        where.AND("created <= ?", new Timestamp(specification.getMaxTimestamp()));
       }
     }
     return DB.selectAllFrom(

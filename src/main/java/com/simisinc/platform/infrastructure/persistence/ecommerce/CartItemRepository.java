@@ -53,9 +53,8 @@ public class CartItemRepository {
   public static List<CartItem> findValidItemsByCartId(long cartId) {
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        DB.WHERE()
-            .add("is_removed = ?", false)
-            .add("cart_id = ?", cartId),
+        DB.WHERE("is_removed = ?", false)
+            .AND("cart_id = ?", cartId),
         new DataConstraints().setDefaultColumnToSortBy("item_id").setUseCount(false),
         CartItemRepository::buildRecord);
     return (List<CartItem>) result.getRecords();

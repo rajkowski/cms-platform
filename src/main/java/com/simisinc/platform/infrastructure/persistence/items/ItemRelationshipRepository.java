@@ -31,7 +31,6 @@ import com.simisinc.platform.infrastructure.database.DB;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.database.DataResult;
 import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves item relationship objects
@@ -76,12 +75,10 @@ public class ItemRelationshipRepository {
     if (item == null || collection == null) {
       return null;
     }
-    SqlWhere where = DB.WHERE()
-        .add("item_id = ?", item.getId())
-        .add("related_collection_id = ?", collection.getId());
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        where,
+        DB.WHERE("item_id = ?", item.getId())
+            .AND("related_collection_id = ?", collection.getId()),
         new DataConstraints().setDefaultColumnToSortBy("relationship_id"),
         ItemRelationshipRepository::buildRecord);
     if (result.hasRecords()) {
@@ -94,13 +91,12 @@ public class ItemRelationshipRepository {
     if (item == null || relatedCollection == null || userId < 1) {
       return false;
     }
-    SqlWhere where = DB.WHERE()
-        .add("item_id = ?", item.getId())
-        .add("related_collection_id = ?", relatedCollection.getId())
-        .add(
-            "EXISTS (SELECT 1 FROM members WHERE members.item_id = item_relationships.related_item_id AND members.user_id = ? AND members.approved IS NOT NULL AND archived IS NULL)",
-            userId);
-    long count = DB.selectCountFrom(TABLE_NAME, where);
+    long count = DB.selectCountFrom(TABLE_NAME,
+        DB.WHERE("item_id = ?", item.getId())
+            .AND("related_collection_id = ?", relatedCollection.getId())
+            .AND(
+                "EXISTS (SELECT 1 FROM members WHERE members.item_id = item_relationships.related_item_id AND members.user_id = ? AND members.approved IS NOT NULL AND archived IS NULL)",
+                userId));
     if (count > 0) {
       return true;
     }
@@ -111,15 +107,14 @@ public class ItemRelationshipRepository {
     if (item == null || relatedCollection == null || userId < 1) {
       return false;
     }
-    SqlWhere where = DB.WHERE()
-        .add("item_id = ?", item.getId())
-        .add("related_collection_id = ?", relatedCollection.getId())
-        .add("EXISTS (" +
-            "SELECT 1 FROM members WHERE members.item_id = item_relationships.related_item_id AND members.user_id = ? AND members.approved IS NOT NULL AND archived IS NULL "
-            +
-            "AND EXISTS (SELECT 1 FROM member_roles WHERE members.member_id = member_roles.member_id AND role_id = ?)" +
-            ")", new Long[] { userId, collectionRoleId });
-    long count = DB.selectCountFrom(TABLE_NAME, where);
+    long count = DB.selectCountFrom(TABLE_NAME,
+        DB.WHERE("item_id = ?", item.getId())
+            .AND("related_collection_id = ?", relatedCollection.getId())
+            .AND("EXISTS (" +
+                "SELECT 1 FROM members WHERE members.item_id = item_relationships.related_item_id AND members.user_id = ? AND members.approved IS NOT NULL AND archived IS NULL "
+                +
+                "AND EXISTS (SELECT 1 FROM member_roles WHERE members.member_id = member_roles.member_id AND role_id = ?)" +
+                ")", new Long[] { userId, collectionRoleId }));
     if (count > 0) {
       return true;
     }

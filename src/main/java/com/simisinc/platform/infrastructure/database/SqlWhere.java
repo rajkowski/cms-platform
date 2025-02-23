@@ -24,7 +24,7 @@ import java.util.List;
 import com.simisinc.platform.presentation.controller.DataConstants;
 
 /**
- * A list of where properties and values
+ * A list of where properties and values, using function names similar to SQL syntax
  *
  * @author matt rajkowski
  * @created 2/15/2025 3:11 PM
@@ -33,34 +33,34 @@ public class SqlWhere {
 
   private List<SqlValue> values = new ArrayList<>();
 
-  public SqlWhere add(SqlValue object) {
+  public SqlWhere AND(SqlValue object) {
     values.add(object);
     return this;
   }
 
-  public SqlWhere add(String name) {
+  public SqlWhere AND(String name) {
     values.add(new SqlValue(name));
     return this;
   }
 
-  public SqlWhere add(String name, String value) {
+  public SqlWhere AND(String name, String value) {
     values.add(new SqlValue(name, value));
     return this;
   }
 
-  public SqlWhere add(String name, String[] value) {
+  public SqlWhere AND(String name, String[] value) {
     values.add(new SqlValue(name, value));
     return this;
   }
 
-  public SqlWhere addIfExists(String name, String value) {
+  public SqlWhere andAddIfHasValue(String name, String value) {
     if (value != null) {
       values.add(new SqlValue(name, value));
     }
     return this;
   }
 
-  public SqlWhere addIfExists(String name, String value, int maxLength) {
+  public SqlWhere andAddIfHasValue(String name, String value, int maxLength) {
     if (value != null) {
       if (value.length() > maxLength) {
         value = value.substring(0, maxLength);
@@ -70,24 +70,24 @@ public class SqlWhere {
     return this;
   }
 
-  public SqlWhere add(String name, long value) {
+  public SqlWhere AND(String name, long value) {
     values.add(new SqlValue(name, value));
     return this;
   }
 
-  public SqlWhere add(String name, Long[] value) {
+  public SqlWhere AND(String name, Long[] value) {
     values.add(new SqlValue(name, value));
     return this;
   }
 
-  public SqlWhere addIfExists(String name, long value, long emptyValue) {
+  public SqlWhere andAddIfHasValue(String name, long value, long emptyValue) {
     if (value != emptyValue) {
       values.add(new SqlValue(name, value));
     }
     return this;
   }
 
-  public SqlWhere add(String name, long value, long nullValue) {
+  public SqlWhere AND(String name, long value, long nullValue) {
     if (value == nullValue) {
       values.add(new SqlValue(name, value, true));
     } else {
@@ -96,19 +96,19 @@ public class SqlWhere {
     return this;
   }
 
-  public SqlWhere add(String name, int value) {
+  public SqlWhere AND(String name, int value) {
     values.add(new SqlValue(name, value));
     return this;
   }
 
-  public SqlWhere addIfExists(String name, int value, int emptyValue) {
+  public SqlWhere andAddIfHasValue(String name, int value, int emptyValue) {
     if (value != emptyValue) {
       values.add(new SqlValue(name, value));
     }
     return this;
   }
 
-  public SqlWhere add(String name, int value, int nullValue) {
+  public SqlWhere AND(String name, int value, int nullValue) {
     if (value == nullValue) {
       values.add(new SqlValue(name, value, true));
     } else {
@@ -117,19 +117,19 @@ public class SqlWhere {
     return this;
   }
 
-  public SqlWhere add(String name, double value) {
+  public SqlWhere AND(String name, double value) {
     values.add(new SqlValue(name, value));
     return this;
   }
 
-  public SqlWhere addIfExists(String name, double value, double emptyValue) {
+  public SqlWhere andAddIfHasValue(String name, double value, double emptyValue) {
     if (value != emptyValue) {
       values.add(new SqlValue(name, value));
     }
     return this;
   }
 
-  public SqlWhere add(String name, double value, double nullValue) {
+  public SqlWhere AND(String name, double value, double nullValue) {
     if (value == nullValue) {
       values.add(new SqlValue(name, value, true));
     } else {
@@ -138,60 +138,60 @@ public class SqlWhere {
     return this;
   }
 
-  public SqlWhere addWhen(String name, boolean value, boolean checkValue) {
+  public SqlWhere andAddWhen(String name, boolean value, boolean checkValue) {
     if (value == checkValue) {
       values.add(new SqlValue(name, value));
     }
     return this;
   }
 
-  public SqlWhere addIfDataConstantExists(String name, int value) {
+  public SqlWhere andAddIfDataConstantExists(String name, int value) {
     if (value != DataConstants.UNDEFINED) {
-      add(name, value == DataConstants.TRUE);
+      AND(name, value == DataConstants.TRUE);
     }
     return this;
   }
 
-  public SqlWhere add(String name, Timestamp value) {
+  public SqlWhere AND(String name, Timestamp value) {
     values.add(new SqlValue(name, value));
     return this;
   }
 
-  public SqlWhere add(String name, Timestamp[] value) {
+  public SqlWhere AND(String name, Timestamp[] value) {
     values.add(new SqlValue(name, value));
     return this;
   }
 
-  public SqlWhere add(String name, Object[] value) {
+  public SqlWhere AND(String name, Object[] value) {
     values.add(new SqlValue(name, value));
     return this;
   }
 
-  public SqlWhere addIfExists(String name, Timestamp value) {
+  public SqlWhere andAddIfHasValue(String name, Timestamp value) {
     if (value != null) {
       values.add(new SqlValue(name, value));
     }
     return this;
   }
 
-  public SqlWhere add(String name, BigDecimal value) {
+  public SqlWhere AND(String name, BigDecimal value) {
     values.add(new SqlValue(name, value));
     return this;
   }
 
-  public SqlWhere addIfExists(String name, BigDecimal value) {
+  public SqlWhere andAddIfHasValue(String name, BigDecimal value) {
     if (value != null) {
       values.add(new SqlValue(name, value));
     }
     return this;
   }
 
-  public SqlWhere add(String name, boolean value) {
+  public SqlWhere AND(String name, boolean value) {
     values.add(new SqlValue(name, value));
     return this;
   }
 
-  public SqlWhere addGeomPoint(String name, double latitude, double longitude) {
+  public SqlWhere andGeomPoint(String name, double latitude, double longitude) {
     values.add(new SqlValue(name, SqlValue.GEOM_TYPE, latitude, longitude));
     return this;
   }

@@ -70,7 +70,7 @@ public class InstagramMediaRepository {
     SqlWhere where = null;
     if (specification != null) {
       where = DB.WHERE()
-          .addIfExists("media_type = ?", specification.getMediaType());
+          .andAddIfHasValue("media_type = ?", specification.getMediaType());
     }
     DataResult result = DB.selectAllFrom(TABLE_NAME, where, constraints, InstagramMediaRepository::buildRecord);
     return (List<InstagramMedia>) result.getRecords();

@@ -17,7 +17,6 @@
 package com.simisinc.platform.application.cms;
 
 import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Determines user access to folders
@@ -29,37 +28,33 @@ public class CheckFolderPermissionCommand {
 
   public static boolean userHasAddPermission(long folderId, long userId) {
     // SELECT COUNT(*) FROM user_groups WHERE user_id = 2 AND group_id IN (SELECT group_id FROM folder_groups WHERE folder_id = 9 AND add_permission = true);
-    SqlWhere where = DB.WHERE()
-        .add("user_id = ?", userId)
-        .add("group_id IN (SELECT group_id FROM folder_groups WHERE folder_id = ? AND add_permission = true)", folderId);
-    long count = DB.selectCountFrom("user_groups", where);
+    long count = DB.selectCountFrom("user_groups",
+        DB.WHERE("user_id = ?", userId)
+            .AND("group_id IN (SELECT group_id FROM folder_groups WHERE folder_id = ? AND add_permission = true)", folderId));
     return (count > 0);
   }
 
   public static boolean userHasViewPermission(long folderId, long userId) {
     // SELECT COUNT(*) FROM user_groups WHERE user_id = 2 AND group_id IN (SELECT group_id FROM folder_groups WHERE folder_id = 9 AND view_permission = true);
-    SqlWhere where = DB.WHERE()
-        .add("user_id = ?", userId)
-        .add("group_id IN (SELECT group_id FROM folder_groups WHERE folder_id = ? AND view_permission = true)", folderId);
-    long count = DB.selectCountFrom("user_groups", where);
+    long count = DB.selectCountFrom("user_groups",
+        DB.WHERE("user_id = ?", userId)
+            .AND("group_id IN (SELECT group_id FROM folder_groups WHERE folder_id = ? AND view_permission = true)", folderId));
     return (count > 0);
   }
 
   public static boolean userHasEditPermission(long folderId, long userId) {
     // SELECT COUNT(*) FROM user_groups WHERE user_id = 2 AND group_id IN (SELECT group_id FROM folder_groups WHERE folder_id = 9 AND edit_permission = true);
-    SqlWhere where = DB.WHERE()
-        .add("user_id = ?", userId)
-        .add("group_id IN (SELECT group_id FROM folder_groups WHERE folder_id = ? AND edit_permission = true)", folderId);
-    long count = DB.selectCountFrom("user_groups", where);
+    long count = DB.selectCountFrom("user_groups",
+        DB.WHERE("user_id = ?", userId)
+            .AND("group_id IN (SELECT group_id FROM folder_groups WHERE folder_id = ? AND edit_permission = true)", folderId));
     return (count > 0);
   }
 
   public static boolean userHasDeletePermission(long folderId, long userId) {
     // SELECT COUNT(*) FROM user_groups WHERE user_id = 2 AND group_id IN (SELECT group_id FROM folder_groups WHERE folder_id = 9 AND delete_permission = true);
-    SqlWhere where = DB.WHERE()
-        .add("user_id = ?", userId)
-        .add("group_id IN (SELECT group_id FROM folder_groups WHERE folder_id = ? AND delete_permission = true)", folderId);
-    long count = DB.selectCountFrom("user_groups", where);
+    long count = DB.selectCountFrom("user_groups",
+        DB.WHERE("user_id = ?", userId)
+            .AND("group_id IN (SELECT group_id FROM folder_groups WHERE folder_id = ? AND delete_permission = true)", folderId));
     return (count > 0);
   }
 }

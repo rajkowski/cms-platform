@@ -54,24 +54,29 @@ public class CustomerRepository {
   private static DataResult query(CustomerSpecification specification, DataConstraints constraints) {
     SqlWhere where = null;
     if (specification != null) {
-      where = DB.WHERE().addIfExists("customer_id = ?", specification.getId(), -1).addIfExists("LOWER(email) = ?",
-          specification.getEmail() != null ? specification.getEmail().toLowerCase() : null);
+      where = DB.WHERE()
+          .andAddIfHasValue("customer_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("LOWER(email) = ?",
+              specification.getEmail() != null ? specification.getEmail().toLowerCase() : null);
       if (StringUtils.isNotBlank(specification.getUniqueId())) {
-        where.add("(LOWER(customer_unique_id) = LOWER(?) OR LOWER(customer_unique_id) LIKE LOWER(?))",
-            new String[] { specification.getUniqueId(), specification.getUniqueId() + "%" });
+        where
+            .AND("(LOWER(customer_unique_id) = LOWER(?) OR LOWER(customer_unique_id) LIKE LOWER(?))",
+                new String[] { specification.getUniqueId(), specification.getUniqueId() + "%" });
       }
       if (StringUtils.isNotBlank(specification.getOrderNumber())) {
-        where.add(
-            "EXISTS (SELECT 1 FROM orders WHERE customers.customer_id = orders.customer_id AND LOWER(order_unique_id) = ?)",
-            specification.getOrderNumber().toLowerCase());
+        where
+            .AND("EXISTS (SELECT 1 FROM orders WHERE customers.customer_id = orders.customer_id AND LOWER(order_unique_id) = ?)",
+                specification.getOrderNumber().toLowerCase());
       }
       if (StringUtils.isNotBlank(specification.getPhoneNumber())) {
-        where.add("phone_number = ?", specification.getPhoneNumber());
+        where
+            .AND("phone_number = ?", specification.getPhoneNumber());
       }
       if (StringUtils.isNotBlank(specification.getName())) {
-        where.add(
-            "(LOWER(concat_ws(' ', first_name, last_name)) LIKE LOWER(?) ESCAPE '!' OR LOWER(concat_ws(' ', shipping_first_name, shipping_last_name)) LIKE LOWER(?) ESCAPE '!')",
-            new String[] { "%" + specification.getName() + "%", "%" + specification.getName() + "%" });
+        where
+            .AND(
+                "(LOWER(concat_ws(' ', first_name, last_name)) LIKE LOWER(?) ESCAPE '!' OR LOWER(concat_ws(' ', shipping_first_name, shipping_last_name)) LIKE LOWER(?) ESCAPE '!')",
+                new String[] { "%" + specification.getName() + "%", "%" + specification.getName() + "%" });
       }
     }
     return DB.selectAllFrom(TABLE_NAME, where, constraints, CustomerRepository::buildRecord);

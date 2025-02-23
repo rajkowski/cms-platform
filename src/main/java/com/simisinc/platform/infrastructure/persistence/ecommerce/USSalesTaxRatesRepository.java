@@ -49,14 +49,14 @@ public class USSalesTaxRatesRepository {
     SqlUtils orderBy = new SqlUtils();
     if (specification != null) {
       if (specification.getStateAbbreviation() != null) {
-        where.add("state = ?", specification.getStateAbbreviation().toUpperCase());
+        where.AND("state = ?", specification.getStateAbbreviation().toUpperCase());
       }
       if (specification.getZipCode() != null) {
         String zipCode = specification.getZipCode();
         if (zipCode.length() > 5) {
           zipCode = zipCode.substring(0, 5);
         }
-        where.add("zip_code = ?", zipCode);
+        where.AND("zip_code = ?", zipCode);
       }
     }
     return DB.selectAllFrom(
@@ -84,9 +84,8 @@ public class USSalesTaxRatesRepository {
     }
     return (USSalesTaxRate) DB.selectRecordFrom(
         TABLE_NAME,
-        DB.WHERE()
-            .add("state = ?", state.toUpperCase())
-            .add("zip_code = ?", zipCode),
+        DB.WHERE("state = ?", state.toUpperCase())
+            .AND("zip_code = ?", zipCode),
         USSalesTaxRatesRepository::buildRecord);
   }
 

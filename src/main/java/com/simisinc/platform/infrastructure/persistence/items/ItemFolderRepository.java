@@ -171,18 +171,18 @@ public class ItemFolderRepository {
     SqlWhere where = null;
     if (specification != null) {
       where = DB.WHERE()
-          .addIfExists("item_id = ?", specification.getItemId(), -1)
-          .addIfExists("folder_id = ?", specification.getId(), -1)
-          .addIfExists("folder_unique_id = ?", specification.getUniqueId());
+          .andAddIfHasValue("item_id = ?", specification.getItemId(), -1)
+          .andAddIfHasValue("folder_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("folder_unique_id = ?", specification.getUniqueId());
       if (specification.getName() != null) {
-        where.add("LOWER(name) = ?", specification.getName().toLowerCase());
+        where.AND("LOWER(name) = ?", specification.getName().toLowerCase());
       }
       if (specification.getForUserId() != DataConstants.UNDEFINED) {
         if (specification.getForUserId() == UserSession.GUEST_ID) {
-          where.add("allows_guests = true");
+          where.AND("allows_guests = true");
         } else {
           // For logged out and logged in users
-          where.add(
+          where.AND(
               "(allows_guests = true " +
                   "OR (has_allowed_groups = true " +
                   "AND EXISTS (SELECT 1 FROM item_folder_groups WHERE folder_id = item_folders.folder_id " +
@@ -215,9 +215,8 @@ public class ItemFolderRepository {
     }
     ItemFolder folder = (ItemFolder) DB.selectRecordFrom(
         TABLE_NAME,
-        DB.WHERE()
-            .add("folder_unique_id = ?", uniqueId)
-            .add("item_id", itemId),
+        DB.WHERE("folder_unique_id = ?", uniqueId)
+            .AND("item_id", itemId),
         ItemFolderRepository::buildRecord);
     populateRelatedData(folder);
     return folder;
@@ -232,9 +231,8 @@ public class ItemFolderRepository {
     }
     ItemFolder folder = (ItemFolder) DB.selectRecordFrom(
         TABLE_NAME,
-        DB.WHERE()
-            .add("LOWER(name) = ?", name.toLowerCase())
-            .add("item_id = ?", itemId),
+        DB.WHERE("LOWER(name) = ?", name.toLowerCase())
+            .AND("item_id = ?", itemId),
         ItemFolderRepository::buildRecord);
     populateRelatedData(folder);
     return folder;

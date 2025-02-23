@@ -49,8 +49,8 @@ public class AppRepository {
     SqlWhere where = null;
     if (specification != null) {
       where = DB.WHERE()
-          .addIfExists("app_id = ?", specification.getId(), -1)
-          .addIfExists("public_key = ?", specification.getPublicKey());
+          .andAddIfHasValue("app_id = ?", specification.getId(), -1)
+          .andAddIfHasValue("public_key = ?", specification.getPublicKey());
     }
     return DB.selectAllFrom(TABLE_NAME, where, constraints, AppRepository::buildRecord);
   }
