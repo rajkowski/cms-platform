@@ -9,13 +9,13 @@
     },
     "ace": {
       "package": "ace-builds",
-      "version": "1.37.5",
+      "version": "1.39.0",
       "paths": [
         "node_modules/ace-builds/src-min-noconflict/*"
       ]
     },
     "add-to-calendar-button": {
-      "version": "2.8.1",
+      "version": "2.8.6",
       "paths": [
         "node_modules/add-to-calendar-button/dist/atcb.js"
       ]
@@ -25,7 +25,7 @@
     },
     "chartjs": {
       "package": "chart.js",
-      "version": "4.4.7",
+      "version": "4.4.8",
       "paths": [
         "node_modules/chart.js/dist/chart.umd.js"
       ]
@@ -102,7 +102,7 @@
       ]
     },
     "jsuites": {
-      "version": "5.8.5",
+      "version": "5.9.1",
       "paths": [
         "node_modules/jsuites/dist/jsuites.css",
         "node_modules/jsuites/dist/jsuites.d.ts",
@@ -127,7 +127,7 @@
       "version": "4.2.2"
     },
     "mermaid": {
-      "version": "11.4.1",
+      "version": "11.5.0",
       "paths": [
         "node_modules/mermaid/dist/mermaid.js",
         "node_modules/mermaid/dist/mermaid.min.js"
@@ -156,7 +156,7 @@
     },
     "prism": {
       "package": "prismjs",
-      "version": "1.29.0",
+      "version": "1.30.0",
       "paths": [
         "node_modules/prismjs/prism.js",
         "node_modules/prismjs/themes/prism.css",
@@ -175,7 +175,7 @@
       ]
     },
     "swiper": {
-      "version": "11.2.2",
+      "version": "11.2.5",
       "paths": [
         "node_modules/swiper/swiper-bundle.css",
         "node_modules/swiper/swiper-bundle.js",
