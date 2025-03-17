@@ -42,7 +42,7 @@
 </style>
 <div id="dataset-preview"></div>
 <script>
-  var colHeaders = [
+  let colHeaders = [
     <c:choose>
       <c:when test="${empty dataset.fieldTitles}">
         {title:"Data",width:1000}
@@ -59,7 +59,7 @@
       </c:otherwise>
     </c:choose>
   ];
-  var data = [
+  let data = [
     <c:forEach items="${sampleRows}" var="row" varStatus="rowStatus">
     [
       <c:forEach items="${row}" var="data" varStatus="dataStatus">
@@ -75,24 +75,27 @@
     ]<c:if test="${!rowStatus.last}">, </c:if>
     </c:forEach>
   ];
-  var container = document.getElementById('dataset-preview');
+  let container = document.getElementById('dataset-preview');
 
-  var table = jspreadsheet(container, {
-    data: data,
-    columns: colHeaders,
-    defaultColAlign: 'left',
-    defaultColWidth: 130,
-    tableOverflow: true,
-    tableWidth: "100%",
-    tableHeight: "100%",
-    editable: false
+  let worksheets = jspreadsheet(container, {
+      worksheets: [
+        {
+          data: data,
+          columns: colHeaders,
+          defaultColAlign: 'left',
+          defaultColWidth: 130,
+          tableOverflow: true,
+          tableWidth: "100%",
+          tableHeight: "100%",
+          editable: false
+        },
+      ],
   });
 
   $(document).ready(function () {
-    var rect = container.getBoundingClientRect(),
+    let rect = container.getBoundingClientRect(),
       scrollLeft = window.pageXOffset || document.documentElement.scrollLeft,
       scrollTop = window.pageYOffset || document.documentElement.scrollTop;
     container.style.height = "calc(100vh - " + Math.round(rect.top + scrollTop + 50) + "px)";
-    // table.setWidth(0, 800);
   });
 </script>

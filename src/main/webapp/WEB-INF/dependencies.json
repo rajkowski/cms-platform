@@ -92,7 +92,7 @@
     },
     "jspreadsheet": {
       "package": "jspreadsheet-ce",
-      "version": "4.15.0",
+      "version": "5.0.0",
       "paths": [
         "node_modules/jspreadsheet-ce/dist/index.js",
         "node_modules/jspreadsheet-ce/dist/index.d.ts",
