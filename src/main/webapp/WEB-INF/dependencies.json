@@ -9,7 +9,7 @@
     },
     "ace": {
       "package": "ace-builds",
-      "version": "1.39.0",
+      "version": "1.39.1",
       "paths": [
         "node_modules/ace-builds/src-min-noconflict/*"
       ]
@@ -92,7 +92,7 @@
     },
     "jspreadsheet": {
       "package": "jspreadsheet-ce",
-      "version": "5.0.0",
+      "version": "5.0.1",
       "paths": [
         "node_modules/jspreadsheet-ce/dist/index.js",
         "node_modules/jspreadsheet-ce/dist/index.d.ts",
@@ -127,7 +127,7 @@
       "version": "4.2.2"
     },
     "mermaid": {
-      "version": "11.5.0",
+      "version": "11.6.0",
       "paths": [
         "node_modules/mermaid/dist/mermaid.js",
         "node_modules/mermaid/dist/mermaid.min.js"
