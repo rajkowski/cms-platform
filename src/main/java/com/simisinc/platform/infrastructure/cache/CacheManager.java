@@ -16,6 +16,11 @@
 
 package com.simisinc.platform.infrastructure.cache;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
@@ -25,17 +30,13 @@ import com.simisinc.platform.domain.model.cms.Content;
 import com.simisinc.platform.domain.model.cms.Stylesheet;
 import com.simisinc.platform.domain.model.cms.TableOfContents;
 import com.simisinc.platform.domain.model.items.Collection;
+import com.simisinc.platform.infrastructure.distributedmessaging.MessagingCommand;
 import com.simisinc.platform.infrastructure.persistence.AppRepository;
 import com.simisinc.platform.infrastructure.persistence.SitePropertyRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.ContentRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.StylesheetRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.TableOfContentsRepository;
 import com.simisinc.platform.infrastructure.persistence.items.CollectionRepository;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Manages the available caches
@@ -77,16 +78,16 @@ public class CacheManager {
     // System Property Cache (prefix = map)
     LoadingCache<String, List<SiteProperty>> sitePropertyListCache = Caffeine.newBuilder()
         .maximumSize(10_000)
-//        .expireAfterWrite(5, TimeUnit.MINUTES)
-//        .refreshAfterWrite(1, TimeUnit.MINUTES)
+        //        .expireAfterWrite(5, TimeUnit.MINUTES)
+        //        .refreshAfterWrite(1, TimeUnit.MINUTES)
         .build(SitePropertyRepository::findAllByPrefix);
     cacheManager.put(SYSTEM_PROPERTY_PREFIX_CACHE, sitePropertyListCache);
 
     // App Cache (publicKey = app)
     LoadingCache<String, App> appCache = Caffeine.newBuilder()
         .maximumSize(1_000)
-//        .expireAfterWrite(5, TimeUnit.MINUTES)
-//        .refreshAfterWrite(1, TimeUnit.MINUTES)
+        //        .expireAfterWrite(5, TimeUnit.MINUTES)
+        //        .refreshAfterWrite(1, TimeUnit.MINUTES)
         .build(AppRepository::findByPublicKey);
     cacheManager.put(APP_CACHE, appCache);
 
@@ -100,16 +101,16 @@ public class CacheManager {
     // Stylesheet Cache (webPageId = stylesheet)
     LoadingCache<Long, Stylesheet> stylesheetCache = Caffeine.newBuilder()
         .maximumSize(100)
-//        .expireAfterWrite(5, TimeUnit.MINUTES)
-//        .refreshAfterWrite(1, TimeUnit.MINUTES)
+        //        .expireAfterWrite(5, TimeUnit.MINUTES)
+        //        .refreshAfterWrite(1, TimeUnit.MINUTES)
         .build(StylesheetRepository::findByWebPageId);
     cacheManager.put(STYLESHEET_WEB_PAGE_ID_CACHE, stylesheetCache);
 
     // Content Cache (contentUniqueId = content)
     LoadingCache<String, Content> contentCache = Caffeine.newBuilder()
         .maximumSize(10_000)
-//        .expireAfterWrite(5, TimeUnit.MINUTES)
-//        .refreshAfterWrite(1, TimeUnit.MINUTES)
+        //        .expireAfterWrite(5, TimeUnit.MINUTES)
+        //        .refreshAfterWrite(1, TimeUnit.MINUTES)
         .build(ContentRepository::findByUniqueId);
     cacheManager.put(CONTENT_UNIQUE_ID_CACHE, contentCache);
 
@@ -123,16 +124,16 @@ public class CacheManager {
     // Collection Unique Id Cache (collectionUniqueId = collection)
     LoadingCache<String, Collection> collectionCache = Caffeine.newBuilder()
         .maximumSize(100)
-//        .expireAfterWrite(5, TimeUnit.MINUTES)
-//        .refreshAfterWrite(1, TimeUnit.MINUTES)
+        //        .expireAfterWrite(5, TimeUnit.MINUTES)
+        //        .refreshAfterWrite(1, TimeUnit.MINUTES)
         .build(CollectionRepository::findByUniqueId);
     cacheManager.put(COLLECTION_UNIQUE_ID_CACHE, collectionCache);
 
     // Collection Unique Id Cache (collectionUniqueId = collection)
     LoadingCache<String, TableOfContents> tableOfContentsCache = Caffeine.newBuilder()
         .maximumSize(100)
-//        .expireAfterWrite(5, TimeUnit.MINUTES)
-//        .refreshAfterWrite(1, TimeUnit.MINUTES)
+        //        .expireAfterWrite(5, TimeUnit.MINUTES)
+        //        .refreshAfterWrite(1, TimeUnit.MINUTES)
         .build(TableOfContentsRepository::findByUniqueId);
     cacheManager.put(TABLE_OF_CONTENTS_UNIQUE_ID_CACHE, tableOfContentsCache);
 
@@ -180,9 +181,16 @@ public class CacheManager {
   }
 
   public static void invalidateKey(String cacheName, Object key) {
+    invalidateKey(cacheName, key, true);
+  }
+
+  public static void invalidateKey(String cacheName, Object key, boolean distributeInvalidation) {
     Cache cache = cacheManager.get(cacheName);
     if (cache != null) {
       cache.invalidate(key);
+      if (distributeInvalidation) {
+        MessagingCommand.sendNotification(cacheName, key);
+      }
     }
   }
 
