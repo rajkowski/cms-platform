@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
+ * Copyright 2025 Matt Rajkowski (https://github.com/rajkowski)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,14 +56,14 @@ public class ConnectionPool {
     return new HikariDataSource(config);
   }
 
-  /** Configure the application's connection pool */
+  /** Configure the application's background jobs connection pool */
   private static HikariDataSource initBackgroundJobsCP(Properties properties) {
     HikariConfig config = new HikariConfig(mergePropertiesFromPrefix(properties, "backgroundJobs"));
     config.setMaxLifetime(600_000);
     return new HikariDataSource(config);
   }
 
-  /** Configure the application's connection pool for persistent, long-lived connections */
+  /** Configure the application's connection pool for distributed messaging connections */
   private static HikariDataSource initDistributedMessagingCP(Properties properties) {
     HikariConfig config = new HikariConfig(mergePropertiesFromPrefix(properties, "distributedMessaging"));
     config.setMaxLifetime(600_000);
@@ -76,6 +76,7 @@ public class ConnectionPool {
     distributedMessagingDS.close();
   }
 
+  /* Each pool is configured with the base dataSource properties and name specific properties */
   private static Properties mergePropertiesFromPrefix(Properties properties, String prefix) {
     Properties filteredProperties = new Properties();
     for (String name : properties.stringPropertyNames()) {
