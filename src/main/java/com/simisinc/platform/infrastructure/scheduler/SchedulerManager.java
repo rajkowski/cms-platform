@@ -16,19 +16,14 @@
 
 package com.simisinc.platform.infrastructure.scheduler;
 
-import com.simisinc.platform.infrastructure.database.DataSource;
-import com.simisinc.platform.infrastructure.instance.InstanceManager;
-import com.simisinc.platform.infrastructure.scheduler.admin.DatasetsDownloadAndSyncJob;
-import com.simisinc.platform.infrastructure.scheduler.cms.LoadSystemFilesJob;
-import com.simisinc.platform.infrastructure.scheduler.cms.RecordWebPageHitJob;
-import com.simisinc.platform.infrastructure.scheduler.cms.SystemHealthJob;
-import com.simisinc.platform.infrastructure.scheduler.cms.WebPageHitSnapshotJob;
-import com.simisinc.platform.infrastructure.scheduler.cms.WebPageHitsCleanupJob;
-import com.simisinc.platform.infrastructure.scheduler.ecommerce.OrderManagementProcessNewOrders;
-import com.simisinc.platform.infrastructure.scheduler.ecommerce.OrderManagementProcessShippingUpdates;
-import com.simisinc.platform.infrastructure.scheduler.login.UserTokensCleanupJob;
-import com.simisinc.platform.infrastructure.scheduler.medicine.ProcessMedicineSchedulesJob;
-import com.simisinc.platform.infrastructure.scheduler.socialmedia.InstagramMediaSnapshotJob;
+import static org.jobrunr.server.BackgroundJobServerConfiguration.usingStandardBackgroundJobServerConfiguration;
+
+import java.io.InputStream;
+import java.time.Duration;
+import java.util.Properties;
+
+import javax.servlet.ServletContext;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jobrunr.configuration.JobRunr;
@@ -40,12 +35,18 @@ import org.jobrunr.storage.StorageProvider;
 import org.jobrunr.storage.StorageProviderUtils;
 import org.jobrunr.storage.sql.common.SqlStorageProviderFactory;
 
-import javax.servlet.ServletContext;
-import java.io.InputStream;
-import java.time.Duration;
-import java.util.Properties;
-
-import static org.jobrunr.server.BackgroundJobServerConfiguration.usingStandardBackgroundJobServerConfiguration;
+import com.simisinc.platform.infrastructure.database.ConnectionPool;
+import com.simisinc.platform.infrastructure.instance.InstanceManager;
+import com.simisinc.platform.infrastructure.scheduler.admin.DatasetsDownloadAndSyncJob;
+import com.simisinc.platform.infrastructure.scheduler.cms.LoadSystemFilesJob;
+import com.simisinc.platform.infrastructure.scheduler.cms.RecordWebPageHitJob;
+import com.simisinc.platform.infrastructure.scheduler.cms.WebPageHitSnapshotJob;
+import com.simisinc.platform.infrastructure.scheduler.cms.WebPageHitsCleanupJob;
+import com.simisinc.platform.infrastructure.scheduler.ecommerce.OrderManagementProcessNewOrders;
+import com.simisinc.platform.infrastructure.scheduler.ecommerce.OrderManagementProcessShippingUpdates;
+import com.simisinc.platform.infrastructure.scheduler.login.UserTokensCleanupJob;
+import com.simisinc.platform.infrastructure.scheduler.medicine.ProcessMedicineSchedulesJob;
+import com.simisinc.platform.infrastructure.scheduler.socialmedia.InstagramMediaSnapshotJob;
 
 /**
  * Initializes background jobs to be run on a schedule
@@ -74,7 +75,7 @@ public class SchedulerManager {
 
   // Jobs which can be run by multiple clients
   public static final String DATASETS_DOWNLOAD_AND_SYNC_JOB = "DatasetsDownloadAndSync";
-  
+
   public SchedulerManager() {
   }
 
@@ -98,30 +99,34 @@ public class SchedulerManager {
     try {
       // Determine some settings
       boolean inMemoryStorage = "true".equals(properties.getProperty("org.jobrunr.configuration.useInMemoryStore", "true"));
-      boolean isBackgroundJobServerEnabled = "true".equals(properties.getProperty("org.jobrunr.configuration.useBackgroundJobServer", "true"));
+      boolean isBackgroundJobServerEnabled = "true"
+          .equals(properties.getProperty("org.jobrunr.configuration.useBackgroundJobServer", "true"));
       boolean isDashboardEnabled = "true".equals(properties.getProperty("org.jobrunr.configuration.useDashboard", "false"));
       int dashboardPort = Integer.parseInt(properties.getProperty("org.jobrunr.configuration.dashboardPort", "8000"));
       int workerCount = Integer.parseInt(properties.getProperty("org.jobrunr.configuration.workerCount", "3"));
       int pollInterval = Integer.parseInt(properties.getProperty("org.jobrunr.configuration.pollIntervalInSeconds", "10"));
-      long deleteSucceededJobsHours = Long.parseLong(properties.getProperty("org.jobrunr.configuration.deleteSucceededJobsInHours", "36"));
+      long deleteSucceededJobsHours = Long
+          .parseLong(properties.getProperty("org.jobrunr.configuration.deleteSucceededJobsInHours", "36"));
       long deleteDeletedJobsHours = Long.parseLong(properties.getProperty("org.jobrunr.configuration.deleteDeletedJobsInHours", "10"));
 
       // Configure the storage
-      StorageProvider jobStorageProvider = (inMemoryStorage ? new InMemoryStorageProvider() : SqlStorageProviderFactory.using(DataSource.getDataSource(), null, StorageProviderUtils.DatabaseOptions.CREATE));
+      StorageProvider jobStorageProvider = (inMemoryStorage ? new InMemoryStorageProvider()
+          : SqlStorageProviderFactory.using(ConnectionPool.getBackgroundJobsDataSource(), null,
+              StorageProviderUtils.DatabaseOptions.CREATE));
 
       // Initialize the scheduler
       JobRunr.configure()
           .useStorageProvider(jobStorageProvider)
-//          .useJobActivator(new JobActivator() {
-//            public <T> T activateJob(Class<T> aClass) {
-//              try {
-//                return aClass.newInstance();
-//              } catch (InstantiationException | IllegalAccessException e) {
-//                e.printStackTrace();
-//              }
-//              return null;
-//            }
-//          })
+          //          .useJobActivator(new JobActivator() {
+          //            public <T> T activateJob(Class<T> aClass) {
+          //              try {
+          //                return aClass.newInstance();
+          //              } catch (InstantiationException | IllegalAccessException e) {
+          //                e.printStackTrace();
+          //              }
+          //              return null;
+          //            }
+          //          })
           .withJobFilter(new RetryFilter(2))
           .useBackgroundJobServerIf(isBackgroundJobServerEnabled,
               usingStandardBackgroundJobServerConfiguration()
@@ -144,8 +149,10 @@ public class SchedulerManager {
         BackgroundJob.scheduleRecurrently(USER_TOKENS_CLEANUP_JOB, Cron.hourly(), UserTokensCleanupJob::execute);
         BackgroundJob.scheduleRecurrently(INSTAGRAM_MEDIA_SNAPSHOT_JOB, Cron.hourly(), InstagramMediaSnapshotJob::execute);
         BackgroundJob.scheduleRecurrently(DATASETS_DOWNLOAD_AND_SYNC_JOB, Cron.minutely(), DatasetsDownloadAndSyncJob::execute);
-        BackgroundJob.scheduleRecurrently(ORDER_MANAGEMENT_PROCESS_NEW_ORDERS_JOB, Cron.minutely(), OrderManagementProcessNewOrders::execute);
-        BackgroundJob.scheduleRecurrently(ORDER_MANAGEMENT_PROCESS_SHIPPING_UPDATES_JOB, Cron.hourly(), OrderManagementProcessShippingUpdates::execute);
+        BackgroundJob.scheduleRecurrently(ORDER_MANAGEMENT_PROCESS_NEW_ORDERS_JOB, Cron.minutely(),
+            OrderManagementProcessNewOrders::execute);
+        BackgroundJob.scheduleRecurrently(ORDER_MANAGEMENT_PROCESS_SHIPPING_UPDATES_JOB, Cron.hourly(),
+            OrderManagementProcessShippingUpdates::execute);
         BackgroundJob.scheduleRecurrently(PROCESS_MEDICINE_SCHEDULES_JOB, Cron.daily(23, 43), ProcessMedicineSchedulesJob::execute);
       }
     } catch (Exception se) {

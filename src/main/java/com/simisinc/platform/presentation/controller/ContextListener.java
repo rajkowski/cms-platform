@@ -44,7 +44,7 @@ import com.simisinc.platform.application.filesystem.FileSystemCommand;
 import com.simisinc.platform.application.maps.GeoIPCommand;
 import com.simisinc.platform.domain.model.cms.Content;
 import com.simisinc.platform.infrastructure.cache.CacheManager;
-import com.simisinc.platform.infrastructure.database.DataSource;
+import com.simisinc.platform.infrastructure.database.ConnectionPool;
 import com.simisinc.platform.infrastructure.database.DatabaseProperties;
 import com.simisinc.platform.infrastructure.instance.InstanceManager;
 import com.simisinc.platform.infrastructure.persistence.cms.ContentRepository;
@@ -95,7 +95,7 @@ public class ContextListener implements ServletContextListener {
 
       // Connect to the database
       Properties databaseProperties = DatabaseProperties.configureDatabaseProperties(is);
-      DataSource.init(databaseProperties);
+      ConnectionPool.init(databaseProperties);
 
       // See if this is a new install or an upgrade
       if (!DatabaseCommand.initialize(databaseProperties)) {
@@ -189,8 +189,8 @@ public class ContextListener implements ServletContextListener {
     LOG.info("Shutting down the distributed job scheduler...");
     SchedulerManager.shutdown();
 
-    LOG.info("Shutting down the database...");
-    DataSource.shutdown();
+    LOG.info("Shutting down the database connection pool...");
+    ConnectionPool.shutdown();
 
     LOG.info("Removing webapp references...");
     WebApp.shutdown();
