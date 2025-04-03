@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the [Common Changelog](https://common-changelog.org/).
 
+## 2025-04-03
+
+- OAuth authentication attempts can be accepted across multiple instances, previously the same instance was required
+
 ## 2025-04-02
 
 - Using PostgreSQL LISTEN/NOTIFY, multiple instances of CMS Platform will now invalidate caches across instances for real-time content change notifications

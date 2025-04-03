@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
+ * Copyright 2025 Matt Rajkowski (https://github.com/rajkowski)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,25 +21,25 @@ import java.time.Duration;
 import org.jobrunr.jobs.annotations.Job;
 
 import com.simisinc.platform.infrastructure.distributedlock.LockManager;
-import com.simisinc.platform.infrastructure.persistence.login.UserTokenRepository;
+import com.simisinc.platform.infrastructure.persistence.login.OAuthStateRepository;
 import com.simisinc.platform.infrastructure.scheduler.SchedulerManager;
 
 /**
- * Deletes expired tokens
+ * Deletes expired oauth values
  *
  * @author matt rajkowski
- * @created 4/26/22 10:39 PM
+ * @created 4/3/2025 9:22 AM
  */
-public class UserTokensCleanupJob {
+public class OAuthStateCleanupJob {
 
-  @Job(name = "Delete expired tokens")
+  @Job(name = "Delete expired oauth values")
   public static void execute() {
     // Distributed lock
-    String lock = LockManager.lock(SchedulerManager.USER_TOKENS_CLEANUP_JOB, Duration.ofHours(1));
+    String lock = LockManager.lock(SchedulerManager.OAUTH_STATE_CLEANUP_JOB, Duration.ofMinutes(5));
     if (lock == null) {
       return;
     }
 
-    UserTokenRepository.deleteOldTokens();
+    OAuthStateRepository.deleteOldStateValues();
   }
 }

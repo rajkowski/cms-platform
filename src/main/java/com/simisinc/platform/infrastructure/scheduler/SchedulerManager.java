@@ -44,6 +44,7 @@ import com.simisinc.platform.infrastructure.scheduler.cms.WebPageHitSnapshotJob;
 import com.simisinc.platform.infrastructure.scheduler.cms.WebPageHitsCleanupJob;
 import com.simisinc.platform.infrastructure.scheduler.ecommerce.OrderManagementProcessNewOrders;
 import com.simisinc.platform.infrastructure.scheduler.ecommerce.OrderManagementProcessShippingUpdates;
+import com.simisinc.platform.infrastructure.scheduler.login.OAuthStateCleanupJob;
 import com.simisinc.platform.infrastructure.scheduler.login.UserTokensCleanupJob;
 import com.simisinc.platform.infrastructure.scheduler.medicine.ProcessMedicineSchedulesJob;
 import com.simisinc.platform.infrastructure.scheduler.socialmedia.InstagramMediaSnapshotJob;
@@ -68,6 +69,7 @@ public class SchedulerManager {
   public static final String WEB_PAGE_HIT_SNAPSHOT_JOB = "WebPageHitSnapshot";
   public static final String WEB_PAGE_HITS_CLEANUP_JOB = "WebPageHitsCleanup";
   public static final String USER_TOKENS_CLEANUP_JOB = "UserTokensCleanup";
+  public static final String OAUTH_STATE_CLEANUP_JOB = "OAuthStateCleanup";
   public static final String INSTAGRAM_MEDIA_SNAPSHOT_JOB = "InstagramMediaSnapshot";
   public static final String ORDER_MANAGEMENT_PROCESS_NEW_ORDERS_JOB = "OrderManagementProcessNewOrders";
   public static final String ORDER_MANAGEMENT_PROCESS_SHIPPING_UPDATES_JOB = "OrderManagementProcessShippingUpdates";
@@ -147,6 +149,7 @@ public class SchedulerManager {
         BackgroundJob.scheduleRecurrently(WEB_PAGE_HIT_SNAPSHOT_JOB, Cron.every5minutes(), WebPageHitSnapshotJob::execute);
         BackgroundJob.scheduleRecurrently(WEB_PAGE_HITS_CLEANUP_JOB, Cron.daily(4), WebPageHitsCleanupJob::execute);
         BackgroundJob.scheduleRecurrently(USER_TOKENS_CLEANUP_JOB, Cron.hourly(), UserTokensCleanupJob::execute);
+        BackgroundJob.scheduleRecurrently(OAUTH_STATE_CLEANUP_JOB, Cron.every5minutes(), OAuthStateCleanupJob::execute);
         BackgroundJob.scheduleRecurrently(INSTAGRAM_MEDIA_SNAPSHOT_JOB, Cron.hourly(), InstagramMediaSnapshotJob::execute);
         BackgroundJob.scheduleRecurrently(DATASETS_DOWNLOAD_AND_SYNC_JOB, Cron.minutely(), DatasetsDownloadAndSyncJob::execute);
         BackgroundJob.scheduleRecurrently(ORDER_MANAGEMENT_PROCESS_NEW_ORDERS_JOB, Cron.minutely(),
