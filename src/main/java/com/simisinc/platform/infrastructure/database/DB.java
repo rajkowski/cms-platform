@@ -48,7 +48,7 @@ public class DB {
   private static long LONG_QUERY_MS = 20;
 
   public static Connection getConnection() throws SQLException {
-    return DataSource.getDataSource().getConnection();
+    return ConnectionPool.getApplicationDataSource().getConnection();
   }
 
   public static SqlUtils SELECT(String... fieldNames) {

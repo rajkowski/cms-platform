@@ -33,7 +33,7 @@ import com.simisinc.platform.application.cms.MakeStaticSiteCommand;
 import com.simisinc.platform.application.cms.WebPageXmlLayoutCommand;
 import com.simisinc.platform.application.filesystem.FileSystemCommand;
 import com.simisinc.platform.infrastructure.cache.CacheManager;
-import com.simisinc.platform.infrastructure.database.DataSource;
+import com.simisinc.platform.infrastructure.database.ConnectionPool;
 import com.simisinc.platform.infrastructure.database.DatabaseProperties;
 import com.simisinc.platform.presentation.controller.PageTemplateEngine;
 
@@ -66,7 +66,7 @@ public class MakeStaticSiteApp {
     // Connect to the database
     try (InputStream is = new FileInputStream(new File(webAppPath, "/WEB-INF/classes/database.properties"))) {
       Properties databaseProperties = DatabaseProperties.configureDatabaseProperties(is);
-      DataSource.init(databaseProperties);
+      ConnectionPool.init(databaseProperties);
       LOG.info("Using database: " + databaseProperties.get("dataSource.databaseName"));
     } catch (Exception e) {
       LOG.error("Could not connect to the database");

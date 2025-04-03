@@ -44,8 +44,9 @@ import com.simisinc.platform.application.filesystem.FileSystemCommand;
 import com.simisinc.platform.application.maps.GeoIPCommand;
 import com.simisinc.platform.domain.model.cms.Content;
 import com.simisinc.platform.infrastructure.cache.CacheManager;
-import com.simisinc.platform.infrastructure.database.DataSource;
+import com.simisinc.platform.infrastructure.database.ConnectionPool;
 import com.simisinc.platform.infrastructure.database.DatabaseProperties;
+import com.simisinc.platform.infrastructure.distributedmessaging.MessagingManager;
 import com.simisinc.platform.infrastructure.instance.InstanceManager;
 import com.simisinc.platform.infrastructure.persistence.cms.ContentRepository;
 import com.simisinc.platform.infrastructure.scheduler.SchedulerManager;
@@ -95,7 +96,7 @@ public class ContextListener implements ServletContextListener {
 
       // Connect to the database
       Properties databaseProperties = DatabaseProperties.configureDatabaseProperties(is);
-      DataSource.init(databaseProperties);
+      ConnectionPool.init(databaseProperties);
 
       // See if this is a new install or an upgrade
       if (!DatabaseCommand.initialize(databaseProperties)) {
@@ -112,6 +113,10 @@ public class ContextListener implements ServletContextListener {
     // Startup the CacheManager (Before any LoadSitePropertyCommand.loadByName() can be used)
     LOG.info("Startup the cache manager...");
     CacheManager.startup();
+
+    // Startup the distributed cache manager
+    LOG.info("Startup the distributed cache manager...");
+    MessagingManager.startup();
 
     // Verify the filesystem entry
     String serverRootPath = FileSystemCommand.getFileServerRootPathValue();
@@ -189,8 +194,11 @@ public class ContextListener implements ServletContextListener {
     LOG.info("Shutting down the distributed job scheduler...");
     SchedulerManager.shutdown();
 
-    LOG.info("Shutting down the database...");
-    DataSource.shutdown();
+    LOG.info("Shutting down the distributed message manager...");
+    MessagingManager.shutdown();
+
+    LOG.info("Shutting down the database connection pool...");
+    ConnectionPool.shutdown();
 
     LOG.info("Removing webapp references...");
     WebApp.shutdown();
