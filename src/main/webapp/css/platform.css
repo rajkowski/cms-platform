@@ -75,6 +75,14 @@ p {
   outline: none;
 }
 
+/* Grid system */
+
+.grid-container {
+  padding-right: 2rem;
+  padding-left: 2rem;
+  max-width: 100%;
+}
+
 /* Fix for Safari 14 */
 
 .sticky {
