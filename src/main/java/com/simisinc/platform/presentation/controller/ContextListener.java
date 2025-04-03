@@ -114,8 +114,8 @@ public class ContextListener implements ServletContextListener {
     LOG.info("Startup the cache manager...");
     CacheManager.startup();
 
-    // Startup the distributed cache manager
-    LOG.info("Startup the distributed cache manager...");
+    // Startup the distributed messaging manager
+    LOG.info("Startup the distributed messaging manager...");
     MessagingManager.startup();
 
     // Verify the filesystem entry
