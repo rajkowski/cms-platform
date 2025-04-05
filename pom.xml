@@ -117,8 +117,6 @@
       <groupId>com.github.rajkowski</groupId>
       <artifactId>easy-flows-playbooks</artifactId>
       <version>1.2.0</version>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/lib/provided/easy-flows-playbooks/easy-flows-playbooks-1.2.0.jar</systemPath>
     </dependency>
     <dependency>
       <groupId>com.vladsch.flexmark</groupId>
@@ -141,11 +139,9 @@
       <version>4.2.1</version>
     </dependency>
     <dependency>
-      <groupId>com.granule</groupId>
+      <groupId>com.github.rajkowski</groupId>
       <artifactId>granule</artifactId>
-      <version>1.0.20-SNAPSHOT</version>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/lib/provided/granule/granule-1.0.20-SNAPSHOT.jar</systemPath>
+      <version>2.0.0</version>
     </dependency>
     <dependency>
       <groupId>com.google.javascript</groupId>
