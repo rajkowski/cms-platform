@@ -28,3 +28,13 @@ docker buildx build \
   -t ghcr.io/rajkowski/cms-platform:${MAJOR_TAG} \
   .
 ```
+
+## PostgreSQL Image with PostGIS
+
+```bash
+docker buildx build \
+  --platform linux/amd64,linux/arm64 \
+  --push \
+  -t ghcr.io/rajkowski/cms-platform-db:15 \
+  ./docker/db/
+```

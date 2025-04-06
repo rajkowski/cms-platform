@@ -1,9 +1,4 @@
-## With Tomcat
-## CATALINA_HOME:   /usr/local/tomcat
-# ant package
-# docker build -f docker/app/Dockerfile -t cms-platform:latest .
-# docker image ls
-# docker run -p 80:8080 --env-file=.env cms-platform:latest
+# This Dockerfile requires a build using: ant package
 
 FROM tomcat:9.0-jdk21
 COPY ./target/cms-platform.war /usr/local/tomcat/webapps/ROOT.war

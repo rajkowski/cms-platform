@@ -1,9 +1,9 @@
 services:
 
   db:
-    build:
-      context: ./
-      dockerfile: ./docker/db/Dockerfile
+    image: ghcr.io/rajkowski/cms-platform-db:15
+    env_file:
+      .env
     environment:
       POSTGRES_USER: "${DB_USER:?err}"
       POSTGRES_PASSWORD: "${DB_PASSWORD:?err}"
@@ -14,16 +14,16 @@ services:
       - db-data:/var/lib/postgresql/data:delegated
 
   app:
-    build:
-      context: ./
-      dockerfile: ./docker/app/Dockerfile
+    image: ghcr.io/rajkowski/cms-platform:1
     ports:
       - 80:8080
+    env_file:
+      .env
     environment:
       CMS_ADMIN_USERNAME: "${CMS_ADMIN_USERNAME:?err}"
       CMS_ADMIN_PASSWORD: "${CMS_ADMIN_PASSWORD:?err}"
       CMS_FORCE_SSL: "${CMS_FORCE_SSL:-true}"
-      CMS_NODE_TYPE: "${CMS_NODE_TYPE:-standalone}"
+      CMS_NODE_TYPE: "${CMS_NODE_TYPE:-main}"
       DB_SERVER_NAME: "${DB_SERVER_NAME:-db}"
       DB_SSL: "${DB_SSL:-false}"
       DB_USER: "${DB_USER:?err}"

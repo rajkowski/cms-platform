@@ -72,6 +72,32 @@ Need a website or web portal? CMS Platform can be used from Day 1:
 - **API**: Rest API
 - **Platform**: Micro Widgets, Connection Pool, Cache, Scheduler, Workflow, Expression Engine, Upgrades, Migrations, Record Paging
 
+## Run the Published Container Images
+
+You can use the `docker-compose.yaml` file in this repo to pull the latest images and run them locally.
+
+Create a file called `.env` with the following values, edit as needed:
+
+```dotenv
+CMS_ADMIN_USERNAME=<Your_Admin_Username>
+CMS_ADMIN_PASSWORD=<Your_Admin_Password>
+CMS_FORCE_SSL=false
+CMS_NODE_TYPE=main
+DB_SERVER_NAME=db
+DB_SSL=false
+DB_NAME=cms-platform
+DB_USER=postgres
+DB_PASSWORD=postgres_password
+```
+
+Run:
+
+```bash
+docker compose up
+```
+
+Login: <http://localhost/login>
+
 ## Release Process
 
 In general:
