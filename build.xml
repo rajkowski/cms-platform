@@ -141,6 +141,7 @@
         <include name="**/*.xml"/>
         <include name="**/*.yml"/>
         <include name="**/*.tld"/>
+        <include name="**/*.json"/>
         <include name="**/*.mmdb"/>
         <include name="**/*.properties"/>
       </fileset>
