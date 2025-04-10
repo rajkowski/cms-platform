@@ -74,7 +74,8 @@ Need a website or web portal? CMS Platform can be used from Day 1:
 
 ## Run the Published Container Images
 
-You can use the `docker-compose.yaml` file in this repo to pull the latest images and run them locally.
+You can use the `docker-compose.yaml` file in this repo to pull the latest images and run them locally:
+<https://github.com/rajkowski/cms-platform/blob/main/docker-compose.yaml>
 
 Create a file called `.env` with the following values, edit as needed:
 
@@ -99,14 +100,6 @@ docker compose up
 Login: <http://localhost/login>
 
 ## Release Process
-
-In general:
-
-1. Deploy
-2. Login
-3. Configure
-4. Create
-5. Maintain
 
 An optimized web application archive (.war), with production settings, is released to this project's GitHub releases, ready for installation and which automatically upgrades previously installed versions. Always have a backup of your database and the file library path.
 
