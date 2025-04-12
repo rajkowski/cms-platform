@@ -19,6 +19,8 @@ nav:
   - Customization: 'customization.md'
   - Dev Environment: 'developer-environment.md'
   - Installation: 'installation.md'
+  - User Guide:
+      - Web Page Design User Guide: 'user-guide/web-page-design.md'
   - DevSecOps Pipeline: 'pipeline.md'
   - Integrations:
       - OAuth: 'oauth.md'
