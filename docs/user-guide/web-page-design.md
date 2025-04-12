@@ -82,7 +82,7 @@ Placing the widget and manually specifying the TOC entries:
 <widget name="tableOfContents">
   <links>
     <link name="The first page" value="/the-first-page" />
-    <link name="Another page & information" value="/another-page-and-information" />
+    <link name="Another page &amp; information" value="/another-page-and-information" />
   </links>
 </widget>
 ```
