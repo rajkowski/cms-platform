@@ -126,7 +126,7 @@
     <dependency>
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-core</artifactId>
-      <version>11.4.1</version>
+      <version>11.5.0</version>
     </dependency>
     <dependency>
       <groupId>org.flywaydb</groupId>
@@ -519,7 +519,7 @@
             <configuration>
               <target>
                 <ant antfile="${basedir}/build.xml">
-                  <target name="mvn-dependencies" />
+                  <target name="mvn-dependencies"/>
                 </ant>
               </target>
             </configuration>
@@ -533,7 +533,7 @@
             <configuration>
               <target>
                 <ant antfile="${basedir}/build.xml">
-                  <target name="package" />
+                  <target name="package"/>
                 </ant>
               </target>
             </configuration>
