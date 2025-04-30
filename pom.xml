@@ -171,7 +171,7 @@
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty-handler-proxy</artifactId>
-      <version>4.1.119.Final</version>
+      <version>4.2.0.Final</version>
     </dependency>
     <dependency>
       <groupId>io.netty</groupId>
@@ -519,7 +519,7 @@
             <configuration>
               <target>
                 <ant antfile="${basedir}/build.xml">
-                  <target name="mvn-dependencies" />
+                  <target name="mvn-dependencies"/>
                 </ant>
               </target>
             </configuration>
@@ -533,7 +533,7 @@
             <configuration>
               <target>
                 <ant antfile="${basedir}/build.xml">
-                  <target name="package" />
+                  <target name="package"/>
                 </ant>
               </target>
             </configuration>
