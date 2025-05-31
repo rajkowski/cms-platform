@@ -23,7 +23,7 @@ export MAJOR_TAG=1
 docker buildx build \
   --label "org.opencontainers.image.source=https://github.com/rajkowski/cms-platform" \
   --label "org.opencontainers.image.description=CMS Platform web application" \
-  --label "org.opencontainers.image.licenses=Apache"
+  --label "org.opencontainers.image.licenses=Apache" \
   --platform linux/amd64,linux/arm64 \
   --push \
   -t ghcr.io/rajkowski/cms-platform:${BUILD_TAG} \
