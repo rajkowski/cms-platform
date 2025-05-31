@@ -9,13 +9,13 @@
     },
     "ace": {
       "package": "ace-builds",
-      "version": "1.39.1",
+      "version": "1.41.0",
       "paths": [
         "node_modules/ace-builds/src-min-noconflict/*"
       ]
     },
     "add-to-calendar-button": {
-      "version": "2.8.9",
+      "version": "2.9.1",
       "paths": [
         "node_modules/add-to-calendar-button/dist/atcb.js"
       ]
@@ -25,7 +25,7 @@
     },
     "chartjs": {
       "package": "chart.js",
-      "version": "4.4.8",
+      "version": "4.4.9",
       "paths": [
         "node_modules/chart.js/dist/chart.umd.js"
       ]
@@ -92,7 +92,7 @@
     },
     "jspreadsheet": {
       "package": "jspreadsheet-ce",
-      "version": "5.0.1",
+      "version": "5.0.2",
       "paths": [
         "node_modules/jspreadsheet-ce/dist/index.js",
         "node_modules/jspreadsheet-ce/dist/index.d.ts",
@@ -102,7 +102,7 @@
       ]
     },
     "jsuites": {
-      "version": "5.9.2",
+      "version": "5.10.0",
       "paths": [
         "node_modules/jsuites/dist/jsuites.css",
         "node_modules/jsuites/dist/jsuites.d.ts",
@@ -175,7 +175,7 @@
       ]
     },
     "swiper": {
-      "version": "11.2.6",
+      "version": "11.2.8",
       "paths": [
         "node_modules/swiper/swiper-bundle.css",
         "node_modules/swiper/swiper-bundle.js",
@@ -188,7 +188,7 @@
       ]
     },
     "tinymce": {
-      "version": "6.8.5",
+      "version": "6.8.6",
       "paths": [
         "node_modules/tinymce/tinymce.js",
         "node_modules/tinymce/tinymce.min.js",
