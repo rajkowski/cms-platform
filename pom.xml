@@ -111,7 +111,7 @@
     <dependency>
       <groupId>commons-validator</groupId>
       <artifactId>commons-validator</artifactId>
-      <version>1.9.0</version>
+      <version>1.10.0</version>
     </dependency>
     <dependency>
       <groupId>com.github.rajkowski</groupId>
@@ -126,12 +126,12 @@
     <dependency>
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-core</artifactId>
-      <version>11.9.1</version>
+      <version>11.9.2</version>
     </dependency>
     <dependency>
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-database-postgresql</artifactId>
-      <version>11.9.1</version>
+      <version>11.9.2</version>
     </dependency>
     <dependency>
       <groupId>com.maxmind.geoip2</groupId>
@@ -156,27 +156,27 @@
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty-codec-http</artifactId>
-      <version>4.2.1.Final</version>
+      <version>4.2.2.Final</version>
     </dependency>
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty-codec-http2</artifactId>
-      <version>4.2.1.Final</version>
+      <version>4.2.2.Final</version>
     </dependency>
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty-handler</artifactId>
-      <version>4.2.1.Final</version>
+      <version>4.2.2.Final</version>
     </dependency>
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty-handler-proxy</artifactId>
-      <version>4.2.1.Final</version>
+      <version>4.2.2.Final</version>
     </dependency>
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty-resolver-dns</artifactId>
-      <version>4.2.1.Final</version>
+      <version>4.2.2.Final</version>
     </dependency>
     <dependency>
       <groupId>io.netty</groupId>
@@ -281,7 +281,7 @@
     <dependency>
       <groupId>com.googlecode.libphonenumber</groupId>
       <artifactId>libphonenumber</artifactId>
-      <version>9.0.8</version>
+      <version>9.0.9</version>
     </dependency>
     <dependency>
       <groupId>org.projectlombok</groupId>
