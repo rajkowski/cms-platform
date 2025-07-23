@@ -131,7 +131,7 @@
     <dependency>
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-database-postgresql</artifactId>
-      <version>11.9.2</version>
+      <version>11.10.0</version>
     </dependency>
     <dependency>
       <groupId>com.maxmind.geoip2</groupId>
@@ -519,7 +519,7 @@
             <configuration>
               <target>
                 <ant antfile="${basedir}/build.xml">
-                  <target name="mvn-dependencies" />
+                  <target name="mvn-dependencies"/>
                 </ant>
               </target>
             </configuration>
@@ -533,7 +533,7 @@
             <configuration>
               <target>
                 <ant antfile="${basedir}/build.xml">
-                  <target name="package" />
+                  <target name="package"/>
                 </ant>
               </target>
             </configuration>
