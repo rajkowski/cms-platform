@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@superset-ui/embedded-sdk": "0.2.0",
-    "ace-builds": "1.43.0",
+    "ace-builds": "1.43.1",
     "add-to-calendar-button": "2.9.1",
     "bootstrap": "5.3.7",
     "chart.js": "4.5.0",
