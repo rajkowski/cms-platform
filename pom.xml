@@ -351,7 +351,7 @@
     <dependency>
       <groupId>com.stripe</groupId>
       <artifactId>stripe-java</artifactId>
-      <version>29.2.0</version>
+      <version>29.3.0</version>
     </dependency>
     <dependency>
       <groupId>org.thymeleaf</groupId>
@@ -519,7 +519,7 @@
             <configuration>
               <target>
                 <ant antfile="${basedir}/build.xml">
-                  <target name="mvn-dependencies" />
+                  <target name="mvn-dependencies"/>
                 </ant>
               </target>
             </configuration>
@@ -533,7 +533,7 @@
             <configuration>
               <target>
                 <ant antfile="${basedir}/build.xml">
-                  <target name="package" />
+                  <target name="package"/>
                 </ant>
               </target>
             </configuration>
