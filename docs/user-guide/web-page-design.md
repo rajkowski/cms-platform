@@ -60,6 +60,136 @@ When `hr="true"` is specified, then an HTML `<HR>` element is appended before a 
 
 There are approximately 50 widgets which may be configured and combined on web pages. Some widgets use a "uniqueId" will corresponds to using the backend database to reference the content. By using the same "uniqueId" on multiple pages, the content can be edited once, and each page will reuse the same content source-of-truth.
 
+### Breadcrumbs
+
+```xml
+<widget name="breadcrumbs">
+  <links>
+    <link name="Previous Page Title" value="/link" />
+    <link name="Page Title" value="" />
+  </links>
+</widget>
+```
+
+### Content
+
+Placing the widget with the database content editor (recommended):
+
+```xml
+<widget name="content">
+  <uniqueId>content-unique-id</uniqueId>
+</widget>
+```
+
+Placing the widget and specifying HTML to inject:
+
+```xml
+<widget name="content">
+  <html>&lt;![CDATA[ Any HTML content ]]&gt;</html>
+</widget>
+```
+
+### Content Accordian
+
+The accordian can have multiple levels of expanding sections.
+
+Placing the widget with the database content editor (recommended):
+
+```xml
+<widget name="contentAccordion">
+  <uniqueId>content-unique-id</uniqueId>
+</widget>
+```
+
+Placing the widget and specifying HTML to inject:
+
+```xml
+<widget name="contentAccordion">
+  <html>&lt;![CDATA[ Any HTML content ]]&gt;</html>
+</widget>
+```
+
+### Content Cards
+
+### Content Gallery
+
+### Content Reveal
+
+### Content Slider
+
+### Content Tabs
+
+### Button
+
+### Link
+
+### Card
+
+### Menu
+
+### Progress Card
+
+### Statistic Card
+
+### Logo
+
+### Copyright
+
+### Email Subscribe
+
+### Form
+
+### Blog Post List
+
+### Blog Post
+
+### Blog Post Name
+
+### Product Browser
+
+### Product Name
+
+### Product Image
+
+### Product Description
+
+### Add to Cart
+
+### Cart
+
+### Remote Content
+
+### Remote Course List
+
+These require Moodle Token and URL to be configured.
+
+```xml
+<widget name="remoteCourseList" group="instructors">
+  <title>Instructor's Courses</title>
+  <showWhenEmpty>true</showWhenEmpty>
+  <role>teacher</role>
+  <useItemLink>false</useItemLink>
+  <showLaunchLink>true</showLaunchLink>
+  <launchLabel>View</launchLabel>
+  <showParticipants>true</showParticipants>
+  <noRecordsFoundMessage>No classes were found</noRecordsFoundMessage>
+  <showAddCourseButton>true</showAddCourseButton>
+  <courseButtonText>Add a course</courseButtonText>
+</widget>
+```
+
+```xml
+<widget name="remoteCourseList">
+  <title>My Enrolled Courses</title>
+  <showWhenEmpty>true</showWhenEmpty>
+  <useItemLink>false</useItemLink>
+  <showLaunchLink>true</showLaunchLink>
+  <launchLabel>View</launchLabel>
+</widget>
+```
+
+### Search Form
+
 ### Table of Contents (TOC) Widget
 
 This is a reusable component which dynamically adapts to the page it is displayed on.
@@ -103,3 +233,54 @@ Editing the widget with the database configuration editor:
 When specifying a Web Page Link, standard [URI restrictions](https://www.rfc-editor.org/rfc/rfc3986#page-12) apply.
 
 Do not use these URI reserved characters with web page links: `:`  `/` `?` `#` `[` `]` `@` `!` `$` `&` `'` `(` `)` `*` `+` `,` `;` `=`
+
+### Album Gallery
+
+### Photo Gallery
+
+### File List
+
+### File List by Folder
+
+### File List by Year
+
+### File Drop Zone
+
+### Calendar
+
+An example calendar component configured to show the CMS calendar called "all-learners" as well as combining the user's Moodle Events if the integration is enabled.
+
+```xml
+<widget name="calendar">
+  <view>small</view>
+  <default>month</default>
+  <calendarUniqueId>all-learners</calendarUniqueId>
+  <showEvents>true</showEvents>
+  <showHolidays>true</showHolidays>
+  <showMoodleEvents>true</showMoodleEvents>
+</widget>
+```
+
+### Upcoming Calendar Events
+
+### Calendar Event Details
+
+### Map
+
+### Instagram Photos
+
+A business account must be setup at Instagram, and the API token must be configured in the CMS Platform Social Settings.
+
+### Social Media Links
+
+### Wiki
+
+### Web Page Content Search Results
+
+### Web Page Title Search Results
+
+### Blog Post Search Results
+
+### Calendar Search Results
+
+### Items Search Results
