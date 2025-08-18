@@ -42,9 +42,13 @@ public class MessagingHandler {
       PGConnection pgConnection = connection.unwrap(PGConnection.class);
 
       // Attach to the database LISTEN channel
-      Statement stmt = connection.createStatement();
-      stmt.execute("LISTEN " + MessagingManager.CHANNEL);
-      LOG.info("Started PostgreSQL LISTEN on channel: " + MessagingManager.CHANNEL);
+      try (Statement stmt = connection.createStatement()) {
+        stmt.execute("LISTEN " + MessagingManager.CHANNEL);
+        LOG.info("Started PostgreSQL LISTEN on channel: " + MessagingManager.CHANNEL);
+      } catch (SQLException e) {
+        LOG.error("Error setting up LISTEN on channel: " + MessagingManager.CHANNEL, e);
+        return;
+      }
 
       // Wait for notifications
       while (true) {
