@@ -61,7 +61,7 @@ public class XMLHeaderLoader implements Serializable {
       Document document = parseDocument(url);
       return parseDocument(document, layoutName);
     } catch (Exception e) {
-      e.printStackTrace();
+      LOG.error(e);
     }
     return null;
   }

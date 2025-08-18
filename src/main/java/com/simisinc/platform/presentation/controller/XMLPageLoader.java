@@ -88,7 +88,7 @@ public class XMLPageLoader implements Serializable {
       Document document = parseDocument(url);
       loadWidgetLibrary(document);
     } catch (Exception e) {
-      e.printStackTrace();
+      LOG.error(e);
     }
   }
 
@@ -133,7 +133,7 @@ public class XMLPageLoader implements Serializable {
         }
       }
     } catch (Exception e) {
-      e.printStackTrace();
+      LOG.error(e);
     }
   }
 

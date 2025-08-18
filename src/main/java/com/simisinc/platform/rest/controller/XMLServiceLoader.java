@@ -65,7 +65,7 @@ public class XMLServiceLoader implements Serializable {
       Document document = parseDocument(url);
       addServices(document);
     } catch (Exception e) {
-      e.printStackTrace();
+      LOG.error(e);
     }
   }
 

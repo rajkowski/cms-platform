@@ -77,7 +77,7 @@ public class XMLJSONServiceLoader implements Serializable {
       Document document = parseDocument(fileName, context);
       addServices(document);
     } catch (Exception e) {
-      e.printStackTrace();
+      LOG.error(e);
     }
   }
 

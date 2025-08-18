@@ -95,7 +95,7 @@ public class XMLWebPageTemplateLoader implements Serializable {
       Document document = readDocument(context, fileName);
       return parseDocument(document, category);
     } catch (Exception e) {
-      e.printStackTrace();
+      LOG.error(e);
     }
     return null;
   }
@@ -168,7 +168,7 @@ public class XMLWebPageTemplateLoader implements Serializable {
           new StreamResult(buffer));
       xml = buffer.toString();
     } catch (TransformerException e) {
-      e.printStackTrace();
+      LOG.error(e);
     }
     return xml;
   }

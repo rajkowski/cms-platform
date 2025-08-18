@@ -74,7 +74,7 @@ public class WebPageListWidget extends GenericWidget {
       xmlPageConfig.load();
       context.getRequest().setAttribute("standardPages", standardPages);
     } catch (Exception e) {
-      e.printStackTrace();
+      LOG.error(e);
       return null;
     }
 

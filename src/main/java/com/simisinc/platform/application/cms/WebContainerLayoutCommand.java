@@ -66,7 +66,7 @@ public class WebContainerLayoutCommand {
       // Process the header document
       return XMLHeaderLoader.addFromXml(container);
     } catch (Exception e) {
-      e.printStackTrace();
+      LOG.error(e);
     }
     return null;
   }
@@ -96,7 +96,7 @@ public class WebContainerLayoutCommand {
       // Process the footer document
       return XMLFooterLoader.addFromXml(container);
     } catch (Exception e) {
-      e.printStackTrace();
+      LOG.error(e);
     }
     return null;
   }
