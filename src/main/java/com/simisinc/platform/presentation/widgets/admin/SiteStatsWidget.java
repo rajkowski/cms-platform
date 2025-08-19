@@ -29,8 +29,9 @@ import com.simisinc.platform.presentation.widgets.cms.PreferenceEntriesList;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import org.apache.commons.lang3.StringUtils;
 
-import javax.json.bind.Jsonb;
-import javax.json.bind.JsonbBuilder;
+import jakarta.json.bind.Jsonb;
+import jakarta.json.bind.JsonbBuilder;
+
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
