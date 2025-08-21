@@ -72,6 +72,9 @@ public class WebPackageStylesheetTag extends SimpleTagSupport {
     if (StringUtils.isNotEmpty(version)) {
       LOG.debug("WebPackage Stylesheet Requested: " + packageName + "==" + version + ": " + file);
       String ctx = (String) pageContext.getAttribute(CONTEXT_PATH, PageContext.REQUEST_SCOPE);
+      if (ctx == null) {
+        ctx = "";
+      }
       // Attributes
       String mediaValue = "";
       if (media != null) {
