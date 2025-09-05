@@ -492,8 +492,6 @@ public class WebContainerCommand implements Serializable {
             } else if (widgetContext.hasJsp()) {
               // Render the widget's JSP
               if (httpRequest != null) {
-                LOG.debug("Including JSP: /WEB-INF/jsp" + widgetContext.getJsp());
-                LOG.debug("JSP logoSrc before: " + httpRequest.getAttribute("logoSrc"));
                 RequestDispatcher requestDispatcher = httpRequest.getRequestDispatcher("/WEB-INF/jsp" + widgetContext.getJsp());
                 if (requestDispatcher == null) {
                   // Register an error and skip the output
@@ -511,9 +509,6 @@ public class WebContainerCommand implements Serializable {
                 WidgetResponseWrapper responseWrapper = new WidgetResponseWrapper(response);
                 requestDispatcher.include(httpRequest, responseWrapper);
                 widgetContent = responseWrapper.getOutputAndClose();
-                LOG.debug("JSP logoSrc after: " + httpRequest.getAttribute("logoSrc"));
-                // httpRequest.removeAttribute("logoSrc");
-
               }
             } else if (widgetContext.hasHtml()) {
               // Use the widget's generated HTML
