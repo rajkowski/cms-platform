@@ -130,16 +130,28 @@ public class WebContainerCommand implements Serializable {
         for (Widget widget : column.getWidgets()) {
 
           // Reset the request attributes for each widget
-          Enumeration<?> attributeNames = pageRequest.getAttributeNames();
-          while (attributeNames.hasMoreElements()) {
-            String name = (String) attributeNames.nextElement();
+          Enumeration<?> pageRequestAttributeNames = pageRequest.getAttributeNames();
+          while (pageRequestAttributeNames.hasMoreElements()) {
+            String name = (String) pageRequestAttributeNames.nextElement();
             if (!name.startsWith("controller") && !name.startsWith("master") && !name.startsWith("request")) {
               // Page request attributes are set by widgets for both JSPs and Templates
               pageRequest.removeAttribute(name);
               // HTTP request attributes are set by this container for JSPs specifically
               if (httpRequest != null) {
                 httpRequest.removeAttribute(name);
+                LOG.debug("    Removing from httpRequest: " + name);
               }
+            }
+          }
+
+          // HTTP request attributes are set by this container for JSPs specifically
+          // and JSPs can also set attributes seperately
+          Enumeration<?> httpRequestAttributeNames = httpRequest.getAttributeNames();
+          while (httpRequestAttributeNames.hasMoreElements()) {
+            String name = (String) httpRequestAttributeNames.nextElement();
+            if (!name.startsWith("controller") && !name.startsWith("master") && !name.startsWith("request")) {
+              httpRequest.removeAttribute(name);
+              LOG.debug("    Removing from httpRequest: " + name);
             }
           }
 
@@ -485,6 +497,7 @@ public class WebContainerCommand implements Serializable {
               // Render the widget's JSP
               if (httpRequest != null) {
                 LOG.debug("Including JSP: /WEB-INF/jsp" + widgetContext.getJsp());
+                LOG.debug("JSP logoSrc before: " + httpRequest.getAttribute("logoSrc"));
                 RequestDispatcher requestDispatcher = httpRequest.getRequestDispatcher("/WEB-INF/jsp" + widgetContext.getJsp());
                 if (requestDispatcher == null) {
                   // Register an error and skip the output
@@ -495,12 +508,18 @@ public class WebContainerCommand implements Serializable {
                 httpRequest.setAttribute(WEB_PACKAGE_LIST, webContainerContext.getWebPackageList());
                 // Map the pageRequest attributes to the http request for JSPs
                 for (String attribute : pageRequest.getAttributes().keySet()) {
+                  LOG.debug("   Setting for widget: " + attribute + " = " + pageRequest.getAttribute(attribute));
                   httpRequest.setAttribute(attribute, pageRequest.getAttribute(attribute));
                 }
                 // Render the JSP content
                 WidgetResponseWrapper responseWrapper = new WidgetResponseWrapper(response);
                 requestDispatcher.include(httpRequest, responseWrapper);
                 widgetContent = responseWrapper.getOutputAndClose();
+                LOG.debug("JSP logoSrc after: " + httpRequest.getAttribute("logoSrc"));
+                // httpRequest.removeAttribute("logoSrc");
+
+                
+
               }
             } else if (widgetContext.hasHtml()) {
               // Use the widget's generated HTML
