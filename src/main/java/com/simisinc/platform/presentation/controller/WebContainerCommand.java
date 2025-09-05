@@ -136,22 +136,18 @@ public class WebContainerCommand implements Serializable {
             if (!name.startsWith("controller") && !name.startsWith("master") && !name.startsWith("request")) {
               // Page request attributes are set by widgets for both JSPs and Templates
               pageRequest.removeAttribute(name);
-              // HTTP request attributes are set by this container for JSPs specifically
-              if (httpRequest != null) {
-                httpRequest.removeAttribute(name);
-                LOG.debug("    Removing from httpRequest: " + name);
-              }
             }
           }
 
           // HTTP request attributes are set by this container for JSPs specifically
-          // and JSPs can also set attributes seperately
-          Enumeration<?> httpRequestAttributeNames = httpRequest.getAttributeNames();
-          while (httpRequestAttributeNames.hasMoreElements()) {
-            String name = (String) httpRequestAttributeNames.nextElement();
-            if (!name.startsWith("controller") && !name.startsWith("master") && !name.startsWith("request")) {
-              httpRequest.removeAttribute(name);
-              LOG.debug("    Removing from httpRequest: " + name);
+          // and JSPs can also set attributes separately
+          if (httpRequest != null) {
+            Enumeration<?> httpRequestAttributeNames = httpRequest.getAttributeNames();
+            while (httpRequestAttributeNames.hasMoreElements()) {
+              String name = (String) httpRequestAttributeNames.nextElement();
+              if (!name.startsWith("controller") && !name.startsWith("master") && !name.startsWith("request")) {
+                httpRequest.removeAttribute(name);
+              }
             }
           }
 
@@ -517,8 +513,6 @@ public class WebContainerCommand implements Serializable {
                 widgetContent = responseWrapper.getOutputAndClose();
                 LOG.debug("JSP logoSrc after: " + httpRequest.getAttribute("logoSrc"));
                 // httpRequest.removeAttribute("logoSrc");
-
-                
 
               }
             } else if (widgetContext.hasHtml()) {
