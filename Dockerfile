@@ -5,7 +5,7 @@ ARG ANT_VERSION=1.10.15
 ARG ANT_DOWNLOAD_SHA512=d78427aff207592c024ff1552dc04f7b57065a195c42d398fcffe7a0145e8d00cd46786f5aa52e77ab0fdf81334f065eb8011eecd2b48f7228e97ff4cb20d16c
 ARG ANT_MIRROR=https://downloads.apache.org
 
-RUN yum install -y tar
+RUN tdnf install -y tar
 
 # Install Ant
 RUN set -o errexit -o nounset \
