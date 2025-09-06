@@ -9,13 +9,13 @@
     },
     "ace": {
       "package": "ace-builds",
-      "version": "1.43.2",
+      "version": "1.43.3",
       "paths": [
         "node_modules/ace-builds/src-min-noconflict/*"
       ]
     },
     "add-to-calendar-button": {
-      "version": "2.9.1",
+      "version": "2.11.2",
       "paths": [
         "node_modules/add-to-calendar-button/dist/atcb.js"
       ]
@@ -92,7 +92,7 @@
     },
     "jspreadsheet": {
       "package": "jspreadsheet-ce",
-      "version": "5.0.3",
+      "version": "5.0.4",
       "paths": [
         "node_modules/jspreadsheet-ce/dist/index.js",
         "node_modules/jspreadsheet-ce/dist/index.d.ts",
@@ -102,7 +102,7 @@
       ]
     },
     "jsuites": {
-      "version": "5.12.0",
+      "version": "5.13.0",
       "paths": [
         "node_modules/jsuites/dist/jsuites.css",
         "node_modules/jsuites/dist/jsuites.d.ts",
@@ -127,7 +127,7 @@
       "version": "4.2.2"
     },
     "mermaid": {
-      "version": "11.10.0",
+      "version": "11.11.0",
       "paths": [
         "node_modules/mermaid/dist/mermaid.js",
         "node_modules/mermaid/dist/mermaid.min.js"
