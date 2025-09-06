@@ -502,7 +502,6 @@ public class WebContainerCommand implements Serializable {
                 httpRequest.setAttribute(WEB_PACKAGE_LIST, webContainerContext.getWebPackageList());
                 // Map the pageRequest attributes to the http request for JSPs
                 for (String attribute : pageRequest.getAttributes().keySet()) {
-                  LOG.debug("   Setting for widget: " + attribute + " = " + pageRequest.getAttribute(attribute));
                   httpRequest.setAttribute(attribute, pageRequest.getAttribute(attribute));
                 }
                 // Render the JSP content
