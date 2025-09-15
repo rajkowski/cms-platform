@@ -74,6 +74,10 @@ public class WebPackageScriptTag extends SimpleTagSupport {
     // Find the package and version
     PageContext pageContext = (PageContext) getJspContext();
     Map<String, WebPackage> webPackageList = (Map) pageContext.getAttribute(WEB_PACKAGE_LIST, PageContext.REQUEST_SCOPE);
+    if (webPackageList == null) {
+      LOG.error(WEB_PACKAGE_LIST + " not found in request");
+      return;
+    }
     String version = webPackageList.get(packageName).getVersion();
 
     // @todo Add this package's file to the web page map so that packages can be consolidated and put in the page header
