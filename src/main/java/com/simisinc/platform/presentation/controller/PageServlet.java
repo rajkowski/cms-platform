@@ -574,6 +574,9 @@ public class PageServlet extends HttpServlet {
         }
       }
 
+      // Set attributes for the layout JSP
+      request.setAttribute(RequestConstants.WEB_PACKAGE_LIST, webPackageList);
+
       // Determine the output page requirements (css/scripts/etc)
       if (webContainerContext.isEmbedded()) {
         request.getServletContext().getRequestDispatcher("/WEB-INF/jsp/embedded.jsp").forward(request, response);
