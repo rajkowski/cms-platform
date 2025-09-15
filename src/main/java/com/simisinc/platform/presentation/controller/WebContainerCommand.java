@@ -129,28 +129,6 @@ public class WebContainerCommand implements Serializable {
         LOG.debug("  Widgets: " + column.getWidgets().size());
         for (Widget widget : column.getWidgets()) {
 
-          // Reset the request attributes for each widget
-          Enumeration<?> pageRequestAttributeNames = pageRequest.getAttributeNames();
-          while (pageRequestAttributeNames.hasMoreElements()) {
-            String name = (String) pageRequestAttributeNames.nextElement();
-            if (!name.startsWith("controller") && !name.startsWith("master") && !name.startsWith("request")) {
-              // Page request attributes are set by widgets for both JSPs and Templates
-              pageRequest.removeAttribute(name);
-            }
-          }
-
-          // HTTP request attributes are set by this container for JSPs specifically
-          // and JSPs can also set attributes separately
-          if (httpRequest != null) {
-            Enumeration<?> httpRequestAttributeNames = httpRequest.getAttributeNames();
-            while (httpRequestAttributeNames.hasMoreElements()) {
-              String name = (String) httpRequestAttributeNames.nextElement();
-              if (!name.startsWith("controller") && !name.startsWith("master") && !name.startsWith("request")) {
-                httpRequest.removeAttribute(name);
-              }
-            }
-          }
-
           // Check the user's role and groups
           if (!WebComponentCommand.allowsUser(widget, userSession)) {
             LOG.debug("WIDGET NOT ALLOWED: " + widget.getWidgetName() + " " +
@@ -498,12 +476,12 @@ public class WebContainerCommand implements Serializable {
                   LOG.error("JSP NOT FOUND: " + "/WEB-INF/jsp" + widgetContext.getJsp());
                   continue;
                 }
-                // Share the web packages
-                httpRequest.setAttribute(WEB_PACKAGE_LIST, webContainerContext.getWebPackageList());
                 // Map the pageRequest attributes to the http request for JSPs
                 for (String attribute : pageRequest.getAttributes().keySet()) {
                   httpRequest.setAttribute(attribute, pageRequest.getAttribute(attribute));
                 }
+                // Share the web packages
+                httpRequest.setAttribute(WEB_PACKAGE_LIST, webContainerContext.getWebPackageList());
                 // Render the JSP content
                 WidgetResponseWrapper responseWrapper = new WidgetResponseWrapper(response);
                 requestDispatcher.include(httpRequest, responseWrapper);
@@ -533,6 +511,31 @@ public class WebContainerCommand implements Serializable {
               sectionRenderInfo.addColumn(columnRenderInfo);
             }
             columnRenderInfo.addWidget(widgetRenderInfo);
+          }
+
+          // Reset the request attributes for each widget
+          Enumeration<?> pageRequestAttributeNames = pageRequest.getAttributeNames();
+          while (pageRequestAttributeNames.hasMoreElements()) {
+            String name = (String) pageRequestAttributeNames.nextElement();
+            if (!name.startsWith("controller") && !name.startsWith("master") && !name.startsWith("request")) {
+              // Page request attributes are set by widgets for both JSPs and Templates
+              pageRequest.removeAttribute(name);
+              if (httpRequest != null) {
+                httpRequest.removeAttribute(name);
+              }
+            }
+          }
+
+          // HTTP request attributes are set by this container for JSPs specifically
+          // and JSPs can also set attributes separately
+          if (httpRequest != null) {
+            Enumeration<?> httpRequestAttributeNames = httpRequest.getAttributeNames();
+            while (httpRequestAttributeNames.hasMoreElements()) {
+              String name = (String) httpRequestAttributeNames.nextElement();
+              if (!name.startsWith("controller") && !name.startsWith("master") && !name.startsWith("request")) {
+                httpRequest.removeAttribute(name);
+              }
+            }
           }
         }
       }
