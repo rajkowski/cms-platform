@@ -17,8 +17,8 @@ docker buildx create --use
 Build and push to Github container image registry:
 
 ```bash
-export BUILD_TAG=20250906.10000
-export MINOR_TAG=20250906
+export BUILD_TAG=20250916.10000
+export MINOR_TAG=20250916
 export MAJOR_TAG=1
 docker buildx build \
   --label "org.opencontainers.image.source=https://github.com/rajkowski/cms-platform" \
