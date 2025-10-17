@@ -17,6 +17,7 @@
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="font" uri="/WEB-INF/tlds/font-functions.tld" %>
 <%@ taglib prefix="js" uri="/WEB-INF/tlds/javascript-escape.tld" %>
+<%@ taglib prefix="g" uri="http://granule.com/tags" %>
 <jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="webPage" class="com.simisinc.platform.domain.model.cms.WebPage" scope="request"/>
@@ -284,6 +285,56 @@
     border-radius: 2px;
     flex-grow: 1;
   }
+
+  .layout-palette-item {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 10px;
+    cursor: move;
+    transition: all 0.2s;
+  }
+
+  .layout-palette-item:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-color: #007bff;
+  }
+
+  .layout-label {
+    font-size: 11px;
+    color: #6c757d;
+    text-align: center;
+  }
+
+  .palette-section {
+    margin-bottom: 10px;
+  }
+
+  .palette-section-header {
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none; /* Prevent text selection on click */
+  }
+
+  .palette-section-header:hover {
+    color: #007bff;
+  }
+
+  .palette-section-header .toggle-icon {
+    transition: transform 0.2s;
+    font-size: 12px;
+  }
+
+  .palette-section-header.collapsed .toggle-icon {
+    transform: rotate(-90deg);
+  }
+
+  .palette-section-content {
+    padding-top: 10px;
+  }
 </style>
 
 <div id="visual-page-editor-wrapper">
@@ -318,49 +369,123 @@
     
     <!-- Widget Palette -->
     <div id="widget-palette">
-      <h5>Widgets</h5>
-      <input type="text" id="widget-search" placeholder="Search widgets..." class="property-input" />
-      
-      <div class="widget-palette-category">Content</div>
-      <div class="widget-palette-item" draggable="true" data-widget-type="content">
-        <i class="${font:far()} fa-paragraph"></i> <strong>Content</strong>
-        <div style="font-size: 11px; color: #6c757d;">Rich text content block</div>
+      <div class="palette-section">
+        <div class="palette-section-header collapsed">
+          <h5>Layouts</h5>
+          <i class="${font:fas()} fa-chevron-down toggle-icon"></i>
+        </div>
+        <div class="palette-section-content" style="display: none;">
+          <div class="layout-palette-item" draggable="true" data-layout="small-12">
+            <div class="layout-preview">
+              <div class="layout-preview-col" style="flex-basis: 100%;"></div>
+            </div>
+            <div class="layout-label">1 Column</div>
+          </div>
+          <div class="layout-palette-item" draggable="true" data-layout="small-6,small-6">
+            <div class="layout-preview">
+              <div class="layout-preview-col" style="flex-basis: 50%;"></div>
+              <div class="layout-preview-col" style="flex-basis: 50%;"></div>
+            </div>
+            <div class="layout-label">2 Columns</div>
+          </div>
+          <div class="layout-palette-item" draggable="true" data-layout="small-4,small-4,small-4">
+            <div class="layout-preview">
+              <div class="layout-preview-col" style="flex-basis: 33.33%;"></div>
+              <div class="layout-preview-col" style="flex-basis: 33.33%;"></div>
+              <div class="layout-preview-col" style="flex-basis: 33.33%;"></div>
+            </div>
+            <div class="layout-label">3 Columns</div>
+          </div>
+          <div class="layout-palette-item" draggable="true" data-layout="small-3,small-3,small-3,small-3">
+            <div class="layout-preview">
+              <div class="layout-preview-col" style="flex-basis: 25%;"></div>
+              <div class="layout-preview-col" style="flex-basis: 25%;"></div>
+              <div class="layout-preview-col" style="flex-basis: 25%;"></div>
+              <div class="layout-preview-col" style="flex-basis: 25%;"></div>
+            </div>
+            <div class="layout-label">4 Columns</div>
+          </div>
+          <div class="layout-palette-item" draggable="true" data-layout="small-4,small-8">
+            <div class="layout-preview">
+              <div class="layout-preview-col" style="flex-basis: 33.33%;"></div>
+              <div class="layout-preview-col" style="flex-basis: 66.67%;"></div>
+            </div>
+            <div class="layout-label">33 / 67</div>
+          </div>
+          <div class="layout-palette-item" draggable="true" data-layout="small-8,small-4">
+            <div class="layout-preview">
+              <div class="layout-preview-col" style="flex-basis: 66.67%;"></div>
+              <div class="layout-preview-col" style="flex-basis: 33.33%;"></div>
+            </div>
+            <div class="layout-label">67 / 33</div>
+          </div>
+          <div class="layout-palette-item" draggable="true" data-layout="small-3,small-9">
+            <div class="layout-preview">
+              <div class="layout-preview-col" style="flex-basis: 25%;"></div>
+              <div class="layout-preview-col" style="flex-basis: 75%;"></div>
+            </div>
+            <div class="layout-label">25 / 75</div>
+          </div>
+          <div class="layout-palette-item" draggable="true" data-layout="small-9,small-3">
+            <div class="layout-preview">
+              <div class="layout-preview-col" style="flex-basis: 75%;"></div>
+              <div class="layout-preview-col" style="flex-basis: 25%;"></div>
+            </div>
+            <div class="layout-label">75 / 25</div>
+          </div>
+        </div>
       </div>
-      <div class="widget-palette-item" draggable="true" data-widget-type="contentAccordion">
-        <i class="${font:far()} fa-list"></i> <strong>Accordion</strong>
-        <div style="font-size: 11px; color: #6c757d;">Collapsible content sections</div>
-      </div>
-      <div class="widget-palette-item" draggable="true" data-widget-type="contentCards">
-        <i class="${font:far()} fa-th"></i> <strong>Cards</strong>
-        <div style="font-size: 11px; color: #6c757d;">Content card grid</div>
-      </div>
-      <div class="widget-palette-item" draggable="true" data-widget-type="contentSlider">
-        <i class="${font:far()} fa-images"></i> <strong>Slider</strong>
-        <div style="font-size: 11px; color: #6c757d;">Image/content slider</div>
-      </div>
-      
-      <div class="widget-palette-category">Navigation</div>
-      <div class="widget-palette-item" draggable="true" data-widget-type="breadcrumbs">
-        <i class="${font:far()} fa-ellipsis-h"></i> <strong>Breadcrumbs</strong>
-        <div style="font-size: 11px; color: #6c757d;">Navigation breadcrumbs</div>
-      </div>
-      <div class="widget-palette-item" draggable="true" data-widget-type="menu">
-        <i class="${font:far()} fa-bars"></i> <strong>Menu</strong>
-        <div style="font-size: 11px; color: #6c757d;">Navigation menu</div>
-      </div>
-      
-      <div class="widget-palette-category">UI Elements</div>
-      <div class="widget-palette-item" draggable="true" data-widget-type="button">
-        <i class="${font:far()} fa-hand-pointer"></i> <strong>Button</strong>
-        <div style="font-size: 11px; color: #6c757d;">Call-to-action button</div>
-      </div>
-      <div class="widget-palette-item" draggable="true" data-widget-type="card">
-        <i class="${font:far()} fa-square"></i> <strong>Card</strong>
-        <div style="font-size: 11px; color: #6c757d;">Information card</div>
-      </div>
-      <div class="widget-palette-item" draggable="true" data-widget-type="statisticCard">
-        <i class="${font:far()} fa-chart-bar"></i> <strong>Statistic Card</strong>
-        <div style="font-size: 11px; color: #6c757d;">Display statistics</div>
+
+      <div class="palette-section">
+        <div class="palette-section-header collapsed">
+          <h5>Widgets</h5>
+          <i class="${font:fas()} fa-chevron-down toggle-icon"></i>
+        </div>
+        <div class="palette-section-content" style="display: none;">
+          <input type="text" id="widget-search" placeholder="Search widgets..." class="property-input" />
+          
+          <div class="widget-palette-category">Content</div>
+          <div class="widget-palette-item" draggable="true" data-widget-type="content">
+            <i class="${font:far()} fa-paragraph"></i> <strong>Content</strong>
+            <div style="font-size: 11px; color: #6c757d;">Rich text content block</div>
+          </div>
+          <div class="widget-palette-item" draggable="true" data-widget-type="contentAccordion">
+            <i class="${font:far()} fa-list"></i> <strong>Accordion</strong>
+            <div style="font-size: 11px; color: #6c757d;">Collapsible content sections</div>
+          </div>
+          <div class="widget-palette-item" draggable="true" data-widget-type="contentCards">
+            <i class="${font:far()} fa-th"></i> <strong>Cards</strong>
+            <div style="font-size: 11px; color: #6c757d;">Content card grid</div>
+          </div>
+          <div class="widget-palette-item" draggable="true" data-widget-type="contentSlider">
+            <i class="${font:far()} fa-images"></i> <strong>Slider</strong>
+            <div style="font-size: 11px; color: #6c757d;">Image/content slider</div>
+          </div>
+          
+          <div class="widget-palette-category">Navigation</div>
+          <div class="widget-palette-item" draggable="true" data-widget-type="breadcrumbs">
+            <i class="${font:far()} fa-ellipsis-h"></i> <strong>Breadcrumbs</strong>
+            <div style="font-size: 11px; color: #6c757d;">Navigation breadcrumbs</div>
+          </div>
+          <div class="widget-palette-item" draggable="true" data-widget-type="menu">
+            <i class="${font:far()} fa-bars"></i> <strong>Menu</strong>
+            <div style="font-size: 11px; color: #6c757d;">Navigation menu</div>
+          </div>
+          
+          <div class="widget-palette-category">UI Elements</div>
+          <div class="widget-palette-item" draggable="true" data-widget-type="button">
+            <i class="${font:far()} fa-hand-pointer"></i> <strong>Button</strong>
+            <div style="font-size: 11px; color: #6c757d;">Call-to-action button</div>
+          </div>
+          <div class="widget-palette-item" draggable="true" data-widget-type="card">
+            <i class="${font:far()} fa-square"></i> <strong>Card</strong>
+            <div style="font-size: 11px; color: #6c757d;">Information card</div>
+          </div>
+          <div class="widget-palette-item" draggable="true" data-widget-type="statisticCard">
+            <i class="${font:far()} fa-chart-bar"></i> <strong>Statistic Card</strong>
+            <div style="font-size: 11px; color: #6c757d;">Display statistics</div>
+          </div>
+        </div>
       </div>
     </div>
     
@@ -417,12 +542,14 @@
 <script id="existing-xml-data" type="text/plain"><c:out value="${webPage.pageXml}" escapeXml="true"/></script>
 
 <!-- Load JavaScript modules -->
-<script src="${ctx}/javascript/widgets/editor/editor-main.js"></script>
-<script src="${ctx}/javascript/widgets/editor/drag-drop-manager.js"></script>
-<script src="${ctx}/javascript/widgets/editor/layout-manager.js"></script>
-<script src="${ctx}/javascript/widgets/editor/widget-registry.js"></script>
-<script src="${ctx}/javascript/widgets/editor/canvas-controller.js"></script>
-<script src="${ctx}/javascript/widgets/editor/properties-panel.js"></script>
+ <g:compress>
+  <script src="${ctx}/javascript/widgets/editor/editor-main.js"></script>
+  <script src="${ctx}/javascript/widgets/editor/drag-drop-manager.js"></script>
+  <script src="${ctx}/javascript/widgets/editor/layout-manager.js"></script>
+  <script src="${ctx}/javascript/widgets/editor/widget-registry.js"></script>
+  <script src="${ctx}/javascript/widgets/editor/canvas-controller.js"></script>
+  <script src="${ctx}/javascript/widgets/editor/properties-panel.js"></script>
+</g:compress>
 
 <script>
   // Initialize the editor
@@ -441,5 +568,18 @@
     
     window.pageEditor = new PageEditor(editorConfig);
     window.pageEditor.init();
+
+    // Set up collapsible palette sections
+    document.querySelectorAll('.palette-section-header').forEach(header => {
+      header.addEventListener('click', () => {
+        const content = header.nextElementSibling;
+        header.classList.toggle('collapsed');
+        if (header.classList.contains('collapsed')) {
+          content.style.display = 'none';
+        } else {
+          content.style.display = 'block';
+        }
+      });
+    });
   });
 </script>

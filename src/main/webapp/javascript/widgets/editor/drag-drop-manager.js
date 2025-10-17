@@ -79,24 +79,41 @@ class DragDropManager {
    * Set up draggable widgets in the palette
    */
   setupPaletteWidgets() {
+    // Draggable widgets
     const paletteItems = document.querySelectorAll('.widget-palette-item');
-    
     paletteItems.forEach(item => {
-      // Drag start
       item.addEventListener('dragstart', (e) => {
         const widgetType = item.getAttribute('data-widget-type');
         this.draggedType = 'widget';
         this.draggedData = { type: widgetType };
-        
         e.dataTransfer.effectAllowed = 'copy';
         e.dataTransfer.setData('text/plain', widgetType);
-        
         item.style.opacity = '0.5';
         console.log('Drag started:', widgetType);
       });
       
-      // Drag end
-      item.addEventListener('dragend', (e) => {
+      item.addEventListener('dragend', () => {
+        item.style.opacity = '1';
+        this.draggedType = null;
+        this.draggedData = null;
+        console.log('Drag ended');
+      });
+    });
+
+    // Draggable layouts
+    const layoutItems = document.querySelectorAll('.layout-palette-item');
+    layoutItems.forEach(item => {
+      item.addEventListener('dragstart', (e) => {
+        const layout = item.getAttribute('data-layout');
+        this.draggedType = 'layout';
+        this.draggedData = { layout: layout };
+        e.dataTransfer.effectAllowed = 'copy';
+        e.dataTransfer.setData('text/plain', layout);
+        item.style.opacity = '0.5';
+        console.log('Drag started: layout', layout);
+      });
+
+      item.addEventListener('dragend', () => {
         item.style.opacity = '1';
         this.draggedType = null;
         this.draggedData = null;
@@ -113,7 +130,7 @@ class DragDropManager {
     
     // Canvas-level drop zone (for rows and widgets)
     this.registerDropZone(canvas, {
-      accept: ['widget', 'row'],
+      accept: ['widget', 'row', 'layout'],
       onDrop: (e, type, data) => this.handleCanvasDrop(e, type, data)
     });
   }
@@ -140,7 +157,7 @@ class DragDropManager {
 
         if (this.draggedType === 'widget' && element.classList.contains('canvas-column')) {
           this.handleWidgetDragOver(e, element);
-        } else if (this.draggedType === 'row' && element.id === 'editor-canvas') {
+        } else if ((this.draggedType === 'row' || this.draggedType === 'layout') && element.id === 'editor-canvas') {
           this.handleRowDragOver(e, element);
         }
       } else {
@@ -235,7 +252,15 @@ class DragDropManager {
   handleCanvasDrop(e, type, data) {
     console.log('Dropped on canvas:', type, data);
     
-    if (type === 'widget') {
+    if (type === 'layout') {
+      const targetRowId = this.rowPlaceholder ? this.rowPlaceholder.nextElementSibling?.getAttribute('data-row-id') : null;
+      const columnLayout = this.draggedData.layout.split(',');
+      const rowId = this.editor.getLayoutManager().addRow(columnLayout, targetRowId);
+      
+      this.editor.getCanvasController().renderLayout(this.editor.getLayoutManager().getStructure());
+      this.editor.saveToHistory();
+
+    } else if (type === 'widget') {
       // Create a new row with one column and add the widget
       const columnLayout = ['small-12'];
       const rowId = this.editor.getLayoutManager().addRow(columnLayout);

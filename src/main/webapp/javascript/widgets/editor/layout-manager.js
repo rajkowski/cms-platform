@@ -20,9 +20,10 @@ class LayoutManager {
   /**
    * Add a new row with specified column layout
    * @param {Array} columnClasses Array of CSS classes for each column
+   * @param {string|null} targetRowId Optional ID of the row to insert before
    * @returns {string} Row ID
    */
-  addRow(columnClasses) {
+  addRow(columnClasses, targetRowId = null) {
     const rowId = 'row-' + (this.nextRowId++);
     
     const row = {
@@ -35,7 +36,17 @@ class LayoutManager {
       }))
     };
     
-    this.structure.rows.push(row);
+    if (targetRowId) {
+      const targetIndex = this.structure.rows.findIndex(r => r.id === targetRowId);
+      if (targetIndex !== -1) {
+        this.structure.rows.splice(targetIndex, 0, row);
+      } else {
+        this.structure.rows.push(row);
+      }
+    } else {
+      this.structure.rows.push(row);
+    }
+    
     console.log('Row added:', rowId);
     
     return rowId;

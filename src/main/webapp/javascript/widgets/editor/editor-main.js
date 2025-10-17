@@ -135,11 +135,13 @@ class PageEditor {
       // Define layouts
       const layouts = [
         { name: '1 Column', classes: ['small-12'] },
-        { name: '2 Columns (50/50)', classes: ['small-12 medium-6', 'small-12 medium-6'] },
-        { name: '2 Columns (67/33)', classes: ['small-12 medium-8', 'small-12 medium-4'] },
-        { name: '2 Columns (33/67)', classes: ['small-12 medium-4', 'small-12 medium-8'] },
-        { name: '3 Columns', classes: ['small-12 medium-4', 'small-12 medium-4', 'small-12 medium-4'] },
-        { name: '4 Columns', classes: ['small-12 medium-3', 'small-12 medium-3', 'small-12 medium-3', 'small-12 medium-3'] }
+        { name: '2 Columns', classes: ['small-6', 'small-6'] },
+        { name: '3 Columns', classes: ['small-4', 'small-4', 'small-4'] },
+        { name: '4 Columns', classes: ['small-3', 'small-3', 'small-3', 'small-3'] },
+        { name: '33 / 67', classes: ['small-4', 'small-8'] },
+        { name: '67 / 33', classes: ['small-8', 'small-4'] },
+        { name: '25 / 75', classes: ['small-3', 'small-9'] },
+        { name: '75 / 25', classes: ['small-9', 'small-3'] }
       ];
       
       // Populate options
@@ -153,16 +155,19 @@ class PageEditor {
         layout.classes.forEach(cssClass => {
           const col = document.createElement('div');
           col.className = 'layout-preview-col';
-          // Set flex-grow based on column class
-          const match = cssClass.match(/medium-(\d+)/);
+          // Set flex-basis based on column class
+          const match = cssClass.match(/small-(\d+)/);
           if (match) {
-            col.style.flexGrow = match[1];
+            const width = (parseInt(match[1]) / 12) * 100;
+            col.style.flexBasis = `${width}%`;
           }
           preview.appendChild(col);
         });
         
         const name = document.createElement('div');
         name.textContent = layout.name;
+        name.style.fontSize = '11px';
+        name.style.color = '#6c757d';
         
         option.appendChild(preview);
         option.appendChild(name);
