@@ -1223,4 +1223,14 @@
     </section>
   </page>
 
+  <page name="/admin/visual-page-editor" role="admin,content-manager" title="Visual Page Editor" class="full-page">
+    <section class="grid-x">
+      <column class="small-12 cell">
+        <widget name="visualPageEditor">
+          <title>Visual Page Editor</title>
+        </widget>
+      </column>
+    </section>
+  </page>
+
 </pages>

@@ -244,6 +244,8 @@
     <echo file="${target.dir}/VERSION" message="${version}"/>
   </target>
 
+  <target name="deploy" depends="webapp" />
+
   <target name="webapp" depends="compile">
     <delete dir="${exploded.work.dir}"/>
     <mkdir dir="${exploded.work.dir}"/>
