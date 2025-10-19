@@ -140,6 +140,16 @@ class WidgetRegistry {
       }
     });
 
+    this.register('fileDropZone', {
+      name: 'File Drop Zone',
+      category: 'Content',
+      icon: 'fa-upload',
+      description: 'A drop zone for uploading files',
+      properties: {
+        folderUniqueId: { type: 'text', label: 'Folder Unique ID', required: true }
+      }
+    });
+
     this.register('photoGallery', {
       name: 'Photo Gallery',
       category: 'Content',
@@ -518,6 +528,17 @@ class WidgetRegistry {
       }
     });
 
+    this.register('searchInfo', {
+      name: 'Search Info',
+      category: 'Other',
+      icon: 'fa-info',
+      description: 'Displays what the user searched for',
+      properties: {
+        icon: { type: 'text', label: 'Icon' },
+        title: { type: 'text', label: 'Title' }
+      }
+    });
+
     this.register('link', {
       name: 'Link',
       category: 'Other',
@@ -569,6 +590,49 @@ class WidgetRegistry {
       properties: {
         uniqueId: { type: 'text', label: 'Unique ID', required: true },
         name: { type: 'text', label: 'Menu Name' }
+      }
+    });
+
+    this.register('webPageSearchResults', {
+      name: 'Web Page Search Results',
+      category: 'Other',
+      icon: 'fa-search',
+      description: 'Displays web page search results',
+      properties: {
+        limit: { type: 'number', label: 'Limit' },
+        showWhenEmpty: { type: 'checkbox', label: 'Show When Empty' }
+      }
+    });
+
+    this.register('webPageTitleSearchResults', {
+      name: 'Web Page Title Search Results',
+      category: 'Other',
+      icon: 'fa-search',
+      description: 'Displays web page title search results',
+      properties: {
+        limit: { type: 'number', label: 'Limit' },
+        showWhenEmpty: { type: 'checkbox', label: 'Show When Empty' }
+      }
+    });
+
+    this.register('tableOfContents', {
+      name: 'Table of Contents',
+      category: 'Other',
+      icon: 'fa-book',
+      description: 'A table of contents',
+      properties: {
+        uniqueId: { type: 'text', label: 'Unique ID', required: true },
+        link: { type: 'text', label: 'Link' }
+      }
+    });
+
+    this.register('tableOfContentsEditor', {
+      name: 'Table of Contents Editor',
+      category: 'Other',
+      icon: 'fa-edit',
+      description: 'An editor for a table of contents',
+      properties: {
+        uniqueId: { type: 'text', label: 'Unique ID', required: true }
       }
     });
 
