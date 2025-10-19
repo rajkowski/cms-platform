@@ -207,8 +207,14 @@ class WidgetRegistry {
       icon: 'fa-rss',
       description: 'Content from a remote source',
       properties: {
+        title: { type: 'text', label: 'Title', required: false },
+        icon: { type: 'text', label: 'Icon', required: false },
         url: { type: 'text', label: 'URL', required: true },
-        cache: { type: 'number', label: 'Cache (minutes)' }
+        cache: { type: 'number', label: 'Cache (minutes)' },
+        startTag: { type: 'text', label: 'Start HTML Tag', required: false },
+        endTag: { type: 'text', label: 'End HTML Tag', required: false },
+        includeTags: { type: 'checkbox', label: 'Include Tags' },
+        adjustTable: { type: 'checkbox', label: 'Adjust Table' },
       }
     });
 
