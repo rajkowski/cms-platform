@@ -265,6 +265,31 @@ class WidgetRegistry {
       }
     });
 
+    this.register('card', {
+      name: 'Card',
+      category: 'Content',
+      icon: 'fa-vcard',
+      description: 'A card with content',
+      properties: {
+        uniqueId: { type: 'text', label: 'Unique ID', required: true },
+        html: { type: 'textarea', label: 'HTML Content', required: false }
+      }
+    });
+
+    this.register('statisticCard', {
+      name: 'Statistic Card',
+      category: 'Dashboard',
+      icon: 'fa-calculator',
+      description: 'A card with a statistic',
+      properties: {
+        label: { type: 'text', label: 'Label', required: true },
+        value: { type: 'text', label: 'Value', required: true },
+        link: { type: 'text', label: 'Link URL' },
+        icon: { type: 'text', label: 'Icon' },
+        color: { type: 'text', label: 'Color' }
+      }
+    });
+
     this.register('superset', {
       name: 'Superset',
       category: 'Dashboard',
@@ -505,6 +530,40 @@ class WidgetRegistry {
       icon: 'fa-comment-alt',
       description: 'System messages',
       properties: {}
+    });
+
+    this.register('button', {
+      name: 'Button',
+      category: 'Other',
+      icon: 'fa-square',
+      description: 'A button',
+      properties: {
+        name: { type: 'text', label: 'Button Text', required: true },
+        link: { type: 'text', label: 'Link URL' },
+        cssClass: { type: 'text', label: 'CSS Class' }
+      }
+    });
+
+    this.register('breadcrumbs', {
+      name: 'Breadcrumbs',
+      category: 'Other',
+      icon: 'fa-angle-double-right',
+      description: 'Breadcrumb navigation',
+      properties: {
+        useHomepage: { type: 'checkbox', label: 'Use Homepage' },
+        useWebPage: { type: 'checkbox', label: 'Use Web Page' }
+      }
+    });
+
+    this.register('menu', {
+      name: 'Menu',
+      category: 'Other',
+      icon: 'fa-bars',
+      description: 'A menu',
+      properties: {
+        uniqueId: { type: 'text', label: 'Unique ID', required: true },
+        name: { type: 'text', label: 'Menu Name' }
+      }
     });
 
     console.log('Widget registry loaded:', this.widgets.size, 'widgets');
