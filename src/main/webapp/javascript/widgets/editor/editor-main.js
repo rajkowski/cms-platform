@@ -178,7 +178,7 @@ class PageEditor {
       const modal = document.getElementById('layout-picker-modal');
       const optionsContainer = document.getElementById('layout-picker-options');
       const cancelBtn = document.getElementById('cancel-layout-picker');
-      
+
       // Define layouts
       const layouts = [
         { name: '1 Column', classes: ['small-12'] },
@@ -190,13 +190,27 @@ class PageEditor {
         { name: '25 / 75', classes: ['small-3', 'small-9'] },
         { name: '75 / 25', classes: ['small-9', 'small-3'] }
       ];
-      
+
+      // Cleanup function to close modal and remove listeners
+      const cleanup = () => {
+        modal.style.display = 'none';
+        document.removeEventListener('keydown', escHandler);
+      };
+
+      // Handler for the Escape key
+      const escHandler = (e) => {
+        if (e.key === 'Escape') {
+          cleanup();
+          resolve(null);
+        }
+      };
+
       // Populate options
       optionsContainer.innerHTML = '';
       layouts.forEach(layout => {
         const option = document.createElement('div');
         option.className = 'layout-option';
-        
+
         const preview = document.createElement('div');
         preview.className = 'layout-preview';
         layout.classes.forEach(cssClass => {
@@ -210,32 +224,33 @@ class PageEditor {
           }
           preview.appendChild(col);
         });
-        
+
         const name = document.createElement('div');
         name.textContent = layout.name;
         name.style.fontSize = '11px';
         name.style.color = '#6c757d';
-        
+
         option.appendChild(preview);
         option.appendChild(name);
-        
+
         option.addEventListener('click', () => {
-          modal.style.display = 'none';
+          cleanup();
           resolve(layout.classes);
         });
-        
+
         optionsContainer.appendChild(option);
       });
-      
-      // Show modal
+
+      // Show modal and add listeners
       modal.style.display = 'flex';
-      
+      document.addEventListener('keydown', escHandler);
+
       // Handle cancellation
       const cancelHandler = () => {
-        modal.style.display = 'none';
+        cleanup();
         resolve(null);
       };
-      
+
       cancelBtn.onclick = cancelHandler;
       modal.onclick = (e) => {
         if (e.target === modal) {
