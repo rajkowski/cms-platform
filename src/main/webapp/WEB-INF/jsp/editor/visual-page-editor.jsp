@@ -287,6 +287,7 @@
   }
 
   .layout-palette-item {
+    position: relative; /* Needed for positioning the button */
     background: #fff;
     border: 1px solid #dee2e6;
     border-radius: 4px;
@@ -294,6 +295,32 @@
     margin-bottom: 10px;
     cursor: move;
     transition: all 0.2s;
+  }
+
+  .add-layout-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    font-size: 16px;
+    line-height: 24px;
+    text-align: center;
+    cursor: pointer;
+    display: none; /* Hidden by default */
+    z-index: 2;
+  }
+
+  .layout-palette-item:hover .add-layout-btn {
+    display: block; /* Show on hover */
+  }
+
+  .add-layout-btn:hover {
+    background: #0056b3;
   }
 
   .layout-palette-item:hover {
@@ -432,12 +459,14 @@
 
         <div id="layouts-tab" class="tab-content active">
           <div class="layout-palette-item" draggable="true" data-layout="small-12">
+            <button class="add-layout-btn" title="Add row to page">+</button>
             <div class="layout-preview">
               <div class="layout-preview-col" style="flex-basis: 100%;"></div>
             </div>
             <div class="layout-label">1 Column</div>
           </div>
           <div class="layout-palette-item" draggable="true" data-layout="small-6,small-6">
+            <button class="add-layout-btn" title="Add row to page">+</button>
             <div class="layout-preview">
               <div class="layout-preview-col" style="flex-basis: 50%;"></div>
               <div class="layout-preview-col" style="flex-basis: 50%;"></div>
@@ -445,6 +474,7 @@
             <div class="layout-label">2 Columns</div>
           </div>
           <div class="layout-palette-item" draggable="true" data-layout="small-4,small-4,small-4">
+            <button class="add-layout-btn" title="Add row to page">+</button>
             <div class="layout-preview">
               <div class="layout-preview-col" style="flex-basis: 33.33%;"></div>
               <div class="layout-preview-col" style="flex-basis: 33.33%;"></div>
@@ -453,6 +483,7 @@
             <div class="layout-label">3 Columns</div>
           </div>
           <div class="layout-palette-item" draggable="true" data-layout="small-3,small-3,small-3,small-3">
+            <button class="add-layout-btn" title="Add row to page">+</button>
             <div class="layout-preview">
               <div class="layout-preview-col" style="flex-basis: 25%;"></div>
               <div class="layout-preview-col" style="flex-basis: 25%;"></div>
@@ -462,6 +493,7 @@
             <div class="layout-label">4 Columns</div>
           </div>
           <div class="layout-palette-item" draggable="true" data-layout="small-4,small-8">
+            <button class="add-layout-btn" title="Add row to page">+</button>
             <div class="layout-preview">
               <div class="layout-preview-col" style="flex-basis: 33.33%;"></div>
               <div class="layout-preview-col" style="flex-basis: 66.67%;"></div>
@@ -469,6 +501,7 @@
             <div class="layout-label">33 / 67</div>
           </div>
           <div class="layout-palette-item" draggable="true" data-layout="small-8,small-4">
+            <button class="add-layout-btn" title="Add row to page">+</button>
             <div class="layout-preview">
               <div class="layout-preview-col" style="flex-basis: 66.67%;"></div>
               <div class="layout-preview-col" style="flex-basis: 33.33%;"></div>
@@ -476,6 +509,7 @@
             <div class="layout-label">67 / 33</div>
           </div>
           <div class="layout-palette-item" draggable="true" data-layout="small-3,small-9">
+            <button class="add-layout-btn" title="Add row to page">+</button>
             <div class="layout-preview">
               <div class="layout-preview-col" style="flex-basis: 25%;"></div>
               <div class="layout-preview-col" style="flex-basis: 75%;"></div>
@@ -483,6 +517,7 @@
             <div class="layout-label">25 / 75</div>
           </div>
           <div class="layout-palette-item" draggable="true" data-layout="small-9,small-3">
+            <button class="add-layout-btn" title="Add row to page">+</button>
             <div class="layout-preview">
               <div class="layout-preview-col" style="flex-basis: 75%;"></div>
               <div class="layout-preview-col" style="flex-basis: 25%;"></div>
@@ -594,6 +629,16 @@
         const target = document.querySelector(tab.getAttribute('href'));
         tabContents.forEach(tc => tc.classList.remove('active'));
         target.classList.add('active');
+      });
+    });
+
+    // Handle clicking the add layout button
+    document.querySelectorAll('.add-layout-btn').forEach(button => {
+      button.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent triggering drag-and-drop
+        const layoutItem = e.target.closest('.layout-palette-item');
+        const layout = layoutItem.dataset.layout.split(',');
+        window.pageEditor.addRow(layout);
       });
     });
   });
