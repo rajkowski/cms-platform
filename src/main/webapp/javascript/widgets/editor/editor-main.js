@@ -33,6 +33,9 @@ class PageEditor {
     // Cache DOM element references
     this.cacheElements();
     
+    // Populate the widget palette
+    this.populateWidgetPalette();
+    
     // Initialize sub-modules
     this.dragDropManager.init();
     this.canvasController.init();
@@ -90,6 +93,47 @@ class PageEditor {
     document.addEventListener('keydown', (e) => this.handleKeyboardShortcuts(e));
   }
   
+  /**
+   * Populate the widget palette from the registry
+   */
+  populateWidgetPalette() {
+    const container = document.getElementById('widget-list-container');
+    if (!container) return;
+
+    const categories = this.widgetRegistry.getCategories();
+    let html = '';
+
+    categories.forEach(category => {
+      html += `<div class="widget-palette-category">${category}</div>`;
+      const widgets = this.widgetRegistry.getByCategory(category);
+      
+      widgets.forEach(widget => {
+        // Find the widget type (key) for the given widget definition
+        let widgetType = null;
+        for (let [key, value] of this.widgetRegistry.widgets.entries()) {
+          if (value === widget) {
+            widgetType = key;
+            break;
+          }
+        }
+
+        if (widgetType) {
+          html += `
+            <div class="widget-palette-item" draggable="true" data-widget-type="${widgetType}">
+              <i class="far ${widget.icon || 'fa-puzzle-piece'}"></i> <strong>${widget.name}</strong>
+              <div style="font-size: 11px; color: #6c757d;">${widget.description || ''}</div>
+            </div>
+          `;
+        }
+      });
+    });
+
+    container.innerHTML = html;
+    
+    // Re-initialize drag and drop for the new items
+    this.dragDropManager.initPaletteItems();
+  }
+
   /**
    * Add a new row to the canvas
    */

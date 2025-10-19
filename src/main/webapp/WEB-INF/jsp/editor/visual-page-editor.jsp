@@ -443,47 +443,8 @@
         </div>
         <div class="palette-section-content" style="display: none;">
           <input type="text" id="widget-search" placeholder="Search widgets..." class="property-input" />
-          
-          <div class="widget-palette-category">Content</div>
-          <div class="widget-palette-item" draggable="true" data-widget-type="content">
-            <i class="${font:far()} fa-paragraph"></i> <strong>Content</strong>
-            <div style="font-size: 11px; color: #6c757d;">Rich text content block</div>
-          </div>
-          <div class="widget-palette-item" draggable="true" data-widget-type="contentAccordion">
-            <i class="${font:far()} fa-list"></i> <strong>Accordion</strong>
-            <div style="font-size: 11px; color: #6c757d;">Collapsible content sections</div>
-          </div>
-          <div class="widget-palette-item" draggable="true" data-widget-type="contentCards">
-            <i class="${font:far()} fa-th"></i> <strong>Cards</strong>
-            <div style="font-size: 11px; color: #6c757d;">Content card grid</div>
-          </div>
-          <div class="widget-palette-item" draggable="true" data-widget-type="contentSlider">
-            <i class="${font:far()} fa-images"></i> <strong>Slider</strong>
-            <div style="font-size: 11px; color: #6c757d;">Image/content slider</div>
-          </div>
-          
-          <div class="widget-palette-category">Navigation</div>
-          <div class="widget-palette-item" draggable="true" data-widget-type="breadcrumbs">
-            <i class="${font:far()} fa-ellipsis-h"></i> <strong>Breadcrumbs</strong>
-            <div style="font-size: 11px; color: #6c757d;">Navigation breadcrumbs</div>
-          </div>
-          <div class="widget-palette-item" draggable="true" data-widget-type="menu">
-            <i class="${font:far()} fa-bars"></i> <strong>Menu</strong>
-            <div style="font-size: 11px; color: #6c757d;">Navigation menu</div>
-          </div>
-          
-          <div class="widget-palette-category">UI Elements</div>
-          <div class="widget-palette-item" draggable="true" data-widget-type="button">
-            <i class="${font:far()} fa-hand-pointer"></i> <strong>Button</strong>
-            <div style="font-size: 11px; color: #6c757d;">Call-to-action button</div>
-          </div>
-          <div class="widget-palette-item" draggable="true" data-widget-type="card">
-            <i class="${font:far()} fa-square"></i> <strong>Card</strong>
-            <div style="font-size: 11px; color: #6c757d;">Information card</div>
-          </div>
-          <div class="widget-palette-item" draggable="true" data-widget-type="statisticCard">
-            <i class="${font:far()} fa-chart-bar"></i> <strong>Statistic Card</strong>
-            <div style="font-size: 11px; color: #6c757d;">Display statistics</div>
+          <div id="widget-list-container">
+            <!-- Widgets will be dynamically inserted here -->
           </div>
         </div>
       </div>
@@ -542,7 +503,7 @@
 <script id="existing-xml-data" type="text/plain"><c:out value="${webPage.pageXml}" escapeXml="true"/></script>
 
 <!-- Load JavaScript modules -->
- <g:compress>
+<g:compress>
   <script src="${ctx}/javascript/widgets/editor/editor-main.js"></script>
   <script src="${ctx}/javascript/widgets/editor/drag-drop-manager.js"></script>
   <script src="${ctx}/javascript/widgets/editor/layout-manager.js"></script>

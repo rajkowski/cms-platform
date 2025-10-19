@@ -15,16 +15,33 @@ class DragDropManager {
     this.dropZones = new Map();
     this.widgetPlaceholder = null;
     this.rowPlaceholder = null;
+    this.draggedItem = null;
   }
   
   /**
    * Initialize drag and drop functionality
    */
   init() {
+    this.initPaletteItems();
+    this.initCanvasListeners();
+  }
+  
+  /**
+   * Initialize palette item listeners
+   */
+  initPaletteItems() {
+    const paletteItems = document.querySelectorAll('.widget-palette-item, .layout-palette-item');
+    paletteItems.forEach(item => {
+      item.addEventListener('dragstart', (e) => this.handleDragStart(e));
+      item.addEventListener('dragend', (e) => this.handleDragEnd(e));
+    });
+  }
+
+  /**
+   * Initialize canvas listeners
+   */
+  initCanvasListeners() {
     console.log('Initializing Drag and Drop Manager...');
-    
-    // Set up palette widget drag handlers
-    this.setupPaletteWidgets();
     
     // Set up canvas drop zones
     this.setupCanvasDropZones();
@@ -387,40 +404,17 @@ class DragDropManager {
     const closestRow = this.findClosestRow(e.clientY, canvasElement);
     if (closestRow.element) {
       if (closestRow.position === 'before') {
-        canvasElement.insertBefore(this.rowPlaceholder, closestRow.element);
+        closestRow.element.parentNode.insertBefore(this.rowPlaceholder, closestRow.element);
       } else {
-        canvasElement.insertBefore(this.rowPlaceholder, closestRow.element.nextSibling);
+        closestRow.element.parentNode.insertBefore(this.rowPlaceholder, closestRow.element.nextSibling);
       }
     } else {
-      // If no rows, or dragging to the end
       canvasElement.appendChild(this.rowPlaceholder);
     }
   }
 
   /**
-   * Handle widget drag over for visual feedback
-   */
-  handleWidgetDragOver(e, columnElement) {
-    if (!this.widgetPlaceholder) {
-      this.widgetPlaceholder = document.createElement('div');
-      this.widgetPlaceholder.className = 'widget-drag-placeholder';
-    }
-
-    const closestWidget = this.findClosestWidget(e.clientY, columnElement);
-    if (closestWidget.element) {
-      if (closestWidget.position === 'before') {
-        columnElement.insertBefore(this.widgetPlaceholder, closestWidget.element);
-      } else {
-        columnElement.insertBefore(this.widgetPlaceholder, closestWidget.element.nextSibling);
-      }
-    } else {
-      // If no widgets, or dragging to the end
-      columnElement.appendChild(this.widgetPlaceholder);
-    }
-  }
-
-  /**
-   * Find the closest widget to the current mouse position within a column
+   * Find the closest widget to a vertical position within a column
    */
   findClosestWidget(y, columnElement) {
     const widgets = columnElement.querySelectorAll('.canvas-widget');
@@ -454,7 +448,6 @@ class DragDropManager {
     };
 
     widgets.forEach(widget => {
-      // Skip the currently dragged widget
       if (widget === this.draggedElement) return;
       
       const box = widget.getBoundingClientRect();
@@ -466,38 +459,103 @@ class DragDropManager {
 
     return closestAfter.element ? closestAfter : { element: null, position: 'after' };
   }
-  
+
   /**
-   * Enable dragging on an element
+   * Handle widget drag over for visual feedback
    */
-  enableDragging(element, type, data) {
-    element.setAttribute('draggable', 'true');
-    
-    element.addEventListener('dragstart', (e) => {
-      this.draggedElement = element;
-      this.draggedType = type;
-      this.draggedData = data;
-      
-      e.dataTransfer.effectAllowed = 'move';
-      e.dataTransfer.setData('text/plain', JSON.stringify(data));
-      
-      element.style.opacity = '0.5';
-      console.log('Drag started:', type, data);
-    });
-    
-    element.addEventListener('dragend', (e) => {
-      element.style.opacity = '1';
-      this.draggedElement = null;
-      this.draggedType = null;
-      this.draggedData = null;
-      console.log('Drag ended');
-    });
+  handleWidgetDragOver(e, columnElement) {
+    if (!this.widgetPlaceholder) {
+      this.widgetPlaceholder = document.createElement('div');
+      this.widgetPlaceholder.className = 'widget-drag-placeholder';
+    }
+
+    const closestWidget = this.findClosestWidget(e.clientY, columnElement);
+    if (closestWidget.element) {
+      if (closestWidget.position === 'before') {
+        closestWidget.element.parentNode.insertBefore(this.widgetPlaceholder, closestWidget.element);
+      } else {
+        closestWidget.element.parentNode.insertBefore(this.widgetPlaceholder, closestWidget.element.nextSibling);
+      }
+    } else {
+      columnElement.appendChild(this.widgetPlaceholder);
+    }
   }
-  
+
   /**
-   * Generate unique ID
+   * Handle drag start for any draggable item
+   */
+  handleDragStart(e) {
+    const target = e.currentTarget;
+    target.style.opacity = '0.5';
+    this.draggedItem = target;
+
+    const widgetType = target.getAttribute('data-widget-type');
+    const layout = target.getAttribute('data-layout');
+    const rowId = target.getAttribute('data-row-id');
+    const columnId = target.getAttribute('data-column-id');
+    const widgetId = target.getAttribute('data-widget-id');
+
+    if (widgetType) {
+      this.draggedType = 'widget';
+      this.draggedData = { type: widgetType };
+      e.dataTransfer.effectAllowed = 'copy';
+    } else if (layout) {
+      this.draggedType = 'layout';
+      this.draggedData = { layout: layout };
+      e.dataTransfer.effectAllowed = 'copy';
+    } else if (rowId && !columnId) {
+      this.draggedType = 'row';
+      this.draggedData = { rowId: rowId };
+      e.dataTransfer.effectAllowed = 'move';
+      this.draggedElement = target;
+    } else if (widgetId) {
+      this.draggedType = 'widget';
+      this.draggedData = { 
+        widgetId: widgetId,
+        sourceRowId: rowId,
+        sourceColumnId: columnId
+      };
+      e.dataTransfer.effectAllowed = 'move';
+      this.draggedElement = target;
+    }
+    
+    e.dataTransfer.setData('text/plain', JSON.stringify(this.draggedData));
+    console.log('Drag started:', this.draggedType, this.draggedData);
+  }
+
+  /**
+   * Handle drag end for any draggable item
+   */
+  handleDragEnd(e) {
+    if (this.draggedItem) {
+      this.draggedItem.style.opacity = '1';
+    }
+    
+    this.draggedItem = null;
+    this.draggedType = null;
+    this.draggedData = null;
+    this.draggedElement = null;
+
+    // Clean up placeholders
+    if (this.widgetPlaceholder) {
+      this.widgetPlaceholder.remove();
+      this.widgetPlaceholder = null;
+    }
+    if (this.rowPlaceholder) {
+      this.rowPlaceholder.remove();
+      this.rowPlaceholder = null;
+    }
+
+    // Clean up drag-over styles
+    document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+
+    console.log('Drag ended');
+  }
+
+  /**
+   * Generate a unique ID
    */
   generateId() {
-    return 'dropzone-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    return `zone-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 }
