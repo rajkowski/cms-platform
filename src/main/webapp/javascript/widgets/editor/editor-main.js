@@ -137,14 +137,17 @@ class PageEditor {
   /**
    * Add a new row to the canvas
    */
-  async addRow() {
+  async addRow(columnLayout = null) {
     console.log('Adding new row...');
     
     try {
-      const columnLayout = await this.showColumnLayoutPicker();
+      if (!columnLayout) {
+        columnLayout = await this.showColumnLayoutPicker();
+      }
+      
       if (!columnLayout) {
         console.log('Row addition cancelled.');
-        return; // User cancelled
+        return; // User cancelled or no layout provided
       }
       
       // Create row in layout manager
