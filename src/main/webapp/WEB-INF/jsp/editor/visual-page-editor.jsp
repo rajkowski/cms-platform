@@ -335,6 +335,61 @@
   .palette-section-content {
     padding-top: 10px;
   }
+
+  /* Palette Tabs */
+  #widget-palette {
+    padding: 0; /* Remove padding to allow tabs to span full width */
+  }
+
+  .palette-tabs-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .tabs-nav {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-bottom: 1px solid #dee2e6;
+    flex-shrink: 0;
+  }
+
+  .tabs-nav li {
+    flex-grow: 1;
+    text-align: center;
+  }
+
+  .tabs-nav a {
+    display: block;
+    padding: 12px 15px;
+    text-decoration: none;
+    color: #495057;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    font-weight: 600;
+  }
+
+  .tabs-nav a:hover {
+    background-color: #f8f9fa;
+  }
+
+  .tabs-nav a.active {
+    color: #007bff;
+    border-bottom-color: #007bff;
+  }
+
+  .tab-content {
+    display: none;
+    padding: 15px;
+    overflow-y: auto;
+    flex-grow: 1;
+  }
+
+  .tab-content.active {
+    display: block;
+  }
 </style>
 
 <div id="visual-page-editor-wrapper">
@@ -369,12 +424,13 @@
     
     <!-- Widget Palette -->
     <div id="widget-palette">
-      <div class="palette-section">
-        <div class="palette-section-header collapsed">
-          <h5>Layouts</h5>
-          <i class="${font:fas()} fa-chevron-down toggle-icon"></i>
-        </div>
-        <div class="palette-section-content" style="display: none;">
+      <div class="palette-tabs-container">
+        <ul class="tabs-nav">
+          <li><a href="#layouts-tab" class="active">Layouts</a></li>
+          <li><a href="#widgets-tab">Widgets</a></li>
+        </ul>
+
+        <div id="layouts-tab" class="tab-content active">
           <div class="layout-palette-item" draggable="true" data-layout="small-12">
             <div class="layout-preview">
               <div class="layout-preview-col" style="flex-basis: 100%;"></div>
@@ -434,15 +490,9 @@
             <div class="layout-label">75 / 25</div>
           </div>
         </div>
-      </div>
 
-      <div class="palette-section">
-        <div class="palette-section-header collapsed">
-          <h5>Widgets</h5>
-          <i class="${font:fas()} fa-chevron-down toggle-icon"></i>
-        </div>
-        <div class="palette-section-content" style="display: none;">
-          <input type="text" id="widget-search" placeholder="Search widgets..." class="property-input" />
+        <div id="widgets-tab" class="tab-content">
+          <input type="text" id="widget-search" placeholder="Search widgets..." class="property-input" style="margin-bottom: 15px;" />
           <div id="widget-list-container">
             <!-- Widgets will be dynamically inserted here -->
           </div>
@@ -530,16 +580,20 @@
     window.pageEditor = new PageEditor(editorConfig);
     window.pageEditor.init();
 
-    // Set up collapsible palette sections
-    document.querySelectorAll('.palette-section-header').forEach(header => {
-      header.addEventListener('click', () => {
-        const content = header.nextElementSibling;
-        header.classList.toggle('collapsed');
-        if (header.classList.contains('collapsed')) {
-          content.style.display = 'none';
-        } else {
-          content.style.display = 'block';
-        }
+    // Set up palette tabs
+    const tabs = document.querySelectorAll('.tabs-nav a');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', e => {
+        e.preventDefault();
+
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        const target = document.querySelector(tab.getAttribute('href'));
+        tabContents.forEach(tc => tc.classList.remove('active'));
+        target.classList.add('active');
       });
     });
   });
