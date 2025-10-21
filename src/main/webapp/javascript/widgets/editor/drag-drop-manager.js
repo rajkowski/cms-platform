@@ -284,10 +284,15 @@ class DragDropManager {
       const row = this.editor.getLayoutManager().getRow(rowId);
       
       // Add widget to the first column
-      const widgetId = this.editor.getLayoutManager().addWidget(rowId, row.columns[0].id, this.draggedData.type);
-      
-      // Render the row
-      this.editor.getCanvasController().renderRow(rowId, row);
+      this.editor.getLayoutManager().addWidget(rowId, row.columns[0].id, this.draggedData.type);
+
+      // If this is the first row, re-render the whole layout to clear the placeholder
+      if (this.editor.getLayoutManager().getStructure().rows.length === 1) {
+        this.editor.getCanvasController().renderLayout(this.editor.getLayoutManager().getStructure());
+      } else {
+        // Otherwise, just render the new row for better performance
+        this.editor.getCanvasController().renderRow(rowId, row);
+      }
       
       // Save to history
       this.editor.saveToHistory();
