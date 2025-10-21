@@ -542,7 +542,7 @@
           <!-- Existing layout will be rendered here via JavaScript -->
         </c:when>
         <c:otherwise>
-          <div class="empty-canvas">
+          <div class="empty-canvas" style="cursor: pointer;">
             <i class="${font:far()} fa-plus-circle fa-3x margin-bottom-10"></i>
             <h5>Start Building Your Page</h5>
             <p>Click "Add Row" to begin or drag widgets from the palette</p>

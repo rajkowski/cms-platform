@@ -91,6 +91,12 @@ class PageEditor {
     
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => this.handleKeyboardShortcuts(e));
+
+    // Click handler for initial empty canvas
+    const emptyCanvas = this.elements.canvas.querySelector('.empty-canvas');
+    if (emptyCanvas) {
+      emptyCanvas.addEventListener('click', () => this.addRow());
+    }
   }
   
   /**
