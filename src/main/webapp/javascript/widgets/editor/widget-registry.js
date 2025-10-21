@@ -211,28 +211,11 @@ class WidgetRegistry {
       }
     });
 
-    this.register('remoteContent', {
-      name: 'Remote Content',
-      category: 'Content',
-      icon: 'fa-rss',
-      description: 'Content from a remote source',
-      properties: {
-        title: { type: 'text', label: 'Title', required: false },
-        icon: { type: 'text', label: 'Icon', required: false },
-        url: { type: 'text', label: 'URL', required: true },
-        cache: { type: 'number', label: 'Cache (minutes)' },
-        startTag: { type: 'text', label: 'Start HTML Tag', required: false },
-        endTag: { type: 'text', label: 'End HTML Tag', required: false },
-        includeTags: { type: 'checkbox', label: 'Include Tags' },
-        adjustTable: { type: 'checkbox', label: 'Adjust Table' },
-      }
-    });
-
     this.register('socialMediaLinks', {
       name: 'Social Media Links',
+      description: 'Displays a list of social media icons linking to site profiles.',
       category: 'Content',
       icon: 'fa-share-alt',
-      description: 'Links to social media profiles',
       properties: {
         title: { type: 'text', label: 'Title' },
         showTitles: { type: 'checkbox', label: 'Show Titles' },
@@ -242,26 +225,70 @@ class WidgetRegistry {
     });
 
     this.register('instagram', {
-      name: 'Instagram',
+      name: 'Instagram Feed',
+      description: 'Displays a feed of recent Instagram posts.',
       category: 'Content',
       icon: 'fa-instagram',
-      description: 'Instagram feed',
       properties: {
-        token: { type: 'text', label: 'Access Token' },
-        count: { type: 'number', label: 'Count' }
+        title: {
+          type: 'text',
+          label: 'Title',
+          description: 'An optional title for the widget'
+        },
+        icon: {
+          type: 'text',
+          label: 'Icon',
+          description: 'An optional icon for the title'
+        },
+        limit: {
+          type: 'number',
+          label: 'Limit',
+          description: 'The number of posts to display (default: 8)'
+        },
+        cardClass: {
+          type: 'text',
+          label: 'Card CSS Class',
+          description: 'CSS class to apply to each post card'
+        },
+        smallCardCount: {
+          type: 'number',
+          label: 'Small Screen Cards',
+          description: 'Number of cards per row on small screens (default: 6)'
+        },
+        mediumCardCount: {
+          type: 'number',
+          label: 'Medium Screen Cards',
+          description: 'Number of cards per row on medium screens'
+        },
+        largeCardCount: {
+          type: 'number',
+          label: 'Large Screen Cards',
+          description: 'Number of cards per row on large screens'
+        }
       }
     });
 
     this.register('leaderboard', {
       name: 'Leaderboard',
+      description: 'Displays a leaderboard from a dataset.',
       category: 'Content',
       icon: 'fa-trophy',
-      description: 'A leaderboard',
       properties: {
-        collection: { type: 'text', label: 'Collection Unique ID' },
-        collectionId: { type: 'number', label: 'Collection ID' },
-        view: { type: 'select', label: 'View', options: ['list', 'grid'] },
-        rows: { type: 'number', label: 'Rows' }
+        title: {
+          type: 'text',
+          label: 'Title',
+          description: 'An optional title for the widget'
+        },
+        icon: {
+          type: 'text',
+          label: 'Icon',
+          description: 'An optional icon for the title'
+        },
+        dataset: {
+          type: 'text',
+          label: 'Dataset Name',
+          description: 'The name of the dataset to use for the leaderboard'
+        }
       }
     });
 
@@ -294,26 +321,79 @@ class WidgetRegistry {
 
     this.register('statisticCard', {
       name: 'Statistic Card',
+      description: 'Displays a card with a key statistic and an icon.',
       category: 'Dashboard',
-      icon: 'fa-calculator',
-      description: 'A card with a statistic',
+      icon: 'fa-chart-bar',
       properties: {
-        label: { type: 'text', label: 'Label', required: true },
-        value: { type: 'text', label: 'Value', required: true },
-        link: { type: 'text', label: 'Link URL' },
-        icon: { type: 'text', label: 'Icon' },
-        color: { type: 'text', label: 'Color' }
+        value: {
+          type: 'number',
+          label: 'Value',
+          description: 'The numerical value of the statistic'
+        },
+        label: {
+          type: 'text',
+          label: 'Label',
+          description: 'The label for the statistic'
+        },
+        icon: {
+          type: 'text',
+          label: 'Icon',
+          description: 'A Font Awesome icon to display'
+        },
+        link: {
+          type: 'text',
+          label: 'Link',
+          description: 'An optional URL to link to'
+        },
+        iconColor: {
+          type: 'text',
+          label: 'Icon Color',
+          description: 'Color for the icon (e.g., #ffffff or theme.color)'
+        },
+        view: {
+          type: 'text',
+          label: 'View',
+          description: 'Set to "vertical" for a vertical layout'
+        }
       }
     });
 
     this.register('superset', {
-      name: 'Superset',
+      name: 'Superset Dashboard',
+      description: 'Renders an embedded Superset dashboard.',
       category: 'Dashboard',
       icon: 'fa-chart-pie',
-      description: 'An Apache Superset chart',
       properties: {
-        url: { type: 'text', label: 'URL', required: true },
-        height: { type: 'number', label: 'Height' }
+        dashboardValue: {
+          type: 'text',
+          label: 'Dashboard Value',
+          description: 'The value/ID of the dashboard to display'
+        },
+        dashboardEmbeddedId: {
+          type: 'text',
+          label: 'Embedded ID',
+          description: 'The embedded ID for the dashboard'
+        },
+        height: {
+          type: 'text',
+          label: 'Height',
+          description: 'The height of the dashboard container (e.g., 300px)'
+        },
+        hideChartTitle: {
+          type: 'boolean',
+          label: 'Hide Chart Title',
+          description: 'Whether to hide the chart title (default: true)'
+        },
+        hideChartControls: {
+          type: 'boolean',
+          label: 'Hide Chart Controls',
+          description: 'Whether to hide the chart controls (default: true)'
+        },
+        clause: {
+          type: 'text',
+          label: 'RLS Clause',
+          description: 'Row-Level Security (RLS) clause to apply'
+        }
       }
     });
 
@@ -520,7 +600,7 @@ class WidgetRegistry {
 
     this.register('searchForm', {
       name: 'Search Form',
-      category: 'Other',
+      category: 'Search',
       icon: 'fa-search',
       description: 'A search form',
       properties: {
@@ -530,7 +610,7 @@ class WidgetRegistry {
 
     this.register('searchInfo', {
       name: 'Search Info',
-      category: 'Other',
+      category: 'Search',
       icon: 'fa-info',
       description: 'Displays what the user searched for',
       properties: {
@@ -553,7 +633,7 @@ class WidgetRegistry {
 
     this.register('systemMessages', {
       name: 'System Messages',
-      category: 'Other',
+      category: 'System',
       icon: 'fa-comment-alt',
       description: 'System messages',
       properties: {}
@@ -595,7 +675,7 @@ class WidgetRegistry {
 
     this.register('webPageSearchResults', {
       name: 'Web Page Search Results',
-      category: 'Other',
+      category: 'Search',
       icon: 'fa-search',
       description: 'Displays web page search results',
       properties: {
@@ -606,7 +686,7 @@ class WidgetRegistry {
 
     this.register('webPageTitleSearchResults', {
       name: 'Web Page Title Search Results',
-      category: 'Other',
+      category: 'Search',
       icon: 'fa-search',
       description: 'Displays web page title search results',
       properties: {
@@ -628,11 +708,157 @@ class WidgetRegistry {
 
     this.register('tableOfContentsEditor', {
       name: 'Table of Contents Editor',
-      category: 'Other',
+      category: 'System',
       icon: 'fa-edit',
       description: 'An editor for a table of contents',
       properties: {
         uniqueId: { type: 'text', label: 'Unique ID', required: true }
+      }
+    });
+
+    this.register('imageUpload', {
+      name: 'Image Upload',
+      description: 'Handles image uploads and returns a URL.',
+      category: 'Content',
+      icon: 'fa-upload',
+      properties: {}
+    });
+
+    this.register('imageBrowser', {
+      name: 'Image Browser',
+      description: 'Displays a gallery of uploaded images to select from.',
+      category: 'System',
+      icon: 'fa-images',
+      properties: {
+        title: {
+          type: 'text',
+          label: 'Title',
+          description: 'A title to show for the widget'
+        },
+        icon: {
+          type: 'text',
+          label: 'Icon',
+          description: 'A Font Awesome icon to show with the title'
+        }
+      }
+    });
+
+    this.register('videoBrowser', {
+      name: 'Video Browser',
+      description: 'Displays a gallery of uploaded videos to select from.',
+      category: 'System',
+      icon: 'fa-video',
+      properties: {
+        title: {
+          type: 'text',
+          label: 'Title',
+          description: 'A title to show for the widget'
+        },
+        icon: {
+          type: 'text',
+          label: 'Icon',
+          description: 'A Font Awesome icon to show with the title'
+        }
+      }
+    });
+
+    this.register('fileBrowser', {
+      name: 'File Browser',
+      description: 'Displays a gallery of uploaded files to select from.',
+      category: 'System',
+      icon: 'fa-file',
+      properties: {
+        title: {
+          type: 'text',
+          label: 'Title',
+          description: 'A title to show for the widget'
+        },
+        icon: {
+          type: 'text',
+          label: 'Icon',
+          description: 'A Font Awesome icon to show with the title'
+        }
+      }
+    });
+
+    this.register('wiki', {
+      name: 'Wiki',
+      description: 'Displays a navigable wiki.',
+      category: 'Content',
+      icon: 'fa-book',
+      properties: {
+        title: {
+          type: 'text',
+          label: 'Title',
+          description: 'A title to show for the widget'
+        },
+        icon: {
+          type: 'text',
+          label: 'Icon',
+          description: 'A Font Awesome icon to show with the title'
+        },
+        wikiUniqueId: {
+          type: 'text',
+          label: 'Wiki Unique ID',
+          description: 'The unique ID of the wiki to display'
+        }
+      }
+    });
+
+    this.register('wikiEditor', {
+      name: 'Wiki Editor',
+      description: 'Provides an editor for a wiki page.',
+      category: 'System',
+      icon: 'fa-edit',
+      properties: {}
+    });
+
+    this.register('remoteContent', {
+      name: 'Remote Content',
+      description: 'Fetches and displays content from a remote URL.',
+      category: 'Content',
+      icon: 'fa-cloud-download-alt',
+      properties: {
+        url: {
+          type: 'text',
+          label: 'URL',
+          description: 'The URL of the content to fetch'
+        },
+        title: {
+          type: 'text',
+          label: 'Title',
+          description: 'An optional title for the content block'
+        },
+        icon: {
+          type: 'text',
+          label: 'Icon',
+          description: 'An optional icon for the title'
+        },
+        clean: {
+          type: 'boolean',
+          label: 'Clean HTML',
+          description: 'Whether to clean the fetched HTML content (default: true)'
+        },
+        includeTags: {
+          type: 'boolean',
+          label: 'Include Tags',
+          description: 'When using start/end tags, whether to include the tags themselves (default: true)'
+        },
+        startTag: {
+          type: 'text',
+          label: 'Start Tag',
+          description: 'The starting HTML tag to begin capturing content from'
+        },
+        endTag: {
+          type: 'text',
+          label: 'End Tag',
+          description: 'The ending HTML tag to stop capturing content at'
+        },
+        adjustTable: {
+          type: 'boolean',
+          label: 'Adjust Table',
+          description: 'Add a scroll class to tables for responsiveness'
+        }
       }
     });
 
