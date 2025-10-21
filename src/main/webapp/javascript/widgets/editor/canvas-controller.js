@@ -46,7 +46,7 @@ class CanvasController {
   renderEmptyCanvas() {
     this.canvas.innerHTML = `
       <div class="empty-canvas">
-        <i class="fa-solid fa-plus-circle fa-3x"></i>
+        <i class="fa-solid fa-plus-circle fa-3x margin-bottom-10"></i>
         <h5>Start Building Your Page</h5>
         <p>Click "Add Row" to begin or drag widgets from the palette</p>
       </div>

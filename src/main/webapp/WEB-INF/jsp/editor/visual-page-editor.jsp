@@ -543,7 +543,7 @@
         </c:when>
         <c:otherwise>
           <div class="empty-canvas">
-            <i class="${font:far()} fa-plus-circle fa-3x"></i>
+            <i class="${font:far()} fa-plus-circle fa-3x margin-bottom-10"></i>
             <h5>Start Building Your Page</h5>
             <p>Click "Add Row" to begin or drag widgets from the palette</p>
           </div>
