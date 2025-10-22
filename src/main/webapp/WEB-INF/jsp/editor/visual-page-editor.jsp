@@ -22,6 +22,8 @@
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="webPage" class="com.simisinc.platform.domain.model.cms.WebPage" scope="request"/>
 <link href="${ctx}/css/platform.css" rel="stylesheet">
+<link href="${ctx}/css/spectrum-1.8.1/spectrum.css" rel="stylesheet">
+<script src="${ctx}/javascript/spectrum-1.8.1/spectrum.js"></script>
 <style>
   #visual-page-editor-container {
     display: flex;
