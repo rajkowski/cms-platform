@@ -455,11 +455,18 @@
     <div id="widget-palette">
       <div class="palette-tabs-container">
         <ul class="tabs-nav">
-          <li><a href="#layouts-tab" class="active">Layouts</a></li>
-          <li><a href="#widgets-tab">Widgets</a></li>
+          <li><a href="#widgets-tab" class="active">Widgets</a></li>
+          <li><a href="#layouts-tab">Layouts</a></li>
         </ul>
 
-        <div id="layouts-tab" class="tab-content active">
+        <div id="widgets-tab" class="tab-content active">
+          <input type="text" id="widget-search" placeholder="Search widgets..." class="property-input" style="margin-bottom: 15px;" />
+          <div id="widget-list-container">
+            <!-- Widgets will be dynamically inserted here -->
+          </div>
+        </div>
+
+        <div id="layouts-tab" class="tab-content">
           <div class="layout-palette-item" draggable="true" data-layout="small-12">
             <button class="add-layout-btn" title="Add row to page">+</button>
             <div class="layout-preview">
@@ -528,12 +535,6 @@
           </div>
         </div>
 
-        <div id="widgets-tab" class="tab-content">
-          <input type="text" id="widget-search" placeholder="Search widgets..." class="property-input" style="margin-bottom: 15px;" />
-          <div id="widget-list-container">
-            <!-- Widgets will be dynamically inserted here -->
-          </div>
-        </div>
       </div>
     </div>
     
