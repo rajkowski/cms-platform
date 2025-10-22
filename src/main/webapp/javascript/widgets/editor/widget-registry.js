@@ -299,12 +299,17 @@ class WidgetRegistry {
       icon: 'fa-tasks',
       description: 'A card with a progress bar',
       properties: {
-        label: { type: 'text', label: 'Label', required: true },
-        value: { type: 'number', label: 'Value', required: true },
-        total: { type: 'number', label: 'Total', required: true },
-        link: { type: 'text', label: 'Link URL' },
-        icon: { type: 'text', label: 'Icon' },
-        color: { type: 'text', label: 'Color' }
+        label: { type: 'text', label: 'Label', required: false },
+        value: { type: 'text', label: 'Value', required: false },
+        progress: { type: 'number', label: 'Progress', required: true },
+        maxValue: { type: 'number', label: 'Max Value', required: true },
+        maxLabel: { type: 'text', label: 'Max Label' },
+        link: { type: 'text', label: 'Link' },
+        textColor: { type: 'color', label: 'Text Color' },
+        subheaderColor: { type: 'color', label: 'Sub Header Color' },
+        progressColor: { type: 'color', label: 'Progress Color' },
+        remainderColor: { type: 'color', label: 'Remained Color' },
+        view: { type: 'text', label: 'View' }
       }
     });
 
@@ -314,8 +319,12 @@ class WidgetRegistry {
       icon: 'fa-vcard',
       description: 'A card with content',
       properties: {
-        uniqueId: { type: 'text', label: 'Unique ID', required: true },
-        html: { type: 'textarea', label: 'HTML Content', required: false }
+        classData: { type: 'text', label: 'Class', required: false },
+        title: { type: 'text', label: 'Title', required: false },
+        icon: { type: 'text', label: 'Icon', required: false },
+        link: { type: 'text', label: 'Link', required: false },
+        linkTitle: { type: 'text', label: 'Link Title', required: false },
+        linkIcon: { type: 'text', label: 'Link Icon', required: false }
       }
     });
 
@@ -346,7 +355,7 @@ class WidgetRegistry {
           description: 'An optional URL to link to'
         },
         iconColor: {
-          type: 'text',
+          type: 'color',
           label: 'Icon Color',
           description: 'Color for the icon (e.g., #ffffff or theme.color)'
         },
