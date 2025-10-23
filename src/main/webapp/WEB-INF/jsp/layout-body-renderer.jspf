@@ -117,6 +117,7 @@
       </c:choose>
     </c:forEach>
     <c:if test="${userSession.hasRole('admin') && !empty totalRenderTime &&
+                  !fn:startsWith(pageRenderInfo.name, '/admin/visual-page-editor') &&
                   !fn:startsWith(pageRenderInfo.name, '/admin/web-page-designer') &&
                   !fn:startsWith(pageRenderInfo.name, '/content-editor')}">
       <div class="grid-container hide-for-print admin-render-time">
