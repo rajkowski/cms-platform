@@ -18,7 +18,13 @@ package com.simisinc.platform.application.oauth;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 import javax.security.auth.login.AccountException;
 
@@ -75,10 +81,7 @@ public class OAuthUserInfoCommand {
       LOG.debug("Found OAuth id token...");
       JsonNode idTokenJson = JWTCommand.parseJwt(idToken);
       hasAllProperties = populateUserFromIdTokenPayload(idTokenJson, userBean);
-      if (hasAllProperties) {
-        populateUserRolesFromPayload(idTokenJson, userBean);
-        populateUserGroupsFromPayload(idTokenJson, userBean);
-      }
+      processUserMembership(idTokenJson, userBean);
     }
 
     // Make a userinfo request if needed
@@ -90,8 +93,24 @@ public class OAuthUserInfoCommand {
         LOG.warn("preferred_username OR email is required");
         return null;
       }
-      populateUserRolesFromPayload(userInfoJson, userBean);
-      populateUserGroupsFromPayload(userInfoJson, userBean);
+      processUserMembership(userInfoJson, userBean);
+    }
+
+    // Some users need to be checked with Microsoft Graph API because they have too many AD Groups for the previous request method
+    if (userBean.getGroupList() == null || userBean.getGroupList().isEmpty() || userBean.getGroupList().size() == 1) {
+
+      LOG.debug("Checking Microsoft Graph API for user properties...");
+
+      // Multiple AD Groups can be queried using the Microsoft Graph API
+      String graphAdPrefix = LoadSitePropertyCommand.loadByName("oauth.graph.ad.prefixes");
+      if (StringUtils.isNotBlank(graphAdPrefix)) {
+
+        LOG.debug("Using Microsoft Graph API with prefixes: " + graphAdPrefix);
+        List<String> graphGroups = retrieveGraphGroups(graphAdPrefix, oAuthToken);
+        if (!graphGroups.isEmpty()) {
+          applyMembershipValues(userBean, graphGroups);
+        }
+      }
     }
     return validateUserRecord(userBean);
   }
@@ -133,6 +152,105 @@ public class OAuthUserInfoCommand {
       LOG.error("User could not be saved: " + de.getMessage(), de);
       return null;
     }
+  }
+
+  private static void processUserMembership(JsonNode json, User user) {
+    ensureDefaultGroup(user);
+    if (json == null) {
+      return;
+    }
+    List<String> membershipValues = extractMembershipValues(json);
+    if (!membershipValues.isEmpty()) {
+      applyMembershipValues(user, membershipValues);
+    }
+  }
+
+  private static List<String> extractMembershipValues(JsonNode json) {
+    Set<String> values = new LinkedHashSet<>();
+    appendValuesFromAttribute(json, LoadSitePropertyCommand.loadByName("oauth.role.attribute"), values);
+    appendValuesFromAttribute(json, LoadSitePropertyCommand.loadByName("oauth.group.attribute"), values);
+    return new ArrayList<>(values);
+  }
+
+  private static void appendValuesFromAttribute(JsonNode json, String attributeName, Set<String> values) {
+    if (StringUtils.isBlank(attributeName) || !json.has(attributeName) || json.get(attributeName) == null) {
+      return;
+    }
+    for (JsonNode jsonNode : json.get(attributeName)) {
+      String rawValue = jsonNode.asText();
+      if (StringUtils.isNotBlank(rawValue) && !"null".equalsIgnoreCase(rawValue)) {
+        values.add(rawValue);
+      }
+    }
+  }
+
+  private static void applyMembershipValues(User user, List<String> membershipValues) {
+    if (membershipValues == null || membershipValues.isEmpty()) {
+      return;
+    }
+    ensureDefaultGroup(user);
+    List<Group> userGroupList = user.getGroupList();
+    if (userGroupList == null) {
+      userGroupList = new ArrayList<>();
+    }
+    List<Role> userRoleList = user.getRoleList();
+    if (userRoleList == null) {
+      userRoleList = new ArrayList<>();
+    }
+    for (String value : membershipValues) {
+      populateUserGroup(user, userGroupList, value);
+      populateUserRole(user, userRoleList, value);
+    }
+    user.setGroupList(userGroupList);
+    user.setRoleList(userRoleList);
+  }
+
+  private static void ensureDefaultGroup(User user) {
+    List<Group> userGroupList = user.getGroupList();
+    if (userGroupList == null) {
+      userGroupList = new ArrayList<>();
+      user.setGroupList(userGroupList);
+    }
+    Group defaultGroup = GroupRepository.findByName("All Users");
+    if (defaultGroup != null && userGroupList.stream()
+        .noneMatch(g -> g != null && (Objects.equals(g.getUniqueId(), defaultGroup.getUniqueId())
+            || Objects.equals(g.getName(), defaultGroup.getName())))) {
+      userGroupList.add(defaultGroup);
+    }
+  }
+
+  private static List<String> retrieveGraphGroups(String graphAdPrefix, OAuthToken oAuthToken) {
+    Map<String, String> additionalHeaders = new HashMap<>();
+    additionalHeaders.put("ConsistencyLevel", "eventual");
+    Map<String, String> graphGroupOverrides = loadGraphGroupOverrides();
+    Set<String> membershipValues = new LinkedHashSet<>();
+    for (String prefix : graphAdPrefix.split(",")) {
+      if (StringUtils.isBlank(prefix)) {
+        continue;
+      }
+      String url = OAuthConfigurationCommand.retrieveUserGroupsEndpoint(prefix);
+      JsonNode graphJson = OAuthHttpCommand.sendHttpGet(url, additionalHeaders, oAuthToken);
+      if (graphJson == null) {
+        LOG.warn("Graph API did not return any groups for prefix: " + prefix);
+        continue;
+      }
+      if (!graphJson.has("value") || !graphJson.get("value").isArray()) {
+        continue;
+      }
+      for (JsonNode groupNode : graphJson.get("value")) {
+        String displayName = groupNode.has("displayName") ? groupNode.get("displayName").asText() : null;
+        String id = groupNode.has("id") ? groupNode.get("id").asText() : null;
+        if ((displayName == null || "null".equalsIgnoreCase(displayName)) && StringUtils.isNotBlank(id)) {
+          displayName = graphGroupOverrides.get(id);
+        }
+        if (StringUtils.isBlank(displayName)) {
+          LOG.debug("Skipping group with no displayName or override: " + id);
+          continue;
+        }
+        membershipValues.add(displayName);
+      }
+    }
+    return new ArrayList<>(membershipValues);
   }
 
   /** Populate some user fields from the access token */
@@ -184,62 +302,42 @@ public class OAuthUserInfoCommand {
     return !StringUtils.isAnyBlank(user.getEmail(), user.getUsername());
   }
 
-  /** Populate the users roles from the token payload */
-  public static void populateUserRolesFromPayload(JsonNode json, User user) {
-    LOG.debug("Checking OAuth roles...");
-    List<Role> userRoleList = user.getRoleList();
-    if (userRoleList == null) {
-      userRoleList = new ArrayList<>();
-    }
-    String roleAttribute = LoadSitePropertyCommand.loadByName("oauth.role.attribute");
-    if (StringUtils.isNotBlank(roleAttribute) && json.has(roleAttribute)) {
+  public static void populateUserRole(User user, List<Role> userRoleList, String roleValue) {
+    if (StringUtils.isNotBlank(roleValue) && !roleValue.equals("null")) {
       String oauthAdminRoleValue = LoadSitePropertyCommand.loadByName("oauth.role.admin");
-      for (JsonNode jsonNode : json.get(roleAttribute)) {
-        String roleValue = jsonNode.asText();
-        Role thisRole = RoleRepository.findByOAuthPath(roleValue);
-        // Determine if there is a setting to promote this user to admin based on role value
-        if (thisRole == null && StringUtils.isNotBlank(oauthAdminRoleValue) && roleValue.equals(oauthAdminRoleValue)) {
-          LOG.debug("User promoted to admin");
-          thisRole = RoleRepository.findByCode("admin");
-        }
-        if (thisRole != null) {
+      Role thisRole = RoleRepository.findByOAuthPath(roleValue);
+      // Determine if there is a setting to promote this user to admin based on role value
+      if (thisRole == null && StringUtils.isNotBlank(oauthAdminRoleValue) && roleValue.equals(oauthAdminRoleValue)) {
+        LOG.debug("User promoted to admin");
+        thisRole = RoleRepository.findByCode("admin");
+      }
+      if (thisRole != null) {
+        if (!userRoleList.stream().anyMatch(r -> r.getOAuthPath() != null && r.getOAuthPath().equals(roleValue))) {
+          LOG.debug("Associating user with role: " + thisRole.getCode());
           userRoleList.add(thisRole);
         }
       }
     }
-    user.setRoleList(userRoleList);
   }
 
-  /** Populate the users groups from the token payload */
-  public static void populateUserGroupsFromPayload(JsonNode json, User user) {
-    LOG.debug("Checking OAuth groups...");
-    // All users must belong to the base "All Users" group
-    Group defaultGroup = GroupRepository.findByName("All Users");
-    List<Group> userGroupList = user.getGroupList();
-    if (userGroupList == null) {
-      userGroupList = new ArrayList<>();
-    }
-    userGroupList.add(defaultGroup);
-    // Check the oauth attribute and values
-    String groupAttribute = LoadSitePropertyCommand.loadByName("oauth.group.attribute");
-    if (StringUtils.isNotBlank(groupAttribute) && json.has(groupAttribute)) {
+  public static void populateUserGroup(User user, List<Group> userGroupList, String groupValue) {
+    if (StringUtils.isNotBlank(groupValue) && !groupValue.equals("null")) {
       // Use a list of acceptable groups from site properties
       List<String> oauthGroupList = LoadSitePropertyCommand.loadByNameAsList("oauth.group.list");
-      // Iterate through the found groups, looking for a match
-      for (JsonNode jsonNode : json.get(groupAttribute)) {
-        String groupValue = jsonNode.asText();
-        // See if the system is configured with this OAuth group value, then use it
-        Group thisGroup = GroupRepository.findByOAuthPath(groupValue);
-        if (thisGroup == null && oauthGroupList != null && oauthGroupList.contains(groupValue)) {
-          // Create the group
-          thisGroup = createGroup(groupValue);
-        }
-        if (thisGroup != null) {
+      // See if the system is configured with this OAuth group value, then use it
+      Group thisGroup = GroupRepository.findByOAuthPath(groupValue);
+      if (thisGroup == null && oauthGroupList != null && oauthGroupList.contains(groupValue)) {
+        // Create the group
+        thisGroup = createGroup(groupValue);
+      }
+      if (thisGroup != null) {
+        LOG.debug("Associating user with group: " + thisGroup.getName());
+        final Group finalGroup = thisGroup;
+        if (!userGroupList.stream().anyMatch(g -> g.getName().equals(finalGroup.getName()))) {
           userGroupList.add(thisGroup);
         }
       }
     }
-    user.setGroupList(userGroupList);
   }
 
   /** Creates a user group on-the-fly unless one exists, then returns the group */
@@ -260,5 +358,27 @@ public class OAuthUserInfoCommand {
       thisGroup = GroupRepository.findByUniqueId(groupValue);
     }
     return thisGroup;
+  }
+
+  private static Map<String, String> loadGraphGroupOverrides() {
+    String overridesValue = LoadSitePropertyCommand.loadByName("oauth.graph.group.overrides");
+    if (StringUtils.isBlank(overridesValue)) {
+      return Collections.emptyMap();
+    }
+    Map<String, String> overrides = new HashMap<>();
+    String[] pairs = overridesValue.split(",");
+    for (String pair : pairs) {
+      if (StringUtils.isBlank(pair)) {
+        continue;
+      }
+      String[] parts = pair.split("=", 2);
+      LOG.debug("Processing override pair: " + pair);
+      if (parts.length == 2 && StringUtils.isNoneBlank(parts[0], parts[1])) {
+        // The values are accessed by groupId, so reverse the order
+        overrides.put(parts[1].trim(), parts[0].trim());
+      }
+    }
+    LOG.debug("Loaded graph group overrides: " + overrides.size());
+    return overrides;
   }
 }
