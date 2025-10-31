@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.github.rajkowski</groupId>
   <artifactId>cms-platform</artifactId>
-  <version>20250531.10000-SNAPSHOT</version>
+  <version>20251031.10000-SNAPSHOT</version>
   <name>CMS Platform</name>
   <url>https://github.com/rajkowski/cms-platform</url>
   <description>Agile, Enterprise, Open Source Content Management System (CMS) and Web Portal</description>

@@ -22,6 +22,7 @@ import org.apache.commons.logging.LogFactory;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
+import com.simisinc.platform.application.cms.UrlCommand;
 import com.simisinc.platform.application.http.HttpGetCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.infrastructure.cache.CacheManager;
@@ -105,6 +106,11 @@ public class OAuthConfigurationCommand {
 
   public static String retrieveUserInfoEndpoint() {
     return retrieveValue("userinfo_endpoint");
+  }
+
+  public static String retrieveUserGroupsEndpoint(String prefix) {
+    // Requires header... ConsistencyLevel: eventual
+    return "https://graph.microsoft.com/v1.0/me/memberOf/microsoft.graph.group?$count=true&$orderby=displayName&$select=displayName,id&$search=%22displayName:" + UrlCommand.encodeUri(prefix) + "%22";
   }
 
   public static String retrieveLogoutEndpoint() {

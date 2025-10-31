@@ -41,6 +41,10 @@ public class OAuthHttpCommand {
   private static Log LOG = LogFactory.getLog(OAuthHttpCommand.class);
 
   public static JsonNode sendHttpGet(String endpoint, OAuthToken oAuthToken) {
+    return sendHttpGet(endpoint, null, oAuthToken);
+  }
+  
+  public static JsonNode sendHttpGet(String endpoint, Map<String, String> additionalHeaders, OAuthToken oAuthToken) {
     if (StringUtils.isBlank(endpoint)) {
       return null;
     }
@@ -59,6 +63,9 @@ public class OAuthHttpCommand {
     // Prepare request
     Map<String, String> headers = new HashMap<>();
     headers.put("Authorization", "Bearer " + oAuthToken.getAccessToken());
+    if (additionalHeaders != null && !additionalHeaders.isEmpty()) {
+      headers.putAll(additionalHeaders);
+    }
 
     // Check for content
     String remoteContent = HttpGetCommand.execute(endpoint, headers);
