@@ -241,9 +241,13 @@
     height: 100%;
     background: rgba(0,0,0,0.5);
     display: none;
+    z-index: 1000;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
+  }
+
+  .modal-overlay.active {
+    display: flex !important;
   }
 
   .modal-content {
@@ -433,6 +437,7 @@
       <button id="add-row-btn" class="button tiny primary no-gap"><i class="${font:far()} fa-plus"></i> Add Row</button>
       <button id="undo-btn" class="button tiny secondary no-gap" disabled><i class="${font:far()} fa-undo"></i> Undo</button>
       <button id="redo-btn" class="button tiny secondary no-gap" disabled><i class="${font:far()} fa-redo"></i> Redo</button>
+      <button id="pre-designed-page-btn" class="button tiny secondary no-gap"><i class="${font:far()} fa-magic"></i> Pre-Designed Page</button>
     </div>
     <div>
       <button id="preview-btn" class="button tiny secondary no-gap"><i class="${font:far()} fa-eye"></i> Raw Values</button>
@@ -565,6 +570,41 @@
   </div>
 </div>
 
+<!-- Pre-Designed Page Modal -->
+<div id="pre-designed-page-modal" class="modal-overlay" style="display:none;">
+  <div class="modal-content">
+    <h4>Apply a Pre-Designed Page Layout</h4>
+    <ul id="pre-designed-page-list">
+      <!-- Pre-designed page items will be inserted here by JavaScript -->
+    </ul>
+    <script>
+      // Dynamically populate the pre-designed page list from preDesignedTemplates
+      document.addEventListener('DOMContentLoaded', function() {
+      var list = document.getElementById('pre-designed-page-list');
+      if (window.preDesignedTemplates && window.preDesignedTemplateLabels) {
+        // Use the order from window.preDesignedTemplateLabels keys
+        Object.keys(window.preDesignedTemplateLabels).forEach(function(key) {
+          console.log("Checking template key:", key);
+          if (window.preDesignedTemplates[key]) {
+            var label = window.preDesignedTemplateLabels[key] || key.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            var li = document.createElement('li');
+            var a = document.createElement('a');
+            a.href = "#";
+            a.setAttribute('data-template', key);
+            a.textContent = label;
+            li.appendChild(a);
+            list.appendChild(li);
+          }
+        });
+      }
+    });
+    </script>
+    <div style="text-align: right; margin-top: 20px;">
+      <button id="close-pre-designed-page-modal" class="button tiny secondary">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- Hidden form for submission -->
 <form id="editor-form" method="post" style="display: none;">
   <input type="hidden" name="widget" value="${widgetContext.uniqueId}"/>
@@ -592,6 +632,7 @@
 
 <!-- Load JavaScript modules -->
 <g:compress>
+  <script src="${ctx}/javascript/widgets/editor/pre-designed-templates.js"></script>
   <script src="${ctx}/javascript/widgets/editor/editor-main.js"></script>
   <script src="${ctx}/javascript/widgets/editor/drag-drop-manager.js"></script>
   <script src="${ctx}/javascript/widgets/editor/layout-manager.js"></script>
@@ -617,6 +658,51 @@
     
     window.pageEditor = new PageEditor(editorConfig);
     window.pageEditor.init();
+
+    // Show modal
+    document.getElementById('pre-designed-page-btn').addEventListener('click', function() {
+    document.getElementById('pre-designed-page-modal').classList.add('active');
+    });
+    // Hide modal
+    document.getElementById('close-pre-designed-page-modal').addEventListener('click', function() {
+    document.getElementById('pre-designed-page-modal').classList.remove('active');
+    });
+    // Handle template selection
+    document.getElementById('pre-designed-page-list').addEventListener('click', function(e) {
+      if (e.target.tagName === 'A') {
+        e.preventDefault();
+        const templateKey = e.target.getAttribute('data-template');
+        const template = preDesignedTemplates[templateKey];
+        if (template && window.pageEditor) {
+          const layoutManager = window.pageEditor.getLayoutManager();
+          // Remove all existing rows
+          layoutManager.structure.rows = [];
+          // Add new rows/widgets from template
+          template.forEach(row => {
+            const rowId = layoutManager.addRow(row.layout);
+            const rowObj = layoutManager.getRow(rowId);
+            if (Array.isArray(row.widgets)) {
+              row.widgets.forEach((widget, colIdx) => {
+                if (rowObj && rowObj.columns[colIdx]) {
+                  const widgetId = layoutManager.addWidget(rowId, rowObj.columns[colIdx].id, widget.type);
+                  // Set widget properties
+                  const widgetObj = layoutManager.getWidget(widgetId);
+                  if (widgetObj && widget.properties) {
+                    Object.keys(widget.properties).forEach(propKey => {
+                      widgetObj.properties[propKey] = widget.properties[propKey];
+                    });
+                  }
+                }
+              });
+            }
+          });
+          // Re-render the layout after adding all rows/widgets
+          window.pageEditor.getCanvasController().renderLayout(layoutManager.getStructure());
+          window.pageEditor.saveToHistory();
+        }
+        document.getElementById('pre-designed-page-modal').classList.remove('active');
+      }
+    });
 
     // Set up palette tabs
     const tabs = document.querySelectorAll('.tabs-nav a');
