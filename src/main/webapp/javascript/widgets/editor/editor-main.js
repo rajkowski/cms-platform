@@ -404,7 +404,7 @@ class PageEditor {
     
     // Open preview in new window/tab
     // For now, just show alert with XML
-    alert('Preview functionality coming soon!\n\nGenerated XML:\n' + xml);
+    alert('Generated XML:\n\n' + xml);
   }
   
   /**

@@ -435,7 +435,7 @@
       <button id="redo-btn" class="button tiny secondary no-gap" disabled><i class="${font:far()} fa-redo"></i> Redo</button>
     </div>
     <div>
-      <button id="preview-btn" class="button tiny secondary no-gap"><i class="${font:far()} fa-eye"></i> Preview</button>
+      <button id="preview-btn" class="button tiny secondary no-gap"><i class="${font:far()} fa-eye"></i> Raw Values</button>
       <button id="save-btn" class="button tiny success no-gap"><i class="${font:far()} fa-save"></i> Save</button>
       <c:choose>
         <c:when test="${!empty returnPage}">
