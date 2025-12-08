@@ -241,7 +241,7 @@
     height: 100%;
     background: rgba(0,0,0,0.5);
     display: none;
-    z-index: 1000;
+    z-index: 10000;
     justify-content: center;
     align-items: center;
   }
@@ -338,6 +338,79 @@
     font-size: 11px;
     color: #6c757d;
     text-align: center;
+  }
+
+  /* Pre-Designed Page Template Styles */
+  #pre-designed-page-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  #pre-designed-page-list li {
+    display: block;
+  }
+
+  #pre-designed-page-list a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 15px;
+    border: 2px solid #dee2e6;
+    border-radius: 6px;
+    text-decoration: none;
+    color: #495057;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    height: 100%;
+    min-height: 180px;
+  }
+
+  #pre-designed-page-list a:hover {
+    border-color: #007bff;
+    background: #f8f9fa;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  .template-preview {
+    width: 100%;
+    height: 80px;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 3px;
+    margin-bottom: 10px;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .template-preview-row {
+    display: flex;
+    gap: 2px;
+    height: 8px;
+    flex-shrink: 0;
+    min-height: 8px;
+  }
+
+  .template-preview-col {
+    background: #ced4da;
+    border-radius: 1px;
+    flex: 1;
+  }
+
+  .template-label {
+    font-size: 12px;
+    color: #495057;
+    font-weight: 500;
+    text-align: center;
+    word-wrap: break-word;
   }
 
   .palette-section {
@@ -572,7 +645,7 @@
 
 <!-- Pre-Designed Page Modal -->
 <div id="pre-designed-page-modal" class="modal-overlay" style="display:none;">
-  <div class="modal-content">
+  <div class="modal-content" style="max-width: 800px;">
     <h4>Apply a Pre-Designed Page Layout</h4>
     <ul id="pre-designed-page-list">
       <!-- Pre-designed page items will be inserted here by JavaScript -->
@@ -580,24 +653,62 @@
     <script>
       // Dynamically populate the pre-designed page list from preDesignedTemplates
       document.addEventListener('DOMContentLoaded', function() {
-      var list = document.getElementById('pre-designed-page-list');
-      if (window.preDesignedTemplates && window.preDesignedTemplateLabels) {
-        // Use the order from window.preDesignedTemplateLabels keys
-        Object.keys(window.preDesignedTemplateLabels).forEach(function(key) {
-          console.log("Checking template key:", key);
-          if (window.preDesignedTemplates[key]) {
-            var label = window.preDesignedTemplateLabels[key] || key.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-            var li = document.createElement('li');
-            var a = document.createElement('a');
-            a.href = "#";
-            a.setAttribute('data-template', key);
-            a.textContent = label;
-            li.appendChild(a);
-            list.appendChild(li);
-          }
-        });
-      }
-    });
+        var list = document.getElementById('pre-designed-page-list');
+        if (window.preDesignedTemplates && window.preDesignedTemplateLabels) {
+          // Use the order from window.preDesignedTemplateLabels keys
+          Object.keys(window.preDesignedTemplateLabels).forEach(function(key) {
+            console.log("Checking template key:", key);
+            if (window.preDesignedTemplates[key]) {
+              var label = window.preDesignedTemplateLabels[key] || key.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+              var li = document.createElement('li');
+              var a = document.createElement('a');
+              a.href = "#";
+              a.setAttribute('data-template', key);
+              
+              // Create the template preview
+              var preview = document.createElement('div');
+              preview.className = 'template-preview';
+              
+              // Generate rows based on the template structure
+              var template = window.preDesignedTemplates[key];
+              if (Array.isArray(template) && template.length > 0) {
+                // Show all rows in the preview
+                for (var i = 0; i < template.length; i++) {
+                  var row = template[i];
+                  if (row.layout) {
+                    var rowDiv = document.createElement('div');
+                    rowDiv.className = 'template-preview-row';
+                    
+                    // Create columns based on layout
+                    row.layout.forEach(function(colClass) {
+                      var col = document.createElement('div');
+                      col.className = 'template-preview-col';
+                      var match = colClass.match(/small-(\d+)/);
+                      if (match) {
+                        var width = (parseInt(match[1]) / 12) * 100;
+                        col.style.flex = width;
+                      }
+                      rowDiv.appendChild(col);
+                    });
+                    
+                    preview.appendChild(rowDiv);
+                  }
+                }
+              }
+              
+              // Create the label
+              var labelDiv = document.createElement('div');
+              labelDiv.className = 'template-label';
+              labelDiv.textContent = label;
+              
+              a.appendChild(preview);
+              a.appendChild(labelDiv);
+              li.appendChild(a);
+              list.appendChild(li);
+            }
+          });
+        }
+      });
     </script>
     <div style="text-align: right; margin-top: 20px;">
       <button id="close-pre-designed-page-modal" class="button tiny secondary">Cancel</button>
@@ -659,19 +770,38 @@
     window.pageEditor = new PageEditor(editorConfig);
     window.pageEditor.init();
 
+    // Helper function to close modal
+    function closePreDesignedPageModal() {
+      document.getElementById('pre-designed-page-modal').classList.remove('active');
+    }
+
     // Show modal
     document.getElementById('pre-designed-page-btn').addEventListener('click', function() {
-    document.getElementById('pre-designed-page-modal').classList.add('active');
+      document.getElementById('pre-designed-page-modal').classList.add('active');
     });
+    
     // Hide modal
     document.getElementById('close-pre-designed-page-modal').addEventListener('click', function() {
-    document.getElementById('pre-designed-page-modal').classList.remove('active');
+      closePreDesignedPageModal();
     });
+    
+    // Close modal on ESC key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        const modal = document.getElementById('pre-designed-page-modal');
+        if (modal && modal.classList.contains('active')) {
+          closePreDesignedPageModal();
+        }
+      }
+    });
+    
     // Handle template selection
     document.getElementById('pre-designed-page-list').addEventListener('click', function(e) {
-      if (e.target.tagName === 'A') {
+      // Find the closest anchor tag to handle clicks on child elements
+      const link = e.target.closest('a');
+      if (link) {
         e.preventDefault();
-        const templateKey = e.target.getAttribute('data-template');
+        const templateKey = link.getAttribute('data-template');
         const template = preDesignedTemplates[templateKey];
         if (template && window.pageEditor) {
           const layoutManager = window.pageEditor.getLayoutManager();
@@ -700,7 +830,7 @@
           window.pageEditor.getCanvasController().renderLayout(layoutManager.getStructure());
           window.pageEditor.saveToHistory();
         }
-        document.getElementById('pre-designed-page-modal').classList.remove('active');
+        closePreDesignedPageModal();
       }
     });
 
