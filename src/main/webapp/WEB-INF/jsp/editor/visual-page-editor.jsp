@@ -27,8 +27,8 @@
 <style>
   #visual-page-editor-container {
     display: flex;
-    height: calc(100vh - 200px);
-    min-height: 600px;
+    height: 600px; /* Will be calculated dynamically by JavaScript */
+    min-height: 300px;
   }
   
   #editor-toolbar {
@@ -730,5 +730,42 @@
         window.pageEditor.addRow(layout);
       });
     });
+
+    // Calculate the container height dynamically
+    function calculateContainerHeight() {
+      const wrapper = document.getElementById('visual-page-editor-wrapper');
+      const toolbar = document.getElementById('editor-toolbar');
+      const container = document.getElementById('visual-page-editor-container');
+      
+      if (!wrapper || !toolbar || !container) return;
+      
+      // Get the viewport height
+      const viewportHeight = window.innerHeight;
+      
+      // Calculate the height used by elements above the container
+      const wrapperTop = wrapper.getBoundingClientRect().top;
+      const toolbarHeight = toolbar.offsetHeight;
+      
+      // Get any title element if it exists
+      const titleElement = wrapper.querySelector('h4');
+      const titleHeight = titleElement ? titleElement.offsetHeight : 0;
+      
+      // Get the messages container if it exists
+      const messagesElement = wrapper.querySelector('[role="alert"], .messages-container');
+      const messagesHeight = messagesElement ? messagesElement.offsetHeight : 0;
+      
+      // Calculate available height: viewport height - space from top - title - messages - toolbar
+      const availableHeight = viewportHeight - wrapperTop - titleHeight - messagesHeight - toolbarHeight;
+      
+      // Set the container height with a minimum
+      const finalHeight = Math.max(availableHeight, 300);
+      container.style.height = finalHeight + 'px';
+    }
+    
+    // Calculate height on load
+    calculateContainerHeight();
+    
+    // Recalculate on window resize
+    window.addEventListener('resize', calculateContainerHeight);
   });
 </script>
