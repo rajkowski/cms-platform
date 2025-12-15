@@ -469,12 +469,14 @@
 
   .tabs-nav a {
     display: block;
-    padding: 12px 15px;
+    padding: 8px 10px;
     text-decoration: none;
     color: #495057;
     border-bottom: 3px solid transparent;
     transition: all 0.2s;
     font-weight: 600;
+    font-size: 12px;
+    white-space: nowrap;
   }
 
   .tabs-nav a:hover {
