@@ -21,6 +21,9 @@ class PageEditor {
     this.historyIndex = -1;
     this.maxHistorySize = 50;
     
+    // Track the saved state for dirty detection
+    this.lastSavedState = null;
+    
     // References to DOM elements
     this.elements = {};
   }
@@ -53,6 +56,9 @@ class PageEditor {
     
     // Save initial state to history
     this.saveToHistory();
+    
+    // Set baseline for dirty detection
+    this.setSavedState();
     
     console.log('Editor initialized successfully');
   }
@@ -455,15 +461,27 @@ class PageEditor {
    * Check if the editor has unsaved changes
    */
   isDirty() {
-    // Compare current state with the last saved state
-    if (this.history.length === 0) {
+    // If there's no saved state baseline, we can't know if there are changes
+    if (this.lastSavedState === null) {
+      console.log('isDirty: false (no baseline saved state)');
       return false;
     }
     
+    // Get the current layout state
     const currentState = JSON.stringify(this.layoutManager.getStructure());
-    const lastSavedState = this.history[this.historyIndex];
+    const dirty = currentState !== this.lastSavedState;
     
-    return currentState !== JSON.stringify(lastSavedState);
+    console.log('isDirty:', dirty);
+    
+    return dirty;
+  }
+  
+  /**
+   * Set the baseline saved state for dirty detection
+   */
+  setSavedState() {
+    this.lastSavedState = JSON.stringify(this.layoutManager.getStructure());
+    console.log('Saved state baseline set');
   }
   
   /**

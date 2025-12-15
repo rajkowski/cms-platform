@@ -148,7 +148,10 @@ class PagesTabManager {
     const pageLink = item.getAttribute('data-page-link');
 
     // Check if user has unsaved changes
-    if (this.pageEditor.isDirty && this.pageEditor.isDirty()) {
+    const isDirty = this.pageEditor.isDirty && this.pageEditor.isDirty();
+    console.log('Page click - isDirty:', isDirty, 'History length:', this.pageEditor.history.length);
+    
+    if (isDirty) {
       if (!confirm('You have unsaved changes. Are you sure you want to switch pages?')) {
         return;
       }
@@ -212,7 +215,14 @@ class PagesTabManager {
           if (this.pageEditor.config.hasExistingLayout) {
             this.pageEditor.loadExistingLayout(data.pageXml);
           }
+          
+          // Reset history and save the loaded state as the new baseline
+          this.pageEditor.history = [];
+          this.pageEditor.historyIndex = -1;
           this.pageEditor.saveToHistory();
+          
+          // Set baseline for dirty detection
+          this.pageEditor.setSavedState();
 
           console.log('Page content loaded successfully');
         } else {
