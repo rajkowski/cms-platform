@@ -71,6 +71,7 @@ public class VisualPageEditorWidget extends GenericWidget {
         context.setErrorMessage("A web page is required");
         return context;
       }
+      LOG.debug("Loading web page for link: " + webPageLinkValue);
       webPage = WebPageRepository.findByLink(webPageLinkValue);
       if (webPage == null) {
         webPage = new WebPage();
@@ -97,10 +98,11 @@ public class VisualPageEditorWidget extends GenericWidget {
   public WidgetContext post(WidgetContext context) {
 
     // Populate the fields
-    String webPageLinkValue = context.getParameter("webPage");
+    String webPageLinkValue = context.getParameter("webPageLink");
     String returnPage = context.getParameter("returnPage");
 
     // Load the web page being designed
+    LOG.debug("Loading web page for link: " + webPageLinkValue);
     WebPage webPage = WebPageRepository.findByLink(webPageLinkValue);
     if (webPage == null) {
       webPage = new WebPage();

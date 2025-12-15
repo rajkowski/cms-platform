@@ -605,12 +605,12 @@
     <div id="widget-palette">
       <div class="palette-tabs-container">
         <ul class="tabs-nav">
-          <li><a href="#widgets-tab" class="active">Widgets</a></li>
+          <li><a href="#pages-tab" class="active">Pages</a></li>
           <li><a href="#layouts-tab">Layouts</a></li>
-          <li><a href="#pages-tab">Pages</a></li>
+          <li><a href="#widgets-tab">Widgets</a></li>
         </ul>
 
-        <div id="widgets-tab" class="tab-content active">
+        <div id="widgets-tab" class="tab-content">
           <input type="text" id="widget-search" placeholder="Search widgets..." class="property-input" style="margin-bottom: 15px;" />
           <div id="widget-list-container">
             <!-- Widgets will be dynamically inserted here -->
@@ -686,7 +686,7 @@
           </div>
         </div>
 
-        <div id="pages-tab" class="tab-content">
+        <div id="pages-tab" class="tab-content active">
           <div id="pages-loading" style="display: none;">
             <i class="${font:far()} fa-spinner fa-spin"></i> Loading pages...
           </div>
@@ -807,6 +807,7 @@
   <input type="hidden" name="widget" value="${widgetContext.uniqueId}"/>
   <input type="hidden" name="token" value="${userSession.formToken}"/>
   <input type="hidden" name="webPage" value="<c:out value="${webPage.link}" />"/>
+  <input type="hidden" name="webPageLink" value="<c:out value="${webPage.link}" />"/>
   <input type="hidden" name="returnPage" value="${returnPage}" />
   <input type="hidden" id="designer-data" name="designerData" value=""/>
 </form>

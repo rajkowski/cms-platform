@@ -427,13 +427,14 @@ class PageEditor {
       // Set form data
       this.elements.designerData.value = jsonData;
       
-      // Set the current page link if editing a different page
+      // Always update the web page link to the currently selected page
       const pageLink = this.pagesTabManager.getSelectedPageLink();
-      if (pageLink && pageLink !== this.config.webPageLink.substring(1)) {
-        // Update the web page hidden input if there's one
-        const webPageInput = document.querySelector('input[name="webPage"]');
+      if (pageLink) {
+        console.log('Setting web page link to:', pageLink);
+        // Update the web page hidden input with the selected page
+        const webPageInput = document.querySelector('input[name="webPageLink"]');
         if (webPageInput) {
-          webPageInput.value = '/' + pageLink;
+          webPageInput.value = pageLink;
         }
       }
       
