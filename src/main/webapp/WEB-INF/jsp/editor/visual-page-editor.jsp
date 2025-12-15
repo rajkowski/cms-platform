@@ -496,6 +496,76 @@
   .tab-content.active {
     display: block;
   }
+
+  /* Pages Tab Styles */
+  #web-page-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  #web-page-list li {
+    margin-bottom: 10px;
+  }
+
+  .web-page-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: white;
+  }
+
+  .web-page-item:hover {
+    border-color: #007bff;
+    background: #f8f9fa;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  .web-page-item.selected {
+    border-color: #007bff;
+    background: #e7f3ff;
+  }
+
+  .web-page-info {
+    flex-grow: 1;
+  }
+
+  .web-page-title {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 3px;
+  }
+
+  .web-page-link {
+    font-size: 12px;
+    color: #6c757d;
+  }
+
+  #pages-loading {
+    text-align: center;
+    padding: 20px;
+    color: #6c757d;
+  }
+
+  #pages-error {
+    padding: 15px;
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    color: #721c24;
+    margin-bottom: 15px;
+  }
+
+  #pages-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6c757d;
+  }
 </style>
 
 <div id="visual-page-editor-wrapper">
@@ -535,6 +605,7 @@
         <ul class="tabs-nav">
           <li><a href="#widgets-tab" class="active">Widgets</a></li>
           <li><a href="#layouts-tab">Layouts</a></li>
+          <li><a href="#pages-tab">Pages</a></li>
         </ul>
 
         <div id="widgets-tab" class="tab-content active">
@@ -611,6 +682,19 @@
             </div>
             <div class="layout-label">75 / 25</div>
           </div>
+        </div>
+
+        <div id="pages-tab" class="tab-content">
+          <div id="pages-loading" style="display: none;">
+            <i class="${font:far()} fa-spinner fa-spin"></i> Loading pages...
+          </div>
+          <div id="pages-error" style="display: none;"></div>
+          <div id="pages-empty" style="display: none;">
+            <p>No pages available</p>
+          </div>
+          <ul id="web-page-list">
+            <!-- Web pages will be dynamically inserted here -->
+          </ul>
         </div>
 
       </div>
@@ -750,6 +834,7 @@
   <script src="${ctx}/javascript/widgets/editor/widget-registry.js"></script>
   <script src="${ctx}/javascript/widgets/editor/canvas-controller.js"></script>
   <script src="${ctx}/javascript/widgets/editor/properties-panel.js"></script>
+  <script src="${ctx}/javascript/widgets/editor/pages-tab-manager.js"></script>
 </g:compress>
 
 <script>

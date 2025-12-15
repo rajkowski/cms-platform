@@ -14,6 +14,7 @@ class PageEditor {
     this.widgetRegistry = new WidgetRegistry();
     this.canvasController = new CanvasController(this);
     this.propertiesPanel = new PropertiesPanel(this);
+    this.pagesTabManager = new PagesTabManager(this);
     
     // History management for undo/redo
     this.history = [];
@@ -40,6 +41,7 @@ class PageEditor {
     this.dragDropManager.init();
     this.canvasController.init();
     this.propertiesPanel.init();
+    this.pagesTabManager.init();
     
     // Set up event listeners
     this.setupEventListeners();
@@ -425,6 +427,16 @@ class PageEditor {
       // Set form data
       this.elements.designerData.value = jsonData;
       
+      // Set the current page link if editing a different page
+      const pageLink = this.pagesTabManager.getSelectedPageLink();
+      if (pageLink && pageLink !== this.config.webPageLink.substring(1)) {
+        // Update the web page hidden input if there's one
+        const webPageInput = document.querySelector('input[name="webPage"]');
+        if (webPageInput) {
+          webPageInput.value = '/' + pageLink;
+        }
+      }
+      
       // Submit form
       this.elements.editorForm.submit();
       
@@ -436,6 +448,21 @@ class PageEditor {
       this.elements.saveBtn.disabled = false;
       this.elements.saveBtn.textContent = 'Save';
     }
+  }
+
+  /**
+   * Check if the editor has unsaved changes
+   */
+  isDirty() {
+    // Compare current state with the last saved state
+    if (this.history.length === 0) {
+      return false;
+    }
+    
+    const currentState = JSON.stringify(this.layoutManager.getStructure());
+    const lastSavedState = this.history[this.historyIndex];
+    
+    return currentState !== JSON.stringify(lastSavedState);
   }
   
   /**
