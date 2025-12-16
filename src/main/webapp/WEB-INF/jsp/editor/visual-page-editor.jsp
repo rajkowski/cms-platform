@@ -21,7 +21,6 @@
 <jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="webPage" class="com.simisinc.platform.domain.model.cms.WebPage" scope="request"/>
-<link href="${ctx}/css/platform.css" rel="stylesheet">
 <link href="${ctx}/css/spectrum-1.8.1/spectrum.css" rel="stylesheet">
 <script src="${ctx}/javascript/spectrum-1.8.1/spectrum.js"></script>
 <style>
@@ -569,6 +568,7 @@
     color: #6c757d;
   }
 </style>
+<link href="${ctx}/css/platform.css" rel="stylesheet">
 
 <div id="visual-page-editor-wrapper">
   <c:if test="${!empty title}">
