@@ -366,16 +366,10 @@ class CanvasController {
    * Show row settings
    */
   showRowSettings(rowId) {
-    const row = this.editor.getLayoutManager().getRow(rowId);
-    const currentClass = row.cssClass || '';
-    
-    const newClass = prompt('Enter row CSS classes (space-separated):', currentClass);
-    
-    if (newClass !== null) {
-      this.editor.getLayoutManager().updateRowClass(rowId, newClass);
-      this.renderRow(rowId, row);
-      this.editor.saveToHistory();
-    }
+    this.editor.getPropertiesPanel().show({
+      type: 'row',
+      rowId: rowId
+    });
   }
 
 

@@ -51,16 +51,136 @@ class PropertiesPanel {
     const row = this.editor.getLayoutManager().getRow(rowId);
     if (!row) return;
     
-    this.content.innerHTML = `
-      <h6>Row Properties</h6>
+    // Parse current CSS classes
+    const cssClasses = (row.cssClass || '').split(' ').filter(c => c.trim());
+    
+    let html = `<h6>Row Properties</h6>`;
+    
+    // Margin class to value mappings
+    const marginTopValues = {
+      '': -1, 'margin-top-0': 0, 'margin-top-1': 1, 'margin-top-2': 2, 'margin-top-3': 3,
+      'margin-top-4': 4, 'margin-top-5': 5, 'margin-top-10': 10, 'margin-top-15': 15,
+      'margin-top-20': 20, 'margin-top-25': 25, 'margin-top-30': 30, 'margin-top-35': 35,
+      'margin-top-40': 40, 'margin-top-50': 50, 'margin-top-75': 75, 'margin-top-100': 100,
+      'margin-top-150': 150, 'margin-top-200': 200, 'margin-top-240': 240, 'margin-top-250': 250
+    };
+    
+    const marginBottomValues = {
+      '': -1, 'margin-bottom-0': 0, 'margin-bottom-5': 5, 'margin-bottom-10': 10, 'margin-bottom-15': 15,
+      'margin-bottom-20': 20, 'margin-bottom-25': 25, 'margin-bottom-30': 30, 'margin-bottom-35': 35,
+      'margin-bottom-40': 40, 'margin-bottom-50': 50, 'margin-bottom-75': 75, 'margin-bottom-100': 100,
+      'margin-bottom-150': 150, 'margin-bottom-200': 200, 'margin-bottom-250': 250, 'margin-bottom-300': 300,
+      'margin-bottom-400': 400
+    };
+    
+    // Valid margin values for sliders
+    const topMarginOptions = [-1, 0, 1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 35, 40, 50, 75, 100, 150, 200, 240, 250];
+    const bottomMarginOptions = [-1, 0, 5, 10, 15, 20, 25, 30, 35, 40, 50, 75, 100, 150, 200, 250, 300, 400];
+    
+    const getClassValue = (prefix) => cssClasses.find(c => c.startsWith(prefix)) || '';
+    const marginTopClass = getClassValue('margin-top-');
+    const marginBottomClass = getClassValue('margin-bottom-');
+    const marginTopValue = marginTopValues[marginTopClass] || -1;
+    const marginBottomValue = marginBottomValues[marginBottomClass] || -1;
+    
+    // Find initial indices for sliders
+    const topMarginIndex = topMarginOptions.indexOf(marginTopValue);
+    const bottomMarginIndex = bottomMarginOptions.indexOf(marginBottomValue);
+    
+    // Margin section with snap sliders
+    html += `<div style="border-bottom:1px solid #ddd;padding-bottom:10px;margin-bottom:10px;">
+      <div style="font-weight:bold;font-size:13px;margin-bottom:8px;">Margins</div>
+      
       <div class="property-group">
-        <div class="property-label">CSS Class</div>
-        <input type="text" class="property-input" id="row-css-class" value="${row.cssClass || ''}" placeholder="e.g., align-center" />
+      <div class="property-label">Top Margin: <span id="row-margin-top-value">${marginTopValue === -1 ? 'default' : marginTopValue + 'px'}</span></div>
+      <input type="range" class="property-input" id="row-margin-top" min="0" max="${topMarginOptions.length - 1}" value="${topMarginIndex >= 0 ? topMarginIndex : 0}" style="width:100%;cursor:pointer;" data-values='${JSON.stringify(topMarginOptions)}' />
       </div>
-      <button class="button tiny primary expanded" onclick="window.pageEditor.getPropertiesPanel().saveRowProperties('${rowId}')">
-        Apply Changes
-      </button>
-    `;
+      
+      <div class="property-group">
+      <div class="property-label">Bottom Margin: <span id="row-margin-bottom-value">${marginBottomValue}px</span></div>
+      <input type="range" class="property-input" id="row-margin-bottom" min="0" max="${bottomMarginOptions.length - 1}" value="${bottomMarginIndex >= 0 ? bottomMarginIndex : 0}" style="width:100%;cursor:pointer;" data-values='${JSON.stringify(bottomMarginOptions)}' />
+      </div>
+    </div>`;
+    
+    // CSS Class manual override
+    html += `<div class="property-group">
+      <div class="property-label">Additional CSS Classes</div>
+      <input type="text" class="property-input" id="row-css-class" value="" placeholder="e.g., align-center" />
+      <div style="font-size:12px;color:#666;margin-top:5px;">Any additional custom classes (space-separated)</div>
+    </div>`;
+    
+    // CSS preview
+    html += `<div class="property-group" style="background:#f5f5f5;padding:10px;border-radius:4px;margin:10px 0;">
+      <div style="font-weight:bold;font-size:12px;margin-bottom:5px;">Applied Classes</div>
+      <div id="row-css-preview" style="font-family:monospace;font-size:11px;word-break:break-all;color:#333;max-height:80px;overflow-y:auto;"></div>
+    </div>`;
+    
+    this.content.innerHTML = html;
+    
+    // Set up event listener for live preview
+    const marginTopSelect = document.getElementById('row-margin-top');
+    const marginBottomSelect = document.getElementById('row-margin-bottom');
+    const additionalClassesInput = document.getElementById('row-css-class');
+    const preview = document.getElementById('row-css-preview');
+    
+    // Helper to convert value to class
+    const valueToTopMarginClass = (val) => {
+      for (const [cls, v] of Object.entries(marginTopValues)) {
+        if (v === val) return cls;
+      }
+      return '';
+    };
+    
+    const valueToBottomMarginClass = (val) => {
+      for (const [cls, v] of Object.entries(marginBottomValues)) {
+        if (v === val) return cls;
+      }
+      return '';
+    };
+    
+    const updatePreview = () => {
+      // Get slider indices and convert to actual values
+      const topIndex = parseInt(marginTopSelect?.value || 0);
+      const bottomIndex = parseInt(marginBottomSelect?.value || 0);
+      const topMarginValues_list = JSON.parse(marginTopSelect?.getAttribute('data-values') || '[]');
+      const bottomMarginValues_list = JSON.parse(marginBottomSelect?.getAttribute('data-values') || '[]');
+      
+      const marginTopVal = topMarginValues_list[topIndex] || 0;
+      const marginBottomVal = bottomMarginValues_list[bottomIndex] || 0;
+      
+      const marginTop = valueToTopMarginClass(marginTopVal);
+      const marginBottom = valueToBottomMarginClass(marginBottomVal);
+      const additionalClasses = additionalClassesInput?.value.trim() || '';
+      const finalClasses = [marginTop, marginBottom, additionalClasses].filter(c => c).join(' ');
+      if (preview) {
+        preview.textContent = finalClasses || '(no classes applied)';
+      }
+      
+      // Update slider value displays
+      const topValueDisplay = document.getElementById('row-margin-top-value');
+      const bottomValueDisplay = document.getElementById('row-margin-bottom-value');
+      if (topValueDisplay) topValueDisplay.textContent = marginTopVal === -1 ? 'default' : marginTopVal + 'px';
+      if (bottomValueDisplay) bottomValueDisplay.textContent = marginBottomVal === -1 ? 'default' : marginBottomVal + 'px';
+      
+      // Save immediately to the data model
+      const finalClass = finalClasses || '';
+      if (this.editor && this.editor.getLayoutManager) {
+        this.editor.getLayoutManager().updateRowClass(rowId, finalClass);
+        const row = this.editor.getLayoutManager().getRow(rowId);
+        if (row && this.editor.getCanvasController) {
+          this.editor.getCanvasController().renderRow(rowId, row);
+        }
+        if (this.editor.saveToHistory) {
+          this.editor.saveToHistory();
+        }
+      }
+    };
+    
+    const self = this;
+    if (marginTopSelect) marginTopSelect.addEventListener('input', function() { updatePreview.call(self); });
+    if (marginBottomSelect) marginBottomSelect.addEventListener('input', function() { updatePreview.call(self); });
+    if (additionalClassesInput) additionalClassesInput.addEventListener('input', function() { updatePreview.call(self); });
+    updatePreview.call(this);
   }
   
   /**
@@ -73,16 +193,251 @@ class PropertiesPanel {
     const column = row.columns.find(c => c.id === columnId);
     if (!column) return;
     
-    this.content.innerHTML = `
-      <h6>Column Properties</h6>
+    // Parse current CSS classes
+    const cssClasses = (column.cssClass || '').split(' ').filter(c => c.trim());
+    
+    // Helper to get class
+    const getClassValue = (prefix) => cssClasses.find(c => c.startsWith(prefix)) || '';
+    
+    // Size options (small, medium, large)
+    const sizeOptions = [
+      '', 'small-12', 'small-11', 'small-10', 'small-9', 'small-8', 'small-7', 'small-6', 
+      'small-5', 'small-4', 'small-3', 'small-2', 'small-1'
+    ];
+    
+    const mediumOptions = [
+      '', 'medium-12', 'medium-11', 'medium-10', 'medium-9', 'medium-8', 'medium-7', 
+      'medium-6', 'medium-5', 'medium-4', 'medium-3', 'medium-2', 'medium-1'
+    ];
+    
+    const largeOptions = [
+      '', 'large-12', 'large-11', 'large-10', 'large-9', 'large-8', 'large-7',
+      'large-6', 'large-5', 'large-4', 'large-3', 'large-2', 'large-1'
+    ];
+    
+    const paddingOptions = [
+      { value: '', label: 'None' },
+      { value: 'padding-top-5', label: '5px' },
+      { value: 'padding-top-10', label: '10px' },
+      { value: 'padding-top-15', label: '15px' },
+      { value: 'padding-top-20', label: '20px' },
+      { value: 'padding-top-30', label: '30px' },
+      { value: 'padding-top-40', label: '40px' },
+      { value: 'padding-top-50', label: '50px' },
+      { value: 'padding-top-60', label: '60px' }
+    ];
+    
+    const paddingBottomOptions = [
+      { value: '', label: 'None' },
+      { value: 'padding-bottom-0', label: '0px' },
+      { value: 'padding-bottom-5', label: '5px' },
+      { value: 'padding-bottom-10', label: '10px' },
+      { value: 'padding-bottom-15', label: '15px' },
+      { value: 'padding-bottom-20', label: '20px' },
+      { value: 'padding-bottom-30', label: '30px' },
+      { value: 'padding-bottom-40', label: '40px' },
+      { value: 'padding-bottom-50', label: '50px' },
+      { value: 'padding-bottom-60', label: '60px' },
+      { value: 'padding-bottom-75', label: '75px' },
+      { value: 'padding-bottom-100', label: '100px' }
+    ];
+    
+    const calloutOptions = [
+      { value: '', label: 'None' },
+      { value: 'callout', label: 'Callout (default)' },
+      { value: 'callout box', label: 'Callout with box' },
+      { value: 'callout no-box', label: 'Callout no-box' },
+      { value: 'callout no-border', label: 'Callout no-border' },
+      { value: 'callout border-none', label: 'Callout border-none' },
+      { value: 'callout radius', label: 'Callout radius' },
+      { value: 'callout round', label: 'Callout round' }
+    ];
+    
+    const alignmentOptions = [
+      { value: '', label: 'Default' },
+      { value: 'align-center', label: 'Center' },
+      { value: 'align-left', label: 'Left' },
+      { value: 'align-right', label: 'Right' },
+      { value: 'align-justify', label: 'Justify' }
+    ];
+    
+    const textOptions = [
+      { value: '', label: 'None' },
+      { value: 'text-bold', label: 'Bold' },
+      { value: 'text-underline', label: 'Underline' },
+      { value: 'text-strike', label: 'Strikethrough' },
+      { value: 'text-no-wrap', label: 'No Wrap' },
+      { value: 'text-middle', label: 'Middle' }
+    ];
+    
+    // Get current values
+    const smallClass = getClassValue('small-') || '';
+    const mediumClass = getClassValue('medium-');
+    const largeClass = getClassValue('large-');
+    const paddingTopClass = getClassValue('padding-top-');
+    const paddingBottomClass = getClassValue('padding-bottom-');
+    const calloutClass = getClassValue('callout');
+    const alignmentClass = getClassValue('align-');
+    const textClass = getClassValue('text-');
+    
+    // Calculate unhandled classes to add to custom CSS
+    const handledClasses = [smallClass, mediumClass, largeClass, paddingTopClass, paddingBottomClass, calloutClass, alignmentClass, textClass].filter(c => c);
+    const unhandledClasses = cssClasses.filter(c => !handledClasses.includes(c)).join(' ');
+    
+    let html = `<h6>Column Properties</h6>`;
+    
+    // Size section
+    html += `<div style="border-bottom:1px solid #ddd;padding-bottom:10px;margin-bottom:10px;">
+      <div style="font-weight:bold;font-size:13px;margin-bottom:8px;">Responsive Sizes</div>
+      
       <div class="property-group">
-        <div class="property-label">CSS Class</div>
-        <input type="text" class="property-input" id="column-css-class" value="${column.cssClass || ''}" placeholder="e.g., small-12 medium-6" />
-      </div>
-      <button class="button tiny primary expanded" onclick="window.pageEditor.getPropertiesPanel().saveColumnProperties('${rowId}', '${columnId}')">
-        Apply Changes
-      </button>
-    `;
+        <div class="property-label">Small (Phone)</div>
+        <select class="property-input" id="column-size-small">`;
+    for (const size of sizeOptions) {
+      const selected = smallClass === size ? 'selected' : '';
+      const label = size || '(none)';
+      html += `<option value="${size}" ${selected}>${label}</option>`;
+    }
+    html += `</select></div>
+      
+      <div class="property-group">
+        <div class="property-label">Medium (Tablet)</div>
+        <select class="property-input" id="column-size-medium">`;
+    for (const size of mediumOptions) {
+      const selected = mediumClass === size ? 'selected' : '';
+      html += `<option value="${size}" ${selected}>${size || '(same as small)'}</option>`;
+    }
+    html += `</select></div>
+      
+      <div class="property-group">
+        <div class="property-label">Large (Desktop)</div>
+        <select class="property-input" id="column-size-large">`;
+    for (const size of largeOptions) {
+      const selected = largeClass === size ? 'selected' : '';
+      html += `<option value="${size}" ${selected}>${size || '(same as medium)'}</option>`;
+    }
+    html += `</select></div>
+    </div>`;
+    
+    // Spacing section
+    html += `<div style="border-bottom:1px solid #ddd;padding-bottom:10px;margin-bottom:10px;">
+      <div style="font-weight:bold;font-size:13px;margin-bottom:8px;">Spacing (Padding)</div>
+      
+      <div class="property-group">
+        <div class="property-label">Top Padding</div>
+        <select class="property-input" id="column-padding-top">`;
+    for (const option of paddingOptions) {
+      const selected = paddingTopClass === option.value ? 'selected' : '';
+      html += `<option value="${option.value}" ${selected}>${option.label}</option>`;
+    }
+    html += `</select></div>
+      
+      <div class="property-group">
+        <div class="property-label">Bottom Padding</div>
+        <select class="property-input" id="column-padding-bottom">`;
+    for (const option of paddingBottomOptions) {
+      const selected = paddingBottomClass === option.value ? 'selected' : '';
+      html += `<option value="${option.value}" ${selected}>${option.label}</option>`;
+    }
+    html += `</select></div>
+    </div>`;
+    
+    // Callout/Box section
+    html += `<div style="border-bottom:1px solid #ddd;padding-bottom:10px;margin-bottom:10px;">
+      <div class="property-group">
+        <div class="property-label">Box Style</div>
+        <select class="property-input" id="column-callout">`;
+    for (const option of calloutOptions) {
+      // Default to 'none' if no callout class exists
+      const selected = (calloutClass === option.value || (!calloutClass && option.value === '')) ? 'selected' : '';
+      html += `<option value="${option.value}" ${selected}>${option.label}</option>`;
+    }
+    html += `</select></div>
+    </div>`;
+    
+    // Alignment section
+    html += `<div style="border-bottom:1px solid #ddd;padding-bottom:10px;margin-bottom:10px;">
+      <div class="property-group">
+        <div class="property-label">Alignment</div>
+        <select class="property-input" id="column-alignment">`;
+    for (const option of alignmentOptions) {
+      const selected = alignmentClass === option.value ? 'selected' : '';
+      html += `<option value="${option.value}" ${selected}>${option.label}</option>`;
+    }
+    html += `</select></div>
+    </div>`;
+    
+    // Text section
+    html += `<div style="border-bottom:1px solid #ddd;padding-bottom:10px;margin-bottom:10px;">
+      <div class="property-group">
+        <div class="property-label">Text Style</div>
+        <select class="property-input" id="column-text">`;
+    for (const option of textOptions) {
+      const selected = textClass === option.value ? 'selected' : '';
+      html += `<option value="${option.value}" ${selected}>${option.label}</option>`;
+    }
+    html += `</select></div>
+    </div>`;
+    
+    // Custom CSS
+    html += `<div class="property-group">
+      <div class="property-label">Additional CSS Classes</div>
+      <input type="text" class="property-input" id="column-css-custom" value="${unhandledClasses}" placeholder="Custom classes" />
+      <div style="font-size:12px;color:#666;margin-top:5px;">Any additional custom classes (space-separated)</div>
+    </div>`;
+    
+    // CSS preview
+    html += `<div class="property-group" style="background:#f5f5f5;padding:10px;border-radius:4px;margin:10px 0;">
+      <div style="font-weight:bold;font-size:12px;margin-bottom:5px;">Applied Classes</div>
+      <div id="column-css-preview" style="font-family:monospace;font-size:11px;word-break:break-all;color:#333;max-height:100px;overflow-y:auto;"></div>
+    </div>`;
+    
+    html += `<button class="button tiny primary expanded" onclick="window.pageEditor.getPropertiesPanel().saveColumnProperties('${rowId}', '${columnId}')">
+      Apply Changes
+    </button>`;
+    
+    this.content.innerHTML = html;
+    
+    // Set up event listener for live preview
+    const self = this;
+    const updatePreview = () => {
+      const small = document.getElementById('column-size-small')?.value || '';
+      const medium = document.getElementById('column-size-medium')?.value || '';
+      const large = document.getElementById('column-size-large')?.value || '';
+      const paddingTop = document.getElementById('column-padding-top')?.value || '';
+      const paddingBottom = document.getElementById('column-padding-bottom')?.value || '';
+      const callout = document.getElementById('column-callout')?.value || '';
+      const alignment = document.getElementById('column-alignment')?.value || '';
+      const text = document.getElementById('column-text')?.value || '';
+      const custom = document.getElementById('column-css-custom')?.value.trim() || '';
+      
+      const classes = [small, medium, large, paddingTop, paddingBottom, callout, alignment, text, custom].filter(c => c);
+      const preview = document.getElementById('column-css-preview');
+      if (preview) {
+        preview.textContent = classes.length > 0 ? classes.join(' ') : '(no classes applied)';
+      }
+      
+      // Save to data model
+      if (self.editor && self.editor.getLayoutManager) {
+        self.editor.getLayoutManager().updateColumnClass(rowId, columnId, classes.join(' '));
+        const row = self.editor.getLayoutManager().getRow(rowId);
+        if (row && self.editor.getCanvasController) {
+          self.editor.getCanvasController().renderRow(rowId, row);
+        }
+        if (self.editor.saveToHistory) {
+          self.editor.saveToHistory();
+        }
+      }
+    };
+    
+    ['column-size-small', 'column-size-medium', 'column-size-large', 'column-padding-top', 'column-padding-bottom', 'column-callout', 'column-alignment', 'column-text', 'column-css-custom'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('change', function() { updatePreview(); });
+        el.addEventListener('input', function() { updatePreview(); });
+      }
+    });
+    updatePreview();
   }
   
   /**
@@ -205,9 +560,15 @@ class PropertiesPanel {
    * Save row properties
    */
   saveRowProperties(rowId) {
-    const cssClass = document.getElementById('row-css-class').value;
+    const marginTopSelect = document.getElementById('row-margin-top');
+    const marginBottomSelect = document.getElementById('row-margin-bottom');
+    const additionalClasses = document.getElementById('row-css-class')?.value.trim() || '';
     
-    this.editor.getLayoutManager().updateRowClass(rowId, cssClass);
+    const marginTop = marginTopSelect?.value || '';
+    const marginBottom = marginBottomSelect?.value || '';
+    const finalClasses = [marginTop, marginBottom, additionalClasses].filter(c => c).join(' ');
+    
+    this.editor.getLayoutManager().updateRowClass(rowId, finalClasses);
     
     // Re-render the row
     const row = this.editor.getLayoutManager().getRow(rowId);
@@ -223,9 +584,20 @@ class PropertiesPanel {
    * Save column properties
    */
   saveColumnProperties(rowId, columnId) {
-    const cssClass = document.getElementById('column-css-class').value;
+    const small = document.getElementById('column-size-small')?.value || '';
+    const medium = document.getElementById('column-size-medium')?.value || '';
+    const large = document.getElementById('column-size-large')?.value || '';
+    const paddingTop = document.getElementById('column-padding-top')?.value || '';
+    const paddingBottom = document.getElementById('column-padding-bottom')?.value || '';
+    const callout = document.getElementById('column-callout')?.value || '';
+    const alignment = document.getElementById('column-alignment')?.value || '';
+    const text = document.getElementById('column-text')?.value || '';
+    const custom = document.getElementById('column-css-custom')?.value.trim() || '';
     
-    this.editor.getLayoutManager().updateColumnClass(rowId, columnId, cssClass);
+    const classes = [small, medium, large, paddingTop, paddingBottom, callout, alignment, text, custom].filter(c => c);
+    const finalCssClass = classes.join(' ');
+    
+    this.editor.getLayoutManager().updateColumnClass(rowId, columnId, finalCssClass);
     
     // Re-render the row
     const row = this.editor.getLayoutManager().getRow(rowId);
