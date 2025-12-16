@@ -207,7 +207,7 @@
   }
   
   .property-group {
-    margin-bottom: 20px;
+    margin-bottom: 10px;
   }
   
   .property-label {
