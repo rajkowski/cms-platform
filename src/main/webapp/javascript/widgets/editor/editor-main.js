@@ -180,6 +180,7 @@ class PageEditor {
       
     } catch (error) {
       console.error('Error adding row:', error);
+      alert('Error adding row: ' + error.message);
     }
   }
 
@@ -189,10 +190,6 @@ class PageEditor {
    */
   showColumnLayoutPicker() {
     return new Promise((resolve) => {
-      const modal = document.getElementById('layout-picker-modal');
-      const optionsContainer = document.getElementById('layout-picker-options');
-      const cancelBtn = document.getElementById('cancel-layout-picker');
-
       // Define layouts
       const layouts = [
         { name: '1 Column', classes: ['small-12'] },
@@ -205,31 +202,80 @@ class PageEditor {
         { name: '75 / 25', classes: ['small-9', 'small-3'] }
       ];
 
-      // Cleanup function to close modal and remove listeners
-      const cleanup = () => {
-        modal.style.display = 'none';
-        document.removeEventListener('keydown', escHandler);
-      };
+      // Create modal overlay
+      const modalOverlay = document.createElement('div');
+      modalOverlay.className = 'modal-overlay active';
+      modalOverlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        z-index: 10000;
+        justify-content: center;
+        align-items: center;
+      `;
 
-      // Handler for the Escape key
-      const escHandler = (e) => {
-        if (e.key === 'Escape') {
-          cleanup();
-          resolve(null);
-        }
-      };
+      // Create modal content
+      const modalContent = document.createElement('div');
+      modalContent.className = 'modal-content';
+      modalContent.style.cssText = `
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        width: 90%;
+        max-width: 600px;
+      `;
 
-      // Populate options
-      optionsContainer.innerHTML = '';
+      // Add title
+      const title = document.createElement('h4');
+      title.textContent = 'Select Column Layout';
+      title.style.marginTop = '0';
+      modalContent.appendChild(title);
+
+      // Create layout picker container
+      const layoutPicker = document.createElement('div');
+      layoutPicker.className = 'layout-picker';
+      layoutPicker.style.cssText = `
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 20px;
+      `;
+
+      // Add layout options
       layouts.forEach(layout => {
         const option = document.createElement('div');
         option.className = 'layout-option';
+        option.style.cssText = `
+          border: 2px solid #dee2e6;
+          border-radius: 4px;
+          padding: 15px;
+          cursor: pointer;
+          transition: all 0.2s;
+          text-align: center;
+        `;
 
+        // Create preview
         const preview = document.createElement('div');
         preview.className = 'layout-preview';
+        preview.style.cssText = `
+          display: flex;
+          gap: 5px;
+          height: 40px;
+          margin-bottom: 10px;
+        `;
+
         layout.classes.forEach(cssClass => {
           const col = document.createElement('div');
           col.className = 'layout-preview-col';
+          col.style.cssText = `
+            background: #ced4da;
+            border-radius: 2px;
+            flex-grow: 1;
+          `;
           // Set flex-basis based on column class
           const match = cssClass.match(/small-(\d+)/);
           if (match) {
@@ -239,38 +285,84 @@ class PageEditor {
           preview.appendChild(col);
         });
 
-        const name = document.createElement('div');
-        name.textContent = layout.name;
-        name.style.fontSize = '11px';
-        name.style.color = '#6c757d';
+        // Create label
+        const label = document.createElement('div');
+        label.textContent = layout.name;
+        label.style.cssText = `
+          font-size: 11px;
+          color: #6c757d;
+          text-align: center;
+        `;
 
         option.appendChild(preview);
-        option.appendChild(name);
+        option.appendChild(label);
 
+        // Add hover effect
+        option.addEventListener('mouseenter', () => {
+          option.style.borderColor = '#007bff';
+          option.style.background = '#f8f9fa';
+        });
+
+        option.addEventListener('mouseleave', () => {
+          option.style.borderColor = '#dee2e6';
+          option.style.background = '';
+        });
+
+        // Handle selection
         option.addEventListener('click', () => {
-          cleanup();
+          document.body.removeChild(modalOverlay);
+          document.removeEventListener('keydown', escHandler);
           resolve(layout.classes);
         });
 
-        optionsContainer.appendChild(option);
+        layoutPicker.appendChild(option);
       });
 
-      // Show modal and add listeners
-      modal.style.display = 'flex';
-      document.addEventListener('keydown', escHandler);
+      modalContent.appendChild(layoutPicker);
 
-      // Handle cancellation
+      // Add cancel button
+      const buttonContainer = document.createElement('div');
+      buttonContainer.style.cssText = `
+        text-align: right;
+        margin-top: 20px;
+      `;
+
+      const cancelBtn = document.createElement('button');
+      cancelBtn.textContent = 'Cancel';
+      cancelBtn.className = 'button tiny secondary';
+      cancelBtn.style.cssText = `
+        padding: 8px 15px;
+      `;
+
       const cancelHandler = () => {
-        cleanup();
+        document.body.removeChild(modalOverlay);
+        document.removeEventListener('keydown', escHandler);
         resolve(null);
       };
 
-      cancelBtn.onclick = cancelHandler;
-      modal.onclick = (e) => {
-        if (e.target === modal) {
+      cancelBtn.addEventListener('click', cancelHandler);
+      buttonContainer.appendChild(cancelBtn);
+      modalContent.appendChild(buttonContainer);
+
+      modalOverlay.appendChild(modalContent);
+
+      // Handler for the Escape key
+      const escHandler = (e) => {
+        if (e.key === 'Escape') {
           cancelHandler();
         }
       };
+
+      // Close on overlay click
+      modalOverlay.addEventListener('click', (e) => {
+        if (e.target === modalOverlay) {
+          cancelHandler();
+        }
+      });
+
+      // Add to DOM and show
+      document.body.appendChild(modalOverlay);
+      document.addEventListener('keydown', escHandler);
     });
   }  /**
    * Load existing layout from XML
