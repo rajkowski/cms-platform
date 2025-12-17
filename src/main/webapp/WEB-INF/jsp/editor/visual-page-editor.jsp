@@ -568,54 +568,47 @@
     color: #6c757d;
   }
 
-  /* Preview Modal */
-  #preview-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
+  /* Preview Toggle */
+  #preview-container {
+    display: none;
+    flex: 1;
+    background: #ffffff;
+    overflow-y: auto;
+    padding: 20px;
+    position: relative;
+  }
+
+  #preview-container.active {
+    display: block !important;
+  }
+
+  #editor-canvas.hidden {
+    display: none;
+  }
+
+  #preview-loading {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6c757d;
+  }
+
+  #preview-error {
+    padding: 20px;
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+    border-radius: 4px;
+  }
+
+  #preview-iframe {
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.5);
+    border: none;
     display: none;
-    z-index: 10000;
-    justify-content: center;
-    align-items: center;
   }
 
-  #preview-modal.active {
-    display: flex;
-  }
-
-  #preview-modal-content {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 5px 25px rgba(0,0,0,0.3);
-    width: 90%;
-    height: 90%;
-    max-width: 1200px;
-    display: flex;
-    flex-direction: column;
-  }
-
-  #preview-modal-header {
-    padding: 15px 20px;
-    border-bottom: 1px solid #dee2e6;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-shrink: 0;
-  }
-
-  #preview-modal-header h4 {
-    margin: 0;
-    font-size: 16px;
-  }
-
-  #preview-modal-body {
-    flex: 1;
-    overflow: auto;
-    background: white;
-    padding-top: 10px;
+  #preview-iframe.active {
+    display: block !important;
   }
 
   #preview-loading {
@@ -632,6 +625,49 @@
     color: #721c24;
     margin: 20px;
   }
+
+  /* Toggle Switch Styles */
+  #toggle-preview-btn {
+    border: 2px solid #dee2e6;
+    padding: 6px 12px;
+    /* border-radius: 4px; */
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    position: relative;
+  }
+
+  #toggle-preview-btn:hover {
+    border-color: #adb5bd;
+  }
+
+  #toggle-preview-btn::after {
+    content: '';
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #dee2e6;
+    transition: all 0.3s ease;
+  }
+
+  #toggle-preview-btn.active {
+    border-color: #17a2b8;
+    background-color: #32676f;
+  }
+
+  #toggle-preview-btn.active:hover {
+    border-color: #138496;
+  }
+
+  #toggle-preview-btn.active::after {
+    background: #17a2b8;
+    box-shadow: 0 0 8px rgba(23, 162, 184, 0.5);
+  }
 </style>
 <link href="${ctx}/css/platform.css" rel="stylesheet">
 
@@ -644,15 +680,15 @@
   <!-- Toolbar -->
   <div id="editor-toolbar">
     <div>
-      <button id="add-row-btn" class="button tiny primary no-gap"><i class="${font:far()} fa-plus"></i> Add Row</button>
-      <button id="undo-btn" class="button tiny secondary no-gap" disabled><i class="${font:far()} fa-undo"></i> Undo</button>
-      <button id="redo-btn" class="button tiny secondary no-gap" disabled><i class="${font:far()} fa-redo"></i> Redo</button>
-      <button id="pre-designed-page-btn" class="button tiny secondary no-gap"><i class="${font:far()} fa-magic"></i> Pre-Designed Page</button>
+      <button id="add-row-btn" class="button tiny primary no-gap radius"><i class="${font:far()} fa-plus"></i> Add Row</button>
+      <button id="undo-btn" class="button tiny secondary no-gap radius" disabled><i class="${font:far()} fa-undo"></i> Undo</button>
+      <button id="redo-btn" class="button tiny secondary no-gap radius" disabled><i class="${font:far()} fa-redo"></i> Redo</button>
+      <button id="pre-designed-page-btn" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-magic"></i> Pre-Designed Page</button>
     </div>
     <div>
-      <button id="toggle-preview-btn" class="button tiny secondary no-gap"><i class="${font:far()} fa-eye"></i> Preview</button>
-      <button id="preview-btn" class="button tiny secondary no-gap"><i class="${font:far()} fa-database"></i> Data</button>
-      <button id="save-btn" class="button tiny success no-gap"><i class="${font:far()} fa-save"></i> Save</button>
+      <button id="toggle-preview-btn" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-eye"></i> Preview</button>
+      <button id="preview-btn" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-database"></i> Data</button>
+      <button id="save-btn" class="button tiny success no-gap radius"><i class="${font:far()} fa-save"></i> Save</button>
       <c:choose>
         <c:when test="${!empty returnPage}">
           <a href="${returnPage}" class="button tiny secondary no-gap">Cancel</a>
@@ -768,6 +804,15 @@
       </div>
     </div>
     
+    <!-- Preview Container -->
+    <div id="preview-container">
+      <div id="preview-loading" style="display: none;">
+        <i class="${font:far()} fa-spinner fa-spin"></i> Loading preview...
+      </div>
+      <div id="preview-error" style="display: none;"></div>
+      <iframe id="preview-iframe"></iframe>
+    </div>
+    
     <!-- Editor Canvas -->
     <div id="editor-canvas">
       <c:choose>
@@ -878,23 +923,6 @@
   <input type="hidden" id="designer-data" name="designerData" value=""/>
 </form>
 
-<!-- Preview Modal -->
-<div id="preview-modal">
-  <div id="preview-modal-content">
-    <div id="preview-modal-header">
-      <h4>Page Preview</h4>
-      <button id="close-preview-modal-btn" class="button tiny secondary no-gap"><i class="${font:far()} fa-times"></i> Close</button>
-    </div>
-    <div id="preview-modal-body">
-      <div id="preview-loading" style="display: none;">
-        <i class="${font:far()} fa-spinner fa-spin"></i> Loading preview...
-      </div>
-      <div id="preview-error" style="display: none;"></div>
-      <iframe id="preview-iframe" style="width: 100%; height: 100%; border: none; display: none;"></iframe>
-    </div>
-  </div>
-</div>
-
 <!-- Store existing XML safely for JS -->
 <script id="existing-xml-data" type="text/plain"><c:out value="${webPage.pageXml}" escapeXml="true"/></script>
 
@@ -926,6 +954,96 @@
     };
     
     window.pageEditor = new PageEditor(editorConfig);
+    
+    // Set up preview update listener BEFORE initializing the page editor
+    let isPreviewMode = false;
+    const togglePreviewBtn = document.getElementById('toggle-preview-btn');
+    const previewContainer = document.getElementById('preview-container');
+    const editorCanvas = document.getElementById('editor-canvas');
+    const previewIframe = document.getElementById('preview-iframe');
+    const previewLoading = document.getElementById('preview-loading');
+    const previewError = document.getElementById('preview-error');
+
+    // Function to refresh the preview
+    function refreshPreview() {
+      previewIframe.style.display = 'none';
+      previewLoading.style.display = 'block';
+      previewError.style.display = 'none';
+      
+      // Get the current editor data as XML
+      const layoutManager = window.pageEditor.getLayoutManager();
+      const designerData = layoutManager.toXML();
+      
+      // Get the selected page link from the pages tab manager
+      const webPageLink = window.pageEditor.pagesTabManager.getSelectedPageLink();
+      
+      // Send to server for rendering
+      const formData = new FormData();
+      // formData.append('widget', '<c:out value="${widgetContext.uniqueId}" />');
+      formData.append('token', '<c:out value="${userSession.formToken}" />');
+      formData.append('webPageLink', webPageLink);
+      formData.append('designerData', designerData);
+      formData.append('containerPreview', 'true');
+      
+      fetch(webPageLink, {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to load preview: ' + response.statusText);
+        }
+        return response.text();
+      })
+      .then(html => {
+        previewLoading.style.display = 'none';
+        // Write the complete HTML response to the iframe
+        const iframeDoc = previewIframe.contentDocument || previewIframe.contentWindow.document;
+        iframeDoc.open();
+        iframeDoc.write(html);
+        iframeDoc.close();
+        previewIframe.style.display = 'block';
+      })
+      .catch(error => {
+        previewLoading.style.display = 'none';
+        previewError.style.display = 'block';
+        previewError.textContent = 'Error loading preview: ' + error.message;
+      });
+    }
+
+    // Listen for page changes
+    document.addEventListener('pageChanged', function(e) {
+      console.log('pageChanged event fired, isPreviewMode:', isPreviewMode);
+      // If in preview mode, refresh the preview when page is switched
+      if (isPreviewMode) {
+        console.log('Refreshing preview due to page change');
+        // Add a small delay to ensure the layout is fully processed
+        setTimeout(() => {
+          refreshPreview();
+        }, 100);
+      }
+    });
+
+    togglePreviewBtn.addEventListener('click', function() {
+      isPreviewMode = !isPreviewMode;
+      
+      if (isPreviewMode) {
+        // Switch to preview mode
+        editorCanvas.classList.add('hidden');
+        previewContainer.classList.add('active');
+        togglePreviewBtn.classList.add('active');
+        
+        // Load preview
+        refreshPreview();
+      } else {
+        // Switch back to editor mode
+        editorCanvas.classList.remove('hidden');
+        previewContainer.classList.remove('active');
+        togglePreviewBtn.classList.remove('active');
+      }
+    });
+
+    // Now initialize the page editor
     window.pageEditor.init();
 
     // Helper function to close modal
@@ -1055,71 +1173,5 @@
     
     // Recalculate on window resize
     window.addEventListener('resize', calculateContainerHeight);
-
-    // Preview Mode Toggle
-    const togglePreviewBtn = document.getElementById('toggle-preview-btn');
-    const closePreviewModalBtn = document.getElementById('close-preview-modal-btn');
-    const previewModal = document.getElementById('preview-modal');
-    const previewIframe = document.getElementById('preview-iframe');
-    const previewLoading = document.getElementById('preview-loading');
-    const previewError = document.getElementById('preview-error');
-
-    togglePreviewBtn.addEventListener('click', function() {
-      previewModal.classList.add('active');
-      previewIframe.style.display = 'none';
-      previewLoading.style.display = 'block';
-      previewError.style.display = 'none';
-      
-      // Get the current editor data as XML
-      const layoutManager = window.pageEditor.getLayoutManager();
-      const designerData = layoutManager.toXML();
-      
-      // Get the selected page link from the pages tab manager
-      const webPageLink = window.pageEditor.pagesTabManager.getSelectedPageLink();
-      
-      // Send to server for rendering
-      const formData = new FormData();
-      // formData.append('widget', '<c:out value="${widgetContext.uniqueId}" />');
-      formData.append('token', '<c:out value="${userSession.formToken}" />');
-      formData.append('webPageLink', webPageLink);
-      formData.append('designerData', designerData);
-      formData.append('containerPreview', 'true');
-      
-      fetch(webPageLink, {
-        method: 'POST',
-        body: formData
-      })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Failed to load preview: ' + response.statusText);
-        }
-        return response.text();
-      })
-      .then(html => {
-        previewLoading.style.display = 'none';
-        // Write the complete HTML response to the iframe
-        const iframeDoc = previewIframe.contentDocument || previewIframe.contentWindow.document;
-        iframeDoc.open();
-        iframeDoc.write(html);
-        iframeDoc.close();
-        previewIframe.style.display = 'block';
-      })
-      .catch(error => {
-        previewLoading.style.display = 'none';
-        previewError.style.display = 'block';
-        previewError.textContent = 'Error loading preview: ' + error.message;
-      });
-    });
-
-    closePreviewModalBtn.addEventListener('click', function() {
-      previewModal.classList.remove('active');
-    });
-
-    // Close preview on ESC key
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape' && previewModal.classList.contains('active')) {
-        previewModal.classList.remove('active');
-      }
-    });
   });
 </script>

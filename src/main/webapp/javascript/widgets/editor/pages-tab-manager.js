@@ -224,6 +224,9 @@ class PagesTabManager {
           // Set baseline for dirty detection
           this.pageEditor.setSavedState();
 
+          // Dispatch a custom event to notify that the page has been switched
+          document.dispatchEvent(new CustomEvent('pageChanged', { detail: { pageLink } }));
+
           console.log('Page content loaded successfully');
         } else {
           throw new Error('No page content returned');
