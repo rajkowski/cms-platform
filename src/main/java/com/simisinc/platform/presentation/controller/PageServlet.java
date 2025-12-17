@@ -181,6 +181,118 @@ public class PageServlet extends HttpServlet {
     ConvertUtils.register(converter, Timestamp.class);
   }
 
+  /**
+   * Handles preview requests from the visual page editor
+   * Renders the page using unsaved designer data from the editor
+   */
+  private void handlePreviewRequest(HttpServletRequest request, HttpServletResponse response,
+      PageRequest previewPageRequest, UserSession userSession) throws Exception {
+
+    // Only admins and content managers can use preview
+    if (!userSession.hasRole("admin") && !userSession.hasRole("content-manager")) {
+      response.sendError(HttpServletResponse.SC_FORBIDDEN);
+      return;
+    }
+
+    String designerData = request.getParameter("designerData");
+    if (StringUtils.isBlank(designerData)) {
+      response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+      return;
+    }
+
+    // This is a preview request with unsaved designer data
+    PageRequest pageRequest = new PageRequest("GET",
+        previewPageRequest.getScheme(),
+        previewPageRequest.getServerName(),
+        previewPageRequest.getPort(),
+        previewPageRequest.getContextPath(),
+        previewPageRequest.getUri(),
+        previewPageRequest.getQueryString(),
+        previewPageRequest.isSecure(),
+        previewPageRequest.getRemoteAddr());
+    pageRequest.setParameterMap(request.getParameterMap());
+
+    LOG.debug("Processing preview request for: " + pageRequest.getPagePath());
+
+    try {
+      // See if there's an existing web page
+      WebPage currentWebPage = LoadWebPageCommand.loadByLink(pageRequest.getPagePath());
+
+      // Create a temporary web page for the preview
+      WebPage webPage = new WebPage();
+      webPage.setTitle(currentWebPage != null ? currentWebPage.getTitle() : "Preview Page");
+      webPage.setLink(pageRequest.getPagePath());
+      webPage.setPageXml(designerData);
+
+      // Create the page design from the XML
+      Page pageRef = XMLPageFactory.createPage(webPage.getTitle(), webPage, WebPageXmlLayoutCommand.getWidgetLibrary());
+      if (pageRef == null) {
+        response.getWriter().print("<p>Error: Unable to render preview</p>");
+        return;
+      }
+
+      // Load properties needed for rendering
+      Map<String, String> sitePropertyMap = LoadSitePropertyCommand.loadAsMap("site");
+      Map<String, String> themePropertyMap = LoadSitePropertyCommand.loadAsMap("theme");
+
+      // Create a context for processing the widgets
+      ControllerSession controllerSession = (ControllerSession) request.getSession()
+          .getAttribute(SessionConstants.CONTROLLER);
+      URL applicationUrl = request.getServletContext().getResource("/");
+      WebContainerContext webContainerContext = new WebContainerContext(applicationUrl, pageRequest, request,
+          response, controllerSession, widgetInstances, webPackageList, webPage, pageRef);
+
+      // Prepare core data
+      Map<String, String> coreData = new HashMap<>();
+      coreData.put("userId", String.valueOf(userSession.getUserId()));
+
+      // Create page render info
+      PageRenderInfo pageRenderInfo = new PageRenderInfo(pageRef, pageRequest.getPagePath());
+
+      // Process and render the widgets
+      PageResponse pageResponse = WebContainerCommand.processWidgets(webContainerContext, pageRef.getSections(),
+          pageRenderInfo, coreData, userSession, themePropertyMap, request);
+
+      if (pageResponse.isHandled()) {
+        // The widget processor handled the response
+        return;
+      }
+
+      // Set up request attributes for the JSP
+      request.setAttribute(CONTEXT_PATH, pageRequest.getContextPath());
+      request.setAttribute(PAGE_RENDER_INFO, pageRenderInfo);
+      request.setAttribute("sitePropertyMap", sitePropertyMap);
+
+      // Determine if there is a global custom stylesheet
+      Stylesheet globalStylesheet = LoadStylesheetCommand.loadStylesheetByWebPageId(-1);
+      if (globalStylesheet != null) {
+        request.setAttribute("includeGlobalStylesheet", "true");
+        request.setAttribute("includeGlobalStylesheetLastModified", globalStylesheet.getModified().getTime());
+      }
+      // Determine if the current webPage has an additional custom stylesheet
+      if (webPage != null) {
+        Stylesheet pageStylesheet = LoadStylesheetCommand.loadStylesheetByWebPageId(webPage.getId());
+        if (pageStylesheet != null) {
+          request.setAttribute("includeStylesheet", pageStylesheet.getWebPageId());
+          request.setAttribute("includeStylesheetLastModified", pageStylesheet.getModified().getTime());
+        }
+      }
+
+      // Set attributes for the layout JSP
+      request.setAttribute(RequestConstants.WEB_PACKAGE_LIST, webPackageList);
+
+      // For embedded mobile and API content
+      // request.setAttribute(PAGE_BODY, "/WEB-INF/jsp/container-layout.jsp");
+      // For web content with a header and footer
+      request.setAttribute(PAGE_BODY, "/WEB-INF/jsp/layout.jsp");
+      request.getServletContext().getRequestDispatcher("/WEB-INF/jsp/main.jsp").forward(request, response);
+
+    } catch (Exception e) {
+      LOG.error("Error processing preview request: " + e.getMessage(), e);
+      response.getWriter().print("<p>Error loading preview: " + e.getMessage() + "</p>");
+    }
+  }
+
   public void destroy() {
 
   }
@@ -231,6 +343,14 @@ public class PageServlet extends HttpServlet {
         response.setHeader("Pragma", "no-cache");
         response.setHeader("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate");
         response.setHeader("Expires", "-1");
+      }
+
+      // Handle preview requests from the visual page editor
+      String previewParam = request.getParameter("containerPreview");
+      if ("true".equals(previewParam)) {
+        // Forward to the preview handler
+        handlePreviewRequest(request, response, pageRequest, userSession);
+        return;
       }
 
       // Always access the WebPage record so it can be used downstream

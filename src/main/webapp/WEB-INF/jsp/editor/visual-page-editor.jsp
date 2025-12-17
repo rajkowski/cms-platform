@@ -567,6 +567,71 @@
     padding: 40px 20px;
     color: #6c757d;
   }
+
+  /* Preview Modal */
+  #preview-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    z-index: 10000;
+    justify-content: center;
+    align-items: center;
+  }
+
+  #preview-modal.active {
+    display: flex;
+  }
+
+  #preview-modal-content {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 5px 25px rgba(0,0,0,0.3);
+    width: 90%;
+    height: 90%;
+    max-width: 1200px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  #preview-modal-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  #preview-modal-header h4 {
+    margin: 0;
+    font-size: 16px;
+  }
+
+  #preview-modal-body {
+    flex: 1;
+    overflow: auto;
+    background: white;
+    padding-top: 10px;
+  }
+
+  #preview-loading {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6c757d;
+  }
+
+  #preview-error {
+    padding: 20px;
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    color: #721c24;
+    margin: 20px;
+  }
 </style>
 <link href="${ctx}/css/platform.css" rel="stylesheet">
 
@@ -585,7 +650,8 @@
       <button id="pre-designed-page-btn" class="button tiny secondary no-gap"><i class="${font:far()} fa-magic"></i> Pre-Designed Page</button>
     </div>
     <div>
-      <button id="preview-btn" class="button tiny secondary no-gap"><i class="${font:far()} fa-eye"></i> Raw Values</button>
+      <button id="toggle-preview-btn" class="button tiny secondary no-gap"><i class="${font:far()} fa-eye"></i> Preview</button>
+      <button id="preview-btn" class="button tiny secondary no-gap"><i class="${font:far()} fa-database"></i> Data</button>
       <button id="save-btn" class="button tiny success no-gap"><i class="${font:far()} fa-save"></i> Save</button>
       <c:choose>
         <c:when test="${!empty returnPage}">
@@ -812,15 +878,19 @@
   <input type="hidden" id="designer-data" name="designerData" value=""/>
 </form>
 
-<!-- Column Layout Picker Modal -->
-<div id="layout-picker-modal" class="modal-overlay">
-  <div class="modal-content">
-    <h4>Select a Column Layout</h4>
-    <div id="layout-picker-options" class="layout-picker">
-      <!-- Layout options will be dynamically inserted here -->
+<!-- Preview Modal -->
+<div id="preview-modal">
+  <div id="preview-modal-content">
+    <div id="preview-modal-header">
+      <h4>Page Preview</h4>
+      <button id="close-preview-modal-btn" class="button tiny secondary no-gap"><i class="${font:far()} fa-times"></i> Close</button>
     </div>
-    <div style="text-align: right; margin-top: 20px;">
-      <button id="cancel-layout-picker" class="button tiny secondary">Cancel</button>
+    <div id="preview-modal-body">
+      <div id="preview-loading" style="display: none;">
+        <i class="${font:far()} fa-spinner fa-spin"></i> Loading preview...
+      </div>
+      <div id="preview-error" style="display: none;"></div>
+      <iframe id="preview-iframe" style="width: 100%; height: 100%; border: none; display: none;"></iframe>
     </div>
   </div>
 </div>
@@ -985,5 +1055,71 @@
     
     // Recalculate on window resize
     window.addEventListener('resize', calculateContainerHeight);
+
+    // Preview Mode Toggle
+    const togglePreviewBtn = document.getElementById('toggle-preview-btn');
+    const closePreviewModalBtn = document.getElementById('close-preview-modal-btn');
+    const previewModal = document.getElementById('preview-modal');
+    const previewIframe = document.getElementById('preview-iframe');
+    const previewLoading = document.getElementById('preview-loading');
+    const previewError = document.getElementById('preview-error');
+
+    togglePreviewBtn.addEventListener('click', function() {
+      previewModal.classList.add('active');
+      previewIframe.style.display = 'none';
+      previewLoading.style.display = 'block';
+      previewError.style.display = 'none';
+      
+      // Get the current editor data as XML
+      const layoutManager = window.pageEditor.getLayoutManager();
+      const designerData = layoutManager.toXML();
+      
+      // Get the selected page link from the pages tab manager
+      const webPageLink = window.pageEditor.pagesTabManager.getSelectedPageLink();
+      
+      // Send to server for rendering
+      const formData = new FormData();
+      // formData.append('widget', '<c:out value="${widgetContext.uniqueId}" />');
+      formData.append('token', '<c:out value="${userSession.formToken}" />');
+      formData.append('webPageLink', webPageLink);
+      formData.append('designerData', designerData);
+      formData.append('containerPreview', 'true');
+      
+      fetch(webPageLink, {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to load preview: ' + response.statusText);
+        }
+        return response.text();
+      })
+      .then(html => {
+        previewLoading.style.display = 'none';
+        // Write the complete HTML response to the iframe
+        const iframeDoc = previewIframe.contentDocument || previewIframe.contentWindow.document;
+        iframeDoc.open();
+        iframeDoc.write(html);
+        iframeDoc.close();
+        previewIframe.style.display = 'block';
+      })
+      .catch(error => {
+        previewLoading.style.display = 'none';
+        previewError.style.display = 'block';
+        previewError.textContent = 'Error loading preview: ' + error.message;
+      });
+    });
+
+    closePreviewModalBtn.addEventListener('click', function() {
+      previewModal.classList.remove('active');
+    });
+
+    // Close preview on ESC key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && previewModal.classList.contains('active')) {
+        previewModal.classList.remove('active');
+      }
+    });
   });
 </script>
