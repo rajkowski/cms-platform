@@ -41,7 +41,7 @@
   
   #widget-palette {
     width: 250px;
-    background: #ffffff;
+    background: #f8f9fa;
     border-right: 1px solid #dee2e6;
     overflow-y: auto;
     padding: 15px;
@@ -458,6 +458,7 @@
     margin: 0;
     padding: 0;
     border-bottom: 1px solid #dee2e6;
+    background-color: #ffffff;
     flex-shrink: 0;
   }
 
@@ -656,8 +657,8 @@
   }
 
   #toggle-preview-btn.active {
-    border-color: #17a2b8;
-    background-color: #32676f;
+    border-color: #43AC6A;
+    background-color: #292929;
   }
 
   #toggle-preview-btn.active:hover {
@@ -665,7 +666,7 @@
   }
 
   #toggle-preview-btn.active::after {
-    background: #17a2b8;
+    background: #43AC6A;
     box-shadow: 0 0 8px rgba(23, 162, 184, 0.5);
   }
 </style>
