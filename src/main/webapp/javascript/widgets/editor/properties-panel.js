@@ -180,7 +180,9 @@ class PropertiesPanel {
     if (marginTopSelect) marginTopSelect.addEventListener('input', function() { updatePreview.call(self); });
     if (marginBottomSelect) marginBottomSelect.addEventListener('input', function() { updatePreview.call(self); });
     if (additionalClassesInput) additionalClassesInput.addEventListener('input', function() { updatePreview.call(self); });
-    updatePreview.call(this);
+    
+    // Highlight the row in the canvas
+    this.highlightRow(rowId);
   }
   
   /**
@@ -437,13 +439,18 @@ class PropertiesPanel {
         el.addEventListener('input', function() { updatePreview(); });
       }
     });
-    updatePreview();
+    
+    // Highlight the column in the canvas
+    this.highlightColumn(rowId, columnId);
   }
   
   /**
    * Show widget properties
    */
   showWidgetProperties(rowId, columnId, widgetId) {
+    // Clear any previously highlighted row or column
+    this.clearHighlight();
+    
     const widget = this.editor.getLayoutManager().getWidget(rowId, columnId, widgetId);
     if (!widget) return;
     
@@ -649,10 +656,51 @@ class PropertiesPanel {
   }
   
   /**
+   * Highlight a row in the canvas
+   */
+  highlightRow(rowId) {
+    // Remove any previous highlighting
+    this.clearHighlight();
+    
+    const rowElement = document.querySelector(`[data-row-id="${rowId}"]`);
+    if (rowElement) {
+      rowElement.classList.add('selected');
+      // Scroll into view
+      rowElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }
+  
+  /**
+   * Highlight a column in the canvas
+   */
+  highlightColumn(rowId, columnId) {
+    // Remove any previous highlighting
+    this.clearHighlight();
+    
+    const rowElement = document.querySelector(`[data-row-id="${rowId}"]`);
+    const columnElement = rowElement ? rowElement.querySelector(`[data-column-id="${columnId}"]`) : null;
+    if (columnElement) {
+      columnElement.classList.add('selected');
+      // Scroll into view
+      columnElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }
+  
+  /**
+   * Clear highlighting from all elements
+   */
+  clearHighlight() {
+    document.querySelectorAll('.canvas-row.selected, .canvas-column.selected').forEach(el => {
+      el.classList.remove('selected');
+    });
+  }
+  
+  /**
    * Clear properties panel
    */
   clear() {
     this.currentContext = null;
+    this.clearHighlight();
     this.content.innerHTML = '<p style="color: #6c757d; font-size: 14px;">Select an element to edit its properties</p>';
   }
   

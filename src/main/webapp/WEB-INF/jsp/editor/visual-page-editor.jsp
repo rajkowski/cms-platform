@@ -101,6 +101,12 @@
     background: #f8f9fa;
   }
   
+  .canvas-row.selected {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0,123,255,0.25);
+    background: #f0f7ff;
+  }
+  
   .canvas-row.drag-over {
     background: #e7f3ff;
     border-color: #007bff;
@@ -111,6 +117,17 @@
     padding: 10px;
     min-height: 60px;
     position: relative;
+  }
+  
+  .canvas-column:hover {
+    border-color: #007bff;
+    background: #f8f9fa;
+  }
+  
+  .canvas-column.selected {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0,123,255,0.25);
+    background: #f0f7ff;
   }
   
   .canvas-column.drag-over {
@@ -1015,6 +1032,10 @@
     // Listen for page changes
     document.addEventListener('pageChanged', function(e) {
       console.log('pageChanged event fired, isPreviewMode:', isPreviewMode);
+      // Reset the properties panel (unselect any previously selected widget)
+      if (window.pageEditor && window.pageEditor.getPropertiesPanel()) {
+        window.pageEditor.getPropertiesPanel().clear();
+      }
       // If in preview mode, refresh the preview when page is switched
       if (isPreviewMode) {
         console.log('Refreshing preview due to page change');
