@@ -37,6 +37,18 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 20px;
+  }
+
+  .toolbar-section {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .toolbar-section.middle {
+    flex-grow: 1;
+    justify-content: center;
   }
   
   #widget-palette {
@@ -697,14 +709,24 @@
   
   <!-- Toolbar -->
   <div id="editor-toolbar">
-    <div>
+    <!-- Left Section -->
+    <div class="toolbar-section left">
       <button id="add-row-btn" class="button tiny primary no-gap radius"><i class="${font:far()} fa-plus"></i> Add Row</button>
       <button id="undo-btn" class="button tiny secondary no-gap radius" disabled><i class="${font:far()} fa-undo"></i> Undo</button>
       <button id="redo-btn" class="button tiny secondary no-gap radius" disabled><i class="${font:far()} fa-redo"></i> Redo</button>
-      <button id="pre-designed-page-btn" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-magic"></i> Pre-Designed Page</button>
+      <button id="pre-designed-page-btn" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-magic"></i> Templates</button>
     </div>
-    <div>
+
+    <!-- Middle Section -->
+    <div class="toolbar-section middle">
       <button id="toggle-preview-btn" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-eye"></i> Preview</button>
+      <a id="web-page-info-btn" href="#" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-info-circle"></i> Page Info</a>
+      <a id="web-page-css-btn" href="#" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-palette"></i> CSS</a>
+      <a id="web-page-xml-editor-btn" href="#" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-code"></i> XML</a>
+    </div>
+
+    <!-- Right Section -->
+    <div class="toolbar-section right">
       <button id="preview-btn" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-database"></i> Data</button>
       <button id="save-btn" class="button tiny success no-gap radius"><i class="${font:far()} fa-save"></i> Save</button>
       <c:choose>
@@ -1036,6 +1058,7 @@
       if (window.pageEditor && window.pageEditor.getPropertiesPanel()) {
         window.pageEditor.getPropertiesPanel().clear();
       }
+      
       // If in preview mode, refresh the preview when page is switched
       if (isPreviewMode) {
         console.log('Refreshing preview due to page change');
@@ -1067,6 +1090,60 @@
 
     // Now initialize the page editor
     window.pageEditor.init();
+
+    // Set up middle section button handlers
+    const returnPage = '<c:out value="${returnPage}" />';
+    
+    // Web Page Info button
+    document.getElementById('web-page-info-btn').addEventListener('click', function(e) {
+      e.preventDefault();
+      // Reset the properties panel
+      if (window.pageEditor && window.pageEditor.getPropertiesPanel()) {
+        window.pageEditor.getPropertiesPanel().clear();
+      }
+      const webPageLink = window.pageEditor.pagesTabManager.getSelectedPageLink();
+      const link = '/admin/web-page?webPage=' + encodeURIComponent(webPageLink) + '&returnPage=' + encodeURIComponent(returnPage || webPageLink);
+      previewIframe.src = link;
+      previewIframe.classList.add('active');
+      document.getElementById('preview-container').classList.add('active');
+      editorCanvas.classList.add('hidden');
+      togglePreviewBtn.classList.add('active');
+      isPreviewMode = true;
+    });
+    
+    // Web Page XML Editor button
+    document.getElementById('web-page-xml-editor-btn').addEventListener('click', function(e) {
+      e.preventDefault();
+      // Reset the properties panel
+      if (window.pageEditor && window.pageEditor.getPropertiesPanel()) {
+        window.pageEditor.getPropertiesPanel().clear();
+      }
+      const webPageLink = window.pageEditor.pagesTabManager.getSelectedPageLink();
+      const link = '/admin/web-container-designer?name=header.default&returnPage=' + encodeURIComponent(returnPage || webPageLink);
+      previewIframe.src = link;
+      previewIframe.classList.add('active');
+      document.getElementById('preview-container').classList.add('active');
+      editorCanvas.classList.add('hidden');
+      togglePreviewBtn.classList.add('active');
+      isPreviewMode = true;
+    });
+    
+    // Web Page CSS button
+    document.getElementById('web-page-css-btn').addEventListener('click', function(e) {
+      e.preventDefault();
+      // Reset the properties panel
+      if (window.pageEditor && window.pageEditor.getPropertiesPanel()) {
+        window.pageEditor.getPropertiesPanel().clear();
+      }
+      const webPageLink = window.pageEditor.pagesTabManager.getSelectedPageLink();
+      const link = '/admin/css-editor?webPage=' + encodeURIComponent(webPageLink) + '&returnPage=' + encodeURIComponent(returnPage || webPageLink);
+      previewIframe.src = link;
+      previewIframe.classList.add('active');
+      document.getElementById('preview-container').classList.add('active');
+      editorCanvas.classList.add('hidden');
+      togglePreviewBtn.classList.add('active');
+      isPreviewMode = true;
+    });
 
     // Helper function to close modal
     function closePreDesignedPageModal() {
