@@ -283,7 +283,6 @@ public class PageServlet extends HttpServlet {
 
       // For embedded mobile and API content
       // request.setAttribute(PAGE_BODY, "/WEB-INF/jsp/container-layout.jsp");
-      // For web content with a header and footer
       request.setAttribute(PAGE_BODY, "/WEB-INF/jsp/layout.jsp");
       request.getServletContext().getRequestDispatcher("/WEB-INF/jsp/main.jsp").forward(request, response);
 
@@ -606,25 +605,30 @@ public class PageServlet extends HttpServlet {
         return;
       }
 
-      // Render the header
-      Header header = null;
-      if (pageRenderInfo.getName().startsWith("/checkout")) {
-        header = WebContainerLayoutCommand.retrieveHeader("header.plain",
-            request.getServletContext().getResource("/WEB-INF/web-layouts/header/header-layout.xml"));
-      } else {
-        header = WebContainerLayoutCommand.retrieveHeader("header.default",
-            request.getServletContext().getResource("/WEB-INF/web-layouts/header/header-layout.xml"));
-      }
-      HeaderRenderInfo headerRenderInfo = new HeaderRenderInfo(header, pageRequest.getPagePath());
-      WebContainerCommand.processWidgets(webContainerContext, header.getSections(), headerRenderInfo, coreData,
-          userSession, themePropertyMap, request);
+      // For normal pages, render the header and footer
+      HeaderRenderInfo headerRenderInfo = null;
+      FooterRenderInfo footerRenderInfo = null;
+      if (!"iframe".equals(request.getHeader("Sec-Fetch-Dest"))) {
+        // Render the header
+        Header header = null;
+        if (pageRenderInfo.getName().startsWith("/checkout")) {
+          header = WebContainerLayoutCommand.retrieveHeader("header.plain",
+              request.getServletContext().getResource("/WEB-INF/web-layouts/header/header-layout.xml"));
+        } else {
+          header = WebContainerLayoutCommand.retrieveHeader("header.default",
+              request.getServletContext().getResource("/WEB-INF/web-layouts/header/header-layout.xml"));
+        }
+        headerRenderInfo = new HeaderRenderInfo(header, pageRequest.getPagePath());
+        WebContainerCommand.processWidgets(webContainerContext, header.getSections(), headerRenderInfo, coreData,
+            userSession, themePropertyMap, request);
 
-      // Render the footer
-      Footer footer = WebContainerLayoutCommand.retrieveFooter("footer.default",
-          request.getServletContext().getResource("/WEB-INF/web-layouts/footer/footer-layout.xml"));
-      FooterRenderInfo footerRenderInfo = new FooterRenderInfo(footer, pageRequest.getPagePath());
-      WebContainerCommand.processWidgets(webContainerContext, footer.getSections(), footerRenderInfo, coreData,
-          userSession, themePropertyMap, request);
+        // Render the footer
+        Footer footer = WebContainerLayoutCommand.retrieveFooter("footer.default",
+            request.getServletContext().getResource("/WEB-INF/web-layouts/footer/footer-layout.xml"));
+        footerRenderInfo = new FooterRenderInfo(footer, pageRequest.getPagePath());
+        WebContainerCommand.processWidgets(webContainerContext, footer.getSections(), footerRenderInfo, coreData,
+            userSession, themePropertyMap, request);
+      }
 
       // Finalize the controller session (zero out the widget's session data)
       controllerSession.clearAllWidgetData();
