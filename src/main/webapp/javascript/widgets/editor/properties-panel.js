@@ -87,6 +87,11 @@ class PropertiesPanel {
     const topMarginIndex = topMarginOptions.indexOf(marginTopValue);
     const bottomMarginIndex = bottomMarginOptions.indexOf(marginBottomValue);
     
+    // Extract additional classes (non-margin classes)
+    const additionalClasses = cssClasses
+      .filter(c => !c.startsWith('margin-top-') && !c.startsWith('margin-bottom-'))
+      .join(' ');
+    
     // Margin section with snap sliders
     html += `<div style="border-bottom:1px solid #ddd;padding-bottom:10px;margin-bottom:10px;">
       <div style="font-weight:bold;font-size:13px;margin-bottom:8px;">Margins</div>
@@ -104,8 +109,12 @@ class PropertiesPanel {
     
     // CSS Class manual override
     html += `<div class="property-group">
+      <label style="margin-bottom:10px;"><input type="checkbox" id="row-hr" ${row.hr ? 'checked' : ''} /> Horizontal Line</label>
+    </div>`;
+    
+    html += `<div class="property-group">
       <div class="property-label">Additional CSS Classes</div>
-      <input type="text" class="property-input" id="row-css-class" value="" placeholder="e.g., align-center" />
+      <input type="text" class="property-input" id="row-css-class" value="${this.escapeHtml(additionalClasses)}" placeholder="e.g., align-center" />
       <div style="font-size:12px;color:#666;margin-top:5px;">Any additional custom classes (space-separated)</div>
     </div>`;
     
@@ -169,6 +178,13 @@ class PropertiesPanel {
         const row = this.editor.getLayoutManager().getRow(rowId);
         if (row && this.editor.getCanvasController) {
           this.editor.getCanvasController().renderRow(rowId, row);
+          // Re-highlight the row after re-render
+          setTimeout(() => {
+            const rowElement = document.querySelector(`[data-row-id="${rowId}"]`);
+            if (rowElement) {
+              rowElement.classList.add('selected');
+            }
+          }, 0);
         }
         if (this.editor.saveToHistory) {
           this.editor.saveToHistory();
@@ -180,6 +196,30 @@ class PropertiesPanel {
     if (marginTopSelect) marginTopSelect.addEventListener('input', function() { updatePreview.call(self); });
     if (marginBottomSelect) marginBottomSelect.addEventListener('input', function() { updatePreview.call(self); });
     if (additionalClassesInput) additionalClassesInput.addEventListener('input', function() { updatePreview.call(self); });
+    
+    // Add hr checkbox listener
+    const hrCheckbox = document.getElementById('row-hr');
+    if (hrCheckbox) {
+      hrCheckbox.addEventListener('change', function() {
+        const row = self.editor.getLayoutManager().getRow(rowId);
+        if (row) {
+          row.hr = this.checked;
+          if (self.editor.getCanvasController) {
+            self.editor.getCanvasController().renderRow(rowId, row);
+            // Re-highlight the row after re-render
+            setTimeout(() => {
+              const rowElement = document.querySelector(`[data-row-id="${rowId}"]`);
+              if (rowElement) {
+                rowElement.classList.add('selected');
+              }
+            }, 0);
+          }
+          if (self.editor.saveToHistory) {
+            self.editor.saveToHistory();
+          }
+        }
+      });
+    }
     
     // Highlight the row in the canvas
     this.highlightRow(rowId);
@@ -383,8 +423,12 @@ class PropertiesPanel {
     
     // Custom CSS
     html += `<div class="property-group">
+      <label style="margin-bottom:10px;"><input type="checkbox" id="column-hr" ${column.hr ? 'checked' : ''} /> Horizontal Line</label>
+    </div>`;
+    
+    html += `<div class="property-group">
       <div class="property-label">Additional CSS Classes</div>
-      <input type="text" class="property-input" id="column-css-custom" value="${unhandledClasses}" placeholder="Custom classes" />
+      <input type="text" class="property-input" id="column-css-custom" value="${this.escapeHtml(unhandledClasses)}" placeholder="Custom classes" />
       <div style="font-size:12px;color:#666;margin-top:5px;">Any additional custom classes (space-separated)</div>
     </div>`;
     
@@ -425,6 +469,16 @@ class PropertiesPanel {
         const row = self.editor.getLayoutManager().getRow(rowId);
         if (row && self.editor.getCanvasController) {
           self.editor.getCanvasController().renderRow(rowId, row);
+          // Re-highlight the column after re-render
+          setTimeout(() => {
+            const rowElement = document.querySelector(`[data-row-id="${rowId}"]`);
+            if (rowElement) {
+              const columnElement = rowElement.querySelector(`[data-column-id="${columnId}"]`);
+              if (columnElement) {
+                columnElement.classList.add('selected');
+              }
+            }
+          }, 0);
         }
         if (self.editor.saveToHistory) {
           self.editor.saveToHistory();
@@ -439,6 +493,36 @@ class PropertiesPanel {
         el.addEventListener('input', function() { updatePreview(); });
       }
     });
+    
+    // Add hr checkbox listener
+    const hrCheckbox = document.getElementById('column-hr');
+    if (hrCheckbox) {
+      hrCheckbox.addEventListener('change', function() {
+        const row = self.editor.getLayoutManager().getRow(rowId);
+        if (row) {
+          const column = row.columns.find(c => c.id === columnId);
+          if (column) {
+            column.hr = this.checked;
+            if (self.editor.getCanvasController) {
+              self.editor.getCanvasController().renderRow(rowId, row);
+              // Re-highlight the column after re-render
+              setTimeout(() => {
+                const rowElement = document.querySelector(`[data-row-id="${rowId}"]`);
+                if (rowElement) {
+                  const columnElement = rowElement.querySelector(`[data-column-id="${columnId}"]`);
+                  if (columnElement) {
+                    columnElement.classList.add('selected');
+                  }
+                }
+              }, 0);
+            }
+            if (self.editor.saveToHistory) {
+              self.editor.saveToHistory();
+            }
+          }
+        }
+      });
+    }
     
     // Highlight the column in the canvas
     this.highlightColumn(rowId, columnId);
@@ -467,6 +551,18 @@ class PropertiesPanel {
       html += this.renderPropertyField(propName, propDef, widget.properties[propName] || '');
     }
     
+    // Add Additional CSS Classes field
+    html += `<div style="border-top:1px solid #ddd;padding-top:10px;margin-top:10px;">`;
+    html += `<div class="property-group">`;
+    html += `<label style="margin-bottom:10px;"><input type="checkbox" id="widget-hr" ${widget.hr ? 'checked' : ''} /> Horizontal Line</label>`;
+    html += `</div>`;
+    html += `<div class="property-group">`;
+    html += `<div class="property-label">Additional CSS Classes</div>`;
+    html += `<input type="text" class="property-input" id="widget-css-class" value="${this.escapeHtml(widget.cssClass || '')}" placeholder="e.g., margin-50" />`;
+    html += `<div style="font-size:12px;color:#666;margin-top:5px;">Any additional custom classes (space-separated)</div>`;
+    html += `</div>`;
+    html += `</div>`;
+    
     html += `
       <button class="button tiny primary expanded" onclick="window.pageEditor.getPropertiesPanel().saveWidgetProperties('${rowId}', '${columnId}', '${widgetId}')">
         Apply Changes
@@ -474,6 +570,73 @@ class PropertiesPanel {
     `;
     
     this.content.innerHTML = html;
+
+    // Set up event listeners for immediate save
+    const self = this;
+    const updateWidgetProperties = () => {
+      const cssClassInput = document.getElementById('widget-css-class');
+      if (cssClassInput) {
+        const widgetData = self.editor.getLayoutManager().getWidget(rowId, columnId, widgetId);
+        if (widgetData) {
+          widgetData.cssClass = cssClassInput.value.trim();
+          if (self.editor.getCanvasController) {
+            const row = self.editor.getLayoutManager().getRow(rowId);
+            self.editor.getCanvasController().renderRow(rowId, row);
+            // Re-highlight the widget after re-render
+            setTimeout(() => {
+              const rowElement = document.querySelector(`[data-row-id="${rowId}"]`);
+              if (rowElement) {
+                const columnElement = rowElement.querySelector(`[data-column-id="${columnId}"]`);
+                if (columnElement) {
+                  const widgetElement = columnElement.querySelector(`[data-widget-id="${widgetId}"]`);
+                  if (widgetElement) {
+                    widgetElement.classList.add('selected');
+                  }
+                }
+              }
+            }, 0);
+          }
+          if (self.editor.saveToHistory) {
+            self.editor.saveToHistory();
+          }
+        }
+      }
+    };
+    
+    const cssClassInput = document.getElementById('widget-css-class');
+    if (cssClassInput) {
+      cssClassInput.addEventListener('input', updateWidgetProperties);
+    }
+    
+    const hrCheckbox = document.getElementById('widget-hr');
+    if (hrCheckbox) {
+      hrCheckbox.addEventListener('change', function() {
+        const widgetData = self.editor.getLayoutManager().getWidget(rowId, columnId, widgetId);
+        if (widgetData) {
+          widgetData.hr = this.checked;
+          if (self.editor.getCanvasController) {
+            const row = self.editor.getLayoutManager().getRow(rowId);
+            self.editor.getCanvasController().renderRow(rowId, row);
+            // Re-highlight the widget after re-render
+            setTimeout(() => {
+              const rowElement = document.querySelector(`[data-row-id="${rowId}"]`);
+              if (rowElement) {
+                const columnElement = rowElement.querySelector(`[data-column-id="${columnId}"]`);
+                if (columnElement) {
+                  const widgetElement = columnElement.querySelector(`[data-widget-id="${widgetId}"]`);
+                  if (widgetElement) {
+                    widgetElement.classList.add('selected');
+                  }
+                }
+              }
+            }, 0);
+          }
+          if (self.editor.saveToHistory) {
+            self.editor.saveToHistory();
+          }
+        }
+      });
+    }
 
     // Initialize color pickers
     this.initColorPickers();
@@ -570,6 +733,7 @@ class PropertiesPanel {
     const marginTopSelect = document.getElementById('row-margin-top');
     const marginBottomSelect = document.getElementById('row-margin-bottom');
     const additionalClasses = document.getElementById('row-css-class')?.value.trim() || '';
+    const hrCheckbox = document.getElementById('row-hr');
     
     const marginTop = marginTopSelect?.value || '';
     const marginBottom = marginBottomSelect?.value || '';
@@ -577,8 +741,13 @@ class PropertiesPanel {
     
     this.editor.getLayoutManager().updateRowClass(rowId, finalClasses);
     
-    // Re-render the row
+    // Update hr attribute
     const row = this.editor.getLayoutManager().getRow(rowId);
+    if (row) {
+      row.hr = hrCheckbox && hrCheckbox.checked;
+    }
+    
+    // Re-render the row
     this.editor.getCanvasController().renderRow(rowId, row);
     
     // Save to history
@@ -600,14 +769,23 @@ class PropertiesPanel {
     const alignment = document.getElementById('column-alignment')?.value || '';
     const text = document.getElementById('column-text')?.value || '';
     const custom = document.getElementById('column-css-custom')?.value.trim() || '';
+    const hrCheckbox = document.getElementById('column-hr');
     
     const classes = [small, medium, large, paddingTop, paddingBottom, callout, alignment, text, custom].filter(c => c);
     const finalCssClass = classes.join(' ');
     
     this.editor.getLayoutManager().updateColumnClass(rowId, columnId, finalCssClass);
     
-    // Re-render the row
+    // Update hr attribute
     const row = this.editor.getLayoutManager().getRow(rowId);
+    if (row) {
+      const column = row.columns.find(c => c.id === columnId);
+      if (column) {
+        column.hr = hrCheckbox && hrCheckbox.checked;
+      }
+    }
+    
+    // Re-render the row
     this.editor.getCanvasController().renderRow(rowId, row);
     
     // Save to history
@@ -644,6 +822,19 @@ class PropertiesPanel {
     
     // Update widget properties
     this.editor.getLayoutManager().updateWidgetProperties(rowId, columnId, widgetId, properties);
+    
+    // Update widget CSS class and hr attribute
+    const cssClassInput = document.getElementById('widget-css-class');
+    const hrCheckbox = document.getElementById('widget-hr');
+    const widgetData = this.editor.getLayoutManager().getWidget(rowId, columnId, widgetId);
+    if (widgetData) {
+      if (cssClassInput) {
+        widgetData.cssClass = cssClassInput.value.trim();
+      }
+      if (hrCheckbox) {
+        widgetData.hr = hrCheckbox.checked;
+      }
+    }
     
     // Re-render the row
     const row = this.editor.getLayoutManager().getRow(rowId);

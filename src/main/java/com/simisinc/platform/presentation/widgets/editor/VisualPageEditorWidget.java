@@ -183,6 +183,9 @@ public class VisualPageEditorWidget extends GenericWidget {
         if (StringUtils.isNotBlank(rowCssClass)) {
           xml.append(" class=\"").append(WebPageXmlCommand.escapeXml(rowCssClass)).append("\"");
         }
+        if (rowNode.has("hr") && rowNode.get("hr").asBoolean()) {
+          xml.append(" hr=\"true\"");
+        }
         xml.append(">\n");
 
         if (rowNode.has("columns")) {
@@ -191,6 +194,9 @@ public class VisualPageEditorWidget extends GenericWidget {
             xml.append("    <column");
             if (StringUtils.isNotBlank(colCssClass)) {
               xml.append(" class=\"").append(WebPageXmlCommand.escapeXml(colCssClass)).append("\"");
+            }
+            if (columnNode.has("hr") && columnNode.get("hr").asBoolean()) {
+              xml.append(" hr=\"true\"");
             }
             xml.append(">\n");
 

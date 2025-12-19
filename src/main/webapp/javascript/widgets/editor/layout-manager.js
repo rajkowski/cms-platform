@@ -348,12 +348,18 @@ class LayoutManager {
       if (row.cssClass) {
         xml += ` class="${this.escapeXml(row.cssClass)}"`;
       }
+      if (row.hr) {
+        xml += ' hr="true"';
+      }
       xml += '>\n';
       
       for (const column of row.columns) {
         xml += '    <column';
         if (column.cssClass) {
           xml += ` class="${this.escapeXml(column.cssClass)}"`;
+        }
+        if (column.hr) {
+          xml += ' hr="true"';
         }
         xml += '>\n';
         
@@ -376,7 +382,14 @@ class LayoutManager {
    * Convert widget to XML
    */
   widgetToXml(widget, indent) {
-    let xml = indent + `<widget name="${this.escapeXml(widget.type)}">\n`;
+    let xml = indent + `<widget name="${this.escapeXml(widget.type)}"`;
+    if (widget.cssClass && widget.cssClass.trim()) {
+      xml += ` class="${this.escapeXml(widget.cssClass)}"`;
+    }
+    if (widget.hr) {
+      xml += ' hr="true"';
+    }
+    xml += '>\n';
     
     for (const [key, value] of Object.entries(widget.properties)) {
       if (Array.isArray(value)) {
@@ -436,6 +449,7 @@ class LayoutManager {
       const row = {
         id: rowId,
         cssClass: section.getAttribute('class') || '',
+        hr: section.getAttribute('hr') === 'true',
         columns: []
       };
       
@@ -446,6 +460,7 @@ class LayoutManager {
         const col = {
           id: columnId,
           cssClass: column.getAttribute('class') || '',
+          hr: column.getAttribute('hr') === 'true',
           widgets: []
         };
         
@@ -456,6 +471,8 @@ class LayoutManager {
           const w = {
             id: widgetId,
             type: widget.getAttribute('name') || '',
+            cssClass: widget.getAttribute('class') || '',
+            hr: widget.getAttribute('hr') === 'true',
             properties: this.parseWidgetProperties(widget)
           };
           

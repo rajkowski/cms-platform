@@ -40,7 +40,17 @@ public class WebPageXmlCommand {
   public static String widgetNodeToXml(JsonNode widgetNode, String indent) {
     StringBuilder xml = new StringBuilder();
     String widgetName = widgetNode.get("type").asText();
-    xml.append(indent).append("<widget name=\"").append(escapeXml(widgetName)).append("\">\n");
+    xml.append(indent).append("<widget name=\"").append(escapeXml(widgetName)).append("\"");
+    
+    // Add class attribute if present
+    if (widgetNode.has("cssClass")) {
+      String cssClass = widgetNode.get("cssClass").asText();
+      if (StringUtils.isNotBlank(cssClass)) {
+        xml.append(" class=\"").append(escapeXml(cssClass)).append("\"");
+      }
+    }
+    
+    xml.append(">\n");
 
     if (widgetNode.has("properties")) {
       JsonNode propertiesNode = widgetNode.get("properties");
