@@ -50,6 +50,11 @@ public class WebPageXmlCommand {
       }
     }
     
+    // Add hr attribute if present
+    if (widgetNode.has("hr") && widgetNode.get("hr").asBoolean()) {
+      xml.append(" hr=\"true\"");
+    }
+    
     xml.append(">\n");
 
     if (widgetNode.has("properties")) {
