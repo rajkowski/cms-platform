@@ -74,11 +74,10 @@ public class LoadTextFileCommand {
 
       LOG.debug("Reading bytes... " + bytesToRead);
       char[] bytes = new char[bytesToRead];
-      BufferedReader bufferedReader = new BufferedReader(reader);
-      int bytesRead = bufferedReader.read(bytes);
-      bufferedReader.close();
-      LOG.debug("Bytes read: " + bytesRead);
-
+      try (BufferedReader bufferedReader = new BufferedReader(reader)) {
+        int bytesRead = bufferedReader.read(bytes);
+        LOG.debug("Bytes read: " + bytesRead);
+      }
       result = new String(bytes);
     } catch (IOException e) {
       LOG.error(e);

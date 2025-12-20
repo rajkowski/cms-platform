@@ -232,14 +232,13 @@ public class FileSystemCommand {
       String method = "SHA-512";
       MessageDigest digest = MessageDigest.getInstance(method);
 
-      FileInputStream fis = new FileInputStream(file);
-      byte[] byteArray = new byte[1024];
-      int bytesCount = 0;
-      while ((bytesCount = fis.read(byteArray)) != -1) {
-        digest.update(byteArray, 0, bytesCount);
+      try (FileInputStream fis = new FileInputStream(file)) {
+        byte[] byteArray = new byte[1024];
+        int bytesCount = 0;
+        while ((bytesCount = fis.read(byteArray)) != -1) {
+          digest.update(byteArray, 0, bytesCount);
+        }
       }
-      fis.close();
-
       // Convert decimal to hexadecimal format
       byte[] bytes = digest.digest();
       StringBuilder sb = new StringBuilder();
