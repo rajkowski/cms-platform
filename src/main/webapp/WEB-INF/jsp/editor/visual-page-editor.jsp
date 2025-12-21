@@ -1119,7 +1119,7 @@
         window.pageEditor.getPropertiesPanel().clear();
       }
       const webPageLink = window.pageEditor.pagesTabManager.getSelectedPageLink();
-      const link = '/admin/web-container-designer?name=header.default&returnPage=' + encodeURIComponent(returnPage || webPageLink);
+      const link = '/admin/web-page-designer?webPage=' + encodeURIComponent(webPageLink);
       previewIframe.src = link;
       previewIframe.classList.add('active');
       document.getElementById('preview-container').classList.add('active');
