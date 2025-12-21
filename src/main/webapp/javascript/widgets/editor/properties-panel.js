@@ -438,10 +438,6 @@ class PropertiesPanel {
       <div id="column-css-preview" style="font-family:monospace;font-size:11px;word-break:break-all;color:#333;max-height:100px;overflow-y:auto;"></div>
     </div>`;
     
-    html += `<button class="button tiny primary expanded" onclick="window.pageEditor.getPropertiesPanel().saveColumnProperties('${rowId}', '${columnId}')">
-      Apply Changes
-    </button>`;
-    
     this.content.innerHTML = html;
     
     // Set up event listener for live preview
@@ -563,50 +559,55 @@ class PropertiesPanel {
     html += `</div>`;
     html += `</div>`;
     
-    html += `
-      <button class="button tiny primary expanded" onclick="window.pageEditor.getPropertiesPanel().saveWidgetProperties('${rowId}', '${columnId}', '${widgetId}')">
-        Apply Changes
-      </button>
-    `;
-    
     this.content.innerHTML = html;
 
-    // Set up event listeners for immediate save
+    // Set up event listeners for immediate save for all widget properties
     const self = this;
-    const updateWidgetProperties = () => {
-      const cssClassInput = document.getElementById('widget-css-class');
-      if (cssClassInput) {
-        const widgetData = self.editor.getLayoutManager().getWidget(rowId, columnId, widgetId);
-        if (widgetData) {
-          widgetData.cssClass = cssClassInput.value.trim();
-          if (self.editor.getCanvasController) {
-            const row = self.editor.getLayoutManager().getRow(rowId);
-            self.editor.getCanvasController().renderRow(rowId, row);
-            // Re-highlight the widget after re-render
-            setTimeout(() => {
-              const rowElement = document.querySelector(`[data-row-id="${rowId}"]`);
-              if (rowElement) {
-                const columnElement = rowElement.querySelector(`[data-column-id="${columnId}"]`);
-                if (columnElement) {
-                  const widgetElement = columnElement.querySelector(`[data-widget-id="${widgetId}"]`);
-                  if (widgetElement) {
-                    widgetElement.classList.add('selected');
-                  }
-                }
+    
+    // Add listeners to all property inputs
+    if (definition && definition.properties) {
+      for (const propName of Object.keys(definition.properties)) {
+        const element = document.getElementById(`prop-${propName}`);
+        if (element) {
+          const updatePropertyOnChange = () => {
+            const widgetData = self.editor.getLayoutManager().getWidget(rowId, columnId, widgetId);
+            if (widgetData) {
+              const propDef = definition.properties[propName];
+              if (propDef.type === 'checkbox') {
+                widgetData.properties[propName] = element.checked ? 'true' : 'false';
+              } else {
+                widgetData.properties[propName] = element.value;
               }
-            }, 0);
-          }
-          if (self.editor.saveToHistory) {
-            self.editor.saveToHistory();
-          }
+              if (self.editor.getCanvasController) {
+                const row = self.editor.getLayoutManager().getRow(rowId);
+                self.editor.getCanvasController().renderRow(rowId, row);
+                // Re-highlight the widget after re-render
+                setTimeout(() => {
+                  const rowElement = document.querySelector(`[data-row-id="${rowId}"]`);
+                  if (rowElement) {
+                    const columnElement = rowElement.querySelector(`[data-column-id="${columnId}"]`);
+                    if (columnElement) {
+                      const widgetElement = columnElement.querySelector(`[data-widget-id="${widgetId}"]`);
+                      if (widgetElement) {
+                        widgetElement.classList.add('selected');
+                      }
+                    }
+                  }
+                }, 0);
+              }
+              if (self.editor.saveToHistory) {
+                self.editor.saveToHistory();
+              }
+            }
+          };
+          
+          element.addEventListener('change', updatePropertyOnChange);
+          element.addEventListener('input', updatePropertyOnChange);
         }
       }
-    };
-    
-    const cssClassInput = document.getElementById('widget-css-class');
-    if (cssClassInput) {
-      cssClassInput.addEventListener('input', updateWidgetProperties);
     }
+    
+    // Update widget CSS class and set up listeners for CSS class and HR checkbox
     
     const hrCheckbox = document.getElementById('widget-hr');
     if (hrCheckbox) {
@@ -637,16 +638,49 @@ class PropertiesPanel {
         }
       });
     }
+    
+    // Add listener for CSS class input
+    const cssClassInput = document.getElementById('widget-css-class');
+    if (cssClassInput) {
+      cssClassInput.addEventListener('input', function() {
+        const widgetData = self.editor.getLayoutManager().getWidget(rowId, columnId, widgetId);
+        if (widgetData) {
+          widgetData.cssClass = this.value.trim();
+          if (self.editor.getCanvasController) {
+            const row = self.editor.getLayoutManager().getRow(rowId);
+            self.editor.getCanvasController().renderRow(rowId, row);
+            // Re-highlight the widget after re-render
+            setTimeout(() => {
+              const rowElement = document.querySelector(`[data-row-id="${rowId}"]`);
+              if (rowElement) {
+                const columnElement = rowElement.querySelector(`[data-column-id="${columnId}"]`);
+                if (columnElement) {
+                  const widgetElement = columnElement.querySelector(`[data-widget-id="${widgetId}"]`);
+                  if (widgetElement) {
+                    widgetElement.classList.add('selected');
+                  }
+                }
+              }
+            }, 0);
+          }
+          if (self.editor.saveToHistory) {
+            self.editor.saveToHistory();
+          }
+        }
+      });
+    }
 
     // Initialize color pickers
-    this.initColorPickers();
+    this.initColorPickers(rowId, columnId, widgetId, definition);
   }
   
   /**
    * Initialize color pickers for any color properties
    */
-  initColorPickers() {
+  initColorPickers(rowId, columnId, widgetId, widgetDef) {
     const colorInputs = this.content.querySelectorAll('input[data-type="color"]');
+    const self = this;
+    
     colorInputs.forEach(input => {
       $(input).spectrum({
         // color: input.value,
@@ -669,7 +703,35 @@ class PropertiesPanel {
         showInput: true,
         showInitial: true,
         showAlpha: false,
-        allowEmpty: true
+        allowEmpty: true,
+        change: function(color) {
+          // Handle color change
+          const propName = input.id.replace('prop-', '');
+          const widgetData = self.editor.getLayoutManager().getWidget(rowId, columnId, widgetId);
+          if (widgetData && widgetDef && widgetDef.properties && widgetDef.properties[propName]) {
+            widgetData.properties[propName] = color.toHexString();
+            if (self.editor.getCanvasController) {
+              const row = self.editor.getLayoutManager().getRow(rowId);
+              self.editor.getCanvasController().renderRow(rowId, row);
+              // Re-highlight the widget after re-render
+              setTimeout(() => {
+                const rowElement = document.querySelector(`[data-row-id="${rowId}"]`);
+                if (rowElement) {
+                  const columnElement = rowElement.querySelector(`[data-column-id="${columnId}"]`);
+                  if (columnElement) {
+                    const widgetElement = columnElement.querySelector(`[data-widget-id="${widgetId}"]`);
+                    if (widgetElement) {
+                      widgetElement.classList.add('selected');
+                    }
+                  }
+                }
+              }, 0);
+            }
+            if (self.editor.saveToHistory) {
+              self.editor.saveToHistory();
+            }
+          }
+        }
       });
     });
   }
@@ -750,10 +812,9 @@ class PropertiesPanel {
     // Re-render the row
     this.editor.getCanvasController().renderRow(rowId, row);
     
-    // Save to history
+    // Save to history and mark as dirty
     this.editor.saveToHistory();
-    
-    alert('Row properties saved');
+    this.editor.updateSaveIndicator();
   }
   
   /**
@@ -788,10 +849,9 @@ class PropertiesPanel {
     // Re-render the row
     this.editor.getCanvasController().renderRow(rowId, row);
     
-    // Save to history
+    // Save to history and mark as dirty
     this.editor.saveToHistory();
-    
-    alert('Column properties saved');
+    this.editor.updateSaveIndicator();
   }
   
   /**
@@ -840,10 +900,9 @@ class PropertiesPanel {
     const row = this.editor.getLayoutManager().getRow(rowId);
     this.editor.getCanvasController().renderRow(rowId, row);
     
-    // Save to history
+    // Save to history and mark as dirty
     this.editor.saveToHistory();
-    
-    alert('Widget properties saved');
+    this.editor.updateSaveIndicator();
   }
   
   /**

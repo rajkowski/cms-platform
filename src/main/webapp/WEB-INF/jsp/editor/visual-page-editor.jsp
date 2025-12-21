@@ -719,11 +719,11 @@
 
     <!-- Middle Section -->
     <div class="toolbar-section middle">
-      <button id="save-btn" class="button tiny success no-gap radius"><i class="${font:far()} fa-save"></i> Save</button>
       <button id="toggle-preview-btn" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-eye"></i> Preview</button>
       <a id="web-page-info-btn" href="#" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-info-circle"></i> Page Info</a>
       <a id="web-page-css-btn" href="#" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-palette"></i> CSS</a>
       <a id="web-page-xml-editor-btn" href="#" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-code"></i> XML</a>
+      <button id="save-btn" class="button tiny no-gap radius"><i class="${font:far()} fa-save"></i> Save</button>
     </div>
 
     <!-- Right Section -->
@@ -731,10 +731,10 @@
       <button id="preview-btn" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-database"></i> Raw Data</button>
       <c:choose>
         <c:when test="${!empty returnPage}">
-          <a href="${returnPage}" class="button tiny secondary no-gap">Exit</a>
+          <a href="${returnPage}" class="button tiny no-gap radius">Exit</a>
         </c:when>
         <c:when test="${!empty webPage.link}">
-          <a href="${ctx}${webPage.link}" class="button tiny secondary no-gap">Exit</a>
+          <a href="${ctx}${webPage.link}" class="button tiny no-gap radius">Exit</a>
         </c:when>
       </c:choose>
     </div>
@@ -955,7 +955,7 @@
 
 <!-- Hidden form for submission -->
 <form id="editor-form" method="post" style="display: none;">
-  <input type="hidden" name="widget" value="${widgetContext.uniqueId}"/>
+  <input type="hidden" name="widget" value="/json/saveWebPage1"/>
   <input type="hidden" name="token" value="${userSession.formToken}"/>
   <input type="hidden" name="webPage" value="<c:out value="${webPage.link}" />"/>
   <input type="hidden" name="webPageLink" value="<c:out value="${webPage.link}" />"/>

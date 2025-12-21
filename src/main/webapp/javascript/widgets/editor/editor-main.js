@@ -60,7 +60,27 @@ class PageEditor {
     // Set baseline for dirty detection
     this.setSavedState();
     
+    // Initialize save indicator
+    this.updateSaveIndicator();
+    
     console.log('Editor initialized successfully');
+  }
+  
+  /**
+   * Update the save button indicator to show unsaved changes
+   */
+  updateSaveIndicator() {
+    if (this.isDirty()) {
+      if (!this.elements.saveBtn.dataset.dirty) {
+        this.elements.saveBtn.dataset.dirty = 'true';
+        this.elements.saveBtn.innerHTML = '<i class="far fa-circle-dot"></i> Save <span style="color: #ff6b6b;">●</span>';
+      }
+    } else {
+      if (this.elements.saveBtn.dataset.dirty) {
+        delete this.elements.saveBtn.dataset.dirty;
+        this.elements.saveBtn.innerHTML = '<i class="fa-solid fa-save"></i> Save';
+      }
+    }
   }
   
   /**
@@ -451,8 +471,9 @@ class PageEditor {
       this.historyIndex++;
     }
     
-    // Update undo/redo buttons
+    // Update undo/redo buttons and save indicator
     this.updateHistoryButtons();
+    this.updateSaveIndicator();
   }
   
   /**
@@ -508,44 +529,80 @@ class PageEditor {
   }
   
   /**
-   * Save the page
+   * Save the page using AJAX
    */
   save() {
     console.log('Saving page...');
     
     // Disable save button to prevent double-submission
     this.elements.saveBtn.disabled = true;
-    this.elements.saveBtn.textContent = 'Saving...';
+    this.elements.saveBtn.innerHTML = '<i class="far fa-spinner fa-spin"></i> Saving...';
     
     try {
-      // Convert layout to JSON for backend
+      // Get the current layout state as JSON
       const layoutData = this.layoutManager.getStructure();
       const jsonData = JSON.stringify(layoutData);
       
-      // Set form data
-      this.elements.designerData.value = jsonData;
-      
-      // Always update the web page link to the currently selected page
+      // Get the selected page link
       const pageLink = this.pagesTabManager.getSelectedPageLink();
-      if (pageLink) {
-        console.log('Setting web page link to:', pageLink);
-        // Update the web page hidden input with the selected page
-        const webPageInput = document.querySelector('input[name="webPageLink"]');
-        if (webPageInput) {
-          webPageInput.value = pageLink;
-        }
-      }
       
-      // Submit form
-      this.elements.editorForm.submit();
+      // Create form data for submission
+      const formData = new FormData();
+      formData.append('widget', document.querySelector('input[name="widget"]')?.value || '');
+      formData.append('token', document.querySelector('input[name="token"]')?.value || '');
+      formData.append('webPageLink', pageLink);
+      formData.append('designerData', jsonData);
+      
+      // Send the AJAX request to the save endpoint
+      fetch('/json/saveWebPage', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('HTTP error, status = ' + response.status);
+        }
+        return response.json();
+      })
+      .then(data => {
+        // Success! Update the saved state and show message
+        this.setSavedState();
+        this.updateSaveIndicator();
+        
+        // Re-enable save button
+        this.elements.saveBtn.disabled = false;
+        this.elements.saveBtn.innerHTML = '<i class="far fa-check"></i> Saved!';
+        
+        // Reset the button text after 2 seconds to clean state
+        setTimeout(() => {
+          this.elements.saveBtn.innerHTML = '<i class="fa-solid fa-save"></i> Save';
+          this.updateSaveIndicator();
+        }, 2000);
+        
+        console.log('Page saved successfully', data);
+      })
+      .catch(error => {
+        console.error('Error saving page:', error);
+        
+        // Show error message
+        this.elements.saveBtn.disabled = false;
+        this.elements.saveBtn.innerHTML = '<i class="far fa-exclamation-triangle"></i> Save Failed';
+        
+        // Reset the button text after 3 seconds
+        setTimeout(() => {
+          this.elements.saveBtn.innerHTML = originalContent;
+        }, 3000);
+        
+        alert('Error saving page: ' + error.message);
+      });
       
     } catch (error) {
-      console.error('Error saving page:', error);
-      alert('An error occurred while saving the page: ' + error.message);
+      console.error('Error preparing save:', error);
+      alert('An error occurred while preparing to save the page: ' + error.message);
       
       // Re-enable save button
       this.elements.saveBtn.disabled = false;
-      this.elements.saveBtn.textContent = 'Save';
+      this.elements.saveBtn.innerHTML = originalContent;
     }
   }
 

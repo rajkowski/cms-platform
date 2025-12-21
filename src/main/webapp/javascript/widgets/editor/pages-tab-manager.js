@@ -223,6 +223,9 @@ class PagesTabManager {
           
           // Set baseline for dirty detection
           this.pageEditor.setSavedState();
+          
+          // Update save indicator to reflect clean state
+          this.pageEditor.updateSaveIndicator();
 
           // Dispatch a custom event to notify that the page has been switched
           document.dispatchEvent(new CustomEvent('pageChanged', { detail: { pageLink } }));
