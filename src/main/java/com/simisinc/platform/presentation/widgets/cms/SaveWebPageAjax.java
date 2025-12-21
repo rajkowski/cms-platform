@@ -16,18 +16,17 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.simisinc.platform.application.cms.SaveWebPageCommand;
-import com.simisinc.platform.application.cms.WebPageXmlCommand;
+import com.simisinc.platform.application.cms.WebPageJsonToXMLCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 /**
  * Saves a web page's layout from the visual page editor
@@ -80,7 +79,7 @@ public class SaveWebPageAjax extends GenericWidget {
     // Convert the JSON layout data to XML format
     String pageXml;
     try {
-      pageXml = convertDesignerJsonToXml(designerData);
+      pageXml = WebPageJsonToXMLCommand.convertDesignerJsonToXml(designerData);
     } catch (Exception e) {
       LOG.error("Error converting JSON layout to XML: " + e.getMessage(), e);
       StringBuilder sb = new StringBuilder();
@@ -130,56 +129,4 @@ public class SaveWebPageAjax extends GenericWidget {
     return context;
   }
 
-  /**
-   * Converts JSON layout structure to XML format
-   *
-   * @param designerJson the JSON layout structure
-   * @return XML string for page layout
-   */
-  private String convertDesignerJsonToXml(String designerJson) throws Exception {
-    ObjectMapper mapper = new ObjectMapper();
-    JsonNode pageNode = mapper.readTree(designerJson);
-
-    StringBuilder xml = new StringBuilder();
-    xml.append("<page>\n");
-
-    if (pageNode.has("rows")) {
-      for (JsonNode rowNode : pageNode.get("rows")) {
-        String rowCssClass = rowNode.has("cssClass") ? rowNode.get("cssClass").asText() : "";
-        xml.append("  <section");
-        if (StringUtils.isNotBlank(rowCssClass)) {
-          xml.append(" class=\"").append(WebPageXmlCommand.escapeXml(rowCssClass)).append("\"");
-        }
-        if (rowNode.has("hr") && rowNode.get("hr").asBoolean()) {
-          xml.append(" hr=\"true\"");
-        }
-        xml.append(">\n");
-
-        if (rowNode.has("columns")) {
-          for (JsonNode columnNode : rowNode.get("columns")) {
-            String colCssClass = columnNode.has("cssClass") ? columnNode.get("cssClass").asText() : "";
-            xml.append("    <column");
-            if (StringUtils.isNotBlank(colCssClass)) {
-              xml.append(" class=\"").append(WebPageXmlCommand.escapeXml(colCssClass)).append("\"");
-            }
-            if (columnNode.has("hr") && columnNode.get("hr").asBoolean()) {
-              xml.append(" hr=\"true\"");
-            }
-            xml.append(">\n");
-
-            if (columnNode.has("widgets")) {
-              for (JsonNode widgetNode : columnNode.get("widgets")) {
-                xml.append(WebPageXmlCommand.widgetNodeToXml(widgetNode, "      "));
-              }
-            }
-            xml.append("    </column>\n");
-          }
-        }
-        xml.append("  </section>\n");
-      }
-    }
-    xml.append("</page>");
-
-    return xml.toString();
-  }
 }

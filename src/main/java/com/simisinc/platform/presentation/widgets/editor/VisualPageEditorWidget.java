@@ -16,20 +16,19 @@
 
 package com.simisinc.platform.presentation.widgets.editor;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.simisinc.platform.application.DataException;
-import com.simisinc.platform.application.cms.SaveWebPageCommand;
-import com.simisinc.platform.application.cms.UrlCommand;
-import com.simisinc.platform.application.cms.WebPageXmlCommand;
-import com.simisinc.platform.domain.model.cms.WebPage;
-import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.text.WordUtils;
+
+import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.application.cms.SaveWebPageCommand;
+import com.simisinc.platform.application.cms.UrlCommand;
+import com.simisinc.platform.application.cms.WebPageJsonToXMLCommand;
+import com.simisinc.platform.domain.model.cms.WebPage;
+import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
+import com.simisinc.platform.presentation.controller.WidgetContext;
+import com.simisinc.platform.presentation.widgets.GenericWidget;
 
 /**
  * Visual Editor Widget for web page design with drag-and-drop interface
@@ -121,8 +120,7 @@ public class VisualPageEditorWidget extends GenericWidget {
 
     try {
       // Convert the JSON structure to XML format
-      // This will use a similar pattern to WebPageDesignerToXmlCommand
-      String pageXml = convertDesignerJsonToXml(designerJson);
+      String pageXml = WebPageJsonToXMLCommand.convertDesignerJsonToXml(designerJson);
       webPage.setPageXml(pageXml);
       LOG.debug("Converted to XML: " + pageXml);
 
@@ -161,57 +159,5 @@ public class VisualPageEditorWidget extends GenericWidget {
       context.setRequestObject(webPage);
       return context;
     }
-  }
-
-  /**
-   * Converts the designer JSON structure to XML format
-   * 
-   * @param designerJson JSON string from the editor
-   * @return XML string for page layout
-   */
-  private String convertDesignerJsonToXml(String designerJson) throws Exception {
-    ObjectMapper mapper = new ObjectMapper();
-    JsonNode pageNode = mapper.readTree(designerJson);
-
-    StringBuilder xml = new StringBuilder();
-    xml.append("<page>\n");
-
-    if (pageNode.has("rows")) {
-      for (JsonNode rowNode : pageNode.get("rows")) {
-        String rowCssClass = rowNode.has("cssClass") ? rowNode.get("cssClass").asText() : "";
-        xml.append("  <section");
-        if (StringUtils.isNotBlank(rowCssClass)) {
-          xml.append(" class=\"").append(WebPageXmlCommand.escapeXml(rowCssClass)).append("\"");
-        }
-        if (rowNode.has("hr") && rowNode.get("hr").asBoolean()) {
-          xml.append(" hr=\"true\"");
-        }
-        xml.append(">\n");
-
-        if (rowNode.has("columns")) {
-          for (JsonNode columnNode : rowNode.get("columns")) {
-            String colCssClass = columnNode.has("cssClass") ? columnNode.get("cssClass").asText() : "";
-            xml.append("    <column");
-            if (StringUtils.isNotBlank(colCssClass)) {
-              xml.append(" class=\"").append(WebPageXmlCommand.escapeXml(colCssClass)).append("\"");
-            }
-            if (columnNode.has("hr") && columnNode.get("hr").asBoolean()) {
-              xml.append(" hr=\"true\"");
-            }
-            xml.append(">\n");
-
-            if (columnNode.has("widgets")) {
-              for (JsonNode widgetNode : columnNode.get("widgets")) {
-                xml.append(WebPageXmlCommand.widgetNodeToXml(widgetNode, "      "));
-              }
-            }
-            xml.append("    </column>\n");
-          }
-        }
-        xml.append("  </section>\n");
-      }
-    }
-    xml.append("</page>");
-    return xml.toString();
   }
 }
