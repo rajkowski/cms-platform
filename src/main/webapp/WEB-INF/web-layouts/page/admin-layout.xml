@@ -2,6 +2,12 @@
 <pages>
   <!-- Admin -->
   <page name="/admin" role="admin,content-manager,community-manager,ecommerce-manager" title="Admin">
+    <widget name="content">
+      <html><![CDATA[<h3>Admin Module</h3>]]></html>
+    </widget>
+  </page>
+
+  <page name="/admin/welcome" role="admin,content-manager,community-manager,ecommerce-manager" title="Admin">
     <section>
       <column>
         <widget name="content" class="margin-bottom-20">
