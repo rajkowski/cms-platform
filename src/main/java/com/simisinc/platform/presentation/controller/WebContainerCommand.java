@@ -373,6 +373,15 @@ public class WebContainerCommand implements Serializable {
           if (!webContainerContext.isTargeted()) {
             if (widgetContext.hasRedirect()) {
               controllerSession.clearAllWidgetData();
+              // External redirect for validated URL
+              if (widgetContext.getRedirect().startsWith("http://") ||
+                  widgetContext.getRedirect().startsWith("https://")) {
+                LOG.debug("Sending an external redirect to: " + widgetContext.getRedirect());
+                response.sendRedirect(widgetContext.getRedirect());
+                pageResponse.setHandled(true);
+                return pageResponse;
+              }
+              // Internal redirect
               String siteUrl = LoadSitePropertyCommand.loadByName("site.url");
               response.sendRedirect(siteUrl + pageRequest.getContextPath() + widgetContext.getRedirect());
               pageResponse.setHandled(true);
