@@ -16,18 +16,8 @@
 
 package com.simisinc.platform.presentation.controller;
 
-import static com.simisinc.platform.presentation.controller.RequestConstants.CONTEXT_PATH;
-import static com.simisinc.platform.presentation.controller.RequestConstants.FOOTER_RENDER_INFO;
-import static com.simisinc.platform.presentation.controller.RequestConstants.FOOTER_STICKY_LINKS;
-import static com.simisinc.platform.presentation.controller.RequestConstants.HEADER_RENDER_INFO;
-import static com.simisinc.platform.presentation.controller.RequestConstants.LOG_USER;
-import static com.simisinc.platform.presentation.controller.RequestConstants.MASTER_MENU_TAB_LIST;
-import static com.simisinc.platform.presentation.controller.RequestConstants.PAGE_COLLECTION;
-import static com.simisinc.platform.presentation.controller.RequestConstants.PAGE_COLLECTION_CATEGORY;
-import static com.simisinc.platform.presentation.controller.RequestConstants.PAGE_RENDER_INFO;
-import static com.simisinc.platform.presentation.controller.RequestConstants.SHOW_MAIN_MENU;
-
 import java.io.File;
+import java.lang.reflect.Constructor;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.time.ZoneId;
@@ -69,6 +59,16 @@ import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.domain.model.items.Category;
 import com.simisinc.platform.domain.model.items.Collection;
 import com.simisinc.platform.domain.model.items.Item;
+import static com.simisinc.platform.presentation.controller.RequestConstants.CONTEXT_PATH;
+import static com.simisinc.platform.presentation.controller.RequestConstants.FOOTER_RENDER_INFO;
+import static com.simisinc.platform.presentation.controller.RequestConstants.FOOTER_STICKY_LINKS;
+import static com.simisinc.platform.presentation.controller.RequestConstants.HEADER_RENDER_INFO;
+import static com.simisinc.platform.presentation.controller.RequestConstants.LOG_USER;
+import static com.simisinc.platform.presentation.controller.RequestConstants.MASTER_MENU_TAB_LIST;
+import static com.simisinc.platform.presentation.controller.RequestConstants.PAGE_COLLECTION;
+import static com.simisinc.platform.presentation.controller.RequestConstants.PAGE_COLLECTION_CATEGORY;
+import static com.simisinc.platform.presentation.controller.RequestConstants.PAGE_RENDER_INFO;
+import static com.simisinc.platform.presentation.controller.RequestConstants.SHOW_MAIN_MENU;
 import com.simisinc.platform.presentation.widgets.cms.WebContainerContext;
 
 /**
@@ -123,13 +123,28 @@ public class PageTemplateEngine {
     if (!isInitialized()) {
       LOG.info("Instantiating the widgets...");
       for (String widgetName : widgetLibrary.keySet()) {
+        String widgetClass = widgetLibrary.get(widgetName);
         try {
-          String widgetClass = widgetLibrary.get(widgetName);
-          Object classRef = Class.forName(widgetClass).getDeclaredConstructor().newInstance();
+          if (StringUtils.isBlank(widgetClass)) {
+            LOG.error("Widget class is blank for widget: " + widgetName);
+            continue;
+          }
+          Class<?> clazz = Class.forName(widgetClass);
+          if (clazz == null) {
+            LOG.error("Class not found for widget: " + widgetName);
+            continue;
+          }
+          Constructor<?> constructor = clazz.getDeclaredConstructor();
+          if (constructor == null) {
+            LOG.error("Constructor not found for widget: " + widgetName);
+            continue;
+          }
+          constructor.setAccessible(true);
+          Object classRef = constructor.newInstance();
           widgetInstances.put(widgetName, classRef);
           LOG.info("Added widget class: " + widgetName + " = " + widgetClass);
-        } catch (Exception e) {
-          LOG.error("Class not found for '" + widgetName + "': " + e.getMessage());
+        } catch (Exception | NoClassDefFoundError e) {
+          LOG.error("Class not initialized for: " + widgetName + " = " + widgetClass + ": " + e.getMessage());
         }
       }
       LOG.info("Widgets loaded: " + widgetInstances.size());
