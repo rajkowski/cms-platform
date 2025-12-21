@@ -75,7 +75,8 @@ public class WebContainerCommand implements Serializable {
       UserSession userSession, Map<String, String> themePropertyMap, HttpServletRequest httpRequest)
       throws Exception {
 
-    LOG.debug("Processing container... " + containerRenderInfo.getName() + ": " + sections.size());
+    LOG.debug("Processing container... " + containerRenderInfo.getName());
+    LOG.debug("  Sections: " + sections.size());
 
     PageRequest pageRequest = webContainerContext.getPageRequest();
     HttpServletResponse response = webContainerContext.getResponse();

@@ -28,6 +28,8 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * The page request encapsulates values from HttpRequest values and/or non-HttpRequest values
@@ -38,6 +40,7 @@ import org.apache.commons.lang3.time.DateUtils;
 public class PageRequest implements Serializable {
 
   private static final long serialVersionUID = 215434482513634196L;
+  private static Log LOG = LogFactory.getLog(PageRequest.class);
 
   private String scheme = null;
   private String serverName = null;
@@ -235,11 +238,16 @@ public class PageRequest implements Serializable {
   }
 
   private void processPaths() {
+    LOG.trace("Context path: " + contextPath);
     if (StringUtils.isBlank(uri)) {
       uri = "/";
     }
+    LOG.trace("URI: " + uri);
     pagePath = uri.substring(contextPath.length());
+    LOG.debug("Page path: " + pagePath);
     baseUrl = scheme + "://" + serverName + (port != 80 && port != 443 ? ":" + port : "");
+    LOG.trace("Base URL: " + baseUrl);
     url = baseUrl + contextPath;
+    LOG.trace("URL: " + url);
   }
 }

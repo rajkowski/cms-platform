@@ -609,6 +609,7 @@ public class PageServlet extends HttpServlet {
       HeaderRenderInfo headerRenderInfo = null;
       FooterRenderInfo footerRenderInfo = null;
       if (!"iframe".equals(request.getHeader("Sec-Fetch-Dest"))) {
+        LOG.debug("Rendering header and footer...");
         // Render the header
         Header header = null;
         if (pageRenderInfo.getName().startsWith("/checkout")) {
@@ -709,7 +710,8 @@ public class PageServlet extends HttpServlet {
           // For embedded mobile and API content
           request.setAttribute(PAGE_BODY, "/WEB-INF/jsp/container-layout.jsp");
         } else {
-          // For web content with a header and footer
+          // For web content with a header and 
+          LOG.debug("Setting header and footer render info... " + (headerRenderInfo != null) + " " + (footerRenderInfo != null));
           request.setAttribute(HEADER_RENDER_INFO, headerRenderInfo);
           request.setAttribute(FOOTER_RENDER_INFO, footerRenderInfo);
           request.setAttribute(PAGE_BODY, "/WEB-INF/jsp/layout.jsp");
