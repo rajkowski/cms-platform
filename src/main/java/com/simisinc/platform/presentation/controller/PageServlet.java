@@ -384,7 +384,7 @@ public class PageServlet extends HttpServlet {
       // Determine the Page XML Layout for this request
       Page pageRef = WebPageXmlLayoutCommand.retrievePageForRequest(webPage, pageRequest.getPagePath());
 
-      // Load the properties
+      // Load the common properties
       Map<String, String> systemPropertyMap = LoadSitePropertyCommand.loadAsMap("system");
       Map<String, String> sitePropertyMap = LoadSitePropertyCommand.loadAsMap("site");
       Map<String, String> themePropertyMap = LoadSitePropertyCommand.loadAsMap("theme");
@@ -706,7 +706,11 @@ public class PageServlet extends HttpServlet {
       if (webContainerContext.isEmbedded()) {
         request.getServletContext().getRequestDispatcher("/WEB-INF/jsp/embedded.jsp").forward(request, response);
       } else {
-        if ("container".equals(request.getSession().getAttribute(SessionConstants.X_VIEW_MODE))) {
+        if ("/admin".equals(pageRequest.getPagePath())) {
+          // The admin menu will be shown
+          LOG.debug("Setting admin render info...");
+          request.setAttribute(PAGE_BODY, "/WEB-INF/jsp/admin.jsp");
+        } else if ("container".equals(request.getSession().getAttribute(SessionConstants.X_VIEW_MODE))) {
           // For embedded mobile and API content
           request.setAttribute(PAGE_BODY, "/WEB-INF/jsp/container-layout.jsp");
         } else {
