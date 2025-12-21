@@ -48,6 +48,7 @@ public class SaveWebPageAjax extends GenericWidget {
     if (!context.hasRole("admin") && !context.hasRole("content-editor")) {
       LOG.debug("No permission to save web page");
       context.setJson("{\"success\":false,\"message\":\"Permission denied\"}");
+      context.setSuccess(false);
       return context;
     }
 
@@ -57,6 +58,7 @@ public class SaveWebPageAjax extends GenericWidget {
     if (StringUtils.isBlank(webPageLink)) {
       LOG.debug("Page link is empty");
       context.setJson("{\"success\":false,\"message\":\"Page link is required\"}");
+      context.setSuccess(false);
       return context;
     }
 
@@ -65,6 +67,7 @@ public class SaveWebPageAjax extends GenericWidget {
     if (page == null) {
       LOG.debug("Web page not found for link: " + webPageLink);
       context.setJson("{\"success\":false,\"message\":\"Page not found\"}");
+      context.setSuccess(false);
       return context;
     }
 
@@ -73,6 +76,7 @@ public class SaveWebPageAjax extends GenericWidget {
     if (StringUtils.isBlank(designerData)) {
       LOG.debug("No designer data provided");
       context.setJson("{\"success\":false,\"message\":\"Layout data is required\"}");
+      context.setSuccess(false);
       return context;
     }
 
@@ -88,6 +92,7 @@ public class SaveWebPageAjax extends GenericWidget {
       sb.append("\"message\":\"").append(JsonCommand.toJson("Error processing layout: " + e.getMessage())).append("\"");
       sb.append("}");
       context.setJson(sb.toString());
+      context.setSuccess(false);
       return context;
     }
 
@@ -114,6 +119,7 @@ public class SaveWebPageAjax extends GenericWidget {
         LOG.debug("Page saved successfully: " + webPageLink);
       } else {
         context.setJson("{\"success\":false,\"message\":\"Failed to save page\"}");
+        context.setSuccess(false);
         LOG.debug("Save returned null for page: " + webPageLink);
       }
     } catch (Exception e) {
@@ -124,6 +130,7 @@ public class SaveWebPageAjax extends GenericWidget {
       sb.append("\"message\":\"").append(JsonCommand.toJson(e.getMessage())).append("\"");
       sb.append("}");
       context.setJson(sb.toString());
+      context.setSuccess(false);
     }
 
     return context;

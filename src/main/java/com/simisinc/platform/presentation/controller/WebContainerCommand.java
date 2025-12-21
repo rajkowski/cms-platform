@@ -360,12 +360,9 @@ public class WebContainerCommand implements Serializable {
             controllerSession.clearAllWidgetData();
             response.setContentType("application/json");
             response.setContentLength(widgetContext.getJson().length());
-            // @todo introduce success/failure status codes
-            // if (widgetContext.isSuccess()) {
-            //   response.setStatus(HttpServletResponse.SC_OK);
-            // } else {
-            //   response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            // }
+            if (!widgetContext.isSuccess()) {
+              response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            }
             PrintWriter out = response.getWriter();
             out.print(widgetContext.getJson());
             out.flush();

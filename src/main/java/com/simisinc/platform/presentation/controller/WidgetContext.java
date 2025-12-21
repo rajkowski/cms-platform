@@ -72,6 +72,7 @@ public class WidgetContext implements Serializable {
   private String widgetName = null;
   private String redirect = null;
   private boolean handledResponse = false;
+  private boolean isSuccess = true;
 
   private String message = null;
   private String successMessage = null;
@@ -263,6 +264,14 @@ public class WidgetContext implements Serializable {
 
   public void setHandledResponse(boolean handledResponse) {
     this.handledResponse = handledResponse;
+  }
+
+  public boolean isSuccess() {
+    return isSuccess;
+  }
+
+  public void setSuccess(boolean isSuccess) {
+    this.isSuccess = isSuccess;
   }
 
   public String getMessage() {
