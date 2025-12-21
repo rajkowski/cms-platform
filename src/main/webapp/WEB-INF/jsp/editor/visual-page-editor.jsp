@@ -719,6 +719,7 @@
 
     <!-- Middle Section -->
     <div class="toolbar-section middle">
+      <button id="save-btn" class="button tiny success no-gap radius"><i class="${font:far()} fa-save"></i> Save</button>
       <button id="toggle-preview-btn" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-eye"></i> Preview</button>
       <a id="web-page-info-btn" href="#" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-info-circle"></i> Page Info</a>
       <a id="web-page-css-btn" href="#" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-palette"></i> CSS</a>
@@ -727,14 +728,13 @@
 
     <!-- Right Section -->
     <div class="toolbar-section right">
-      <button id="preview-btn" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-database"></i> Data</button>
-      <button id="save-btn" class="button tiny success no-gap radius"><i class="${font:far()} fa-save"></i> Save</button>
+      <button id="preview-btn" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-database"></i> Raw Data</button>
       <c:choose>
         <c:when test="${!empty returnPage}">
-          <a href="${returnPage}" class="button tiny secondary no-gap">Cancel</a>
+          <a href="${returnPage}" class="button tiny secondary no-gap">Exit</a>
         </c:when>
         <c:when test="${!empty webPage.link}">
-          <a href="${ctx}${webPage.link}" class="button tiny secondary no-gap">Cancel</a>
+          <a href="${ctx}${webPage.link}" class="button tiny secondary no-gap">Exit</a>
         </c:when>
       </c:choose>
     </div>
