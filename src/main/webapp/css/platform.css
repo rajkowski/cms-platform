@@ -1162,7 +1162,6 @@ a.read-more {
   font-size: 16px;
   color: #000000;
   background: #e6e6e6;
-  transition: all 0.35s ease-in-out;
   padding: 0.5rem 1rem;
 }
 .tabs .tabs-title {
