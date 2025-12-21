@@ -660,7 +660,6 @@
   #toggle-preview-btn {
     border: 2px solid #dee2e6;
     padding: 6px 12px;
-    /* border-radius: 4px; */
     font-size: 13px;
     font-weight: 600;
     transition: all 0.3s ease;
@@ -687,6 +686,7 @@
 
   #toggle-preview-btn.active {
     border-color: #43AC6A;
+    color: #ffffff;
     background-color: #292929;
   }
 
@@ -719,15 +719,15 @@
 
     <!-- Middle Section -->
     <div class="toolbar-section middle">
-      <button id="toggle-preview-btn" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-eye"></i> Preview</button>
-      <a id="web-page-info-btn" href="#" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-info-circle"></i> Page Info</a>
-      <a id="web-page-css-btn" href="#" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-palette"></i> CSS</a>
-      <a id="web-page-xml-editor-btn" href="#" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-code"></i> XML</a>
+      <button id="toggle-preview-btn" class="button tiny no-gap radius"><i class="${font:far()} fa-eye"></i> Preview</button>
       <button id="save-btn" class="button tiny no-gap radius"><i class="${font:far()} fa-save"></i> Save</button>
     </div>
 
     <!-- Right Section -->
     <div class="toolbar-section right">
+      <a id="web-page-info-btn" href="#" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-info-circle"></i> Page Info</a>
+      <a id="web-page-css-btn" href="#" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-palette"></i> CSS</a>
+      <a id="web-page-xml-editor-btn" href="#" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-code"></i> XML</a>
       <button id="preview-btn" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-database"></i> Raw Data</button>
       <c:choose>
         <c:when test="${!empty returnPage}">
