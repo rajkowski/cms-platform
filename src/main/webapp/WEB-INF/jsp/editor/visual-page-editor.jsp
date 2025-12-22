@@ -658,20 +658,16 @@
 
   /* Toggle Switch Styles */
   #toggle-preview-btn {
-    border: 2px solid #dee2e6;
-    padding: 6px 12px;
-    font-size: 13px;
-    font-weight: 600;
+    /* border: 2px solid #dee2e6; */
+    /* padding: 6px 12px; */
+    /* font-size: 13px; */
+    /* font-weight: 600; */
     transition: all 0.3s ease;
     display: inline-flex;
     align-items: center;
     gap: 8px;
     cursor: pointer;
     position: relative;
-  }
-
-  #toggle-preview-btn:hover {
-    border-color: #adb5bd;
   }
 
   #toggle-preview-btn::after {
@@ -685,17 +681,12 @@
   }
 
   #toggle-preview-btn.active {
-    border-color: #43AC6A;
     color: #ffffff;
-    background-color: #292929;
-  }
-
-  #toggle-preview-btn.active:hover {
-    border-color: #138496;
+    background-color: #43AC6A;
   }
 
   #toggle-preview-btn.active::after {
-    background: #43AC6A;
+    background: #0dd757;
     box-shadow: 0 0 8px rgba(23, 162, 184, 0.5);
   }
 </style>
