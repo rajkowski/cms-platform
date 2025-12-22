@@ -741,31 +741,35 @@ class PropertiesPanel {
    */
   renderPropertyField(name, definition, value) {
     let html = '<div class="property-group">';
-    html += `<div class="property-label">${definition.label}${definition.required ? ' *' : ''}</div>`;
     
     switch (definition.type) {
       case 'text':
+        html += `<div class="property-label">${definition.label}${definition.required ? ' *' : ''}</div>`;
         html += `<input type="text" class="property-input" id="prop-${name}" value="${this.escapeHtml(value)}" ${definition.required ? 'required' : ''} />`;
         break;
       
       case 'color':
+        html += `<div class="property-label">${definition.label}${definition.required ? ' *' : ''}</div>`;
         html += `<input type="text" class="property-input" data-type="color" id="prop-${name}" value="${this.escapeHtml(value)}" />`;
         break;
 
       case 'textarea':
+        html += `<div class="property-label">${definition.label}${definition.required ? ' *' : ''}</div>`;
         html += `<textarea class="property-input" id="prop-${name}" rows="5" ${definition.required ? 'required' : ''}>${this.escapeHtml(value)}</textarea>`;
         break;
         
       case 'number':
+        html += `<div class="property-label">${definition.label}${definition.required ? ' *' : ''}</div>`;
         html += `<input type="number" class="property-input" id="prop-${name}" value="${value}" ${definition.required ? 'required' : ''} />`;
         break;
         
       case 'checkbox':
         const checked = value === 'true' || value === true ? 'checked' : '';
-        html += `<label><input type="checkbox" id="prop-${name}" ${checked} /> ${definition.label}</label>`;
+        html += `<label><input type="checkbox" id="prop-${name}" ${checked} /> ${definition.label}${definition.required ? ' *' : ''}</label>`;
         break;
         
       case 'select':
+        html += `<div class="property-label">${definition.label}${definition.required ? ' *' : ''}</div>`;
         html += `<select class="property-input" id="prop-${name}">`;
         if (definition.options) {
           for (const option of definition.options) {
@@ -777,10 +781,12 @@ class PropertiesPanel {
         break;
         
       case 'links':
+        html += `<div class="property-label">${definition.label}${definition.required ? ' *' : ''}</div>`;
         html += '<div style="font-size:12px;color:#666;margin-top:5px;">Links management coming soon</div>';
         break;
         
       default:
+        html += `<div class="property-label">${definition.label}${definition.required ? ' *' : ''}</div>`;
         html += `<input type="text" class="property-input" id="prop-${name}" value="${this.escapeHtml(value)}" />`;
     }
     
