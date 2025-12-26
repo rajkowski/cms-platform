@@ -25,7 +25,7 @@ class WidgetRegistry {
       properties: {
         icon: { type: 'text', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
-        uniqueId: { type: 'text', label: 'Content Repository ID', required: true },
+        uniqueId: { type: 'text', label: 'Content Repository ID', required: true, default: 'GENERATE' },
         html: { type: 'textarea', label: 'Fallback HTML Content', required: false, default: '<p>Content</p>' }
       }
     });
@@ -38,8 +38,8 @@ class WidgetRegistry {
       properties: {
         icon: { type: 'text', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
-        uniqueId: { type: 'text', label: 'Content Repository ID', required: true },
-        html: { type: 'textarea', label: 'Fallback HTML Content', required: false }
+        uniqueId: { type: 'text', label: 'Content Repository ID', required: true, default: 'GENERATE' },
+        html: { type: 'textarea', label: 'Fallback HTML Content', required: false, default: '<h1>Title</h1><p>&gt; Item to expand</p><p>The item content goes here...</p><hr /><p>&gt; Item to expand</p><p>The item content goes here...</p><hr />' }
       }
     });
     
@@ -51,8 +51,8 @@ class WidgetRegistry {
       properties: {
         icon: { type: 'text', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
-        uniqueId: { type: 'text', label: 'Content Repository ID', required: true },
-        html: { type: 'textarea', label: 'Fallback HTML Content', required: false },
+        uniqueId: { type: 'text', label: 'Content Repository ID', required: true, default: 'GENERATE' },
+        html: { type: 'textarea', label: 'Fallback HTML Content', required: false, default: '<p>Multiple card content separated by HR</p>' },
         gridMargin: { type: 'checkbox', label: 'Set Grid Margin CSS', default: 'false' },
         smallCardCount: {
           type: 'number',
@@ -82,14 +82,14 @@ class WidgetRegistry {
       properties: {
         icon: { type: 'text', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
-        uniqueId: { type: 'text', label: 'Content Repository ID', required: true },
-        html: { type: 'textarea', label: 'Fallback HTML Content', required: false },
+        uniqueId: { type: 'text', label: 'Content Repository ID', required: true, default: 'GENERATE' },
+        html: { type: 'textarea', label: 'Fallback HTML Content', required: false, default: '<p>Multiple slide content separated by HR</p>' },
         showControls: { type: 'checkbox', label: 'Show Controls', default: 'true' },
         showLeftControl: { type: 'checkbox', label: 'Show Left Control', default: 'true' },
         showRightControl: { type: 'checkbox', label: 'Show Right Control', default: 'true' },
         showPagination: { type: 'checkbox', label: 'Show Pagination', default: 'true' },
-        loop: { type: 'checkbox', label: 'Loop', default: 'true' },
-        autoplayDelay: { type: 'number', label: 'Autoplay Delay (ms)', default: '-1' },
+        loop: { type: 'checkbox', label: 'Loop', default: 'false' },
+        autoplayDelay: { type: 'number', label: 'Autoplay Delay (ms)', default: '5000' },
         carouselClass: { type: 'text', label: 'Carousel CSS Class', required: false },
       }
     });
@@ -355,10 +355,10 @@ class WidgetRegistry {
       description: 'A card with content',
       properties: {
         classData: { type: 'text', label: 'Class', required: false },
-        title: { type: 'text', label: 'Title', required: false },
-        icon: { type: 'text', label: 'Icon', required: false },
-        link: { type: 'text', label: 'Link', required: false },
-        linkTitle: { type: 'text', label: 'Link Title', required: false },
+        title: { type: 'text', label: 'Title', required: false, default: 'Card Title' },
+        icon: { type: 'text', label: 'Icon', required: false, default: '' },
+        link: { type: 'text', label: 'Link', required: false, default: '' },
+        linkTitle: { type: 'text', label: 'Link Title', required: false, default: '' },
         linkIcon: { type: 'text', label: 'Link Icon', required: false }
       }
     });
@@ -372,32 +372,38 @@ class WidgetRegistry {
         value: {
           type: 'number',
           label: 'Value',
-          description: 'The numerical value of the statistic'
+          description: 'The numerical value of the statistic',
+          default: '0'
         },
         label: {
           type: 'text',
           label: 'Label',
-          description: 'The label for the statistic'
+          description: 'The label for the statistic',
+          default: 'Statistic'
         },
         icon: {
           type: 'text',
           label: 'Icon',
-          description: 'A Font Awesome icon to display'
+          description: 'A Font Awesome icon to display',
+          default: 'chart-bar'
         },
         link: {
           type: 'text',
           label: 'Link',
-          description: 'An optional URL to link to'
+          description: 'An optional URL to link to',
+          default: ''
         },
         iconColor: {
           type: 'color',
           label: 'Icon Color',
-          description: 'Color for the icon (e.g., #ffffff or theme.color)'
+          description: 'Color for the icon (e.g., #ffffff or theme.color)',
+          default: 'theme.body.text.color'
         },
         view: {
           type: 'text',
           label: 'View',
-          description: 'Set to "vertical" for a vertical layout'
+          description: 'Set to "vertical" for a vertical layout',
+          default: 'default'
         }
       }
     });
@@ -501,14 +507,14 @@ class WidgetRegistry {
       description: 'A calendar',
       properties: {
         calendarUniqueId: { type: 'text', label: 'Calendar Repository ID' },
-        defaultView: { type: 'select', label: 'View', options: ['month', 'list', 'day'] },
-        view: { type: 'select', label: 'Placement Size', options: ['default', 'small'] },
-        height: { type: 'number', label: 'Optional Height Value' },
-        showEvents: { type: 'checkbox', label: 'Show Events' },
-        showHolidays: { type: 'checkbox', label: 'Show Holidays' },
-        showMoodleEvents: { type: 'checkbox', label: 'Show Moodle Events' },
-        moodleTextColor: { type: 'color', label: 'Moodle Text Color' },
-        moodleBackgroundColor: { type: 'color', label: 'Moodle Background Color' }
+        defaultView: { type: 'select', label: 'View', options: ['month', 'list', 'day'], default: 'month' },
+        view: { type: 'select', label: 'Placement Size', options: ['default', 'small'], default: 'default' },
+        height: { type: 'number', label: 'Optional Height Value', default: '' },
+        showEvents: { type: 'checkbox', label: 'Show Events', default: 'true' },
+        showHolidays: { type: 'checkbox', label: 'Show Holidays', default: 'true' },
+        showMoodleEvents: { type: 'checkbox', label: 'Show Moodle Events', default: 'false' },
+        moodleTextColor: { type: 'color', label: 'Moodle Text Color', default: '#000000' },
+        moodleBackgroundColor: { type: 'color', label: 'Moodle Background Color', default: '#ffffff' }
       }
     });
 
@@ -519,14 +525,14 @@ class WidgetRegistry {
       description: 'A list of upcoming calendar events',
       properties: {
         calendarUniqueId: { type: 'text', label: 'Calendar Repository ID' },
-        view: { type: 'select', label: 'Display As', options: ['list', 'cards'] },
-        showWhenEmpty: { type: 'checkbox', label: 'Show When Empty' },
-        daysToShow: { type: 'number', label: 'Days to Show' },
-        monthsToShow: { type: 'number', label: 'Months to Show' },
-        showMonthName: { type: 'checkbox', label: 'Show Month Name' },
-        showEventLink: { type: 'checkbox', label: 'Show Event Link' },
-        includeLastEvent: { type: 'checkbox', label: 'Include Last Previous Event' },
-        limit: { type: 'number', label: 'Max Events' },
+        view: { type: 'select', label: 'Display As', options: ['list', 'cards'], default: 'list' },
+        showWhenEmpty: { type: 'checkbox', label: 'Show When Empty', default: 'true' },
+        daysToShow: { type: 'number', label: 'Days to Show', default: '-1' },
+        monthsToShow: { type: 'number', label: 'Months to Show', default: '1' },
+        showMonthName: { type: 'checkbox', label: 'Show Month Name', default: 'true' },
+        showEventLink: { type: 'checkbox', label: 'Show Event Link', default: 'true' },
+        includeLastEvent: { type: 'checkbox', label: 'Include Last Previous Event', default: 'false' },
+        limit: { type: 'number', label: 'Max Events', default: '-1' },
         smallCardCount: {
           type: 'number',
           label: 'Small Screen Cards',
@@ -544,7 +550,7 @@ class WidgetRegistry {
         },
         cardClass: { type: 'text', label: 'Card CSS Class' },
         calendarLink: { type: 'text', label: 'Custom Link to Calendar' },
-        titles: { type: 'text', label: 'Card Titles (|)' }
+        titles: { type: 'text', label: 'Card Titles (Past|Current|Upcoming)' }
       }
     });
 
@@ -721,9 +727,9 @@ class WidgetRegistry {
       icon: 'fa-square',
       description: 'A button',
       properties: {
-        name: { type: 'text', label: 'Button Text', required: true },
+        name: { type: 'text', label: 'Button Text', required: true, default: 'Go' },
         link: { type: 'text', label: 'Link URL' },
-        cssClass: { type: 'text', label: 'CSS Class' }
+        cssClass: { type: 'text', label: 'Button CSS Class' }
       }
     });
 
@@ -734,7 +740,8 @@ class WidgetRegistry {
       description: 'Breadcrumb navigation',
       properties: {
         useHomepage: { type: 'checkbox', label: 'Use Homepage' },
-        useWebPage: { type: 'checkbox', label: 'Use Web Page' }
+        useWebPage: { type: 'checkbox', label: 'Use Web Page' },
+        links: { type: 'array', label: 'Links', default: [] }
       }
     });
 
@@ -745,7 +752,10 @@ class WidgetRegistry {
       description: 'A menu',
       properties: {
         uniqueId: { type: 'text', label: 'Unique ID', required: true },
-        name: { type: 'text', label: 'Menu Name' }
+        name: { type: 'text', label: 'Menu Name' },
+        class: { type: 'text', label: 'Menu Class', default: 'vertical' },
+        showWhenEmpty: { type: 'checkbox', label: 'Show When Empty', default: 'false' },
+        links: { type: 'array', label: 'Links', default: [] }
       }
     });
 

@@ -7,8 +7,10 @@
  */
 
 class LayoutManager {
-  constructor(editor) {
+  constructor(editor, widgetRegistry, generateUniqueId) {
     this.editor = editor;
+    this.widgetRegistry = widgetRegistry;
+    this.generateUniqueId = generateUniqueId;
     this.structure = {
       rows: []
     };
@@ -262,78 +264,32 @@ class LayoutManager {
    * Get default properties for a widget type
    */
   getDefaultProperties(widgetType) {
-    const defaults = {
-      content: {
-        uniqueId: this.generateUniqueId('content'),
-        html: '<p>Content</p>'
-      },
-      contentAccordion: {
-        uniqueId: this.generateUniqueId('accordion'),
-        html: '<h1>Title</h1><p>&gt; Item to expand</p><p>The item content goes here...</p><hr /><p>&gt; Item to expand</p><p>The item content goes here...</p><hr />'
-      },
-      contentCards: {
-        uniqueId: this.generateUniqueId('cards'),
-        html: '<p>Multiple card content separated by HR</p>'
-      },
-      contentSlider: {
-        uniqueId: this.generateUniqueId('slider'),
-        html: '<p>Multiple slide content separated by HR</p>',
-        showControls: 'true',
-        showPagination: 'true',
-        loop: 'false',
-        autoplayDelay: '5000'
-      },
-      breadcrumbs: {
-        links: []
-      },
-      menu: {
-        class: 'vertical',
-        showWhenEmpty: 'false',
-        links: []
-      },
-      button: {
-        name: 'Click Me',
-        link: '#',
-        buttonClass: ''
-      },
-      calendar: {
-        defaultView: 'month',
-        view: 'default',
-        height: '',
-        showEvents: 'true',
-        showHolidays: 'true',
-        showMoodleEvents: 'false',
-        moodleTextColor: '#000000',
-        moodleBackgroundColor: '#ffffff'
-      },
-      upcomingCalendarEvents: {
-        view: 'list',
-        showWhenEmpty: 'true',
-        daysToShow: '-1',
-        monthsToShow: '1',
-        showMonthName: 'true',
-        showEventLink: 'true',
-        includeLastEvent: 'false',
-        limit: '-1'
-      },
-      card: {
-        title: 'Card Title',
-        icon: '',
-        link: '',
-        linkTitle: '',
-        class: ''
-      },
-      statisticCard: {
-        label: 'Statistic',
-        value: '0',
-        icon: 'chart-bar',
-        link: '',
-        iconColor: 'theme.body.text.color',
-        view: 'default'
-      }
-    };
+    if (!this.widgetRegistry) {
+      console.warn('WidgetRegistry not available');
+      return {};
+    }
     
-    return defaults[widgetType] || {};
+    const widgetDefinition = this.widgetRegistry.get(widgetType);
+    if (!widgetDefinition || !widgetDefinition.properties) {
+      return {};
+    }
+    
+    // Extract defaults from property definitions
+    const defaults = {};
+    for (const [propName, propDef] of Object.entries(widgetDefinition.properties)) {
+      if (propDef.hasOwnProperty('default')) {
+        const defaultValue = propDef.default;
+        
+        // Handle special case for uniqueId generation
+        if (defaultValue === 'GENERATE') {
+          defaults[propName] = this.generateUniqueId(widgetType);
+        } else {
+          defaults[propName] = defaultValue;
+        }
+      }
+    }
+    
+    return defaults;
   }
   
   /**
