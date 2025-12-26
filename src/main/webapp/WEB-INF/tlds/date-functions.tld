@@ -38,11 +38,27 @@
     </function>
     <function>
         <description>
-            Determines if the date is within a certain time
+            Determines if the date is at least a certain number of minutes old
         </description>
         <name>isMinutesOld</name>
         <function-class>com.simisinc.platform.application.cms.DateCommand</function-class>
         <function-signature>boolean isMinutesOld(java.sql.Timestamp,int)</function-signature>
+    </function>
+    <function>
+        <description>
+            Determines if the date is at least a certain number of hours old
+        </description>
+        <name>isHoursOld</name>
+        <function-class>com.simisinc.platform.application.cms.DateCommand</function-class>
+        <function-signature>boolean isHoursOld(java.sql.Timestamp,int)</function-signature>
+    </function>
+    <function>
+        <description>
+            Determines if the date is at least a certain number of days old
+        </description>
+        <name>isDaysOld</name>
+        <function-class>com.simisinc.platform.application.cms.DateCommand</function-class>
+        <function-signature>boolean isDaysOld(java.sql.Timestamp,int)</function-signature>
     </function>
     <function>
         <description>
