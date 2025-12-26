@@ -23,8 +23,10 @@ class WidgetRegistry {
       icon: 'fa-paragraph',
       description: 'Rich text content block',
       properties: {
-        uniqueId: { type: 'text', label: 'Unique ID', required: true },
-        html: { type: 'textarea', label: 'HTML Content', required: false }
+        icon: { type: 'text', label: 'Widget Icon', required: false },
+        title: { type: 'text', label: 'Widget Title', required: false },
+        uniqueId: { type: 'text', label: 'Content Repository ID', required: true },
+        html: { type: 'textarea', label: 'Fallback HTML Content', required: false, default: '<p>Content</p>' }
       }
     });
     
@@ -34,8 +36,10 @@ class WidgetRegistry {
       icon: 'fa-list',
       description: 'Collapsible content sections',
       properties: {
-        uniqueId: { type: 'text', label: 'Unique ID', required: true },
-        html: { type: 'textarea', label: 'HTML Content', required: false }
+        icon: { type: 'text', label: 'Widget Icon', required: false },
+        title: { type: 'text', label: 'Widget Title', required: false },
+        uniqueId: { type: 'text', label: 'Content Repository ID', required: true },
+        html: { type: 'textarea', label: 'Fallback HTML Content', required: false }
       }
     });
     
@@ -45,8 +49,28 @@ class WidgetRegistry {
       icon: 'fa-th',
       description: 'Content card grid',
       properties: {
-        uniqueId: { type: 'text', label: 'Unique ID', required: true },
-        html: { type: 'textarea', label: 'HTML Content', required: false }
+        icon: { type: 'text', label: 'Widget Icon', required: false },
+        title: { type: 'text', label: 'Widget Title', required: false },
+        uniqueId: { type: 'text', label: 'Content Repository ID', required: true },
+        html: { type: 'textarea', label: 'Fallback HTML Content', required: false },
+        gridMargin: { type: 'checkbox', label: 'Set Grid Margin CSS', default: 'false' },
+        smallCardCount: {
+          type: 'number',
+          label: 'Small Screen Cards',
+          description: 'Number of cards per row on small screens',
+          default: 1
+        },
+        mediumCardCount: {
+          type: 'number',
+          label: 'Medium Screen Cards',
+          description: 'Number of cards per row on medium screens'
+        },
+        largeCardCount: {
+          type: 'number',
+          label: 'Large Screen Cards',
+          description: 'Number of cards per row on large screens'
+        },
+        cardClass: { type: 'text', label: 'Card CSS Class', required: false }
       }
     });
     
@@ -56,12 +80,17 @@ class WidgetRegistry {
       icon: 'fa-images',
       description: 'Image/content slider',
       properties: {
-        uniqueId: { type: 'text', label: 'Unique ID', required: true },
-        html: { type: 'textarea', label: 'HTML Content', required: false },
-        showControls: { type: 'checkbox', label: 'Show Controls' },
-        showPagination: { type: 'checkbox', label: 'Show Pagination' },
-        loop: { type: 'checkbox', label: 'Loop' },
-        autoplayDelay: { type: 'number', label: 'Autoplay Delay (ms)' }
+        icon: { type: 'text', label: 'Widget Icon', required: false },
+        title: { type: 'text', label: 'Widget Title', required: false },
+        uniqueId: { type: 'text', label: 'Content Repository ID', required: true },
+        html: { type: 'textarea', label: 'Fallback HTML Content', required: false },
+        showControls: { type: 'checkbox', label: 'Show Controls', default: 'true' },
+        showLeftControl: { type: 'checkbox', label: 'Show Left Control', default: 'true' },
+        showRightControl: { type: 'checkbox', label: 'Show Right Control', default: 'true' },
+        showPagination: { type: 'checkbox', label: 'Show Pagination', default: 'true' },
+        loop: { type: 'checkbox', label: 'Loop', default: 'true' },
+        autoplayDelay: { type: 'number', label: 'Autoplay Delay (ms)', default: '-1' },
+        carouselClass: { type: 'text', label: 'Carousel CSS Class', required: false },
       }
     });
     
@@ -71,8 +100,8 @@ class WidgetRegistry {
       icon: 'fa-folder-open',
       description: 'Content tab container',
       properties: {
-        uniqueId: { type: 'text', label: 'Unique ID', required: true },
-        html: { type: 'textarea', label: 'HTML Content', required: false }
+        uniqueId: { type: 'text', label: 'Content Repository ID', required: true },
+        html: { type: 'textarea', label: 'Fallback HTML Content', required: false }
       }
     });
 
@@ -82,8 +111,8 @@ class WidgetRegistry {
       icon: 'fa-plus',
       description: 'Reveals content when clicked',
       properties: {
-        uniqueId: { type: 'text', label: 'Unique ID', required: true },
-        html: { type: 'textarea', label: 'HTML Content', required: false }
+        uniqueId: { type: 'text', label: 'Content Repository ID', required: true },
+        html: { type: 'textarea', label: 'Fallback HTML Content', required: false }
       }
     });
 
@@ -93,8 +122,8 @@ class WidgetRegistry {
       icon: 'fa-th-large',
       description: 'A gallery of content items',
       properties: {
-        uniqueId: { type: 'text', label: 'Unique ID', required: true },
-        html: { type: 'textarea', label: 'HTML Content', required: false }
+        uniqueId: { type: 'text', label: 'Content Repository ID', required: true },
+        html: { type: 'textarea', label: 'Fallback HTML Content', required: false }
       }
     });
 
@@ -104,8 +133,8 @@ class WidgetRegistry {
       icon: 'fa-images',
       description: 'A carousel of content items',
       properties: {
-        uniqueId: { type: 'text', label: 'Unique ID', required: true },
-        html: { type: 'textarea', label: 'HTML Content', required: false }
+        uniqueId: { type: 'text', label: 'Content Repository ID', required: true },
+        html: { type: 'textarea', label: 'Fallback HTML Content', required: false }
       }
     });
 
@@ -132,11 +161,16 @@ class WidgetRegistry {
       icon: 'fa-check-square',
       description: 'A form',
       properties: {
-        uniqueId: { type: 'text', label: 'Unique ID', required: true },
-        form: { type: 'text', label: 'Form Unique ID' },
-        returnPage: { type: 'text', label: 'Return Page' },
-        buttonName: { type: 'text', label: 'Button Name' },
-        class: { type: 'text', label: 'CSS Class' }
+        icon: { type: 'text', label: 'Widget Icon', required: false },
+        title: { type: 'text', label: 'Widget Title', required: false },
+        subtitle: { type: 'text', label: 'Widget Subtitle', required: false },
+        formUniqueId: { type: 'text', label: 'Form Repository ID', required: true },
+        fields: { type: 'text', label: 'Form Input Fields', required: true },
+        useCaptcha: { type: 'checkbox', label: 'Display a Captcha', default: 'true' },
+        checkForSpam: { type: 'checkbox', label: 'Check Content and Mark for Spam', default: 'true' },
+        buttonName: { type: 'text', label: 'Button Name', default: 'Submit' },
+        successTitle: { type: 'text', label: 'Success Title to Display' },
+        successMessage: { type: 'text', label: 'Success Message to Display', default: 'Your information has been submitted.' }
       }
     });
 
@@ -253,7 +287,8 @@ class WidgetRegistry {
         smallCardCount: {
           type: 'number',
           label: 'Small Screen Cards',
-          description: 'Number of cards per row on small screens (default: 6)'
+          description: 'Number of cards per row on small screens (default: 6)',
+          default: 6
         },
         mediumCardCount: {
           type: 'number',
@@ -465,11 +500,15 @@ class WidgetRegistry {
       icon: 'fa-calendar-alt',
       description: 'A calendar',
       properties: {
-        calendar: { type: 'text', label: 'Calendar Unique ID' },
-        calendarId: { type: 'number', label: 'Calendar ID' },
-        view: { type: 'select', label: 'View', options: ['month', 'week', 'day'] },
-        showTitle: { type: 'checkbox', label: 'Show Title' },
-        showToday: { type: 'checkbox', label: 'Show Today Button' }
+        calendarUniqueId: { type: 'text', label: 'Calendar Repository ID' },
+        defaultView: { type: 'select', label: 'View', options: ['month', 'list', 'day'] },
+        view: { type: 'select', label: 'Placement Size', options: ['default', 'small'] },
+        height: { type: 'number', label: 'Optional Height Value' },
+        showEvents: { type: 'checkbox', label: 'Show Events' },
+        showHolidays: { type: 'checkbox', label: 'Show Holidays' },
+        showMoodleEvents: { type: 'checkbox', label: 'Show Moodle Events' },
+        moodleTextColor: { type: 'color', label: 'Moodle Text Color' },
+        moodleBackgroundColor: { type: 'color', label: 'Moodle Background Color' }
       }
     });
 
@@ -479,9 +518,33 @@ class WidgetRegistry {
       icon: 'fa-calendar-check',
       description: 'A list of upcoming calendar events',
       properties: {
-        calendar: { type: 'text', label: 'Calendar Unique ID' },
-        calendarId: { type: 'number', label: 'Calendar ID' },
-        rows: { type: 'number', label: 'Rows' }
+        calendarUniqueId: { type: 'text', label: 'Calendar Repository ID' },
+        view: { type: 'select', label: 'Display As', options: ['list', 'cards'] },
+        showWhenEmpty: { type: 'checkbox', label: 'Show When Empty' },
+        daysToShow: { type: 'number', label: 'Days to Show' },
+        monthsToShow: { type: 'number', label: 'Months to Show' },
+        showMonthName: { type: 'checkbox', label: 'Show Month Name' },
+        showEventLink: { type: 'checkbox', label: 'Show Event Link' },
+        includeLastEvent: { type: 'checkbox', label: 'Include Last Previous Event' },
+        limit: { type: 'number', label: 'Max Events' },
+        smallCardCount: {
+          type: 'number',
+          label: 'Small Screen Cards',
+          description: 'Number of cards per row on small screens (default: 6)'
+        },
+        mediumCardCount: {
+          type: 'number',
+          label: 'Medium Screen Cards',
+          description: 'Number of cards per row on medium screens'
+        },
+        largeCardCount: {
+          type: 'number',
+          label: 'Large Screen Cards',
+          description: 'Number of cards per row on large screens'
+        },
+        cardClass: { type: 'text', label: 'Card CSS Class' },
+        calendarLink: { type: 'text', label: 'Custom Link to Calendar' },
+        titles: { type: 'text', label: 'Card Titles (|)' }
       }
     });
 
@@ -492,12 +555,16 @@ class WidgetRegistry {
       icon: 'fa-map-marked-alt',
       description: 'A map',
       properties: {
-        collection: { type: 'text', label: 'Collection Unique ID' },
-        collectionId: { type: 'number', label: 'Collection ID' },
-        height: { type: 'number', label: 'Height' },
+        icon: { type: 'text', label: 'Widget Icon' },
+        title: { type: 'text', label: 'Widget Title' },
+        coordinates: { type: 'text', label: 'Coordinates (comma-separated)' },
         latitude: { type: 'text', label: 'Latitude' },
         longitude: { type: 'text', label: 'Longitude' },
-        zoom: { type: 'number', label: 'Zoom' }
+        mapHeight: { type: 'number', label: 'Height', default: '290' },
+        mapZoomLevel: { type: 'number', label: 'Zoom Level', default: '12' },
+        showMarker: { type: 'checkbox', label: 'Show a Map Marker', default: 'true' },
+        markerTitle: { type: 'text', label: 'Marker Title' },
+        markerText: { type: 'text', label: 'Marker Caption Text' },
       }
     });
 
@@ -508,7 +575,7 @@ class WidgetRegistry {
       icon: 'fa-address-book',
       description: 'A directory of items',
       properties: {
-        collection: { type: 'text', label: 'Collection Unique ID', required: true },
+        collection: { type: 'text', label: 'Collection Repository ID', required: true },
         view: { type: 'select', label: 'View', options: ['list', 'grid'] },
         showSearch: { type: 'checkbox', label: 'Show Search' },
         showPaging: { type: 'checkbox', label: 'Show Paging' },
@@ -522,7 +589,7 @@ class WidgetRegistry {
       icon: 'fa-list-alt',
       description: 'A list of items',
       properties: {
-        collection: { type: 'text', label: 'Collection Unique ID', required: true },
+        collection: { type: 'text', label: 'Collection Repository ID', required: true },
         view: { type: 'select', label: 'View', options: ['list', 'grid', 'table'] },
         showSearch: { type: 'checkbox', label: 'Show Search' },
         showPaging: { type: 'checkbox', label: 'Show Paging' },
@@ -536,7 +603,7 @@ class WidgetRegistry {
       icon: 'fa-sitemap',
       description: 'A list of categories',
       properties: {
-        collection: { type: 'text', label: 'Collection Unique ID', required: true },
+        collection: { type: 'text', label: 'Collection Repository ID', required: true },
         view: { type: 'select', label: 'View', options: ['list', 'cloud'] },
         showCount: { type: 'checkbox', label: 'Show Count' }
       }
@@ -548,7 +615,7 @@ class WidgetRegistry {
       icon: 'fa-plus-circle',
       description: 'A button to add an item',
       properties: {
-        collection: { type: 'text', label: 'Collection Unique ID', required: true },
+        collection: { type: 'text', label: 'Collection Repository ID', required: true },
         name: { type: 'text', label: 'Button Text' },
         class: { type: 'text', label: 'CSS Class' }
       }
@@ -710,7 +777,7 @@ class WidgetRegistry {
       icon: 'fa-book',
       description: 'A table of contents',
       properties: {
-        uniqueId: { type: 'text', label: 'Unique ID', required: true },
+        uniqueId: { type: 'text', label: 'Table of Contents Repository ID', required: true },
         link: { type: 'text', label: 'Link' }
       }
     });
@@ -808,7 +875,7 @@ class WidgetRegistry {
         },
         wikiUniqueId: {
           type: 'text',
-          label: 'Wiki Unique ID',
+          label: 'Wiki Repository ID',
           description: 'The unique ID of the wiki to display'
         }
       }

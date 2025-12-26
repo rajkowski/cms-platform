@@ -265,7 +265,7 @@ class LayoutManager {
     const defaults = {
       content: {
         uniqueId: this.generateUniqueId('content'),
-        html: '<p>Content...</p>'
+        html: '<p>Content</p>'
       },
       contentAccordion: {
         uniqueId: this.generateUniqueId('accordion'),
@@ -295,6 +295,26 @@ class LayoutManager {
         name: 'Click Me',
         link: '#',
         buttonClass: ''
+      },
+      calendar: {
+        defaultView: 'month',
+        view: 'default',
+        height: '',
+        showEvents: 'true',
+        showHolidays: 'true',
+        showMoodleEvents: 'false',
+        moodleTextColor: '#000000',
+        moodleBackgroundColor: '#ffffff'
+      },
+      upcomingCalendarEvents: {
+        view: 'list',
+        showWhenEmpty: 'true',
+        daysToShow: '-1',
+        monthsToShow: '1',
+        showMonthName: 'true',
+        showEventLink: 'true',
+        includeLastEvent: 'false',
+        limit: '-1'
       },
       card: {
         title: 'Card Title',
