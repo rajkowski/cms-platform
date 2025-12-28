@@ -959,11 +959,11 @@
 
 <!-- Load JavaScript modules -->
 <g:compress>
+  <script src="${ctx}/javascript/widgets/editor/widget-registry.js"></script>
   <script src="${ctx}/javascript/widgets/editor/pre-designed-templates.js"></script>
   <script src="${ctx}/javascript/widgets/editor/editor-main.js"></script>
   <script src="${ctx}/javascript/widgets/editor/drag-drop-manager.js"></script>
   <script src="${ctx}/javascript/widgets/editor/layout-manager.js"></script>
-  <script src="${ctx}/javascript/widgets/editor/widget-registry.js"></script>
   <script src="${ctx}/javascript/widgets/editor/canvas-controller.js"></script>
   <script src="${ctx}/javascript/widgets/editor/properties-panel.js"></script>
   <script src="${ctx}/javascript/widgets/editor/pages-tab-manager.js"></script>

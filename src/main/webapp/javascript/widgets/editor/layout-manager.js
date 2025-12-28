@@ -7,10 +7,9 @@
  */
 
 class LayoutManager {
-  constructor(editor, widgetRegistry, generateUniqueId) {
+  constructor(editor, widgetRegistry) {
     this.editor = editor;
     this.widgetRegistry = widgetRegistry;
-    this.generateUniqueId = generateUniqueId;
     this.structure = {
       rows: []
     };
@@ -140,10 +139,11 @@ class LayoutManager {
     if (!column) return null;
     
     const widgetId = 'widget-' + (this.nextWidgetId++);
+    const defaultProps = this.getDefaultProperties(widgetType);
     const widget = {
       id: widgetId,
       type: widgetType,
-      properties: this.getDefaultProperties(widgetType)
+      properties: defaultProps
     };
     
     if (targetWidgetId) {
@@ -157,7 +157,7 @@ class LayoutManager {
       column.widgets.push(widget);
     }
     
-    console.log('Widget added:', widgetId, widgetType);
+    console.log('Widget added:', widgetId, widgetType, 'properties:', defaultProps);
     
     return widgetId;
   }
@@ -270,14 +270,23 @@ class LayoutManager {
     }
     
     const widgetDefinition = this.widgetRegistry.get(widgetType);
-    if (!widgetDefinition || !widgetDefinition.properties) {
+    console.log('Getting defaults for widget type:', widgetType);
+    console.log('Widget definition:', widgetDefinition);
+    
+    if (!widgetDefinition) {
+      console.warn('No widget definition found for:', widgetType);
+      return {};
+    }
+    
+    if (!widgetDefinition.properties) {
+      console.warn('Widget definition has no properties for:', widgetType);
       return {};
     }
     
     // Extract defaults from property definitions
     const defaults = {};
     for (const [propName, propDef] of Object.entries(widgetDefinition.properties)) {
-      if (propDef.hasOwnProperty('default')) {
+      if (propDef && propDef.hasOwnProperty('default')) {
         const defaultValue = propDef.default;
         
         // Handle special case for uniqueId generation
@@ -289,14 +298,23 @@ class LayoutManager {
       }
     }
     
+    console.log('Extracted defaults:', defaults);
     return defaults;
   }
   
   /**
-   * Generate unique ID for content
+   * Generate unique ID for repository references
    */
   generateUniqueId(prefix) {
-    return prefix + '-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    const pad = (n) => String(n).padStart(2, '0');
+    const d = new Date();
+    const ts = d.getFullYear().toString() +
+      pad(d.getMonth() + 1) +
+      pad(d.getDate()) +
+      pad(d.getHours()) +
+      pad(d.getMinutes()) +
+      pad(d.getSeconds());
+    return prefix + '-' + ts;
   }
   
   /**

@@ -196,11 +196,16 @@ class CanvasController {
     
     // Ensure default properties are set before rendering preview
     if (!widget.properties || Object.keys(widget.properties).length === 0) {
-      widget.properties = this.editor.getLayoutManager().getDefaultProperties(widget.type);
+      const defaultProps = this.editor.getLayoutManager().getDefaultProperties(widget.type);
+      widget.properties = defaultProps;
+      console.log('Applied default properties to widget:', widget.id, widget.properties);
+    } else {
+      console.log('Widget already has properties:', widget.id, widget.properties);
     }
     
     // Create widget preview after defaults are set
     const preview = this.renderWidgetPreview(widget);
+    console.log('Preview for widget', widget.id, ':', preview);
     widgetElement.innerHTML = `
       <div style="display:flex;align-items:center;margin-bottom:10px;">
         <i class="fa ${widgetIcon}" style="margin-right:8px;color:#007bff;"></i>
@@ -229,11 +234,17 @@ class CanvasController {
     const props = widget.properties;
     
     if (!props || Object.keys(props).length === 0) {
+      console.log("No properties found for widget:", widget.id);
       return '<div style="font-size:12px;color:#999;">Widget configuration</div>';
     }
     
     const previewValue = this.getPreviewValue(props);
-    return previewValue ? `<div style="font-size:12px;color:#666;">${previewValue}</div>` : '<div style="font-size:12px;color:#999;">Widget configuration</div>';
+    if (previewValue) {
+      console.log("Preview value for widget", widget.id, ":", previewValue);
+      return `<div style="font-size:12px;color:#666;">${previewValue}</div>`;
+    }
+    console.log("No preview value could be determined for widget:", widget.id);
+    return '<div style="font-size:12px;color:#999;">Widget configuration</div>';
   }
   
   /**
@@ -244,16 +255,26 @@ class CanvasController {
     const priorityKeys = ['uniqueId', 'name', 'title', 'heading', 'text', 'label'];
     for (const key of priorityKeys) {
       if (props[key]) {
-        return (key === 'label' && props.value) ? props[key] + ': ' + props.value : props[key];
+        const value = (key === 'label' && props.value) ? props[key] + ': ' + props.value : props[key];
+        console.log(`Found preview value in "${key}":`, value);
+        return value;
       }
     }
     
     // Check for any property key containing 'UniqueId'
     const uniqueIdKey = Object.keys(props).find(key => key.includes('UniqueId') && props[key]);
-    if (uniqueIdKey) return props[uniqueIdKey];
+    if (uniqueIdKey) {
+      console.log(`Found preview value in "${uniqueIdKey}":`, props[uniqueIdKey]);
+      return props[uniqueIdKey];
+    }
     
     // Return the first non-empty string property value
     const firstString = Object.values(props).find(value => typeof value === 'string' && value.trim());
+    if (firstString) {
+      console.log('Found preview value from first string property:', firstString);
+    } else {
+      console.log('No preview value found in properties:', Object.keys(props));
+    }
     return firstString || null;
   }
   

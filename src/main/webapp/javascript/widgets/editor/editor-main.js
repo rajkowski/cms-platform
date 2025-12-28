@@ -10,8 +10,8 @@ class PageEditor {
   constructor(config) {
     this.config = config;
     this.dragDropManager = new DragDropManager(this);
-    this.layoutManager = new LayoutManager(this);
     this.widgetRegistry = new WidgetRegistry();
+    this.layoutManager = new LayoutManager(this, this.widgetRegistry);
     this.canvasController = new CanvasController(this);
     this.propertiesPanel = new PropertiesPanel(this);
     this.pagesTabManager = new PagesTabManager(this);
