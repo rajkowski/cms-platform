@@ -429,17 +429,17 @@ class WidgetRegistry {
       category: 'Dashboard',
       icon: 'fa-chart-bar',
       properties: {
-        value: {
-          type: 'number',
-          label: 'Value',
-          description: 'The numerical value of the statistic',
-          default: '0'
-        },
         label: {
           type: 'text',
           label: 'Label',
           description: 'The label for the statistic',
           default: 'Statistic'
+        },
+        value: {
+          type: 'number',
+          label: 'Value',
+          description: 'The numerical value of the statistic',
+          default: '0'
         },
         icon: {
           type: 'text',
@@ -450,7 +450,7 @@ class WidgetRegistry {
         link: {
           type: 'text',
           label: 'Link',
-          description: 'An optional URL to link to',
+          description: 'An optional page URL to link to (/example)',
           default: ''
         },
         iconColor: {
@@ -460,8 +460,9 @@ class WidgetRegistry {
           default: 'theme.body.text.color'
         },
         view: {
-          type: 'text',
           label: 'View',
+          type: 'select',
+          options: ['default', 'vertical'],
           description: 'Set to "vertical" for a vertical layout',
           default: 'default'
         }
