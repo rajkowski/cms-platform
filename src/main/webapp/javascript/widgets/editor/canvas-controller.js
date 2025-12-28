@@ -194,13 +194,19 @@ class CanvasController {
     const widgetName = definition ? definition.name : widget.type;
     const widgetIcon = definition ? definition.icon : 'fa-cube';
     
-    // Create widget preview
+    // Ensure default properties are set before rendering preview
+    if (!widget.properties || Object.keys(widget.properties).length === 0) {
+      widget.properties = this.editor.getLayoutManager().getDefaultProperties(widget.type);
+    }
+    
+    // Create widget preview after defaults are set
+    const preview = this.renderWidgetPreview(widget);
     widgetElement.innerHTML = `
       <div style="display:flex;align-items:center;margin-bottom:10px;">
         <i class="fa ${widgetIcon}" style="margin-right:8px;color:#007bff;"></i>
         <strong>${widgetName}</strong>
       </div>
-      ${this.renderWidgetPreview(widget)}
+      ${preview}
     `;
     
     // Add widget controls
@@ -220,26 +226,35 @@ class CanvasController {
    * Render widget preview
    */
   renderWidgetPreview(widget) {
-    // Simple preview based on widget type
     const props = widget.properties;
     
-    if (props.uniqueId) {
-      return `<div style="font-size:12px;color:#666;">${props.uniqueId}</div>`;
-    }
-    for (const key of Object.keys(props)) {
-      if (key.includes('UniqueId') && props[key]) {
-        return `<div style="font-size:12px;color:#666;">${props[key]}</div>`;
-      }
-    }
-    if (props.name) {
-      return `<div style="font-size:12px;color:#666;">${props.name}</div>`;
-    } else if (props.title) {
-      return `<div style="font-size:12px;color:#666;">${props.title}</div>`;
-    } else if (props.label) {
-      return `<div style="font-size:12px;color:#666;">${props.label}: ${props.value || ''}</div>`;
+    if (!props || Object.keys(props).length === 0) {
+      return '<div style="font-size:12px;color:#999;">Widget configuration</div>';
     }
     
-    return '<div style="font-size:12px;color:#999;">Widget configuration</div>';
+    const previewValue = this.getPreviewValue(props);
+    return previewValue ? `<div style="font-size:12px;color:#666;">${previewValue}</div>` : '<div style="font-size:12px;color:#999;">Widget configuration</div>';
+  }
+  
+  /**
+   * Get the display value for widget preview
+   */
+  getPreviewValue(props) {
+    // Check for priority properties first
+    const priorityKeys = ['uniqueId', 'name', 'title', 'heading', 'text', 'label'];
+    for (const key of priorityKeys) {
+      if (props[key]) {
+        return (key === 'label' && props.value) ? props[key] + ': ' + props.value : props[key];
+      }
+    }
+    
+    // Check for any property key containing 'UniqueId'
+    const uniqueIdKey = Object.keys(props).find(key => key.includes('UniqueId') && props[key]);
+    if (uniqueIdKey) return props[uniqueIdKey];
+    
+    // Return the first non-empty string property value
+    const firstString = Object.values(props).find(value => typeof value === 'string' && value.trim());
+    return firstString || null;
   }
   
   /**
