@@ -547,7 +547,7 @@ class PropertiesPanel {
     if (this.editor && this.editor.pagesTabManager && this.editor.pagesTabManager.getSelectedPageLink) {
       pageLink = this.editor.pagesTabManager.getSelectedPageLink();
       // Remove leading "/" if present
-      if (pageLink.startsWith('/')) {
+      if (pageLink && pageLink.startsWith('/')) {
         pageLink = pageLink.substring(1);
       }
     }
@@ -836,7 +836,7 @@ class PropertiesPanel {
       pad(d.getHours()) +
       pad(d.getMinutes()) +
       pad(d.getSeconds());
-    return `${baseName}-${ts}`;
+    return `${baseName ?? 'id'}-${ts}`;
   }
   
   /**
