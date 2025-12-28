@@ -53,7 +53,7 @@ class WidgetRegistry {
         title: { type: 'text', label: 'Widget Title', required: false },
         uniqueId: { type: 'text', label: 'Content Repository ID', required: true, default: 'GENERATE' },
         html: { type: 'textarea', label: 'Fallback HTML Content', required: false, default: '<p>Multiple card content separated by HR</p>' },
-        gridMargin: { type: 'checkbox', label: 'Set Grid Margin CSS', default: 'false' },
+        gridMargin: { type: 'checkbox', label: 'Set Grid Margin CSS', default: false },
         smallCardCount: {
           type: 'number',
           label: 'Small Screen Cards',
@@ -84,24 +84,38 @@ class WidgetRegistry {
         title: { type: 'text', label: 'Widget Title', required: false },
         uniqueId: { type: 'text', label: 'Content Repository ID', required: true, default: 'GENERATE' },
         html: { type: 'textarea', label: 'Fallback HTML Content', required: false, default: '<p>Multiple slide content separated by HR</p>' },
-        showControls: { type: 'checkbox', label: 'Show Controls', default: 'true' },
-        showLeftControl: { type: 'checkbox', label: 'Show Left Control', default: 'true' },
-        showRightControl: { type: 'checkbox', label: 'Show Right Control', default: 'true' },
-        showPagination: { type: 'checkbox', label: 'Show Pagination', default: 'true' },
-        loop: { type: 'checkbox', label: 'Loop', default: 'false' },
+        showControls: { type: 'checkbox', label: 'Show Controls', default: true },
+        showLeftControl: { type: 'checkbox', label: 'Show Left Control', default: true },
+        showRightControl: { type: 'checkbox', label: 'Show Right Control', default: true },
+        showPagination: { type: 'checkbox', label: 'Show Pagination', default: true },
+        loop: { type: 'checkbox', label: 'Loop', default: false },
         autoplayDelay: { type: 'number', label: 'Autoplay Delay (ms)', default: '5000' },
         carouselClass: { type: 'text', label: 'Carousel CSS Class', required: false },
       }
     });
     
+    this.register('tableOfContents', {
+      name: 'Table of Contents',
+      category: 'Content',
+      icon: 'fa-book',
+      description: 'A table of contents',
+      properties: {
+        uniqueId: { type: 'text', label: 'Table of Contents Repository ID', required: true },
+        link: { type: 'text', label: 'Named Title Link at Top of List (name=/link)' }
+      }
+    });
+
     this.register('contentTabs', {
       name: 'Content Tabs',
       category: 'Content',
       icon: 'fa-folder-open',
-      description: 'Content tab container',
+      description: 'Content tab container from XML',
       properties: {
-        uniqueId: { type: 'text', label: 'Content Repository ID', required: true },
-        html: { type: 'textarea', label: 'Fallback HTML Content', required: false }
+        icon: { type: 'text', label: 'Widget Icon', required: false },
+        title: { type: 'text', label: 'Widget Title', required: false },
+        tabs: { type: 'xml', label: 'Tab Data', required: true },
+        useLinks: { type: 'checkbox', label: 'Use Links Instead of Divs', default: false },
+        smudge: { type: 'checkbox', label: 'Set Div Tab Click in URL', default: true },
       }
     });
 
@@ -111,8 +125,15 @@ class WidgetRegistry {
       icon: 'fa-plus',
       description: 'Reveals content when clicked',
       properties: {
+        icon: { type: 'text', label: 'Widget Icon', required: false },
+        title: { type: 'text', label: 'Widget Title', required: false },
         uniqueId: { type: 'text', label: 'Content Repository ID', required: true },
-        html: { type: 'textarea', label: 'Fallback HTML Content', required: false }
+        html: { type: 'textarea', label: 'Fallback HTML Content', required: false },
+        attach: { type: 'select', label: 'Attach Side', options: ['left', ''], default: '' },
+        animate: { type: 'select', label: 'Animate Directions', options: ['up', 'down', 'right', 'left', 'fade'], default: 'left' },
+        useIcon: { type: 'checkbox', label: 'Use Icon on Button', default: false },
+        revealClass: { type: 'text', label: 'Reveal CSS Class', required: false },
+        size: { type: 'text', label: 'Reveal Size CSS Class', required: false },
       }
     });
 
@@ -122,8 +143,18 @@ class WidgetRegistry {
       icon: 'fa-th-large',
       description: 'A gallery of content items',
       properties: {
+        icon: { type: 'text', label: 'Widget Icon', required: false },
+        title: { type: 'text', label: 'Widget Title', required: false },
         uniqueId: { type: 'text', label: 'Content Repository ID', required: true },
-        html: { type: 'textarea', label: 'Fallback HTML Content', required: false }
+        html: { type: 'textarea', label: 'Fallback HTML Content', required: false },
+        carouselSize: { type: 'select', label: 'Carousel Size', options: ['tiny', 'small', 'medium', 'large'], default: 'small' },
+        carouselTitle: { type: 'text', label: 'Carousel Title', required: false },
+        useIcon: { type: 'checkbox', label: 'Use Icon on Button', default: false },
+        showControls: { type: 'checkbox', label: 'Show Controls', default: true },
+        showLeftControl: { type: 'checkbox', label: 'Show Left Control', default: true },
+        showRightControl: { type: 'checkbox', label: 'Show Right Control', default: true },
+        showBullets: { type: 'checkbox', label: 'Show Bullets', default: true },
+        carouselClass: { type: 'text', label: 'Carousel CSS Class', required: false },
       }
     });
 
@@ -133,6 +164,8 @@ class WidgetRegistry {
       icon: 'fa-images',
       description: 'A carousel of content items',
       properties: {
+        icon: { type: 'text', label: 'Widget Icon', required: false },
+        title: { type: 'text', label: 'Widget Title', required: false },
         uniqueId: { type: 'text', label: 'Content Repository ID', required: true },
         html: { type: 'textarea', label: 'Fallback HTML Content', required: false }
       }
@@ -144,14 +177,41 @@ class WidgetRegistry {
       icon: 'fa-newspaper',
       description: 'A list of blog posts',
       properties: {
-        view: { type: 'select', label: 'View', options: ['condensed', 'basic', 'summary'] },
-        condensed: { type: 'checkbox', label: 'Condensed' },
-        showImages: { type: 'checkbox', label: 'Show Images' },
-        showAuthor: { type: 'checkbox', label: 'Show Author' },
-        showDate: { type: 'checkbox', label: 'Show Date' },
-        showComments: { type: 'checkbox', label: 'Show Comments' },
-        rows: { type: 'number', label: 'Rows' },
-        class: { type: 'text', label: 'CSS Class' }
+        icon: { type: 'text', label: 'Widget Icon', required: false },
+        title: { type: 'text', label: 'Widget Title', required: false },
+        blogUniqueId: { type: 'text', label: 'Blog Repository ID', required: true },
+        type: { type: 'select', label: 'Type of List', options: ['default', 'recent'], default: 'default' },
+        view: { type: 'select', label: 'View As', options: ['default', 'masonry', 'overview', 'titles', 'cards', 'featured'], default: 'default' },
+        limit: { type: 'number', label: 'Items Per Page', default: 10},
+        showWhenEmpty: { type: 'checkbox', label: 'Show When Empty', default: true },
+        showPaging: { type: 'checkbox', label: 'Show Paging', default: true },
+        showSort: { type: 'checkbox', label: 'Show Sort', default: false },
+        showAuthor: { type: 'checkbox', label: 'Show Author', default: true },
+        showDate: { type: 'checkbox', label: 'Show Date', default: true },
+        addDateToTitle: { type: 'checkbox', label: 'Add Date to Title', default: false },
+        showTags: { type: 'checkbox', label: 'Show Tags', default: false },
+        showImage: { type: 'checkbox', label: 'Show Image', default: true },
+        showSummary: { type: 'checkbox', label: 'Show Summary', default: true },
+        showReadMore: { type: 'checkbox', label: 'Show Read More Link', default: true },
+        readMoreText: { type: 'text', label: 'Read More Text Label', default: 'Read more' },
+        showBullets: { type: 'checkbox', label: 'Show Bullets in Title View', default: false },
+        smallCardCount: {
+          type: 'number',
+          label: 'Small Screen Cards',
+          description: 'Number of cards per row on small screens (default: 3)',
+          default: 3
+        },
+        mediumCardCount: {
+          type: 'number',
+          label: 'Medium Screen Cards',
+          description: 'Number of cards per row on medium screens'
+        },
+        largeCardCount: {
+          type: 'number',
+          label: 'Large Screen Cards',
+          description: 'Number of cards per row on large screens'
+        },
+        cardClass: { type: 'text', label: 'Card CSS Class', required: false }
       }
     });
 
@@ -166,8 +226,8 @@ class WidgetRegistry {
         subtitle: { type: 'text', label: 'Widget Subtitle', required: false },
         formUniqueId: { type: 'text', label: 'Form Repository ID', required: true },
         fields: { type: 'text', label: 'Form Input Fields', required: true },
-        useCaptcha: { type: 'checkbox', label: 'Display a Captcha', default: 'true' },
-        checkForSpam: { type: 'checkbox', label: 'Check Content and Mark for Spam', default: 'true' },
+        useCaptcha: { type: 'checkbox', label: 'Display a Captcha', default: true },
+        checkForSpam: { type: 'checkbox', label: 'Check Content and Mark for Spam', default: true },
         buttonName: { type: 'text', label: 'Button Name', default: 'Submit' },
         successTitle: { type: 'text', label: 'Success Title to Display' },
         successMessage: { type: 'text', label: 'Success Message to Display', default: 'Your information has been submitted.' }
@@ -510,9 +570,9 @@ class WidgetRegistry {
         defaultView: { type: 'select', label: 'View', options: ['month', 'list', 'day'], default: 'month' },
         view: { type: 'select', label: 'Placement Size', options: ['default', 'small'], default: 'default' },
         height: { type: 'number', label: 'Optional Height Value', default: '' },
-        showEvents: { type: 'checkbox', label: 'Show Events', default: 'true' },
-        showHolidays: { type: 'checkbox', label: 'Show Holidays', default: 'true' },
-        showMoodleEvents: { type: 'checkbox', label: 'Show Moodle Events', default: 'false' },
+        showEvents: { type: 'checkbox', label: 'Show Events', default: true },
+        showHolidays: { type: 'checkbox', label: 'Show Holidays', default: true },
+        showMoodleEvents: { type: 'checkbox', label: 'Show Moodle Events', default: false },
         moodleTextColor: { type: 'color', label: 'Moodle Text Color', default: '#000000' },
         moodleBackgroundColor: { type: 'color', label: 'Moodle Background Color', default: '#ffffff' }
       }
@@ -526,12 +586,12 @@ class WidgetRegistry {
       properties: {
         calendarUniqueId: { type: 'text', label: 'Calendar Repository ID' },
         view: { type: 'select', label: 'Display As', options: ['list', 'cards'], default: 'list' },
-        showWhenEmpty: { type: 'checkbox', label: 'Show When Empty', default: 'true' },
+        showWhenEmpty: { type: 'checkbox', label: 'Show When Empty', default: true },
         daysToShow: { type: 'number', label: 'Days to Show', default: '-1' },
         monthsToShow: { type: 'number', label: 'Months to Show', default: '1' },
-        showMonthName: { type: 'checkbox', label: 'Show Month Name', default: 'true' },
-        showEventLink: { type: 'checkbox', label: 'Show Event Link', default: 'true' },
-        includeLastEvent: { type: 'checkbox', label: 'Include Last Previous Event', default: 'false' },
+        showMonthName: { type: 'checkbox', label: 'Show Month Name', default: true },
+        showEventLink: { type: 'checkbox', label: 'Show Event Link', default: true },
+        includeLastEvent: { type: 'checkbox', label: 'Include Last Previous Event', default: false },
         limit: { type: 'number', label: 'Max Events', default: '-1' },
         smallCardCount: {
           type: 'number',
@@ -568,7 +628,7 @@ class WidgetRegistry {
         longitude: { type: 'text', label: 'Longitude' },
         mapHeight: { type: 'number', label: 'Height', default: '290' },
         mapZoomLevel: { type: 'number', label: 'Zoom Level', default: '12' },
-        showMarker: { type: 'checkbox', label: 'Show a Map Marker', default: 'true' },
+        showMarker: { type: 'checkbox', label: 'Show a Map Marker', default: true },
         markerTitle: { type: 'text', label: 'Marker Title' },
         markerText: { type: 'text', label: 'Marker Caption Text' },
       }
@@ -754,7 +814,7 @@ class WidgetRegistry {
         uniqueId: { type: 'text', label: 'Unique ID', required: true },
         name: { type: 'text', label: 'Menu Name' },
         class: { type: 'text', label: 'Menu Class', default: 'vertical' },
-        showWhenEmpty: { type: 'checkbox', label: 'Show When Empty', default: 'false' },
+        showWhenEmpty: { type: 'checkbox', label: 'Show When Empty', default: false },
         links: { type: 'array', label: 'Links', default: [] }
       }
     });
@@ -781,17 +841,7 @@ class WidgetRegistry {
       }
     });
 
-    this.register('tableOfContents', {
-      name: 'Table of Contents',
-      category: 'Other',
-      icon: 'fa-book',
-      description: 'A table of contents',
-      properties: {
-        uniqueId: { type: 'text', label: 'Table of Contents Repository ID', required: true },
-        link: { type: 'text', label: 'Link' }
-      }
-    });
-
+    /*
     this.register('tableOfContentsEditor', {
       name: 'Table of Contents Editor',
       category: 'System',
@@ -801,6 +851,7 @@ class WidgetRegistry {
         uniqueId: { type: 'text', label: 'Unique ID', required: true }
       }
     });
+    */
 
     this.register('imageUpload', {
       name: 'Image Upload',
