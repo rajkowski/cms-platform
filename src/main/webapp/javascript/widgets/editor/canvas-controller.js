@@ -225,7 +225,13 @@ class CanvasController {
     
     if (props.uniqueId) {
       return `<div style="font-size:12px;color:#666;">${props.uniqueId}</div>`;
-    } else if (props.name) {
+    }
+    for (const key of Object.keys(props)) {
+      if (key.includes('UniqueId') && props[key]) {
+        return `<div style="font-size:12px;color:#666;">${props[key]}</div>`;
+      }
+    }
+    if (props.name) {
       return `<div style="font-size:12px;color:#666;">${props.name}</div>`;
     } else if (props.title) {
       return `<div style="font-size:12px;color:#666;">${props.title}</div>`;
