@@ -542,9 +542,21 @@ class PropertiesPanel {
     
     let html = `<h6>${definition.name} Properties</h6>`;
     
+    // Get the page link for generating unique IDs
+    let pageLink = 'page';
+    if (this.editor && this.editor.pagesTabManager && this.editor.pagesTabManager.getSelectedPageLink) {
+      pageLink = this.editor.pagesTabManager.getSelectedPageLink();
+      // Remove leading "/" if present
+      if (pageLink.startsWith('/')) {
+        pageLink = pageLink.substring(1);
+      }
+    }
+    
     // Render property fields
     for (const [propName, propDef] of Object.entries(definition.properties)) {
-      html += this.renderPropertyField(propName, propDef, widget.properties[propName] || '');
+      // Pass the value if it exists in widget.properties, otherwise pass undefined
+      const propValue = widget.properties.hasOwnProperty(propName) ? widget.properties[propName] : undefined;
+      html += this.renderPropertyField(propName, propDef, propValue, pageLink);
     }
     
     // Add Additional CSS Classes field
@@ -739,41 +751,59 @@ class PropertiesPanel {
   /**
    * Render a property field
    */
-  renderPropertyField(name, definition, value) {
+  renderPropertyField(name, definition, value, pageLink = 'page') {
     let html = '<div class="property-group">';
+    
+    // Handle GENERATE special case - generate a unique ID
+    let displayValue = value;
+    
+    // If value is undefined, use the default from definition
+    if (value === undefined) {
+      if (definition.default === 'GENERATE') {
+        displayValue = this.generateUniqueId(pageLink);
+      } else if (definition.default !== undefined) {
+        displayValue = definition.default;
+      } else {
+        displayValue = '';
+      }
+    } else if (value === 'GENERATE') {
+      // Generate a unique ID using the page link
+      displayValue = this.generateUniqueId(pageLink);
+    }
     
     switch (definition.type) {
       case 'text':
         html += `<div class="property-label">${definition.label}${definition.required ? ' *' : ''}</div>`;
-        html += `<input type="text" class="property-input" id="prop-${name}" value="${this.escapeHtml(value)}" ${definition.required ? 'required' : ''} />`;
+        html += `<input type="text" class="property-input" id="prop-${name}" value="${this.escapeHtml(displayValue)}" ${definition.required ? 'required' : ''} />`;
         break;
       
       case 'color':
         html += `<div class="property-label">${definition.label}${definition.required ? ' *' : ''}</div>`;
-        html += `<input type="text" class="property-input" data-type="color" id="prop-${name}" value="${this.escapeHtml(value)}" />`;
+        html += `<input type="text" class="property-input" data-type="color" id="prop-${name}" value="${this.escapeHtml(displayValue)}" />`;
         break;
 
       case 'textarea':
         html += `<div class="property-label">${definition.label}${definition.required ? ' *' : ''}</div>`;
-        html += `<textarea class="property-input" id="prop-${name}" rows="5" ${definition.required ? 'required' : ''}>${this.escapeHtml(value)}</textarea>`;
+        html += `<textarea class="property-input" id="prop-${name}" rows="5" ${definition.required ? 'required' : ''}>${this.escapeHtml(displayValue)}</textarea>`;
         break;
         
       case 'number':
         html += `<div class="property-label">${definition.label}${definition.required ? ' *' : ''}</div>`;
-        html += `<input type="number" class="property-input" id="prop-${name}" value="${value}" ${definition.required ? 'required' : ''} />`;
+        html += `<input type="number" class="property-input" id="prop-${name}" value="${displayValue}" ${definition.required ? 'required' : ''} />`;
         break;
         
-      case 'checkbox':
-        const checked = value === 'true' || value === true ? 'checked' : '';
+      case 'checkbox': {
+        const checked = displayValue === 'true' || displayValue === true ? 'checked' : '';
         html += `<label><input type="checkbox" id="prop-${name}" ${checked} /> ${definition.label}${definition.required ? ' *' : ''}</label>`;
         break;
+      }
         
       case 'select':
         html += `<div class="property-label">${definition.label}${definition.required ? ' *' : ''}</div>`;
         html += `<select class="property-input" id="prop-${name}">`;
         if (definition.options) {
           for (const option of definition.options) {
-            const selected = value === option ? 'selected' : '';
+            const selected = displayValue === option ? 'selected' : '';
             html += `<option value="${option}" ${selected}>${option}</option>`;
           }
         }
@@ -787,11 +817,26 @@ class PropertiesPanel {
         
       default:
         html += `<div class="property-label">${definition.label}${definition.required ? ' *' : ''}</div>`;
-        html += `<input type="text" class="property-input" id="prop-${name}" value="${this.escapeHtml(value)}" />`;
+        html += `<input type="text" class="property-input" id="prop-${name}" value="${this.escapeHtml(displayValue)}" />`;
     }
     
     html += '</div>';
     return html;
+  }
+  
+  /**
+   * Generate a unique ID for properties (e.g., content repository IDs)
+   */
+  generateUniqueId(baseName) {
+    const pad = (n) => String(n).padStart(2, '0');
+    const d = new Date();
+    const ts = d.getFullYear().toString() +
+      pad(d.getMonth() + 1) +
+      pad(d.getDate()) +
+      pad(d.getHours()) +
+      pad(d.getMinutes()) +
+      pad(d.getSeconds());
+    return `${baseName}-${ts}`;
   }
   
   /**
