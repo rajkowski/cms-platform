@@ -80,6 +80,7 @@ public class TableOfContentsWidget extends GenericWidget {
     // Look for saved content
     TableOfContents tableOfContents = LoadTableOfContentsCommand.loadByUniqueId(uniqueId, true);
     if (tableOfContents == null) {
+      // Fallback to preferences
       tableOfContents = createTableOfContentsFromPreferences(context);
     }
 
