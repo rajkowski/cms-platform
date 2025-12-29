@@ -598,6 +598,17 @@ class WidgetRegistry {
       }
     });
 
+    this.register('calendarEventDetails', {
+      name: 'Calendar Event Details',
+      category: 'Calendar',
+      icon: 'fa-calendar-alt',
+      description: 'A calendar event',
+      properties: {
+        icon: { type: 'text', label: 'Widget Icon' },
+        title: { type: 'text', label: 'Widget Title' },
+      }
+    });
+
     // Map widgets
     this.register('map', {
       name: 'Map',
