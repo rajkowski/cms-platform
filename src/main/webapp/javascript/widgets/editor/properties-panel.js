@@ -684,6 +684,230 @@ class PropertiesPanel {
 
     // Initialize color pickers
     this.initColorPickers(rowId, columnId, widgetId, definition);
+    
+    // Initialize XML properties
+    this.initXmlProperties(rowId, columnId, widgetId, definition);
+  }
+  
+  /**
+   * Initialize XML array properties with add/edit/delete functionality
+   */
+  initXmlProperties(rowId, columnId, widgetId, widgetDef) {
+    // Find all XML property add buttons
+    const addButtons = this.content.querySelectorAll('button[id^="add-"]');
+    
+    addButtons.forEach((button) => {
+      const propName = button.id.replace('add-', '');
+      const propDef = widgetDef.properties[propName];
+      
+      if (!propDef || propDef.type !== 'xml') return;
+      
+      button.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.addXmlItem(propName, propDef, rowId, columnId, widgetId);
+      });
+    });
+    
+    // Setup delete buttons and field listeners for each XML property
+    Object.entries(widgetDef.properties).forEach(([propName, propDef]) => {
+      if (propDef.type === 'xml') {
+        this.attachXmlItemListeners(propDef, propName, rowId, columnId, widgetId);
+      }
+    });
+  }
+  
+  /**
+   * Add a new XML item to the array
+   */
+  addXmlItem(propName, propDef, rowId, columnId, widgetId) {
+    const schema = propDef.schema || {};
+    const itemSchema = schema.items || {};
+    const itemName = itemSchema.name || 'item';
+    const attributes = itemSchema.attributes || {};
+    
+    // Get current items
+    const itemsContainer = document.getElementById(`xml-items-${propName}`);
+    
+    const currentItems = this.getXmlItemsFromUI(propName, itemName, attributes);
+    
+    // Create new item with defaults
+    const newItem = {};
+    for (const [attrName, attrDef] of Object.entries(attributes)) {
+      if (attrDef.default === undefined) {
+        newItem[attrName] = '';
+      } else {
+        newItem[attrName] = attrDef.default;
+      }
+    }
+    
+    currentItems.push(newItem);
+    
+    // Re-render items container
+    const newItemIndex = currentItems.length - 1;
+    const itemHtml = this.renderXmlItem(propName, newItemIndex, newItem, itemName, attributes);
+    
+    // Remove empty state message if present
+    const emptyMessage = itemsContainer.querySelector('div[style*="color:#999"]');
+    if (emptyMessage) {
+      emptyMessage.remove();
+    }
+    
+    // Add new item HTML
+    itemsContainer.insertAdjacentHTML('beforeend', itemHtml);
+    
+    // Attach listeners to new item
+    this.attachXmlItemListeners(propDef, propName, rowId, columnId, widgetId);
+    
+    // Save to widget
+    this.saveXmlProperty(propName, propDef, currentItems, rowId, columnId, widgetId);
+  }
+  
+  /**
+   * Get XML items from the current UI state
+   */
+  getXmlItemsFromUI(propName, itemName, attributes) {
+    const items = [];
+    const container = document.getElementById(`xml-items-${propName}`);
+    if (!container) return items;
+    
+    // Get all items within this specific container
+    const itemElements = container.querySelectorAll(`div.xml-item[data-item-index]`);
+    
+    itemElements.forEach((element) => {
+      const item = {};
+      for (const attrName of Object.keys(attributes)) {
+        const fieldId = `xml-field-${propName}-${element.dataset.itemIndex}-${attrName}`;
+        const field = document.getElementById(fieldId);
+        if (field) {
+          const attrDef = attributes[attrName];
+          if (attrDef.type === 'checkbox') {
+            item[attrName] = field.checked ? 'true' : 'false';
+          } else {
+            item[attrName] = field.value;
+          }
+        }
+      }
+      items.push(item);
+    });
+    
+    return items;
+  }
+  
+  /**
+   * Attach event listeners to XML item controls
+   */
+  attachXmlItemListeners(propDef, propName, rowId, columnId, widgetId) {
+    const schema = propDef.schema || {};
+    const itemSchema = schema.items || {};
+    const itemName = itemSchema.name || 'item';
+    const attributes = itemSchema.attributes || {};
+    
+    // Attach delete button listeners
+    const deleteButtons = this.content.querySelectorAll(`button.delete-xml-item[data-prop="${propName}"]`);
+    deleteButtons.forEach((btn) => {
+      // Remove previous listeners by cloning and replacing
+      const newBtn = btn.cloneNode(true);
+      btn.parentNode.replaceChild(newBtn, btn);
+      
+      newBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const indexToDelete = Number.parseInt(newBtn.dataset.index, 10);
+        this.deleteXmlItem(propName, indexToDelete, propDef, rowId, columnId, widgetId);
+      });
+    });
+    
+    // Attach input field listeners
+    const fields = this.content.querySelectorAll(`input[id^="xml-field-${propName}"], select[id^="xml-field-${propName}"]`);
+    fields.forEach((field) => {
+      // Remove previous listeners by cloning and replacing
+      const newField = field.cloneNode(true);
+      field.parentNode.replaceChild(newField, field);
+      
+      newField.addEventListener('change', () => {
+        const items = this.getXmlItemsFromUI(propName, itemName, attributes);
+        this.saveXmlProperty(propName, propDef, items, rowId, columnId, widgetId);
+      });
+      
+      newField.addEventListener('input', () => {
+        const items = this.getXmlItemsFromUI(propName, itemName, attributes);
+        this.saveXmlProperty(propName, propDef, items, rowId, columnId, widgetId);
+      });
+    });
+  }
+  
+  /**
+   * Delete an XML item from the array
+   */
+  deleteXmlItem(propName, indexToDelete, propDef, rowId, columnId, widgetId) {
+    const schema = propDef.schema || {};
+    const itemSchema = schema.items || {};
+    const itemName = itemSchema.name || 'item';
+    const attributes = itemSchema.attributes || {};
+    
+    // Get current items and remove the one at the index
+    const currentItems = this.getXmlItemsFromUI(propName, itemName, attributes);
+    currentItems.splice(indexToDelete, 1);
+    
+    // Re-render the container
+    const itemsContainer = document.getElementById(`xml-items-${propName}`);
+    itemsContainer.innerHTML = '';
+    
+    if (currentItems.length === 0) {
+      itemsContainer.innerHTML = `<div style="color:#999;font-style:italic;text-align:center;padding:20px;">No ${itemName} entries yet</div>`;
+    } else {
+      currentItems.forEach((item, index) => {
+        const itemHtml = this.renderXmlItem(propName, index, item, itemName, attributes);
+        itemsContainer.insertAdjacentHTML('beforeend', itemHtml);
+      });
+    }
+    
+    // Reattach listeners
+    this.attachXmlItemListeners(propDef, propName, rowId, columnId, widgetId);
+    
+    // Save to widget
+    this.saveXmlProperty(propName, propDef, currentItems, rowId, columnId, widgetId);
+  }
+  
+  /**
+   * Save XML property to widget data
+   */
+  saveXmlProperty(propName, propDef, items, rowId, columnId, widgetId) {
+    const schema = propDef.schema || {};
+    const itemSchema = schema.items || {};
+    const itemName = itemSchema.name || 'item';
+    
+    // Convert items array back to XML string
+    const xmlString = this.convertXmlItemsToString(items, itemName);
+    
+    // Save to widget
+    const widgetData = this.editor.getLayoutManager().getWidget(rowId, columnId, widgetId);
+    if (widgetData) {
+      widgetData.properties[propName] = xmlString;
+      
+      // Re-render and save to history
+      if (this.editor.getCanvasController) {
+        const row = this.editor.getLayoutManager().getRow(rowId);
+        this.editor.getCanvasController().renderRow(rowId, row);
+        
+        // Re-highlight the widget after re-render
+        setTimeout(() => {
+          const rowElement = document.querySelector(`[data-row-id="${rowId}"]`);
+          if (rowElement) {
+            const columnElement = rowElement.querySelector(`[data-column-id="${columnId}"]`);
+            if (columnElement) {
+              const widgetElement = columnElement.querySelector(`[data-widget-id="${widgetId}"]`);
+              if (widgetElement) {
+                widgetElement.classList.add('selected');
+              }
+            }
+          }
+        }, 0);
+      }
+      
+      if (this.editor.saveToHistory) {
+        this.editor.saveToHistory();
+      }
+    }
   }
   
   /**
@@ -810,6 +1034,10 @@ class PropertiesPanel {
         html += '</select>';
         break;
         
+      case 'xml':
+        html += this.renderXmlProperty(name, definition, value);
+        break;
+        
       case 'links':
         html += `<div class="property-label">${definition.label}${definition.required ? ' *' : ''}</div>`;
         html += '<div style="font-size:12px;color:#666;margin-top:5px;">Links management coming soon</div>';
@@ -822,6 +1050,161 @@ class PropertiesPanel {
     
     html += '</div>';
     return html;
+  }
+
+  /**
+   * Render an XML property with array management interface
+   */
+  renderXmlProperty(name, definition, value) {
+    let html = '<div class="property-group">';
+    html += `<div class="property-label">${definition.label}${definition.required ? ' *' : ''}</div>`;
+    
+    // Parse existing items from value
+    let items = [];
+    if (value && typeof value === 'string') {
+      // Try to parse XML string
+      items = this.parseXmlArrayFromString(value, definition.schema);
+    } else if (Array.isArray(value)) {
+      items = value;
+    }
+    
+    // Get schema info
+    const schema = definition.schema || {};
+    const itemSchema = schema.items || {};
+    const itemName = itemSchema.name || 'item';
+    const attributes = itemSchema.attributes || {};
+    
+    // Create container for items
+    html += `<div id="xml-items-${name}" style="border:1px solid #ddd;border-radius:4px;padding:10px;margin:10px 0;max-height:400px;overflow-y:auto;">`;
+    
+    // Render existing items
+    items.forEach((item, index) => {
+      html += this.renderXmlItem(name, index, item, itemName, attributes);
+    });
+    
+    // Empty state message
+    if (items.length === 0) {
+      html += `<div style="color:#999;font-style:italic;text-align:center;padding:20px;">No ${itemName} entries yet</div>`;
+    }
+    
+    html += `</div>`;
+    
+    // Add button
+    html += `<button type="button" id="add-${name}" class="button small" style="margin-top:10px;">Add ${itemName}</button>`;
+    
+    // Hidden storage for array data
+    html += `<input type="hidden" id="prop-${name}" data-items-count="${items.length}" />`;
+    
+    html += '</div>';
+    
+    return html;
+  }
+
+  /**
+   * Render a single XML item in the array
+   */
+  renderXmlItem(propName, index, item, itemName, attributes) {
+    let html = `<div class="xml-item" data-item-index="${index}" style="border:1px solid #e0e0e0;border-radius:3px;padding:10px;margin-bottom:10px;background:#f9f9f9;">`;
+    
+    // Item header with index and delete button
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">`;
+    html += `<div style="font-weight:bold;font-size:12px;color:#666;">${itemName} #${index + 1}</div>`;
+    html += `<button type="button" class="delete-xml-item" data-prop="${propName}" data-index="${index}" style="padding:3px 8px;font-size:11px;background:#f0f0f0;border:1px solid #ddd;border-radius:3px;cursor:pointer;">Delete</button>`;
+    html += `</div>`;
+    
+    // Render attribute fields
+    html += `<div style="display:grid;gap:10px;">`;
+    for (const [attrName, attrDef] of Object.entries(attributes)) {
+      const attrValue = (item && item[attrName]) || attrDef.default || '';
+      const fieldId = `xml-field-${propName}-${index}-${attrName}`;
+      
+      html += `<div>`;
+      html += `<label style="display:block;font-size:12px;font-weight:bold;margin-bottom:3px;">
+        ${attrDef.label || attrName}${attrDef.required ? ' <span style="color:red;">*</span>' : ''}
+      </label>`;
+      
+      // Render based on attribute type
+      if (attrDef.type === 'select' && attrDef.options) {
+        html += `<select id="${fieldId}" class="property-input" data-attr="${attrName}" style="width:100%;">`;
+        for (const option of attrDef.options) {
+          const selected = attrValue === option ? 'selected' : '';
+          html += `<option value="${option}" ${selected}>${option}</option>`;
+        }
+        html += `</select>`;
+      } else if (attrDef.type === 'checkbox') {
+        const checked = attrValue === 'true' || attrValue === true ? 'checked' : '';
+        html += `<label style="display:flex;align-items:center;"><input type="checkbox" id="${fieldId}" class="property-input" data-attr="${attrName}" ${checked} /> <span style="margin-left:5px;font-size:12px;">${attrDef.checkboxLabel || 'Yes'}</span></label>`;
+      } else {
+        html += `<input type="text" id="${fieldId}" class="property-input" data-attr="${attrName}" value="${this.escapeHtml(attrValue)}" style="width:100%;" />`;
+      }
+      html += `</div>`;
+    }
+    html += `</div>`;
+    
+    html += `</div>`;
+    
+    return html;
+  }
+
+  /**
+   * Parse XML string into array of items
+   */
+  parseXmlArrayFromString(xmlString, schema) {
+    try {
+      if (!xmlString) return [];
+      
+      const itemSchema = schema?.items || {};
+      const itemName = itemSchema.name || 'item';
+      
+      // Parse XML
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(`<root>${xmlString}</root>`, 'text/xml');
+      
+      if (xmlDoc.getElementsByTagName('parsererror').length > 0) {
+        console.error('XML Parse error');
+        return [];
+      }
+      
+      // Extract items
+      const items = [];
+      const elements = xmlDoc.getElementsByTagName(itemName);
+      
+      for (let i = 0; i < elements.length; i++) {
+        const element = elements[i];
+        const item = {};
+        
+        // Get all attributes
+        for (const attr of element.attributes) {
+          item[attr.name] = attr.value;
+        }
+        
+        items.push(item);
+      }
+      
+      return items;
+    } catch (e) {
+      console.error('Error parsing XML:', e);
+      return [];
+    }
+  }
+
+  /**
+   * Convert XML items array back to XML string
+   */
+  convertXmlItemsToString(items, itemName) {
+    if (!items || items.length === 0) return '';
+    
+    let xml = '';
+    for (const item of items) {
+      xml += `<${itemName}`;
+      for (const [key, value] of Object.entries(item)) {
+        const escapedValue = String(value).replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        xml += ` ${key}="${escapedValue}"`;
+      }
+      xml += ` />`;
+    }
+    
+    return xml;
   }
   
   /**
@@ -924,7 +1307,16 @@ class PropertiesPanel {
       
       if (!element) continue;
       
-      if (propDef.type === 'checkbox') {
+      if (propDef.type === 'xml') {
+        // For XML properties, extract items from UI and convert to XML string
+        const schema = propDef.schema || {};
+        const itemSchema = schema.items || {};
+        const itemName = itemSchema.name || 'item';
+        const attributes = itemSchema.attributes || {};
+        
+        const items = this.getXmlItemsFromUI(propName, itemName, attributes);
+        properties[propName] = this.convertXmlItemsToString(items, itemName);
+      } else if (propDef.type === 'checkbox') {
         properties[propName] = element.checked ? 'true' : 'false';
       } else {
         properties[propName] = element.value;

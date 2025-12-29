@@ -263,10 +263,11 @@ class WidgetRegistry {
               name: 'field',
               attributes: {
                 name: { type: 'text', label: 'Label', required: true },
+                required: { type: 'checkbox', label: 'Required', default: false },
                 value: { type: 'text', label: 'Parameter Name', required: true },
                 placeholder: { type: 'text', label: 'Placeholder', required: false },
-                type: { type: 'select', label: 'Type', options: ['', 'email'], default: '' },
-                required: { type: 'checkbox', label: 'Required', default: false },
+                type: { type: 'select', label: 'Type', options: ['', 'email', 'list'], default: '' },
+                list: { type: 'text', label: 'List Items (comma separated)', required: false },
               }
             }
           }
@@ -847,7 +848,7 @@ class WidgetRegistry {
               name: 'link',
               attributes: {
                 name: { type: 'text', label: 'Page Title', required: true },
-                value: { type: 'text', label: 'Page Link', required: true },
+                value: { type: 'text', label: 'Page Link', required: false },
               }
             }
           }
