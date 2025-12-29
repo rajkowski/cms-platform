@@ -26,7 +26,8 @@ class WidgetRegistry {
         icon: { type: 'text', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
         uniqueId: { type: 'text', label: 'Content Repository ID', required: true, default: 'GENERATE' },
-        html: { type: 'textarea', label: 'Fallback HTML Content', required: false, default: '<p>Content</p>' }
+        html: { type: 'textarea', label: 'Fallback HTML Content', required: false, default: '<p>Content</p>' },
+        videoBackgroundUrl: { type: 'text', label: 'Video Background URL' }
       }
     });
     
@@ -39,7 +40,10 @@ class WidgetRegistry {
         icon: { type: 'text', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
         uniqueId: { type: 'text', label: 'Content Repository ID', required: true, default: 'GENERATE' },
-        html: { type: 'textarea', label: 'Fallback HTML Content', required: false, default: '<h1>Title</h1><p>&gt; Item to expand</p><p>The item content goes here...</p><hr /><p>&gt; Item to expand</p><p>The item content goes here...</p><hr />' }
+        html: { type: 'textarea', label: 'Fallback HTML Content', required: false, default: '<h1>Title</h1><p>&gt; Item to expand</p><p>The item content goes here...</p><hr /><p>&gt; Item to expand</p><p>The item content goes here...</p><hr />' },
+        accordionClass: { type: 'text', label: 'Accordion CSS Class' },
+        innerAccordionClass: { type: 'text', label: 'Inner Accordion CSS Class' },
+        expandTopLevel: { type: 'checkbox', label: 'Expand Top Level', default: false },
       }
     });
     
@@ -91,6 +95,7 @@ class WidgetRegistry {
         loop: { type: 'checkbox', label: 'Loop', default: false },
         autoplayDelay: { type: 'number', label: 'Autoplay Delay (ms)', default: '5000' },
         carouselClass: { type: 'text', label: 'Carousel CSS Class', required: false },
+        cardClass: { type: 'text', label: 'Card CSS Class', required: false },
       }
     });
     
@@ -113,9 +118,25 @@ class WidgetRegistry {
       properties: {
         icon: { type: 'text', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
-        tabs: { type: 'xml', label: 'Tab Data', required: true },
+        tabs: {
+          type: 'xml',
+          label: 'Tabs',
+          required: true,
+          schema: {
+            type: 'array',
+            items: {
+              type: 'object',
+              name: 'tab',
+              attributes: {
+                name: { type: 'text', label: 'Tab Title', required: true },
+                linkId: { type: 'text', label: 'Sequential Id', required: true },
+                contentUniqueId: { type: 'text', label: 'Content Repository ID', required: true, default: 'GENERATE' },
+              }
+            }
+          }
+        },
         useLinks: { type: 'checkbox', label: 'Use Links Instead of Divs', default: false },
-        smudge: { type: 'checkbox', label: 'Set Div Tab Click in URL', default: true },
+        smudge: { type: 'checkbox', label: 'Selected Tab Sets Anchor in URL', default: true },
       }
     });
 
@@ -225,12 +246,31 @@ class WidgetRegistry {
         title: { type: 'text', label: 'Widget Title', required: false },
         subtitle: { type: 'text', label: 'Widget Subtitle', required: false },
         formUniqueId: { type: 'text', label: 'Form Repository ID', required: true },
-        fields: { type: 'text', label: 'Form Input Fields', required: true },
         useCaptcha: { type: 'checkbox', label: 'Display a Captcha', default: true },
         checkForSpam: { type: 'checkbox', label: 'Check Content and Mark for Spam', default: true },
         buttonName: { type: 'text', label: 'Button Name', default: 'Submit' },
         successTitle: { type: 'text', label: 'Success Title to Display' },
-        successMessage: { type: 'text', label: 'Success Message to Display', default: 'Your information has been submitted.' }
+        successMessage: { type: 'text', label: 'Success Message to Display', default: 'Your information has been submitted.' },
+        emailTo: { type: 'text', label: 'Email Address For Form Contents' },
+        fields: {
+          type: 'xml',
+          label: 'Fields',
+          required: true,
+          schema: {
+            type: 'array',
+            items: {
+              type: 'object',
+              name: 'field',
+              attributes: {
+                name: { type: 'text', label: 'Label', required: true },
+                value: { type: 'text', label: 'Parameter Name', required: true },
+                placeholder: { type: 'text', label: 'Placeholder', required: false },
+                type: { type: 'select', label: 'Type', options: ['', 'email'], default: '' },
+                required: { type: 'checkbox', label: 'Required', default: false },
+              }
+            }
+          }
+        },
       }
     });
 
@@ -796,9 +836,23 @@ class WidgetRegistry {
       icon: 'fa-angle-double-right',
       description: 'Breadcrumb navigation',
       properties: {
-        useHomepage: { type: 'checkbox', label: 'Use Homepage' },
-        useWebPage: { type: 'checkbox', label: 'Use Web Page' },
-        links: { type: 'array', label: 'Links', default: [] }
+        links: {
+          type: 'xml',
+          label: 'Links',
+          required: true,
+          schema: {
+            type: 'array',
+            items: {
+              type: 'object',
+              name: 'link',
+              attributes: {
+                name: { type: 'text', label: 'Page Title', required: true },
+                value: { type: 'text', label: 'Page Link', required: true },
+              }
+            }
+          }
+        },
+        blogUniqueId: { type: 'text', label: 'Blog Repository ID to check links against' },
       }
     });
 
@@ -808,11 +862,38 @@ class WidgetRegistry {
       icon: 'fa-bars',
       description: 'A menu',
       properties: {
-        uniqueId: { type: 'text', label: 'Unique ID', required: true },
-        name: { type: 'text', label: 'Menu Name' },
-        class: { type: 'text', label: 'Menu Class', default: 'vertical' },
+        title: { type: 'text', label: 'Widget Title' },
+        id: { type: 'text', label: 'Menu HTML ID' },
+        class: { type: 'text', label: 'Menu CSS Class (vertical)' },
+        wrap: { type: 'checkbox', label: 'Allow Menu to Wrap', default: true },
+        useHighlight: { type: 'checkbox', label: 'Set Active CSS', default: false },
         showWhenEmpty: { type: 'checkbox', label: 'Show When Empty', default: false },
-        links: { type: 'array', label: 'Links', default: [] }
+        showWhenOneEntry: { type: 'checkbox', label: 'Show When One Entry', default: true },
+        redirectToFirstTabWithAccess: { type: 'checkbox', label: 'Redirect to First Tab With Access', default: false },
+        tocUniqueId: { type: 'text', label: 'Table of Contents Repository ID' },
+        links: {
+          type: 'xml',
+          label: 'Links',
+          required: false,
+          schema: {
+            type: 'array',
+            items: {
+              type: 'object',
+              name: 'link',
+              attributes: {
+                name: { type: 'text', label: 'Page Title', required: true },
+                link: { type: 'text', label: 'Page Link', required: true },
+                class: { type: 'text', label: 'CSS Class', required: false },
+                role: { type: 'text', label: 'Role Required (guest, users)', required: false },
+                group: { type: 'text', label: 'Group Required (csv)', required: false },
+                rule: { type: 'text', label: 'Rule (site.login, site.registrations)', required: false },
+                icon: { type: 'text', label: 'Icon', required: false },
+                iconOnly: { type: 'checkbox', label: 'Icon Only', default: false }, 
+                type: { type: 'select', label: 'Link Type', options: ['', 'admin', 'cart'], default: '' },
+              }
+            }
+          }
+        },
       }
     });
 
