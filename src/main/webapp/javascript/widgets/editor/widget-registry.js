@@ -262,46 +262,29 @@ class WidgetRegistry {
       icon: 'fa-file-alt',
       description: 'A list of files',
       properties: {
-        folder: { type: 'text', label: 'Folder Unique ID' },
-        folderId: { type: 'number', label: 'Folder ID' },
-        category: { type: 'text', label: 'Category' },
-        tags: { type: 'text', label: 'Tags' },
-        view: { type: 'select', label: 'View', options: ['list', 'grid'] },
-        showSearch: { type: 'checkbox', label: 'Show Search' },
-        showPaging: { type: 'checkbox', label: 'Show Paging' },
-        allowUpload: { type: 'checkbox', label: 'Allow Upload' },
-        allowFolders: { type: 'checkbox', label: 'Allow Folders' },
-        allowDelete: { type: 'checkbox', label: 'Allow Delete' },
-        allowSubfolders: { type: 'checkbox', label: 'Allow Subfolders' },
-        allowFileVersions: { type: 'checkbox', label: 'Allow File Versions' },
-        allowSharing: { type: 'checkbox', label: 'Allow Sharing' },
-        allowDirectDownload: { type: 'checkbox', label: 'Allow Direct Download' },
-        showBreadcrumbs: { type: 'checkbox', label: 'Show Breadcrumbs' },
-        showTitle: { type: 'checkbox', label: 'Show Title' },
-        showActions: { type: 'checkbox', label: 'Show Actions' },
-        showDate: { type: 'checkbox', label: 'Show Date' },
-        showSize: { type: 'checkbox', label: 'Show Size' },
-        showVersion: { type: 'checkbox', label: 'Show Version' },
-        showDescription: { type: 'checkbox', label: 'Show Description' },
-        showCategories: { type: 'checkbox', label: 'Show Categories' },
-        showTags: { type: 'checkbox', label: 'Show Tags' },
-        showUploader: { type: 'checkbox', label: 'Show Uploader' },
-        showLastUpdated: { type: 'checkbox', label: 'Show Last Updated' },
-        showMimeType: { type: 'checkbox', label: 'Show Mime Type' },
-        showExtension: { type: 'checkbox', label: 'Show Extension' },
-        showPreview: { type: 'checkbox', label: 'Show Preview' },
-        showDownloadCount: { type: 'checkbox', label: 'Show Download Count' },
-        showShareLink: { type: 'checkbox', label: 'Show Share Link' },
-        showCopyLink: { type: 'checkbox', label: 'Show Copy Link' },
-        showEditLink: { type: 'checkbox', label: 'Show Edit Link' },
-        showDeleteLink: { type: 'checkbox', label: 'Show Delete Link' },
-        showUploadLink: { type: 'checkbox', label: 'Show Upload Link' },
-        showFolderLink: { type: 'checkbox', label: 'Show Folder Link' },
-        showSubfolderLink: { type: 'checkbox', label: 'Show Subfolder Link' },
-        showFileLink: { type: 'checkbox', label: 'Show File Link' },
-        showFileVersionLink: { type: 'checkbox', label: 'Show File Version Link' },
-        showSharingLink: { type: 'checkbox', label: 'Show Sharing Link' },
-        showDirectDownloadLink: { type: 'checkbox', label: 'Show Direct Download Link' }
+        icon: { type: 'text', label: 'Widget Icon', required: false },
+        title: { type: 'text', label: 'Widget Title', required: false },
+        folderUniqueId: { type: 'text', label: 'Folder Unique ID' },
+        showWhenEmpty: { type: 'checkbox', label: 'Show When Empty', default: true },
+        showLinks: { type: 'checkbox', label: 'Show Links', default: true },
+        useViewer: { type: 'checkbox', label: 'Enable Viewer', default: false },
+        withinLastDays: {
+          type: 'number',
+          label: 'Sent Within Last Days',
+          description: 'Files sent within the last X days (default: -1)',
+          default: -1
+        },
+        rules: { 
+          type: 'select', 
+          label: 'Access Rules', 
+          options: ['role-based', 'user-created']
+        },
+        orderBy: { 
+          type: 'select', 
+          label: 'Sort Order', 
+          options: ['newest', 'oldest', 'descending', 'ascending'],
+          default: 'ascending'
+        }
       }
     });
 
@@ -747,7 +730,9 @@ class WidgetRegistry {
       icon: 'fa-search',
       description: 'A search form',
       properties: {
-        searchPage: { type: 'text', label: 'Search Page' }
+        placeholder: { type: 'text', label: 'Placeholder Text', default: 'Search the site...' },
+        linkText: { type: 'text', label: 'Button Text', default: 'Search' },
+        expand: { type: 'checkbox', label: 'Expand input field when selected', default: false }
       }
     });
 
@@ -755,10 +740,10 @@ class WidgetRegistry {
       name: 'Search Info',
       category: 'Search',
       icon: 'fa-info',
-      description: 'Displays what the user searched for',
+      description: 'Displays what the user searched for and a summary',
       properties: {
-        icon: { type: 'text', label: 'Icon' },
-        title: { type: 'text', label: 'Title' }
+        icon: { type: 'text', label: 'Widget Icon' },
+        title: { type: 'text', label: 'Widget Title' },
       }
     });
 
@@ -823,22 +808,70 @@ class WidgetRegistry {
     this.register('webPageSearchResults', {
       name: 'Web Page Search Results',
       category: 'Search',
-      icon: 'fa-search',
+      icon: 'fa-file-alt',
       description: 'Displays web page search results',
       properties: {
-        limit: { type: 'number', label: 'Limit' },
-        showWhenEmpty: { type: 'checkbox', label: 'Show When Empty' }
+        icon: { type: 'text', label: 'Widget Icon', required: false },
+        title: { type: 'text', label: 'Widget Title', required: false },
+        limit: { type: 'number', label: 'Max results to show', default: 15 },
+        showWhenEmpty: { type: 'checkbox', label: 'Show When Empty', default: true }
       }
     });
 
     this.register('webPageTitleSearchResults', {
       name: 'Web Page Title Search Results',
       category: 'Search',
-      icon: 'fa-search',
+      icon: 'fa-file-alt',
       description: 'Displays web page title search results',
       properties: {
-        limit: { type: 'number', label: 'Limit' },
-        showWhenEmpty: { type: 'checkbox', label: 'Show When Empty' }
+        icon: { type: 'text', label: 'Widget Icon', required: false },
+        title: { type: 'text', label: 'Widget Title', required: false },
+        limit: { type: 'number', label: 'Limit', default: 15 },
+        showWhenEmpty: { type: 'checkbox', label: 'Show When Empty', default: false }
+      }
+    });
+
+    this.register('blogPostSearchResults', {
+      name: 'Blog Post Search Results',
+      category: 'Search',
+      icon: 'fa-file-alt',
+      description: 'Displays blog post search results',
+      properties: {
+        icon: { type: 'text', label: 'Widget Icon', required: false },
+        title: { type: 'text', label: 'Widget Title', required: false },
+        limit: { type: 'number', label: 'Limit', default: 15 },
+        showWhenEmpty: { type: 'checkbox', label: 'Show When Empty', default: false },
+        sortBy: { type: 'select', label: 'Sort Results By', options: ['results', 'new'] },
+        showPaging: { type: 'checkbox', label: 'Show Paging', default: false },
+      }
+    });
+
+    this.register('calendarSearchResults', {
+      name: 'Calendar Event Search Results',
+      category: 'Search',
+      icon: 'fa-calendar',
+      description: 'Displays calendar event search results',
+      properties: {
+        icon: { type: 'text', label: 'Widget Icon', required: false },
+        title: { type: 'text', label: 'Widget Title', required: false },
+        limit: { type: 'number', label: 'Limit', default: 3 },
+        showWhenEmpty: { type: 'checkbox', label: 'Show When Empty', default: false }
+      }
+    });
+
+    this.register('itemsSearchResults', {
+      name: 'Directory Items Search Results',
+      category: 'Search',
+      icon: 'fa-file-alt',
+      description: 'Displays collection item search results',
+      properties: {
+        icon: { type: 'text', label: 'Widget Icon', required: false },
+        title: { type: 'text', label: 'Widget Title', required: false },
+        limit: { type: 'number', label: 'Limit', default: 15 },
+        showWhenEmpty: { type: 'checkbox', label: 'Show When Empty', default: false },
+        sortBy: { type: 'select', label: 'Sort Results By', options: ['results', 'new'] },
+        showPaging: { type: 'checkbox', label: 'Show Paging', default: false },
+        useItemLink: { type: 'checkbox', label: 'Use URL from Item For Link', default: false },
       }
     });
 
