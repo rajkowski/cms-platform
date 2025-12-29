@@ -284,7 +284,7 @@ class DragDropManager {
       const row = this.editor.getLayoutManager().getRow(rowId);
       
       // Add widget to the first column
-      this.editor.getLayoutManager().addWidget(rowId, row.columns[0].id, this.draggedData.type);
+      const newWidgetId = this.editor.getLayoutManager().addWidget(rowId, row.columns[0].id, this.draggedData.type);
 
       // If this is the first row, re-render the whole layout to clear the placeholder
       if (this.editor.getLayoutManager().getStructure().rows.length === 1) {
@@ -293,6 +293,19 @@ class DragDropManager {
         // Otherwise, just render the new row for better performance
         this.editor.getCanvasController().renderRow(rowId, row);
       }
+      
+      // Highlight the newly added widget and show its properties
+      setTimeout(() => {
+        const newWidgetElement = document.querySelector(`[data-widget-id="${newWidgetId}"]`);
+        if (newWidgetElement) {
+          this.editor.getCanvasController().selectElement(newWidgetElement, {
+            type: 'widget',
+            rowId: rowId,
+            columnId: row.columns[0].id,
+            widgetId: newWidgetId
+          });
+        }
+      }, 0);
       
       // Save to history
       this.editor.saveToHistory();
@@ -371,6 +384,7 @@ class DragDropManager {
     
     if (this.draggedType === 'widget') {
       const targetWidgetId = this.widgetPlaceholder ? this.widgetPlaceholder.nextElementSibling?.getAttribute('data-widget-id') : null;
+      let newWidgetId = null;
 
       // If the widget is from the palette, it has a 'type'
       // If it's from the canvas, it has 'widgetId', 'sourceRowId', 'sourceColumnId'
@@ -384,13 +398,27 @@ class DragDropManager {
           columnId,
           targetWidgetId
         );
+        newWidgetId = this.draggedData.widgetId;
       } else {
         // Adding a new widget from the palette
-        this.editor.getLayoutManager().addWidget(rowId, columnId, this.draggedData.type, targetWidgetId);
+        newWidgetId = this.editor.getLayoutManager().addWidget(rowId, columnId, this.draggedData.type, targetWidgetId);
       }
       
       // Re-render the whole layout to reflect the change
       this.editor.getCanvasController().renderLayout(this.editor.getLayoutManager().getStructure());
+      
+      // Highlight the newly added/moved widget and show its properties
+      setTimeout(() => {
+        const newWidgetElement = document.querySelector(`[data-widget-id="${newWidgetId}"]`);
+        if (newWidgetElement) {
+          this.editor.getCanvasController().selectElement(newWidgetElement, {
+            type: 'widget',
+            rowId: rowId,
+            columnId: columnId,
+            widgetId: newWidgetId
+          });
+        }
+      }, 0);
       
       // Save to history
       this.editor.saveToHistory();
