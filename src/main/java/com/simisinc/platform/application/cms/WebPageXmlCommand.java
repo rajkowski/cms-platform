@@ -16,11 +16,14 @@
 
 package com.simisinc.platform.application.cms;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import java.util.Iterator;
+
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.commons.text.StringEscapeUtils;
 
-import java.util.Iterator;
+import com.fasterxml.jackson.databind.JsonNode;
 
 /**
  * Commands for working with web page XML
@@ -29,6 +32,8 @@ import java.util.Iterator;
  * @created 10/16/25 12:00 PM
  */
 public class WebPageXmlCommand {
+
+  private static Log LOG = LogFactory.getLog(WebPageXmlCommand.class);
 
   public static String escapeXml(String text) {
     if (StringUtils.isBlank(text)) {
@@ -41,7 +46,7 @@ public class WebPageXmlCommand {
     StringBuilder xml = new StringBuilder();
     String widgetName = widgetNode.get("type").asText();
     xml.append(indent).append("<widget name=\"").append(escapeXml(widgetName)).append("\"");
-    
+
     // Add class attribute if present
     if (widgetNode.has("cssClass")) {
       String cssClass = widgetNode.get("cssClass").asText();
@@ -49,12 +54,12 @@ public class WebPageXmlCommand {
         xml.append(" class=\"").append(escapeXml(cssClass)).append("\"");
       }
     }
-    
+
     // Add hr attribute if present
     if (widgetNode.has("hr") && widgetNode.get("hr").asBoolean()) {
       xml.append(" hr=\"true\"");
     }
-    
+
     xml.append(">\n");
 
     if (widgetNode.has("properties")) {
@@ -65,13 +70,29 @@ public class WebPageXmlCommand {
         JsonNode valueNode = propertiesNode.get(key);
 
         if (valueNode.isArray()) {
+          LOG.debug("Processing array item for key: " + key);
           // Handle array properties (like links)
           xml.append(indent).append("  <").append(key).append(">\n");
           for (JsonNode item : valueNode) {
             if (item.isObject()) {
-              xml.append(indent).append("    <link");
+
+              // @todo pass in schema to determine item name
+
+              // Generic based on schema
+              String itemName = "undefined";
+              if (key.equals("links")) {
+                itemName = "link";
+              } else if (key.equals("fields")) {
+                itemName = "field";
+              } else if (key.equals("tabs")) {
+                itemName = "tab";
+              } else if (key.endsWith("s")) {
+                itemName = key.substring(0, key.length() - 1);
+              }
+              xml.append(indent).append("    <").append(itemName);
+
               Iterator<String> attributeNames = item.fieldNames();
-              while(attributeNames.hasNext()) {
+              while (attributeNames.hasNext()) {
                 String attributeName = attributeNames.next();
                 xml.append(" ").append(attributeName).append("=\"").append(escapeXml(item.get(attributeName).asText())).append("\"");
               }
@@ -79,21 +100,46 @@ public class WebPageXmlCommand {
             }
           }
           xml.append(indent).append("  </").append(key).append(">\n");
+
         } else if (valueNode.isTextual()) {
+
           if ("html".equals(key)) {
-            xml.append(indent).append("  <").append(key).append("><![CDATA[").append(valueNode.asText()).append("]]></").append(key).append(">\n");
+            LOG.debug("Processing HTML content for key: " + key);
+            xml.append(indent).append("  <").append(key).append("><![CDATA[").append(valueNode.asText()).append("]]></").append(key)
+                .append(">\n");
+
           } else {
-            xml.append(indent).append("  <").append(key).append(">").append(escapeXml(valueNode.asText())).append("</").append(key).append(">\n");
+
+            String valueText = valueNode.asText();
+            if (valueText.startsWith("<") && valueText.endsWith("/>") && valueText.contains("=\"")) {
+              LOG.debug("Processing self-closing tag content for key: " + key);
+              xml.append(indent).append("  <").append(key).append(">")
+                  .append(valueText)
+                  .append("</").append(key).append(">\n");
+            } else {
+              LOG.debug("Processing simple text content for key: " + key);
+              xml.append(indent).append("  <").append(key).append(">")
+                  .append(escapeXml(valueText))
+                  .append("</").append(key).append(">\n");
+            }
           }
+
         } else if (valueNode.isBoolean()) {
-          xml.append(indent).append("  <").append(key).append(">").append(valueNode.asBoolean()).append("</").append(key).append(">\n");
+          LOG.debug("Processing boolean content for key: " + key);
+          xml.append(indent).append("  <").append(key).append(">").append(valueNode.asBoolean()).append("</").append(key)
+              .append(">\n");
         } else if (valueNode.isNumber()) {
+          LOG.debug("Processing numeric content for key: " + key);
           xml.append(indent).append("  <").append(key).append(">").append(valueNode.asDouble()).append("</").append(key).append(">\n");
         }
+
       }
     }
 
     xml.append(indent).append("</widget>\n");
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Generated XML for widget " + widgetName + ":\n" + xml.toString());
+    }
     return xml.toString();
   }
 }
