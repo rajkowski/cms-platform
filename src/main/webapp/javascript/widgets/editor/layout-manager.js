@@ -17,7 +17,7 @@ class LayoutManager {
     this.nextColumnId = 1;
     this.nextWidgetId = 1;
   }
-  
+
   /**
    * Add a new row with specified column layout
    * @param {Array} columnClasses Array of CSS classes for each column
@@ -26,7 +26,7 @@ class LayoutManager {
    */
   addRow(columnClasses, targetRowId = null) {
     const rowId = 'row-' + (this.nextRowId++);
-    
+
     const row = {
       id: rowId,
       cssClass: '',
@@ -36,7 +36,7 @@ class LayoutManager {
         widgets: []
       }))
     };
-    
+
     if (targetRowId) {
       const targetIndex = this.structure.rows.findIndex(r => r.id === targetRowId);
       if (targetIndex !== -1) {
@@ -47,12 +47,12 @@ class LayoutManager {
     } else {
       this.structure.rows.push(row);
     }
-    
+
     console.log('Row added:', rowId);
-    
+
     return rowId;
   }
-  
+
   /**
    * Remove a row
    */
@@ -65,14 +65,14 @@ class LayoutManager {
     }
     return false;
   }
-  
+
   /**
    * Get a row by ID
    */
   getRow(rowId) {
     return this.structure.rows.find(r => r.id === rowId);
   }
-  
+
   /**
    * Update row CSS class
    */
@@ -109,7 +109,7 @@ class LayoutManager {
       // If no target, move to the end
       this.structure.rows.push(draggedRow);
     }
-    
+
     console.log(`Row ${draggedRowId} moved`);
     return true;
   }
@@ -123,21 +123,21 @@ class LayoutManager {
 
     const draggedRow = this.structure.rows.splice(draggedIndex, 1)[0];
     this.structure.rows.push(draggedRow);
-    
+
     console.log(`Row ${draggedRowId} moved to end`);
     return true;
   }
-  
+
   /**
    * Add a widget to a column
    */
   addWidget(rowId, columnId, widgetType, targetWidgetId = null) {
     const row = this.getRow(rowId);
     if (!row) return null;
-    
+
     const column = row.columns.find(c => c.id === columnId);
     if (!column) return null;
-    
+
     const widgetId = 'widget-' + (this.nextWidgetId++);
     const defaultProps = this.getDefaultProperties(widgetType);
     const widget = {
@@ -145,7 +145,7 @@ class LayoutManager {
       type: widgetType,
       properties: defaultProps
     };
-    
+
     if (targetWidgetId) {
       const targetIndex = column.widgets.findIndex(w => w.id === targetWidgetId);
       if (targetIndex !== -1) {
@@ -156,12 +156,12 @@ class LayoutManager {
     } else {
       column.widgets.push(widget);
     }
-    
+
     console.log('Widget added:', widgetId, widgetType, 'properties:', defaultProps);
-    
+
     return widgetId;
   }
-  
+
   /**
    * Move a widget from one column to another
    */
@@ -206,33 +206,33 @@ class LayoutManager {
   removeWidget(rowId, columnId, widgetId) {
     const row = this.getRow(rowId);
     if (!row) return false;
-    
+
     const column = row.columns.find(c => c.id === columnId);
     if (!column) return false;
-    
+
     const index = column.widgets.findIndex(w => w.id === widgetId);
     if (index !== -1) {
       column.widgets.splice(index, 1);
       console.log('Widget removed:', widgetId);
       return true;
     }
-    
+
     return false;
   }
-  
+
   /**
    * Get a widget
    */
   getWidget(rowId, columnId, widgetId) {
     const row = this.getRow(rowId);
     if (!row) return null;
-    
+
     const column = row.columns.find(c => c.id === columnId);
     if (!column) return null;
-    
+
     return column.widgets.find(w => w.id === widgetId);
   }
-  
+
   /**
    * Update widget properties
    */
@@ -244,14 +244,14 @@ class LayoutManager {
     }
     return false;
   }
-  
+
   /**
    * Update column CSS class
    */
   updateColumnClass(rowId, columnId, cssClass) {
     const row = this.getRow(rowId);
     if (!row) return false;
-    
+
     const column = row.columns.find(c => c.id === columnId);
     if (column) {
       column.cssClass = cssClass;
@@ -259,7 +259,7 @@ class LayoutManager {
     }
     return false;
   }
-  
+
   /**
    * Get default properties for a widget type
    */
@@ -268,27 +268,27 @@ class LayoutManager {
       console.warn('WidgetRegistry not available');
       return {};
     }
-    
+
     const widgetDefinition = this.widgetRegistry.get(widgetType);
     console.log('Getting defaults for widget type:', widgetType);
     console.log('Widget definition:', widgetDefinition);
-    
+
     if (!widgetDefinition) {
       console.warn('No widget definition found for:', widgetType);
       return {};
     }
-    
+
     if (!widgetDefinition.properties) {
       console.warn('Widget definition has no properties for:', widgetType);
       return {};
     }
-    
+
     // Extract defaults from property definitions
     const defaults = {};
     for (const [propName, propDef] of Object.entries(widgetDefinition.properties)) {
       if (propDef && propDef.hasOwnProperty('default')) {
         const defaultValue = propDef.default;
-        
+
         // Handle special case for uniqueId generation
         if (defaultValue === 'GENERATE') {
           defaults[propName] = this.generateUniqueId(widgetType);
@@ -297,11 +297,11 @@ class LayoutManager {
         }
       }
     }
-    
+
     console.log('Extracted defaults:', defaults);
     return defaults;
   }
-  
+
   /**
    * Generate unique ID for repository references
    */
@@ -316,27 +316,27 @@ class LayoutManager {
       pad(d.getSeconds());
     return prefix + '-' + ts;
   }
-  
+
   /**
    * Get the entire structure
    */
   getStructure() {
     return this.structure;
   }
-  
+
   /**
    * Set the entire structure
    */
   setStructure(structure) {
     this.structure = structure;
   }
-  
+
   /**
    * Convert structure to XML
    */
   toXML() {
     let xml = '<page>\n';
-    
+
     for (const row of this.structure.rows) {
       xml += '  <section';
       if (row.cssClass) {
@@ -346,7 +346,7 @@ class LayoutManager {
         xml += ' hr="true"';
       }
       xml += '>\n';
-      
+
       for (const column of row.columns) {
         xml += '    <column';
         if (column.cssClass) {
@@ -356,26 +356,30 @@ class LayoutManager {
           xml += ' hr="true"';
         }
         xml += '>\n';
-        
         for (const widget of column.widgets) {
           xml += this.widgetToXml(widget, '      ');
         }
-        
         xml += '    </column>\n';
       }
-      
+
       xml += '  </section>\n';
     }
-    
+
     xml += '</page>';
-    
+
     return xml;
   }
-  
+
   /**
    * Convert widget to XML
    */
   widgetToXml(widget, indent) {
+
+    console.log('Converting widget to XML:', widget);
+
+    // Use the widget registry to guide XML generation
+    const widgetProperties = this.widgetRegistry.get(widget.type).properties || {};
+
     let xml = indent + `<widget name="${this.escapeXml(widget.type)}"`;
     if (widget.cssClass && widget.cssClass.trim()) {
       xml += ` class="${this.escapeXml(widget.cssClass)}"`;
@@ -384,58 +388,61 @@ class LayoutManager {
       xml += ' hr="true"';
     }
     xml += '>\n';
-    
+
     for (const [key, value] of Object.entries(widget.properties)) {
       if (Array.isArray(value)) {
-      // Handle array properties (like links)
-      xml += indent + `  <${key}>\n`;
-      for (const item of value) {
-        xml += indent + `    <link`;
-        for (const [attr, attrValue] of Object.entries(item)) {
-        xml += ` ${attr}="${this.escapeXml(attrValue)}"`;
+        // Handle array properties (like links)
+        xml += indent + `  <${key}>\n`;
+        for (const item of value) {
+          xml += indent + `    <link`;
+          for (const [attr, attrValue] of Object.entries(item)) {
+            xml += ` ${attr}="${this.escapeXml(attrValue)}"`;
+          }
+          xml += ' />\n';
         }
-        xml += ' />\n';
-      }
-      xml += indent + `  </${key}>\n`;
+        xml += indent + `  </${key}>\n`;
+      } else if (widgetProperties.hasOwnProperty(key) && widgetProperties[key].type === 'xml') {
+        // Handle XML string properties
+        xml += indent + `  <${key}>\n`;
+        xml += indent + indent + value + '\n';
+        xml += indent + `  </${key}>\n`;
       } else if (key === 'html') {
-      // Handle CDATA content
-      xml += indent + `  <${key}><![CDATA[${value}]]></${key}>\n`;
+        // Handle CDATA content
+        xml += indent + `  <${key}><![CDATA[${value}]]></${key}>\n`;
       } else {
-      // Handle simple properties
-      xml += indent + `  <${key}>${this.escapeXml(value)}</${key}>\n`;
+        // Handle simple properties
+        xml += indent + `  <${key}>${this.escapeXml(value)}</${key}>\n`;
       }
     }
-    
+
     xml += indent + '</widget>\n';
-    
+
     return xml;
   }
-  
+
   /**
    * Load structure from XML
    */
   fromXML(xmlString) {
-    console.log('Parsing XML:', xmlString);
-    
     // Parse XML string
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(xmlString, 'text/xml');
-    
+
     // Check for parsing errors
     const parserError = xmlDoc.getElementsByTagName('parsererror');
     if (parserError.length > 0) {
       throw new Error('XML parsing error: ' + parserError[0].textContent);
     }
-    
+
     // Reset structure
     this.structure = { rows: [] };
-    
+
     // Parse page element
     const pageElement = xmlDoc.getElementsByTagName('page')[0];
     if (!pageElement) {
       throw new Error('No <page> element found');
     }
-    
+
     // Parse sections (rows)
     const sections = pageElement.getElementsByTagName('section');
     for (const section of sections) {
@@ -446,7 +453,7 @@ class LayoutManager {
         hr: section.getAttribute('hr') === 'true',
         columns: []
       };
-      
+
       // Parse columns
       const columns = section.getElementsByTagName('column');
       for (const column of columns) {
@@ -457,7 +464,7 @@ class LayoutManager {
           hr: column.getAttribute('hr') === 'true',
           widgets: []
         };
-        
+
         // Parse widgets
         const widgets = column.getElementsByTagName('widget');
         for (const widget of widgets) {
@@ -469,28 +476,26 @@ class LayoutManager {
             hr: widget.getAttribute('hr') === 'true',
             properties: this.parseWidgetProperties(widget)
           };
-          
+
           col.widgets.push(w);
         }
-        
+
         row.columns.push(col);
       }
-      
+
       this.structure.rows.push(row);
     }
-    
-    console.log('XML parsed, structure:', this.structure);
   }
-  
+
   /**
    * Parse widget properties from XML element
    */
   parseWidgetProperties(widgetElement) {
     const properties = {};
-    
+
     for (const child of widgetElement.children) {
       const tagName = child.tagName;
-      
+
       if (child.children.length > 0) {
         // Complex property
         if (tagName === 'links') {
@@ -509,16 +514,16 @@ class LayoutManager {
         properties[tagName] = child.textContent;
       }
     }
-    
+
     return properties;
   }
-  
+
   /**
    * Escape XML special characters
    */
   escapeXml(str) {
     if (typeof str !== 'string') return str;
-    
+
     return str
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
