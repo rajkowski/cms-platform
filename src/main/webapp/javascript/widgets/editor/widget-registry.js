@@ -129,7 +129,7 @@ class WidgetRegistry {
               name: 'tab',
               attributes: {
                 name: { type: 'text', label: 'Tab Title', required: true },
-                linkId: { type: 'text', label: 'Sequential Id', required: true },
+                linkId: { type: 'text', label: 'Tab Div Sequential Id', required: true },
                 contentUniqueId: { type: 'text', label: 'Content Repository ID', required: true, default: 'GENERATE' },
               }
             }
