@@ -874,10 +874,11 @@ class PropertiesPanel {
   saveXmlProperty(propName, propDef, items, rowId, columnId, widgetId) {
     const schema = propDef.schema || {};
     const itemSchema = schema.items || {};
-    const itemName = itemSchema.name || 'item';
+    const itemName = itemSchema.name || 'undefined';
     
     // Convert items array back to XML string
     const xmlString = this.convertXmlItemsToString(items, itemName);
+    console.log('Save XML property:', propName, xmlString);
     
     // Save to widget
     const widgetData = this.editor.getLayoutManager().getWidget(rowId, columnId, widgetId);
@@ -1038,11 +1039,6 @@ class PropertiesPanel {
         html += this.renderXmlProperty(name, definition, value);
         break;
         
-      case 'links':
-        html += `<div class="property-label">${definition.label}${definition.required ? ' *' : ''}</div>`;
-        html += '<div style="font-size:12px;color:#666;margin-top:5px;">Links management coming soon</div>';
-        break;
-        
       default:
         html += `<div class="property-label">${definition.label}${definition.required ? ' *' : ''}</div>`;
         html += `<input type="text" class="property-input" id="prop-${name}" value="${this.escapeHtml(displayValue)}" />`;
@@ -1151,6 +1147,7 @@ class PropertiesPanel {
    */
   parseXmlArrayFromString(xmlString, schema) {
     try {
+      console.log(`Parsing XML string for schema:`, schema);
       if (!xmlString) return [];
       
       const itemSchema = schema?.items || {};
@@ -1198,12 +1195,17 @@ class PropertiesPanel {
     for (const item of items) {
       xml += `<${itemName}`;
       for (const [key, value] of Object.entries(item)) {
+        // Skip empty attributes
+        if (value.length === 0) continue;
+        // Append the attribute
+        console.log('Converting item attribute:', key, value);
         const escapedValue = String(value).replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         xml += ` ${key}="${escapedValue}"`;
       }
       xml += ` />`;
     }
     
+    console.log('Converted XML string:', xml);
     return xml;
   }
   
@@ -1316,6 +1318,7 @@ class PropertiesPanel {
         
         const items = this.getXmlItemsFromUI(propName, itemName, attributes);
         properties[propName] = this.convertXmlItemsToString(items, itemName);
+        console.log('Save XML widget property', propName, properties[propName]);
       } else if (propDef.type === 'checkbox') {
         properties[propName] = element.checked ? 'true' : 'false';
       } else {

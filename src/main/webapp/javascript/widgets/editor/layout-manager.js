@@ -394,7 +394,9 @@ class LayoutManager {
         // Handle array properties (like links)
         xml += indent + `  <${key}>\n`;
         for (const item of value) {
-          xml += indent + `    <link`;
+          // Generic based on schema
+          const attributeName = widgetProperties[key].schema.items.name || 'undefined';
+          xml += indent + `    <${attributeName}`;
           for (const [attr, attrValue] of Object.entries(item)) {
             xml += ` ${attr}="${this.escapeXml(attrValue)}"`;
           }
@@ -491,23 +493,28 @@ class LayoutManager {
    * Parse widget properties from XML element
    */
   parseWidgetProperties(widgetElement) {
+    const widgetType = widgetElement.getAttribute('name');
     const properties = {};
+
+    console.log('Parsing properties for widget type:', widgetType);
 
     for (const child of widgetElement.children) {
       const tagName = child.tagName;
 
       if (child.children.length > 0) {
-        // Complex property
-        if (tagName === 'links') {
-          properties.links = [];
-          const links = child.getElementsByTagName('link');
-          for (const link of links) {
-            const linkObj = {};
-            for (const attr of link.attributes) {
-              linkObj[attr.name] = attr.value;
+        // Check for XML array
+        const widgetProperties = this.widgetRegistry.get(widgetType).properties || {};
+        if (widgetProperties.hasOwnProperty(tagName) && widgetProperties[tagName].type === 'xml') {
+          properties[tagName] = [];
+          const items = child.getElementsByTagName(widgetProperties[tagName].schema.items.name );
+          for (const item of items) {
+            const itemObj = {};
+            for (const attr of item.attributes) {
+              itemObj[attr.name] = attr.value;
             }
-            properties.links.push(linkObj);
+            properties[tagName].push(itemObj);
           }
+          console.log(`Parsed XML array property: ${tagName}`, properties.items);
         }
       } else {
         // Simple property

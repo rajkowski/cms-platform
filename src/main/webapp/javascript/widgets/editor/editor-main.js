@@ -542,6 +542,8 @@ class PageEditor {
       // Get the current layout state as JSON
       const layoutData = this.layoutManager.getStructure();
       const jsonData = JSON.stringify(layoutData);
+
+      console.log('Prepared layout data for saving:', jsonData);
       
       // Get the selected page link
       const pageLink = this.pagesTabManager.getSelectedPageLink();
