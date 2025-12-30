@@ -29,7 +29,6 @@ public class WebPageJsonToXMLCommand {
    * @return XML string for page layout
    */
   public static String convertDesignerJsonToXml(String designerJson) throws Exception {
-    // @todo turn this into a command class like WebPageDesignerToXmlCommand
     ObjectMapper mapper = new ObjectMapper();
     JsonNode pageNode = mapper.readTree(designerJson);
 
