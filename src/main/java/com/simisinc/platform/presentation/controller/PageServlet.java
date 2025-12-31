@@ -706,9 +706,16 @@ public class PageServlet extends HttpServlet {
       if (webContainerContext.isEmbedded()) {
         request.getServletContext().getRequestDispatcher("/WEB-INF/jsp/embedded.jsp").forward(request, response);
       } else {
-        if ("/admin".equals(pageRequest.getPagePath())) {
-          // The admin menu will be shown
-          LOG.debug("Setting admin render info...");
+        // Check if this is an admin page accessed directly and prepare for iframe rendering
+        boolean isAdminPath = pageRequest.getPagePath().startsWith("/admin") &&
+            !pageRequest.getPagePath().startsWith("/admin/visual-page-editor") &&
+            !pageRequest.getPagePath().startsWith("/admin/web-page-designer") &&
+            !pageRequest.getPagePath().startsWith("/admin/web-page") &&
+            !pageRequest.getPagePath().startsWith("/admin/css-editor") &&
+            !pageRequest.getPagePath().startsWith("/admin/web-container-designer");
+        boolean isIframeRequest = "iframe".equals(request.getHeader("Sec-Fetch-Dest"));
+        if (isAdminPath && !isIframeRequest) {
+          request.setAttribute("adminIframeUrl", pageRequest.getPagePath());
           request.setAttribute(PAGE_BODY, "/WEB-INF/jsp/admin.jsp");
         } else if ("container".equals(request.getSession().getAttribute(SessionConstants.X_VIEW_MODE))) {
           // For embedded mobile and API content

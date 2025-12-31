@@ -2,12 +2,6 @@
 <pages>
   <!-- Admin -->
   <page name="/admin" role="admin,content-manager,community-manager,ecommerce-manager" title="Admin">
-    <widget name="content">
-      <html><![CDATA[<h3>Admin Module</h3>]]></html>
-    </widget>
-  </page>
-
-  <page name="/admin/welcome" role="admin,content-manager,community-manager,ecommerce-manager" title="Admin">
     <section>
       <column>
         <widget name="content" class="margin-bottom-20">
@@ -729,16 +723,12 @@
   </page>
 
   <page name="/admin/sitemap" role="admin,content-manager" title="Site Map">
-    <!--<section>-->
-      <!--<column class="small-12 cell">-->
-        <!--<widget name="breadcrumbs">-->
-          <!--<links>-->
-            <!--<link name="Site Map" value="" />-->
-          <!--</links>-->
-        <!--</widget>-->
-      <!--</column>-->
-    <!--</section>-->
     <section>
+      <column>
+        <widget name="mainMenu" />
+      </column>
+    </section>
+    <section class="margin-top-25">
       <column class="small-12 cell">
         <widget name="siteMap">
           <title>Site Map Editor</title>

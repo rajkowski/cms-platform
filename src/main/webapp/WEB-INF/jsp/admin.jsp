@@ -33,6 +33,10 @@
 <jsp:useBean id="themePropertyMap" class="java.util.HashMap" scope="request"/>
 <jsp:useBean id="analyticsPropertyMap" class="java.util.HashMap" scope="request"/>
 <jsp:useBean id="ecommercePropertyMap" class="java.util.HashMap" scope="request"/>
+<c:set var="adminIframeUrl" value="${requestScope.adminIframeUrl}" />
+<c:if test="${empty adminIframeUrl}">
+  <c:set var="adminIframeUrl" value="${ctx}/admin" />
+</c:if>
 <%-- Draw the admin menu with iframe-based content loading --%>
 <div class="off-canvas-wrapper">
   <div class="off-canvas position-left reveal-for-medium admin-menu hide-for-print" style="z-index: 1005 !important; padding-bottom: 50px" id="offCanvas" data-off-canvas>
@@ -51,7 +55,7 @@
     <%-- Admin Link --%>
     <ul class="vertical menu">
       <li class="section-title">Admin</li>
-      <li<c:if test="${pageRenderInfo.name eq '/admin'}"> class="is-active"</c:if>><a href="javascript:void(0)" onclick="loadAdminContent('${ctx}/admin/welcome', this)"><i class="${font:far()} fa-home fa-fw"></i> <span>Welcome</span></a></li>
+      <li<c:if test="${pageRenderInfo.name eq '/admin'}"> class="is-active"</c:if>><a href="javascript:void(0)" onclick="loadAdminContent('${ctx}/admin', this)"><i class="${font:far()} fa-home fa-fw"></i> <span>Welcome</span></a></li>
       <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/documentation')}"> class="is-active"</c:if>><a href="javascript:void(0)" onclick="loadAdminContent('${ctx}/admin/documentation/wiki/Home', this)"><i class="${font:far()} fa-book fa-fw"></i> <span>Documentation</span></a></li>
       <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/activity')}"> class="is-active"</c:if>><a href="javascript:void(0)" onclick="loadAdminContent('${ctx}/admin/activity', this)"><i class="${font:far()} fa-exchange-alt fa-fw"></i> <span>Activity</span></a></li>
     </ul>
@@ -139,7 +143,7 @@
   </div>
   <div class="off-canvas-content" data-off-canvas-content>
     <div class="web-content admin-web-content">
-      <iframe id="admin-iframe" src="${ctx}/admin/welcome?iframe=true" style="width: 100%; height: 100vh; border: none; display: block;"></iframe>
+      <iframe id="admin-iframe" src="${adminIframeUrl}" style="width: 100%; height: 100vh; border: none; display: block;"></iframe>
     </div>
   </div>
 </div>
@@ -152,6 +156,7 @@
       var separator = url.indexOf('?') > -1 ? '&' : '?';
       // iframe.src = url + separator + 'iframe=true';
       iframe.src = url;
+      window.history.pushState(null, '', url);
     }
     
     // Update active state on menu items
