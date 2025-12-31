@@ -42,6 +42,7 @@
         </c:when>
         <c:when test="${fn:toLowerCase(file.fileType) eq 'url'}">
           <a target="_blank" href="${ctx}/assets/view/${file.baseUrl}?ref=${url:encodeUri(file.filename)}"><c:out value="${file.title}" /></a>
+          <small class="subheader"><i class="fa fa-external-link" aria-hidden="true" title="Opens in a new window"></i></small>
         </c:when>
         <c:when test="${fn:toLowerCase(file.fileType) eq 'video'}">
           <a target="_blank" href="${ctx}/assets/view/${file.url}"><c:out value="${file.title}" /></a>
@@ -55,6 +56,9 @@
       </c:choose>
       <c:if test="${file.fileLength gt 0}">
         <small class="subheader"><c:out value="${number:suffix(file.fileLength)}"/></small>
+        <c:if test="${!empty file.fileType}">
+          <small class="subheader"> | <c:out value="${file.fileType}" /></small>
+        </c:if>
       </c:if>
       <c:choose>
         <c:when test="${date:relative(file.created) eq 'just now'}">
