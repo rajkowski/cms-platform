@@ -61,13 +61,17 @@
         </c:if>
       </c:if>
       <c:choose>
-        <c:when test="${date:relative(file.created) eq 'just now'}">
-          <span class="label small round success">new</span>
-        </c:when>
-        <c:when test="${date:relative(file.modified) eq 'just now'}">
+        <c:when test="${file.created != file.modified && !date:isDaysOld(file.modified, 5)}">
           <span class="label small round primary">updated</span>
         </c:when>
+        <c:when test="${!date:isDaysOld(file.created, 5)}">
+          <span class="label small round success">new</span>
+        </c:when>
       </c:choose>
+      <c:if test="${!empty file.summary}">
+        <br />
+        <small><c:out value="${file.summary}" /></small>
+      </c:if>
     </li>
   </c:forEach>
   </ul>
