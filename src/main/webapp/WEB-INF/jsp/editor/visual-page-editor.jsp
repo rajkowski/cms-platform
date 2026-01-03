@@ -133,6 +133,7 @@
     background: var(--editor-bg);
     border: 1px solid var(--editor-border);
     border-radius: 4px;
+    color: var(--editor-text);
     padding: 10px;
     margin-bottom: 10px;
     cursor: move;
