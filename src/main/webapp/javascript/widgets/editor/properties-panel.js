@@ -687,6 +687,9 @@ class PropertiesPanel {
     
     // Initialize XML properties
     this.initXmlProperties(rowId, columnId, widgetId, definition);
+    
+    // Initialize contentUniqueId properties
+    this.initContentUniqueIdProperties(rowId, columnId, widgetId, definition);
   }
   
   /**
@@ -1037,6 +1040,10 @@ class PropertiesPanel {
         
       case 'xml':
         html += this.renderXmlProperty(name, definition, value);
+        break;
+        
+      case 'contentUniqueId':
+        html += this.renderContentUniqueIdProperty(name, definition, displayValue, pageLink);
         break;
         
       default:
@@ -1398,6 +1405,236 @@ class PropertiesPanel {
     this.currentContext = null;
     this.clearHighlight();
     this.content.innerHTML = '<p style="color: #6c757d; font-size: 14px;">Select an element to edit its properties</p>';
+  }
+  
+  /**
+   * Render contentUniqueId property with content repository integration
+   */
+  renderContentUniqueIdProperty(name, definition, value, pageLink) {
+    let html = '<div class="property-group">';
+    html += `<div class="property-label">${definition.label}${definition.required ? ' *' : ''}</div>`;
+    html += `<div style="display:flex;gap:5px;margin-bottom:5px;">`;
+    html += `<input type="text" class="property-input" id="prop-${name}" value="${this.escapeHtml(value)}" style="flex:1;" />`;
+    html += `<button type="button" class="button small" id="browse-content-${name}" style="white-space:nowrap;">Browse</button>`;
+    html += `<button type="button" class="button small" id="edit-content-${name}" style="white-space:nowrap;display:none;">Edit</button>`;
+    html += `</div>`;
+    html += `</div>`;
+    
+    return html;
+  }
+  
+  /**
+   * Initialize contentUniqueId property handlers
+   */
+  initContentUniqueIdProperties(rowId, columnId, widgetId, widgetDef) {
+    const self = this;
+    Object.entries(widgetDef.properties).forEach(([propName, propDef]) => {
+      if (propDef.type === 'contentUniqueId') {
+        const input = document.getElementById(`prop-${propName}`);
+        const browseBtn = document.getElementById(`browse-content-${propName}`);
+        const editBtn = document.getElementById(`edit-content-${propName}`);
+        
+        if (!input || !browseBtn) return;
+        
+        // Browse button - show content list modal
+        browseBtn.addEventListener('click', () => {
+          self.showContentBrowserModal(propName, propDef, rowId, columnId, widgetId);
+        });
+        
+        // Edit button - open content editor
+        editBtn.addEventListener('click', () => {
+          const uniqueId = input.value;
+          if (uniqueId) {
+            self.openContentEditor(uniqueId);
+          }
+        });
+        
+        // Show edit button if value exists
+        input.addEventListener('input', () => {
+          if (input.value && input.value.trim()) {
+            editBtn.style.display = 'inline-block';
+          } else {
+            editBtn.style.display = 'none';
+          }
+        });
+        
+        // Initial state
+        if (input.value && input.value.trim()) {
+          editBtn.style.display = 'inline-block';
+        }
+      }
+    });
+  }
+  
+  /**
+   * Show content browser modal
+   */
+  showContentBrowserModal(propName, propDef, rowId, columnId, widgetId) {
+    // Create modal if it doesn't exist
+    let modal = document.getElementById('content-browser-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'content-browser-modal';
+      modal.className = 'modal-overlay';
+      modal.innerHTML = `
+        <div class="modal-content" style="max-width:800px;max-height:80vh;overflow-y:auto;">
+          <h4 style="color:var(--editor-text);margin-bottom:15px;">Select Content</h4>
+          <div id="content-browser-list" style="margin-bottom:15px;">
+            <div style="text-align:center;padding:40px;color:var(--editor-text-muted);">
+              <i class="fa fa-spinner fa-spin"></i> Loading content...
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <button type="button" class="button tiny secondary" id="close-content-browser-modal">Cancel</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      
+      // Close button
+      document.getElementById('close-content-browser-modal').addEventListener('click', () => {
+        modal.classList.remove('active');
+      });
+      
+      // Close on overlay click
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          modal.classList.remove('active');
+        }
+      });
+    }
+    
+    // Load content list
+    this.loadContentList(propName, propDef, rowId, columnId, widgetId);
+    
+    // Show modal
+    modal.classList.add('active');
+  }
+  
+  /**
+   * Load content list from server
+   */
+  loadContentList(propName, propDef, rowId, columnId, widgetId) {
+    const listContainer = document.getElementById('content-browser-list');
+    listContainer.innerHTML = '<div style="text-align:center;padding:40px;color:var(--editor-text-muted);"><i class="fa fa-spinner fa-spin"></i> Loading content...</div>';
+    
+    // Fetch content list from server
+    fetch('/json/contentList', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data && data.contentList && Array.isArray(data.contentList)) {
+        this.renderContentList(data.contentList, propName, propDef, rowId, columnId, widgetId);
+      } else {
+        listContainer.innerHTML = '<div style="padding:20px;color:var(--editor-text-muted);">No content available</div>';
+      }
+    })
+    .catch(error => {
+      console.error('Error loading content list:', error);
+      listContainer.innerHTML = '<div style="padding:20px;color:#dc3545;">Error loading content list</div>';
+    });
+  }
+  
+  /**
+   * Render content list in modal
+   */
+  renderContentList(contentList, propName, propDef, rowId, columnId, widgetId) {
+    const listContainer = document.getElementById('content-browser-list');
+    const self = this;
+    
+    if (contentList.length === 0) {
+      listContainer.innerHTML = '<div style="padding:20px;color:var(--editor-text-muted);">No content available</div>';
+      return;
+    }
+    
+    let html = '<div style="display:grid;gap:10px;">';
+    contentList.forEach(content => {
+      const uniqueId = content.uniqueId || content.contentUniqueId || '';
+      const contentSnippet = content.content || uniqueId || 'No content';
+      html += `
+        <div class="content-item" data-unique-id="${this.escapeHtml(uniqueId)}" style="
+          padding:12px;
+          border:1px solid var(--editor-border);
+          border-radius:4px;
+          cursor:pointer;
+          background:var(--editor-bg);
+          transition:all 0.2s;
+        ">
+          <div style="font-weight:600;color:var(--editor-text);margin-bottom:5px;">${this.escapeHtml(uniqueId)}</div>
+          <div style="font-size:12px;color:var(--editor-text-muted);">${this.escapeHtml(contentSnippet)}</div>
+        </div>
+      `;
+    });
+    html += '</div>';
+    
+    listContainer.innerHTML = html;
+    
+    // Add click handlers
+    listContainer.querySelectorAll('.content-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const uniqueId = item.getAttribute('data-unique-id');
+        const input = document.getElementById(`prop-${propName}`);
+        const editBtn = document.getElementById(`edit-content-${propName}`);
+        
+        if (input) {
+          input.value = uniqueId;
+          if (editBtn) {
+            editBtn.style.display = 'inline-block';
+          }
+          
+          // Update widget property
+          const widgetData = self.editor.getLayoutManager().getWidget(rowId, columnId, widgetId);
+          if (widgetData) {
+            widgetData.properties[propName] = uniqueId;
+            if (self.editor.getCanvasController) {
+              const row = self.editor.getLayoutManager().getRow(rowId);
+              self.editor.getCanvasController().renderRow(rowId, row);
+              setTimeout(() => {
+                const rowElement = document.querySelector(`[data-row-id="${rowId}"]`);
+                if (rowElement) {
+                  const columnElement = rowElement.querySelector(`[data-column-id="${columnId}"]`);
+                  if (columnElement) {
+                    const widgetElement = columnElement.querySelector(`[data-widget-id="${widgetId}"]`);
+                    if (widgetElement) {
+                      widgetElement.classList.add('selected');
+                    }
+                  }
+                }
+              }, 0);
+            }
+            if (self.editor.saveToHistory) {
+              self.editor.saveToHistory();
+            }
+          }
+        }
+        
+        // Close modal
+        document.getElementById('content-browser-modal').classList.remove('active');
+      });
+      
+      item.addEventListener('mouseenter', () => {
+        item.style.borderColor = 'var(--editor-selected-border)';
+        item.style.background = 'var(--editor-hover-bg)';
+      });
+      
+      item.addEventListener('mouseleave', () => {
+        item.style.borderColor = 'var(--editor-border)';
+        item.style.background = 'var(--editor-bg)';
+      });
+    });
+  }
+  
+  /**
+   * Open content editor for a uniqueId
+   */
+  openContentEditor(uniqueId) {
+    // Open content editor in new window/tab
+    const url = `/content-editor?uniqueId=${encodeURIComponent(uniqueId)}&returnPage=${encodeURIComponent('/admin/visual-page-editor?webPage=/')}`;
+    window.open(url, '_blank');
   }
   
   /**

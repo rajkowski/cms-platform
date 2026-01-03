@@ -16,6 +16,7 @@
   -->
 <services>
   <service endpoint="/json/activityList" class="com.simisinc.platform.presentation.widgets.items.ActivityListAjax" />
+  <service endpoint="/json/contentList" class="com.simisinc.platform.presentation.widgets.cms.ContentListAjax" />
   <service endpoint="/json/lookupItem" class="com.simisinc.platform.presentation.widgets.items.LookupItemAjax" />
   <service endpoint="/json/lookupLocation" class="com.simisinc.platform.presentation.widgets.items.LookupLocationAjax" />
   <service endpoint="/json/lookupUser" class="com.simisinc.platform.presentation.widgets.cms.LookupUserAjax" />

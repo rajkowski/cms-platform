@@ -25,7 +25,7 @@ class WidgetRegistry {
       properties: {
         icon: { type: 'text', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
-        uniqueId: { type: 'text', label: 'Content Repository ID', required: true, default: 'GENERATE' },
+        uniqueId: { type: 'contentUniqueId', label: 'Content Repository ID', required: true, default: 'GENERATE' },
         html: { type: 'textarea', label: 'Fallback HTML Content', required: false, default: '<p>Content</p>' },
         videoBackgroundUrl: { type: 'text', label: 'Video Background URL' }
       }
@@ -39,7 +39,7 @@ class WidgetRegistry {
       properties: {
         icon: { type: 'text', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
-        uniqueId: { type: 'text', label: 'Content Repository ID', required: true, default: 'GENERATE' },
+        uniqueId: { type: 'contentUniqueId', label: 'Content Repository ID', required: true, default: 'GENERATE' },
         html: { type: 'textarea', label: 'Fallback HTML Content', required: false, default: '<h1>Title</h1><p>&gt; Item to expand</p><p>The item content goes here...</p><hr /><p>&gt; Item to expand</p><p>The item content goes here...</p><hr />' },
         accordionClass: { type: 'text', label: 'Accordion CSS Class' },
         innerAccordionClass: { type: 'text', label: 'Inner Accordion CSS Class' },
@@ -55,7 +55,7 @@ class WidgetRegistry {
       properties: {
         icon: { type: 'text', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
-        uniqueId: { type: 'text', label: 'Content Repository ID', required: true, default: 'GENERATE' },
+        uniqueId: { type: 'contentUniqueId', label: 'Content Repository ID', required: true, default: 'GENERATE' },
         html: { type: 'textarea', label: 'Fallback HTML Content', required: false, default: '<p>Multiple card content separated by HR</p>' },
         gridMargin: { type: 'checkbox', label: 'Set Grid Margin CSS', default: false },
         smallCardCount: {
@@ -86,7 +86,7 @@ class WidgetRegistry {
       properties: {
         icon: { type: 'text', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
-        uniqueId: { type: 'text', label: 'Content Repository ID', required: true, default: 'GENERATE' },
+        uniqueId: { type: 'contentUniqueId', label: 'Content Repository ID', required: true, default: 'GENERATE' },
         html: { type: 'textarea', label: 'Fallback HTML Content', required: false, default: '<p>Multiple slide content separated by HR</p>' },
         showControls: { type: 'checkbox', label: 'Show Controls', default: true },
         showLeftControl: { type: 'checkbox', label: 'Show Left Control', default: true },
@@ -130,7 +130,7 @@ class WidgetRegistry {
               attributes: {
                 name: { type: 'text', label: 'Tab Title', required: true },
                 linkId: { type: 'text', label: 'Tab Div Sequential Id', required: true },
-                contentUniqueId: { type: 'text', label: 'Content Repository ID', required: true, default: 'GENERATE' },
+                contentUniqueId: { type: 'contentUniqueId', label: 'Content Repository ID', required: true, default: 'GENERATE' },
               }
             }
           }
@@ -148,7 +148,7 @@ class WidgetRegistry {
       properties: {
         icon: { type: 'text', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
-        uniqueId: { type: 'text', label: 'Content Repository ID', required: true },
+        uniqueId: { type: 'contentUniqueId', label: 'Content Repository ID', required: true },
         html: { type: 'textarea', label: 'Fallback HTML Content', required: false },
         attach: { type: 'select', label: 'Attach Side', options: ['left', ''], default: '' },
         animate: { type: 'select', label: 'Animate Directions', options: ['up', 'down', 'right', 'left', 'fade'], default: 'left' },
@@ -166,7 +166,7 @@ class WidgetRegistry {
       properties: {
         icon: { type: 'text', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
-        uniqueId: { type: 'text', label: 'Content Repository ID', required: true },
+        uniqueId: { type: 'contentUniqueId', label: 'Content Repository ID', required: true },
         html: { type: 'textarea', label: 'Fallback HTML Content', required: false },
         carouselSize: { type: 'select', label: 'Carousel Size', options: ['tiny', 'small', 'medium', 'large'], default: 'small' },
         carouselTitle: { type: 'text', label: 'Carousel Title', required: false },
@@ -187,7 +187,7 @@ class WidgetRegistry {
       properties: {
         icon: { type: 'text', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
-        uniqueId: { type: 'text', label: 'Content Repository ID', required: true },
+        uniqueId: { type: 'contentUniqueId', label: 'Content Repository ID', required: true },
         html: { type: 'textarea', label: 'Fallback HTML Content', required: false }
       }
     });
