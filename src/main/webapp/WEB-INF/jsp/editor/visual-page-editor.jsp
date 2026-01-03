@@ -264,7 +264,7 @@
   
   .widget-controls {
     position: absolute;
-    top: 5px;
+    top: 15px;
     right: 5px;
     display: none;
   }
@@ -291,7 +291,7 @@
   
   .row-controls {
     position: absolute;
-    top: 5px;
+    top: 0;
     right: 5px;
     display: none;
   }
