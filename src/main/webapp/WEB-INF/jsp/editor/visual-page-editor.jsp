@@ -24,6 +24,31 @@
 <link href="${ctx}/css/spectrum-1.8.1/spectrum.css" rel="stylesheet">
 <script src="${ctx}/javascript/spectrum-1.8.1/spectrum.js"></script>
 <style>
+  /* Dark Mode Variables */
+  :root {
+    --editor-bg: #ffffff;
+    --editor-panel-bg: #f8f9fa;
+    --editor-border: #dee2e6;
+    --editor-text: #212529;
+    --editor-text-muted: #6c757d;
+    --editor-hover-bg: #f8f9fa;
+    --editor-selected-bg: #f0f7ff;
+    --editor-selected-border: #007bff;
+    --editor-shadow: rgba(0,0,0,0.1);
+  }
+  
+  [data-theme="dark"] {
+    --editor-bg: #1a1a1a;
+    --editor-panel-bg: #2d2d2d;
+    --editor-border: #404040;
+    --editor-text: #e0e0e0;
+    --editor-text-muted: #a0a0a0;
+    --editor-hover-bg: #353535;
+    --editor-selected-bg: #1e3a5f;
+    --editor-selected-border: #4a9eff;
+    --editor-shadow: rgba(0,0,0,0.3);
+  }
+  
   #visual-page-editor-container {
     display: flex;
     height: 600px; /* Will be calculated dynamically by JavaScript */
@@ -31,13 +56,14 @@
   }
   
   #editor-toolbar {
-    background: #f8f9fa;
-    border-bottom: 1px solid #dee2e6;
+    background: var(--editor-panel-bg);
+    border-bottom: 1px solid var(--editor-border);
     padding: 10px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 20px;
+    transition: background 0.3s ease, border-color 0.3s ease;
   }
 
   .toolbar-section {
@@ -53,31 +79,59 @@
   
   #widget-palette {
     width: 250px;
-    background: #f8f9fa;
-    border-right: 1px solid #dee2e6;
+    background: var(--editor-panel-bg);
+    border-right: 1px solid var(--editor-border);
     overflow-y: auto;
     padding: 15px;
+    transition: background 0.3s ease, border-color 0.3s ease;
   }
   
   #editor-canvas {
     flex: 1;
-    background: #ffffff;
+    background: var(--editor-bg);
     overflow-y: auto;
     padding: 20px;
     position: relative;
+    transition: background 0.3s ease;
   }
   
   #properties-panel {
     width: 300px;
-    background: #f8f9fa;
-    border-left: 1px solid #dee2e6;
+    background: var(--editor-panel-bg);
+    border-left: 1px solid var(--editor-border);
+    color: var(--editor-text);
     overflow-y: auto;
     padding: 15px;
+    position: relative;
+    transition: background 0.3s ease, border-color 0.3s ease;
+    min-width: 200px;
+    max-width: 600px;
+  }
+  
+  /* Properties Panel Resize Handle */
+  #properties-panel-resize-handle {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    cursor: col-resize;
+    background: transparent;
+    z-index: 10;
+    transition: background 0.2s;
+  }
+  
+  #properties-panel-resize-handle:hover {
+    background: var(--editor-selected-border);
+  }
+  
+  #properties-panel-resize-handle.resizing {
+    background: var(--editor-selected-border);
   }
   
   .widget-palette-item {
-    background: #fff;
-    border: 1px solid #dee2e6;
+    background: var(--editor-bg);
+    border: 1px solid var(--editor-border);
     border-radius: 4px;
     padding: 10px;
     margin-bottom: 10px;
@@ -86,85 +140,125 @@
   }
   
   .widget-palette-item:hover {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    border-color: #007bff;
+    box-shadow: 0 2px 8px var(--editor-shadow);
+    border-color: var(--editor-selected-border);
   }
   
   .widget-palette-category {
     font-weight: bold;
     font-size: 14px;
-    color: #495057;
+    color: var(--editor-text);
     margin: 15px 0 10px 0;
     padding-bottom: 5px;
-    border-bottom: 2px solid #dee2e6;
+    border-bottom: 2px solid var(--editor-border);
   }
   
   .canvas-row {
-    border: 2px dashed #dee2e6;
+    border: 2px dashed var(--editor-border);
     padding: 15px;
     margin-bottom: 15px;
     min-height: 80px;
     position: relative;
     transition: all 0.2s;
+    background: var(--editor-bg);
   }
   
   .canvas-row:hover {
-    border-color: #007bff;
-    background: #f8f9fa;
+    border-color: var(--editor-selected-border);
+    background: var(--editor-hover-bg);
   }
   
   .canvas-row.selected {
-    border-color: #007bff;
-    box-shadow: 0 0 0 3px rgba(0,123,255,0.25);
-    background: #f0f7ff;
+    border-color: var(--editor-selected-border);
+    box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.25);
+    background: var(--editor-selected-bg);
   }
   
   .canvas-row.drag-over {
-    background: #e7f3ff;
-    border-color: #007bff;
+    background: var(--editor-selected-bg);
+    border-color: var(--editor-selected-border);
   }
   
   .canvas-column {
-    border: 1px solid #dee2e6;
+    border: 1px solid var(--editor-border);
     padding: 10px;
     min-height: 60px;
     position: relative;
+    background: var(--editor-bg);
+    transition: all 0.2s;
   }
   
   .canvas-column:hover {
-    border-color: #007bff;
-    background: #f8f9fa;
+    border-color: var(--editor-selected-border);
+    background: var(--editor-hover-bg);
   }
   
   .canvas-column.selected {
-    border-color: #007bff;
-    box-shadow: 0 0 0 3px rgba(0,123,255,0.25);
-    background: #f0f7ff;
+    border-color: var(--editor-selected-border);
+    box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.25);
+    background: var(--editor-selected-bg);
   }
   
   .canvas-column.drag-over {
-    background: #e7f3ff;
-    border-color: #007bff;
+    background: var(--editor-selected-bg);
+    border-color: var(--editor-selected-border);
+  }
+  
+  /* Column Resize Handle */
+  .column-resize-handle {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    cursor: col-resize;
+    background: transparent;
+    z-index: 100;
+    transition: background 0.2s;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+  }
+  
+  .column-resize-handle.left {
+    left: -3px;
+  }
+  
+  .column-resize-handle.right {
+    right: -3px;
+  }
+  
+  .column-resize-handle:hover,
+  .column-resize-handle.resizing {
+    background: var(--editor-selected-border);
+    width: 8px;
+  }
+  
+  .column-resize-handle.resizing {
+    background: var(--editor-selected-border);
+    opacity: 0.8;
   }
   
   .canvas-widget {
-    background: #ffffff;
-    border: 1px solid #dee2e6;
+    background: var(--editor-bg);
+    border: 1px solid var(--editor-border);
     border-radius: 4px;
+    color: var(--editor-text);
     padding: 15px;
     margin-bottom: 10px;
     position: relative;
     cursor: pointer;
+    transition: all 0.2s;
   }
   
   .canvas-widget:hover {
-    border-color: #007bff;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-color: var(--editor-selected-border);
+    box-shadow: 0 2px 8px var(--editor-shadow);
   }
   
   .canvas-widget.selected {
-    border-color: #007bff;
-    box-shadow: 0 0 0 3px rgba(0,123,255,0.25);
+    border-color: var(--editor-selected-border);
+    box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.25);
   }
   
   .widget-controls {
@@ -232,32 +326,44 @@
   .empty-canvas {
     text-align: center;
     padding: 60px 20px;
-    color: #6c757d;
+    color: var(--editor-text-muted);
   }
   
   .property-group {
     margin-bottom: 10px;
+  }
+
+  .property-group label {
+    color: var(--editor-text);
   }
   
   .property-label {
     font-weight: 600;
     font-size: 13px;
     margin-bottom: 5px;
-    color: #495057;
+    color: var(--editor-text);
   }
   
   .property-input {
     width: 100%;
     padding: 8px;
-    border: 1px solid #ced4da;
+    border: 1px solid var(--editor-border);
     border-radius: 4px;
     font-size: 14px;
+    background: var(--editor-bg);
+    color: var(--editor-text);
+    transition: all 0.2s;
   }
   
   .property-input:focus {
     outline: none;
-    border-color: #007bff;
-    box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+    border-color: var(--editor-selected-border);
+    box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.25);
+  }
+  
+  select.property-input {
+    background: var(--editor-bg);
+    color: var(--editor-text);
   }
 
   /* Column Layout Picker Modal */
@@ -279,12 +385,13 @@
   }
 
   .modal-content {
-    background: white;
+    background: var(--editor-bg);
     padding: 30px;
     border-radius: 8px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    box-shadow: 0 5px 15px var(--editor-shadow);
     width: 90%;
     max-width: 600px;
+    color: var(--editor-text);
   }
 
   .layout-picker {
@@ -294,17 +401,18 @@
   }
 
   .layout-option {
-    border: 2px solid #dee2e6;
+    border: 2px solid var(--editor-border);
     border-radius: 4px;
     padding: 15px;
     cursor: pointer;
     transition: all 0.2s;
     text-align: center;
+    background: var(--editor-bg);
   }
-
+  
   .layout-option:hover {
-    border-color: #007bff;
-    background: #f8f9fa;
+    border-color: var(--editor-selected-border);
+    background: var(--editor-hover-bg);
   }
 
   .layout-preview {
@@ -322,8 +430,8 @@
 
   .layout-palette-item {
     position: relative; /* Needed for positioning the button */
-    background: #fff;
-    border: 1px solid #dee2e6;
+    background: var(--editor-bg);
+    border: 1px solid var(--editor-border);
     border-radius: 4px;
     padding: 10px;
     margin-bottom: 10px;
@@ -358,13 +466,13 @@
   }
 
   .layout-palette-item:hover {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    border-color: #007bff;
+    box-shadow: 0 2px 8px var(--editor-shadow);
+    border-color: var(--editor-selected-border);
   }
-
+  
   .layout-label {
     font-size: 11px;
-    color: #6c757d;
+    color: var(--editor-text-muted);
     text-align: center;
   }
 
@@ -387,28 +495,28 @@
     flex-direction: column;
     align-items: center;
     padding: 15px;
-    border: 2px solid #dee2e6;
+    border: 2px solid var(--editor-border);
     border-radius: 6px;
     text-decoration: none;
-    color: #495057;
-    background: white;
+    color: var(--editor-text);
+    background: var(--editor-bg);
     cursor: pointer;
     transition: all 0.2s;
     height: 100%;
     min-height: 180px;
   }
-
+  
   #pre-designed-page-list a:hover {
-    border-color: #007bff;
-    background: #f8f9fa;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-color: var(--editor-selected-border);
+    background: var(--editor-hover-bg);
+    box-shadow: 0 2px 8px var(--editor-shadow);
   }
 
   .template-preview {
     width: 100%;
     height: 80px;
-    background: white;
-    border: 1px solid #dee2e6;
+    background: var(--editor-bg);
+    border: 1px solid var(--editor-border);
     border-radius: 4px;
     display: flex;
     flex-direction: column;
@@ -435,7 +543,7 @@
 
   .template-label {
     font-size: 12px;
-    color: #495057;
+    color: var(--editor-text);
     font-weight: 500;
     text-align: center;
     word-wrap: break-word;
@@ -486,8 +594,8 @@
     list-style: none;
     margin: 0;
     padding: 0;
-    border-bottom: 1px solid #dee2e6;
-    background-color: #ffffff;
+    border-bottom: 1px solid var(--editor-border);
+    background-color: var(--editor-panel-bg);
     flex-shrink: 0;
   }
 
@@ -500,21 +608,21 @@
     display: block;
     padding: 8px 10px;
     text-decoration: none;
-    color: #495057;
+    color: var(--editor-text);
     border-bottom: 3px solid transparent;
     transition: all 0.2s;
     font-weight: 600;
     font-size: 12px;
     white-space: nowrap;
   }
-
+  
   .tabs-nav a:hover {
-    background-color: #f8f9fa;
+    background-color: var(--editor-hover-bg);
   }
-
+  
   .tabs-nav a.active {
-    color: #007bff;
-    border-bottom-color: #007bff;
+    color: var(--editor-selected-border);
+    border-bottom-color: var(--editor-selected-border);
   }
 
   .tab-content {
@@ -544,43 +652,43 @@
     justify-content: space-between;
     align-items: center;
     padding: 12px;
-    border: 1px solid #dee2e6;
+    border: 1px solid var(--editor-border);
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.2s;
-    background: white;
+    background: var(--editor-bg);
   }
-
+  
   .web-page-item:hover {
-    border-color: #007bff;
-    background: #f8f9fa;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-color: var(--editor-selected-border);
+    background: var(--editor-hover-bg);
+    box-shadow: 0 2px 8px var(--editor-shadow);
   }
-
+  
   .web-page-item.selected {
-    border-color: #007bff;
-    background: #e7f3ff;
+    border-color: var(--editor-selected-border);
+    background: var(--editor-selected-bg);
   }
-
+  
   .web-page-info {
     flex-grow: 1;
   }
-
+  
   .web-page-title {
     font-weight: 600;
-    color: #333;
+    color: var(--editor-text);
     margin-bottom: 3px;
   }
-
+  
   .web-page-link {
     font-size: 12px;
-    color: #6c757d;
+    color: var(--editor-text-muted);
   }
-
+  
   #pages-loading {
     text-align: center;
     padding: 20px;
-    color: #6c757d;
+    color: var(--editor-text-muted);
   }
 
   #pages-error {
@@ -595,14 +703,24 @@
   #pages-empty {
     text-align: center;
     padding: 40px 20px;
-    color: #6c757d;
+    color: var(--editor-text-muted);
   }
-
+  
+  /* Dark Mode Toggle */
+  #dark-mode-toggle {
+    border: 1px solid var(--editor-border);
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+  }
+  
   /* Preview Toggle */
   #preview-container {
     display: none;
     flex: 1;
-    background: #ffffff;
+    background: var(--editor-bg);
     overflow-y: auto;
     padding: 20px;
     position: relative;
@@ -619,14 +737,14 @@
   #preview-loading {
     text-align: center;
     padding: 60px 20px;
-    color: #6c757d;
+    color: var(--editor-text-muted);
   }
-
+  
   #preview-error {
     padding: 20px;
-    background: #f8d7da;
-    border: 1px solid #f5c6cb;
-    color: #721c24;
+    background: rgba(220, 53, 69, 0.1);
+    border: 1px solid rgba(220, 53, 69, 0.3);
+    color: #dc3545;
     border-radius: 4px;
   }
 
@@ -720,6 +838,7 @@
       <a id="web-page-css-btn" href="#" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-palette"></i> CSS</a>
       <a id="web-page-xml-editor-btn" href="#" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-code"></i> XML</a>
       <button id="preview-btn" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-database"></i> Raw Data</button>
+      <button id="dark-mode-toggle" class="button tiny secondary no-gap radius" title="Toggle Dark Mode"><i class="${font:far()} fa-moon"></i></button>
       <c:choose>
         <c:when test="${!empty returnPage}">
           <a href="${returnPage}" class="button tiny no-gap radius">Exit</a>
@@ -862,9 +981,10 @@
     
     <!-- Properties Panel -->
     <div id="properties-panel">
-      <h5>Properties</h5>
+      <div id="properties-panel-resize-handle"></div>
+      <h5 style="color: var(--editor-text);">Properties</h5>
       <div id="properties-content">
-        <p style="color: #6c757d; font-size: 14px;">Select an element to edit its properties</p>
+        <p style="color: var(--editor-text-muted); font-size: 14px;">Select an element to edit its properties</p>
       </div>
     </div>
     
@@ -1263,5 +1383,76 @@
     
     // Recalculate on window resize
     window.addEventListener('resize', calculateContainerHeight);
+    
+    // Dark Mode Toggle
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    const editorWrapper = document.getElementById('visual-page-editor-wrapper');
+    
+    // Check for saved theme preference
+    const savedTheme = localStorage.getItem('editor-theme') || 'light';
+    if (savedTheme === 'dark') {
+      editorWrapper.setAttribute('data-theme', 'dark');
+      darkModeToggle.innerHTML = '<i class="${font:far()} fa-sun"></i>';
+    }
+    
+    darkModeToggle.addEventListener('click', function() {
+      const currentTheme = editorWrapper.getAttribute('data-theme');
+      if (currentTheme === 'dark') {
+        editorWrapper.removeAttribute('data-theme');
+        darkModeToggle.innerHTML = '<i class="${font:far()} fa-moon"></i>';
+        localStorage.setItem('editor-theme', 'light');
+      } else {
+        editorWrapper.setAttribute('data-theme', 'dark');
+        darkModeToggle.innerHTML = '<i class="${font:far()} fa-sun"></i>';
+        localStorage.setItem('editor-theme', 'dark');
+      }
+    });
+    
+    // Properties Panel Resizing
+    const propertiesPanel = document.getElementById('properties-panel');
+    const resizeHandle = document.getElementById('properties-panel-resize-handle');
+    let isResizing = false;
+    let startX = 0;
+    let startWidth = 0;
+    
+    resizeHandle.addEventListener('mousedown', function(e) {
+      isResizing = true;
+      startX = e.clientX;
+      startWidth = parseInt(window.getComputedStyle(propertiesPanel).width, 10);
+      resizeHandle.classList.add('resizing');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      e.preventDefault();
+    });
+    
+    document.addEventListener('mousemove', function(e) {
+      if (!isResizing) return;
+      
+      const diff = startX - e.clientX; // Reverse because we're resizing from left
+      const newWidth = startWidth + diff;
+      const minWidth = 200;
+      const maxWidth = 600;
+      
+      if (newWidth >= minWidth && newWidth <= maxWidth) {
+        propertiesPanel.style.width = newWidth + 'px';
+      }
+    });
+    
+    document.addEventListener('mouseup', function() {
+      if (isResizing) {
+        isResizing = false;
+        resizeHandle.classList.remove('resizing');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        // Save width preference
+        localStorage.setItem('properties-panel-width', propertiesPanel.style.width);
+      }
+    });
+    
+    // Restore saved width
+    const savedWidth = localStorage.getItem('properties-panel-width');
+    if (savedWidth) {
+      propertiesPanel.style.width = savedWidth;
+    }
   });
 </script>
