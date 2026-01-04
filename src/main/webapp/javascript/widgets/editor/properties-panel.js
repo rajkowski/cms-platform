@@ -189,6 +189,9 @@ class PropertiesPanel {
         if (this.editor.saveToHistory) {
           this.editor.saveToHistory();
         }
+        
+        // Enhancement: Auto-refresh preview when property is edited and preview is active
+        this.refreshPreviewIfActive();
       }
     };
     
@@ -217,6 +220,9 @@ class PropertiesPanel {
           if (self.editor.saveToHistory) {
             self.editor.saveToHistory();
           }
+          
+          // Enhancement: Auto-refresh preview when property is edited and preview is active
+          self.refreshPreviewIfActive();
         }
       });
     }
@@ -479,6 +485,9 @@ class PropertiesPanel {
         if (self.editor.saveToHistory) {
           self.editor.saveToHistory();
         }
+        
+        // Enhancement: Auto-refresh preview when property is edited and preview is active
+        self.refreshPreviewIfActive();
       }
     };
     
@@ -515,6 +524,9 @@ class PropertiesPanel {
             if (self.editor.saveToHistory) {
               self.editor.saveToHistory();
             }
+            
+            // Enhancement: Auto-refresh preview when property is edited and preview is active
+            self.refreshPreviewIfActive();
           }
         }
       });
@@ -610,6 +622,9 @@ class PropertiesPanel {
               if (self.editor.saveToHistory) {
                 self.editor.saveToHistory();
               }
+              
+              // Enhancement: Auto-refresh preview when property is edited and preview is active
+              self.refreshPreviewIfActive();
             }
           };
           
@@ -647,6 +662,9 @@ class PropertiesPanel {
           if (self.editor.saveToHistory) {
             self.editor.saveToHistory();
           }
+          
+          // Enhancement: Auto-refresh preview when property is edited and preview is active
+          self.refreshPreviewIfActive();
         }
       });
     }
@@ -678,6 +696,9 @@ class PropertiesPanel {
           if (self.editor.saveToHistory) {
             self.editor.saveToHistory();
           }
+          
+          // Enhancement: Auto-refresh preview when property is edited and preview is active
+          self.refreshPreviewIfActive();
         }
       });
     }
@@ -911,6 +932,9 @@ class PropertiesPanel {
       if (this.editor.saveToHistory) {
         this.editor.saveToHistory();
       }
+      
+      // Enhancement: Auto-refresh preview when property is edited and preview is active
+      this.refreshPreviewIfActive();
     }
   }
   
@@ -970,6 +994,9 @@ class PropertiesPanel {
             if (self.editor.saveToHistory) {
               self.editor.saveToHistory();
             }
+            
+            // Enhancement: Auto-refresh preview when property is edited and preview is active
+            self.refreshPreviewIfActive();
           }
         }
       });
@@ -1609,6 +1636,9 @@ class PropertiesPanel {
             if (self.editor.saveToHistory) {
               self.editor.saveToHistory();
             }
+            
+            // Enhancement: Auto-refresh preview when property is edited and preview is active
+            self.refreshPreviewIfActive();
           }
         }
         
@@ -1646,5 +1676,19 @@ class PropertiesPanel {
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
+  }
+  
+  /**
+   * Enhancement: Auto-refresh preview when property is edited and preview is active
+   */
+  refreshPreviewIfActive() {
+    // Check if preview mode is active by looking at the toggle button state
+    const togglePreviewBtn = document.getElementById('toggle-preview-btn');
+    if (togglePreviewBtn && togglePreviewBtn.classList.contains('active')) {
+      // Call the global refreshPreview function if it exists
+      if (typeof window.refreshPreview === 'function') {
+        window.refreshPreview();
+      }
+    }
   }
 }

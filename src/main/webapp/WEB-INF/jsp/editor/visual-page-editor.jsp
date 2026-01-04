@@ -1163,6 +1163,9 @@
       });
     }
 
+    // Make refreshPreview globally available for property change events
+    window.refreshPreview = refreshPreview;
+
     // Listen for page changes
     document.addEventListener('pageChanged', function(e) {
       console.log('pageChanged event fired, isPreviewMode:', isPreviewMode);
@@ -1202,6 +1205,19 @@
 
     // Now initialize the page editor
     window.pageEditor.init();
+
+    // Enhancement: Add canvas background click handler to unselect everything
+    if (editorCanvas) {
+      editorCanvas.addEventListener('click', function(e) {
+        // Only unselect if clicking directly on the canvas background (not on child elements)
+        if (e.target === editorCanvas) {
+          // Clear the properties panel (unselect everything)
+          if (window.pageEditor && window.pageEditor.getPropertiesPanel()) {
+            window.pageEditor.getPropertiesPanel().clear();
+          }
+        }
+      });
+    }
 
     // Set up middle section button handlers
     const returnPage = '<c:out value="${returnPage}" />';
