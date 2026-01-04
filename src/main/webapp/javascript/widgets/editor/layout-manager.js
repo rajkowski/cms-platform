@@ -30,11 +30,18 @@ class LayoutManager {
     const row = {
       id: rowId,
       cssClass: '',
-      columns: columnClasses.map(cssClass => ({
-        id: 'col-' + (this.nextColumnId++),
-        cssClass: cssClass + ' cell',
-        widgets: []
-      }))
+      columns: columnClasses.map(cssClass => {
+        const columnId = 'col-' + (this.nextColumnId++);
+        
+        // Only use the base class (typically small-X) - let Foundation handle inheritance
+        const fullCssClass = cssClass + ' cell';
+        
+        return {
+          id: columnId,
+          cssClass: fullCssClass,
+          widgets: []
+        };
+      })
     };
 
     if (targetRowId) {
@@ -54,6 +61,31 @@ class LayoutManager {
   }
 
   /**
+   * Extract size number from a CSS class like 'small-6'
+   */
+  extractSizeFromClass(cssClass) {
+    const match = cssClass.match(/(?:small|medium|large)-(\d+)/);
+    return match ? parseInt(match[1], 10) : 12;
+  }
+
+  /**
+   * Build CSS classes for all viewports with the same size
+   */
+  buildViewportClasses(size) {
+    return `small-${size} medium-${size} large-${size}`;
+  }
+
+  /**
+   * Ensure a CSS class string follows Foundation inheritance pattern
+   * Only add larger viewport classes if they differ from the inherited size
+   */
+  ensureProperViewportClasses(cssClass) {
+    // Don't modify existing classes - preserve the original inheritance pattern
+    // Foundation CSS will handle inheritance automatically
+    return cssClass;
+  }
+
+  /**
    * Remove a row
    */
   removeRow(rowId) {
@@ -61,6 +93,18 @@ class LayoutManager {
     if (index !== -1) {
       this.structure.rows.splice(index, 1);
       console.log('Row removed:', rowId);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Update a row in the structure
+   */
+  updateRow(rowId, updatedRow) {
+    const index = this.structure.rows.findIndex(r => r.id === rowId);
+    if (index !== -1) {
+      this.structure.rows[index] = updatedRow;
       return true;
     }
     return false;
@@ -460,9 +504,14 @@ class LayoutManager {
       const columns = section.getElementsByTagName('column');
       for (const column of columns) {
         const columnId = 'col-' + (this.nextColumnId++);
+        let cssClass = column.getAttribute('class') || '';
+        
+        // Preserve original classes - don't add missing viewport classes
+        // Foundation CSS handles inheritance automatically
+        
         const col = {
           id: columnId,
-          cssClass: column.getAttribute('class') || '',
+          cssClass: cssClass,
           hr: column.getAttribute('hr') === 'true',
           widgets: []
         };

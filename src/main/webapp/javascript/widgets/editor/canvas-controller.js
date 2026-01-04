@@ -19,7 +19,47 @@ class CanvasController {
    */
   init() {
     this.canvas = document.getElementById('editor-canvas');
+    this.addViewportIndicator();
+    this.setupViewportChangeListener();
     console.log('Canvas Controller initialized');
+  }
+
+  /**
+   * Add viewport indicator to canvas
+   */
+  addViewportIndicator() {
+    const indicator = document.createElement('div');
+    indicator.className = 'viewport-indicator';
+    indicator.id = 'viewport-indicator';
+    this.canvas.appendChild(indicator);
+    this.updateViewportIndicator();
+  }
+
+  /**
+   * Update viewport indicator text
+   */
+  updateViewportIndicator() {
+    const indicator = document.getElementById('viewport-indicator');
+    if (indicator) {
+      const currentViewport = this.editor.getViewportManager().getCurrentViewport();
+      const config = this.editor.getViewportManager().getViewportConfig(currentViewport);
+      indicator.textContent = config.name + ' View';
+    }
+  }
+
+  /**
+   * Setup listener for viewport changes
+   */
+  setupViewportChangeListener() {
+    document.addEventListener('viewportChanged', (e) => {
+      this.updateViewportIndicator();
+      
+      // Re-render the layout to apply viewport-specific column classes
+      const structure = this.editor.getLayoutManager().getStructure();
+      this.renderLayout(structure);
+      
+      console.log('Canvas updated for viewport change:', e.detail.current);
+    });
   }
   
   /**
@@ -346,10 +386,25 @@ class CanvasController {
         return;
       }
       
-      // Get current grid sizes
+      // Get current grid sizes for the current viewport
       const parseSize = (cssClass) => {
-        const match = cssClass.match(/small-(\d+)/);
-        return match ? parseInt(match[1], 10) : 12;
+        const currentViewport = this.editor.getViewportManager().getCurrentViewport();
+        const classes = cssClass.split(' ');
+        const viewportClass = classes.find(c => c.startsWith(currentViewport + '-'));
+        
+        if (viewportClass) {
+          const match = viewportClass.match(/(\w+)-(\d+)/);
+          return match ? parseInt(match[2], 10) : 12;
+        }
+        
+        // Fallback to small if current viewport not found
+        const smallClass = classes.find(c => c.startsWith('small-'));
+        if (smallClass) {
+          const match = smallClass.match(/small-(\d+)/);
+          return match ? parseInt(match[1], 10) : 12;
+        }
+        
+        return 12;
       };
       
       startColSize = parseSize(column.cssClass);
@@ -488,29 +543,57 @@ class CanvasController {
     
     console.log('updateColumnSizes called', { newColSize, newAdjSize, currentColClass: column.cssClass, currentAdjClass: adjacent.cssClass });
     
-    // Get existing classes (preserve medium, large, and other classes)
-    const getSizeClasses = (cssClass) => {
+    // Get current viewport from viewport manager
+    const currentViewport = this.editor.getViewportManager().getCurrentViewport();
+    
+    // Parse existing classes and preserve Foundation inheritance pattern
+    const updateColumnClass = (cssClass, newSize) => {
       const classes = cssClass.split(' ').filter(c => c.trim());
-      return {
-        small: classes.find(c => c.startsWith('small-')) || 'small-12',
-        medium: classes.find(c => c.startsWith('medium-')) || '',
-        large: classes.find(c => c.startsWith('large-')) || '',
-        other: classes.filter(c => !c.startsWith('small-') && !c.startsWith('medium-') && !c.startsWith('large-') && c !== 'cell' && c !== 'canvas-column')
-      };
+      const viewportSizes = {};
+      const otherClasses = [];
+      
+      classes.forEach(cls => {
+        if (cls.match(/^(small|medium|large)-\d+$/)) {
+          const [viewport, size] = cls.split('-');
+          viewportSizes[viewport] = parseInt(size, 10);
+        } else if (cls !== 'canvas-column') {
+          otherClasses.push(cls);
+        }
+      });
+      
+      // Update the size for the current viewport
+      viewportSizes[currentViewport] = newSize;
+      
+      // Build the class string following Foundation inheritance pattern
+      // Only include viewport classes that are explicitly different from inherited values
+      const sizeClasses = [];
+      
+      // Always include small (base size)
+      if (viewportSizes.small) {
+        sizeClasses.push(`small-${viewportSizes.small}`);
+      }
+      
+      // Only include medium if it's different from small
+      if (viewportSizes.medium && viewportSizes.medium !== viewportSizes.small) {
+        sizeClasses.push(`medium-${viewportSizes.medium}`);
+      }
+      
+      // Only include large if it's different from the inherited value (medium or small)
+      const inheritedLargeSize = viewportSizes.medium || viewportSizes.small;
+      if (viewportSizes.large && viewportSizes.large !== inheritedLargeSize) {
+        sizeClasses.push(`large-${viewportSizes.large}`);
+      }
+      
+      return [...sizeClasses, ...otherClasses].filter(c => c).join(' ');
     };
     
-    const colClasses = getSizeClasses(column.cssClass);
-    const adjClasses = getSizeClasses(adjacent.cssClass);
+    column.cssClass = updateColumnClass(column.cssClass, newColSize);
+    adjacent.cssClass = updateColumnClass(adjacent.cssClass, newAdjSize);
     
-    // Update small sizes
-    colClasses.small = `small-${newColSize}`;
-    adjClasses.small = `small-${newAdjSize}`;
-    
-    // Rebuild CSS classes (without canvas-column, that's added separately)
-    column.cssClass = [colClasses.small, colClasses.medium, colClasses.large, ...colClasses.other, 'cell'].filter(c => c).join(' ');
-    adjacent.cssClass = [adjClasses.small, adjClasses.medium, adjClasses.large, ...adjClasses.other, 'cell'].filter(c => c).join(' ');
-    
-    console.log('Updated CSS classes', { newColClass: column.cssClass, newAdjClass: adjacent.cssClass });
+    console.log('Updated CSS classes for viewport', currentViewport, { 
+      newColClass: column.cssClass, 
+      newAdjClass: adjacent.cssClass 
+    });
     
     // Update the DOM immediately for visual feedback
     const columnElement = document.querySelector(`[data-column-id="${columnId}"]`);
@@ -521,7 +604,7 @@ class CanvasController {
       return;
     }
     
-    // Update column element
+    // Update column element classes
     const updateElementClasses = (element, newCssClass) => {
       if (!element) return;
       
@@ -529,7 +612,7 @@ class CanvasController {
       const classesToRemove = [];
       for (let i = 0; i < element.classList.length; i++) {
         const cls = element.classList[i];
-        if (cls.startsWith('small-') || cls.startsWith('medium-') || cls.startsWith('large-') || cls === 'cell') {
+        if (cls.match(/^(small|medium|large)-\d+$/) || cls === 'cell') {
           classesToRemove.push(cls);
         }
       }
@@ -642,11 +725,53 @@ class CanvasController {
     
     row.columns.forEach((col, index) => {
       const size = baseSize + (index < remainder ? 1 : 0);
-      const classes = col.cssClass.split(' ').filter(c => !c.startsWith('small-') && !c.startsWith('medium-') && !c.startsWith('large-'));
-      col.cssClass = `small-${size} ${classes.join(' ')}`.trim();
-      if (!col.cssClass.includes('cell')) {
-        col.cssClass += ' cell';
+      
+      // Parse existing classes to preserve non-size classes and inheritance pattern
+      const classes = col.cssClass.split(' ').filter(c => c.trim());
+      const viewportSizes = {};
+      const otherClasses = [];
+      
+      classes.forEach(cls => {
+        if (cls.match(/^(small|medium|large)-\d+$/)) {
+          const [viewport, sizeStr] = cls.split('-');
+          viewportSizes[viewport] = parseInt(sizeStr, 10);
+        } else if (cls !== 'cell') {
+          otherClasses.push(cls);
+        }
+      });
+      
+      // Update all existing viewport sizes proportionally
+      const oldSmallSize = viewportSizes.small || 12;
+      const ratio = size / oldSmallSize;
+      
+      Object.keys(viewportSizes).forEach(viewport => {
+        const newSize = Math.round(viewportSizes[viewport] * ratio);
+        viewportSizes[viewport] = Math.max(1, Math.min(12, newSize));
+      });
+      
+      // Always ensure we have at least a small size
+      if (!viewportSizes.small) {
+        viewportSizes.small = size;
       }
+      
+      // Build class string following Foundation inheritance pattern
+      const sizeClasses = [];
+      
+      // Always include small (base size)
+      sizeClasses.push(`small-${viewportSizes.small}`);
+      
+      // Only include medium if different from small
+      if (viewportSizes.medium && viewportSizes.medium !== viewportSizes.small) {
+        sizeClasses.push(`medium-${viewportSizes.medium}`);
+      }
+      
+      // Only include large if different from inherited value
+      const inheritedLargeSize = viewportSizes.medium || viewportSizes.small;
+      if (viewportSizes.large && viewportSizes.large !== inheritedLargeSize) {
+        sizeClasses.push(`large-${viewportSizes.large}`);
+      }
+      
+      col.cssClass = [...sizeClasses, ...otherClasses, 'cell'].filter(c => c).join(' ');
     });
   }
   

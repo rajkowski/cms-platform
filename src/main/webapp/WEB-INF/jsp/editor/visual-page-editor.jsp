@@ -707,6 +707,60 @@
     color: var(--editor-text-muted);
   }
   
+  /* Viewport Controls */
+  .viewport-controls {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    margin-left: 20px;
+  }
+
+  .viewport-btn {
+    transition: all 0.2s ease;
+    border: 1px solid var(--editor-border);
+    background: var(--editor-bg);
+    color: var(--editor-text);
+  }
+
+  .viewport-btn:hover {
+    background: var(--editor-hover-bg);
+    border-color: var(--editor-selected-border);
+  }
+
+  .viewport-btn.active {
+    background: var(--editor-selected-border);
+    color: white;
+    border-color: var(--editor-selected-border);
+  }
+
+  /* Viewport-specific canvas styles */
+  #editor-canvas.viewport-small {
+    transition: max-width 0.3s ease, margin 0.3s ease;
+  }
+
+  #editor-canvas.viewport-medium {
+    transition: max-width 0.3s ease, margin 0.3s ease;
+  }
+
+  #editor-canvas.viewport-large {
+    transition: max-width 0.3s ease, margin 0.3s ease;
+  }
+
+  /* Viewport indicator */
+  .viewport-indicator {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--editor-selected-border);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    z-index: 100;
+    opacity: 0.8;
+  }
+
   /* Dark Mode Toggle */
   #dark-mode-toggle {
     border: 1px solid var(--editor-border);
@@ -1136,6 +1190,7 @@
 <g:compress>
   <script src="${ctx}/javascript/widgets/editor/widget-registry.js"></script>
   <script src="${ctx}/javascript/widgets/editor/pre-designed-templates.js"></script>
+  <script src="${ctx}/javascript/widgets/editor/viewport-manager.js"></script>
   <script src="${ctx}/javascript/widgets/editor/editor-main.js"></script>
   <script src="${ctx}/javascript/widgets/editor/drag-drop-manager.js"></script>
   <script src="${ctx}/javascript/widgets/editor/layout-manager.js"></script>

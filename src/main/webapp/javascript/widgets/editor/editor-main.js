@@ -15,6 +15,7 @@ class PageEditor {
     this.canvasController = new CanvasController(this);
     this.propertiesPanel = new PropertiesPanel(this);
     this.pagesTabManager = new PagesTabManager(this);
+    this.viewportManager = new ViewportManager(this);
     
     // History management for undo/redo
     this.history = [];
@@ -45,6 +46,7 @@ class PageEditor {
     this.canvasController.init();
     this.propertiesPanel.init();
     this.pagesTabManager.init();
+    this.viewportManager.init();
     
     // Set up event listeners
     this.setupEventListeners();
@@ -675,6 +677,13 @@ class PageEditor {
   setSavedState() {
     this.lastSavedState = JSON.stringify(this.layoutManager.getStructure());
     console.log('Saved state baseline set');
+  }
+  
+  /**
+   * Get viewport manager instance
+   */
+  getViewportManager() {
+    return this.viewportManager;
   }
   
   /**
