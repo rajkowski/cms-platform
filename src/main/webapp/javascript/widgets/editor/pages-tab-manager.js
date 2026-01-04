@@ -185,7 +185,10 @@ class PagesTabManager {
    * Load the content of a specific page
    */
   loadPageContent(pageLink) {
-    // Show loading state
+    // Show loading indicator in toolbar
+    this.pageEditor.showLoadingIndicator('Loading page...');
+    
+    // Show loading state in canvas
     const canvas = this.pageEditor.elements.canvas;
     const loadingHTML = `
       <div style="text-align: center; padding: 40px; color: #6c757d;">
@@ -214,6 +217,9 @@ class PagesTabManager {
           this.pageEditor.layoutManager.structure = { rows: [] };
           if (this.pageEditor.config.hasExistingLayout) {
             this.pageEditor.loadExistingLayout(data.pageXml);
+          } else {
+            // Hide loading indicator if no existing layout to load
+            this.pageEditor.hideLoadingIndicator();
           }
           
           // Reset history and save the loaded state as the new baseline
@@ -237,6 +243,10 @@ class PagesTabManager {
       })
       .catch(error => {
         console.error('Error loading page content:', error);
+        
+        // Hide loading indicator
+        this.pageEditor.hideLoadingIndicator();
+        
         canvas.innerHTML = `
           <div style="padding: 40px; color: #721c24; background: #f8d7da; border-radius: 4px;">
             <i class="fa fa-exclamation-triangle"></i> Error loading page: ${error.message}

@@ -808,6 +808,46 @@
     background: #0dd757;
     box-shadow: 0 0 8px rgba(23, 162, 184, 0.5);
   }
+
+  /* Floating Loading Indicator Overlay */
+  .loading-indicator-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(2px);
+    transition: all 0.3s ease;
+  }
+
+  [data-theme="dark"] .loading-indicator-overlay {
+    background: rgba(26, 26, 26, 0.9);
+  }
+
+  .loading-indicator-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--editor-text);
+    font-size: 16px;
+    font-weight: 500;
+    padding: 20px 30px;
+    background: var(--editor-bg);
+    border: 1px solid var(--editor-border);
+    border-radius: 8px;
+    box-shadow: 0 4px 20px var(--editor-shadow);
+    backdrop-filter: blur(10px);
+  }
+
+  .loading-indicator-content i {
+    color: #007bff;
+    font-size: 18px;
+  }
 </style>
 <link href="${ctx}/css/platform.css" rel="stylesheet">
 
@@ -957,6 +997,13 @@
     
     <!-- Preview Container -->
     <div id="preview-container">
+      <!-- Floating Loading Indicator for Preview -->
+      <div id="preview-loading-indicator" class="loading-indicator-overlay" style="display: none;">
+        <div class="loading-indicator-content">
+          <i class="${font:far()} fa-spinner fa-spin"></i> <span>Loading preview...</span>
+        </div>
+      </div>
+      
       <div id="preview-loading" style="display: none;">
         <i class="${font:far()} fa-spinner fa-spin"></i> Loading preview...
       </div>
@@ -966,6 +1013,13 @@
     
     <!-- Editor Canvas -->
     <div id="editor-canvas">
+      <!-- Floating Loading Indicator -->
+      <div id="page-loading-indicator" class="loading-indicator-overlay" style="display: none;">
+        <div class="loading-indicator-content">
+          <i class="${font:far()} fa-spinner fa-spin"></i> <span id="loading-text">Loading...</span>
+        </div>
+      </div>
+      
       <c:choose>
         <c:when test="${hasExistingLayout}">
           <!-- Existing layout will be rendered here via JavaScript -->
@@ -1119,8 +1173,18 @@
     // Function to refresh the preview
     function refreshPreview() {
       previewIframe.style.display = 'none';
-      previewLoading.style.display = 'block';
       previewError.style.display = 'none';
+      
+      // Show floating loading indicator for preview
+      const previewLoadingIndicator = document.getElementById('preview-loading-indicator');
+      if (previewLoadingIndicator) {
+        previewLoadingIndicator.style.display = 'flex';
+      }
+      
+      // Show loading indicator in toolbar
+      if (window.pageEditor) {
+        window.pageEditor.showLoadingIndicator('Loading preview...');
+      }
       
       // Get the current editor data as XML
       const layoutManager = window.pageEditor.getLayoutManager();
@@ -1148,7 +1212,13 @@
         return response.text();
       })
       .then(html => {
-        previewLoading.style.display = 'none';
+        // Hide loading indicators
+        if (previewLoadingIndicator) {
+          previewLoadingIndicator.style.display = 'none';
+        }
+        if (window.pageEditor) {
+          window.pageEditor.hideLoadingIndicator();
+        }
         // Write the complete HTML response to the iframe
         const iframeDoc = previewIframe.contentDocument || previewIframe.contentWindow.document;
         iframeDoc.open();
@@ -1157,7 +1227,13 @@
         previewIframe.style.display = 'block';
       })
       .catch(error => {
-        previewLoading.style.display = 'none';
+        // Hide loading indicators
+        if (previewLoadingIndicator) {
+          previewLoadingIndicator.style.display = 'none';
+        }
+        if (window.pageEditor) {
+          window.pageEditor.hideLoadingIndicator();
+        }
         previewError.style.display = 'block';
         previewError.textContent = 'Error loading preview: ' + error.message;
       });
@@ -1225,6 +1301,10 @@
     // Web Page Info button
     document.getElementById('web-page-info-btn').addEventListener('click', function(e) {
       e.preventDefault();
+      // Show loading indicator
+      if (window.pageEditor) {
+        window.pageEditor.showLoadingIndicator('Loading page info...');
+      }
       // Reset the properties panel
       if (window.pageEditor && window.pageEditor.getPropertiesPanel()) {
         window.pageEditor.getPropertiesPanel().clear();
@@ -1232,6 +1312,12 @@
       const webPageLink = window.pageEditor.pagesTabManager.getSelectedPageLink();
       const link = '/admin/web-page?webPage=' + encodeURIComponent(webPageLink) + '&returnPage=' + encodeURIComponent(returnPage || webPageLink);
       previewIframe.src = link;
+      previewIframe.onload = function() {
+        // Hide loading indicator when iframe loads
+        if (window.pageEditor) {
+          window.pageEditor.hideLoadingIndicator();
+        }
+      };
       previewIframe.classList.add('active');
       document.getElementById('preview-container').classList.add('active');
       editorCanvas.classList.add('hidden');
@@ -1242,6 +1328,10 @@
     // Web Page XML Editor button
     document.getElementById('web-page-xml-editor-btn').addEventListener('click', function(e) {
       e.preventDefault();
+      // Show loading indicator
+      if (window.pageEditor) {
+        window.pageEditor.showLoadingIndicator('Loading XML editor...');
+      }
       // Reset the properties panel
       if (window.pageEditor && window.pageEditor.getPropertiesPanel()) {
         window.pageEditor.getPropertiesPanel().clear();
@@ -1249,6 +1339,12 @@
       const webPageLink = window.pageEditor.pagesTabManager.getSelectedPageLink();
       const link = '/admin/web-page-designer?webPage=' + encodeURIComponent(webPageLink);
       previewIframe.src = link;
+      previewIframe.onload = function() {
+        // Hide loading indicator when iframe loads
+        if (window.pageEditor) {
+          window.pageEditor.hideLoadingIndicator();
+        }
+      };
       previewIframe.classList.add('active');
       document.getElementById('preview-container').classList.add('active');
       editorCanvas.classList.add('hidden');
@@ -1259,6 +1355,10 @@
     // Web Page CSS button
     document.getElementById('web-page-css-btn').addEventListener('click', function(e) {
       e.preventDefault();
+      // Show loading indicator
+      if (window.pageEditor) {
+        window.pageEditor.showLoadingIndicator('Loading CSS editor...');
+      }
       // Reset the properties panel
       if (window.pageEditor && window.pageEditor.getPropertiesPanel()) {
         window.pageEditor.getPropertiesPanel().clear();
@@ -1266,6 +1366,12 @@
       const webPageLink = window.pageEditor.pagesTabManager.getSelectedPageLink();
       const link = '/admin/css-editor?webPage=' + encodeURIComponent(webPageLink) + '&returnPage=' + encodeURIComponent(returnPage || webPageLink);
       previewIframe.src = link;
+      previewIframe.onload = function() {
+        // Hide loading indicator when iframe loads
+        if (window.pageEditor) {
+          window.pageEditor.hideLoadingIndicator();
+        }
+      };
       previewIframe.classList.add('active');
       document.getElementById('preview-container').classList.add('active');
       editorCanvas.classList.add('hidden');

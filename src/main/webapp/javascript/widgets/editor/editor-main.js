@@ -82,6 +82,25 @@ class PageEditor {
       }
     }
   }
+
+  /**
+   * Show the loading indicator in the toolbar
+   */
+  showLoadingIndicator(text = 'Loading...') {
+    if (this.elements.loadingIndicator && this.elements.loadingText) {
+      this.elements.loadingText.textContent = text;
+      this.elements.loadingIndicator.style.display = 'flex';
+    }
+  }
+
+  /**
+   * Hide the loading indicator in the toolbar
+   */
+  hideLoadingIndicator() {
+    if (this.elements.loadingIndicator) {
+      this.elements.loadingIndicator.style.display = 'none';
+    }
+  }
   
   /**
    * Cache references to frequently accessed DOM elements
@@ -99,7 +118,9 @@ class PageEditor {
       saveBtn: document.getElementById('save-btn'),
       widgetSearch: document.getElementById('widget-search'),
       editorForm: document.getElementById('editor-form'),
-      designerData: document.getElementById('designer-data')
+      designerData: document.getElementById('designer-data'),
+      loadingIndicator: document.getElementById('page-loading-indicator'),
+      loadingText: document.getElementById('loading-text')
     };
   }
   
@@ -390,6 +411,9 @@ class PageEditor {
   loadExistingLayout(xml) {
     console.log('Loading existing layout from XML...');
     
+    // Show loading indicator
+    this.showLoadingIndicator('Loading layout...');
+    
     try {
       // Parse XML and load into layout manager
       this.layoutManager.fromXML(xml);
@@ -397,9 +421,16 @@ class PageEditor {
       // Render all rows and columns
       this.canvasController.renderLayout(this.layoutManager.getStructure());
       
+      // Hide loading indicator
+      this.hideLoadingIndicator();
+      
       console.log('Layout loaded successfully');
     } catch (error) {
       console.error('Error loading layout:', error);
+      
+      // Hide loading indicator
+      this.hideLoadingIndicator();
+      
       alert('Could not load existing layout. Starting with blank canvas.');
     }
   }
@@ -534,8 +565,12 @@ class PageEditor {
   save() {
     console.log('Saving page...');
     
+    // Show loading indicator in toolbar
+    this.showLoadingIndicator('Saving...');
+    
     // Disable save button to prevent double-submission
     this.elements.saveBtn.disabled = true;
+    const originalSaveContent = this.elements.saveBtn.innerHTML;
     this.elements.saveBtn.innerHTML = '<i class="far fa-spinner fa-spin"></i> Saving...';
     
     try {
@@ -571,6 +606,9 @@ class PageEditor {
         this.setSavedState();
         this.updateSaveIndicator();
         
+        // Hide loading indicator
+        this.hideLoadingIndicator();
+        
         // Re-enable save button
         this.elements.saveBtn.disabled = false;
         this.elements.saveBtn.innerHTML = '<i class="far fa-check"></i> Saved!';
@@ -586,13 +624,16 @@ class PageEditor {
       .catch(error => {
         console.error('Error saving page:', error);
         
+        // Hide loading indicator
+        this.hideLoadingIndicator();
+        
         // Show error message
         this.elements.saveBtn.disabled = false;
         this.elements.saveBtn.innerHTML = '<i class="far fa-exclamation-triangle"></i> Save Failed';
         
         // Reset the button text after 3 seconds
         setTimeout(() => {
-          this.elements.saveBtn.innerHTML = originalContent;
+          this.elements.saveBtn.innerHTML = originalSaveContent;
         }, 3000);
         
         alert('Error saving page: ' + error.message);
@@ -602,9 +643,10 @@ class PageEditor {
       console.error('Error preparing save:', error);
       alert('An error occurred while preparing to save the page: ' + error.message);
       
-      // Re-enable save button
+      // Hide loading indicator and re-enable save button
+      this.hideLoadingIndicator();
       this.elements.saveBtn.disabled = false;
-      this.elements.saveBtn.innerHTML = originalContent;
+      this.elements.saveBtn.innerHTML = originalSaveContent;
     }
   }
 
