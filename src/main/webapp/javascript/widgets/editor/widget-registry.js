@@ -419,16 +419,16 @@ class WidgetRegistry {
       description: 'A card with a progress bar',
       properties: {
         label: { type: 'text', label: 'Label', required: false },
-        value: { type: 'text', label: 'Value', required: false },
-        progress: { type: 'number', label: 'Progress', required: true },
-        maxValue: { type: 'number', label: 'Max Value', required: true },
-        maxLabel: { type: 'text', label: 'Max Label' },
+        value: { type: 'text', label: 'Label Value', required: false },
+        maxLabel: { type: 'text', label: 'Max Label', default: 'maxLabel' },
+        progress: { type: 'number', label: 'Progress Value', required: true, default: 0 },
+        maxValue: { type: 'number', label: 'Max Value', required: true, default: 100 },
         link: { type: 'text', label: 'Link' },
-        textColor: { type: 'color', label: 'Text Color' },
-        subheaderColor: { type: 'color', label: 'Sub Header Color' },
-        progressColor: { type: 'color', label: 'Progress Color' },
-        remainderColor: { type: 'color', label: 'Remained Color' },
-        view: { type: 'text', label: 'View' }
+        textColor: { type: 'color', label: 'Text Color', default: '#000000' },
+        subheaderColor: { type: 'color', label: 'Sub Header Color', default: '#000000' },
+        progressColor: { type: 'color', label: 'Progress Color', default: '#ffcc02' },
+        remainderColor: { type: 'color', label: 'Remained Color', default: '#1f1e22' },
+        view: { type: 'select', label: 'View', options: ['default', 'vertical'] }
       }
     });
 
