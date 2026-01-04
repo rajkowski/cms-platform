@@ -280,6 +280,11 @@ class CanvasController {
    * Setup column resize functionality
    */
   setupColumnResize(handle, rowId, columnId, side) {
+
+    // @todo handle edge cases where no adjacent column exists (e.g., first or last column, only one column)
+    // @todo handle case where there are more than 2 columns in a row
+    // @todo implement independent small, medium, large resizing based on selected viewport mode state
+
     let isResizing = false;
     let startX = 0;
     let startColSize = 0;
@@ -334,6 +339,7 @@ class CanvasController {
         adjacentColumn = row.columns[columnIndex + 1];
       }
       
+      // @todo handle edge cases where no adjacent column exists (e.g., first or last column, only one column)
       if (!adjacentColumn) {
         console.log('No adjacent column found', { side, columnIndex, totalColumns: row.columns.length });
         isResizing = false;
@@ -367,7 +373,7 @@ class CanvasController {
       
       // Get the actual row width (grid container width)
       const rowWidth = gridContainer.offsetWidth;
-      
+
       if (rowWidth === 0) {
         console.warn('Row width is 0, cannot resize');
         return;
@@ -381,8 +387,10 @@ class CanvasController {
       // Calculate new sizes
       let newColSize = startColSize;
       let newAdjSize = startAdjSize;
+
+      console.log('Calculating new sizes', { rowWidth, diff, gridUnitsChange, startColSize, startAdjSize });
       
-      if (side === 'left') {
+      if (side === 'right' || side === 'left') {
         // Column grows, adjacent shrinks
         newColSize = startColSize + gridUnitsChange;
         newAdjSize = startAdjSize - gridUnitsChange;
@@ -391,7 +399,7 @@ class CanvasController {
         newColSize = startColSize - gridUnitsChange;
         newAdjSize = startAdjSize + gridUnitsChange;
       }
-      
+
       // Round to nearest integer and clamp to valid range
       newColSize = Math.round(newColSize);
       newAdjSize = Math.round(newAdjSize);
@@ -422,6 +430,8 @@ class CanvasController {
       newColSize = Math.max(1, Math.min(12, newColSize));
       newAdjSize = Math.max(1, Math.min(12, newAdjSize));
       
+      console.log('Checking column sizes', { newColSize, newAdjSize, diff, gridUnitsChange });
+
       // Only update if sizes actually changed
       if (newColSize !== startColSize || newAdjSize !== startAdjSize) {
         console.log('Updating column sizes', { newColSize, newAdjSize, diff, gridUnitsChange });
@@ -557,6 +567,9 @@ class CanvasController {
     if (adjacentElement) {
       void adjacentElement.offsetHeight;
     }
+
+    // Tell the layout manager about the change
+    this.editor.getLayoutManager().updateRow(rowId, row);
   }
   
   
