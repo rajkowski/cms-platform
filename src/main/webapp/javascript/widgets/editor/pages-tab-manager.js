@@ -138,7 +138,7 @@ class PagesTabManager {
   /**
    * Handle page selection
    */
-  handlePageClick(e) {
+  async handlePageClick(e) {
     const item = e.target.closest('.web-page-item');
     if (!item) {
       return;
@@ -152,7 +152,8 @@ class PagesTabManager {
     console.log('Page click - isDirty:', isDirty, 'History length:', this.pageEditor.history.length);
     
     if (isDirty) {
-      if (!confirm('You have unsaved changes. Are you sure you want to switch pages?')) {
+      const confirmed = await this.pageEditor.showConfirmDialog('You have unsaved changes. Are you sure you want to switch pages?');
+      if (!confirmed) {
         return;
       }
     }

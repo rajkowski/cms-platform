@@ -357,7 +357,7 @@ class PageEditor {
 
       // Confirm button
       const confirmBtn = document.createElement('button');
-      confirmBtn.textContent = 'Delete';
+      confirmBtn.textContent = 'Confirm';
       confirmBtn.className = 'btn btn-danger';
       confirmBtn.style.cssText = 'padding: 8px 16px; border: none; background: #dc3545; color: white; cursor: pointer; border-radius: 4px;';
 
