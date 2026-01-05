@@ -154,9 +154,106 @@
     border-bottom: 2px solid var(--editor-border);
   }
   
+  /* Foundation Grid Integration for Editor */
+  #editor-canvas .grid-x {
+    display: flex;
+    flex-flow: row wrap;
+    margin-left: -0.625rem;
+    margin-right: -0.625rem;
+  }
+  
+  #editor-canvas .grid-x > .cell {
+    flex: 0 0 auto;
+    min-height: 0px;
+    min-width: 0px;
+    width: 100%;
+    padding-left: 0.625rem;
+    padding-right: 0.625rem;
+    box-sizing: border-box;
+  }
+  
+  /* Override canvas-column styles to work with Foundation grid */
+  #editor-canvas .canvas-column {
+    /* Remove conflicting styles */
+    padding: 10px 0; /* Remove left/right padding, keep top/bottom */
+    margin: 0; /* Remove any margins */
+    box-sizing: border-box;
+    position: relative;
+    background: var(--editor-bg);
+    border: 1px solid var(--editor-border);
+    border-radius: 4px;
+    min-height: 60px;
+    transition: all 0.2s;
+  }
+  
+  /* Add inner content wrapper for proper spacing */
+  #editor-canvas .column-content {
+    position: relative;
+    border: 1px solid var(--editor-border);
+    border-radius: 4px;
+  }
+  
+  #editor-canvas .canvas-column > *:not(.column-resize-handle):not(.column-controls) {
+    /* Content spacing handled by column-content wrapper */
+  }
+  
+  /* Foundation responsive classes for editor */
+  #editor-canvas .cell.small-1 { flex: 0 0 8.33333%; max-width: 8.33333%; }
+  #editor-canvas .cell.small-2 { flex: 0 0 16.66667%; max-width: 16.66667%; }
+  #editor-canvas .cell.small-3 { flex: 0 0 25%; max-width: 25%; }
+  #editor-canvas .cell.small-4 { flex: 0 0 33.33333%; max-width: 33.33333%; }
+  #editor-canvas .cell.small-5 { flex: 0 0 41.66667%; max-width: 41.66667%; }
+  #editor-canvas .cell.small-6 { flex: 0 0 50%; max-width: 50%; }
+  #editor-canvas .cell.small-7 { flex: 0 0 58.33333%; max-width: 58.33333%; }
+  #editor-canvas .cell.small-8 { flex: 0 0 66.66667%; max-width: 66.66667%; }
+  #editor-canvas .cell.small-9 { flex: 0 0 75%; max-width: 75%; }
+  #editor-canvas .cell.small-10 { flex: 0 0 83.33333%; max-width: 83.33333%; }
+  #editor-canvas .cell.small-11 { flex: 0 0 91.66667%; max-width: 91.66667%; }
+  #editor-canvas .cell.small-12 { flex: 0 0 100%; max-width: 100%; }
+  
+  /* Medium viewport classes - only apply when canvas is medium or larger */
+  #editor-canvas.viewport-medium .cell.medium-1,
+  #editor-canvas.viewport-large .cell.medium-1 { flex: 0 0 8.33333%; max-width: 8.33333%; }
+  #editor-canvas.viewport-medium .cell.medium-2,
+  #editor-canvas.viewport-large .cell.medium-2 { flex: 0 0 16.66667%; max-width: 16.66667%; }
+  #editor-canvas.viewport-medium .cell.medium-3,
+  #editor-canvas.viewport-large .cell.medium-3 { flex: 0 0 25%; max-width: 25%; }
+  #editor-canvas.viewport-medium .cell.medium-4,
+  #editor-canvas.viewport-large .cell.medium-4 { flex: 0 0 33.33333%; max-width: 33.33333%; }
+  #editor-canvas.viewport-medium .cell.medium-5,
+  #editor-canvas.viewport-large .cell.medium-5 { flex: 0 0 41.66667%; max-width: 41.66667%; }
+  #editor-canvas.viewport-medium .cell.medium-6,
+  #editor-canvas.viewport-large .cell.medium-6 { flex: 0 0 50%; max-width: 50%; }
+  #editor-canvas.viewport-medium .cell.medium-7,
+  #editor-canvas.viewport-large .cell.medium-7 { flex: 0 0 58.33333%; max-width: 58.33333%; }
+  #editor-canvas.viewport-medium .cell.medium-8,
+  #editor-canvas.viewport-large .cell.medium-8 { flex: 0 0 66.66667%; max-width: 66.66667%; }
+  #editor-canvas.viewport-medium .cell.medium-9,
+  #editor-canvas.viewport-large .cell.medium-9 { flex: 0 0 75%; max-width: 75%; }
+  #editor-canvas.viewport-medium .cell.medium-10,
+  #editor-canvas.viewport-large .cell.medium-10 { flex: 0 0 83.33333%; max-width: 83.33333%; }
+  #editor-canvas.viewport-medium .cell.medium-11,
+  #editor-canvas.viewport-large .cell.medium-11 { flex: 0 0 91.66667%; max-width: 91.66667%; }
+  #editor-canvas.viewport-medium .cell.medium-12,
+  #editor-canvas.viewport-large .cell.medium-12 { flex: 0 0 100%; max-width: 100%; }
+  
+  /* Large viewport classes - only apply when canvas is large */
+  #editor-canvas.viewport-large .cell.large-1 { flex: 0 0 8.33333%; max-width: 8.33333%; }
+  #editor-canvas.viewport-large .cell.large-2 { flex: 0 0 16.66667%; max-width: 16.66667%; }
+  #editor-canvas.viewport-large .cell.large-3 { flex: 0 0 25%; max-width: 25%; }
+  #editor-canvas.viewport-large .cell.large-4 { flex: 0 0 33.33333%; max-width: 33.33333%; }
+  #editor-canvas.viewport-large .cell.large-5 { flex: 0 0 41.66667%; max-width: 41.66667%; }
+  #editor-canvas.viewport-large .cell.large-6 { flex: 0 0 50%; max-width: 50%; }
+  #editor-canvas.viewport-large .cell.large-7 { flex: 0 0 58.33333%; max-width: 58.33333%; }
+  #editor-canvas.viewport-large .cell.large-8 { flex: 0 0 66.66667%; max-width: 66.66667%; }
+  #editor-canvas.viewport-large .cell.large-9 { flex: 0 0 75%; max-width: 75%; }
+  #editor-canvas.viewport-large .cell.large-10 { flex: 0 0 83.33333%; max-width: 83.33333%; }
+  #editor-canvas.viewport-large .cell.large-11 { flex: 0 0 91.66667%; max-width: 91.66667%; }
+  #editor-canvas.viewport-large .cell.large-12 { flex: 0 0 100%; max-width: 100%; }
+
   .canvas-row {
     border: 2px dashed var(--editor-border);
-    padding: 15px;
+    padding: 25px;
     margin-bottom: 15px;
     min-height: 80px;
     position: relative;
@@ -181,12 +278,12 @@
   }
   
   .canvas-column {
-    border: 1px solid var(--editor-border);
-    padding: 10px;
-    min-height: 60px;
+    /* Foundation grid integration - minimal conflicting styles */
     position: relative;
     background: var(--editor-bg);
     transition: all 0.2s;
+    min-height: 60px;
+    /* Padding and sizing handled by Foundation grid classes above */
   }
   
   .canvas-column:hover {
@@ -196,7 +293,7 @@
   
   .canvas-column.selected {
     border-color: var(--editor-selected-border);
-    box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.25);
+    /* box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.25); */
     background: var(--editor-selected-bg);
   }
   
@@ -232,7 +329,7 @@
   .column-resize-handle:hover,
   .column-resize-handle.resizing {
     background: var(--editor-selected-border);
-    width: 8px;
+    width: 6px;
   }
   
   .column-resize-handle.resizing {
@@ -264,7 +361,7 @@
   
   .widget-controls {
     position: absolute;
-    top: 15px;
+    top: 10px;
     right: 5px;
     display: none;
   }
@@ -746,6 +843,25 @@
     transition: max-width 0.3s ease, margin 0.3s ease;
   }
 
+  /* Preview container viewport styles */
+  #preview-container.viewport-small {
+    transition: max-width 0.3s ease, margin 0.3s ease;
+  }
+
+  #preview-container.viewport-medium {
+    transition: max-width 0.3s ease, margin 0.3s ease;
+  }
+
+  #preview-container.viewport-large {
+    transition: max-width 0.3s ease, margin 0.3s ease;
+  }
+
+  #preview-iframe {
+    transition: width 0.3s ease, max-width 0.3s ease;
+    margin: 0 auto;
+    display: block;
+  }
+
   /* Viewport indicator */
   .viewport-indicator {
     position: absolute;
@@ -759,6 +875,25 @@
     font-weight: 600;
     z-index: 100;
     opacity: 0.8;
+  }
+
+  /* Raw Data Modal Styles */
+  .raw-data-modal .modal-content {
+    background: var(--editor-bg);
+    color: var(--editor-text);
+    border: 1px solid var(--editor-border);
+  }
+
+  .raw-data-modal textarea {
+    background: var(--editor-bg);
+    color: var(--editor-text);
+    border: 1px solid var(--editor-border);
+  }
+
+  .raw-data-modal textarea:focus {
+    outline: none;
+    border-color: var(--editor-selected-border);
+    box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.25);
   }
 
   /* Dark Mode Toggle */
@@ -1248,6 +1383,9 @@
       // Get the selected page link from the pages tab manager
       const webPageLink = window.pageEditor.pagesTabManager.getSelectedPageLink();
       
+      // Get current viewport for preview sizing
+      const currentViewport = window.pageEditor.getViewportManager().getCurrentViewport();
+      
       // Send to server for rendering
       const formData = new FormData();
       // formData.append('widget', '<c:out value="${widgetContext.uniqueId}" />');
@@ -1255,6 +1393,7 @@
       formData.append('webPageLink', webPageLink);
       formData.append('designerData', designerData);
       formData.append('containerPreview', 'true');
+      formData.append('viewport', currentViewport); // Add viewport info
       
       fetch(webPageLink, {
         method: 'POST',
@@ -1279,6 +1418,14 @@
         iframeDoc.open();
         iframeDoc.write(html);
         iframeDoc.close();
+        
+        // Apply viewport styles to iframe after content loads
+        previewIframe.onload = function() {
+          if (window.pageEditor && window.pageEditor.getViewportManager()) {
+            window.pageEditor.getViewportManager().applyPreviewViewportStyles();
+          }
+        };
+        
         previewIframe.style.display = 'block';
       })
       .catch(error => {
@@ -1309,6 +1456,20 @@
       if (isPreviewMode) {
         console.log('Refreshing preview due to page change');
         // Add a small delay to ensure the layout is fully processed
+        setTimeout(() => {
+          refreshPreview();
+        }, 100);
+      }
+    });
+
+    // Listen for viewport changes
+    document.addEventListener('viewportChanged', function(e) {
+      console.log('viewportChanged event fired, isPreviewMode:', isPreviewMode);
+      
+      // If in preview mode, refresh the preview when viewport is switched
+      if (isPreviewMode) {
+        console.log('Refreshing preview due to viewport change');
+        // Add a small delay to ensure the viewport styles are applied
         setTimeout(() => {
           refreshPreview();
         }, 100);

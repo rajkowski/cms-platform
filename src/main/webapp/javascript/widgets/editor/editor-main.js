@@ -548,17 +548,149 @@ class PageEditor {
   }
   
   /**
-   * Preview the page
+   * Preview the page (Raw Data)
    */
   preview() {
-    console.log('Opening preview...');
+    console.log('Opening raw data preview...');
     
-    // Generate XML
-    const xml = this.layoutManager.toXML();
-    
-    // Open preview in new window/tab
-    // For now, just show alert with XML
-    alert('Generated XML:\n\n' + xml);
+    try {
+      // Generate XML from current layout
+      const xml = this.layoutManager.toXML();
+      
+      // Create a modal to display the raw XML data
+      this.showRawDataModal(xml);
+      
+    } catch (error) {
+      console.error('Error generating preview:', error);
+      alert('Error generating raw data: ' + error.message);
+    }
+  }
+
+  /**
+   * Show raw data in a modal
+   */
+  showRawDataModal(xmlData) {
+    // Create modal overlay
+    const modalOverlay = document.createElement('div');
+    modalOverlay.className = 'modal-overlay raw-data-modal active';
+    modalOverlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      z-index: 10000;
+      justify-content: center;
+      align-items: center;
+    `;
+
+    // Create modal content
+    const modalContent = document.createElement('div');
+    modalContent.className = 'modal-content';
+    modalContent.style.cssText = `
+      background: var(--editor-bg);
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 5px 15px var(--editor-shadow);
+      width: 90%;
+      max-width: 800px;
+      max-height: 80vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      color: var(--editor-text);
+    `;
+
+    // Add title
+    const title = document.createElement('h4');
+    title.textContent = 'Raw Page Data (XML)';
+    title.style.cssText = 'margin-top: 0; margin-bottom: 20px; color: var(--editor-text);';
+    modalContent.appendChild(title);
+
+    // Create textarea for XML content
+    const xmlTextarea = document.createElement('textarea');
+    xmlTextarea.value = xmlData;
+    xmlTextarea.style.cssText = `
+      width: 100%;
+      height: 400px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      border: 1px solid var(--editor-border);
+      border-radius: 4px;
+      padding: 10px;
+      background: var(--editor-bg);
+      color: var(--editor-text);
+      resize: vertical;
+      margin-bottom: 20px;
+    `;
+    xmlTextarea.readOnly = true;
+    modalContent.appendChild(xmlTextarea);
+
+    // Create button container
+    const buttonContainer = document.createElement('div');
+    buttonContainer.style.cssText = `
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    `;
+
+    // Copy button
+    const copyBtn = document.createElement('button');
+    copyBtn.textContent = 'Copy to Clipboard';
+    copyBtn.className = 'button tiny primary';
+    copyBtn.style.cssText = 'padding: 8px 15px;';
+    copyBtn.addEventListener('click', () => {
+      xmlTextarea.select();
+      document.execCommand('copy');
+      copyBtn.textContent = 'Copied!';
+      setTimeout(() => {
+        copyBtn.textContent = 'Copy to Clipboard';
+      }, 2000);
+    });
+
+    // Close button
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = 'Close';
+    closeBtn.className = 'button tiny secondary';
+    closeBtn.style.cssText = 'padding: 8px 15px;';
+
+    const closeHandler = () => {
+      document.body.removeChild(modalOverlay);
+      document.removeEventListener('keydown', escHandler);
+    };
+
+    closeBtn.addEventListener('click', closeHandler);
+
+    buttonContainer.appendChild(copyBtn);
+    buttonContainer.appendChild(closeBtn);
+    modalContent.appendChild(buttonContainer);
+
+    modalOverlay.appendChild(modalContent);
+
+    // Handler for the Escape key
+    const escHandler = (e) => {
+      if (e.key === 'Escape') {
+        closeHandler();
+      }
+    };
+
+    // Close on overlay click
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) {
+        closeHandler();
+      }
+    });
+
+    // Add to DOM and show
+    document.body.appendChild(modalOverlay);
+    document.addEventListener('keydown', escHandler);
+
+    // Focus the textarea for easy copying
+    setTimeout(() => {
+      xmlTextarea.focus();
+    }, 100);
   }
   
   /**

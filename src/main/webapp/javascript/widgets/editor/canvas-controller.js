@@ -184,14 +184,18 @@ class CanvasController {
     if (!row) return null;
     
     const columnElement = document.createElement('div');
-    columnElement.className = 'canvas-column ' + column.cssClass;
+    columnElement.className = 'canvas-column cell ' + column.cssClass;
     columnElement.setAttribute('data-column-id', column.id);
     
-    // Add column controls
-    const controls = this.createColumnControls(rowId, column.id, columnElement);
-    columnElement.appendChild(controls);
+    // Create content wrapper for proper spacing
+    const contentWrapper = document.createElement('div');
+    contentWrapper.className = 'column-content';
+    contentWrapper.style.cssText = 'padding: 10px; min-height: 40px;';
     
-    // Add resize handles (left and right)
+    // Add column controls to content wrapper
+    const controls = this.createColumnControls(rowId, column.id, columnElement);
+    
+    // Add resize handles to the column element (outside content wrapper)
     const leftResizeHandle = document.createElement('div');
     leftResizeHandle.className = 'column-resize-handle left';
     leftResizeHandle.setAttribute('data-column-id', column.id);
@@ -206,8 +210,11 @@ class CanvasController {
     this.setupColumnResize(leftResizeHandle, rowId, column.id, 'left');
     this.setupColumnResize(rightResizeHandle, rowId, column.id, 'right');
     
-    columnElement.appendChild(leftResizeHandle);
-    columnElement.appendChild(rightResizeHandle);
+    contentWrapper.appendChild(leftResizeHandle);
+    contentWrapper.appendChild(rightResizeHandle);
+    columnElement.appendChild(controls);
+    columnElement.appendChild(contentWrapper);
+
     
     // Make it a drop zone for widgets
     const dropZoneId = this.editor.dragDropManager.registerDropZone(columnElement, {
@@ -217,23 +224,23 @@ class CanvasController {
       }
     });
     
-    // Render widgets
+    // Render widgets in content wrapper
     let emptyMsg = null;
     if (column.widgets && column.widgets.length > 0) {
       for (const widget of column.widgets) {
         const widgetElement = this.renderWidget(rowId, column.id, widget);
-        columnElement.appendChild(widgetElement);
+        contentWrapper.appendChild(widgetElement);
       }
     } else {
       emptyMsg = document.createElement('div');
       emptyMsg.style.cssText = 'text-align:center;color:var(--editor-text-muted);padding:20px;';
       emptyMsg.textContent = 'Drop widget here';
-      columnElement.appendChild(emptyMsg);
+      contentWrapper.appendChild(emptyMsg);
     }
     
     // Make column clickable for selection
     columnElement.addEventListener('click', (e) => {
-      if (e.target === columnElement || (emptyMsg && e.target === emptyMsg)) {
+      if (e.target === columnElement || e.target === contentWrapper || (emptyMsg && e.target === emptyMsg)) {
         this.selectElement(columnElement, { type: 'column', rowId, columnId: column.id });
       }
     });
@@ -247,7 +254,7 @@ class CanvasController {
   createColumnControls(rowId, columnId, columnElement) {
     const controls = document.createElement('div');
     controls.className = 'column-controls';
-    controls.style.cssText = 'position:absolute;top:5px;right:5px;display:none;z-index:1;';
+    controls.style.cssText = 'position:absolute;top:3px;right:5px;display:none;z-index:1;';
     
     // Add Column button (before this one)
     const addBeforeBtn = document.createElement('button');
@@ -305,7 +312,7 @@ class CanvasController {
     controls.appendChild(moveRightBtn);
     controls.appendChild(deleteBtn);
     
-    // Show controls on hover
+    // Show controls on hover of the column element
     columnElement.addEventListener('mouseenter', () => {
       controls.style.display = 'block';
     });

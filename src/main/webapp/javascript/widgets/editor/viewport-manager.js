@@ -9,7 +9,7 @@
 class ViewportManager {
   constructor(editor) {
     this.editor = editor;
-    this.currentViewport = 'small'; // Default to small viewport
+    this.currentViewport = 'large'; // Default to large viewport
     this.viewports = {
       small: { name: 'Small', icon: 'fa-mobile-alt', maxWidth: '600px' },
       medium: { name: 'Medium', icon: 'fa-tablet-alt', maxWidth: '1024px' },
@@ -114,7 +114,7 @@ class ViewportManager {
   }
 
   /**
-   * Apply viewport-specific styles to the canvas
+   * Apply viewport-specific styles to the canvas and preview
    */
   applyViewportStyles() {
     if (!this.canvas) return;
@@ -129,7 +129,7 @@ class ViewportManager {
     
     // Apply max-width constraint to simulate viewport
     if (this.currentViewport === 'small') {
-      this.canvas.style.maxWidth = '640px';
+      this.canvas.style.maxWidth = '600px';
       this.canvas.style.margin = '0 auto';
     } else if (this.currentViewport === 'medium') {
       this.canvas.style.maxWidth = '1024px';
@@ -139,7 +139,46 @@ class ViewportManager {
       this.canvas.style.margin = '';
     }
 
+    // Also apply viewport styles to preview container and iframe
+    this.applyPreviewViewportStyles();
+
     console.log(`Applied viewport styles for ${this.currentViewport}`);
+  }
+
+  /**
+   * Apply viewport styles to preview iframe
+   */
+  applyPreviewViewportStyles() {
+    const previewContainer = document.getElementById('preview-container');
+    const previewIframe = document.getElementById('preview-iframe');
+    
+    if (!previewContainer || !previewIframe) return;
+
+    // Remove existing viewport classes from preview
+    previewContainer.classList.remove('viewport-small', 'viewport-medium', 'viewport-large');
+    
+    // Add current viewport class to preview
+    previewContainer.classList.add(`viewport-${this.currentViewport}`);
+    
+    // Apply same max-width constraints to preview
+    if (this.currentViewport === 'small') {
+      previewContainer.style.maxWidth = '600px';
+      previewContainer.style.margin = '0 auto';
+      previewIframe.style.width = '600px';
+      previewIframe.style.maxWidth = '600px';
+    } else if (this.currentViewport === 'medium') {
+      previewContainer.style.maxWidth = '1024px';
+      previewContainer.style.margin = '0 auto';
+      previewIframe.style.width = '1024px';
+      previewIframe.style.maxWidth = '1024px';
+    } else {
+      previewContainer.style.maxWidth = '';
+      previewContainer.style.margin = '';
+      previewIframe.style.width = '100%';
+      previewIframe.style.maxWidth = '';
+    }
+
+    console.log(`Applied preview viewport styles for ${this.currentViewport}`);
   }
 
   /**
