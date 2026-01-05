@@ -9,7 +9,7 @@
 class ViewportManager {
   constructor(editor) {
     this.editor = editor;
-    this.currentViewport = 'large'; // Default to large viewport
+    this.currentViewport = 'medium'; // Default to medium viewport
     this.viewports = {
       small: { name: 'Small', icon: 'fa-mobile-alt', maxWidth: '600px' },
       medium: { name: 'Medium', icon: 'fa-tablet-alt', maxWidth: '1024px' },

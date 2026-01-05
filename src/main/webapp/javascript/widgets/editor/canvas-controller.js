@@ -327,6 +327,7 @@ class CanvasController {
     let startColSize = 0;
     let startAdjSize = 0;
     let adjacentColumn = null;
+    let lastUpdateX = 0; // Track last update position
     let rowElement = null;
     let gridContainer = null;
     let columnIndex = -1;
@@ -340,6 +341,7 @@ class CanvasController {
       
       isResizing = true;
       startX = e.clientX;
+      lastUpdateX = e.clientX; // Initialize last update position
       
       // Find the row element and disable its dragging temporarily
       rowElement = document.querySelector(`[data-row-id="${rowId}"]`);
@@ -431,6 +433,7 @@ class CanvasController {
         columnIndex, 
         totalColumns, 
         side,
+        adjacentColumnId: adjacentColumn.id,
         rowWidth: gridContainer.offsetWidth 
       });
       
@@ -445,8 +448,8 @@ class CanvasController {
       e.preventDefault();
       e.stopPropagation();
       
-      // Calculate pixel difference
-      const pixelDiff = e.clientX - startX;
+      // Calculate pixel difference from last update (not from start)
+      const pixelDiff = e.clientX - lastUpdateX;
       
       // Get the actual row width (grid container width)
       const rowWidth = gridContainer.offsetWidth;
@@ -457,14 +460,36 @@ class CanvasController {
       
       // Calculate how many grid units this pixel difference represents
       const gridUnitWidth = rowWidth / 12;
-      let gridUnitsChange = Math.round(pixelDiff / gridUnitWidth);
       
-      // Simplified direction logic: right movement increases size, left decreases
-      // No need to invert based on handle side - just use the pixel movement direction
+      // Add sensitivity control - require more pixels per grid unit change
+      const sensitivity = 2; // Require 2x the grid unit width to change by 1 unit
+      let gridUnitsChange = pixelDiff / (gridUnitWidth * sensitivity);
       
-      // Calculate new sizes
-      let newColSize = startColSize + gridUnitsChange;
-      let newAdjSize = startAdjSize - gridUnitsChange;
+      // Only round when we have a significant change (at least 0.5 units)
+      if (Math.abs(gridUnitsChange) < 0.5) {
+        return; // Don't update for very small movements
+      }
+      
+      // Round to nearest integer for actual grid changes
+      gridUnitsChange = Math.round(gridUnitsChange);
+      
+      // Skip if no actual change
+      if (gridUnitsChange === 0) {
+        return;
+      }
+      
+      // Correct direction logic based on handle side and adjacent column position
+      let newColSize, newAdjSize;
+      
+      if (side === 'right') {
+        // Right handle: moving right increases column, moving left decreases column
+        newColSize = startColSize + gridUnitsChange;
+        newAdjSize = startAdjSize - gridUnitsChange;
+      } else if (side === 'left') {
+        // Left handle: moving right decreases column (expanding left neighbor), moving left increases column
+        newColSize = startColSize - gridUnitsChange;
+        newAdjSize = startAdjSize + gridUnitsChange;
+      }
       
       // Ensure minimum size of 1 and maximum of 11 (leave at least 1 for adjacent)
       newColSize = Math.max(1, Math.min(11, newColSize));
@@ -485,8 +510,11 @@ class CanvasController {
       // Only update if sizes actually changed
       if (newColSize !== startColSize || newAdjSize !== startAdjSize) {
         console.log('Updating column sizes', { 
+          side,
           pixelDiff, 
           gridUnitsChange, 
+          startColSize,
+          startAdjSize,
           newColSize, 
           newAdjSize,
           total: newColSize + newAdjSize
@@ -495,9 +523,10 @@ class CanvasController {
         // Update the column classes immediately for visual feedback
         this.updateColumnSizes(rowId, columnId, adjacentColumn.id, newColSize, newAdjSize);
         
-        // Update start sizes for next iteration
+        // Update start sizes and last update position for next iteration
         startColSize = newColSize;
         startAdjSize = newAdjSize;
+        lastUpdateX = e.clientX; // Update the reference point
       }
     };
     
