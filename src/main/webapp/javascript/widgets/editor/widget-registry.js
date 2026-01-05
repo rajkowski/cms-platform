@@ -592,7 +592,7 @@ class WidgetRegistry {
       description: 'A calendar',
       properties: {
         calendarUniqueId: { type: 'text', label: 'Calendar Repository ID' },
-        defaultView: { type: 'select', label: 'View', options: ['month', 'list', 'day'], default: 'month' },
+        default: { type: 'select', label: 'View', options: ['month', 'list', 'day'], default: 'month' },
         view: { type: 'select', label: 'Placement Size', options: ['default', 'small'], default: 'default' },
         height: { type: 'number', label: 'Optional Height Value', default: '' },
         showEvents: { type: 'checkbox', label: 'Show Events', default: true },
