@@ -1461,7 +1461,10 @@ class PropertiesPanel {
         const browseBtn = document.getElementById(`browse-content-${propName}`);
         const editBtn = document.getElementById(`edit-content-${propName}`);
         
-        if (!input || !browseBtn) return;
+        if (!input || !browseBtn) {
+          console.log('Missing required elements for property:', propName);
+          return;
+        }
         
         // Browse button - show content list modal
         browseBtn.addEventListener('click', () => {
@@ -1469,25 +1472,29 @@ class PropertiesPanel {
         });
         
         // Edit button - open content editor
-        editBtn.addEventListener('click', () => {
-          const uniqueId = input.value;
-          if (uniqueId) {
-            self.openContentEditor(uniqueId);
-          }
-        });
+        if (editBtn) {
+          editBtn.addEventListener('click', () => {
+            const uniqueId = input.value;
+            if (uniqueId) {
+              self.openContentEditor(uniqueId);
+            }
+          });
+        } else {
+          console.log('Edit button not found for property:', propName);
+        }
         
         // Show edit button if value exists
         input.addEventListener('input', () => {
           if (input.value && input.value.trim()) {
-            editBtn.style.display = 'inline-block';
+            if (editBtn) editBtn.style.display = 'inline-block';
           } else {
-            editBtn.style.display = 'none';
+            if (editBtn) editBtn.style.display = 'none';
           }
         });
         
         // Initial state
         if (input.value && input.value.trim()) {
-          editBtn.style.display = 'inline-block';
+          if (editBtn) editBtn.style.display = 'inline-block';
         }
       }
     });
@@ -1662,9 +1669,60 @@ class PropertiesPanel {
    * Open content editor for a uniqueId
    */
   openContentEditor(uniqueId) {
-    // Open content editor in new window/tab
-    const url = `/content-editor?uniqueId=${encodeURIComponent(uniqueId)}&returnPage=${encodeURIComponent('/admin/visual-page-editor?webPage=/')}`;
-    window.open(url, '_blank');
+    // Get the currently selected web page
+    const webPageLink = window.pageEditor && window.pageEditor.pagesTabManager 
+      ? window.pageEditor.pagesTabManager.getSelectedPageLink() 
+      : '/';
+    
+    // Open content editor in the preview iframe
+    const url = `/content-editor?uniqueId=${encodeURIComponent(uniqueId)}&returnPage=${encodeURIComponent(webPageLink)}`;
+    
+    const previewIframe = document.getElementById('preview-iframe');
+    const previewContainer = document.getElementById('preview-container');
+    const editorCanvas = document.getElementById('editor-canvas');
+    const togglePreviewBtn = document.getElementById('toggle-preview-btn');
+    
+    console.log('Elements found:', { previewIframe, previewContainer, editorCanvas, togglePreviewBtn });
+    
+    if (previewIframe && previewContainer && editorCanvas && togglePreviewBtn) {
+      console.log('Setting iframe src and switching to preview mode');
+      
+      // Show loading indicator
+      if (window.pageEditor) {
+        window.pageEditor.showLoadingIndicator('Loading content editor...');
+      }
+      
+      // Reset the properties panel
+      // if (window.pageEditor && window.pageEditor.getPropertiesPanel()) {
+      //   window.pageEditor.getPropertiesPanel().clear();
+      // }
+      
+      // Set iframe source
+      previewIframe.src = url;
+      
+      // Handle iframe load
+      previewIframe.onload = function() {
+        // Hide loading indicator when iframe loads
+        if (window.pageEditor) {
+          window.pageEditor.hideLoadingIndicator();
+        }
+      };
+      
+      // Switch to preview mode
+      previewIframe.classList.add('active');
+      previewContainer.classList.add('active');
+      editorCanvas.classList.add('hidden');
+      togglePreviewBtn.classList.add('active');
+      
+      // Set global preview mode flag if it exists
+      if (typeof isPreviewMode !== 'undefined') {
+        isPreviewMode = true;
+      }
+    } else {
+      console.log('Required elements not found, falling back to window.open');
+      // Fallback to opening in new window if elements not found
+      window.open(url, '_blank');
+    }
   }
   
   /**
