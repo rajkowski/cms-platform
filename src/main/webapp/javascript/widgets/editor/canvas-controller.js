@@ -353,14 +353,38 @@ class CanvasController {
       
       if (!gridContainer) {
         console.error('Grid container not found');
+        
+        // Clean up UI state before returning
         isResizing = false;
+        handle.classList.remove('resizing');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        
+        // Re-enable row dragging
+        if (rowElement) {
+          rowElement.draggable = true;
+          rowElement.style.pointerEvents = '';
+        }
+        
         return;
       }
       
       const row = this.editor.getLayoutManager().getRow(rowId);
       if (!row) {
         console.error('Row not found');
+        
+        // Clean up UI state before returning
         isResizing = false;
+        handle.classList.remove('resizing');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        
+        // Re-enable row dragging
+        if (rowElement) {
+          rowElement.draggable = true;
+          rowElement.style.pointerEvents = '';
+        }
+        
         return;
       }
       
@@ -369,7 +393,19 @@ class CanvasController {
       
       if (columnIndex === -1) {
         console.error('Column not found');
+        
+        // Clean up UI state before returning
         isResizing = false;
+        handle.classList.remove('resizing');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        
+        // Re-enable row dragging
+        if (rowElement) {
+          rowElement.draggable = true;
+          rowElement.style.pointerEvents = '';
+        }
+        
         return;
       }
       
@@ -379,7 +415,19 @@ class CanvasController {
       if (totalColumns === 1) {
         // Single column - can't resize
         console.log('Cannot resize single column');
+        
+        // Clean up UI state before returning
         isResizing = false;
+        handle.classList.remove('resizing');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        
+        // Re-enable row dragging
+        if (rowElement) {
+          rowElement.draggable = true;
+          rowElement.style.pointerEvents = '';
+        }
+        
         return;
       }
       
@@ -393,7 +441,19 @@ class CanvasController {
       } else {
         // Edge case: no appropriate neighbor for this handle
         console.log('No appropriate adjacent column for this handle');
+        
+        // Clean up UI state before returning
         isResizing = false;
+        handle.classList.remove('resizing');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        
+        // Re-enable row dragging
+        if (rowElement) {
+          rowElement.draggable = true;
+          rowElement.style.pointerEvents = '';
+        }
+        
         return;
       }
       
@@ -532,7 +592,7 @@ class CanvasController {
     
     document.addEventListener('mousemove', mousemoveHandler);
     
-    document.addEventListener('mouseup', () => {
+    const mouseupHandler = () => {
       if (isResizing) {
         isResizing = false;
         handle.classList.remove('resizing');
@@ -545,8 +605,9 @@ class CanvasController {
           rowElement.style.pointerEvents = '';
         }
         
-        // Remove mousemove handler
+        // Remove event handlers
         document.removeEventListener('mousemove', mousemoveHandler);
+        document.removeEventListener('mouseup', mouseupHandler);
         
         adjacentColumn = null;
         rowElement = null;
@@ -554,10 +615,25 @@ class CanvasController {
         
         // Re-render the row to ensure classes are properly applied
         const row = this.editor.getLayoutManager().getRow(rowId);
-        this.renderRow(rowId, row);
-        this.editor.saveToHistory();
+        if (row) {
+          this.renderRow(rowId, row);
+          this.editor.saveToHistory();
+        }
       }
-    });
+    };
+    
+    document.addEventListener('mouseup', mouseupHandler);
+    
+    // Also add escape key handler to cancel resize
+    const escapeHandler = (e) => {
+      if (e.key === 'Escape' && isResizing) {
+        console.log('Resize cancelled by escape key');
+        mouseupHandler(); // Use the same cleanup
+        document.removeEventListener('keydown', escapeHandler);
+      }
+    };
+    
+    document.addEventListener('keydown', escapeHandler);
   }
   
   /**

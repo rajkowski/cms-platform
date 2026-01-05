@@ -12,7 +12,7 @@ class ViewportManager {
     this.currentViewport = 'medium'; // Default to medium viewport
     this.viewports = {
       small: { name: 'Small', icon: 'fa-mobile-alt', maxWidth: '600px' },
-      medium: { name: 'Medium', icon: 'fa-tablet-alt', maxWidth: '1024px' },
+      medium: { name: 'Medium', icon: 'fa-tablet-alt', maxWidth: '100%' },
       large: { name: 'Large', icon: 'fa-desktop', maxWidth: '100%' }
     };
     
@@ -132,11 +132,11 @@ class ViewportManager {
       this.canvas.style.maxWidth = '600px';
       this.canvas.style.margin = '0 auto';
     } else if (this.currentViewport === 'medium') {
-      this.canvas.style.maxWidth = '1024px';
-      this.canvas.style.margin = '0 auto';
-    } else {
       this.canvas.style.maxWidth = '';
       this.canvas.style.margin = '';
+    } else {
+      this.canvas.style.maxWidth = '64em';
+      this.canvas.style.margin = '0 auto';
     }
 
     // Also apply viewport styles to preview container and iframe
@@ -167,14 +167,14 @@ class ViewportManager {
       previewIframe.style.width = '600px';
       previewIframe.style.maxWidth = '600px';
     } else if (this.currentViewport === 'medium') {
-      previewContainer.style.maxWidth = '1024px';
-      previewContainer.style.margin = '0 auto';
-      previewIframe.style.width = '1024px';
-      previewIframe.style.maxWidth = '1024px';
-    } else {
       previewContainer.style.maxWidth = '';
       previewContainer.style.margin = '';
       previewIframe.style.width = '100%';
+      previewIframe.style.maxWidth = '';
+    } else {
+      previewContainer.style.maxWidth = '64em';
+      previewContainer.style.margin = '0 auto';
+      previewIframe.style.width = '64em';
       previewIframe.style.maxWidth = '';
     }
 
