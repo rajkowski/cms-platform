@@ -322,11 +322,6 @@ class CanvasController {
    * Setup column resize functionality
    */
   setupColumnResize(handle, rowId, columnId, side) {
-
-    // @todo handle edge cases where no adjacent column exists (e.g., first or last column, only one column)
-    // @todo handle case where there are more than 2 columns in a row
-    // @todo implement independent small, medium, large resizing based on selected viewport mode state
-
     let isResizing = false;
     let startX = 0;
     let startColSize = 0;
@@ -334,6 +329,8 @@ class CanvasController {
     let adjacentColumn = null;
     let rowElement = null;
     let gridContainer = null;
+    let columnIndex = -1;
+    let totalColumns = 0;
     
     handle.addEventListener('mousedown', (e) => {
       e.stopPropagation();
@@ -365,7 +362,9 @@ class CanvasController {
         return;
       }
       
-      const columnIndex = row.columns.findIndex(c => c.id === columnId);
+      columnIndex = row.columns.findIndex(c => c.id === columnId);
+      totalColumns = row.columns.length;
+      
       if (columnIndex === -1) {
         console.error('Column not found');
         isResizing = false;
@@ -374,16 +373,30 @@ class CanvasController {
       
       const column = row.columns[columnIndex];
       
-      // Find adjacent column
-      if (side === 'left' && columnIndex > 0) {
-        adjacentColumn = row.columns[columnIndex - 1];
-      } else if (side === 'right' && columnIndex < row.columns.length - 1) {
-        adjacentColumn = row.columns[columnIndex + 1];
+      // Enhanced logic to handle edge cases
+      if (totalColumns === 1) {
+        // Single column - can't resize
+        console.log('Cannot resize single column');
+        isResizing = false;
+        return;
       }
       
-      // @todo handle edge cases where no adjacent column exists (e.g., first or last column, only one column)
+      // Find adjacent column - simplified logic
+      if (side === 'left' && columnIndex > 0) {
+        // Left handle - resize with left neighbor
+        adjacentColumn = row.columns[columnIndex - 1];
+      } else if (side === 'right' && columnIndex < row.columns.length - 1) {
+        // Right handle - resize with right neighbor
+        adjacentColumn = row.columns[columnIndex + 1];
+      } else {
+        // Edge case: no appropriate neighbor for this handle
+        console.log('No appropriate adjacent column for this handle');
+        isResizing = false;
+        return;
+      }
+      
       if (!adjacentColumn) {
-        console.log('No adjacent column found', { side, columnIndex, totalColumns: row.columns.length });
+        console.log('No adjacent column available for resizing');
         isResizing = false;
         return;
       }
@@ -412,7 +425,14 @@ class CanvasController {
       startColSize = parseSize(column.cssClass);
       startAdjSize = parseSize(adjacentColumn.cssClass);
       
-      console.log('Resize initialized', { startColSize, startAdjSize, rowWidth: gridContainer.offsetWidth });
+      console.log('Resize initialized', { 
+        startColSize, 
+        startAdjSize, 
+        columnIndex, 
+        totalColumns, 
+        side,
+        rowWidth: gridContainer.offsetWidth 
+      });
       
       handle.classList.add('resizing');
       document.body.style.cursor = 'col-resize';
@@ -422,78 +442,59 @@ class CanvasController {
     const mousemoveHandler = (e) => {
       if (!isResizing || !adjacentColumn || !gridContainer) return;
       
-      e.preventDefault(); // Prevent any default behavior
-      e.stopPropagation(); // Stop event from bubbling to row
+      e.preventDefault();
+      e.stopPropagation();
       
       // Calculate pixel difference
-      const diff = side === 'left' ? (startX - e.clientX) : (e.clientX - startX);
+      const pixelDiff = e.clientX - startX;
       
       // Get the actual row width (grid container width)
       const rowWidth = gridContainer.offsetWidth;
-
       if (rowWidth === 0) {
         console.warn('Row width is 0, cannot resize');
         return;
       }
       
       // Calculate how many grid units this pixel difference represents
-      // Each grid unit is rowWidth / 12
       const gridUnitWidth = rowWidth / 12;
-      const gridUnitsChange = diff / gridUnitWidth;
+      let gridUnitsChange = Math.round(pixelDiff / gridUnitWidth);
+      
+      // Simplified direction logic: right movement increases size, left decreases
+      // No need to invert based on handle side - just use the pixel movement direction
       
       // Calculate new sizes
-      let newColSize = startColSize;
-      let newAdjSize = startAdjSize;
-
-      console.log('Calculating new sizes', { rowWidth, diff, gridUnitsChange, startColSize, startAdjSize });
+      let newColSize = startColSize + gridUnitsChange;
+      let newAdjSize = startAdjSize - gridUnitsChange;
       
-      if (side === 'right' || side === 'left') {
-        // Column grows, adjacent shrinks
-        newColSize = startColSize + gridUnitsChange;
-        newAdjSize = startAdjSize - gridUnitsChange;
-      } else {
-        // Column shrinks, adjacent grows
-        newColSize = startColSize - gridUnitsChange;
-        newAdjSize = startAdjSize + gridUnitsChange;
-      }
-
-      // Round to nearest integer and clamp to valid range
-      newColSize = Math.round(newColSize);
-      newAdjSize = Math.round(newAdjSize);
+      // Ensure minimum size of 1 and maximum of 11 (leave at least 1 for adjacent)
+      newColSize = Math.max(1, Math.min(11, newColSize));
+      newAdjSize = Math.max(1, Math.min(11, newAdjSize));
       
-      // Ensure minimum size of 1 and maximum of 12
-      newColSize = Math.max(1, Math.min(12, newColSize));
-      newAdjSize = Math.max(1, Math.min(12, newAdjSize));
-      
-      // Ensure total doesn't exceed 12 (adjust if needed)
+      // Ensure total equals 12 (Foundation grid total)
       const total = newColSize + newAdjSize;
-      if (total > 12) {
-        const excess = total - 12;
-        if (newColSize > newAdjSize) {
-          newColSize -= excess;
-        } else {
-          newAdjSize -= excess;
-        }
-      } else if (total < 12) {
-        const deficit = 12 - total;
-        if (newColSize > newAdjSize) {
-          newAdjSize += deficit;
-        } else {
-          newColSize += deficit;
+      if (total !== 12) {
+        // Adjust the adjacent column to maintain total of 12
+        newAdjSize = 12 - newColSize;
+        // Ensure adjacent doesn't go below 1
+        if (newAdjSize < 1) {
+          newAdjSize = 1;
+          newColSize = 11;
         }
       }
       
-      // Ensure sizes are still valid after adjustment
-      newColSize = Math.max(1, Math.min(12, newColSize));
-      newAdjSize = Math.max(1, Math.min(12, newAdjSize));
-      
-      console.log('Checking column sizes', { newColSize, newAdjSize, diff, gridUnitsChange });
-
       // Only update if sizes actually changed
       if (newColSize !== startColSize || newAdjSize !== startAdjSize) {
-        console.log('Updating column sizes', { newColSize, newAdjSize, diff, gridUnitsChange });
+        console.log('Updating column sizes', { 
+          pixelDiff, 
+          gridUnitsChange, 
+          newColSize, 
+          newAdjSize,
+          total: newColSize + newAdjSize
+        });
+        
         // Update the column classes immediately for visual feedback
         this.updateColumnSizes(rowId, columnId, adjacentColumn.id, newColSize, newAdjSize);
+        
         // Update start sizes for next iteration
         startColSize = newColSize;
         startAdjSize = newAdjSize;
@@ -548,45 +549,32 @@ class CanvasController {
     // Get current viewport from viewport manager
     const currentViewport = this.editor.getViewportManager().getCurrentViewport();
     
-    // Parse existing classes and preserve Foundation inheritance pattern
+    // Simplified class update - just update the current viewport size
     const updateColumnClass = (cssClass, newSize) => {
       const classes = cssClass.split(' ').filter(c => c.trim());
-      const viewportSizes = {};
       const otherClasses = [];
+      let hasCurrentViewport = false;
       
+      // Remove old viewport classes and keep other classes
       classes.forEach(cls => {
         if (cls.match(/^(small|medium|large)-\d+$/)) {
-          const [viewport, size] = cls.split('-');
-          viewportSizes[viewport] = parseInt(size, 10);
+          const [viewport] = cls.split('-');
+          if (viewport === currentViewport) {
+            hasCurrentViewport = true;
+            // Skip this class - we'll add the new size
+          } else {
+            // Keep other viewport classes
+            otherClasses.push(cls);
+          }
         } else if (cls !== 'canvas-column') {
           otherClasses.push(cls);
         }
       });
       
-      // Update the size for the current viewport
-      viewportSizes[currentViewport] = newSize;
+      // Add the new size for current viewport
+      otherClasses.push(`${currentViewport}-${newSize}`);
       
-      // Build the class string following Foundation inheritance pattern
-      // Only include viewport classes that are explicitly different from inherited values
-      const sizeClasses = [];
-      
-      // Always include small (base size)
-      if (viewportSizes.small) {
-        sizeClasses.push(`small-${viewportSizes.small}`);
-      }
-      
-      // Only include medium if it's different from small
-      if (viewportSizes.medium && viewportSizes.medium !== viewportSizes.small) {
-        sizeClasses.push(`medium-${viewportSizes.medium}`);
-      }
-      
-      // Only include large if it's different from the inherited value (medium or small)
-      const inheritedLargeSize = viewportSizes.medium || viewportSizes.small;
-      if (viewportSizes.large && viewportSizes.large !== inheritedLargeSize) {
-        sizeClasses.push(`large-${viewportSizes.large}`);
-      }
-      
-      return [...sizeClasses, ...otherClasses].filter(c => c).join(' ');
+      return otherClasses.filter(c => c).join(' ');
     };
     
     column.cssClass = updateColumnClass(column.cssClass, newColSize);
@@ -607,52 +595,39 @@ class CanvasController {
     }
     
     // Update column element classes
-    const updateElementClasses = (element, newCssClass) => {
+    const updateElementClasses = (element, newCssClass, newSize) => {
       if (!element) return;
       
-      // Remove all grid-related classes
+      // Remove current viewport grid classes only
       const classesToRemove = [];
       for (let i = 0; i < element.classList.length; i++) {
         const cls = element.classList[i];
-        if (cls.match(/^(small|medium|large)-\d+$/) || cls === 'cell') {
+        if (cls.startsWith(`${currentViewport}-`)) {
           classesToRemove.push(cls);
         }
       }
       classesToRemove.forEach(cls => element.classList.remove(cls));
       
-      // Add new grid classes
-      const newClasses = newCssClass.split(' ').filter(c => c.trim());
-      newClasses.forEach(cls => {
-        if (cls) {
-          element.classList.add(cls);
-        }
-      });
+      // Add new current viewport class
+      element.classList.add(`${currentViewport}-${newSize}`);
     };
     
     console.log('Updating column element', { 
       columnId,
       oldClassName: columnElement.className, 
-      newClassName: column.cssClass
+      newSize: newColSize
     });
     
-    updateElementClasses(columnElement, column.cssClass);
+    updateElementClasses(columnElement, column.cssClass, newColSize);
     
     console.log('Updating adjacent element', { 
       adjacentColumnId,
       oldClassName: adjacentElement.className, 
-      newClassName: adjacent.cssClass
+      newSize: newAdjSize
     });
     
-    updateElementClasses(adjacentElement, adjacent.cssClass);
+    updateElementClasses(adjacentElement, adjacent.cssClass, newAdjSize);
     
-    // Force a reflow to ensure Foundation recalculates the grid
-    if (columnElement) {
-      void columnElement.offsetHeight;
-    }
-    if (adjacentElement) {
-      void adjacentElement.offsetHeight;
-    }
-
     // Tell the layout manager about the change
     this.editor.getLayoutManager().updateRow(rowId, row);
   }
@@ -817,12 +792,12 @@ class CanvasController {
    * Delete a column
    */
   async deleteColumn(rowId, columnId) {
-console.log('deleteColumn called with rowId:', rowId, 'columnId:', columnId);
+    console.log('deleteColumn called with rowId:', rowId, 'columnId:', columnId);
     const row = this.editor.getLayoutManager().getRow(rowId);
     if (!row) {
       console.log('Row not found');
-return;
-}
+      return;
+    }
     
     if (row.columns.length <= 1) {
       this.editor.showAlertDialog('Cannot delete the last column in a row. Delete the row instead.');
@@ -831,11 +806,11 @@ return;
     
     const confirmed = await this.editor.showConfirmDialog('Are you sure you want to delete this column? All widgets in it will be removed.');
     if (confirmed) {
-console.log('User confirmed column deletion');
+      console.log('User confirmed column deletion');
       const columnIndex = row.columns.findIndex(c => c.id === columnId);
       if (columnIndex !== -1) {
         row.columns.splice(columnIndex, 1);
-console.log('Column removed from row data');
+        console.log('Column removed from row data');
         
         // Adjust remaining column sizes
         this.adjustColumnSizes(row);
@@ -848,11 +823,11 @@ console.log('Column removed from row data');
         this.selectedElement = null;
         this.selectedContext = null;
         this.editor.getPropertiesPanel().clear();
-console.log('Column deletion completed');
+        console.log('Column deletion completed');
       } else {
         console.log('Column not found in row');
       }
-} else {
+    } else {
       console.log('User cancelled column deletion');
     }
   }
@@ -987,7 +962,7 @@ console.log('Column deletion completed');
     deleteBtn.innerHTML = '<i class="fa fa-trash"></i>';
     deleteBtn.title = 'Delete Widget';
     deleteBtn.onclick = (e) => {
-console.log('Widget delete button clicked');
+      console.log('Widget delete button clicked');
       e.stopPropagation();
       this.deleteWidget(rowId, columnId, widgetId);
     };
@@ -1048,14 +1023,14 @@ console.log('Widget delete button clicked');
     console.log('deleteRow called with rowId:', rowId);
     const confirmed = await this.editor.showConfirmDialog('Are you sure you want to delete this row?');
     if (confirmed) {
-console.log('User confirmed deletion, calling removeRow');
+      console.log('User confirmed deletion, calling removeRow');
       this.editor.getLayoutManager().removeRow(rowId);
       
       // Remove from DOM
       const rowElement = document.querySelector(`[data-row-id="${rowId}"]`);
       if (rowElement) {
         rowElement.remove();
-console.log('Row element removed from DOM');
+        console.log('Row element removed from DOM');
       } else {
         console.log('Row element not found in DOM');
       }
@@ -1072,7 +1047,7 @@ console.log('Row element removed from DOM');
       if (this.editor.getLayoutManager().getStructure().rows.length === 0) {
         this.renderEmptyCanvas();
       }
-} else {
+    } else {
       console.log('User cancelled deletion');
     }
   }
@@ -1084,7 +1059,7 @@ console.log('Row element removed from DOM');
     console.log('deleteWidget called with rowId:', rowId, 'columnId:', columnId, 'widgetId:', widgetId);
     const confirmed = await this.editor.showConfirmDialog('Are you sure you want to delete this widget?');
     if (confirmed) {
-console.log('User confirmed widget deletion');
+      console.log('User confirmed widget deletion');
       this.editor.getLayoutManager().removeWidget(rowId, columnId, widgetId);
       
       // Re-render the row
@@ -1098,7 +1073,7 @@ console.log('User confirmed widget deletion');
       
       // Save to history
       this.editor.saveToHistory();
-console.log('Widget deletion completed');
+      console.log('Widget deletion completed');
     } else {
       console.log('User cancelled widget deletion');
     }

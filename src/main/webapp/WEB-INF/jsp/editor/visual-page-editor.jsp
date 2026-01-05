@@ -303,41 +303,6 @@
     border-color: var(--editor-selected-border);
   }
   
-  /* Column Resize Handle */
-  .column-resize-handle {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 6px;
-    cursor: col-resize;
-    background: transparent;
-    z-index: 100;
-    transition: background 0.2s;
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-  }
-  
-  .column-resize-handle.left {
-    left: -3px;
-  }
-  
-  .column-resize-handle.right {
-    right: -3px;
-  }
-  
-  .column-resize-handle:hover,
-  .column-resize-handle.resizing {
-    background: var(--editor-selected-border);
-    width: 6px;
-  }
-  
-  .column-resize-handle.resizing {
-    background: var(--editor-selected-border);
-    opacity: 0.8;
-  }
-  
   .canvas-widget {
     background: var(--editor-bg);
     border: 1px solid var(--editor-border);
@@ -385,6 +350,61 @@
     height: 80px;
     margin-bottom: 15px;
     transition: all 0.2s;
+  }
+  
+  /* Enhanced column dragging styles */
+  .canvas-column.dragging {
+    opacity: 0.5;
+    transform: rotate(2deg);
+    z-index: 1000;
+  }
+  
+  .canvas-column:hover {
+    cursor: grab;
+  }
+  
+  .canvas-column:active {
+    cursor: grabbing;
+  }
+  
+  /* Improved resize handle visibility */
+  .column-resize-handle {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    cursor: col-resize;
+    background: transparent;
+    z-index: 100;
+    transition: background 0.2s;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+  }
+  
+  .column-resize-handle.left {
+    left: -3px;
+  }
+  
+  .column-resize-handle.right {
+    right: -3px;
+  }
+  
+  .column-resize-handle:hover,
+  .column-resize-handle.resizing {
+    background: var(--editor-selected-border);
+    width: 6px;
+  }
+  
+  .column-resize-handle.resizing {
+    background: var(--editor-selected-border);
+    opacity: 0.8;
+  }
+  
+  /* Show resize handles on column hover */
+  .canvas-column:hover .column-resize-handle {
+    background: rgba(74, 158, 255, 0.3);
   }
   
   .row-controls {
