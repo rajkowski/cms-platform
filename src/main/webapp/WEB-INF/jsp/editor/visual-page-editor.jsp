@@ -399,6 +399,18 @@
     z-index: 1;
   }
   
+  .column-controls {
+    position: absolute;
+    top: 3px;
+    right: 5px;
+    display: none;
+  }
+  
+  .canvas-column:hover .column-controls {
+    display: block;
+    z-index: 1;
+  }
+  
   .control-btn {
     background: #007bff;
     color: white;

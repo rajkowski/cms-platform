@@ -228,6 +228,175 @@ class PageEditor {
   }
 
   /**
+   * Show a custom alert dialog
+   * @param {string} message - The alert message
+   * @returns {Promise<void>} A promise that resolves when the dialog is closed
+   */
+  showAlertDialog(message) {
+    return new Promise((resolve) => {
+      // Create modal overlay
+      const modalOverlay = document.createElement('div');
+      modalOverlay.className = 'modal-overlay active';
+      modalOverlay.style.cssText = `
+        z-index: 10000;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      `;
+
+      // Create modal content
+      const modalContent = document.createElement('div');
+      modalContent.className = 'modal-content';
+      modalContent.style.cssText = `
+        max-width: 400px;
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        text-align: center;
+      `;
+
+      // Add message
+      const messageEl = document.createElement('p');
+      messageEl.textContent = message;
+      messageEl.style.cssText = 'margin: 0 0 20px 0; font-size: 16px; line-height: 1.4;';
+      modalContent.appendChild(messageEl);
+
+      // OK button
+      const okBtn = document.createElement('button');
+      okBtn.textContent = 'OK';
+      okBtn.className = 'btn btn-primary';
+      okBtn.style.cssText = 'padding: 8px 16px; border: none; background: #007bff; color: white; cursor: pointer; border-radius: 4px;';
+
+      const closeHandler = () => {
+        document.body.removeChild(modalOverlay);
+        document.removeEventListener('keydown', escHandler);
+        resolve();
+      };
+
+      okBtn.addEventListener('click', closeHandler);
+      modalContent.appendChild(okBtn);
+      modalOverlay.appendChild(modalContent);
+
+      // Handler for the Escape key
+      const escHandler = (e) => {
+        if (e.key === 'Escape') {
+          closeHandler();
+        }
+      };
+
+      // Close on overlay click
+      modalOverlay.addEventListener('click', (e) => {
+        if (e.target === modalOverlay) {
+          closeHandler();
+        }
+      });
+
+      // Add to DOM and show
+      document.body.appendChild(modalOverlay);
+      document.addEventListener('keydown', escHandler);
+    });
+  }
+
+  /**
+   * Show a custom confirm dialog
+   * @param {string} message - The confirmation message
+   * @returns {Promise<boolean>} A promise that resolves with true if confirmed, false if cancelled
+   */
+  showConfirmDialog(message) {
+    return new Promise((resolve) => {
+      // Create modal overlay
+      const modalOverlay = document.createElement('div');
+      modalOverlay.className = 'modal-overlay active';
+      modalOverlay.style.cssText = `
+        z-index: 10000;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      `;
+
+      // Create modal content
+      const modalContent = document.createElement('div');
+      modalContent.className = 'modal-content';
+      modalContent.style.cssText = `
+        max-width: 400px;
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        text-align: center;
+      `;
+
+      // Add message
+      const messageEl = document.createElement('p');
+      messageEl.textContent = message;
+      messageEl.style.cssText = 'margin: 0 0 20px 0; font-size: 16px; line-height: 1.4;';
+      modalContent.appendChild(messageEl);
+
+      // Create button container
+      const buttonContainer = document.createElement('div');
+      buttonContainer.style.cssText = 'display: flex; gap: 10px; justify-content: center;';
+
+      // Cancel button
+      const cancelBtn = document.createElement('button');
+      cancelBtn.textContent = 'Cancel';
+      cancelBtn.className = 'btn btn-secondary';
+      cancelBtn.style.cssText = 'padding: 8px 16px; border: 1px solid #ccc; background: #f8f9fa; cursor: pointer; border-radius: 4px;';
+
+      // Confirm button
+      const confirmBtn = document.createElement('button');
+      confirmBtn.textContent = 'Delete';
+      confirmBtn.className = 'btn btn-danger';
+      confirmBtn.style.cssText = 'padding: 8px 16px; border: none; background: #dc3545; color: white; cursor: pointer; border-radius: 4px;';
+
+      const closeHandler = (confirmed) => {
+        document.body.removeChild(modalOverlay);
+        document.removeEventListener('keydown', escHandler);
+        resolve(confirmed);
+      };
+
+      cancelBtn.addEventListener('click', () => closeHandler(false));
+      confirmBtn.addEventListener('click', () => closeHandler(true));
+
+      buttonContainer.appendChild(cancelBtn);
+      buttonContainer.appendChild(confirmBtn);
+      modalContent.appendChild(buttonContainer);
+
+      modalOverlay.appendChild(modalContent);
+
+      // Handler for the Escape key
+      const escHandler = (e) => {
+        if (e.key === 'Escape') {
+          closeHandler(false);
+        }
+      };
+
+      // Close on overlay click
+      modalOverlay.addEventListener('click', (e) => {
+        if (e.target === modalOverlay) {
+          closeHandler(false);
+        }
+      });
+
+      // Add to DOM and show
+      document.body.appendChild(modalOverlay);
+      document.addEventListener('keydown', escHandler);
+    });
+  }
+
+  /**
    * Show a modal to select column layout
    * @returns {Promise<Array|null>} A promise that resolves with the selected layout or null if cancelled
    */

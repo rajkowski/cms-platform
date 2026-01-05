@@ -168,6 +168,7 @@ class CanvasController {
     deleteBtn.innerHTML = '<i class="fa fa-trash"></i>';
     deleteBtn.title = 'Delete Row';
     deleteBtn.onclick = (e) => {
+      console.log('Row delete button clicked');
       e.stopPropagation();
       this.deleteRow(rowId);
     };
@@ -186,6 +187,7 @@ class CanvasController {
     const columnElement = document.createElement('div');
     columnElement.className = 'canvas-column cell ' + column.cssClass;
     columnElement.setAttribute('data-column-id', column.id);
+    columnElement.setAttribute('data-row-id', rowId);
     
     // Create content wrapper for proper spacing
     const contentWrapper = document.createElement('div');
@@ -254,7 +256,7 @@ class CanvasController {
   createColumnControls(rowId, columnId, columnElement) {
     const controls = document.createElement('div');
     controls.className = 'column-controls';
-    controls.style.cssText = 'position:absolute;top:3px;right:5px;display:none;z-index:1;';
+    controls.style.cssText = 'position:absolute;top:3px;right:5px;z-index:1;';
     
     // Add Column button (before this one)
     const addBeforeBtn = document.createElement('button');
@@ -302,6 +304,7 @@ class CanvasController {
     deleteBtn.innerHTML = '<i class="fa fa-trash"></i>';
     deleteBtn.title = 'Delete Column';
     deleteBtn.onclick = (e) => {
+      console.log('Column delete button clicked');
       e.stopPropagation();
       this.deleteColumn(rowId, columnId);
     };
@@ -311,14 +314,6 @@ class CanvasController {
     controls.appendChild(moveLeftBtn);
     controls.appendChild(moveRightBtn);
     controls.appendChild(deleteBtn);
-    
-    // Show controls on hover of the column element
-    columnElement.addEventListener('mouseenter', () => {
-      controls.style.display = 'block';
-    });
-    columnElement.addEventListener('mouseleave', () => {
-      controls.style.display = 'none';
-    });
     
     return controls;
   }
@@ -342,7 +337,7 @@ class CanvasController {
     
     handle.addEventListener('mousedown', (e) => {
       e.stopPropagation();
-      e.preventDefault(); // Prevent default drag behavior
+      e.preventDefault();
       
       console.log('Column resize started', { rowId, columnId, side });
       
@@ -353,7 +348,7 @@ class CanvasController {
       rowElement = document.querySelector(`[data-row-id="${rowId}"]`);
       if (rowElement) {
         rowElement.draggable = false;
-        rowElement.style.pointerEvents = 'none'; // Prevent row interactions during resize
+        rowElement.style.pointerEvents = 'none';
         gridContainer = rowElement.querySelector('.grid-x');
       }
       
@@ -821,19 +816,26 @@ class CanvasController {
   /**
    * Delete a column
    */
-  deleteColumn(rowId, columnId) {
+  async deleteColumn(rowId, columnId) {
+console.log('deleteColumn called with rowId:', rowId, 'columnId:', columnId);
     const row = this.editor.getLayoutManager().getRow(rowId);
-    if (!row) return;
+    if (!row) {
+      console.log('Row not found');
+return;
+}
     
     if (row.columns.length <= 1) {
-      alert('Cannot delete the last column in a row. Delete the row instead.');
+      this.editor.showAlertDialog('Cannot delete the last column in a row. Delete the row instead.');
       return;
     }
     
-    if (confirm('Are you sure you want to delete this column? All widgets in it will be removed.')) {
+    const confirmed = await this.editor.showConfirmDialog('Are you sure you want to delete this column? All widgets in it will be removed.');
+    if (confirmed) {
+console.log('User confirmed column deletion');
       const columnIndex = row.columns.findIndex(c => c.id === columnId);
       if (columnIndex !== -1) {
         row.columns.splice(columnIndex, 1);
+console.log('Column removed from row data');
         
         // Adjust remaining column sizes
         this.adjustColumnSizes(row);
@@ -846,7 +848,12 @@ class CanvasController {
         this.selectedElement = null;
         this.selectedContext = null;
         this.editor.getPropertiesPanel().clear();
+console.log('Column deletion completed');
+      } else {
+        console.log('Column not found in row');
       }
+} else {
+      console.log('User cancelled column deletion');
     }
   }
   
@@ -980,6 +987,7 @@ class CanvasController {
     deleteBtn.innerHTML = '<i class="fa fa-trash"></i>';
     deleteBtn.title = 'Delete Widget';
     deleteBtn.onclick = (e) => {
+console.log('Widget delete button clicked');
       e.stopPropagation();
       this.deleteWidget(rowId, columnId, widgetId);
     };
@@ -1036,14 +1044,20 @@ class CanvasController {
   /**
    * Delete a row
    */
-  deleteRow(rowId) {
-    if (confirm('Are you sure you want to delete this row?')) {
+  async deleteRow(rowId) {
+    console.log('deleteRow called with rowId:', rowId);
+    const confirmed = await this.editor.showConfirmDialog('Are you sure you want to delete this row?');
+    if (confirmed) {
+console.log('User confirmed deletion, calling removeRow');
       this.editor.getLayoutManager().removeRow(rowId);
       
       // Remove from DOM
       const rowElement = document.querySelector(`[data-row-id="${rowId}"]`);
       if (rowElement) {
         rowElement.remove();
+console.log('Row element removed from DOM');
+      } else {
+        console.log('Row element not found in DOM');
       }
       
       // Clear selection
@@ -1058,14 +1072,19 @@ class CanvasController {
       if (this.editor.getLayoutManager().getStructure().rows.length === 0) {
         this.renderEmptyCanvas();
       }
+} else {
+      console.log('User cancelled deletion');
     }
   }
   
   /**
    * Delete a widget
    */
-  deleteWidget(rowId, columnId, widgetId) {
-    if (confirm('Are you sure you want to delete this widget?')) {
+  async deleteWidget(rowId, columnId, widgetId) {
+    console.log('deleteWidget called with rowId:', rowId, 'columnId:', columnId, 'widgetId:', widgetId);
+    const confirmed = await this.editor.showConfirmDialog('Are you sure you want to delete this widget?');
+    if (confirmed) {
+console.log('User confirmed widget deletion');
       this.editor.getLayoutManager().removeWidget(rowId, columnId, widgetId);
       
       // Re-render the row
@@ -1079,6 +1098,9 @@ class CanvasController {
       
       // Save to history
       this.editor.saveToHistory();
+console.log('Widget deletion completed');
+    } else {
+      console.log('User cancelled widget deletion');
     }
   }
   
