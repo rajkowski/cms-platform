@@ -1677,50 +1677,12 @@ class PropertiesPanel {
     // Open content editor in the preview iframe
     const url = `/content-editor?uniqueId=${encodeURIComponent(uniqueId)}&returnPage=${encodeURIComponent(webPageLink)}`;
     
-    const previewIframe = document.getElementById('preview-iframe');
-    const previewContainer = document.getElementById('preview-container');
-    const editorCanvas = document.getElementById('editor-canvas');
-    const togglePreviewBtn = document.getElementById('toggle-preview-btn');
-    
-    console.log('Elements found:', { previewIframe, previewContainer, editorCanvas, togglePreviewBtn });
-    
-    if (previewIframe && previewContainer && editorCanvas && togglePreviewBtn) {
-      console.log('Setting iframe src and switching to preview mode');
-      
-      // Show loading indicator
-      if (window.pageEditor) {
-        window.pageEditor.showLoadingIndicator('Loading content editor...');
-      }
-      
-      // Reset the properties panel
-      // if (window.pageEditor && window.pageEditor.getPropertiesPanel()) {
-      //   window.pageEditor.getPropertiesPanel().clear();
-      // }
-      
-      // Set iframe source
-      previewIframe.src = url;
-      
-      // Handle iframe load
-      previewIframe.onload = function() {
-        // Hide loading indicator when iframe loads
-        if (window.pageEditor) {
-          window.pageEditor.hideLoadingIndicator();
-        }
-      };
-      
-      // Switch to preview mode
-      previewIframe.classList.add('active');
-      previewContainer.classList.add('active');
-      editorCanvas.classList.add('hidden');
-      togglePreviewBtn.classList.add('active');
-      
-      // Set global preview mode flag if it exists
-      if (typeof isPreviewMode !== 'undefined') {
-        isPreviewMode = true;
-      }
+    // Use the global openPageInIframe function if available
+    if (typeof window.openPageInIframe === 'function') {
+      window.openPageInIframe(url, 'Loading content editor...');
     } else {
-      console.log('Required elements not found, falling back to window.open');
-      // Fallback to opening in new window if elements not found
+      console.log('window.openPageInIframe function not available, falling back to window.open');
+      // Fallback to opening in new window if function not available
       window.open(url, '_blank');
     }
   }

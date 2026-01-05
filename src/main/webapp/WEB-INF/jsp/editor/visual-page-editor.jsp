@@ -1393,6 +1393,37 @@
     const previewLoading = document.getElementById('preview-loading');
     const previewError = document.getElementById('preview-error');
 
+    // General function to open a page in the preview iframe
+    window.openPageInIframe = function(url, loadingMessage = 'Loading...') {
+      // Show loading indicator
+      if (window.pageEditor) {
+        window.pageEditor.showLoadingIndicator(loadingMessage);
+      }
+      
+      // Reset the properties panel
+      if (window.pageEditor && window.pageEditor.getPropertiesPanel()) {
+        window.pageEditor.getPropertiesPanel().clear();
+      }
+      
+      // Set iframe source
+      previewIframe.src = url;
+      
+      // Handle iframe load
+      previewIframe.onload = function() {
+        // Hide loading indicator when iframe loads
+        if (window.pageEditor) {
+          window.pageEditor.hideLoadingIndicator();
+        }
+      };
+      
+      // Switch to preview mode
+      previewIframe.classList.add('active');
+      previewContainer.classList.add('active');
+      editorCanvas.classList.add('hidden');
+      togglePreviewBtn.classList.add('active');
+      isPreviewMode = true;
+    };
+
     // Function to refresh the preview
     function refreshPreview() {
       previewIframe.style.display = 'none';
@@ -1550,82 +1581,25 @@
     // Web Page Info button
     document.getElementById('web-page-info-btn').addEventListener('click', function(e) {
       e.preventDefault();
-      // Show loading indicator
-      if (window.pageEditor) {
-        window.pageEditor.showLoadingIndicator('Loading page info...');
-      }
-      // Reset the properties panel
-      if (window.pageEditor && window.pageEditor.getPropertiesPanel()) {
-        window.pageEditor.getPropertiesPanel().clear();
-      }
       const webPageLink = window.pageEditor.pagesTabManager.getSelectedPageLink();
       const link = '/admin/web-page?webPage=' + encodeURIComponent(webPageLink) + '&returnPage=' + encodeURIComponent(returnPage || webPageLink);
-      previewIframe.src = link;
-      previewIframe.onload = function() {
-        // Hide loading indicator when iframe loads
-        if (window.pageEditor) {
-          window.pageEditor.hideLoadingIndicator();
-        }
-      };
-      previewIframe.classList.add('active');
-      document.getElementById('preview-container').classList.add('active');
-      editorCanvas.classList.add('hidden');
-      togglePreviewBtn.classList.add('active');
-      isPreviewMode = true;
+      window.openPageInIframe(link, 'Loading page info...');
     });
     
     // Web Page XML Editor button
     document.getElementById('web-page-xml-editor-btn').addEventListener('click', function(e) {
       e.preventDefault();
-      // Show loading indicator
-      if (window.pageEditor) {
-        window.pageEditor.showLoadingIndicator('Loading XML editor...');
-      }
-      // Reset the properties panel
-      if (window.pageEditor && window.pageEditor.getPropertiesPanel()) {
-        window.pageEditor.getPropertiesPanel().clear();
-      }
       const webPageLink = window.pageEditor.pagesTabManager.getSelectedPageLink();
       const link = '/admin/web-page-designer?webPage=' + encodeURIComponent(webPageLink);
-      previewIframe.src = link;
-      previewIframe.onload = function() {
-        // Hide loading indicator when iframe loads
-        if (window.pageEditor) {
-          window.pageEditor.hideLoadingIndicator();
-        }
-      };
-      previewIframe.classList.add('active');
-      document.getElementById('preview-container').classList.add('active');
-      editorCanvas.classList.add('hidden');
-      togglePreviewBtn.classList.add('active');
-      isPreviewMode = true;
+      window.openPageInIframe(link, 'Loading XML editor...');
     });
     
     // Web Page CSS button
     document.getElementById('web-page-css-btn').addEventListener('click', function(e) {
       e.preventDefault();
-      // Show loading indicator
-      if (window.pageEditor) {
-        window.pageEditor.showLoadingIndicator('Loading CSS editor...');
-      }
-      // Reset the properties panel
-      if (window.pageEditor && window.pageEditor.getPropertiesPanel()) {
-        window.pageEditor.getPropertiesPanel().clear();
-      }
       const webPageLink = window.pageEditor.pagesTabManager.getSelectedPageLink();
       const link = '/admin/css-editor?webPage=' + encodeURIComponent(webPageLink) + '&returnPage=' + encodeURIComponent(returnPage || webPageLink);
-      previewIframe.src = link;
-      previewIframe.onload = function() {
-        // Hide loading indicator when iframe loads
-        if (window.pageEditor) {
-          window.pageEditor.hideLoadingIndicator();
-        }
-      };
-      previewIframe.classList.add('active');
-      document.getElementById('preview-container').classList.add('active');
-      editorCanvas.classList.add('hidden');
-      togglePreviewBtn.classList.add('active');
-      isPreviewMode = true;
+      window.openPageInIframe(link, 'Loading CSS editor...');
     });
 
     // Helper function to close modal
