@@ -179,11 +179,7 @@
     margin: 0; /* Remove any margins */
     box-sizing: border-box;
     position: relative;
-    background: var(--editor-bg);
-    border: 1px solid var(--editor-border);
-    border-radius: 4px;
     min-height: 60px;
-    transition: all 0.2s;
   }
   
   /* Add inner content wrapper for proper spacing */
@@ -257,6 +253,7 @@
     margin-bottom: 15px;
     min-height: 80px;
     position: relative;
+    cursor: pointer;
     transition: all 0.2s;
     background: var(--editor-bg);
   }
@@ -281,6 +278,9 @@
     /* Foundation grid integration - minimal conflicting styles */
     position: relative;
     background: var(--editor-bg);
+    border: 1px solid var(--editor-border);
+    border-radius: 4px;
+    cursor: pointer;
     transition: all 0.2s;
     min-height: 60px;
     /* Padding and sizing handled by Foundation grid classes above */
@@ -288,12 +288,13 @@
   
   .canvas-column:hover {
     border-color: var(--editor-selected-border);
+    box-shadow: 0 2px 8px var(--editor-shadow);
     background: var(--editor-hover-bg);
   }
   
   .canvas-column.selected {
     border-color: var(--editor-selected-border);
-    /* box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.25); */
+    box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.25);
     background: var(--editor-selected-bg);
   }
   
