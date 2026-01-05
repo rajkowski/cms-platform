@@ -1126,7 +1126,7 @@ class CanvasController {
    */
   async deleteRow(rowId) {
     console.log('deleteRow called with rowId:', rowId);
-    const confirmed = await this.editor.showConfirmDialog('Are you sure you want to delete this row?');
+    const confirmed = await this.editor.showConfirmDialog('Are you sure you want to delete this row? All widgets in it will be removed.');
     if (confirmed) {
       console.log('User confirmed deletion, calling removeRow');
       this.editor.getLayoutManager().removeRow(rowId);
