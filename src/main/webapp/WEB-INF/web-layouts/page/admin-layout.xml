@@ -723,11 +723,6 @@
   </page>
 
   <page name="/admin/sitemap" role="admin,content-manager" title="Site Map">
-    <section>
-      <column>
-        <widget name="mainMenu" />
-      </column>
-    </section>
     <section class="margin-top-25">
       <column class="small-12 cell">
         <widget name="siteMap">
@@ -763,25 +758,6 @@
         <widget name="tableOfContentsEditor">
           <title>Sticky Footer Buttons</title>
           <uniqueId>footer-sticky-links</uniqueId>
-        </widget>
-      </column>
-    </section>
-  </page>
-
-  <page name="/admin/sitemap-editor" role="admin,content-manager" title="Site Map Editor">
-    <!--<section>-->
-      <!--<column class="small-12 cell">-->
-        <!--<widget name="breadcrumbs">-->
-          <!--<links>-->
-            <!--<link name="Site Map" value="" />-->
-          <!--</links>-->
-        <!--</widget>-->
-      <!--</column>-->
-    <!--</section>-->
-    <section>
-      <column class="small-12 cell">
-        <widget name="siteMapEditor">
-          <title>Site Map Renaming</title>
         </widget>
       </column>
     </section>

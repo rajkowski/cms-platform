@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,13 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.simisinc.platform.application.DataException;
 import com.simisinc.platform.application.cms.DeleteMenuTabCommand;
 import com.simisinc.platform.application.cms.LoadMenuTabsCommand;
@@ -27,17 +34,12 @@ import com.simisinc.platform.infrastructure.persistence.cms.MenuItemRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.MenuTabRepository;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
-import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.lang3.StringUtils;
-
-import java.lang.reflect.InvocationTargetException;
-import java.util.List;
 
 /**
- * Description
+ * A dynamic site map editor with live preview
  *
  * @author matt rajkowski
- * @created 4/24/18 8:39 AM
+ * @created 1/6/26 8:45 PM
  */
 public class SiteMapWidget extends GenericWidget {
 
@@ -59,131 +61,151 @@ public class SiteMapWidget extends GenericWidget {
     return context;
   }
 
-
   public WidgetContext post(WidgetContext context) throws InvocationTargetException, IllegalAccessException {
-    // Determine the action
-    String method = context.getParameter("method");
     WidgetContext updatedContext = null;
-    if ("sitemap-editor".equals(method)) {
-      updatedContext = processSiteMapChanges(context);
-    } else {
-      updatedContext = processNewTabForm(context);
+    // Check if we have new JSON format data
+    String sitemapData = context.getParameter("sitemapData");
+    if (StringUtils.isBlank(sitemapData)) {
+      context.setErrorMessage("No sitemap data was provided");
+      return context;
     }
+    updatedContext = processJsonSitemapData(context, sitemapData);
     // Trigger cache refresh
     CacheManager.invalidateObjectCacheKey(CacheManager.MENU_TAB_LIST);
     return updatedContext;
   }
 
-  private WidgetContext processNewTabForm(WidgetContext context) throws InvocationTargetException, IllegalAccessException {
+  private WidgetContext processJsonSitemapData(WidgetContext context, String sitemapData) {
+    LOG.debug("processJsonSitemapData...");
 
-    LOG.debug("processNewTabForm...");
-
-    // Populate the fields
-    MenuTab menuTabBean = new MenuTab();
-    BeanUtils.populate(menuTabBean, context.getParameterMap());
-
-    // Save the record
-    MenuTab menuTab = null;
     try {
-      menuTab = SaveMenuTabCommand.appendNewTab(menuTabBean);
-      if (menuTab == null) {
-        throw new DataException("Your information could not be saved due to a system error. Please try again.");
+      ObjectMapper mapper = new ObjectMapper();
+      JsonNode rootNode = mapper.readTree(sitemapData);
+      JsonNode tabsNode = rootNode.get("tabs");
+
+      if (tabsNode != null && tabsNode.isArray()) {
+        // Process each tab
+        for (JsonNode tabNode : tabsNode) {
+          long tabId = tabNode.get("id").asLong();
+          String name = tabNode.get("name").asText();
+          String link = tabNode.get("link").asText();
+          String icon = tabNode.get("icon").asText();
+          int order = tabNode.get("order").asInt();
+          boolean isHome = tabNode.get("isHome").asBoolean();
+
+          // Handle new tabs (negative IDs)
+          if (tabId < 0) {
+            // Create new tab
+            MenuTab newTab = new MenuTab();
+            newTab.setName(name);
+            newTab.setLink(link);
+            newTab.setIcon(icon);
+            try {
+              MenuTab savedTab = SaveMenuTabCommand.appendNewTab(newTab);
+              if (savedTab != null) {
+                tabId = savedTab.getId(); // Update with real ID for menu items
+              }
+            } catch (DataException e) {
+              LOG.error("Error creating new tab: " + e.getMessage());
+              continue;
+            }
+          } else if (!isHome) {
+            // Update existing tab
+            MenuTab existingTab = MenuTabRepository.findById(tabId);
+            if (existingTab != null) {
+              existingTab.setName(name);
+              existingTab.setLink(link);
+              existingTab.setIcon(icon);
+              try {
+                SaveMenuTabCommand.renameTab(existingTab);
+              } catch (DataException e) {
+                LOG.error("Error updating tab: " + e.getMessage());
+              }
+            }
+          }
+
+          // Process menu items for this tab
+          JsonNode itemsNode = tabNode.get("items");
+          if (itemsNode != null && itemsNode.isArray() && !isHome) {
+            for (JsonNode itemNode : itemsNode) {
+              long itemId = itemNode.get("id").asLong();
+              String itemName = itemNode.get("name").asText();
+              String itemLink = itemNode.get("link").asText();
+              int itemOrder = itemNode.get("order").asInt();
+
+              if (itemId < 0) {
+                // Create new menu item
+                try {
+                  MenuTab parentTab = MenuTabRepository.findById(tabId);
+                  if (parentTab != null) {
+                    SaveMenuTabCommand.appendNewMenuItem(parentTab, itemName, itemLink);
+                  }
+                } catch (DataException e) {
+                  LOG.error("Error creating new menu item: " + e.getMessage());
+                }
+              } else {
+                // Update existing menu item
+                MenuItem existingItem = MenuItemRepository.findById(itemId);
+                if (existingItem != null && (!itemName.equals(existingItem.getName()) || !itemLink.equals(existingItem.getLink()))) {
+                  existingItem.setName(itemName);
+                  existingItem.setLink(itemLink);
+                  try {
+                    SaveMenuTabCommand.renameMenuItem(existingItem);
+                  } catch (DataException e) {
+                    LOG.error("Error updating menu item: " + e.getMessage());
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        // Update tab order - collect real tab IDs in order
+        Long[] tabOrder = new Long[tabsNode.size()];
+        int orderIndex = 0;
+        for (JsonNode tabNode : tabsNode) {
+          long tabId = tabNode.get("id").asLong();
+          boolean isHome = tabNode.get("isHome").asBoolean();
+          if (isHome) {
+            tabOrder[orderIndex] = 0L; // Home tab is always ID 0 in the system
+          } else {
+            tabOrder[orderIndex] = tabId < 0 ? 0L : tabId; // For new tabs, we'd need to look up the real ID
+          }
+          orderIndex++;
+        }
+
+        if (tabOrder.length > 0) {
+          SaveMenuTabCommand.updateTabOrder(tabOrder);
+        }
+
+        // Update menu item order
+        for (JsonNode tabNode : tabsNode) {
+          long tabId = tabNode.get("id").asLong();
+          boolean isHome = tabNode.get("isHome").asBoolean();
+
+          if (!isHome) {
+            JsonNode itemsNode = tabNode.get("items");
+            if (itemsNode != null && itemsNode.isArray()) {
+              int itemOrderValue = 0;
+              for (JsonNode itemNode : itemsNode) {
+                long itemId = itemNode.get("id").asLong();
+                if (itemId > 0) { // Only update existing items
+                  SaveMenuTabCommand.updateMenuItemOrder(tabId, itemId, itemOrderValue);
+                }
+                itemOrderValue++;
+              }
+            }
+          }
+        }
       }
-    } catch (DataException e) {
-      context.setErrorMessage(e.getMessage());
-      context.setRequestObject(menuTabBean);
+    } catch (Exception e) {
+      LOG.error("Error processing JSON sitemap data: " + e.getMessage(), e);
+      context.setErrorMessage("Error saving sitemap changes: " + e.getMessage());
       return context;
     }
-
-    // Determine the page to return to
-//    context.setSuccessMessage("Menu Tab was saved");
     context.setRedirect("/admin/sitemap");
     return context;
   }
-
-
-  private WidgetContext processSiteMapChanges(WidgetContext context) throws InvocationTargetException, IllegalAccessException {
-
-    LOG.debug("processSiteMapChanges...");
-
-    List<MenuTab> menuTabList = MenuTabRepository.findAll();
-    for (MenuTab thisTab : menuTabList) {
-      // Check for a renamed menu tab
-      String name = context.getParameter("menuTab" + thisTab.getId() + "name");
-      thisTab.setName(name);
-      // Update the menu tab icon
-      String icon = context.getParameter("menuTab" + thisTab.getId() + "icon");
-      thisTab.setIcon(icon);
-      try {
-        SaveMenuTabCommand.renameTab(thisTab);
-      } catch (DataException e) {
-        LOG.error("Rename tab update error: " + e.getMessage());
-      }
-      // Check for an added menu item
-      String menuItemName = context.getParameter("menuTab" + thisTab.getId() + "menuItemName");
-      if (StringUtils.isNotBlank(menuItemName)) {
-        try {
-          SaveMenuTabCommand.appendNewMenuItem(thisTab, menuItemName, context.getParameter("menuTab" + thisTab.getId() + "menuItemLink"));
-        } catch (DataException e) {
-          LOG.error("Rename tab update error: " + e.getMessage());
-        }
-      }
-    }
-
-    // Check for a renamed menu item
-    List<MenuItem> menuItemList = MenuItemRepository.findAll();
-    for (MenuItem thisMenuItem : menuItemList) {
-      String name = context.getParameter("menuItem" + thisMenuItem.getId() + "name");
-      if (StringUtils.isNotBlank(name) && !name.equals(thisMenuItem.getName())) {
-        thisMenuItem.setName(name);
-        try {
-          SaveMenuTabCommand.renameMenuItem(thisMenuItem);
-        } catch (DataException e) {
-          LOG.error("Rename menu item update error: " + e.getMessage());
-        }
-      }
-    }
-
-
-    // Check for a new tab order
-    String menuTabOrder = context.getParameter("menuTabOrder");
-    if (StringUtils.isNotBlank(menuTabOrder)) {
-      String[] strArray = menuTabOrder.split(",");
-      Long[] longArray = new Long[strArray.length];
-      for (int i = 0; i < strArray.length; i++) {
-        String item = strArray[i];
-        longArray[i] = Long.parseLong(item.substring(item.lastIndexOf("-") + 1));
-      }
-      SaveMenuTabCommand.updateTabOrder(longArray);
-    }
-
-    // Check for new menu item order...
-    String menuItemOrder = context.getParameter("menuItemOrder");
-    if (StringUtils.isNotBlank(menuItemOrder)) {
-      String[] strArray = menuItemOrder.split("\\|");
-      long lastMenuTabId = -1;
-      int currentOrderValue = -1;
-      for (int i = 0; i < strArray.length; i++) {
-        String[] thisItemArray = strArray[i].split(",");
-        String tab = thisItemArray[0];
-        String item = thisItemArray[1];
-        long menuTabId = Long.parseLong(tab.substring(tab.lastIndexOf("-") + 1));
-        long menuItemId = Long.parseLong(item.substring(item.lastIndexOf("-") + 1));
-        if (menuTabId != lastMenuTabId) {
-          currentOrderValue = -1;
-          lastMenuTabId = menuTabId;
-        }
-        ++currentOrderValue;
-        SaveMenuTabCommand.updateMenuItemOrder(menuTabId, menuItemId, currentOrderValue);
-      }
-    }
-
-    // Determine the page to return to
-//    context.setSuccessMessage("Site map was saved!");
-    context.setRedirect("/admin/sitemap");
-    return context;
-  }
-
 
   public WidgetContext delete(WidgetContext context) {
     // Execute the action
@@ -200,7 +222,7 @@ public class SiteMapWidget extends GenericWidget {
       MenuTab menuTab = MenuTabRepository.findById(menuTabId);
       try {
         DeleteMenuTabCommand.deleteMenuTab(menuTab);
-//        context.setSuccessMessage("Menu tab '" + menuTab.getName() + "' was deleted");
+        //        context.setSuccessMessage("Menu tab '" + menuTab.getName() + "' was deleted");
         context.setRedirect("/admin/sitemap");
         return context;
       } catch (Exception e) {
@@ -215,7 +237,7 @@ public class SiteMapWidget extends GenericWidget {
       MenuItem menuItem = MenuItemRepository.findById(menuItemId);
       try {
         DeleteMenuTabCommand.deleteMenuItem(menuItem);
-//        context.setSuccessMessage("Menu item '" + menuItem.getName() + "' was deleted");
+        //        context.setSuccessMessage("Menu item '" + menuItem.getName() + "' was deleted");
         context.setRedirect("/admin/sitemap");
         return context;
       } catch (Exception e) {
