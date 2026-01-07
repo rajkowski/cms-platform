@@ -98,10 +98,10 @@
                   <c:out value="${menuTab.name}" />
                 </div>
                 <div class="menu-tab-link">
-                  <input type="text" class="link-input" value="<c:out value='${menuTab.link}' />" placeholder="/page-url" data-original="<c:out value='${menuTab.link}' />">
+                  <input type="text" class="link-input no-gap" value="<c:out value='${menuTab.link}' />" placeholder="/page-url" data-original="<c:out value='${menuTab.link}' />">
                 </div>
                 <div class="menu-tab-icon">
-                  <input type="text" class="icon-input" value="<c:out value='${menuTab.icon}' />" placeholder="fa-icon" data-original="<c:out value='${menuTab.icon}' />">
+                  <input type="text" class="icon-input no-gap" value="<c:out value='${menuTab.icon}' />" placeholder="fa-icon" data-original="<c:out value='${menuTab.icon}' />">
                 </div>
               </div>
               <div class="menu-tab-actions">
@@ -126,7 +126,7 @@
                       <div class="menu-item-name" contenteditable="true" data-original="<c:out value='${menuItem.name}' />">
                         <c:out value="${menuItem.name}" />
                       </div>
-                      <input type="text" class="menu-item-link" value="<c:out value='${menuItem.link}' />" placeholder="/page-url" data-original="<c:out value='${menuItem.link}' />">
+                      <input type="text" class="menu-item-link no-gap" value="<c:out value='${menuItem.link}' />" placeholder="/page-url" data-original="<c:out value='${menuItem.link}' />">
                     </div>
                     <div class="menu-item-actions">
                       <button type="button" class="btn-icon delete-item-btn" title="Delete item">
@@ -181,6 +181,7 @@ document.addEventListener('DOMContentLoaded', function() {
   var nextTempId = -1;
   var hasChanges = false;
   var isUpdatingFromPreview = false; // Flag to prevent circular updates
+  var updatePreviewTimeout = null; // For debouncing preview updates
 
   // Initialize drag and drop
   var tabDragula = dragula([document.getElementById('sitemap-container')], {
@@ -247,7 +248,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // Initialize preview
-  updatePreview();
+  rebuildPreview();
 
   // Event handlers
   document.getElementById('add-menu-btn').addEventListener('click', showAddMenuModal);
@@ -408,10 +409,10 @@ document.addEventListener('DOMContentLoaded', function() {
         '<div class="menu-tab-content">' +
           '<div class="menu-tab-name" contenteditable="' + (!isHome) + '" data-original="' + name + '">' + name + '</div>' +
           '<div class="menu-tab-link">' +
-            '<input type="text" class="link-input" value="' + link + '" placeholder="/page-url" data-original="' + link + '">' +
+            '<input type="text" class="link-input no-gap" value="' + link + '" placeholder="/page-url" data-original="' + link + '">' +
           '</div>' +
           '<div class="menu-tab-icon">' +
-            '<input type="text" class="icon-input" value="' + icon + '" placeholder="fa-icon" data-original="' + icon + '">' +
+            '<input type="text" class="icon-input no-gap" value="' + icon + '" placeholder="fa-icon" data-original="' + icon + '">' +
           '</div>' +
         '</div>' +
         '<div class="menu-tab-actions">' + actionsHtml + '</div>' +
@@ -431,7 +432,7 @@ document.addEventListener('DOMContentLoaded', function() {
       '</div>' +
       '<div class="menu-item-content">' +
         '<div class="menu-item-name" contenteditable="true" data-original="' + name + '">' + name + '</div>' +
-        '<input type="text" class="menu-item-link" value="' + link + '" placeholder="/page-url" data-original="' + link + '">' +
+        '<input type="text" class="menu-item-link no-gap" value="' + link + '" placeholder="/page-url" data-original="' + link + '">' +
       '</div>' +
       '<div class="menu-item-actions">' +
         '<button type="button" class="btn-icon delete-item-btn" title="Delete item">' +
@@ -476,10 +477,26 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function updatePreview() {
+    // Don't update preview if we're currently dragging in the preview
+    if (previewDragula && previewDragula.dragging) {
+      return;
+    }
+    
+    // Clear any pending update
+    if (updatePreviewTimeout) {
+      clearTimeout(updatePreviewTimeout);
+    }
+    
+    // Debounce the update to prevent rapid rebuilds
+    updatePreviewTimeout = setTimeout(function() {
+      rebuildPreview();
+    }, 50);
+  }
+
+  function rebuildPreview() {
     var previewContainer = document.getElementById('preview-tabs');
     
     // Store current dragula state and destroy it
-    var wasPreviewDragula = previewDragula;
     if (previewDragula) {
       previewDragula.destroy();
     }
