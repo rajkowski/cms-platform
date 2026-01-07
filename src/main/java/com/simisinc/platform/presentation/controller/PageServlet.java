@@ -723,6 +723,9 @@ public class PageServlet extends HttpServlet {
         } else {
           // For web content with a header and 
           LOG.debug("Setting header and footer render info... " + (headerRenderInfo != null) + " " + (footerRenderInfo != null));
+          if (headerRenderInfo == null) {
+            request.setAttribute(SHOW_MAIN_MENU, "false");
+          }
           request.setAttribute(HEADER_RENDER_INFO, headerRenderInfo);
           request.setAttribute(FOOTER_RENDER_INFO, footerRenderInfo);
           request.setAttribute(PAGE_BODY, "/WEB-INF/jsp/layout.jsp");
