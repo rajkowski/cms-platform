@@ -25,6 +25,8 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
 
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
 /**
  * Description
  *
@@ -74,6 +76,9 @@ public class CategoriesListWidget extends GenericWidget {
 
     // Determine the directory url
     String listingsLink = context.getPreferences().getOrDefault("listingsLink", collection.getListingsLink());
+    if (StringUtils.isBlank(listingsLink)) {
+      listingsLink = collection.getListingsLink();
+    }
     context.getRequest().setAttribute("listingsLink", listingsLink);
 
     // Show the JSP
