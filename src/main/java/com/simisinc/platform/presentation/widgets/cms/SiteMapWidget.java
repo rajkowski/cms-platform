@@ -82,6 +82,37 @@ public class SiteMapWidget extends GenericWidget {
       ObjectMapper mapper = new ObjectMapper();
       JsonNode rootNode = mapper.readTree(sitemapData);
       JsonNode tabsNode = rootNode.get("tabs");
+      JsonNode deletedTabsNode = rootNode.get("deletedTabs");
+      JsonNode deletedItemsNode = rootNode.get("deletedItems");
+
+      // Process deletions first
+      if (deletedItemsNode != null && deletedItemsNode.isArray()) {
+        for (JsonNode itemIdNode : deletedItemsNode) {
+          long itemId = itemIdNode.asLong();
+          MenuItem menuItem = MenuItemRepository.findById(itemId);
+          if (menuItem != null) {
+            try {
+              DeleteMenuTabCommand.deleteMenuItem(menuItem);
+            } catch (Exception e) {
+              LOG.error("Error deleting menu item " + itemId + ": " + e.getMessage());
+            }
+          }
+        }
+      }
+
+      if (deletedTabsNode != null && deletedTabsNode.isArray()) {
+        for (JsonNode tabIdNode : deletedTabsNode) {
+          long tabId = tabIdNode.asLong();
+          MenuTab menuTab = MenuTabRepository.findById(tabId);
+          if (menuTab != null) {
+            try {
+              DeleteMenuTabCommand.deleteMenuTab(menuTab);
+            } catch (Exception e) {
+              LOG.error("Error deleting menu tab " + tabId + ": " + e.getMessage());
+            }
+          }
+        }
+      }
 
       if (tabsNode != null && tabsNode.isArray()) {
         // Process each tab
@@ -204,49 +235,6 @@ public class SiteMapWidget extends GenericWidget {
       return context;
     }
     context.setRedirect("/admin/sitemap");
-    return context;
-  }
-
-  public WidgetContext delete(WidgetContext context) {
-    // Execute the action
-    WidgetContext updatedContext = executeDelete(context);
-    // Trigger cache refresh
-    CacheManager.invalidateObjectCacheKey(CacheManager.MENU_TAB_LIST);
-    return updatedContext;
-  }
-
-  private WidgetContext executeDelete(WidgetContext context) {
-    // Determine what's being deleted
-    long menuTabId = context.getParameterAsLong("menuTabId");
-    if (menuTabId != -1) {
-      MenuTab menuTab = MenuTabRepository.findById(menuTabId);
-      try {
-        DeleteMenuTabCommand.deleteMenuTab(menuTab);
-        //        context.setSuccessMessage("Menu tab '" + menuTab.getName() + "' was deleted");
-        context.setRedirect("/admin/sitemap");
-        return context;
-      } catch (Exception e) {
-        context.setErrorMessage("Error. " + e.getMessage());
-        context.setRedirect("/admin/sitemap");
-        return context;
-      }
-    }
-
-    long menuItemId = context.getParameterAsLong("menuItemId");
-    if (menuItemId != -1) {
-      MenuItem menuItem = MenuItemRepository.findById(menuItemId);
-      try {
-        DeleteMenuTabCommand.deleteMenuItem(menuItem);
-        //        context.setSuccessMessage("Menu item '" + menuItem.getName() + "' was deleted");
-        context.setRedirect("/admin/sitemap");
-        return context;
-      } catch (Exception e) {
-        context.setErrorMessage("Error. Menu item could not be deleted.");
-        context.setRedirect("/admin/sitemap");
-        return context;
-      }
-    }
-
     return context;
   }
 }

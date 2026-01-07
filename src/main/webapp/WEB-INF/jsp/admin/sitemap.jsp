@@ -66,7 +66,7 @@
         <button type="button" id="save-sitemap-btn" class="button radius primary">
           <i class="fa fa-save"></i> Save Changes
         </button>
-        <a href="${ctx}/admin/sitemap" class="button radius secondary">Cancel</a>
+        <a href="${ctx}/admin/sitemap" class="button radius secondary">Reload</a>
       </div>
     </div>
   </div>
@@ -182,6 +182,8 @@ document.addEventListener('DOMContentLoaded', function() {
   var hasChanges = false;
   var isUpdatingFromPreview = false; // Flag to prevent circular updates
   var updatePreviewTimeout = null; // For debouncing preview updates
+  var deletedTabs = []; // Track deleted menu tabs
+  var deletedItems = []; // Track deleted menu items
 
   // Initialize drag and drop
   var tabDragula = dragula([document.getElementById('sitemap-container')], {
@@ -358,13 +360,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
     var tabId = tabElement.dataset.tabId;
     if (tabId > 0) {
-      window.location.href = baseUri + '?command=delete&widget=' + widgetId + '&token=' + token + '&menuTabId=' + tabId;
-    } else {
-      tabElement.remove();
-      updateDragula();
-      markChanged();
-      updatePreview();
+      // Track deletion for existing tab
+      deletedTabs.push(parseInt(tabId));
+      // Also track any existing menu items for deletion
+      var itemElements = tabElement.querySelectorAll('.menu-item');
+      itemElements.forEach(function(itemEl) {
+        var itemId = itemEl.dataset.itemId;
+        if (itemId > 0) {
+          deletedItems.push(parseInt(itemId));
+        }
+      });
     }
+    
+    // Remove from DOM
+    tabElement.remove();
+    updateDragula();
+    markChanged();
+    updatePreview();
   }
 
   function deleteMenuItem(itemElement) {
@@ -374,12 +386,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     var itemId = itemElement.dataset.itemId;
     if (itemId > 0) {
-      window.location.href = baseUri + '?command=delete&widget=' + widgetId + '&token=' + token + '&menuItemId=' + itemId;
-    } else {
-      itemElement.remove();
-      markChanged();
-      updatePreview();
+      // Track deletion for existing item
+      deletedItems.push(parseInt(itemId));
     }
+    
+    // Remove from DOM
+    itemElement.remove();
+    markChanged();
+    updatePreview();
   }
 
   function createMenuTabElement(id, name, link, icon, isHome) {
@@ -473,7 +487,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function markChanged() {
     hasChanges = true;
-    document.getElementById('save-sitemap-btn').classList.add('alert');
+    var saveBtn = document.getElementById('save-sitemap-btn');
+    saveBtn.classList.add('alert');
+    
+    // Update button text to show pending changes
+    var pendingCount = deletedTabs.length + deletedItems.length;
+    if (pendingCount > 0) {
+      saveBtn.innerHTML = '<i class="fa fa-save"></i> Save Changes (' + pendingCount + ' deletion' + (pendingCount > 1 ? 's' : '') + ' pending)';
+    } else {
+      saveBtn.innerHTML = '<i class="fa fa-save"></i> Save Changes';
+    }
   }
 
   function updatePreview() {
@@ -638,7 +661,11 @@ document.addEventListener('DOMContentLoaded', function() {
       tabs.push(tab);
     });
 
-    return { tabs: tabs };
+    return { 
+      tabs: tabs,
+      deletedTabs: deletedTabs,
+      deletedItems: deletedItems
+    };
   }
 });
 </script>
