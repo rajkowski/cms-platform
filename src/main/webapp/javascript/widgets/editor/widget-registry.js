@@ -675,27 +675,11 @@ class WidgetRegistry {
       name: 'Directory',
       category: 'Collections',
       icon: 'fa-address-book',
-      description: 'A directory of items',
+      description: 'A list of collections',
       properties: {
-        collection: { type: 'text', label: 'Collection Repository ID', required: true },
-        view: { type: 'select', label: 'View', options: ['list', 'grid'] },
-        showSearch: { type: 'checkbox', label: 'Show Search' },
-        showPaging: { type: 'checkbox', label: 'Show Paging' },
-        rows: { type: 'number', label: 'Rows' }
-      }
-    });
-
-    this.register('itemsList', {
-      name: 'Items List',
-      category: 'Collections',
-      icon: 'fa-list-alt',
-      description: 'A list of items',
-      properties: {
-        collection: { type: 'text', label: 'Collection Repository ID', required: true },
-        view: { type: 'select', label: 'View', options: ['list', 'grid', 'table'] },
-        showSearch: { type: 'checkbox', label: 'Show Search' },
-        showPaging: { type: 'checkbox', label: 'Show Paging' },
-        rows: { type: 'number', label: 'Rows' }
+        icon: { type: 'text', label: 'Widget Icon' },
+        title: { type: 'text', label: 'Widget Title' },
+        view: { type: 'select', label: 'View', options: ['default', 'cards'] }
       }
     });
 
@@ -705,9 +689,66 @@ class WidgetRegistry {
       icon: 'fa-sitemap',
       description: 'A list of categories',
       properties: {
-        collection: { type: 'text', label: 'Collection Repository ID', required: true },
-        view: { type: 'select', label: 'View', options: ['list', 'cloud'] },
-        showCount: { type: 'checkbox', label: 'Show Count' }
+        icon: { type: 'text', label: 'Widget Icon' },
+        title: { type: 'text', label: 'Widget Title' },
+        collectionUniqueId: { type: 'text', label: 'Collection Repository ID', required: true },
+        basedOnItems: { type: 'checkbox', label: 'Only Show the Categories Used by the Items', default: false },
+        listingsLink: { type: 'text', label: 'Link to go back to the Listings', required: false },
+      }
+    });
+
+    this.register('itemsList', {
+      name: 'Items List',
+      category: 'Collections',
+      icon: 'fa-list-alt',
+      description: 'A list of items',
+      properties: {
+        icon: { type: 'text', label: 'Widget Icon' },
+        title: { type: 'text', label: 'Widget Title' },
+        collectionUniqueId: { type: 'text', label: 'Collection Repository ID', required: false },
+        category: { type: 'text', label: 'Filter by Category Name', required: false },
+        nearbyItemUniqueId: { type: 'text', label: 'Nearby Item Unique Id', required: false },
+        view: { type: 'select', label: 'View', options: ['list', 'table', 'cards', 'category-cards', 'jobs'], default: 'list' },
+        showMine: { type: 'checkbox', label: 'Show Mine Only', default: false },
+        showWhenEmpty: { type: 'checkbox', label: 'Show When Empty', default: false },
+        limit: { type: 'number', label: 'Limit', default: 20 },
+        sortBy: { type: 'select', label: 'Sort Results By', options: ['title', 'new'], default: 'title' },
+        showPaging: { type: 'checkbox', label: 'Show Paging', default: true },
+        showLink: { type: 'checkbox', label: 'Show Link', default: true },
+        showImage: { type: 'checkbox', label: 'Show Image', default: false },
+        showIcon: { type: 'checkbox', label: 'Show Icon', default: false },
+        showSummary: { type: 'checkbox', label: 'Show Summary', default: false },
+        showCategory: { type: 'checkbox', label: 'Show Category', default: false },
+        showCategoryIcon: { type: 'checkbox', label: 'Show Category Icon', default: true },
+        showAddress: { type: 'checkbox', label: 'Show Address', default: true },
+        showKeywords: { type: 'checkbox', label: 'Show Keywords', default: true },
+        showUrl: { type: 'checkbox', label: 'Show URL', default: false },
+        showBullets: { type: 'checkbox', label: 'Show Bullets in List', default: false },
+        showActionLinks: { type: 'checkbox', label: 'Show Action Links', default: false },
+        showLaunchLink: { type: 'checkbox', label: 'Show Launch Link', default: false },
+        useItemLink: { type: 'checkbox', label: 'Use Item Link', default: false },
+        useInfoLink: { type: 'checkbox', label: 'Use Info Link', default: true },
+        infoLabel: { type: 'text', label: 'Info Label', default: 'Get Info', required: false },
+        launchLabel: { type: 'text', label: 'Launch Label', default: 'Launch', required: false },
+        columns: { type: 'text', label: 'Fields to Show in Table View (comma-separated)', required: false },
+        smallGridCount: {
+          type: 'number',
+          label: 'Small Screen Cards',
+          description: 'Number of cards per row on small screens',
+          default: 6
+        },
+        mediumGridCount: {
+          type: 'number',
+          label: 'Medium Screen Cards',
+          description: 'Number of cards per row on medium screens',
+          default: 4
+        },
+        largeGridCount: {
+          type: 'number',
+          label: 'Large Screen Cards',
+          description: 'Number of cards per row on large screens',
+          default: 3
+        }
       }
     });
 
