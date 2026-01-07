@@ -92,7 +92,7 @@ public class CollectionTableColumnsCommand {
     if (StringUtils.isNotBlank(commaSeparatedValues)) {
       String[] columns = commaSeparatedValues.split(Pattern.quote(","));
       for (String name : columns) {
-        CollectionTableColumnsCommand.addToList(tableColumnsList, possibleTableColumnList.get(name));
+        CollectionTableColumnsCommand.addToList(tableColumnsList, possibleTableColumnList.get(name.trim()));
       }
     }
 
