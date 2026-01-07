@@ -59,7 +59,6 @@ public class WebPageDesignerWidget extends GenericWidget {
 
   static String TEMPLATES_JSP = "/cms/web-page-templates.jsp";
   static String DESIGNER_JSP = "/cms/web-page-designer.jsp";
-  static String RAW_XML_JSP = "/cms/web-page-editor.jsp";
   static String ACE_XML_EDITOR_JSP = "/cms/web-page-xml-editor.jsp";
 
   public WidgetContext execute(WidgetContext context) {
