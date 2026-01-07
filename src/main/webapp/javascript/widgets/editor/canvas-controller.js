@@ -431,13 +431,17 @@ class CanvasController {
         return;
       }
       
-      // Find adjacent column - simplified logic
+      // Find adjacent column - enhanced logic for last column
       if (side === 'left' && columnIndex > 0) {
         // Left handle - resize with left neighbor
         adjacentColumn = row.columns[columnIndex - 1];
       } else if (side === 'right' && columnIndex < row.columns.length - 1) {
         // Right handle - resize with right neighbor
         adjacentColumn = row.columns[columnIndex + 1];
+      } else if (side === 'right' && columnIndex === row.columns.length - 1) {
+        // Special case: right handle on last column - allow minimizing by creating space for a new column
+        console.log('Right handle on last column - allowing resize to make room for new column');
+        adjacentColumn = null; // We'll handle this case specially
       } else {
         // Edge case: no appropriate neighbor for this handle
         console.log('No appropriate adjacent column for this handle');
@@ -457,7 +461,7 @@ class CanvasController {
         return;
       }
       
-      if (!adjacentColumn) {
+      if (!adjacentColumn && !(side === 'right' && columnIndex === row.columns.length - 1)) {
         console.log('No adjacent column available for resizing');
         isResizing = false;
         return;
@@ -485,7 +489,7 @@ class CanvasController {
       };
       
       startColSize = parseSize(column.cssClass);
-      startAdjSize = parseSize(adjacentColumn.cssClass);
+      startAdjSize = adjacentColumn ? parseSize(adjacentColumn.cssClass) : 0;
       
       console.log('Resize initialized', { 
         startColSize, 
@@ -493,7 +497,7 @@ class CanvasController {
         columnIndex, 
         totalColumns, 
         side,
-        adjacentColumnId: adjacentColumn.id,
+        adjacentColumnId: adjacentColumn ? adjacentColumn.id : 'none (last column resize)',
         rowWidth: gridContainer.offsetWidth 
       });
       
@@ -503,7 +507,19 @@ class CanvasController {
     });
     
     const mousemoveHandler = (e) => {
-      if (!isResizing || !adjacentColumn || !gridContainer) return;
+      if (!isResizing || !gridContainer) return;
+      
+      // Get the current row data
+      const row = this.editor.getLayoutManager().getRow(rowId);
+      if (!row) {
+        console.error('Row not found during resize');
+        return;
+      }
+      
+      // Special case: last column resize without adjacent column
+      if (!adjacentColumn && !(side === 'right' && columnIndex === row.columns.length - 1)) {
+        return;
+      }
       
       e.preventDefault();
       e.stopPropagation();
@@ -538,7 +554,47 @@ class CanvasController {
         return;
       }
       
-      // Correct direction logic based on handle side and adjacent column position
+      // Handle special case: last column resize (no adjacent column)
+      if (!adjacentColumn && side === 'right' && columnIndex === row.columns.length - 1) {
+        // Right handle on last column - allow minimizing to make room for new column
+        let newColSize = startColSize + gridUnitsChange;
+        
+        // Calculate current total used by all columns
+        let currentTotal = 0;
+        for (const col of row.columns) {
+          const colSize = this.parseColumnSize(col.cssClass);
+          currentTotal += colSize;
+        }
+        
+        // Ensure the new size doesn't make total exceed 12 or go below 1
+        const otherColumnsTotal = currentTotal - startColSize;
+        const maxAllowedSize = 12 - otherColumnsTotal;
+        newColSize = Math.max(1, Math.min(maxAllowedSize, newColSize));
+        
+        // Only update if size actually changed
+        if (newColSize !== startColSize) {
+          console.log('Updating last column size', { 
+            side,
+            pixelDiff, 
+            gridUnitsChange, 
+            startColSize,
+            newColSize,
+            currentTotal,
+            otherColumnsTotal,
+            maxAllowedSize
+          });
+          
+          // Update just this column
+          this.updateSingleColumnSize(rowId, columnId, newColSize);
+          
+          // Update start size and last update position for next iteration
+          startColSize = newColSize;
+          lastUpdateX = e.clientX;
+        }
+        return;
+      }
+      
+      // Normal case: resize with adjacent column
       let newColSize, newAdjSize;
       
       if (side === 'right') {
@@ -737,6 +793,108 @@ class CanvasController {
     this.editor.getLayoutManager().updateRow(rowId, row);
   }
   
+  /**
+   * Parse column size from CSS class for current viewport
+   */
+  parseColumnSize(cssClass) {
+    const currentViewport = this.editor.getViewportManager().getCurrentViewport();
+    const classes = cssClass.split(' ');
+    const viewportClass = classes.find(c => c.startsWith(currentViewport + '-'));
+    
+    if (viewportClass) {
+      const match = viewportClass.match(/(\w+)-(\d+)/);
+      return match ? parseInt(match[2], 10) : 12;
+    }
+    
+    // Fallback to small if current viewport not found
+    const smallClass = classes.find(c => c.startsWith('small-'));
+    if (smallClass) {
+      const match = smallClass.match(/small-(\d+)/);
+      return match ? parseInt(match[1], 10) : 12;
+    }
+    
+    return 12;
+  }
+
+  /**
+   * Update a single column size in the data model
+   */
+  updateSingleColumnSize(rowId, columnId, newSize) {
+    const row = this.editor.getLayoutManager().getRow(rowId);
+    const column = row.columns.find(c => c.id === columnId);
+    
+    if (!column) {
+      console.error('Column not found', { columnId });
+      return;
+    }
+    
+    console.log('updateSingleColumnSize called', { newSize, currentColClass: column.cssClass });
+    
+    // Get current viewport from viewport manager
+    const currentViewport = this.editor.getViewportManager().getCurrentViewport();
+    
+    // Update column class for current viewport
+    const updateColumnClass = (cssClass, newSize) => {
+      const classes = cssClass.split(' ').filter(c => c.trim());
+      const otherClasses = [];
+      
+      // Remove old viewport classes and keep other classes
+      classes.forEach(cls => {
+        if (cls.match(/^(small|medium|large)-\d+$/)) {
+          const [viewport] = cls.split('-');
+          if (viewport !== currentViewport) {
+            // Keep other viewport classes
+            otherClasses.push(cls);
+          }
+          // Skip current viewport class - we'll add the new size
+        } else if (cls !== 'canvas-column') {
+          otherClasses.push(cls);
+        }
+      });
+      
+      // Add the new size for current viewport
+      otherClasses.push(`${currentViewport}-${newSize}`);
+      
+      return otherClasses.filter(c => c).join(' ');
+    };
+    
+    column.cssClass = updateColumnClass(column.cssClass, newSize);
+    
+    console.log('Updated CSS class for viewport', currentViewport, { 
+      newColClass: column.cssClass
+    });
+    
+    // Update the DOM immediately for visual feedback
+    const columnElement = document.querySelector(`[data-column-id="${columnId}"]`);
+    
+    if (!columnElement) {
+      console.error('Column element not found in DOM');
+      return;
+    }
+    
+    // Update column element classes
+    const classesToRemove = [];
+    for (let i = 0; i < columnElement.classList.length; i++) {
+      const cls = columnElement.classList[i];
+      if (cls.startsWith(`${currentViewport}-`)) {
+        classesToRemove.push(cls);
+      }
+    }
+    classesToRemove.forEach(cls => columnElement.classList.remove(cls));
+    
+    // Add new current viewport class
+    columnElement.classList.add(`${currentViewport}-${newSize}`);
+    
+    console.log('Updated single column element', { 
+      columnId,
+      oldClassName: columnElement.className, 
+      newSize: newSize
+    });
+    
+    // Tell the layout manager about the change
+    this.editor.getLayoutManager().updateRow(rowId, row);
+  }
+  
   
   /**
    * Add column before the specified column
@@ -759,7 +917,7 @@ class CanvasController {
     row.columns.splice(columnIndex, 0, newColumn);
     
     // Adjust existing column sizes to fit
-    this.adjustColumnSizes(row);
+    this.adjustColumnSizes(row, rowId);
     
     // Re-render
     this.renderRow(rowId, row);
@@ -787,7 +945,7 @@ class CanvasController {
     row.columns.splice(columnIndex + 1, 0, newColumn);
     
     // Adjust existing column sizes to fit
-    this.adjustColumnSizes(row);
+    this.adjustColumnSizes(row, rowId);
     
     // Re-render
     this.renderRow(rowId, row);
@@ -796,10 +954,51 @@ class CanvasController {
   
   /**
    * Adjust column sizes to fit within 12-column grid
+   * Enhanced to use remaining space when available instead of resizing existing columns
    */
-  adjustColumnSizes(row) {
+  adjustColumnSizes(row, rowId) {
     const numColumns = row.columns.length;
     if (numColumns === 0) return;
+    
+    // Calculate current total used by existing columns (excluding the last added one)
+    let currentTotal = 0;
+    let hasNewColumn = false;
+    
+    // Check if we have a column with default size (likely newly added)
+    const defaultSizeColumns = row.columns.filter(col => {
+      const size = this.parseColumnSize(col.cssClass);
+      return size === 6; // Default size from addColumnBefore/After
+    });
+    
+    // If we have exactly one column with size 6 and others with different sizes,
+    // it's likely a newly added column
+    if (defaultSizeColumns.length === 1 && numColumns > 1) {
+      const newColumn = defaultSizeColumns[0];
+      const otherColumns = row.columns.filter(col => col.id !== newColumn.id);
+      
+      // Calculate space used by existing columns
+      let existingTotal = 0;
+      otherColumns.forEach(col => {
+        existingTotal += this.parseColumnSize(col.cssClass);
+      });
+      
+      // If there's remaining space, use it for the new column
+      const remainingSpace = 12 - existingTotal;
+      if (remainingSpace > 0 && remainingSpace <= 12) {
+        console.log('Using remaining space for new column', {
+          existingTotal,
+          remainingSpace,
+          newColumnId: newColumn.id
+        });
+        
+        // Update the new column to use the remaining space
+        this.updateSingleColumnSize(row.id, newColumn.id, remainingSpace);
+        return; // Don't resize existing columns
+      }
+    }
+    
+    // Fallback to original behavior if no remaining space or other conditions not met
+    console.log('No remaining space available, resizing all columns proportionally');
     
     // Calculate base size per column
     const baseSize = Math.floor(12 / numColumns);
@@ -918,7 +1117,7 @@ class CanvasController {
         console.log('Column removed from row data');
         
         // Adjust remaining column sizes
-        this.adjustColumnSizes(row);
+        this.adjustColumnSizes(row, rowId);
         
         // Re-render
         this.renderRow(rowId, row);
