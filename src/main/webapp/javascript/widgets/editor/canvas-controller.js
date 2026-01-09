@@ -309,10 +309,10 @@ class CanvasController {
       this.deleteColumn(rowId, columnId);
     };
     
-    controls.appendChild(addBeforeBtn);
-    controls.appendChild(addAfterBtn);
     controls.appendChild(moveLeftBtn);
     controls.appendChild(moveRightBtn);
+    controls.appendChild(addBeforeBtn);
+    controls.appendChild(addAfterBtn);
     controls.appendChild(deleteBtn);
     
     return controls;

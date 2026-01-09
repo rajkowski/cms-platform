@@ -24,6 +24,7 @@
 <jsp:useBean id="webPage" class="com.simisinc.platform.domain.model.cms.WebPage" scope="request"/>
 <web:stylesheet package="spectrum" file="spectrum.css" />
 <web:script package="spectrum" file="spectrum.js" />
+<g:compress>
 <style>
   /* Dark Mode Variables */
   :root {
@@ -1072,6 +1073,8 @@
     font-size: 18px;
   }
 </style>
+</g:compress>
+
 <link href="${ctx}/css/platform.css" rel="stylesheet">
 
 <div id="visual-page-editor-wrapper">

@@ -41,7 +41,7 @@ public class VisualPageEditorWidget extends GenericWidget {
   static final long serialVersionUID = -8484048371911908893L;
   protected static Log LOG = LogFactory.getLog(VisualPageEditorWidget.class);
 
-  static String EDITOR_JSP = "/editor/visual-page-editor.jsp";
+  static String EDITOR_JSP = "/cms/visual-page-editor.jsp";
 
   public WidgetContext execute(WidgetContext context) {
 
