@@ -606,9 +606,17 @@ public class PageServlet extends HttpServlet {
       }
 
       // For normal pages, render the header and footer
+      boolean prepareHeaderFooter = true;
+      if ("iframe".equals(request.getHeader("Sec-Fetch-Dest"))) {
+        prepareHeaderFooter = false;
+      }
+      if (pageRequest.getPagePath().startsWith("/admin/visual-page-editor")) {
+        prepareHeaderFooter = false;
+      }
+
       HeaderRenderInfo headerRenderInfo = null;
       FooterRenderInfo footerRenderInfo = null;
-      if (!"iframe".equals(request.getHeader("Sec-Fetch-Dest"))) {
+      if (prepareHeaderFooter) {
         LOG.debug("Rendering header and footer...");
         // Render the header
         Header header = null;
@@ -723,11 +731,12 @@ public class PageServlet extends HttpServlet {
         } else {
           // For web content with a header and 
           LOG.debug("Setting header and footer render info... " + (headerRenderInfo != null) + " " + (footerRenderInfo != null));
-          if (headerRenderInfo == null) {
+          if (!prepareHeaderFooter) {
             request.setAttribute(SHOW_MAIN_MENU, "false");
+          } else {
+            request.setAttribute(HEADER_RENDER_INFO, headerRenderInfo);
+            request.setAttribute(FOOTER_RENDER_INFO, footerRenderInfo);
           }
-          request.setAttribute(HEADER_RENDER_INFO, headerRenderInfo);
-          request.setAttribute(FOOTER_RENDER_INFO, footerRenderInfo);
           request.setAttribute(PAGE_BODY, "/WEB-INF/jsp/layout.jsp");
         }
         request.getServletContext().getRequestDispatcher("/WEB-INF/jsp/main.jsp").forward(request, response);
