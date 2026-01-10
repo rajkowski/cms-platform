@@ -922,6 +922,21 @@ class PageEditor {
           this.updateSaveIndicator();
         }, 2000);
         
+        // If this was a new page, update the pages list
+        if (this.pagesTabManager.selectedPageId === 'new') {
+          const pageData = {
+            id: data.webPageId || 'saved',
+            link: this.pagesTabManager.getSelectedPageLink(),
+            title: data.title || this.pagesTabManager.extractTitleFromLink(this.pagesTabManager.getSelectedPageLink())
+          };
+          this.pagesTabManager.updateNewPageAfterSave(pageData);
+          
+          // Refresh the pages list to get the updated list from server
+          setTimeout(() => {
+            this.pagesTabManager.refreshPagesList();
+          }, 1000);
+        }
+        
         console.log('Page saved successfully', data);
       })
       .catch(error => {

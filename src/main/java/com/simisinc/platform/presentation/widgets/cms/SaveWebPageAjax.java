@@ -19,6 +19,7 @@ package com.simisinc.platform.presentation.widgets.cms;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.commons.text.WordUtils;
 
 import com.simisinc.platform.application.cms.SaveWebPageCommand;
 import com.simisinc.platform.application.cms.WebPageJsonToXMLCommand;
@@ -65,11 +66,18 @@ public class SaveWebPageAjax extends GenericWidget {
     // Retrieve the web page
     WebPage page = WebPageRepository.findByLink(webPageLink);
     if (page == null) {
-      LOG.debug("Web page not found for link: " + webPageLink);
-      context.setJson("{\"success\":false,\"message\":\"Page not found\"}");
-      context.setSuccess(false);
-      return context;
+      // This is a new page
+      LOG.debug("Creating new page for link: " + webPageLink);
+      page = new WebPage();
+      page.setLink(webPageLink);
+      page.setCreatedBy(context.getUserId());
+      // Make a page title
+      String title = webPageLink.replace("-", " ");
+      title = StringUtils.substringAfterLast(title, "/");
+      title = WordUtils.capitalizeFully(title, ' ');
+      page.setTitle(title);
     }
+    page.setModifiedBy(context.getUserId());
 
     // Get the designer data (JSON format of the layout)
     String designerData = context.getParameter("designerData");
@@ -95,14 +103,9 @@ public class SaveWebPageAjax extends GenericWidget {
       context.setSuccess(false);
       return context;
     }
+    page.setPageXml(pageXml);
 
     try {
-      // Set the user who is making the change
-      if (context.getUserSession() != null) {
-        page.setModifiedBy(context.getUserSession().getUserId());
-      }
-      page.setPageXml(pageXml);
-
       // Save using the SaveWebPageCommand
       WebPage savedPage = SaveWebPageCommand.saveWebPage(page);
 

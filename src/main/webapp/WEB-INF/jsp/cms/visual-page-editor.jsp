@@ -803,6 +803,16 @@
     background: var(--editor-selected-bg);
   }
   
+  .web-page-item.new-page-item {
+    border: 2px dashed var(--editor-selected-border);
+    background: rgba(74, 158, 255, 0.05);
+  }
+  
+  .web-page-item.new-page-item .web-page-title {
+    color: var(--editor-selected-border);
+    font-weight: 600;
+  }
+  
   .web-page-info {
     flex-grow: 1;
   }

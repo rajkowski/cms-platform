@@ -65,11 +65,18 @@ class PagesTabManager {
         }
 
         if (pages.length === 0) {
-          if (emptyEl) {
-            emptyEl.style.display = 'block';
-          }
-          if (listEl) {
-            listEl.innerHTML = '';
+          // Check if we have a current page that doesn't exist yet
+          const currentPageLink = this.pageEditor.config.webPageLink;
+          if (currentPageLink) {
+            // Show the new page even if no other pages exist
+            this.renderPageList(pages);
+          } else {
+            if (emptyEl) {
+              emptyEl.style.display = 'block';
+            }
+            if (listEl) {
+              listEl.innerHTML = '';
+            }
           }
         } else {
           if (emptyEl) {
@@ -87,6 +94,14 @@ class PagesTabManager {
           errorEl.style.display = 'block';
           errorEl.textContent = 'Error loading pages: ' + error.message;
         }
+        
+        // Even if there's an error loading pages, show the current page if it exists
+        const currentPageLink = this.pageEditor.config.webPageLink;
+        if (currentPageLink && listEl) {
+          const newPageItem = this.createNewPageItem(currentPageLink);
+          listEl.innerHTML = '';
+          listEl.appendChild(newPageItem);
+        }
       });
   }
 
@@ -100,6 +115,16 @@ class PagesTabManager {
     }
 
     listEl.innerHTML = '';
+
+    // Check if the current page being edited exists in the pages list
+    const currentPageLink = this.pageEditor.config.webPageLink;
+    const currentPageExists = pages.some(page => page.link === currentPageLink);
+
+    // If the current page doesn't exist, add it as a new page at the top
+    if (!currentPageExists && currentPageLink) {
+      const newPageItem = this.createNewPageItem(currentPageLink);
+      listEl.appendChild(newPageItem);
+    }
 
     pages.forEach(page => {
       const li = document.createElement('li');
@@ -133,6 +158,46 @@ class PagesTabManager {
       li.appendChild(item);
       listEl.appendChild(li);
     });
+  }
+
+  /**
+   * Create a new page item for pages that don't exist yet
+   */
+  createNewPageItem(pageLink) {
+    const li = document.createElement('li');
+    const item = document.createElement('div');
+    item.className = 'web-page-item new-page-item';
+    item.setAttribute('data-page-id', 'new');
+    item.setAttribute('data-page-link', pageLink);
+    item.classList.add('selected'); // Mark as selected since it's the current page
+
+    // Set the selected state
+    this.selectedPageId = 'new';
+    this.selectedPageLink = pageLink;
+
+    const info = document.createElement('div');
+    info.className = 'web-page-info';
+
+    const title = document.createElement('div');
+    title.className = 'web-page-title';
+    title.innerHTML = '<i class="far fa-plus-circle"></i> New Page';
+
+    const link = document.createElement('div');
+    link.className = 'web-page-link';
+    link.textContent = pageLink;
+
+    const status = document.createElement('div');
+    status.className = 'web-page-status';
+    status.style.cssText = 'font-size: 11px; color: #28a745; font-weight: 600; margin-top: 2px;';
+    status.textContent = 'Not saved yet';
+
+    info.appendChild(title);
+    info.appendChild(link);
+    info.appendChild(status);
+    item.appendChild(info);
+
+    li.appendChild(item);
+    return li;
   }
 
   /**
@@ -174,6 +239,7 @@ class PagesTabManager {
     const selectedItem = document.querySelector(`[data-page-link="${pageLink}"]`);
     if (selectedItem) {
       selectedItem.classList.add('selected');
+      this.selectedPageId = selectedItem.getAttribute('data-page-id');
     }
 
     this.selectedPageLink = pageLink;
@@ -186,6 +252,62 @@ class PagesTabManager {
    * Load the content of a specific page
    */
   loadPageContent(pageLink) {
+    // Check if this is a new page (doesn't exist in the server yet)
+    const isNewPage = this.selectedPageId === 'new';
+    
+    if (isNewPage) {
+      // For new pages, start with empty content
+      console.log('Loading new page:', pageLink);
+      
+      // Show loading indicator briefly for consistency
+      this.pageEditor.showLoadingIndicator('Creating new page...');
+      
+      // Update the editor config for the new page
+      this.pageEditor.config.webPageLink = pageLink;
+      this.pageEditor.config.existingXml = '';
+      this.pageEditor.config.hasExistingLayout = false;
+
+      // Clear current layout
+      this.pageEditor.layoutManager.structure = { rows: [] };
+      
+      // Render empty canvas
+      const canvas = this.pageEditor.elements.canvas;
+      canvas.innerHTML = `
+        <div class="empty-canvas" style="cursor: pointer;">
+          <i class="far fa-plus-circle fa-3x margin-bottom-10"></i>
+          <h5>Start Building Your New Page</h5>
+          <p>Click "Add Row" to begin or drag widgets from the palette</p>
+        </div>
+      `;
+      
+      // Set up click handler for empty canvas
+      const emptyCanvas = canvas.querySelector('.empty-canvas');
+      if (emptyCanvas) {
+        emptyCanvas.addEventListener('click', () => this.pageEditor.addRow());
+      }
+      
+      // Reset history for new page
+      this.pageEditor.history = [];
+      this.pageEditor.historyIndex = -1;
+      this.pageEditor.saveToHistory();
+      
+      // Set baseline for dirty detection
+      this.pageEditor.setSavedState();
+      
+      // Update save indicator
+      this.pageEditor.updateSaveIndicator();
+
+      // Hide loading indicator
+      setTimeout(() => {
+        this.pageEditor.hideLoadingIndicator();
+      }, 300);
+
+      // Dispatch page changed event
+      document.dispatchEvent(new CustomEvent('pageChanged', { detail: { pageLink } }));
+      
+      return;
+    }
+    
     // Show loading indicator in toolbar
     this.pageEditor.showLoadingIndicator('Loading page...');
     
@@ -261,5 +383,67 @@ class PagesTabManager {
    */
   getSelectedPageLink() {
     return this.selectedPageLink;
+  }
+
+  /**
+   * Update the new page item after successful save
+   * This converts the "new page" item to a regular page item
+   */
+  updateNewPageAfterSave(pageData) {
+    const newPageItem = document.querySelector('.new-page-item');
+    if (newPageItem && pageData) {
+      // Remove the new-page-item class and styling
+      newPageItem.classList.remove('new-page-item');
+      
+      // Update the data attributes
+      newPageItem.setAttribute('data-page-id', pageData.id || 'saved');
+      
+      // Update the title to remove the "New Page" indicator
+      const titleEl = newPageItem.querySelector('.web-page-title');
+      if (titleEl) {
+        titleEl.innerHTML = pageData.title || this.extractTitleFromLink(pageData.link);
+      }
+      
+      // Remove or update the status indicator
+      const statusEl = newPageItem.querySelector('.web-page-status');
+      if (statusEl) {
+        statusEl.textContent = 'Saved';
+        statusEl.style.color = '#28a745';
+        // Remove the status after a delay
+        setTimeout(() => {
+          if (statusEl.parentNode) {
+            statusEl.parentNode.removeChild(statusEl);
+          }
+        }, 2000);
+      }
+      
+      // Update the selected page ID
+      this.selectedPageId = pageData.id || 'saved';
+      
+      console.log('Updated new page item after save');
+    }
+  }
+
+  /**
+   * Extract a readable title from a page link
+   */
+  extractTitleFromLink(link) {
+    if (!link) return 'Untitled Page';
+    
+    // Remove leading slash and convert to title case
+    const cleanLink = link.replace(/^\/+/, '');
+    return cleanLink
+      .split(/[-_\/]/)
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ') || 'Home Page';
+  }
+
+  /**
+   * Refresh the pages list from the server
+   * This is useful after saving a new page to get the updated list
+   */
+  refreshPagesList() {
+    console.log('Refreshing pages list...');
+    this.loadPages();
   }
 }
