@@ -26,7 +26,7 @@ class WidgetRegistry {
         icon: { type: 'text', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
         uniqueId: { type: 'contentUniqueId', label: 'Content Repository ID', required: true, default: 'GENERATE' },
-        html: { type: 'textarea', label: 'Fallback HTML Content', required: false, default: '<p>Content</p>' },
+        html: { type: 'html', label: 'Fallback HTML Content (optional)', required: false, default: '<p>Content</p>' },
         videoBackgroundUrl: { type: 'text', label: 'Video Background URL' }
       }
     });
@@ -40,7 +40,7 @@ class WidgetRegistry {
         icon: { type: 'text', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
         uniqueId: { type: 'contentUniqueId', label: 'Content Repository ID', required: true, default: 'GENERATE' },
-        html: { type: 'textarea', label: 'Fallback HTML Content', required: false, default: '<h1>Title</h1><p>&gt; Item to expand</p><p>The item content goes here...</p><hr /><p>&gt; Item to expand</p><p>The item content goes here...</p><hr />' },
+        html: { type: 'html', label: 'Fallback HTML Content (optional)', required: false, default: '<h1>Title</h1><p>&gt; Item to expand</p><p>The item content goes here...</p><hr /><p>&gt; Item to expand</p><p>The item content goes here...</p><hr />' },
         accordionClass: { type: 'text', label: 'Accordion CSS Class' },
         innerAccordionClass: { type: 'text', label: 'Inner Accordion CSS Class' },
         expandTopLevel: { type: 'checkbox', label: 'Expand Top Level', default: false },
@@ -56,7 +56,7 @@ class WidgetRegistry {
         icon: { type: 'text', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
         uniqueId: { type: 'contentUniqueId', label: 'Content Repository ID', required: true, default: 'GENERATE' },
-        html: { type: 'textarea', label: 'Fallback HTML Content', required: false, default: '<p>Multiple card content separated by HR</p>' },
+        html: { type: 'html', label: 'Fallback HTML Content (optional)', required: false, default: '<p>Multiple card content separated by HR</p>' },
         gridMargin: { type: 'checkbox', label: 'Set Grid Margin CSS', default: false },
         smallCardCount: {
           type: 'number',
@@ -87,7 +87,7 @@ class WidgetRegistry {
         icon: { type: 'text', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
         uniqueId: { type: 'contentUniqueId', label: 'Content Repository ID', required: true, default: 'GENERATE' },
-        html: { type: 'textarea', label: 'Fallback HTML Content', required: false, default: '<p>Multiple slide content separated by HR</p>' },
+        html: { type: 'html', label: 'Fallback HTML Content (optional)', required: false, default: '<p>Multiple slide content separated by HR</p>' },
         showControls: { type: 'checkbox', label: 'Show Controls', default: true },
         showLeftControl: { type: 'checkbox', label: 'Show Left Control', default: true },
         showRightControl: { type: 'checkbox', label: 'Show Right Control', default: true },
@@ -96,6 +96,21 @@ class WidgetRegistry {
         autoplayDelay: { type: 'number', label: 'Autoplay Delay (ms)', default: '5000' },
         carouselClass: { type: 'text', label: 'Carousel CSS Class', required: false },
         cardClass: { type: 'text', label: 'Card CSS Class', required: false },
+      }
+    });
+
+    this.register('card', {
+      name: 'Card',
+      category: 'Content',
+      icon: 'fa-vcard',
+      description: 'A card with a title, icon, and link',
+      properties: {
+        title: { type: 'text', label: 'Title', required: false, default: 'Card Title' },
+        icon: { type: 'text', label: 'Icon', required: false, default: '' },
+        linkTitle: { type: 'text', label: 'Link Title', required: false, default: '' },
+        link: { type: 'text', label: 'Link', required: false, default: '' },
+        linkIcon: { type: 'text', label: 'Link Icon', required: false },
+        classData: { type: 'text', label: 'CSS Class', required: false }
       }
     });
     
@@ -149,7 +164,7 @@ class WidgetRegistry {
         icon: { type: 'text', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
         uniqueId: { type: 'contentUniqueId', label: 'Content Repository ID', required: true },
-        html: { type: 'textarea', label: 'Fallback HTML Content', required: false },
+        html: { type: 'html', label: 'Fallback HTML Content (optional)', required: false },
         attach: { type: 'select', label: 'Attach Side', options: ['left', ''], default: '' },
         animate: { type: 'select', label: 'Animate Directions', options: ['up', 'down', 'right', 'left', 'fade'], default: 'left' },
         useIcon: { type: 'checkbox', label: 'Use Icon on Button', default: false },
@@ -159,36 +174,38 @@ class WidgetRegistry {
     });
 
     this.register('contentGallery', {
-      name: 'Content Gallery',
+      name: 'Content Image Gallery',
       category: 'Content',
       icon: 'fa-th-large',
-      description: 'A gallery of content items',
+      description: 'An image gallery of content items',
       properties: {
         icon: { type: 'text', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
         uniqueId: { type: 'contentUniqueId', label: 'Content Repository ID', required: true },
-        html: { type: 'textarea', label: 'Fallback HTML Content', required: false },
-        carouselSize: { type: 'select', label: 'Carousel Size', options: ['tiny', 'small', 'medium', 'large'], default: 'small' },
-        carouselTitle: { type: 'text', label: 'Carousel Title', required: false },
-        useIcon: { type: 'checkbox', label: 'Use Icon on Button', default: false },
-        showControls: { type: 'checkbox', label: 'Show Controls', default: true },
-        showLeftControl: { type: 'checkbox', label: 'Show Left Control', default: true },
-        showRightControl: { type: 'checkbox', label: 'Show Right Control', default: true },
-        showBullets: { type: 'checkbox', label: 'Show Bullets', default: true },
-        carouselClass: { type: 'text', label: 'Carousel CSS Class', required: false },
+        html: { type: 'html', label: 'Fallback HTML Content (optional)', required: false }
       }
     });
 
     this.register('contentCarousel', {
-      name: 'Content Carousel',
+      name: 'Content Slide Carousel',
       category: 'Content',
       icon: 'fa-images',
-      description: 'A carousel of content items',
+      description: 'A slide carousel of content items',
       properties: {
         icon: { type: 'text', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
         uniqueId: { type: 'contentUniqueId', label: 'Content Repository ID', required: true },
-        html: { type: 'textarea', label: 'Fallback HTML Content', required: false }
+        html: { type: 'html', label: 'Fallback HTML Content (optional)', required: false },
+        carouselSize: { type: 'select', label: 'Carousel Size', options: ['tiny', 'small', 'medium', 'large'], default: 'small' },
+        carouselTitle: { type: 'text', label: 'Carousel Title', required: false },
+        display: { type: 'select', label: 'Display As Blocks', options: ['text', 'images'], default: 'text' },
+        showControls: { type: 'checkbox', label: 'Show Controls', default: true },
+        showLeftControl: { type: 'checkbox', label: 'Show Left Control', default: true },
+        showRightControl: { type: 'checkbox', label: 'Show Right Control', default: true },
+        showBullets: { type: 'checkbox', label: 'Show Bullet Slide Count', default: true },
+        pauseOnHover: { type: 'checkbox', label: 'Pause on Hover', default: true },
+        timerDelay: { type: 'number', label: 'Timer Delay Between Slides (ms)', default: '-1' },
+        carouselClass: { type: 'text', label: 'Carousel CSS Class', required: false },
       }
     });
 
@@ -276,29 +293,35 @@ class WidgetRegistry {
     });
 
     this.register('fileDropZone', {
-      name: 'File Drop Zone',
+      name: 'Folder File Drop Zone',
       category: 'Content',
       icon: 'fa-upload',
       description: 'A drop zone for uploading files',
       properties: {
+        icon: { type: 'text', label: 'Widget Icon', required: false },
+        title: { type: 'text', label: 'Widget Title', required: false },
         folderUniqueId: { type: 'text', label: 'Folder Unique ID', required: true }
       }
     });
 
     this.register('photoGallery', {
-      name: 'Photo Gallery',
+      name: 'Folder Photo Gallery',
       category: 'Content',
       icon: 'fa-camera-retro',
       description: 'A gallery of photos',
       properties: {
-        album: { type: 'text', label: 'Album Unique ID' },
-        albumId: { type: 'number', label: 'Album ID' },
-        records: { type: 'text', label: 'Records' }
+        icon: { type: 'text', label: 'Widget Icon', required: false },
+        title: { type: 'text', label: 'Widget Title', required: false },
+        folderUniqueId: { type: 'text', label: 'Folder Unique ID', required: true },
+        showCaption: { type: 'checkbox', label: 'Show Caption', default: true },
+        isSticky: { type: 'checkbox', label: 'Is Sticky', default: false },
+        marginTop: { type: 'number', label: 'Sticky Margin Top Value', default: 8 },
+        controlId: { type: 'text', label: 'Control Id', default: 'myAlbum' }
       }
     });
 
     this.register('fileList', {
-      name: 'File List',
+      name: 'Folder File List',
       category: 'Content',
       icon: 'fa-file-alt',
       description: 'A list of files',
@@ -330,15 +353,12 @@ class WidgetRegistry {
     });
 
     this.register('socialMediaLinks', {
-      name: 'Social Media Links',
-      description: 'Displays a list of social media icons linking to site profiles.',
+      name: 'Social Media Icons',
+      description: 'Displays a list of this system\'s social media icons, linking to external websites.',
       category: 'Content',
       icon: 'fa-share-alt',
       properties: {
-        title: { type: 'text', label: 'Title' },
-        showTitles: { type: 'checkbox', label: 'Show Titles' },
-        useSmallIcons: { type: 'checkbox', label: 'Use Small Icons' },
-        cssClass: { type: 'text', label: 'CSS Class' }
+        iconClass: { type: 'text', label: 'CSS Class for Icons', default: 'margin-left-10' }
       }
     });
 
@@ -388,7 +408,7 @@ class WidgetRegistry {
     });
 
     this.register('leaderboard', {
-      name: 'Leaderboard',
+      name: 'Dataset Leaderboard',
       description: 'Displays a leaderboard from a dataset.',
       category: 'Content',
       icon: 'fa-trophy',
@@ -428,22 +448,7 @@ class WidgetRegistry {
         subheaderColor: { type: 'color', label: 'Sub Header Color', default: '#000000' },
         progressColor: { type: 'color', label: 'Progress Color', default: '#ffcc02' },
         remainderColor: { type: 'color', label: 'Remained Color', default: '#1f1e22' },
-        view: { type: 'select', label: 'View', options: ['default', 'vertical'] }
-      }
-    });
-
-    this.register('card', {
-      name: 'Card',
-      category: 'Content',
-      icon: 'fa-vcard',
-      description: 'A card with content',
-      properties: {
-        classData: { type: 'text', label: 'Class', required: false },
-        title: { type: 'text', label: 'Title', required: false, default: 'Card Title' },
-        icon: { type: 'text', label: 'Icon', required: false, default: '' },
-        link: { type: 'text', label: 'Link', required: false, default: '' },
-        linkTitle: { type: 'text', label: 'Link Title', required: false, default: '' },
-        linkIcon: { type: 'text', label: 'Link Icon', required: false }
+        view: { type: 'select', label: 'View', options: ['default', 'vertical'] , default: 'default'}
       }
     });
 
@@ -752,6 +757,13 @@ class WidgetRegistry {
       }
     });
 
+    // itemsSearchForm
+    // itemFields
+    // itemFileList
+    // itemMembersList
+    // itemRelationshipsList
+    // activityList
+
     this.register('addItemButton', {
       name: 'Add Item Button',
       category: 'Collections',
@@ -763,6 +775,10 @@ class WidgetRegistry {
         class: { type: 'text', label: 'CSS Class' }
       }
     });
+
+    // myAccountDetails
+    // myEmailPreferences
+    // myOrderHistory
 
     // Other widgets
     this.register('logo', {
