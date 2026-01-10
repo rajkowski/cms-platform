@@ -494,6 +494,11 @@
     box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.25);
   }
   
+  .property-input.error {
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25) !important;
+  }
+  
   select.property-input {
     background: var(--editor-bg);
     color: var(--editor-text);
@@ -1097,6 +1102,7 @@
   <div id="editor-toolbar">
     <!-- Left Section -->
     <div class="toolbar-section left">
+      <button id="add-page-btn" class="button tiny success no-gap radius"><i class="${font:far()} fa-file-plus"></i> Add a Page</button>
       <button id="add-row-btn" class="button tiny primary no-gap radius"><i class="${font:far()} fa-plus"></i> Add Row</button>
       <button id="undo-btn" class="button tiny secondary no-gap radius" disabled><i class="${font:far()} fa-undo"></i> Undo</button>
       <button id="redo-btn" class="button tiny secondary no-gap radius" disabled><i class="${font:far()} fa-redo"></i> Redo</button>
@@ -1279,6 +1285,33 @@
       </div>
     </div>
     
+  </div>
+</div>
+
+<!-- Add Page Modal -->
+<div id="add-page-modal" class="modal-overlay" style="display:none;">
+  <div class="modal-content" style="max-width: 500px;">
+    <h4>New Page</h4>
+    <form id="add-page-form">
+      <div class="property-group">
+        <label class="property-label" for="page-title">Title of Page</label>
+        <input type="text" id="page-title" class="property-input" placeholder="Enter page title" required />
+      </div>
+      <div class="property-group">
+        <label class="property-label" for="page-link">Link</label>
+        <input type="text" id="page-link" class="property-input" placeholder="/page-url" required />
+        <div id="page-link-error" style="color: #dc3545; font-size: 12px; margin-top: 5px; display: none;">
+          Link must start with a forward slash (/)
+        </div>
+        <div style="font-size: 12px; color: #6c757d; margin-top: 5px;">
+          The URL path for this page (e.g., /about, /contact, /products/new)
+        </div>
+      </div>
+      <div style="text-align: right; margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+        <button type="button" id="cancel-add-page" class="button tiny secondary radius">Cancel</button>
+        <button type="submit" id="create-page-btn" class="button tiny success radius">Create Page</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -1592,6 +1625,23 @@
     // Set up middle section button handlers
     const returnPage = '<c:out value="${returnPage}" />';
     
+    // Add Page button handler
+    document.getElementById('add-page-btn').addEventListener('click', async function(e) {
+      e.preventDefault();
+      
+      // Check if editor has unsaved changes
+      const isDirty = window.pageEditor.isDirty && window.pageEditor.isDirty();
+      if (isDirty) {
+        const confirmed = await window.pageEditor.showConfirmDialog('You have unsaved changes. Are you sure you want to create a new page?');
+        if (!confirmed) {
+          return;
+        }
+      }
+      
+      // Show the add page modal
+      showAddPageModal();
+    });
+    
     // Web Page Info button
     document.getElementById('web-page-info-btn').addEventListener('click', function(e) {
       e.preventDefault();
@@ -1629,16 +1679,6 @@
     // Hide modal
     document.getElementById('close-pre-designed-page-modal').addEventListener('click', function() {
       closePreDesignedPageModal();
-    });
-    
-    // Close modal on ESC key
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') {
-        const modal = document.getElementById('pre-designed-page-modal');
-        if (modal && modal.classList.contains('active')) {
-          closePreDesignedPageModal();
-        }
-      }
     });
     
     // Handle template selection
@@ -1737,6 +1777,204 @@
       const finalHeight = Math.max(availableHeight, 300);
       container.style.height = finalHeight + 'px';
     }
+
+    // Add Page Modal Functions
+    function showAddPageModal() {
+      const modal = document.getElementById('add-page-modal');
+      const titleInput = document.getElementById('page-title');
+      const linkInput = document.getElementById('page-link');
+      const errorDiv = document.getElementById('page-link-error');
+      
+      // Clear previous values and errors
+      titleInput.value = '';
+      linkInput.value = '';
+      errorDiv.style.display = 'none';
+      linkInput.classList.remove('error');
+      
+      // Show modal
+      modal.classList.add('active');
+      modal.style.display = 'flex';
+      
+      // Focus on title input
+      setTimeout(() => {
+        titleInput.focus();
+      }, 100);
+    }
+
+    function hideAddPageModal() {
+      const modal = document.getElementById('add-page-modal');
+      modal.classList.remove('active');
+      modal.style.display = 'none';
+    }
+
+    // Make functions globally accessible
+    window.showAddPageModal = showAddPageModal;
+    window.hideAddPageModal = hideAddPageModal;
+    window.createNewPage = createNewPage;
+
+    function validatePageLink(link) {
+      // Must start with /
+      if (!link.startsWith('/')) {
+        return false;
+      }
+      
+      // Basic validation - no spaces, valid URL characters
+      const validLinkPattern = /^\/[a-zA-Z0-9\-_\/]*$/;
+      return validLinkPattern.test(link);
+    }
+
+    function generateLinkFromTitle(title) {
+      if (!title) return '';
+      
+      // Convert title to URL-friendly format
+      return '/' + title
+        .toLowerCase()
+        .replace(/[^a-z0-9\s\-_]/g, '') // Remove special characters
+        .replace(/\s+/g, '-') // Replace spaces with hyphens
+        .replace(/\-+/g, '-') // Replace multiple hyphens with single
+        .replace(/^\-|\-$/g, ''); // Remove leading/trailing hyphens
+    }
+
+    // Set up Add Page Modal event listeners
+    document.getElementById('cancel-add-page').addEventListener('click', hideAddPageModal);
+    
+    // Auto-generate link from title
+    document.getElementById('page-title').addEventListener('input', function(e) {
+      const linkInput = document.getElementById('page-link');
+      if (!linkInput.value || linkInput.dataset.autoGenerated !== 'false') {
+        const generatedLink = generateLinkFromTitle(e.target.value);
+        linkInput.value = generatedLink;
+        linkInput.dataset.autoGenerated = 'true';
+      }
+    });
+    
+    // Mark link as manually edited when user types in it
+    document.getElementById('page-link').addEventListener('input', function(e) {
+      e.target.dataset.autoGenerated = 'false';
+      
+      // Clear error state when user starts typing
+      const errorDiv = document.getElementById('page-link-error');
+      errorDiv.style.display = 'none';
+      e.target.classList.remove('error');
+    });
+    
+    // Handle form submission
+    document.getElementById('add-page-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const titleInput = document.getElementById('page-title');
+      const linkInput = document.getElementById('page-link');
+      const errorDiv = document.getElementById('page-link-error');
+      const createBtn = document.getElementById('create-page-btn');
+      
+      const title = titleInput.value.trim();
+      const link = linkInput.value.trim();
+      
+      // Validate inputs
+      if (!title) {
+        titleInput.focus();
+        return;
+      }
+      
+      if (!link) {
+        linkInput.focus();
+        return;
+      }
+      
+      if (!validatePageLink(link)) {
+        errorDiv.style.display = 'block';
+        linkInput.classList.add('error');
+        linkInput.style.borderColor = '#dc3545';
+        linkInput.focus();
+        return;
+      }
+      
+      // Check if page already exists
+      const existingPage = window.pageEditor.pagesTabManager.pages.find(page => page.link === link);
+      if (existingPage) {
+        errorDiv.textContent = 'A page with this link already exists';
+        errorDiv.style.display = 'block';
+        linkInput.classList.add('error');
+        linkInput.style.borderColor = '#dc3545';
+        linkInput.focus();
+        return;
+      }
+      
+      // Check if we're already editing a new page with this link
+      if (window.pageEditor.pagesTabManager.selectedPageId === 'new' && 
+          window.pageEditor.pagesTabManager.selectedPageLink === link) {
+        errorDiv.textContent = 'You are already editing a page with this link';
+        errorDiv.style.display = 'block';
+        linkInput.classList.add('error');
+        linkInput.style.borderColor = '#dc3545';
+        linkInput.focus();
+        return;
+      }
+      
+      // Disable create button to prevent double submission
+      createBtn.disabled = true;
+      createBtn.innerHTML = '<i class="far fa-spinner fa-spin"></i> Creating...';
+      
+      // Create the new page
+      createNewPage(title, link);
+    });
+    
+    function createNewPage(title, link) {
+      console.log('Creating new page:', title, link);
+      
+      // Hide the modal
+      hideAddPageModal();
+      
+      // Switch to the Pages tab to show the new page
+      const pagesTab = document.querySelector('a[href="#pages-tab"]');
+      const pagesTabContent = document.getElementById('pages-tab');
+      
+      if (pagesTab && pagesTabContent) {
+        // Remove active class from all tabs
+        document.querySelectorAll('.tabs-nav a').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        
+        // Activate the Pages tab
+        pagesTab.classList.add('active');
+        pagesTabContent.classList.add('active');
+        
+        console.log('Switched to Pages tab');
+      }
+      
+      // Use the PageEditor's createNewPage method
+      if (window.pageEditor && typeof window.pageEditor.createNewPage === 'function') {
+        window.pageEditor.createNewPage(title, link);
+      } else {
+        console.error('PageEditor createNewPage method not available');
+      }
+      
+      // Re-enable create button for next time
+      const createBtn = document.getElementById('create-page-btn');
+      createBtn.disabled = false;
+      createBtn.innerHTML = 'Create Page';
+    }
+
+    // Close modal on ESC key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        const addPageModal = document.getElementById('add-page-modal');
+        if (addPageModal && addPageModal.classList.contains('active')) {
+          hideAddPageModal();
+        }
+        
+        const modal = document.getElementById('pre-designed-page-modal');
+        if (modal && modal.classList.contains('active')) {
+          closePreDesignedPageModal();
+        }
+      }
+    });
+
+    // Close modal on overlay click
+    document.getElementById('add-page-modal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        hideAddPageModal();
+      }
+    });
     
     // Calculate height on load
     calculateContainerHeight();

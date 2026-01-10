@@ -113,6 +113,7 @@ class PageEditor {
       palette: document.getElementById('widget-palette'),
       properties: document.getElementById('properties-panel'),
       toolbar: document.getElementById('editor-toolbar'),
+      addPageBtn: document.getElementById('add-page-btn'),
       addRowBtn: document.getElementById('add-row-btn'),
       undoBtn: document.getElementById('undo-btn'),
       redoBtn: document.getElementById('redo-btn'),
@@ -131,6 +132,7 @@ class PageEditor {
    */
   setupEventListeners() {
     // Toolbar buttons
+    this.elements.addPageBtn.addEventListener('click', () => this.handleAddPage());
     this.elements.addRowBtn.addEventListener('click', () => this.addRow());
     this.elements.undoBtn.addEventListener('click', () => this.undo());
     this.elements.redoBtn.addEventListener('click', () => this.redo());
@@ -189,6 +191,99 @@ class PageEditor {
     
     // Re-initialize drag and drop for the new items
     this.dragDropManager.initPaletteItems();
+  }
+
+  /**
+   * Create a new page and switch to editing it
+   */
+  createNewPage(title, link) {
+    console.log('Creating new page:', title, link);
+    
+    // Update the editor to work on the new page
+    this.config.webPageLink = link;
+    this.config.existingXml = '';
+    this.config.hasExistingLayout = false;
+    
+    // Clear current layout
+    this.layoutManager.structure = { rows: [] };
+    
+    // Update the pages tab to show the new page
+    this.pagesTabManager.selectedPageId = 'new';
+    this.pagesTabManager.selectedPageLink = link;
+    
+    // Re-render the pages list to include the new page
+    const currentPages = this.pagesTabManager.pages || [];
+    this.pagesTabManager.renderPageList(currentPages);
+    
+    // Set up empty canvas for new page
+    const canvas = this.elements.canvas;
+    canvas.innerHTML = `
+      <div class="empty-canvas" style="cursor: pointer;">
+        <i class="far fa-plus-circle fa-3x margin-bottom-10"></i>
+        <h5>Start Building "${title}"</h5>
+        <p>Click "Add Row" to begin or drag widgets from the palette</p>
+      </div>
+    `;
+    
+    // Set up click handler for empty canvas
+    const emptyCanvas = canvas.querySelector('.empty-canvas');
+    if (emptyCanvas) {
+      emptyCanvas.addEventListener('click', () => this.addRow());
+    }
+    
+    // Reset history for new page
+    this.history = [];
+    this.historyIndex = -1;
+    this.saveToHistory();
+    
+    // Set baseline for dirty detection
+    this.setSavedState();
+    
+    // Update save indicator
+    this.updateSaveIndicator();
+    
+    // Show loading indicator briefly for feedback
+    this.showLoadingIndicator('Setting up new page...');
+    setTimeout(() => {
+      this.hideLoadingIndicator();
+    }, 500);
+    
+    // Dispatch page changed event
+    document.dispatchEvent(new CustomEvent('pageChanged', { detail: { pageLink: link } }));
+    
+    console.log('New page created and ready for editing');
+  }
+
+  /**
+   * Handle the Add Page button click
+   */
+  async handleAddPage() {
+    console.log('Add Page button clicked');
+    
+    // Check if editor has unsaved changes
+    if (this.isDirty()) {
+      console.log('Editor has unsaved changes, showing confirmation dialog');
+      const confirmed = await this.showConfirmDialog('You have unsaved changes. Are you sure you want to create a new page?');
+      console.log('Confirmation result:', confirmed);
+      
+      if (!confirmed) {
+        console.log('User cancelled, not showing Add Page modal');
+        return;
+      }
+      
+      console.log('User confirmed, proceeding to show Add Page modal');
+    }
+    
+    // Small delay to ensure any previous modals are fully cleaned up
+    setTimeout(() => {
+      // Trigger the modal show function (defined in the JSP)
+      if (typeof window.showAddPageModal === 'function') {
+        console.log('Calling showAddPageModal');
+        window.showAddPageModal();
+      } else {
+        console.error('showAddPageModal function not found');
+      }
+    }, 50);
   }
 
   /**
@@ -311,17 +406,19 @@ class PageEditor {
    */
   showConfirmDialog(message) {
     return new Promise((resolve) => {
-      // Create modal overlay
+      // Create modal overlay with unique ID to ensure we can find and remove it
       const modalOverlay = document.createElement('div');
-      modalOverlay.className = 'modal-overlay active';
+      const modalId = 'confirm-dialog-' + Date.now();
+      modalOverlay.id = modalId;
+      modalOverlay.className = 'modal-overlay active confirm-dialog-modal';
       modalOverlay.style.cssText = `
-        z-index: 10000;
+        z-index: 10001;
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 0, 0, 0.5);
+        background: rgba(0, 0, 0, 0.6);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -332,17 +429,20 @@ class PageEditor {
       modalContent.className = 'modal-content';
       modalContent.style.cssText = `
         max-width: 400px;
-        background: white;
+        background: var(--editor-bg);
+        color: var(--editor-text);
         padding: 30px;
         border-radius: 8px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         text-align: center;
+        position: relative;
+        z-index: 10002;
       `;
 
       // Add message
       const messageEl = document.createElement('p');
       messageEl.textContent = message;
-      messageEl.style.cssText = 'margin: 0 0 20px 0; font-size: 16px; line-height: 1.4;';
+      messageEl.style.cssText = 'margin: 0 0 20px 0; font-size: 16px; line-height: 1.4; color: var(--editor-text);';
       modalContent.appendChild(messageEl);
 
       // Create button container
@@ -353,7 +453,7 @@ class PageEditor {
       const cancelBtn = document.createElement('button');
       cancelBtn.textContent = 'Cancel';
       cancelBtn.className = 'btn btn-secondary';
-      cancelBtn.style.cssText = 'padding: 8px 16px; border: 1px solid #ccc; background: #f8f9fa; cursor: pointer; border-radius: 4px;';
+      cancelBtn.style.cssText = 'padding: 8px 16px; border: 1px solid var(--editor-border); background: var(--editor-panel-bg); color: var(--editor-text); cursor: pointer; border-radius: 4px;';
 
       // Confirm button
       const confirmBtn = document.createElement('button');
@@ -361,20 +461,49 @@ class PageEditor {
       confirmBtn.className = 'btn btn-danger';
       confirmBtn.style.cssText = 'padding: 8px 16px; border: none; background: #dc3545; color: white; cursor: pointer; border-radius: 4px;';
 
+      let isResolved = false; // Prevent multiple resolutions
+
       const closeHandler = (confirmed) => {
-        document.body.removeChild(modalOverlay);
+        if (isResolved) return; // Prevent multiple calls
+        isResolved = true;
+        
+        console.log('Closing confirm dialog with result:', confirmed);
+        
+        // Remove event listeners first
         document.removeEventListener('keydown', escHandler);
-        resolve(confirmed);
+        cancelBtn.removeEventListener('click', cancelHandler);
+        confirmBtn.removeEventListener('click', confirmHandler);
+        modalOverlay.removeEventListener('click', overlayClickHandler);
+        
+        // Find and remove the modal by ID
+        const modalToRemove = document.getElementById(modalId);
+        if (modalToRemove && document.body.contains(modalToRemove)) {
+          document.body.removeChild(modalToRemove);
+          console.log('Confirm dialog removed from DOM');
+        }
+        
+        // Also try to remove by class name as backup
+        const confirmDialogs = document.querySelectorAll('.confirm-dialog-modal');
+        confirmDialogs.forEach(dialog => {
+          if (document.body.contains(dialog)) {
+            document.body.removeChild(dialog);
+          }
+        });
+        
+        // Small delay to ensure DOM cleanup before resolving
+        setTimeout(() => {
+          resolve(confirmed);
+        }, 10);
       };
 
-      cancelBtn.addEventListener('click', () => closeHandler(false));
-      confirmBtn.addEventListener('click', () => closeHandler(true));
-
-      buttonContainer.appendChild(cancelBtn);
-      buttonContainer.appendChild(confirmBtn);
-      modalContent.appendChild(buttonContainer);
-
-      modalOverlay.appendChild(modalContent);
+      // Define handlers separately to ensure proper cleanup
+      const cancelHandler = () => closeHandler(false);
+      const confirmHandler = () => closeHandler(true);
+      const overlayClickHandler = (e) => {
+        if (e.target === modalOverlay) {
+          closeHandler(false);
+        }
+      };
 
       // Handler for the Escape key
       const escHandler = (e) => {
@@ -383,16 +512,28 @@ class PageEditor {
         }
       };
 
-      // Close on overlay click
-      modalOverlay.addEventListener('click', (e) => {
-        if (e.target === modalOverlay) {
-          closeHandler(false);
-        }
-      });
+      // Add event listeners
+      cancelBtn.addEventListener('click', cancelHandler);
+      confirmBtn.addEventListener('click', confirmHandler);
+      modalOverlay.addEventListener('click', overlayClickHandler);
+      document.addEventListener('keydown', escHandler);
+
+      buttonContainer.appendChild(cancelBtn);
+      buttonContainer.appendChild(confirmBtn);
+      modalContent.appendChild(buttonContainer);
+      modalOverlay.appendChild(modalContent);
 
       // Add to DOM and show
       document.body.appendChild(modalOverlay);
-      document.addEventListener('keydown', escHandler);
+      
+      // Focus the confirm button for better UX
+      setTimeout(() => {
+        if (!isResolved) {
+          confirmBtn.focus();
+        }
+      }, 100);
+      
+      console.log('Confirm dialog created and added to DOM');
     });
   }
 
