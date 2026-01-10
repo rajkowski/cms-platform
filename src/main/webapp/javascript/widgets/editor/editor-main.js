@@ -682,7 +682,7 @@ class PageEditor {
 
       const cancelBtn = document.createElement('button');
       cancelBtn.textContent = 'Cancel';
-      cancelBtn.className = 'button tiny secondary';
+      cancelBtn.className = 'button tiny secondary radius';
       cancelBtn.style.cssText = `
         padding: 8px 15px;
       `;
@@ -949,7 +949,7 @@ class PageEditor {
     // Copy button
     const copyBtn = document.createElement('button');
     copyBtn.textContent = 'Copy to Clipboard';
-    copyBtn.className = 'button tiny primary';
+    copyBtn.className = 'button tiny primary radius';
     copyBtn.style.cssText = 'padding: 8px 15px;';
     copyBtn.addEventListener('click', () => {
       xmlTextarea.select();
@@ -963,7 +963,7 @@ class PageEditor {
     // Close button
     const closeBtn = document.createElement('button');
     closeBtn.textContent = 'Close';
-    closeBtn.className = 'button tiny secondary';
+    closeBtn.className = 'button tiny secondary radius';
     closeBtn.style.cssText = 'padding: 8px 15px;';
 
     const closeHandler = () => {
