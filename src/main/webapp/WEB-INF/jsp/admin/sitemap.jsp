@@ -304,7 +304,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   function showAddMenuModal() {
-    document.getElementById('add-menu-modal').style.display = 'block';
+    document.getElementById('add-menu-modal').style.display = 'flex';
     document.getElementById('new-menu-name').focus();
   }
 
