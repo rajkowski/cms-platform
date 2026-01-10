@@ -540,6 +540,9 @@ class PropertiesPanel {
    * Show widget properties
    */
   showWidgetProperties(rowId, columnId, widgetId) {
+    // Clean up any existing TinyMCE editors
+    this.cleanupHtmlEditors();
+    
     // Clear any previously highlighted row or column
     this.clearHighlight();
     
@@ -705,6 +708,9 @@ class PropertiesPanel {
 
     // Initialize color pickers
     this.initColorPickers(rowId, columnId, widgetId, definition);
+    
+    // Initialize HTML editors (TinyMCE)
+    this.initHtmlEditors(rowId, columnId, widgetId, definition);
     
     // Initialize XML properties
     this.initXmlProperties(rowId, columnId, widgetId, definition);
@@ -1004,6 +1010,81 @@ class PropertiesPanel {
   }
 
   /**
+   * Initialize HTML editors (TinyMCE) for any html type properties
+   */
+  initHtmlEditors(rowId, columnId, widgetId, widgetDef) {
+    const htmlFields = this.content.querySelectorAll('textarea.html-editor-field');
+    const self = this;
+    
+    if (!htmlFields || htmlFields.length === 0) return;
+    
+    // Check if TinyMCE is available
+    if (typeof tinymce === 'undefined') {
+      console.warn('TinyMCE is not loaded');
+      return;
+    }
+    
+    htmlFields.forEach(textarea => {
+      const propName = textarea.id.replace('prop-', '');
+      
+      // Initialize TinyMCE on this textarea
+      tinymce.init({
+        target: textarea,
+        inline: false,
+        menubar: false,
+        branding: false,
+        height: 200,
+        plugins: 'fullscreen link lists code',
+        toolbar: 'fullscreen | blocks | bold italic underline | alignleft aligncenter alignright | bullist numlist hr | link | code',
+        content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 14px; }',
+        setup: function(editor) {
+          editor.on('change', function() {
+            // Update the textarea value
+            editor.save();
+            
+            // Save to widget data
+            const widgetData = self.editor.getLayoutManager().getWidget(rowId, columnId, widgetId);
+            if (widgetData && widgetDef && widgetDef.properties && widgetDef.properties[propName]) {
+              widgetData.properties[propName] = textarea.value;
+              
+              if (self.editor.getCanvasController) {
+                const row = self.editor.getLayoutManager().getRow(rowId);
+                self.editor.getCanvasController().renderRow(rowId, row);
+                
+                // Re-highlight the widget after re-render
+                setTimeout(() => {
+                  const rowElement = document.querySelector(`[data-row-id="${rowId}"]`);
+                  if (rowElement) {
+                    const columnElement = rowElement.querySelector(`[data-column-id="${columnId}"]`);
+                    if (columnElement) {
+                      const widgetElement = columnElement.querySelector(`[data-widget-id="${widgetId}"]`);
+                      if (widgetElement) {
+                        widgetElement.classList.add('selected');
+                      }
+                    }
+                  }
+                }, 0);
+              }
+              
+              if (self.editor.saveToHistory) {
+                self.editor.saveToHistory();
+              }
+              
+              // Enhancement: Auto-refresh preview when property is edited and preview is active
+              self.refreshPreviewIfActive();
+            }
+          });
+          
+          // Also handle blur event for when user clicks away
+          editor.on('blur', function() {
+            editor.save();
+          });
+        }
+      });
+    });
+  }
+
+  /**
    * Render a property field
    */
   renderPropertyField(name, definition, value, pageLink = 'page') {
@@ -1032,14 +1113,15 @@ class PropertiesPanel {
         html += `<input type="text" class="property-input" id="prop-${name}" value="${this.escapeHtml(displayValue)}" ${definition.required ? 'required' : ''} />`;
         break;
       
-      case 'color':
-        html += `<div class="property-label">${definition.label}${definition.required ? ' *' : ''}</div>`;
-        html += `<input type="text" class="property-input" data-type="color" id="prop-${name}" value="${this.escapeHtml(displayValue)}" />`;
-        break;
-
       case 'textarea':
         html += `<div class="property-label">${definition.label}${definition.required ? ' *' : ''}</div>`;
         html += `<textarea class="property-input" id="prop-${name}" rows="5" ${definition.required ? 'required' : ''}>${this.escapeHtml(displayValue)}</textarea>`;
+        break;
+        
+      case 'html':
+        html += `<div class="property-label">${definition.label}${definition.required ? ' *' : ''}</div>`;
+        html += `<div id="tinymce-container-${name}" class="tinymce-editor-container"></div>`;
+        html += `<textarea class="property-input html-editor-field" id="prop-${name}" rows="5" ${definition.required ? 'required' : ''}>${this.escapeHtml(displayValue)}</textarea>`;
         break;
         
       case 'number':
@@ -1052,6 +1134,11 @@ class PropertiesPanel {
         html += `<label><input type="checkbox" id="prop-${name}" ${checked} /> ${definition.label}${definition.required ? ' *' : ''}</label>`;
         break;
       }
+
+      case 'color':
+        html += `<div class="property-label">${definition.label}${definition.required ? ' *' : ''}</div>`;
+        html += `<input type="text" class="property-input" data-type="color" id="prop-${name}" value="${this.escapeHtml(displayValue)}" />`;
+        break;
         
       case 'select':
         html += `<div class="property-label">${definition.label}${definition.required ? ' *' : ''}</div>`;
@@ -1065,14 +1152,14 @@ class PropertiesPanel {
         html += '</select>';
         break;
         
-      case 'xml':
-        html += this.renderXmlProperty(name, definition, value);
-        break;
-        
       case 'contentUniqueId':
         html += this.renderContentUniqueIdProperty(name, definition, displayValue, pageLink);
         break;
-        
+
+      case 'xml':
+        html += this.renderXmlProperty(name, definition, value);
+        break;
+                
       default:
         html += `<div class="property-label">${definition.label}${definition.required ? ' *' : ''}</div>`;
         html += `<input type="text" class="property-input" id="prop-${name}" value="${this.escapeHtml(displayValue)}" />`;
@@ -1120,7 +1207,7 @@ class PropertiesPanel {
     html += `</div>`;
     
     // Add button
-    html += `<button type="button" id="add-${name}" class="button small" style="margin-top:10px;">Add ${itemName}</button>`;
+    html += `<button type="button" id="add-${name}" class="button small radius" style="margin-top:10px;">Add ${itemName}</button>`;
     
     // Hidden storage for array data
     html += `<input type="hidden" id="prop-${name}" data-items-count="${items.length}" />`;
@@ -1429,9 +1516,27 @@ class PropertiesPanel {
    * Clear properties panel
    */
   clear() {
+    // Clean up TinyMCE editors before clearing content
+    this.cleanupHtmlEditors();
+    
     this.currentContext = null;
     this.clearHighlight();
     this.content.innerHTML = '<p style="color: #6c757d; font-size: 14px;">Select an element to edit its properties</p>';
+  }
+  
+  /**
+   * Cleanup TinyMCE editors
+   */
+  cleanupHtmlEditors() {
+    if (typeof tinymce !== 'undefined') {
+      const htmlFields = this.content.querySelectorAll('textarea.html-editor-field');
+      htmlFields.forEach(textarea => {
+        const editor = tinymce.get(textarea.id);
+        if (editor) {
+          editor.remove();
+        }
+      });
+    }
   }
   
   /**
@@ -1442,8 +1547,8 @@ class PropertiesPanel {
     html += `<div class="property-label">${definition.label}${definition.required ? ' *' : ''}</div>`;
     html += `<div style="display:flex;gap:5px;margin-bottom:5px;">`;
     html += `<input type="text" class="property-input" id="prop-${name}" value="${this.escapeHtml(value)}" style="flex:1;" />`;
-    html += `<button type="button" class="button small" id="browse-content-${name}" style="white-space:nowrap;">Browse</button>`;
-    html += `<button type="button" class="button small" id="edit-content-${name}" style="white-space:nowrap;display:none;">Edit</button>`;
+    html += `<button type="button" class="button small radius" id="browse-content-${name}" style="white-space:nowrap;">Browse</button>`;
+    html += `<button type="button" class="button small radius" id="edit-content-${name}" style="white-space:nowrap;display:none;">Edit</button>`;
     html += `</div>`;
     html += `</div>`;
     
@@ -1519,7 +1624,7 @@ class PropertiesPanel {
             </div>
           </div>
           <div style="text-align:right;">
-            <button type="button" class="button tiny secondary" id="close-content-browser-modal">Cancel</button>
+            <button type="button" class="button tiny secondary radius" id="close-content-browser-modal">Cancel</button>
           </div>
         </div>
       `;
