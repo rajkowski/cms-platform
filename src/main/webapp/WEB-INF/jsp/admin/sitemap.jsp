@@ -97,11 +97,23 @@
                 <div class="menu-tab-name" contenteditable="${!status.first}" data-original="<c:out value='${menuTab.name}' />">
                   <c:out value="${menuTab.name}" />
                 </div>
+                <%-- @todo status.first does not need input fields --%>
                 <div class="menu-tab-link">
                   <input type="text" class="link-input no-gap" value="<c:out value='${menuTab.link}' />" placeholder="/page-url" data-original="<c:out value='${menuTab.link}' />">
+                  <button type="button" class="btn-icon pick-link-btn" title="Pick from pages" style="margin-left: 5px;">
+                    <i class="fa fa-search"></i>
+                  </button>
                 </div>
                 <div class="menu-tab-icon">
                   <input type="text" class="icon-input no-gap" value="<c:out value='${menuTab.icon}' />" placeholder="fa-icon" data-original="<c:out value='${menuTab.icon}' />">
+                  <button type="button" class="btn-icon pick-icon-btn" title="Pick an icon" style="margin-left: 5px;">
+                    <i class="fa fa-icons"></i>
+                  </button>
+                  <c:if test="${!empty menuTab.icon}">
+                    <span class="icon-preview" style="margin-left: 8px; font-size: 20px;">
+                      <i class="fa ${menuTab.icon}"></i>
+                    </span>
+                  </c:if>
                 </div>
               </div>
               <div class="menu-tab-actions">
@@ -126,7 +138,12 @@
                       <div class="menu-item-name" contenteditable="true" data-original="<c:out value='${menuItem.name}' />">
                         <c:out value="${menuItem.name}" />
                       </div>
-                      <input type="text" class="menu-item-link no-gap" value="<c:out value='${menuItem.link}' />" placeholder="/page-url" data-original="<c:out value='${menuItem.link}' />">
+                      <div style="display: flex; align-items: center; gap: 5px;">
+                        <input type="text" class="menu-item-link no-gap" value="<c:out value='${menuItem.link}' />" placeholder="/page-url" data-original="<c:out value='${menuItem.link}' />" style="flex: 1;">
+                        <button type="button" class="btn-icon pick-item-link-btn" title="Pick from pages">
+                          <i class="fa fa-search"></i>
+                        </button>
+                      </div>
                     </div>
                     <div class="menu-item-actions">
                       <button type="button" class="btn-icon delete-item-btn" title="Delete item">
@@ -158,20 +175,35 @@
       </div>
       <div class="form-group">
         <label>Page Link</label>
-        <input type="text" id="new-menu-link" placeholder="/page-url">
+        <div style="display: flex; gap: 5px;">
+          <input type="text" id="new-menu-link" placeholder="/page-url" style="flex: 1;">
+          <button type="button" id="pick-new-menu-link-btn" class="button small radius" title="Pick from pages">
+            <i class="fa fa-search"></i>
+          </button>
+        </div>
       </div>
       <div class="form-group">
         <label>Icon</label>
-        <input type="text" id="new-menu-icon" placeholder="fa-icon">
+        <div style="display: flex; gap: 5px; align-items: center;">
+          <input type="text" id="new-menu-icon" placeholder="fa-icon" style="flex: 1;">
+          <button type="button" id="pick-new-menu-icon-btn" class="button small radius" title="Pick an icon">
+            <i class="fa fa-icons"></i>
+          </button>
+          <span id="new-menu-icon-preview" style="font-size: 20px; min-width: 30px; text-align: center;"></span>
+        </div>
       </div>
       <div class="modal-actions">
-        <button type="submit" class="button success">Add Menu</button>
-        <button type="button" class="button secondary cancel-btn">Cancel</button>
+        <button type="submit" class="button success radius">Add Menu</button>
+        <button type="button" class="button secondary radius cancel-btn">Cancel</button>
       </div>
     </form>
   </div>
 </div>
 <web:script package="dragula" file="dragula.min.js" />
+<g:compress>
+  <script src="${ctx}/javascript/icon-picker-modal.js"></script>
+  <script src="${ctx}/javascript/page-link-picker-modal.js"></script>
+</g:compress>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   var widgetId = '${widgetContext.uniqueId}';
@@ -300,6 +332,67 @@ document.addEventListener('DOMContentLoaded', function() {
       deleteMenuItem(e.target.closest('.menu-item'));
     } else if (e.target.closest('.add-item-btn')) {
       addMenuItem(e.target.closest('.menu-tab'));
+    } else if (e.target.closest('.pick-icon-btn')) {
+      // Icon picker for menu tab
+      const tabElement = e.target.closest('.menu-tab');
+      const iconInput = tabElement.querySelector('.icon-input');
+      const iconPreview = tabElement.querySelector('.icon-preview');
+      
+      if (window.iconPickerModal && iconInput) {
+        window.iconPickerModal.show((selectedIcon) => {
+          iconInput.value = selectedIcon;
+          
+          // Update or create preview
+          if (iconPreview) {
+            if (selectedIcon) {
+              iconPreview.innerHTML = `<i class="fa ${selectedIcon}"></i>`;
+              iconPreview.style.display = 'inline';
+            } else {
+              iconPreview.style.display = 'none';
+            }
+          } else if (selectedIcon) {
+            // Create preview if it doesn't exist
+            const newPreview = document.createElement('span');
+            newPreview.className = 'icon-preview';
+            newPreview.style.cssText = 'margin-left: 8px; font-size: 20px;';
+            newPreview.innerHTML = `<i class="fa ${selectedIcon}"></i>`;
+            iconInput.parentElement.appendChild(newPreview);
+          }
+          
+          markChanged();
+          if (!isUpdatingFromPreview) {
+            updatePreview();
+          }
+        }, iconInput.value);
+      }
+    } else if (e.target.closest('.pick-link-btn')) {
+      // Link picker for menu tab
+      const tabElement = e.target.closest('.menu-tab');
+      const linkInput = tabElement.querySelector('.link-input');
+      
+      if (window.pageLinkPickerModal && linkInput) {
+        window.pageLinkPickerModal.show((selectedLink) => {
+          linkInput.value = selectedLink;
+          markChanged();
+          if (!isUpdatingFromPreview) {
+            updatePreview();
+          }
+        }, linkInput.value);
+      }
+    } else if (e.target.closest('.pick-item-link-btn')) {
+      // Link picker for menu item
+      const itemElement = e.target.closest('.menu-item');
+      const linkInput = itemElement.querySelector('.menu-item-link');
+      
+      if (window.pageLinkPickerModal && linkInput) {
+        window.pageLinkPickerModal.show((selectedLink) => {
+          linkInput.value = selectedLink;
+          markChanged();
+          if (!isUpdatingFromPreview) {
+            updatePreview();
+          }
+        }, linkInput.value);
+      }
     }
   });
 
@@ -311,7 +404,57 @@ document.addEventListener('DOMContentLoaded', function() {
   function hideAddMenuModal() {
     document.getElementById('add-menu-modal').style.display = 'none';
     document.getElementById('add-menu-form').reset();
+    // Clear icon preview
+    const iconPreview = document.getElementById('new-menu-icon-preview');
+    if (iconPreview) {
+      iconPreview.innerHTML = '';
+    }
   }
+  
+  // Set up icon picker for new menu modal
+  document.getElementById('pick-new-menu-icon-btn').addEventListener('click', function(e) {
+    e.preventDefault();
+    const iconInput = document.getElementById('new-menu-icon');
+    const iconPreview = document.getElementById('new-menu-icon-preview');
+    
+    if (window.iconPickerModal) {
+      window.iconPickerModal.show((selectedIcon) => {
+        iconInput.value = selectedIcon;
+        if (iconPreview) {
+          if (selectedIcon) {
+            iconPreview.innerHTML = `<i class="fa ${selectedIcon}"></i>`;
+          } else {
+            iconPreview.innerHTML = '';
+          }
+        }
+      }, iconInput.value);
+    }
+  });
+  
+  // Update icon preview when typing manually
+  document.getElementById('new-menu-icon').addEventListener('input', function() {
+    const iconPreview = document.getElementById('new-menu-icon-preview');
+    if (iconPreview) {
+      const iconClass = this.value.trim();
+      if (iconClass) {
+        iconPreview.innerHTML = `<i class="fa ${iconClass}"></i>`;
+      } else {
+        iconPreview.innerHTML = '';
+      }
+    }
+  });
+  
+  // Set up link picker for new menu modal
+  document.getElementById('pick-new-menu-link-btn').addEventListener('click', function(e) {
+    e.preventDefault();
+    const linkInput = document.getElementById('new-menu-link');
+    
+    if (window.pageLinkPickerModal) {
+      window.pageLinkPickerModal.show((selectedLink) => {
+        linkInput.value = selectedLink;
+      }, linkInput.value);
+    }
+  });
 
   function addMenuTab() {
     var name = document.getElementById('new-menu-name').value.trim();
@@ -424,9 +567,16 @@ document.addEventListener('DOMContentLoaded', function() {
           '<div class="menu-tab-name" contenteditable="' + (!isHome) + '" data-original="' + name + '">' + name + '</div>' +
           '<div class="menu-tab-link">' +
             '<input type="text" class="link-input no-gap" value="' + link + '" placeholder="/page-url" data-original="' + link + '">' +
+            '<button type="button" class="btn-icon pick-link-btn" title="Pick from pages" style="margin-left: 5px;">' +
+              '<i class="fa fa-search"></i>' +
+            '</button>' +
           '</div>' +
           '<div class="menu-tab-icon">' +
             '<input type="text" class="icon-input no-gap" value="' + icon + '" placeholder="fa-icon" data-original="' + icon + '">' +
+            '<button type="button" class="btn-icon pick-icon-btn" title="Pick an icon" style="margin-left: 5px;">' +
+              '<i class="fa fa-icons"></i>' +
+            '</button>' +
+            (icon ? '<span class="icon-preview" style="margin-left: 8px; font-size: 20px;"><i class="fa ' + icon + '"></i></span>' : '') +
           '</div>' +
         '</div>' +
         '<div class="menu-tab-actions">' + actionsHtml + '</div>' +
@@ -446,7 +596,12 @@ document.addEventListener('DOMContentLoaded', function() {
       '</div>' +
       '<div class="menu-item-content">' +
         '<div class="menu-item-name" contenteditable="true" data-original="' + name + '">' + name + '</div>' +
-        '<input type="text" class="menu-item-link no-gap" value="' + link + '" placeholder="/page-url" data-original="' + link + '">' +
+        '<div style="display: flex; align-items: center; gap: 5px;">' +
+          '<input type="text" class="menu-item-link no-gap" value="' + link + '" placeholder="/page-url" data-original="' + link + '" style="flex: 1;">' +
+          '<button type="button" class="btn-icon pick-item-link-btn" title="Pick from pages">' +
+            '<i class="fa fa-search"></i>' +
+          '</button>' +
+        '</div>' +
       '</div>' +
       '<div class="menu-item-actions">' +
         '<button type="button" class="btn-icon delete-item-btn" title="Delete item">' +

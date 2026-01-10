@@ -480,7 +480,7 @@
   
   .property-input {
     width: 100%;
-    padding: 8px;
+    padding: 8px 8px 0 8px;
     border: 1px solid var(--editor-border);
     border-radius: 4px;
     font-size: 14px;
@@ -518,11 +518,11 @@
   .tox .tox-toolbar,
   .tox .tox-toolbar__primary,
   .tox .tox-menubar {
-    background: var(--editor-panel-bg) !important;
+    /* background: var(--editor-panel-bg) !important; */
   }
   
   .tox .tox-edit-area__iframe {
-    background: var(--editor-bg) !important;
+    /* background: var(--editor-bg) !important; */
   }
 
   /* Column Layout Picker Modal */
@@ -1424,6 +1424,8 @@
 
 <!-- Load JavaScript modules -->
 <g:compress>
+  <script src="${ctx}/javascript/icon-picker-modal.js"></script>
+  <script src="${ctx}/javascript/page-link-picker-modal.js"></script>
   <script src="${ctx}/javascript/widgets/editor/widget-registry.js"></script>
   <script src="${ctx}/javascript/widgets/editor/pre-designed-templates.js"></script>
   <script src="${ctx}/javascript/widgets/editor/viewport-manager.js"></script>

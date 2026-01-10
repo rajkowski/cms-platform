@@ -717,6 +717,9 @@ class PropertiesPanel {
     
     // Initialize contentUniqueId properties
     this.initContentUniqueIdProperties(rowId, columnId, widgetId, definition);
+    
+    // Initialize icon pickers
+    this.initIconPickers(rowId, columnId, widgetId, definition);
   }
   
   /**
@@ -1152,6 +1155,23 @@ class PropertiesPanel {
         html += '</select>';
         break;
         
+      case 'icon':
+        html += `<div class="property-label">${definition.label}${definition.required ? ' *' : ''}</div>`;
+        html += `<div style="display: flex; gap: 8px; align-items: center;">`;
+        html += `<input type="text" class="property-input" id="prop-${name}" value="${this.escapeHtml(displayValue)}" placeholder="fa-icon" style="flex: 1;" />`;
+        html += `<button type="button" class="button tiny radius" id="pick-icon-${name}" style="white-space: nowrap;">
+          <i class="fa fa-icons"></i> Pick
+        </button>`;
+        if (displayValue) {
+          html += `<div id="icon-preview-${name}" style="font-size: 24px; padding-bottom: 15px; color: #6f6f6f; min-width: 30px; text-align: center;">
+            <i class="fa ${this.escapeHtml(displayValue)}"></i>
+          </div>`;
+        } else {
+          html += `<div id="icon-preview-${name}" style="font-size: 24px; padding-bottom: 15px; color: #ccc; min-width: 30px; text-align: center;"></div>`;
+        }
+        html += `</div>`;
+        break;
+      
       case 'contentUniqueId':
         html += this.renderContentUniqueIdProperty(name, definition, displayValue, pageLink);
         break;
@@ -1790,6 +1810,93 @@ class PropertiesPanel {
       // Fallback to opening in new window if function not available
       window.open(url, '_blank');
     }
+  }
+  
+  /**
+   * Initialize icon pickers for any icon properties
+   */
+  initIconPickers(rowId, columnId, widgetId, widgetDef) {
+    const self = this;
+    
+    // Find all icon property pick buttons
+    Object.entries(widgetDef.properties).forEach(([propName, propDef]) => {
+      if (propDef.type === 'icon') {
+        const pickBtn = document.getElementById(`pick-icon-${propName}`);
+        const input = document.getElementById(`prop-${propName}`);
+        const preview = document.getElementById(`icon-preview-${propName}`);
+        
+        if (pickBtn && input) {
+          pickBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            // Show icon picker modal
+            if (window.iconPickerModal) {
+              window.iconPickerModal.show((selectedIcon) => {
+                // Update input value
+                input.value = selectedIcon;
+                
+                // Update preview
+                if (preview) {
+                  if (selectedIcon) {
+                    preview.innerHTML = `<i class="fa ${selectedIcon}"></i>`;
+                    preview.style.color = '#333';
+                  } else {
+                    preview.innerHTML = '';
+                    preview.style.color = '#ccc';
+                  }
+                }
+                
+                // Save to widget
+                const widgetData = self.editor.getLayoutManager().getWidget(rowId, columnId, widgetId);
+                if (widgetData) {
+                  widgetData.properties[propName] = selectedIcon;
+                  
+                  if (self.editor.getCanvasController) {
+                    const row = self.editor.getLayoutManager().getRow(rowId);
+                    self.editor.getCanvasController().renderRow(rowId, row);
+                    
+                    // Re-highlight the widget after re-render
+                    setTimeout(() => {
+                      const rowElement = document.querySelector(`[data-row-id="${rowId}"]`);
+                      if (rowElement) {
+                        const columnElement = rowElement.querySelector(`[data-column-id="${columnId}"]`);
+                        if (columnElement) {
+                          const widgetElement = columnElement.querySelector(`[data-widget-id="${widgetId}"]`);
+                          if (widgetElement) {
+                            widgetElement.classList.add('selected');
+                          }
+                        }
+                      }
+                    }, 0);
+                  }
+                  
+                  if (self.editor.saveToHistory) {
+                    self.editor.saveToHistory();
+                  }
+                  
+                  // Auto-refresh preview when property is edited and preview is active
+                  self.refreshPreviewIfActive();
+                }
+              }, input.value);
+            }
+          });
+          
+          // Also update preview when user types manually
+          input.addEventListener('input', () => {
+            if (preview) {
+              const iconClass = input.value.trim();
+              if (iconClass) {
+                preview.innerHTML = `<i class="fa ${iconClass}"></i>`;
+                preview.style.color = '#333';
+              } else {
+                preview.innerHTML = '';
+                preview.style.color = '#ccc';
+              }
+            }
+          });
+        }
+      }
+    });
   }
   
   /**

@@ -247,12 +247,35 @@
 
 .menu-tab-link input,
 .menu-tab-icon input {
-  width: 100%;
+  flex: 1;
   padding: 8px 12px;
   border: 1px solid #ced4da;
   border-radius: 6px;
   font-size: 14px;
   transition: border-color 0.2s ease;
+}
+
+.menu-tab-link,
+.menu-tab-icon {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pick-link-btn,
+.pick-icon-btn,
+.pick-item-link-btn {
+  flex-shrink: 0;
+  padding: 6px 10px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.icon-preview {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #495057;
 }
 
 .menu-tab-link input:focus,

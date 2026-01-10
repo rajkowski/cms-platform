@@ -23,7 +23,7 @@ class WidgetRegistry {
       icon: 'fa-paragraph',
       description: 'Rich text content block',
       properties: {
-        icon: { type: 'text', label: 'Widget Icon', required: false },
+        icon: { type: 'icon', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
         uniqueId: { type: 'contentUniqueId', label: 'Content Repository ID', required: true, default: 'GENERATE' },
         html: { type: 'html', label: 'Fallback HTML Content (optional)', required: false, default: '<p>Content</p>' },
@@ -37,7 +37,7 @@ class WidgetRegistry {
       icon: 'fa-list',
       description: 'Collapsible content sections',
       properties: {
-        icon: { type: 'text', label: 'Widget Icon', required: false },
+        icon: { type: 'icon', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
         uniqueId: { type: 'contentUniqueId', label: 'Content Repository ID', required: true, default: 'GENERATE' },
         html: { type: 'html', label: 'Fallback HTML Content (optional)', required: false, default: '<h1>Title</h1><p>&gt; Item to expand</p><p>The item content goes here...</p><hr /><p>&gt; Item to expand</p><p>The item content goes here...</p><hr />' },
@@ -53,7 +53,7 @@ class WidgetRegistry {
       icon: 'fa-th',
       description: 'Content card grid',
       properties: {
-        icon: { type: 'text', label: 'Widget Icon', required: false },
+        icon: { type: 'icon', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
         uniqueId: { type: 'contentUniqueId', label: 'Content Repository ID', required: true, default: 'GENERATE' },
         html: { type: 'html', label: 'Fallback HTML Content (optional)', required: false, default: '<p>Multiple card content separated by HR</p>' },
@@ -84,7 +84,7 @@ class WidgetRegistry {
       icon: 'fa-images',
       description: 'Image/content slider',
       properties: {
-        icon: { type: 'text', label: 'Widget Icon', required: false },
+        icon: { type: 'icon', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
         uniqueId: { type: 'contentUniqueId', label: 'Content Repository ID', required: true, default: 'GENERATE' },
         html: { type: 'html', label: 'Fallback HTML Content (optional)', required: false, default: '<p>Multiple slide content separated by HR</p>' },
@@ -131,7 +131,7 @@ class WidgetRegistry {
       icon: 'fa-folder-open',
       description: 'Content tab container from XML',
       properties: {
-        icon: { type: 'text', label: 'Widget Icon', required: false },
+        icon: { type: 'icon', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
         tabs: {
           type: 'xml',
@@ -161,7 +161,7 @@ class WidgetRegistry {
       icon: 'fa-plus',
       description: 'Reveals content when clicked',
       properties: {
-        icon: { type: 'text', label: 'Widget Icon', required: false },
+        icon: { type: 'icon', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
         uniqueId: { type: 'contentUniqueId', label: 'Content Repository ID', required: true },
         html: { type: 'html', label: 'Fallback HTML Content (optional)', required: false },
@@ -179,7 +179,7 @@ class WidgetRegistry {
       icon: 'fa-th-large',
       description: 'An image gallery of content items',
       properties: {
-        icon: { type: 'text', label: 'Widget Icon', required: false },
+        icon: { type: 'icon', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
         uniqueId: { type: 'contentUniqueId', label: 'Content Repository ID', required: true },
         html: { type: 'html', label: 'Fallback HTML Content (optional)', required: false }
@@ -192,7 +192,7 @@ class WidgetRegistry {
       icon: 'fa-images',
       description: 'A slide carousel of content items',
       properties: {
-        icon: { type: 'text', label: 'Widget Icon', required: false },
+        icon: { type: 'icon', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
         uniqueId: { type: 'contentUniqueId', label: 'Content Repository ID', required: true },
         html: { type: 'html', label: 'Fallback HTML Content (optional)', required: false },
@@ -215,7 +215,7 @@ class WidgetRegistry {
       icon: 'fa-newspaper',
       description: 'A list of blog posts',
       properties: {
-        icon: { type: 'text', label: 'Widget Icon', required: false },
+        icon: { type: 'icon', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
         blogUniqueId: { type: 'text', label: 'Blog Repository ID', required: true },
         type: { type: 'select', label: 'Type of List', options: ['default', 'recent'], default: 'default' },
@@ -259,7 +259,7 @@ class WidgetRegistry {
       icon: 'fa-check-square',
       description: 'A form',
       properties: {
-        icon: { type: 'text', label: 'Widget Icon', required: false },
+        icon: { type: 'icon', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
         subtitle: { type: 'text', label: 'Widget Subtitle', required: false },
         formUniqueId: { type: 'text', label: 'Form Repository ID', required: true },
@@ -298,7 +298,7 @@ class WidgetRegistry {
       icon: 'fa-upload',
       description: 'A drop zone for uploading files',
       properties: {
-        icon: { type: 'text', label: 'Widget Icon', required: false },
+        icon: { type: 'icon', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
         folderUniqueId: { type: 'text', label: 'Folder Unique ID', required: true }
       }
@@ -310,7 +310,7 @@ class WidgetRegistry {
       icon: 'fa-camera-retro',
       description: 'A gallery of photos',
       properties: {
-        icon: { type: 'text', label: 'Widget Icon', required: false },
+        icon: { type: 'icon', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
         folderUniqueId: { type: 'text', label: 'Folder Unique ID', required: true },
         showCaption: { type: 'checkbox', label: 'Show Caption', default: true },
@@ -326,7 +326,7 @@ class WidgetRegistry {
       icon: 'fa-file-alt',
       description: 'A list of files',
       properties: {
-        icon: { type: 'text', label: 'Widget Icon', required: false },
+        icon: { type: 'icon', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
         folderUniqueId: { type: 'text', label: 'Folder Unique ID' },
         showWhenEmpty: { type: 'checkbox', label: 'Show When Empty', default: true },
@@ -650,7 +650,7 @@ class WidgetRegistry {
       icon: 'fa-calendar-alt',
       description: 'A calendar event',
       properties: {
-        icon: { type: 'text', label: 'Widget Icon' },
+        icon: { type: 'icon', label: 'Widget Icon' },
         title: { type: 'text', label: 'Widget Title' },
       }
     });
@@ -662,7 +662,7 @@ class WidgetRegistry {
       icon: 'fa-map-marked-alt',
       description: 'A map',
       properties: {
-        icon: { type: 'text', label: 'Widget Icon' },
+        icon: { type: 'icon', label: 'Widget Icon' },
         title: { type: 'text', label: 'Widget Title' },
         coordinates: { type: 'text', label: 'Coordinates (comma-separated)' },
         latitude: { type: 'text', label: 'Latitude' },
@@ -682,7 +682,7 @@ class WidgetRegistry {
       icon: 'fa-address-book',
       description: 'A list of collections',
       properties: {
-        icon: { type: 'text', label: 'Widget Icon' },
+        icon: { type: 'icon', label: 'Widget Icon' },
         title: { type: 'text', label: 'Widget Title' },
         view: { type: 'select', label: 'View', options: ['default', 'cards'] }
       }
@@ -694,7 +694,7 @@ class WidgetRegistry {
       icon: 'fa-sitemap',
       description: 'A list of categories',
       properties: {
-        icon: { type: 'text', label: 'Widget Icon' },
+        icon: { type: 'icon', label: 'Widget Icon' },
         title: { type: 'text', label: 'Widget Title' },
         collectionUniqueId: { type: 'text', label: 'Collection Repository ID', required: true },
         basedOnItems: { type: 'checkbox', label: 'Only Show the Categories Used by the Items', default: false },
@@ -708,7 +708,7 @@ class WidgetRegistry {
       icon: 'fa-list-alt',
       description: 'A list of items',
       properties: {
-        icon: { type: 'text', label: 'Widget Icon' },
+        icon: { type: 'icon', label: 'Widget Icon' },
         title: { type: 'text', label: 'Widget Title' },
         collectionUniqueId: { type: 'text', label: 'Collection Repository ID', required: false },
         category: { type: 'text', label: 'Filter by Category Name', required: false },
@@ -851,7 +851,7 @@ class WidgetRegistry {
       icon: 'fa-info',
       description: 'Displays what the user searched for and a summary',
       properties: {
-        icon: { type: 'text', label: 'Widget Icon' },
+        icon: { type: 'icon', label: 'Widget Icon' },
         title: { type: 'text', label: 'Widget Title' },
       }
     });
@@ -961,7 +961,7 @@ class WidgetRegistry {
       icon: 'fa-file-alt',
       description: 'Displays web page search results',
       properties: {
-        icon: { type: 'text', label: 'Widget Icon', required: false },
+        icon: { type: 'icon', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
         limit: { type: 'number', label: 'Max results to show', default: 15 },
         showWhenEmpty: { type: 'checkbox', label: 'Show When Empty', default: true }
@@ -974,7 +974,7 @@ class WidgetRegistry {
       icon: 'fa-file-alt',
       description: 'Displays web page title search results',
       properties: {
-        icon: { type: 'text', label: 'Widget Icon', required: false },
+        icon: { type: 'icon', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
         limit: { type: 'number', label: 'Limit', default: 15 },
         showWhenEmpty: { type: 'checkbox', label: 'Show When Empty', default: false }
@@ -987,7 +987,7 @@ class WidgetRegistry {
       icon: 'fa-file-alt',
       description: 'Displays blog post search results',
       properties: {
-        icon: { type: 'text', label: 'Widget Icon', required: false },
+        icon: { type: 'icon', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
         limit: { type: 'number', label: 'Limit', default: 15 },
         showWhenEmpty: { type: 'checkbox', label: 'Show When Empty', default: false },
@@ -1002,7 +1002,7 @@ class WidgetRegistry {
       icon: 'fa-calendar',
       description: 'Displays calendar event search results',
       properties: {
-        icon: { type: 'text', label: 'Widget Icon', required: false },
+        icon: { type: 'icon', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
         limit: { type: 'number', label: 'Limit', default: 3 },
         showWhenEmpty: { type: 'checkbox', label: 'Show When Empty', default: false }
@@ -1015,7 +1015,7 @@ class WidgetRegistry {
       icon: 'fa-file-alt',
       description: 'Displays collection item search results',
       properties: {
-        icon: { type: 'text', label: 'Widget Icon', required: false },
+        icon: { type: 'icon', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
         limit: { type: 'number', label: 'Limit', default: 15 },
         showWhenEmpty: { type: 'checkbox', label: 'Show When Empty', default: false },
