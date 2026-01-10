@@ -421,8 +421,9 @@ class LayoutManager {
 
     console.log('Converting widget to XML:', widget);
 
-    // Use the widget registry to guide XML generation
-    const widgetProperties = this.widgetRegistry.get(widget.type).properties || {};
+    // Use the widget registry to guide XML generation, with null safety
+    const widgetDefinition = this.widgetRegistry.get(widget.type);
+    const widgetProperties = widgetDefinition ? (widgetDefinition.properties || {}) : {};
 
     let xml = indent + `<widget name="${this.escapeXml(widget.type)}"`;
     if (widget.cssClass && widget.cssClass.trim()) {
@@ -438,8 +439,10 @@ class LayoutManager {
         // Handle array properties (like links)
         xml += indent + `  <${key}>\n`;
         for (const item of value) {
-          // Generic based on schema
-          const attributeName = widgetProperties[key].schema.items.name || 'undefined';
+          // Generic based on schema, with null safety
+          const attributeName = (widgetProperties[key] && widgetProperties[key].schema && widgetProperties[key].schema.items) 
+            ? widgetProperties[key].schema.items.name || 'item'
+            : 'item';
           xml += indent + `    <${attributeName}`;
           for (const [attr, attrValue] of Object.entries(item)) {
             xml += ` ${attr}="${this.escapeXml(attrValue)}"`;
@@ -453,7 +456,7 @@ class LayoutManager {
         xml += indent + indent + value + '\n';
         xml += indent + `  </${key}>\n`;
       } else if (key === 'html') {
-        // Handle CDATA content
+        // Handle CDATA content - preserve as-is
         xml += indent + `  <${key}><![CDATA[${value}]]></${key}>\n`;
       } else {
         // Handle simple properties
@@ -551,11 +554,16 @@ class LayoutManager {
       const tagName = child.tagName;
 
       if (child.children.length > 0) {
-        // Check for XML array
-        const widgetProperties = this.widgetRegistry.get(widgetType).properties || {};
+        // Check for XML array - with null safety
+        const widgetDefinition = this.widgetRegistry.get(widgetType);
+        const widgetProperties = widgetDefinition ? (widgetDefinition.properties || {}) : {};
+        
         if (widgetProperties.hasOwnProperty(tagName) && widgetProperties[tagName].type === 'xml') {
           properties[tagName] = [];
-          const items = child.getElementsByTagName(widgetProperties[tagName].schema.items.name );
+          const itemsName = (widgetProperties[tagName].schema && widgetProperties[tagName].schema.items) 
+            ? widgetProperties[tagName].schema.items.name 
+            : 'item';
+          const items = child.getElementsByTagName(itemsName);
           for (const item of items) {
             const itemObj = {};
             for (const attr of item.attributes) {
@@ -563,11 +571,27 @@ class LayoutManager {
             }
             properties[tagName].push(itemObj);
           }
-          console.log(`Parsed XML array property: ${tagName}`, properties.items);
+          console.log(`Parsed XML array property: ${tagName}`, properties[tagName]);
+        } else {
+          // Handle unknown complex elements - preserve as text content
+          properties[tagName] = child.innerHTML || child.textContent;
         }
       } else {
-        // Simple property
-        properties[tagName] = child.textContent;
+        // Simple property - check for CDATA content
+        let content = child.textContent;
+        
+        // Check if this is a CDATA section by looking at the raw XML
+        const serializer = new XMLSerializer();
+        const childXml = serializer.serializeToString(child);
+        if (childXml.includes('<![CDATA[') && childXml.includes(']]>')) {
+          // Extract CDATA content - preserve variable expressions
+          const cdataMatch = childXml.match(/<!\[CDATA\[(.*?)\]\]>/s);
+          if (cdataMatch) {
+            content = cdataMatch[1];
+          }
+        }
+        
+        properties[tagName] = content;
       }
     }
 
