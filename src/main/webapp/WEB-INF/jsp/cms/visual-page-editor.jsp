@@ -1383,7 +1383,7 @@
       });
     </script>
     <div style="text-align: right; margin-top: 20px;">
-      <button id="close-pre-designed-page-modal" class="button tiny secondary">Cancel</button>
+      <button id="close-pre-designed-page-modal" class="button tiny secondary radius">Cancel</button>
     </div>
   </div>
 </div>
