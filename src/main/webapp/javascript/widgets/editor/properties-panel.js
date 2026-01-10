@@ -1105,7 +1105,7 @@ class PropertiesPanel {
     const attributes = itemSchema.attributes || {};
     
     // Create container for items
-    html += `<div id="xml-items-${name}" style="border:1px solid #ddd;border-radius:4px;padding:10px;margin:10px 0;max-height:400px;overflow-y:auto;">`;
+    html += `<div id="xml-items-${name}" style="border:1px solid #ddd;border-radius:4px;padding:10px;margin:10px 0;overflow-y:auto;">`;
     
     // Render existing items
     items.forEach((item, index) => {
