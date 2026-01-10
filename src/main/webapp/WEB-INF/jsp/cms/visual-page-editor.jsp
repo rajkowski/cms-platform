@@ -24,6 +24,7 @@
 <jsp:useBean id="webPage" class="com.simisinc.platform.domain.model.cms.WebPage" scope="request"/>
 <web:stylesheet package="spectrum" file="spectrum.css" />
 <web:script package="spectrum" file="spectrum.js" />
+<web:script package="tinymce" file="tinymce.min.js" />
 <g:compress>
 <style>
   /* Dark Mode Variables */
@@ -502,6 +503,26 @@
   select.property-input {
     background: var(--editor-bg);
     color: var(--editor-text);
+  }
+  
+  /* TinyMCE HTML Editor Styles */
+  .tinymce-editor-container {
+    margin-bottom: 10px;
+  }
+  
+  .html-editor-field {
+    display: none; /* Hide the textarea when TinyMCE is active */
+  }
+  
+  /* TinyMCE editor styling for dark mode compatibility */
+  .tox .tox-toolbar,
+  .tox .tox-toolbar__primary,
+  .tox .tox-menubar {
+    background: var(--editor-panel-bg) !important;
+  }
+  
+  .tox .tox-edit-area__iframe {
+    background: var(--editor-bg) !important;
   }
 
   /* Column Layout Picker Modal */
