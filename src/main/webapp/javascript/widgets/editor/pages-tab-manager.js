@@ -122,7 +122,9 @@ class PagesTabManager {
 
     // If the current page doesn't exist, add it as a new page at the top
     if (!currentPageExists && currentPageLink) {
-      const newPageItem = this.createNewPageItem(currentPageLink);
+      // Use the stored title from the editor if available
+      const pageTitle = this.pageEditor.newPageTitle || null;
+      const newPageItem = this.createNewPageItem(currentPageLink, pageTitle);
       listEl.appendChild(newPageItem);
     }
 
@@ -162,8 +164,10 @@ class PagesTabManager {
 
   /**
    * Create a new page item for pages that don't exist yet
+   * @param {string} pageLink - The page link
+   * @param {string} pageTitle - Optional title for the page (defaults to "New Page")
    */
-  createNewPageItem(pageLink) {
+  createNewPageItem(pageLink, pageTitle = null) {
     const li = document.createElement('li');
     const item = document.createElement('div');
     item.className = 'web-page-item new-page-item';
@@ -180,7 +184,9 @@ class PagesTabManager {
 
     const title = document.createElement('div');
     title.className = 'web-page-title';
-    title.innerHTML = '<i class="far fa-plus-circle"></i> New Page';
+    // Use provided title or default to "New Page"
+    const displayTitle = pageTitle || 'New Page';
+    title.innerHTML = `<i class="far fa-plus-circle"></i> ${this.escapeHtml(displayTitle)}`;
 
     const link = document.createElement('div');
     link.className = 'web-page-link';
@@ -445,5 +451,17 @@ class PagesTabManager {
   refreshPagesList() {
     console.log('Refreshing pages list...');
     this.loadPages();
+  }
+
+  /**
+   * Escape HTML special characters
+   * @param {string} str - The string to escape
+   * @returns {string} The escaped string
+   */
+  escapeHtml(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
   }
 }
