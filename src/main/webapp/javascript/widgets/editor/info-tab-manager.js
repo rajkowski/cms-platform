@@ -64,7 +64,45 @@ class InfoTabManager {
     this.isLoading = true;
     this.currentPageLink = webPageLink;
     
-    // Show loading state
+    // Check if this is a new page (not saved yet)
+    const isNewPage = this.editor.pagesTabManager?.selectedPageId === 'new';
+    
+    if (isNewPage) {
+      // For new pages, create default data structure
+      console.log('Loading info for new page:', webPageLink);
+      
+      // Get the title from the editor if available
+      const pageTitle = this.editor.newPageTitle || '';
+      
+      this.originalData = {
+        title: pageTitle,
+        link: webPageLink,
+        keywords: '',
+        description: '',
+        draft: true,
+        searchable: true,
+        showInSitemap: true,
+        sitemapPriority: 0.5,
+        sitemapChangeFrequency: '',
+        imageUrl: ''
+      };
+      this.currentData = { ...this.originalData };
+      this.sitemapChangeFrequencyOptions = {
+        'always': 'Always',
+        'hourly': 'Hourly',
+        'daily': 'Daily',
+        'weekly': 'Weekly',
+        'monthly': 'Monthly',
+        'yearly': 'Yearly',
+        'never': 'Never'
+      };
+      
+      this.isLoading = false;
+      this.render();
+      return;
+    }
+    
+    // Show loading state for existing pages
     this.container.innerHTML = `
       <div style="text-align: center; padding: 20px; color: var(--editor-text-muted);">
         <i class="fa fa-spinner fa-spin"></i> Loading page info...
@@ -254,6 +292,19 @@ class InfoTabManager {
       }
     });
     
+    // Special handling for title field on new pages - update left panel in real-time
+    const titleInput = document.getElementById('info-title');
+    if (titleInput) {
+      titleInput.addEventListener('input', () => {
+        // Check if this is a new page
+        const isNewPage = this.editor.pagesTabManager?.selectedPageId === 'new';
+        if (isNewPage) {
+          const newTitle = titleInput.value.trim() || 'New Page';
+          this.updatePageTitleInLeftPanel(this.currentPageLink, newTitle);
+        }
+      });
+    }
+    
     // Update image preview when URL changes
     const imageUrlInput = document.getElementById('info-image-url');
     if (imageUrlInput) {
@@ -379,6 +430,11 @@ class InfoTabManager {
         // Update original data to match current (changes saved)
         this.originalData = { ...this.currentData };
         this.rightPanelTabs.clearDirtyForTab('info');
+        
+        // If the title changed, update the page name in the left panel
+        if (this.currentData.title !== this.originalData.title) {
+          this.updatePageTitleInLeftPanel(this.currentPageLink, this.currentData.title);
+        }
       }
       
       return result;
@@ -423,6 +479,31 @@ class InfoTabManager {
       <p style="color: var(--editor-text-muted); font-size: 14px;">Select a page to view its information</p>
     `;
     this.rightPanelTabs.clearDirtyForTab('info');
+  }
+
+  /**
+   * Update the page title in the left panel Pages tab
+   * @param {string} pageLink - The page link
+   * @param {string} newTitle - The new title
+   */
+  updatePageTitleInLeftPanel(pageLink, newTitle) {
+    // Find the page item in the left panel
+    const pageItem = document.querySelector(`.web-page-item[data-page-link="${pageLink}"]`);
+    if (pageItem) {
+      const titleElement = pageItem.querySelector('.web-page-title');
+      if (titleElement) {
+        // Preserve the icon if it exists
+        const icon = titleElement.querySelector('i');
+        if (icon) {
+          titleElement.innerHTML = '';
+          titleElement.appendChild(icon);
+          titleElement.appendChild(document.createTextNode(' ' + newTitle));
+        } else {
+          titleElement.textContent = newTitle;
+        }
+        console.log('Updated page title in left panel:', newTitle);
+      }
+    }
   }
 }
 
