@@ -12,6 +12,7 @@ class PropertiesPanel {
     this.panel = null;
     this.content = null;
     this.currentContext = null;
+    this.rightPanelTabs = null;
   }
   
   /**
@@ -24,9 +25,22 @@ class PropertiesPanel {
   }
   
   /**
+   * Set the RightPanelTabs reference for tab switching
+   * @param {RightPanelTabs} rightPanelTabs - The right panel tabs manager
+   */
+  setRightPanelTabs(rightPanelTabs) {
+    this.rightPanelTabs = rightPanelTabs;
+  }
+  
+  /**
    * Show properties for selected element
    */
   show(context) {
+    // Switch to Properties tab when showing element properties
+    if (this.rightPanelTabs) {
+      this.rightPanelTabs.switchTab('properties');
+    }
+    
     this.currentContext = context;
     
     switch (context.type) {
@@ -1541,7 +1555,12 @@ class PropertiesPanel {
     
     this.currentContext = null;
     this.clearHighlight();
-    this.content.innerHTML = '<p style="color: #6c757d; font-size: 14px;">Select an element to edit its properties</p>';
+    this.content.innerHTML = '<p style="color: var(--editor-text-muted); font-size: 14px;">Select an element to edit its properties</p>';
+    
+    // Restore to previous non-properties tab when clearing
+    if (this.rightPanelTabs) {
+      this.rightPanelTabs.restorePreviousTab();
+    }
   }
   
   /**

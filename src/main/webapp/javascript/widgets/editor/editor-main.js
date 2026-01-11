@@ -16,6 +16,10 @@ class PageEditor {
     this.propertiesPanel = new PropertiesPanel(this);
     this.pagesTabManager = new PagesTabManager(this);
     this.viewportManager = new ViewportManager(this);
+    this.rightPanelTabs = new RightPanelTabs(this);
+    this.infoTabManager = new InfoTabManager(this, this.rightPanelTabs);
+    this.cssTabManager = new CSSTabManager(this, this.rightPanelTabs);
+    this.xmlTabManager = new XMLTabManager(this, this.rightPanelTabs);
     
     // History management for undo/redo
     this.history = [];
@@ -47,6 +51,13 @@ class PageEditor {
     this.propertiesPanel.init();
     this.pagesTabManager.init();
     this.viewportManager.init();
+    this.rightPanelTabs.init();
+    this.infoTabManager.init();
+    this.cssTabManager.init();
+    this.xmlTabManager.init();
+    
+    // Connect PropertiesPanel to RightPanelTabs
+    this.propertiesPanel.setRightPanelTabs(this.rightPanelTabs);
     
     // Set up event listeners
     this.setupEventListeners();
@@ -54,6 +65,14 @@ class PageEditor {
     // Load existing layout if available
     if (this.config.hasExistingLayout && this.config.existingXml) {
       this.loadExistingLayout(this.config.existingXml);
+    }
+    
+    // Load initial page data for Info and CSS tabs
+    if (this.config.webPageLink) {
+      // Load Info tab data for the initial page
+      this.infoTabManager.loadPageInfo(this.config.webPageLink);
+      // Load CSS tab data for the initial page
+      this.cssTabManager.loadStylesheet(this.config.webPageLink);
     }
     
     // Save initial state to history
@@ -117,7 +136,6 @@ class PageEditor {
       addRowBtn: document.getElementById('add-row-btn'),
       undoBtn: document.getElementById('undo-btn'),
       redoBtn: document.getElementById('redo-btn'),
-      previewBtn: document.getElementById('preview-btn'),
       saveBtn: document.getElementById('save-btn'),
       widgetSearch: document.getElementById('widget-search'),
       editorForm: document.getElementById('editor-form'),
@@ -136,7 +154,6 @@ class PageEditor {
     this.elements.addRowBtn.addEventListener('click', () => this.addRow());
     this.elements.undoBtn.addEventListener('click', () => this.undo());
     this.elements.redoBtn.addEventListener('click', () => this.redo());
-    this.elements.previewBtn.addEventListener('click', () => this.preview());
     this.elements.saveBtn.addEventListener('click', () => this.save());
     
     // Widget search
@@ -736,6 +753,11 @@ class PageEditor {
       // Hide loading indicator
       this.hideLoadingIndicator();
       
+      // Dispatch layout changed event for XML tab sync
+      document.dispatchEvent(new CustomEvent('layoutChanged', {
+        detail: { source: 'canvas' }
+      }));
+      
       console.log('Layout loaded successfully');
     } catch (error) {
       console.error('Error loading layout:', error);
@@ -817,6 +839,11 @@ class PageEditor {
     // Update undo/redo buttons and save indicator
     this.updateHistoryButtons();
     this.updateSaveIndicator();
+    
+    // Dispatch layout changed event for XML tab sync
+    document.dispatchEvent(new CustomEvent('layoutChanged', {
+      detail: { source: 'canvas' }
+    }));
   }
   
   /**
@@ -847,6 +874,11 @@ class PageEditor {
   restoreState(state) {
     this.layoutManager.setStructure(state);
     this.canvasController.renderLayout(state);
+    
+    // Dispatch layout changed event for XML tab sync
+    document.dispatchEvent(new CustomEvent('layoutChanged', {
+      detail: { source: 'canvas' }
+    }));
   }
   
   /**
@@ -858,156 +890,11 @@ class PageEditor {
   }
   
   /**
-   * Preview the page (Raw Data)
+   * Save the page using AJAX - unified save for layout, info, and CSS
+   * Implements Requirements 6.1, 6.2, 6.3, 6.4, 6.5, 6.6
    */
-  preview() {
-    console.log('Opening raw data preview...');
-    
-    try {
-      // Generate XML from current layout
-      const xml = this.layoutManager.toXML();
-      
-      // Create a modal to display the raw XML data
-      this.showRawDataModal(xml);
-      
-    } catch (error) {
-      console.error('Error generating preview:', error);
-      alert('Error generating raw data: ' + error.message);
-    }
-  }
-
-  /**
-   * Show raw data in a modal
-   */
-  showRawDataModal(xmlData) {
-    // Create modal overlay
-    const modalOverlay = document.createElement('div');
-    modalOverlay.className = 'modal-overlay raw-data-modal active';
-    modalOverlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.5);
-      display: flex;
-      z-index: 10000;
-      justify-content: center;
-      align-items: center;
-    `;
-
-    // Create modal content
-    const modalContent = document.createElement('div');
-    modalContent.className = 'modal-content';
-    modalContent.style.cssText = `
-      background: var(--editor-bg);
-      padding: 30px;
-      border-radius: 8px;
-      box-shadow: 0 5px 15px var(--editor-shadow);
-      width: 90%;
-      max-width: 800px;
-      max-height: 80vh;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      color: var(--editor-text);
-    `;
-
-    // Add title
-    const title = document.createElement('h4');
-    title.textContent = 'Raw Page Data (XML)';
-    title.style.cssText = 'margin-top: 0; margin-bottom: 20px; color: var(--editor-text);';
-    modalContent.appendChild(title);
-
-    // Create textarea for XML content
-    const xmlTextarea = document.createElement('textarea');
-    xmlTextarea.value = xmlData;
-    xmlTextarea.style.cssText = `
-      width: 100%;
-      height: 400px;
-      font-family: 'Courier New', monospace;
-      font-size: 12px;
-      border: 1px solid var(--editor-border);
-      border-radius: 4px;
-      padding: 10px;
-      background: var(--editor-bg);
-      color: var(--editor-text);
-      resize: vertical;
-      margin-bottom: 20px;
-    `;
-    xmlTextarea.readOnly = true;
-    modalContent.appendChild(xmlTextarea);
-
-    // Create button container
-    const buttonContainer = document.createElement('div');
-    buttonContainer.style.cssText = `
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    `;
-
-    // Copy button
-    const copyBtn = document.createElement('button');
-    copyBtn.textContent = 'Copy to Clipboard';
-    copyBtn.className = 'button tiny primary radius';
-    copyBtn.style.cssText = 'padding: 8px 15px;';
-    copyBtn.addEventListener('click', () => {
-      xmlTextarea.select();
-      document.execCommand('copy');
-      copyBtn.textContent = 'Copied!';
-      setTimeout(() => {
-        copyBtn.textContent = 'Copy to Clipboard';
-      }, 2000);
-    });
-
-    // Close button
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = 'Close';
-    closeBtn.className = 'button tiny secondary radius';
-    closeBtn.style.cssText = 'padding: 8px 15px;';
-
-    const closeHandler = () => {
-      document.body.removeChild(modalOverlay);
-      document.removeEventListener('keydown', escHandler);
-    };
-
-    closeBtn.addEventListener('click', closeHandler);
-
-    buttonContainer.appendChild(copyBtn);
-    buttonContainer.appendChild(closeBtn);
-    modalContent.appendChild(buttonContainer);
-
-    modalOverlay.appendChild(modalContent);
-
-    // Handler for the Escape key
-    const escHandler = (e) => {
-      if (e.key === 'Escape') {
-        closeHandler();
-      }
-    };
-
-    // Close on overlay click
-    modalOverlay.addEventListener('click', (e) => {
-      if (e.target === modalOverlay) {
-        closeHandler();
-      }
-    });
-
-    // Add to DOM and show
-    document.body.appendChild(modalOverlay);
-    document.addEventListener('keydown', escHandler);
-
-    // Focus the textarea for easy copying
-    setTimeout(() => {
-      xmlTextarea.focus();
-    }, 100);
-  }
-  
-  /**
-   * Save the page using AJAX
-   */
-  save() {
-    console.log('Saving page...');
+  async save() {
+    console.log('Saving page (unified save)...');
     
     // Show loading indicator in toolbar
     this.showLoadingIndicator('Saving...');
@@ -1017,115 +904,432 @@ class PageEditor {
     const originalSaveContent = this.elements.saveBtn.innerHTML;
     this.elements.saveBtn.innerHTML = '<i class="far fa-spinner fa-spin"></i> Saving...';
     
+    // Track what needs to be saved and results
+    const saveResults = {
+      layout: { needed: false, success: false, error: null },
+      info: { needed: false, success: false, error: null },
+      css: { needed: false, success: false, error: null }
+    };
+    
     try {
-      // Get the current layout state as JSON
-      const layoutData = this.layoutManager.getStructure();
-      const jsonData = JSON.stringify(layoutData);
-
-      console.log('Prepared layout data for saving:', jsonData);
+      // Determine what needs to be saved (Requirements 6.1)
+      const layoutDirty = this.isLayoutDirty();
+      const dirtyTabs = this.rightPanelTabs.getDirtyTabs();
+      const infoDirty = dirtyTabs.includes('info') || this.infoTabManager.hasChanges();
+      const cssDirty = dirtyTabs.includes('css') || this.cssTabManager.hasChanges();
       
-      // Get the selected page link
-      const pageLink = this.pagesTabManager.getSelectedPageLink();
+      saveResults.layout.needed = layoutDirty;
+      saveResults.info.needed = infoDirty;
+      saveResults.css.needed = cssDirty;
       
-      // Create form data for submission
-      const formData = new FormData();
-      formData.append('widget', document.querySelector('input[name="widget"]')?.value || '');
-      formData.append('token', document.querySelector('input[name="token"]')?.value || '');
-      formData.append('webPageLink', pageLink);
-      formData.append('designerData', jsonData);
+      console.log('Save analysis:', { layoutDirty, infoDirty, cssDirty });
       
-      // Send the AJAX request to the save endpoint
-      fetch('/json/saveWebPage', {
-        method: 'POST',
-        body: formData
-      })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('HTTP error, status = ' + response.status);
-        }
-        return response.json();
-      })
-      .then(data => {
-        // Success! Update the saved state and show message
-        this.setSavedState();
-        this.updateSaveIndicator();
-        
-        // Hide loading indicator
+      // If nothing needs saving, show message and return
+      if (!layoutDirty && !infoDirty && !cssDirty) {
         this.hideLoadingIndicator();
-        
-        // Re-enable save button
         this.elements.saveBtn.disabled = false;
-        this.elements.saveBtn.innerHTML = '<i class="far fa-check"></i> Saved!';
-        
-        // Reset the button text after 2 seconds to clean state
-        setTimeout(() => {
-          this.elements.saveBtn.innerHTML = '<i class="fa-solid fa-save"></i> Save';
-          this.updateSaveIndicator();
-        }, 2000);
-        
-        // If this was a new page, update the pages list
-        if (this.pagesTabManager.selectedPageId === 'new') {
-          const pageData = {
-            id: data.webPageId || 'saved',
-            link: this.pagesTabManager.getSelectedPageLink(),
-            title: data.title || this.pagesTabManager.extractTitleFromLink(this.pagesTabManager.getSelectedPageLink())
-          };
-          this.pagesTabManager.updateNewPageAfterSave(pageData);
-          
-          // Refresh the pages list to get the updated list from server
-          setTimeout(() => {
-            this.pagesTabManager.refreshPagesList();
-          }, 1000);
+        this.elements.saveBtn.innerHTML = originalSaveContent;
+        this.showSaveToast('No changes to save', 'info');
+        return;
+      }
+      
+      // Save layout if dirty (Requirements 6.2)
+      if (layoutDirty) {
+        try {
+          await this.saveLayout();
+          saveResults.layout.success = true;
+        } catch (error) {
+          saveResults.layout.error = error.message;
+          console.error('Error saving layout:', error);
         }
-        
-        console.log('Page saved successfully', data);
-      })
-      .catch(error => {
-        console.error('Error saving page:', error);
-        
-        // Hide loading indicator
-        this.hideLoadingIndicator();
-        
-        // Show error message
-        this.elements.saveBtn.disabled = false;
-        this.elements.saveBtn.innerHTML = '<i class="far fa-exclamation-triangle"></i> Save Failed';
-        
-        // Reset the button text after 3 seconds
-        setTimeout(() => {
-          this.elements.saveBtn.innerHTML = originalSaveContent;
-        }, 3000);
-        
-        alert('Error saving page: ' + error.message);
-      });
+      }
+      
+      // Save page info if dirty (Requirements 6.3)
+      if (infoDirty) {
+        try {
+          const infoResult = await this.infoTabManager.save();
+          if (infoResult.success) {
+            saveResults.info.success = true;
+          } else {
+            saveResults.info.error = infoResult.message || 'Failed to save page info';
+          }
+        } catch (error) {
+          saveResults.info.error = error.message;
+          console.error('Error saving page info:', error);
+        }
+      }
+      
+      // Save CSS if dirty (Requirements 6.4)
+      if (cssDirty) {
+        try {
+          const cssResult = await this.cssTabManager.save();
+          if (cssResult.success) {
+            saveResults.css.success = true;
+          } else {
+            saveResults.css.error = cssResult.message || 'Failed to save CSS';
+          }
+        } catch (error) {
+          saveResults.css.error = error.message;
+          console.error('Error saving CSS:', error);
+        }
+      }
+      
+      // Process results and show feedback (Requirements 6.5, 6.6)
+      this.processSaveResults(saveResults, originalSaveContent);
       
     } catch (error) {
-      console.error('Error preparing save:', error);
-      alert('An error occurred while preparing to save the page: ' + error.message);
-      
-      // Hide loading indicator and re-enable save button
+      console.error('Error during unified save:', error);
       this.hideLoadingIndicator();
       this.elements.saveBtn.disabled = false;
       this.elements.saveBtn.innerHTML = originalSaveContent;
+      this.showSaveToast('Error saving: ' + error.message, 'error');
     }
+  }
+  
+  /**
+   * Save just the layout data
+   * @returns {Promise<Object>} The save result
+   */
+  async saveLayout() {
+    return new Promise((resolve, reject) => {
+      try {
+        // Get the current layout state as JSON
+        const layoutData = this.layoutManager.getStructure();
+        const jsonData = JSON.stringify(layoutData);
+
+        console.log('Prepared layout data for saving:', jsonData);
+        
+        // Get the selected page link
+        const pageLink = this.pagesTabManager.getSelectedPageLink();
+        
+        // Create form data for submission
+        const formData = new FormData();
+        formData.append('token', document.querySelector('input[name="token"]')?.value || '');
+        formData.append('webPageLink', pageLink);
+        formData.append('designerData', jsonData);
+        
+        // Send the AJAX request to the save endpoint
+        fetch('/json/saveWebPage', {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('HTTP error, status = ' + response.status);
+          }
+          return response.json();
+        })
+        .then(data => {
+          // Success! Update the saved state
+          this.setSavedState();
+          
+          // If this was a new page, update the pages list
+          if (this.pagesTabManager.selectedPageId === 'new') {
+            const pageData = {
+              id: data.webPageId || 'saved',
+              link: this.pagesTabManager.getSelectedPageLink(),
+              title: data.title || this.pagesTabManager.extractTitleFromLink(this.pagesTabManager.getSelectedPageLink())
+            };
+            this.pagesTabManager.updateNewPageAfterSave(pageData);
+            
+            // Refresh the pages list to get the updated list from server
+            setTimeout(() => {
+              this.pagesTabManager.refreshPagesList();
+            }, 1000);
+          }
+          
+          console.log('Layout saved successfully', data);
+          resolve(data);
+        })
+        .catch(error => {
+          console.error('Error saving layout:', error);
+          reject(error);
+        });
+        
+      } catch (error) {
+        console.error('Error preparing layout save:', error);
+        reject(error);
+      }
+    });
+  }
+  
+  /**
+   * Process save results and show appropriate feedback
+   * @param {Object} results - The save results object
+   * @param {string} originalSaveContent - The original save button content
+   */
+  processSaveResults(results, originalSaveContent) {
+    // Hide loading indicator
+    this.hideLoadingIndicator();
+    
+    // Count successes and failures
+    const savedItems = [];
+    const failedItems = [];
+    
+    if (results.layout.needed) {
+      if (results.layout.success) {
+        savedItems.push('Layout');
+      } else {
+        failedItems.push({ name: 'Layout', error: results.layout.error });
+      }
+    }
+    
+    if (results.info.needed) {
+      if (results.info.success) {
+        savedItems.push('Page Info');
+      } else {
+        failedItems.push({ name: 'Page Info', error: results.info.error });
+      }
+    }
+    
+    if (results.css.needed) {
+      if (results.css.success) {
+        savedItems.push('CSS');
+      } else {
+        failedItems.push({ name: 'CSS', error: results.css.error });
+      }
+    }
+    
+    // Update save button and show feedback
+    this.elements.saveBtn.disabled = false;
+    
+    if (failedItems.length === 0) {
+      // All saves successful
+      this.elements.saveBtn.innerHTML = '<i class="far fa-check"></i> Saved!';
+      this.updateSaveIndicator();
+      
+      // Show success toast with what was saved (Requirements 6.5)
+      const message = savedItems.length === 1 
+        ? `${savedItems[0]} saved successfully`
+        : `Saved: ${savedItems.join(', ')}`;
+      this.showSaveToast(message, 'success');
+      
+      // Reset button after delay
+      setTimeout(() => {
+        this.elements.saveBtn.innerHTML = '<i class="fa-solid fa-save"></i> Save';
+        this.updateSaveIndicator();
+      }, 2000);
+      
+    } else if (savedItems.length > 0) {
+      // Partial success - some saved, some failed (Requirements 6.6)
+      this.elements.saveBtn.innerHTML = '<i class="far fa-exclamation-triangle"></i> Partial Save';
+      
+      // Show warning toast
+      const successMsg = savedItems.length > 0 ? `Saved: ${savedItems.join(', ')}. ` : '';
+      const failMsg = `Failed: ${failedItems.map(f => f.name).join(', ')}`;
+      this.showSaveToast(successMsg + failMsg, 'warning');
+      
+      // Reset button after delay
+      setTimeout(() => {
+        this.elements.saveBtn.innerHTML = originalSaveContent;
+        this.updateSaveIndicator();
+      }, 3000);
+      
+    } else {
+      // All saves failed (Requirements 6.6)
+      this.elements.saveBtn.innerHTML = '<i class="far fa-exclamation-triangle"></i> Save Failed';
+      
+      // Show error toast with details
+      const errorDetails = failedItems.map(f => `${f.name}: ${f.error}`).join('; ');
+      this.showSaveToast('Save failed: ' + errorDetails, 'error');
+      
+      // Reset button after delay
+      setTimeout(() => {
+        this.elements.saveBtn.innerHTML = originalSaveContent;
+      }, 3000);
+    }
+  }
+  
+  /**
+   * Show a toast notification for save feedback
+   * @param {string} message - The message to display
+   * @param {string} type - The type of toast: 'success', 'error', 'warning', 'info'
+   */
+  showSaveToast(message, type = 'info') {
+    // Remove any existing toast
+    const existingToast = document.getElementById('save-toast');
+    if (existingToast) {
+      existingToast.remove();
+    }
+    
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.id = 'save-toast';
+    toast.className = `save-toast save-toast-${type}`;
+    
+    // Set icon based on type
+    let icon = 'fa-info-circle';
+    if (type === 'success') icon = 'fa-check-circle';
+    else if (type === 'error') icon = 'fa-exclamation-circle';
+    else if (type === 'warning') icon = 'fa-exclamation-triangle';
+    
+    toast.innerHTML = `
+      <i class="far ${icon}"></i>
+      <span class="save-toast-message">${message}</span>
+      <button class="save-toast-close" onclick="this.parentElement.remove()">
+        <i class="far fa-times"></i>
+      </button>
+    `;
+    
+    // Add toast styles if not already present
+    this.ensureToastStyles();
+    
+    // Add to DOM
+    document.body.appendChild(toast);
+    
+    // Trigger animation
+    setTimeout(() => {
+      toast.classList.add('show');
+    }, 10);
+    
+    // Auto-remove after delay (longer for errors)
+    const duration = type === 'error' ? 6000 : type === 'warning' ? 5000 : 3000;
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => {
+        if (toast.parentElement) {
+          toast.remove();
+        }
+      }, 300);
+    }, duration);
+  }
+  
+  /**
+   * Ensure toast styles are added to the document
+   */
+  ensureToastStyles() {
+    if (document.getElementById('save-toast-styles')) {
+      return;
+    }
+    
+    const styles = document.createElement('style');
+    styles.id = 'save-toast-styles';
+    styles.textContent = `
+      .save-toast {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 12px 16px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 14px;
+        font-weight: 500;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 10001;
+        transform: translateY(100px);
+        opacity: 0;
+        transition: transform 0.3s ease, opacity 0.3s ease;
+        max-width: 400px;
+      }
+      
+      .save-toast.show {
+        transform: translateY(0);
+        opacity: 1;
+      }
+      
+      .save-toast-success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      
+      .save-toast-error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+      
+      .save-toast-warning {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeeba;
+      }
+      
+      .save-toast-info {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+      }
+      
+      .save-toast-message {
+        flex: 1;
+      }
+      
+      .save-toast-close {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+        opacity: 0.7;
+        color: inherit;
+      }
+      
+      .save-toast-close:hover {
+        opacity: 1;
+      }
+      
+      /* Dark mode support */
+      [data-theme="dark"] .save-toast-success {
+        background: #1e4620;
+        color: #a3d9a5;
+        border-color: #2d5a2e;
+      }
+      
+      [data-theme="dark"] .save-toast-error {
+        background: #4a1c1c;
+        color: #f5a5a5;
+        border-color: #6b2c2c;
+      }
+      
+      [data-theme="dark"] .save-toast-warning {
+        background: #4a3c1c;
+        color: #f5d9a5;
+        border-color: #6b5a2c;
+      }
+      
+      [data-theme="dark"] .save-toast-info {
+        background: #1c3a4a;
+        color: #a5d9f5;
+        border-color: #2c5a6b;
+      }
+    `;
+    document.head.appendChild(styles);
   }
 
   /**
    * Check if the editor has unsaved changes
+   * Checks layout changes and all tab dirty states
    */
   isDirty() {
-    // If there's no saved state baseline, we can't know if there are changes
-    if (this.lastSavedState === null) {
-      console.log('isDirty: false (no baseline saved state)');
-      return false;
-    }
+    // Check layout dirty state
+    const layoutDirty = this.isLayoutDirty();
     
-    // Get the current layout state
-    const currentState = JSON.stringify(this.layoutManager.getStructure());
-    const dirty = currentState !== this.lastSavedState;
+    // Check tab dirty states
+    const tabsDirty = this.rightPanelTabs ? this.rightPanelTabs.isDirty() : false;
     
-    console.log('isDirty:', dirty);
+    // Also check individual tab managers for changes
+    const infoDirty = this.infoTabManager ? this.infoTabManager.hasChanges() : false;
+    const cssDirty = this.cssTabManager ? this.cssTabManager.hasChanges() : false;
+    
+    const dirty = layoutDirty || tabsDirty || infoDirty || cssDirty;
+    
+    console.log('isDirty:', dirty, { layoutDirty, tabsDirty, infoDirty, cssDirty });
     
     return dirty;
+  }
+  
+  /**
+   * Check if only the layout has unsaved changes (not tabs)
+   * @returns {boolean} True if layout has unsaved changes
+   */
+  isLayoutDirty() {
+    if (this.lastSavedState === null) {
+      return false;
+    }
+    const currentState = JSON.stringify(this.layoutManager.getStructure());
+    return currentState !== this.lastSavedState;
   }
   
   /**
@@ -1162,5 +1366,40 @@ class PageEditor {
    */
   getPropertiesPanel() {
     return this.propertiesPanel;
+  }
+  
+  /**
+   * Get right panel tabs instance
+   */
+  getRightPanelTabs() {
+    return this.rightPanelTabs;
+  }
+  
+  /**
+   * Get info tab manager instance
+   */
+  getInfoTabManager() {
+    return this.infoTabManager;
+  }
+  
+  /**
+   * Get CSS tab manager instance
+   */
+  getCSSTabManager() {
+    return this.cssTabManager;
+  }
+  
+  /**
+   * Get XML tab manager instance
+   */
+  getXMLTabManager() {
+    return this.xmlTabManager;
+  }
+  
+  /**
+   * Get viewport manager instance
+   */
+  getViewportManager() {
+    return this.viewportManager;
   }
 }

@@ -103,12 +103,14 @@
     background: var(--editor-panel-bg);
     border-left: 1px solid var(--editor-border);
     color: var(--editor-text);
-    overflow-y: auto;
+    overflow-y: hidden;
     padding: 15px;
     position: relative;
     transition: background 0.3s ease, border-color 0.3s ease;
     min-width: 200px;
     max-width: 600px;
+    display: flex;
+    flex-direction: column;
   }
   
   /* Properties Panel Resize Handle */
@@ -784,6 +786,42 @@
     border-bottom-color: var(--editor-selected-border);
   }
 
+  /* Right Panel Tabs Styles */
+  .right-panel-tabs-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .right-panel-tabs-nav {
+    flex-shrink: 0;
+    margin: 0 -15px;
+    padding: 0 15px;
+  }
+
+  .right-panel-tabs-nav li {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .right-panel-tabs-nav a {
+    padding: 8px 6px;
+    font-size: 11px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .right-panel-tab-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 15px 0;
+  }
+
+  .right-panel-tab-content h6 {
+    color: var(--editor-text);
+    margin-bottom: 10px;
+  }
+
   .tab-content {
     display: none;
     padding: 15px;
@@ -946,25 +984,6 @@
     font-weight: 600;
     z-index: 100;
     opacity: 0.8;
-  }
-
-  /* Raw Data Modal Styles */
-  .raw-data-modal .modal-content {
-    background: var(--editor-bg);
-    color: var(--editor-text);
-    border: 1px solid var(--editor-border);
-  }
-
-  .raw-data-modal textarea {
-    background: var(--editor-bg);
-    color: var(--editor-text);
-    border: 1px solid var(--editor-border);
-  }
-
-  .raw-data-modal textarea:focus {
-    outline: none;
-    border-color: var(--editor-selected-border);
-    box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.25);
   }
 
   /* Dark Mode Toggle */
@@ -1138,10 +1157,6 @@
 
     <!-- Right Section -->
     <div class="toolbar-section right">
-      <a id="web-page-info-btn" href="#" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-info-circle"></i> Page Info</a>
-      <a id="web-page-css-btn" href="#" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-palette"></i> CSS</a>
-      <a id="web-page-xml-editor-btn" href="#" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-code"></i> XML</a>
-      <button id="preview-btn" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-database"></i> Raw Data</button>
       <button id="dark-mode-toggle" class="button tiny secondary no-gap radius" title="Toggle Dark Mode"><i class="${font:far()} fa-moon"></i></button>
       <c:choose>
         <c:when test="${!empty returnPage}">
@@ -1297,12 +1312,46 @@
       </c:choose>
     </div>
     
-    <!-- Properties Panel -->
+    <!-- Right Panel with Tabs -->
     <div id="properties-panel">
       <div id="properties-panel-resize-handle"></div>
-      <h5 style="color: var(--editor-text);">Properties</h5>
-      <div id="properties-content">
-        <p style="color: var(--editor-text-muted); font-size: 14px;">Select an element to edit its properties</p>
+      
+      <!-- Right Panel Tabs -->
+      <div class="right-panel-tabs-container">
+        <ul class="tabs-nav right-panel-tabs-nav">
+          <li><a href="#info-tab" class="active" data-tab="info">Page Info</a></li>
+          <li><a href="#properties-tab" data-tab="properties">Properties</a></li>
+          <li><a href="#css-tab" data-tab="css">CSS</a></li>
+          <li><a href="#xml-tab" data-tab="xml">XML</a></li>
+        </ul>
+        
+        <!-- Info Tab Content -->
+        <div id="info-tab" class="tab-content right-panel-tab-content active" data-tab="info">
+          <div id="info-tab-content">
+            <p style="color: var(--editor-text-muted); font-size: 14px;">Select a page to view its information</p>
+          </div>
+        </div>
+        
+        <!-- Properties Tab Content -->
+        <div id="properties-tab" class="tab-content right-panel-tab-content" data-tab="properties">
+          <div id="properties-content">
+            <p style="color: var(--editor-text-muted); font-size: 14px;">Select an element to edit its properties</p>
+          </div>
+        </div>
+        
+        <!-- CSS Tab Content -->
+        <div id="css-tab" class="tab-content right-panel-tab-content" data-tab="css">
+          <div id="css-tab-content">
+            <p style="color: var(--editor-text-muted); font-size: 14px;">CSS editor will be loaded here</p>
+          </div>
+        </div>
+        
+        <!-- XML Tab Content -->
+        <div id="xml-tab" class="tab-content right-panel-tab-content" data-tab="xml">
+          <div id="xml-tab-content">
+            <p style="color: var(--editor-text-muted); font-size: 14px;">XML editor will be loaded here</p>
+          </div>
+        </div>
       </div>
     </div>
     
@@ -1423,6 +1472,11 @@
 <script id="existing-xml-data" type="text/plain"><c:out value="${webPage.pageXml}" escapeXml="true"/></script>
 
 <!-- Load JavaScript modules -->
+<web:script package="ace" file="ace.js" charset="utf-8" />
+<web:script package="ace" file="mode-css.js" charset="utf-8" />
+<web:script package="ace" file="mode-xml.js" charset="utf-8" />
+<web:script package="ace" file="theme-chrome.js" charset="utf-8" />
+<web:script package="ace" file="theme-monokai.js" charset="utf-8" />
 <g:compress>
   <script src="${ctx}/javascript/icon-picker-modal.js"></script>
   <script src="${ctx}/javascript/page-link-picker-modal.js"></script>
@@ -1435,6 +1489,10 @@
   <script src="${ctx}/javascript/widgets/editor/canvas-controller.js"></script>
   <script src="${ctx}/javascript/widgets/editor/properties-panel.js"></script>
   <script src="${ctx}/javascript/widgets/editor/pages-tab-manager.js"></script>
+  <script src="${ctx}/javascript/widgets/editor/right-panel-tabs.js"></script>
+  <script src="${ctx}/javascript/widgets/editor/info-tab-manager.js"></script>
+  <script src="${ctx}/javascript/widgets/editor/css-tab-manager.js"></script>
+  <script src="${ctx}/javascript/widgets/editor/xml-tab-manager.js"></script>
 </g:compress>
 
 <script>
@@ -1665,30 +1723,6 @@
       showAddPageModal();
     });
     
-    // Web Page Info button
-    document.getElementById('web-page-info-btn').addEventListener('click', function(e) {
-      e.preventDefault();
-      const webPageLink = window.pageEditor.pagesTabManager.getSelectedPageLink();
-      const link = '/admin/web-page?webPage=' + encodeURIComponent(webPageLink) + '&returnPage=' + encodeURIComponent(returnPage || webPageLink);
-      window.openPageInIframe(link, 'Loading page info...');
-    });
-    
-    // Web Page XML Editor button
-    document.getElementById('web-page-xml-editor-btn').addEventListener('click', function(e) {
-      e.preventDefault();
-      const webPageLink = window.pageEditor.pagesTabManager.getSelectedPageLink();
-      const link = '/admin/web-page-designer?webPage=' + encodeURIComponent(webPageLink);
-      window.openPageInIframe(link, 'Loading XML editor...');
-    });
-    
-    // Web Page CSS button
-    document.getElementById('web-page-css-btn').addEventListener('click', function(e) {
-      e.preventDefault();
-      const webPageLink = window.pageEditor.pagesTabManager.getSelectedPageLink();
-      const link = '/admin/css-editor?webPage=' + encodeURIComponent(webPageLink) + '&returnPage=' + encodeURIComponent(returnPage || webPageLink);
-      window.openPageInIframe(link, 'Loading CSS editor...');
-    });
-
     // Helper function to close modal
     function closePreDesignedPageModal() {
       document.getElementById('pre-designed-page-modal').classList.remove('active');
@@ -1743,19 +1777,20 @@
       }
     });
 
-    // Set up palette tabs
-    const tabs = document.querySelectorAll('.tabs-nav a');
-    const tabContents = document.querySelectorAll('.tab-content');
+    // Set up palette tabs (left panel only - scoped to widget-palette)
+    const widgetPalette = document.getElementById('widget-palette');
+    const paletteTabs = widgetPalette.querySelectorAll('.tabs-nav a');
+    const paletteTabContents = widgetPalette.querySelectorAll('.tab-content');
 
-    tabs.forEach(tab => {
+    paletteTabs.forEach(tab => {
       tab.addEventListener('click', e => {
         e.preventDefault();
 
-        tabs.forEach(t => t.classList.remove('active'));
+        paletteTabs.forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
 
         const target = document.querySelector(tab.getAttribute('href'));
-        tabContents.forEach(tc => tc.classList.remove('active'));
+        paletteTabContents.forEach(tc => tc.classList.remove('active'));
         target.classList.add('active');
       });
     });
@@ -1953,9 +1988,10 @@
       const pagesTabContent = document.getElementById('pages-tab');
       
       if (pagesTab && pagesTabContent) {
-        // Remove active class from all tabs
-        document.querySelectorAll('.tabs-nav a').forEach(tab => tab.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        // Remove active class from all palette tabs (left panel only)
+        const widgetPalette = document.getElementById('widget-palette');
+        widgetPalette.querySelectorAll('.tabs-nav a').forEach(tab => tab.classList.remove('active'));
+        widgetPalette.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
         
         // Activate the Pages tab
         pagesTab.classList.add('active');
