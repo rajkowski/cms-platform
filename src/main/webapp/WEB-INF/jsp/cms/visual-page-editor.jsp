@@ -104,7 +104,6 @@
     border-left: 1px solid var(--editor-border);
     color: var(--editor-text);
     overflow-y: hidden;
-    padding: 15px;
     position: relative;
     transition: background 0.3s ease, border-color 0.3s ease;
     min-width: 200px;
@@ -547,12 +546,16 @@
 
   .modal-content {
     background: var(--editor-bg);
-    padding: 30px;
+    padding: 30px 30px 10px 30px;
     border-radius: 8px;
     box-shadow: 0 5px 15px var(--editor-shadow);
     width: 90%;
     max-width: 600px;
+    max-height: 90vh;
     color: var(--editor-text);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
 
   .layout-picker {
@@ -806,7 +809,7 @@
 
   .right-panel-tabs-nav a {
     padding: 8px 6px;
-    font-size: 11px;
+    font-size: 12px;
     overflow: hidden;
     text-overflow: ellipsis;
   }
@@ -1146,7 +1149,6 @@
       <button id="add-row-btn" class="button tiny primary no-gap radius"><i class="${font:far()} fa-plus"></i> Add Row</button>
       <button id="undo-btn" class="button tiny secondary no-gap radius" disabled><i class="${font:far()} fa-undo"></i> Undo</button>
       <button id="redo-btn" class="button tiny secondary no-gap radius" disabled><i class="${font:far()} fa-redo"></i> Redo</button>
-      <button id="pre-designed-page-btn" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-magic"></i> Templates</button>
     </div>
 
     <!-- Middle Section -->
@@ -1189,6 +1191,13 @@
         </div>
 
         <div id="layouts-tab" class="tab-content">
+          <!-- Templates Button -->
+          <div style="padding: 10px; border-bottom: 1px solid var(--editor-border);">
+            <button id="pre-designed-page-btn-layouts" class="button expanded secondary radius" style="width: 100%; margin: 0;">
+              <i class="${font:far()} fa-magic"></i> Choose a Template
+            </button>
+          </div>
+          
           <div class="layout-palette-item" draggable="true" data-layout="small-12">
             <button class="add-layout-btn" title="Add row to page">+</button>
             <div class="layout-preview">
@@ -1388,10 +1397,12 @@
 <!-- Pre-Designed Page Modal -->
 <div id="pre-designed-page-modal" class="modal-overlay" style="display:none;">
   <div class="modal-content" style="max-width: 800px;">
-    <h4>Apply a Pre-Designed Page Layout</h4>
-    <ul id="pre-designed-page-list">
-      <!-- Pre-designed page items will be inserted here by JavaScript -->
-    </ul>
+    <h4 style="color:var(--editor-text);margin: 0 0 15px 0; flex-shrink: 0;">Choose a Template</h4>
+    <div id="icon-grid" style="flex: 1; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 15px; background: #f9f9f9; min-height: 200px;">
+      <ul id="pre-designed-page-list">
+        <!-- Templates items will be rendered here -->
+      </ul>
+    </div>
     <script>
       // Dynamically populate the pre-designed page list from preDesignedTemplates
       document.addEventListener('DOMContentLoaded', function() {
@@ -1452,7 +1463,7 @@
         }
       });
     </script>
-    <div style="text-align: right; margin-top: 20px;">
+    <div style="text-align: right; margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end; flex-shrink: 0;">
       <button id="close-pre-designed-page-modal" class="button tiny secondary radius">Cancel</button>
     </div>
   </div>
@@ -1500,6 +1511,7 @@
   document.addEventListener('DOMContentLoaded', function() {
     const editorConfig = {
       webPageLink: '<c:out value="${webPage.link}" />',
+      webPageId: <c:out value="${webPage.id}" default="-1"/>,
       existingXml: document.getElementById('existing-xml-data').textContent
         .replace(/&lt;/g, '<')
         .replace(/&gt;/g, '>')
@@ -1728,10 +1740,21 @@
       document.getElementById('pre-designed-page-modal').classList.remove('active');
     }
 
-    // Show modal
-    document.getElementById('pre-designed-page-btn').addEventListener('click', function() {
-      document.getElementById('pre-designed-page-modal').classList.add('active');
-    });
+    // Show modal - handle both toolbar button (if exists) and layouts tab button
+    const toolbarBtn = document.getElementById('pre-designed-page-btn');
+    const layoutsBtn = document.getElementById('pre-designed-page-btn-layouts');
+    
+    if (toolbarBtn) {
+      toolbarBtn.addEventListener('click', function() {
+        document.getElementById('pre-designed-page-modal').classList.add('active');
+      });
+    }
+    
+    if (layoutsBtn) {
+      layoutsBtn.addEventListener('click', function() {
+        document.getElementById('pre-designed-page-modal').classList.add('active');
+      });
+    }
     
     // Hide modal
     document.getElementById('close-pre-designed-page-modal').addEventListener('click', function() {
