@@ -1655,14 +1655,14 @@ class PropertiesPanel {
       modal.id = 'content-browser-modal';
       modal.className = 'modal-overlay';
       modal.innerHTML = `
-        <div class="modal-content" style="max-width:800px;max-height:80vh;overflow-y:auto;">
-          <h4 style="color:var(--editor-text);margin-bottom:15px;">Select Content</h4>
-          <div id="content-browser-list" style="margin-bottom:15px;">
+        <div class="modal-content" style="max-width:800px;">
+          <h4 style="color:var(--editor-text);margin: 0 0 15px 0; flex-shrink: 0;">Select a Content Item</h4>
+          <div id="content-browser-list" style="flex: 1; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 15px; background: #f9f9f9; min-height: 200px;">
             <div style="text-align:center;padding:40px;color:var(--editor-text-muted);">
               <i class="fa fa-spinner fa-spin"></i> Loading content...
             </div>
           </div>
-          <div style="text-align:right;">
+          <div style="text-align: right; margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end; flex-shrink: 0;">
             <button type="button" class="button tiny secondary radius" id="close-content-browser-modal">Cancel</button>
           </div>
         </div>
