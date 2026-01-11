@@ -1672,12 +1672,22 @@ class PropertiesPanel {
       // Close button
       document.getElementById('close-content-browser-modal').addEventListener('click', () => {
         modal.classList.remove('active');
+        // Remove escape key listener when modal is closed
+        if (modal.escapeKeyHandler) {
+          document.removeEventListener('keydown', modal.escapeKeyHandler, true);
+          console.log('Content browser - Escape key listener removed');
+        }
       });
       
       // Close on overlay click
       modal.addEventListener('click', (e) => {
         if (e.target === modal) {
           modal.classList.remove('active');
+          // Remove escape key listener when modal is closed
+          if (modal.escapeKeyHandler) {
+            document.removeEventListener('keydown', modal.escapeKeyHandler, true);
+            console.log('Content browser - Escape key listener removed');
+          }
         }
       });
     }
@@ -1687,6 +1697,23 @@ class PropertiesPanel {
     
     // Show modal
     modal.classList.add('active');
+    
+    // Add escape key listener when modal is shown
+    modal.escapeKeyHandler = (e) => {
+      console.log('Content browser - Key pressed:', e.key, 'Modal visible:', modal.classList.contains('active'));
+      if (e.key === 'Escape' || e.keyCode === 27) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Content browser - Escape key detected, hiding modal');
+        modal.classList.remove('active');
+        // Remove escape key listener
+        if (modal.escapeKeyHandler) {
+          document.removeEventListener('keydown', modal.escapeKeyHandler, true);
+          console.log('Content browser - Escape key listener removed');
+        }
+      }
+    };
+    document.addEventListener('keydown', modal.escapeKeyHandler, true);
   }
   
   /**
@@ -1794,7 +1821,13 @@ class PropertiesPanel {
         }
         
         // Close modal
-        document.getElementById('content-browser-modal').classList.remove('active');
+        const contentModal = document.getElementById('content-browser-modal');
+        contentModal.classList.remove('active');
+        // Remove escape key listener when modal is closed
+        if (contentModal.escapeKeyHandler) {
+          document.removeEventListener('keydown', contentModal.escapeKeyHandler, true);
+          console.log('Content browser - Escape key listener removed');
+        }
       });
       
       item.addEventListener('mouseenter', () => {
