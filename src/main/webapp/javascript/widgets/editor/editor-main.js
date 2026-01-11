@@ -67,12 +67,26 @@ class PageEditor {
       this.loadExistingLayout(this.config.existingXml);
     }
     
-    // Load initial page data for Info and CSS tabs
+    // Load initial page data for Info, CSS, and XML tabs
+    // Only load if we have a webPageLink and it's not a new page (webPageId > 0)
     if (this.config.webPageLink) {
-      // Load Info tab data for the initial page
+      const isNewPage = !this.config.webPageId || this.config.webPageId <= 0;
+      
+      if (isNewPage) {
+        // For new pages, set up the pages tab manager to know it's a new page
+        this.pagesTabManager.selectedPageId = 'new';
+        this.pagesTabManager.selectedPageLink = this.config.webPageLink;
+        console.log('Editor initialized for new page:', this.config.webPageLink);
+      }
+      
+      // Load Info tab data (handles both new and existing pages)
       this.infoTabManager.loadPageInfo(this.config.webPageLink);
-      // Load CSS tab data for the initial page
+      // Load CSS tab data (handles both new and existing pages)
       this.cssTabManager.loadStylesheet(this.config.webPageLink);
+      // Update XML tab with initial canvas data
+      setTimeout(() => {
+        this.xmlTabManager.updateFromCanvas();
+      }, 100);
     }
     
     // Save initial state to history
@@ -216,6 +230,9 @@ class PageEditor {
   createNewPage(title, link) {
     console.log('Creating new page:', title, link);
     
+    // Store the title for later use
+    this.newPageTitle = title;
+    
     // Update the editor to work on the new page
     this.config.webPageLink = link;
     this.config.existingXml = '';
@@ -224,11 +241,11 @@ class PageEditor {
     // Clear current layout
     this.layoutManager.structure = { rows: [] };
     
-    // Update the pages tab to show the new page
+    // Update the pages tab to show the new page with title
     this.pagesTabManager.selectedPageId = 'new';
     this.pagesTabManager.selectedPageLink = link;
     
-    // Re-render the pages list to include the new page
+    // Re-render the pages list to include the new page with title
     const currentPages = this.pagesTabManager.pages || [];
     this.pagesTabManager.renderPageList(currentPages);
     
@@ -237,7 +254,7 @@ class PageEditor {
     canvas.innerHTML = `
       <div class="empty-canvas" style="cursor: pointer;">
         <i class="far fa-plus-circle fa-3x margin-bottom-10"></i>
-        <h5>Start Building "${title}"</h5>
+        <h5>Start Building "${this.escapeHtml(title)}"</h5>
         <p>Click "Add Row" to begin or drag widgets from the palette</p>
       </div>
     `;
@@ -1401,5 +1418,17 @@ class PageEditor {
    */
   getViewportManager() {
     return this.viewportManager;
+  }
+
+  /**
+   * Escape HTML special characters
+   * @param {string} str - The string to escape
+   * @returns {string} The escaped string
+   */
+  escapeHtml(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
   }
 }
