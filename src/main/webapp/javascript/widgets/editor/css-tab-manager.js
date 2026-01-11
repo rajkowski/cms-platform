@@ -59,7 +59,7 @@ class CSSTabManager {
       if (e.detail?.tab === 'css' && this.aceEditor) {
         // Resize editor when tab becomes visible
         setTimeout(() => {
-          this.aceEditor.resize();
+          this.resize();
         }, 100);
       }
     });
@@ -76,6 +76,14 @@ class CSSTabManager {
       });
       observer.observe(editorWrapper, { attributes: true });
     }
+    
+    // Listen for window resize to adjust editor height
+    this.resizeHandler = () => {
+      if (this.aceEditor) {
+        this.resize();
+      }
+    };
+    window.addEventListener('resize', this.resizeHandler);
     
     console.log('CSSTabManager initialized');
   }
@@ -172,7 +180,31 @@ class CSSTabManager {
     this.isLoading = true;
     this.currentPageLink = webPageLink;
     
-    // Show loading state
+    // Check if this is a new page (not saved yet)
+    const isNewPage = this.editor.pagesTabManager?.selectedPageId === 'new';
+    
+    if (isNewPage) {
+      // For new pages, start with empty CSS
+      console.log('Loading CSS for new page:', webPageLink);
+      
+      this.originalCSS = '';
+      this.stylesheetId = -1;
+      this.webPageId = -1;
+      
+      if (this.aceEditor) {
+        this.aceEditor.setValue('', -1);
+        this.aceEditor.setReadOnly(false);
+        this.aceEditor.clearSelection();
+        this.aceEditor.moveCursorTo(0, 0);
+      }
+      
+      this.updateStatusText('New page - add CSS below');
+      this.rightPanelTabs.clearDirtyForTab('css');
+      this.isLoading = false;
+      return;
+    }
+    
+    // Show loading state for existing pages
     this.updateStatusText('Loading...');
     if (this.aceEditor) {
       this.aceEditor.setReadOnly(true);
@@ -351,6 +383,17 @@ class CSSTabManager {
    */
   resize() {
     if (this.aceEditor) {
+      let tabContainer = document.getElementById('css-tab');
+      let tabRect = tabContainer.getBoundingClientRect();
+      let tabTop = window.pageYOffset || document.documentElement.scrollTop;
+      let tabAvailableHeight = window.innerHeight - Math.round(tabRect.top + tabTop);
+
+      let statusContainer = document.getElementById('css-editor-status');
+      let statusRect = statusContainer.getBoundingClientRect();
+
+      let container = document.getElementById('css-tab-content');
+      let newHeight = Math.round(tabAvailableHeight - statusRect.height);
+      container.style.height = newHeight + 'px';
       this.aceEditor.resize();
     }
   }
@@ -369,6 +412,15 @@ class CSSTabManager {
    */
   isReady() {
     return this.isInitialized && this.aceEditor !== null;
+  }
+
+  /**
+   * Cleanup method to remove event listeners
+   */
+  destroy() {
+    if (this.resizeHandler) {
+      window.removeEventListener('resize', this.resizeHandler);
+    }
   }
 }
 

@@ -66,7 +66,7 @@ class XMLTabManager {
       if (isXmlTab && this.aceEditor) {
         // Resize editor when tab becomes visible
         setTimeout(() => {
-          this.aceEditor.resize();
+          this.resize();
           // Sync from canvas when switching to XML tab
           this.updateFromCanvas();
         }, 100);
@@ -111,6 +111,14 @@ class XMLTabManager {
         }
       }
     });
+    
+    // Listen for window resize to adjust editor height
+    this.resizeHandler = () => {
+      if (this.aceEditor) {
+        this.resize()
+      }
+    };
+    window.addEventListener('resize', this.resizeHandler);
     
     console.log('XMLTabManager initialized');
   }
@@ -161,7 +169,7 @@ class XMLTabManager {
     });
     
     // Set placeholder text
-    this.aceEditor.setValue('<!-- Select a page to view its XML layout -->\n', -1);
+    this.aceEditor.setValue('', -1);
     
     this.isInitialized = true;
   }
@@ -548,6 +556,17 @@ class XMLTabManager {
    */
   resize() {
     if (this.aceEditor) {
+      let tabContainer = document.getElementById('xml-tab');
+      let tabRect = tabContainer.getBoundingClientRect();
+      let tabTop = window.pageYOffset || document.documentElement.scrollTop;
+      let tabAvailableHeight = window.innerHeight - Math.round(tabRect.top + tabTop);
+
+      let statusContainer = document.getElementById('xml-editor-status');
+      let statusRect = statusContainer.getBoundingClientRect();
+
+      let container = document.getElementById('xml-tab-content');
+      let newHeight = Math.round(tabAvailableHeight - statusRect.height);
+      container.style.height = newHeight + 'px';
       this.aceEditor.resize();
     }
   }
@@ -603,6 +622,15 @@ class XMLTabManager {
     
     // Clean up the result
     return formatted.substring(1, formatted.length - 2);
+  }
+
+  /**
+   * Cleanup method to remove event listeners
+   */
+  destroy() {
+    if (this.resizeHandler) {
+      window.removeEventListener('resize', this.resizeHandler);
+    }
   }
 }
 
