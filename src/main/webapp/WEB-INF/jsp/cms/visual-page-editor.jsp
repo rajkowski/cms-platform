@@ -1123,7 +1123,7 @@
   <div id="editor-toolbar">
     <!-- Left Section -->
     <div class="toolbar-section left">
-      <button id="add-page-btn" class="button tiny success no-gap radius"><i class="${font:far()} fa-file-plus"></i> Add a Page</button>
+      <button id="add-page-btn" class="button tiny success no-gap radius"><i class="${font:far()} fa-file-circle-plus"></i> Add a Page</button>
       <button id="add-row-btn" class="button tiny primary no-gap radius"><i class="${font:far()} fa-plus"></i> Add Row</button>
       <button id="undo-btn" class="button tiny secondary no-gap radius" disabled><i class="${font:far()} fa-undo"></i> Undo</button>
       <button id="redo-btn" class="button tiny secondary no-gap radius" disabled><i class="${font:far()} fa-redo"></i> Redo</button>
