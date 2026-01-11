@@ -2,8 +2,8 @@
  * Web Page Link Picker Modal
  * Universal modal for selecting web page links from the sitemap
  * 
- * @author AI Assistant
- * @created 1/10/26
+ * @author Matt Rajkowski
+ * @created 01/10/26 12:00 PM
  */
 
 class PageLinkPickerModal {
@@ -35,6 +35,18 @@ class PageLinkPickerModal {
     this.loadPages(currentLink);
     
     this.modal.style.display = 'flex';
+    
+    // Add escape key listener when modal is shown
+    this.escapeKeyHandler = (e) => {
+      console.log('Page link picker - Key pressed:', e.key, 'Modal visible:', this.modal.style.display !== 'none');
+      if (e.key === 'Escape' || e.keyCode === 27) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Page link picker - Escape key detected, hiding modal');
+        this.hide();
+      }
+    };
+    document.addEventListener('keydown', this.escapeKeyHandler, true);
   }
 
   /**
@@ -43,6 +55,11 @@ class PageLinkPickerModal {
   hide() {
     if (this.modal) {
       this.modal.style.display = 'none';
+    }
+    // Remove escape key listener
+    if (this.escapeKeyHandler) {
+      document.removeEventListener('keydown', this.escapeKeyHandler, true);
+      console.log('Page link picker - Escape key listener removed');
     }
   }
 
