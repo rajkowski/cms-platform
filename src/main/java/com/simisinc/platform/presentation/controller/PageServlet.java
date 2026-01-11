@@ -576,6 +576,11 @@ public class PageServlet extends HttpServlet {
 
         // Verify a target widget exists
         String targetWidget = request.getParameter("widget");
+        // Json requests use the only widget id
+        if (StringUtils.isEmpty(targetWidget) && pageRequest.getPagePath().startsWith("/json/")) {
+          targetWidget = pageRequest.getPagePath() + "1";
+        }
+        // Require targetWidget
         if (StringUtils.isEmpty(targetWidget)) {
           LOG.error(
               "DEVELOPER: TARGET WIDGET PARAMETER WAS NOT FOUND AND IS REQUIRED " + pageRequest.getPagePath() + " "
