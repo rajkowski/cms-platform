@@ -466,7 +466,7 @@ public class PageServlet extends HttpServlet {
           } else {
             collectionUniqueId = request.getParameter("collectionUniqueId");
           }
-        } else if (pageRef.getCollectionUniqueId().startsWith("/")) {
+        } else if (pageRef.getCollectionUniqueId().startsWith("/") && pageRef.getCollectionUniqueId().contains("*")) {
           collectionUniqueId = pageRequest.getUri().substring(pageRef.getCollectionUniqueId().indexOf("*"));
         }
         if (!StringUtils.isBlank(collectionUniqueId)) {
