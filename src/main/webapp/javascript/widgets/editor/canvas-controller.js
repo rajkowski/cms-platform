@@ -297,6 +297,16 @@ class CanvasController {
       e.stopPropagation();
       this.moveColumnRight(rowId, columnId);
     };
+
+    // Settings button
+    const settingsBtn = document.createElement('button');
+    settingsBtn.className = 'control-btn';
+    settingsBtn.innerHTML = '<i class="fa fa-cog"></i>';
+    settingsBtn.title = 'Column Settings';
+    settingsBtn.onclick = (e) => {
+      e.stopPropagation();
+      this.selectElement(columnElement, { type: 'column', rowId, columnId: columnId });
+    };
     
     // Delete Column button
     const deleteBtn = document.createElement('button');
@@ -313,6 +323,7 @@ class CanvasController {
     controls.appendChild(moveRightBtn);
     controls.appendChild(addBeforeBtn);
     controls.appendChild(addAfterBtn);
+    controls.appendChild(settingsBtn);
     controls.appendChild(deleteBtn);
     
     return controls;
@@ -1392,6 +1403,5 @@ class CanvasController {
       rowId: rowId
     });
   }
-
 
 }
