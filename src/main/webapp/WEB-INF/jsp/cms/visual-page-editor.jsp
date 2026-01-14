@@ -46,7 +46,7 @@
     --editor-border: #404040;
     --editor-text: #e0e0e0;
     --editor-text-muted: #a0a0a0;
-    --editor-hover-bg: #353535;
+    --editor-hover-bg: #1e1e1e;
     --editor-selected-bg: #1e3a5f;
     --editor-selected-border: #4a9eff;
     --editor-shadow: rgba(0,0,0,0.3);
@@ -189,7 +189,6 @@
   /* Add inner content wrapper for proper spacing */
   #editor-canvas .column-content {
     position: relative;
-    border: 1px solid var(--editor-border);
     border-radius: 4px;
   }
   
@@ -325,6 +324,7 @@
   }
   
   .canvas-widget.selected {
+    background: var(--editor-selected-bg);
     border-color: var(--editor-selected-border);
     box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.25);
   }
@@ -1709,6 +1709,9 @@
         if (e.target === editorCanvas) {
           // Clear the properties panel (unselect everything)
           if (window.pageEditor && window.pageEditor.getPropertiesPanel()) {
+            document.querySelectorAll('.canvas-widget.selected').forEach(el => {
+              el.classList.remove('selected');
+            });
             window.pageEditor.getPropertiesPanel().clear();
           }
         }
