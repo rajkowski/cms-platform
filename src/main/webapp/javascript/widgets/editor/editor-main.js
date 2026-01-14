@@ -108,12 +108,12 @@ class PageEditor {
     if (this.isDirty()) {
       if (!this.elements.saveBtn.dataset.dirty) {
         this.elements.saveBtn.dataset.dirty = 'true';
-        this.elements.saveBtn.innerHTML = '<i class="far fa-circle-dot"></i> Save <span style="color: #ff6b6b;">●</span>';
+        this.elements.saveBtn.innerHTML = '<i class="far fa-circle-dot"></i> Publish <span style="color: #ff6b6b;">●</span>';
       }
     } else {
       if (this.elements.saveBtn.dataset.dirty) {
         delete this.elements.saveBtn.dataset.dirty;
-        this.elements.saveBtn.innerHTML = '<i class="fa-solid fa-save"></i> Save';
+        this.elements.saveBtn.innerHTML = '<i class="fa-solid fa-save"></i> Publish';
       }
     }
   }
@@ -1112,7 +1112,7 @@ class PageEditor {
     
     if (failedItems.length === 0) {
       // All saves successful
-      this.elements.saveBtn.innerHTML = '<i class="far fa-check"></i> Saved!';
+      this.elements.saveBtn.innerHTML = '<i class="far fa-check"></i> Published!';
       this.updateSaveIndicator();
       
       // Show success toast with what was saved (Requirements 6.5)
@@ -1123,7 +1123,7 @@ class PageEditor {
       
       // Reset button after delay
       setTimeout(() => {
-        this.elements.saveBtn.innerHTML = '<i class="fa-solid fa-save"></i> Save';
+        this.elements.saveBtn.innerHTML = '<i class="fa-solid fa-save"></i> Publish';
         this.updateSaveIndicator();
       }, 2000);
       

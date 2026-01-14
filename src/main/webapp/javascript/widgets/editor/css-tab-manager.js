@@ -237,7 +237,7 @@ class CSSTabManager {
       if (data.hasStylesheet) {
         this.updateStatusText('Loaded');
       } else {
-        this.updateStatusText('No stylesheet - add CSS below');
+        this.updateStatusText('No additional stylesheet - add page CSS');
       }
       
       // Clear dirty state since we just loaded

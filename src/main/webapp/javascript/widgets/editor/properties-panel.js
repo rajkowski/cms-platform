@@ -1538,7 +1538,7 @@ class PropertiesPanel {
   }
   
   /**
-   * Clear highlighting from all elements
+   * Clear highlighting from row and columns elements
    */
   clearHighlight() {
     document.querySelectorAll('.canvas-row.selected, .canvas-column.selected').forEach(el => {

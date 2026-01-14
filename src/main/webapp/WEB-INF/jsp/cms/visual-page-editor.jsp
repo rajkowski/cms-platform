@@ -27,10 +27,12 @@
 <web:script package="tinymce" file="tinymce.min.js" />
 <g:compress>
 <style>
-  /* Dark Mode Variables */
+  /* Light and Dark Mode Variables */
   :root {
     --editor-bg: #ffffff;
     --editor-panel-bg: #f8f9fa;
+    --editor-panel-input: #ffffff;
+    --editor-panel-input-placeholder: #999999;
     --editor-border: #dee2e6;
     --editor-text: #212529;
     --editor-text-muted: #6c757d;
@@ -43,8 +45,10 @@
   [data-theme="dark"] {
     --editor-bg: #1a1a1a;
     --editor-panel-bg: #2d2d2d;
+    --editor-panel-input: #2d2d2d;
+    --editor-panel-input-placeholder: #646464;
     --editor-border: #404040;
-    --editor-text: #e0e0e0;
+    --editor-text: #ffffff;
     --editor-text-muted: #a0a0a0;
     --editor-hover-bg: #1e1e1e;
     --editor-selected-bg: #1e3a5f;
@@ -489,11 +493,16 @@
     color: var(--editor-text);
     transition: all 0.2s;
   }
+
+  .property-input::placeholder { 
+    color: var(--editor-panel-input-placeholder);
+  }
   
   .property-input:focus {
     outline: none;
     border-color: var(--editor-selected-border);
     box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.25);
+    background-color: var(--editor-panel-input)
   }
   
   .property-input.error {
@@ -1154,7 +1163,7 @@
     <!-- Middle Section -->
     <div class="toolbar-section middle">
       <button id="toggle-preview-btn" class="button tiny no-gap radius"><i class="${font:far()} fa-eye"></i> Preview</button>
-      <button id="save-btn" class="button tiny no-gap radius"><i class="${font:far()} fa-save"></i> Save</button>
+      <button id="save-btn" class="button tiny no-gap radius"><i class="${font:far()} fa-save"></i> Publish</button>
     </div>
 
     <!-- Right Section -->
@@ -1471,7 +1480,6 @@
 
 <!-- Hidden form for submission -->
 <form id="editor-form" method="post" style="display: none;">
-  <input type="hidden" name="widget" value="/json/saveWebPage1"/>
   <input type="hidden" name="token" value="${userSession.formToken}"/>
   <input type="hidden" name="webPage" value="<c:out value="${webPage.link}" />"/>
   <input type="hidden" name="webPageLink" value="<c:out value="${webPage.link}" />"/>
