@@ -167,8 +167,18 @@ public class FileSystemCommandTest {
       File testResourcePath = FileSystemCommand.getFileServerConfigPath("src", "test", "resources");
       File properties = new File(testResourcePath, "simple-list.csv");
       String checksum = FileSystemCommand.getFileChecksum(properties);
+      Assertions.assertNotNull(checksum);
+      Assertions.assertTrue(checksum.startsWith("SHA-512;"));
       Assertions.assertEquals(136, checksum.length());
     }
   }
 
+  @Test
+  void testGetFileChecksumMissingFile() {
+    try (MockedStatic<CacheManager> cacheManager = mockStatic(CacheManager.class)) {
+      cacheManager.when(() -> CacheManager.getLoadingCache(anyString())).thenReturn(sitePropertyListCache);
+      File missing = new File("nonexistent-file-xyz.tmp");
+      Assertions.assertNull(FileSystemCommand.getFileChecksum(missing));
+    }
+  }
 }
