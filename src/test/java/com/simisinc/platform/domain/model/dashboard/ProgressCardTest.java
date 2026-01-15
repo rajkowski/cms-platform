@@ -9,14 +9,14 @@ class ProgressCardTest {
     ProgressCard progressCard = new ProgressCard();
     progressCard.setProgress(50);
     progressCard.setMaxValue(100);
-    Assertions.assertEquals("50.00%", progressCard.getPercentComplete());
+    Assertions.assertEquals("50%", progressCard.getPercentComplete());
 
     progressCard.setProgress(30);
     progressCard.setMaxValue(90);
-    Assertions.assertEquals("33.33%", progressCard.getPercentComplete());
+    Assertions.assertEquals("33%", progressCard.getPercentComplete());
 
     progressCard.setProgress(3);
     progressCard.setMaxValue(7);
-    Assertions.assertEquals("42.86%", progressCard.getPercentComplete());
+    Assertions.assertEquals("42%", progressCard.getPercentComplete());
   }
 }
