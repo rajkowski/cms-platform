@@ -471,7 +471,7 @@ class WidgetRegistry {
           default: '0'
         },
         icon: {
-          type: 'text',
+          type: 'icon',
           label: 'Icon',
           description: 'A Font Awesome icon to display',
           default: 'chart-bar'

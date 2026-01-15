@@ -16,11 +16,12 @@
 
 package com.simisinc.platform.presentation.widgets.dashboard;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.domain.model.dashboard.StatisticCard;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
-import org.apache.commons.lang3.StringUtils;
 
 /**
  * Displays a chart with several stats
@@ -39,10 +40,15 @@ public class StatisticCardWidget extends GenericWidget {
 
   public WidgetContext execute(WidgetContext context) {
 
+    String icon = context.getPreferences().getOrDefault("icon", null);
+    if (StringUtils.isNotEmpty(icon) && !icon.startsWith("fa-")) {
+      icon = "fa-" + icon.trim();
+    }
+
     StatisticCard statisticCard = new StatisticCard();
     statisticCard.setValue(Integer.parseInt(context.getPreferences().getOrDefault("value", "0")));
     statisticCard.setLabel(context.getPreferences().getOrDefault("label", "label"));
-    statisticCard.setIcon(context.getPreferences().getOrDefault("icon", null));
+    statisticCard.setIcon(icon);
     statisticCard.setLink(context.getPreferences().getOrDefault("link", null));
     context.getRequest().setAttribute("statisticCard", statisticCard);
 

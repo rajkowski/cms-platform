@@ -41,7 +41,7 @@
 <div class="grid-y align-middle text-middle">
   <c:if test="${!empty statisticCard.icon}">
     <div class="small-5 cell padding-width-30 text-center">
-      <i id="icon${widgetContext.uniqueId}" class="fa fa-<c:out value="${statisticCard.icon}" /> statistic-card-icon${widgetContext.uniqueId}"></i>
+      <i id="icon${widgetContext.uniqueId}" class="fa <c:out value="${statisticCard.icon}" /> statistic-card-icon${widgetContext.uniqueId}"></i>
     </div>
   </c:if>
   <div class="small-4 cell padding-top-20">
