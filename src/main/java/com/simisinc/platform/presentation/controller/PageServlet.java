@@ -288,7 +288,7 @@ public class PageServlet extends HttpServlet {
 
     } catch (Exception e) {
       LOG.error("Error processing preview request: " + e.getMessage(), e);
-      response.getWriter().print("<p>Error loading preview: " + e.getMessage() + "</p>");
+      response.getWriter().print("<p>Error loading preview</p>");
     }
   }
 
