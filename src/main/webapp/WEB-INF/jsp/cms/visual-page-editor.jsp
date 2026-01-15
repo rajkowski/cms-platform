@@ -73,15 +73,17 @@
     transition: background 0.3s ease, border-color 0.3s ease;
   }
 
-  .toolbar-section {
-    display: flex;
-    gap: 10px;
-    align-items: center;
+  toolbar-section.left {
+    justify-content: flex-start;
   }
 
-  .toolbar-section.middle {
-    flex-grow: 1;
-    justify-content: center;
+  .toolbar-section.center {
+        justify-content: center;
+flex-grow: 1;
+  }
+
+  .toolbar-section.right {
+    justify-content: flex-end;
   }
   
   #widget-palette {
@@ -1160,8 +1162,8 @@
       <button id="redo-btn" class="button tiny secondary no-gap radius" disabled><i class="${font:far()} fa-redo"></i> Redo</button>
     </div>
 
-    <!-- Middle Section -->
-    <div class="toolbar-section middle">
+    <!-- Center Section -->
+    <div class="toolbar-section center">
       <button id="toggle-preview-btn" class="button tiny no-gap radius"><i class="${font:far()} fa-eye"></i> Preview</button>
       <button id="save-btn" class="button tiny no-gap radius"><i class="${font:far()} fa-save"></i> Publish</button>
     </div>
