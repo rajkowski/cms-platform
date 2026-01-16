@@ -255,6 +255,7 @@ public class PageServlet extends HttpServlet {
 
       if (pageResponse.isHandled()) {
         // The widget processor handled the response
+        LOG.debug("Widget processed handled the response");
         return;
       }
 
@@ -264,17 +265,26 @@ public class PageServlet extends HttpServlet {
       request.setAttribute("sitePropertyMap", sitePropertyMap);
 
       // Determine if there is a global custom stylesheet
-      Stylesheet globalStylesheet = LoadStylesheetCommand.loadStylesheetByWebPageId(-1);
+      Stylesheet globalStylesheet = LoadStylesheetCommand.loadStylesheetByWebPageId(-1L);
       if (globalStylesheet != null) {
+        LOG.debug("Adding global stylesheet...");
         request.setAttribute("includeGlobalStylesheet", "true");
         request.setAttribute("includeGlobalStylesheetLastModified", globalStylesheet.getModified().getTime());
+      } else {
+        LOG.debug("No global stylesheet.");
       }
-      // Determine if the current webPage has an additional custom stylesheet
-      if (webPage != null) {
-        Stylesheet pageStylesheet = LoadStylesheetCommand.loadStylesheetByWebPageId(webPage.getId());
+      // Determine if the current webPage has an additional custom stylesheet (or if one was posted with the page)
+      if (false) {
+        // @todo Prepare the temporary css
+      } else if (currentWebPage != null && currentWebPage.getId() > -1) {
+        // For submitted XML... do we know the page???
+        Stylesheet pageStylesheet = LoadStylesheetCommand.loadStylesheetByWebPageId(currentWebPage.getId());
         if (pageStylesheet != null) {
+          LOG.debug("Adding page stylesheet...");
           request.setAttribute("includeStylesheet", pageStylesheet.getWebPageId());
           request.setAttribute("includeStylesheetLastModified", pageStylesheet.getModified().getTime());
+        } else {
+          LOG.debug("No page stylesheet.");
         }
       }
 
@@ -285,6 +295,7 @@ public class PageServlet extends HttpServlet {
       // request.setAttribute(PAGE_BODY, "/WEB-INF/jsp/container-layout.jsp");
       request.setAttribute(PAGE_BODY, "/WEB-INF/jsp/layout.jsp");
       request.getServletContext().getRequestDispatcher("/WEB-INF/jsp/main.jsp").forward(request, response);
+      LOG.debug("Finished dispatch.");
 
     } catch (Exception e) {
       LOG.error("Error processing preview request: " + e.getMessage(), e);
@@ -615,7 +626,8 @@ public class PageServlet extends HttpServlet {
       if ("iframe".equals(request.getHeader("Sec-Fetch-Dest"))) {
         prepareHeaderFooter = false;
       }
-      if (pageRequest.getPagePath().startsWith("/admin/visual-page-editor")) {
+      if (pageRequest.getPagePath().startsWith("/admin/system") ||
+          pageRequest.getPagePath().startsWith("/admin/visual-page-editor")) {
         prepareHeaderFooter = false;
       }
 
@@ -721,6 +733,7 @@ public class PageServlet extends HttpServlet {
       } else {
         // Check if this is an admin page accessed directly and prepare for iframe rendering
         boolean isAdminPath = pageRequest.getPagePath().startsWith("/admin") &&
+            !pageRequest.getPagePath().startsWith("/admin/system") &&
             !pageRequest.getPagePath().startsWith("/admin/visual-page-editor") &&
             !pageRequest.getPagePath().startsWith("/admin/web-page-designer") &&
             !pageRequest.getPagePath().startsWith("/admin/web-page") &&
