@@ -159,6 +159,9 @@ class InfoTabManager {
     
     const data = this.currentData;
     
+    // Check if this is the home page (link = "/")
+    const isHomePage = data.link === '/';
+    
     // Build sitemap change frequency options
     let frequencyOptions = '<option value=""></option>';
     for (const [key, label] of Object.entries(this.sitemapChangeFrequencyOptions)) {
@@ -173,7 +176,9 @@ class InfoTabManager {
           <label class="property-label" for="info-title">Title</label>
           <input type="text" id="info-title" class="property-input" 
                  value="${this.escapeHtml(data.title || '')}" 
-                 placeholder="Page title" />
+                 placeholder="Page title" 
+                 ${isHomePage ? 'readonly style="background: var(--editor-hover-bg); cursor: not-allowed;"' : ''} />
+          ${isHomePage ? '<div style="font-size: 12px; color: var(--editor-text-muted); margin-top: 5px;">Home page title cannot be edited here</div>' : ''}
         </div>
         
         <!-- Link (read-only) -->
