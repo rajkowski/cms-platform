@@ -78,8 +78,10 @@
   }
 
   .toolbar-section.center {
-        justify-content: center;
-flex-grow: 1;
+    display: flex;
+    justify-content: start;
+    flex-grow: 1;
+    gap: 5px;
   }
 
   .toolbar-section.right {

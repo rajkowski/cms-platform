@@ -36,10 +36,10 @@ class ViewportManager {
    */
   createViewportControls() {
     const toolbar = document.getElementById('editor-toolbar');
-    const middleSection = toolbar.querySelector('.toolbar-section.middle');
+    const middleSection = toolbar.querySelector('.toolbar-section.center');
     
     if (!middleSection) {
-      console.error('Middle toolbar section not found');
+      console.error('Center toolbar section not found');
       return;
     }
 
@@ -48,9 +48,7 @@ class ViewportManager {
     viewportControls.className = 'viewport-controls';
     viewportControls.style.cssText = `
       display: flex;
-      gap: 5px;
       align-items: center;
-      margin-left: 20px;
     `;
 
     // Create viewport buttons
