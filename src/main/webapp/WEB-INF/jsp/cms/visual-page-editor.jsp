@@ -62,6 +62,40 @@
     min-height: 300px;
   }
   
+  #editor-titlebar {
+    background: var(--editor-panel-bg);
+    border-bottom: 1px solid var(--editor-border);
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    transition: background 0.3s ease, border-color 0.3s ease;
+  }
+
+  .titlebar-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .titlebar-left img {
+    height: 32px;
+    width: auto;
+  }
+
+  .titlebar-left h2 {
+    margin: 0;
+    font-size: 20px;
+    color: var(--editor-text);
+    font-weight: 600;
+  }
+
+  .titlebar-right {
+    display: flex;
+    gap: 10px;
+  }
+  
   #editor-toolbar {
     background: var(--editor-panel-bg);
     border-bottom: 1px solid var(--editor-border);
@@ -1162,6 +1196,19 @@
     <h4><c:if test="${!empty icon}"><i class="${font:far()} ${icon}"></i> </c:if><c:out value="${title}"/></h4>
   </c:if>
   <%@include file="../page_messages.jspf" %>
+
+  <!-- Title Bar -->
+  <div id="editor-titlebar">
+    <div class="titlebar-left">
+      <img src="${ctx}/images/favicon.png" alt="Logo" />
+      <h2>Webpage Editor</h2>
+    </div>
+    <div class="titlebar-right">
+      <a href="${ctx}/admin/visual-page-editor" class="button tiny no-gap radius">Pages</a>
+      <!-- <a href="${ctx}/admin/visual-page-editor" class="button tiny no-gap radius">Images</a> -->
+      <!-- <a href="${ctx}/admin/visual-page-editor" class="button tiny no-gap radius">Content</a> -->
+    </div>
+  </div>
   
   <!-- Toolbar -->
   <div id="editor-toolbar">
@@ -1866,16 +1913,18 @@
     // Calculate the container height dynamically
     function calculateContainerHeight() {
       const wrapper = document.getElementById('visual-page-editor-wrapper');
+const titlebar = document.getElementById('editor-titlebar');
       const toolbar = document.getElementById('editor-toolbar');
       const container = document.getElementById('visual-page-editor-container');
       
-      if (!wrapper || !toolbar || !container) return;
+      if (!wrapper || !titlebar || !toolbar || !container) return;
       
       // Get the viewport height
       const viewportHeight = window.innerHeight;
       
       // Calculate the height used by elements above the container
       const wrapperTop = wrapper.getBoundingClientRect().top;
+const titlebarHeight = titlebar.offsetHeight;
       const toolbarHeight = toolbar.offsetHeight;
       
       // Get any title element if it exists
@@ -1886,8 +1935,8 @@
       const messagesElement = wrapper.querySelector('[role="alert"], .messages-container');
       const messagesHeight = messagesElement ? messagesElement.offsetHeight : 0;
       
-      // Calculate available height: viewport height - space from top - title - messages - toolbar
-      const availableHeight = viewportHeight - wrapperTop - titleHeight - messagesHeight - toolbarHeight;
+      // Calculate available height: viewport height - space from top - title - messages - titlebar - toolbar
+      const availableHeight = viewportHeight - wrapperTop - titleHeight - messagesHeight - titlebarHeight - toolbarHeight;
       
       // Set the container height with a minimum
       const finalHeight = Math.max(availableHeight, 300);
