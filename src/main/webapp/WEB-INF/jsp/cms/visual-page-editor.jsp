@@ -73,8 +73,10 @@
     transition: background 0.3s ease, border-color 0.3s ease;
   }
 
-  toolbar-section.left {
+  .toolbar-section.left {
+    display: flex;
     justify-content: flex-start;
+    gap: 5px;
   }
 
   .toolbar-section.center {
@@ -85,7 +87,9 @@
   }
 
   .toolbar-section.right {
+    display: flex;
     justify-content: flex-end;
+    gap: 5px;
   }
   
   #widget-palette {
@@ -934,7 +938,7 @@
     display: flex;
     gap: 5px;
     align-items: center;
-    margin-left: 20px;
+    margin-left: 15px;
   }
 
   .viewport-btn {
@@ -1049,6 +1053,7 @@
     height: 100%;
     border: none;
     display: none;
+    background-color: #ffffff;
   }
 
   #preview-iframe.active {
@@ -1142,6 +1147,10 @@
   .loading-indicator-content i {
     color: #007bff;
     font-size: 18px;
+  }  
+
+  [data-theme="dark"] #preview-loading-indicator {
+    color: #ffffff;
   }
 </style>
 </g:compress>
@@ -1172,6 +1181,9 @@
 
     <!-- Right Section -->
     <div class="toolbar-section right">
+<div id="preview-loading-indicator" style="display: none;">
+        <i class="${font:far()} fa-spinner fa-spin"></i>
+      </div>
       <button id="dark-mode-toggle" class="button tiny secondary no-gap radius" title="Toggle Dark Mode"><i class="${font:far()} fa-moon"></i></button>
       <c:choose>
         <c:when test="${!empty returnPage}">
@@ -1297,28 +1309,36 @@
     
     <!-- Preview Container -->
     <div id="preview-container">
+
       <!-- Floating Loading Indicator for Preview -->
-      <div id="preview-loading-indicator" class="loading-indicator-overlay" style="display: none;">
+      <!-- <div id="preview-loading-indicator" class="loading-indicator-overlay" style="display: none;">
         <div class="loading-indicator-content">
           <i class="${font:far()} fa-spinner fa-spin"></i> <span>Loading preview...</span>
         </div>
-      </div>
+      </div> -->
       
-      <div id="preview-loading" style="display: none;">
+      <!-- <div id="preview-loading" style="display: none;">
         <i class="${font:far()} fa-spinner fa-spin"></i> Loading preview...
-      </div>
+      </div> -->
+
       <div id="preview-error" style="display: none;"></div>
-      <iframe id="preview-iframe"></iframe>
+<div style="height: 100%; width: 100%;<c:if test="${!empty themePropertyMap['theme.body.backgroundColor']}">background-color:<c:out value="${themePropertyMap['theme.body.backgroundColor']}" /></c:if>">
+      <iframe id="preview-iframe" style="<c:if test="${!empty themePropertyMap['theme.body.backgroundColor']}">background-color:<c:out value="${themePropertyMap['theme.body.backgroundColor']}" /></c:if>"></iframe>
+</div>
     </div>
     
     <!-- Editor Canvas -->
     <div id="editor-canvas">
+
+
       <!-- Floating Loading Indicator -->
+<!--
       <div id="page-loading-indicator" class="loading-indicator-overlay" style="display: none;">
         <div class="loading-indicator-content">
           <i class="${font:far()} fa-spinner fa-spin"></i> <span id="loading-text">Loading...</span>
         </div>
       </div>
+-->
       
       <c:choose>
         <c:when test="${hasExistingLayout}">
@@ -1527,10 +1547,10 @@
       existingXml: document.getElementById('existing-xml-data').textContent
         .replace(/&lt;/g, '<')
         .replace(/&gt;/g, '>')
-        .replace(/&amp;/g, '&')
         .replace(/&quot;/g, '"')
         .replace(/&#39;/g, "'")
-        .replace(/&#034;/g, '"'),
+        .replace(/&#034;/g, '"')
+        .replace(/&amp;/g, '&'),
       hasExistingLayout: <c:out value="${hasExistingLayout ? 'true' : 'false'}" default="false"/>
     };
     
@@ -1584,7 +1604,7 @@
       // Show floating loading indicator for preview
       const previewLoadingIndicator = document.getElementById('preview-loading-indicator');
       if (previewLoadingIndicator) {
-        previewLoadingIndicator.style.display = 'flex';
+        previewLoadingIndicator.style.display = 'block';
       }
       
       // Show loading indicator in toolbar

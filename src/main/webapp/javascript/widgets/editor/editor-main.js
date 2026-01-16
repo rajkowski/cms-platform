@@ -124,7 +124,7 @@ class PageEditor {
   showLoadingIndicator(text = 'Loading...') {
     if (this.elements.loadingIndicator && this.elements.loadingText) {
       this.elements.loadingText.textContent = text;
-      this.elements.loadingIndicator.style.display = 'flex';
+      this.elements.loadingIndicator.style.display = 'inline-block';
     }
   }
 
@@ -1112,7 +1112,7 @@ class PageEditor {
     
     if (failedItems.length === 0) {
       // All saves successful
-      this.elements.saveBtn.innerHTML = '<i class="far fa-check"></i> Published!';
+      this.elements.saveBtn.innerHTML = '<i class="far fa-check"></i> Saved!';
       this.updateSaveIndicator();
       
       // Show success toast with what was saved (Requirements 6.5)
