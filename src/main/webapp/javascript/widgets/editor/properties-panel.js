@@ -900,7 +900,7 @@ class PropertiesPanel {
     itemsContainer.innerHTML = '';
     
     if (currentItems.length === 0) {
-      itemsContainer.innerHTML = `<div style="color:#999;font-style:italic;text-align:center;padding:20px;">No ${itemName} entries yet</div>`;
+      itemsContainer.innerHTML = `<div style="color:var(--editor-text-muted);font-style:italic;text-align:center;padding:20px;">No ${itemName} entries yet</div>`;
     } else {
       currentItems.forEach((item, index) => {
         const itemHtml = this.renderXmlItem(propName, index, item, itemName, attributes);
@@ -1226,7 +1226,7 @@ class PropertiesPanel {
     const attributes = itemSchema.attributes || {};
     
     // Create container for items
-    html += `<div id="xml-items-${name}" style="border:1px solid #ddd;border-radius:4px;padding:10px;margin:10px 0;overflow-y:auto;">`;
+    html += `<div id="xml-items-${name}" style="border:1px solid var(--editor-border);border-radius:4px;padding:10px;margin:10px 0;overflow-y:auto;background:var(--editor-bg);">`;
     
     // Render existing items
     items.forEach((item, index) => {
@@ -1235,7 +1235,7 @@ class PropertiesPanel {
     
     // Empty state message
     if (items.length === 0) {
-      html += `<div style="color:#999;font-style:italic;text-align:center;padding:20px;">No ${itemName} entries yet</div>`;
+      html += `<div style="color:var(--editor-text-muted);font-style:italic;text-align:center;padding:20px;">No ${itemName} entries yet</div>`;
     }
     
     html += `</div>`;
@@ -1255,12 +1255,12 @@ class PropertiesPanel {
    * Render a single XML item in the array
    */
   renderXmlItem(propName, index, item, itemName, attributes) {
-    let html = `<div class="xml-item" data-item-index="${index}" style="border:1px solid #e0e0e0;border-radius:3px;padding:10px;margin-bottom:10px;background:#f9f9f9;">`;
+    let html = `<div class="xml-item" data-item-index="${index}" style="border:1px solid var(--editor-border);border-radius:3px;padding:10px;margin-bottom:10px;background:var(--editor-panel-bg);">`;
     
     // Item header with index and delete button
     html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">`;
-    html += `<div style="font-weight:bold;font-size:12px;color:#666;">${itemName} #${index + 1}</div>`;
-    html += `<button type="button" class="delete-xml-item" data-prop="${propName}" data-index="${index}" style="padding:3px 8px;font-size:11px;background:#f0f0f0;border:1px solid #ddd;border-radius:3px;cursor:pointer;">Delete</button>`;
+    html += `<div style="font-weight:bold;font-size:12px;color:var(--editor-text-muted);">${itemName} #${index + 1}</div>`;
+    html += `<button type="button" class="delete-xml-item" data-prop="${propName}" data-index="${index}" style="padding:3px 8px;font-size:11px;background:var(--editor-hover-bg);border:1px solid var(--editor-border);border-radius:3px;cursor:pointer;color:var(--editor-text);">Delete</button>`;
     html += `</div>`;
     
     // Render attribute fields
@@ -1270,8 +1270,8 @@ class PropertiesPanel {
       const fieldId = `xml-field-${propName}-${index}-${attrName}`;
       
       html += `<div>`;
-      html += `<label style="display:block;font-size:12px;font-weight:bold;margin-bottom:3px;">
-        ${attrDef.label || attrName}${attrDef.required ? ' <span style="color:red;">*</span>' : ''}
+      html += `<label style="display:block;font-size:12px;font-weight:bold;margin-bottom:3px;color:var(--editor-text);">
+        ${attrDef.label || attrName}${attrDef.required ? ' <span style="color:#dc3545;">*</span>' : ''}
       </label>`;
       
       // Render based on attribute type
@@ -1284,7 +1284,7 @@ class PropertiesPanel {
         html += `</select>`;
       } else if (attrDef.type === 'checkbox') {
         const checked = attrValue === 'true' || attrValue === true ? 'checked' : '';
-        html += `<label style="display:flex;align-items:center;"><input type="checkbox" id="${fieldId}" class="property-input" data-attr="${attrName}" ${checked} /> <span style="margin-left:5px;font-size:12px;">${attrDef.checkboxLabel || 'Yes'}</span></label>`;
+        html += `<label style="display:flex;align-items:center;"><input type="checkbox" id="${fieldId}" class="property-input" data-attr="${attrName}" ${checked} /> <span style="margin-left:5px;font-size:12px;color:var(--editor-text);">${attrDef.checkboxLabel || 'Yes'}</span></label>`;
       } else {
         html += `<input type="text" id="${fieldId}" class="property-input" data-attr="${attrName}" value="${this.escapeHtml(attrValue)}" style="width:100%;" />`;
       }
