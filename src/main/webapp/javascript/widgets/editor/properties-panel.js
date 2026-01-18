@@ -34,14 +34,17 @@ class PropertiesPanel {
   
   /**
    * Show properties for selected element
+   * @param {Object} context - Context object with type, rowId, columnId, widgetId
+   * @param {boolean} skipPreviewRefresh - If true, don't auto-refresh preview when showing (useful for preview mode selections)
    */
-  show(context) {
+  show(context, skipPreviewRefresh) {
     // Switch to Properties tab when showing element properties
     if (this.rightPanelTabs) {
       this.rightPanelTabs.switchTab('properties');
     }
     
     this.currentContext = context;
+    this.skipPreviewRefresh = skipPreviewRefresh || false;
     
     switch (context.type) {
       case 'row':
@@ -107,7 +110,7 @@ class PropertiesPanel {
       .join(' ');
     
     // Margin section with snap sliders
-    html += `<div style="border-bottom:1px solid #ddd;padding-bottom:10px;margin-bottom:10px;">
+    html += `<div style="border-bottom:1px solid var(--editor-border);padding-bottom:10px;margin-bottom:10px;">
       <div style="font-weight:bold;font-size:13px;margin-bottom:8px;">Margins</div>
       
       <div class="property-group">
@@ -129,13 +132,13 @@ class PropertiesPanel {
     html += `<div class="property-group">
       <div class="property-label">Additional CSS Classes</div>
       <input type="text" class="property-input" id="row-css-class" value="${this.escapeHtml(additionalClasses)}" placeholder="e.g., align-center" />
-      <div style="font-size:12px;color:#666;margin-top:5px;">Any additional custom classes (space-separated)</div>
+      <div style="font-size:12px;color:var(--editor-text-muted);margin-top:5px;">Any additional custom classes (space-separated)</div>
     </div>`;
     
     // CSS preview
-    html += `<div class="property-group" style="background:#f5f5f5;padding:10px;border-radius:4px;margin:10px 0;">
+    html += `<div class="property-group" style="background:var(--editor-panel-bg);padding:10px;border-radius:4px;margin:10px 0;border:1px solid var(--editor-border);">
       <div style="font-weight:bold;font-size:12px;margin-bottom:5px;">Applied Classes</div>
-      <div id="row-css-preview" style="font-family:monospace;font-size:11px;word-break:break-all;color:#333;max-height:80px;overflow-y:auto;"></div>
+      <div id="row-css-preview" style="font-family:monospace;font-size:11px;word-break:break-all;max-height:80px;overflow-y:auto;"></div>
     </div>`;
     
     this.content.innerHTML = html;
@@ -352,7 +355,7 @@ class PropertiesPanel {
     let html = `<h6>Column Properties</h6>`;
     
     // Size section
-    html += `<div style="border-bottom:1px solid #ddd;padding-bottom:10px;margin-bottom:10px;">
+    html += `<div style="border-bottom:1px solid var(--editor-border);padding-bottom:10px;margin-bottom:10px;">
       <div style="font-weight:bold;font-size:13px;margin-bottom:8px;">Responsive Sizes</div>
       
       <div class="property-group">
@@ -385,7 +388,7 @@ class PropertiesPanel {
     </div>`;
     
     // Spacing section
-    html += `<div style="border-bottom:1px solid #ddd;padding-bottom:10px;margin-bottom:10px;">
+    html += `<div style="border-bottom:1px solid var(--editor-border);padding-bottom:10px;margin-bottom:10px;">
       <div style="font-weight:bold;font-size:13px;margin-bottom:8px;">Spacing (Padding)</div>
       
       <div class="property-group">
@@ -408,7 +411,7 @@ class PropertiesPanel {
     </div>`;
     
     // Callout/Box section
-    html += `<div style="border-bottom:1px solid #ddd;padding-bottom:10px;margin-bottom:10px;">
+    html += `<div style="border-bottom:1px solid var(--editor-border);padding-bottom:10px;margin-bottom:10px;">
       <div class="property-group">
         <div class="property-label">Box Style</div>
         <select class="property-input" id="column-callout">`;
@@ -421,7 +424,7 @@ class PropertiesPanel {
     </div>`;
     
     // Alignment section
-    html += `<div style="border-bottom:1px solid #ddd;padding-bottom:10px;margin-bottom:10px;">
+    html += `<div style="border-bottom:1px solid var(--editor-border);padding-bottom:10px;margin-bottom:10px;">
       <div class="property-group">
         <div class="property-label">Alignment</div>
         <select class="property-input" id="column-alignment">`;
@@ -433,7 +436,7 @@ class PropertiesPanel {
     </div>`;
     
     // Text section
-    html += `<div style="border-bottom:1px solid #ddd;padding-bottom:10px;margin-bottom:10px;">
+    html += `<div style="border-bottom:1px solid var(--editor-border);padding-bottom:10px;margin-bottom:10px;">
       <div class="property-group">
         <div class="property-label">Text Style</div>
         <select class="property-input" id="column-text">`;
@@ -452,13 +455,13 @@ class PropertiesPanel {
     html += `<div class="property-group">
       <div class="property-label">Additional CSS Classes</div>
       <input type="text" class="property-input" id="column-css-custom" value="${this.escapeHtml(unhandledClasses)}" placeholder="Custom classes" />
-      <div style="font-size:12px;color:#666;margin-top:5px;">Any additional custom classes (space-separated)</div>
+      <div style="font-size:12px;color:var(--editor-text-muted);margin-top:5px;">Any additional custom classes (space-separated)</div>
     </div>`;
     
     // CSS preview
-    html += `<div class="property-group" style="background:#f5f5f5;padding:10px;border-radius:4px;margin:10px 0;">
+    html += `<div class="property-group" style="background:var(--editor-panel-bg);padding:10px;border-radius:4px;margin:10px 0;border:1px solid var(--editor-border);">
       <div style="font-weight:bold;font-size:12px;margin-bottom:5px;">Applied Classes</div>
-      <div id="column-css-preview" style="font-family:monospace;font-size:11px;word-break:break-all;color:#333;max-height:100px;overflow-y:auto;"></div>
+      <div id="column-css-preview" style="font-family:monospace;font-size:11px;word-break:break-all;max-height:100px;overflow-y:auto;"></div>
     </div>`;
     
     this.content.innerHTML = html;
@@ -1982,8 +1985,16 @@ class PropertiesPanel {
   
   /**
    * Enhancement: Auto-refresh preview when property is edited and preview is active
+   * Respects the skipPreviewRefresh flag set during show() to avoid refreshing on initial selection
    */
   refreshPreviewIfActive() {
+    // If skipPreviewRefresh was set during show(), don't auto-refresh
+    if (this.skipPreviewRefresh) {
+      console.debug('PropertiesPanel: Skipping preview refresh (skipPreviewRefresh flag set)');
+      this.skipPreviewRefresh = false; // Reset flag for next time
+      return;
+    }
+    
     // Check if preview mode is active by looking at the toggle button state
     const togglePreviewBtn = document.getElementById('toggle-preview-btn');
     if (togglePreviewBtn && togglePreviewBtn.classList.contains('active')) {
