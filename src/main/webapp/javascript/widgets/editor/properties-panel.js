@@ -1046,6 +1046,14 @@ class PropertiesPanel {
    */
   updateXmlModalTable(propName, itemName, attributes, currentItems, tbody, emptyState, table) {
     console.debug('XML Modal: updateXmlModalTable()', { propName, itemCount: currentItems.length });
+    
+    // Destroy any existing Dragula instance BEFORE clearing DOM
+    if (tbody._dragula) {
+      console.debug('XML Modal: destroying dragula instance before DOM clear');
+      tbody._dragula.destroy();
+      tbody._dragula = null;
+    }
+    
     // Remove old event listeners if they exist
     if (tbody._dragHandlers) {
       tbody.removeEventListener('dragstart', tbody._dragHandlers.dragstart);
@@ -1089,23 +1097,17 @@ class PropertiesPanel {
     console.debug('Dragula: attachXmlModalDragListeners()', { propName, itemCount: currentItems.length });
     this.ensureDragulaLoaded(() => {
       console.debug('Dragula: ensure loaded callback start', { propName });
-      // Destroy any existing Dragula instance
-      if (tbody._dragula) {
-        console.debug('Dragula: destroying existing instance');
-        tbody._dragula.destroy();
-        tbody._dragula = null;
-      }
+      // Note: destroy is now done in updateXmlModalTable BEFORE DOM rebuild
       const drake = dragula([tbody], {
         direction: 'vertical',
         copy: false,
         revertOnSpill: true,
         accepts: (el, target, source, sibling) => target === source,
         moves: (el, source, handle, sibling) => {
-          const allow = !!(handle && handle.classList && handle.classList.contains('drag-handle'));
-          if (handle) {
-            console.debug('Dragula: moves()', { allow, handleClass: handle.className });
-          }
-          return allow;
+          if (!handle) return false;
+          const isHandle = handle.classList.contains('drag-handle') || !!handle.closest('.drag-handle');
+          console.debug('Dragula: moves()', { allow: isHandle, handleClass: handle.className, hasClosest: !!handle.closest });
+          return isHandle;
         },
         invalid: (el, handle) => {
           if (!handle) return true;
