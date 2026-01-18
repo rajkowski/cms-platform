@@ -518,6 +518,20 @@
     color: var(--editor-text);
   }
   
+  /* Applied Classes Preview Box */
+  #row-css-preview,
+  #column-css-preview {
+    background: var(--editor-panel-bg) !important;
+    color: var(--editor-text) !important;
+    border: 1px solid var(--editor-border);
+  }
+  
+  [data-theme="dark"] #row-css-preview,
+  [data-theme="dark"] #column-css-preview {
+    background: #1e1e1e !important;
+    color: #e0e0e0 !important;
+  }
+  
   .property-label {
     font-weight: 600;
     font-size: 13px;
@@ -555,6 +569,100 @@
   select.property-input {
     background: var(--editor-bg);
     color: var(--editor-text);
+  }
+  
+  /* Range Input Styles with Dark Mode Support */
+  input[type="range"].property-input {
+    padding: 8px 0;
+    background: transparent;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  
+  /* Range Track */
+  input[type="range"].property-input::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 6px;
+    background: var(--editor-border);
+    border-radius: 3px;
+    transition: background 0.2s;
+  }
+  
+  input[type="range"].property-input::-moz-range-track {
+    width: 100%;
+    height: 6px;
+    background: var(--editor-border);
+    border-radius: 3px;
+    transition: background 0.2s;
+  }
+  
+  /* Range Thumb */
+  input[type="range"].property-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: var(--editor-selected-border);
+    border: 2px solid var(--editor-bg);
+    border-radius: 50%;
+    cursor: pointer;
+    margin-top: -6px;
+    box-shadow: 0 1px 3px var(--editor-shadow);
+    transition: all 0.2s;
+  }
+  
+  input[type="range"].property-input::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: var(--editor-selected-border);
+    border: 2px solid var(--editor-bg);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 1px 3px var(--editor-shadow);
+    transition: all 0.2s;
+  }
+  
+  /* Hover States */
+  input[type="range"].property-input:hover::-webkit-slider-thumb {
+    background: #0056b3;
+    transform: scale(1.1);
+  }
+  
+  input[type="range"].property-input:hover::-moz-range-thumb {
+    background: #0056b3;
+    transform: scale(1.1);
+  }
+  
+  input[type="range"].property-input:hover::-webkit-slider-runnable-track {
+    background: var(--editor-selected-border);
+  }
+  
+  input[type="range"].property-input:hover::-moz-range-track {
+    background: var(--editor-selected-border);
+  }
+  
+  /* Focus States */
+  input[type="range"].property-input:focus {
+    outline: none;
+    box-shadow: none;
+  }
+  
+  input[type="range"].property-input:focus::-webkit-slider-thumb {
+    box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.25);
+  }
+  
+  input[type="range"].property-input:focus::-moz-range-thumb {
+    box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.25);
+  }
+  
+  /* Dark Mode Specific Adjustments */
+  [data-theme="dark"] input[type="range"].property-input::-webkit-slider-thumb {
+    border-color: var(--editor-panel-bg);
+  }
+  
+  [data-theme="dark"] input[type="range"].property-input::-moz-range-thumb {
+    border-color: var(--editor-panel-bg);
   }
   
   /* TinyMCE HTML Editor Styles */
