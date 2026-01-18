@@ -214,6 +214,9 @@ class PropertiesPanel {
     if (marginBottomSelect) marginBottomSelect.addEventListener('input', function() { updatePreview.call(self); });
     if (additionalClassesInput) additionalClassesInput.addEventListener('input', function() { updatePreview.call(self); });
     
+    // Initial preview update to show current state
+    updatePreview();
+    
     // Add hr checkbox listener
     const hrCheckbox = document.getElementById('row-hr');
     if (hrCheckbox) {
@@ -513,6 +516,9 @@ class PropertiesPanel {
       }
     });
     
+    // Initial preview update to show current state
+    updatePreview();
+    
     // Add hr checkbox listener
     const hrCheckbox = document.getElementById('column-hr');
     if (hrCheckbox) {
@@ -560,11 +566,17 @@ class PropertiesPanel {
     // Clear any previously highlighted row or column
     this.clearHighlight();
     
+    console.debug('PropertiesPanel: showWidgetProperties called with:', { rowId, columnId, widgetId });
     const widget = this.editor.getLayoutManager().getWidget(rowId, columnId, widgetId);
-    if (!widget) return;
+    if (!widget) {
+      console.warn('PropertiesPanel: Widget not found in layout manager:', { rowId, columnId, widgetId });
+      return;
+    }
     
+    console.debug('PropertiesPanel: Found widget:', widget);
     const definition = this.editor.widgetRegistry.get(widget.type);
     if (!definition) {
+      console.warn('PropertiesPanel: Widget definition not found for type:', widget.type);
       this.content.innerHTML = '<p>Widget definition not found</p>';
       return;
     }
@@ -794,7 +806,7 @@ class PropertiesPanel {
     const itemHtml = this.renderXmlItem(propName, newItemIndex, newItem, itemName, attributes);
     
     // Remove empty state message if present
-    const emptyMessage = itemsContainer.querySelector('div[style*="color:#999"]');
+    const emptyMessage = itemsContainer.querySelector('div[style*="font-style:italic"]');
     if (emptyMessage) {
       emptyMessage.remove();
     }
@@ -1053,6 +1065,12 @@ class PropertiesPanel {
         height: 200,
         plugins: 'fullscreen link lists code',
         toolbar: 'fullscreen | blocks | bold italic underline | alignleft aligncenter alignright | bullist numlist hr | link | code',
+        // skin: window.matchMedia("(prefers-color-scheme: dark)").matches
+        //   ? "oxide-dark"
+        //   : "oxide",
+        // content_css: window.matchMedia("(prefers-color-scheme: dark)").matches
+        //   ? "dark"
+        //   : "default",
         content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; font-size: 14px; }',
         setup: function(editor) {
           editor.on('change', function() {

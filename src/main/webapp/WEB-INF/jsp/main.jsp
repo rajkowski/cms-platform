@@ -30,6 +30,7 @@
 <jsp:useBean id="themePropertyMap" class="java.util.HashMap" scope="request"/>
 <jsp:useBean id="analyticsPropertyMap" class="java.util.HashMap" scope="request"/>
 <jsp:useBean id="ecommercePropertyMap" class="java.util.HashMap" scope="request"/>
+<jsp:useBean id="isPreviewMode" class="java.lang.String" scope="request"/>
 <!doctype html>
 <html class="no-js" lang="en" xml:lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -96,6 +97,11 @@
     <web:stylesheets />
     <link rel="stylesheet" type="text/css" href="${ctx}/css/platform.css" />
   </g:compress>
+  <c:if test="${isPreviewMode eq 'true'}">
+    <g:compress>
+      <link rel="stylesheet" type="text/css" href="${ctx}/css/platform/preview-hover.css" />
+    </g:compress>
+  </c:if>
   <c:if test="${!empty themePropertyMap}">
     <g:compress>
       <style><%-- Prevent top-bar flicker --%>
@@ -364,6 +370,11 @@
   <script>
     var mainToken = '${userSession.formToken}';
   </script>
+  <c:if test="${isPreviewMode eq 'true'}">
+    <g:compress>
+      <script src="${ctx}/javascript/widgets/editor/iframe-hover-bridge.js"></script>
+    </g:compress>
+  </c:if>
   <g:compress>
     <web:script package="what-input" file="what-input.min.js" />
     <web:script package="foundation-sites" file="foundation.min.js" />

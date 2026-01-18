@@ -1,0 +1,231 @@
+/**
+ * Preview Hover Styles
+ * 
+ * Styles for the Visual Editor Preview Hover feature including
+ * hover outlines and action buttons.
+ * 
+ * Requirements: 2.2, 4.1, 4.2, 4.4, 4.5, 4.6
+ */
+
+/* Base hover outline styles */
+.preview-hover-outline {
+  position: absolute;
+  pointer-events: none; /* Allow clicks to pass through to underlying elements */
+  border: 2px dashed #007bff;
+  background: transparent;
+  z-index: 9998;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+  border-radius: 2px;
+}
+
+/* Element type specific outline styles */
+.preview-hover-outline--widget {
+  border-color: #007bff; /* Blue for widgets */
+  border-style: dashed;
+}
+
+.preview-hover-outline--column {
+  border-color: #28a745; /* Green for columns */
+  border-style: dashed;
+}
+
+.preview-hover-outline--row {
+  border-color: #ffc107; /* Yellow for rows */
+  border-style: dashed;
+}
+
+/* Action button base styles */
+.preview-hover-button {
+  position: absolute;
+  pointer-events: auto; /* Enable button clicks */
+  z-index: 9999;
+  cursor: pointer;
+  background: #007bff;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 14px;
+  line-height: 1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+/* Add invisible padding around button to prevent flickering */
+.preview-hover-button::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  right: -8px;
+  bottom: -8px;
+  pointer-events: auto;
+  z-index: -1;
+}
+
+/* Button hover state */
+.preview-hover-button:hover {
+  background: #0056b3;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transform: scale(1.05);
+}
+
+/* Button focus state for accessibility */
+.preview-hover-button:focus {
+  background: #0056b3;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+/* Button active state */
+.preview-hover-button:active {
+  background: #004085;
+  transform: scale(0.95);
+}
+
+/* Icon styles within button */
+.preview-hover-button i {
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* Ensure button text is not selectable */
+.preview-hover-button {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .preview-hover-outline {
+    border-width: 3px;
+  }
+  
+  .preview-hover-outline--widget {
+    border-color: #0000ff;
+  }
+  
+  .preview-hover-outline--column {
+    border-color: #008000;
+  }
+  
+  .preview-hover-outline--row {
+    border-color: #ff8c00;
+  }
+  
+  .preview-hover-button {
+    border-width: 3px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .preview-hover-outline,
+  .preview-hover-button {
+    transition: none;
+  }
+  
+  .preview-hover-button:hover {
+    transform: none;
+  }
+  
+  .preview-hover-button:active {
+    transform: none;
+  }
+}
+
+/* Print styles - hide hover elements when printing */
+@media print {
+  .preview-hover-outline,
+  .preview-hover-button {
+    display: none !important;
+  }
+}
+
+/* Mobile/touch device optimizations */
+@media (max-width: 768px) {
+  .preview-hover-button {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+  
+  .preview-hover-button i {
+    font-size: 14px;
+  }
+}
+
+/* Ensure outlines don't interfere with text selection */
+.preview-hover-outline {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Fallback for browsers without CSS custom properties */
+.preview-hover-outline {
+  border-color: #007bff;
+}
+
+/* Animation for smooth outline transitions */
+@keyframes preview-hover-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.preview-hover-outline {
+  animation: preview-hover-fade-in 0.15s ease-out;
+}
+
+.preview-hover-button {
+  animation: preview-hover-fade-in 0.2s ease-out;
+}
+
+/* Ensure proper stacking context */
+.preview-hover-outline,
+.preview-hover-button {
+  isolation: isolate;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .preview-hover-outline--widget {
+    border-color: #66b3ff;
+  }
+  
+  .preview-hover-outline--column {
+    border-color: #66d966;
+  }
+  
+  .preview-hover-outline--row {
+    border-color: #ffd966;
+  }
+  
+  .preview-hover-button {
+    background: #0d6efd;
+    border-color: #495057;
+  }
+  
+  .preview-hover-button:hover {
+    background: #0b5ed7;
+  }
+  
+  .preview-hover-button:focus {
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
+  }
+}

@@ -1189,7 +1189,18 @@
 </style>
 </g:compress>
 
-<link href="${ctx}/css/platform.css" rel="stylesheet">
+<g:compress>
+  <link href="${ctx}/css/platform.css" rel="stylesheet">
+</g:compress>
+<g:compress>
+  <link rel="stylesheet" type="text/css" href="${ctx}/css/platform/preview-hover.css" />
+</g:compress>
+<g:compress>
+  <script src="<c:url value='/javascript/widgets/editor/element-detector.js'/>"></script>
+  <script src="<c:url value='/javascript/widgets/editor/hover-overlay.js'/>"></script>
+  <script src="<c:url value='/javascript/widgets/editor/property-editor-bridge.js'/>"></script>
+  <script src="<c:url value='/javascript/widgets/editor/preview-hover-manager.js'/>"></script>
+</g:compress>
 
 <div id="visual-page-editor-wrapper">
   <c:if test="${!empty title}">
@@ -1204,12 +1215,23 @@
       <h2>Webpage Editor</h2>
     </div>
     <div class="titlebar-right">
-      <a href="${ctx}/admin/visual-page-editor" class="button tiny no-gap radius">Pages</a>
-      <!-- <a href="${ctx}/admin/visual-page-editor" class="button tiny no-gap radius">Images</a> -->
-      <!-- <a href="${ctx}/admin/visual-page-editor" class="button tiny no-gap radius">Content</a> -->
+      <a href="${ctx}/admin/visual-page-editor" class="button tiny no-gap radius confirm-exit">Pages</a>
+       <!-- <a href="${ctx}/admin/visual-page-editor" class="button tiny no-gap radius confirm-exit">Images</a> -->
+       <!-- <a href="${ctx}/admin/visual-page-editor" class="button tiny no-gap radius confirm-exit">Content</a> -->
+       <c:choose>
+        <c:when test="${!empty returnPage}">
+          <a href="${returnPage}" class="button tiny no-gap radius confirm-exit">Exit</a>
+        </c:when>
+        <c:when test="${!empty webPage.link}">
+          <a href="${ctx}${webPage.link}" class="button tiny no-gap radius confirm-exit">Exit</a>
+        </c:when>
+        <c:otherwise>
+          <a href="${ctx}/" class="button tiny no-gap radius confirm-exit">Exit</a>
+        </c:otherwise>
+      </c:choose>
     </div>
   </div>
-  
+
   <!-- Toolbar -->
   <div id="editor-toolbar">
     <!-- Left Section -->
@@ -1228,18 +1250,10 @@
 
     <!-- Right Section -->
     <div class="toolbar-section right">
-<div id="preview-loading-indicator" style="display: none;">
+      <div id="preview-loading-indicator" style="display: none;">
         <i class="${font:far()} fa-spinner fa-spin"></i>
       </div>
       <button id="dark-mode-toggle" class="button tiny secondary no-gap radius" title="Toggle Dark Mode"><i class="${font:far()} fa-moon"></i></button>
-      <c:choose>
-        <c:when test="${!empty returnPage}">
-          <a href="${returnPage}" class="button tiny no-gap radius">Exit</a>
-        </c:when>
-        <c:when test="${!empty webPage.link}">
-          <a href="${ctx}${webPage.link}" class="button tiny no-gap radius">Exit</a>
-        </c:when>
-      </c:choose>
     </div>
   </div>
   
@@ -1369,9 +1383,9 @@
       </div> -->
 
       <div id="preview-error" style="display: none;"></div>
-<div style="height: 100%; width: 100%;<c:if test="${!empty themePropertyMap['theme.body.backgroundColor']}">background-color:<c:out value="${themePropertyMap['theme.body.backgroundColor']}" /></c:if>">
-      <iframe id="preview-iframe" style="<c:if test="${!empty themePropertyMap['theme.body.backgroundColor']}">background-color:<c:out value="${themePropertyMap['theme.body.backgroundColor']}" /></c:if>"></iframe>
-</div>
+      <div style="height: 100%; width: 100%;<c:if test="${!empty themePropertyMap['theme.body.backgroundColor']}">background-color:<c:out value="${themePropertyMap['theme.body.backgroundColor']}" /></c:if>">
+        <iframe id="preview-iframe" style="<c:if test="${!empty themePropertyMap['theme.body.backgroundColor']}">background-color:<c:out value="${themePropertyMap['theme.body.backgroundColor']}" /></c:if>"></iframe>
+      </div>
     </div>
     
     <!-- Editor Canvas -->
@@ -1379,13 +1393,13 @@
 
 
       <!-- Floating Loading Indicator -->
-<!--
+       <!--
       <div id="page-loading-indicator" class="loading-indicator-overlay" style="display: none;">
         <div class="loading-indicator-content">
           <i class="${font:far()} fa-spinner fa-spin"></i> <span id="loading-text">Loading...</span>
         </div>
       </div>
--->
+      -->
       
       <c:choose>
         <c:when test="${hasExistingLayout}">
@@ -1545,6 +1559,179 @@
     </script>
     <div style="text-align: right; margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end; flex-shrink: 0;">
       <button id="close-pre-designed-page-modal" class="button tiny secondary radius">Cancel</button>
+
+    <!-- Initialize Preview Hover integration -->
+    <script>
+      (function () {
+        function initPreviewHover() {
+          try {
+            // Prefer preview iframe's document/body as the hover context
+            var iframe = document.getElementById('preview-iframe');
+            var initWithIframe = function(ifr) {
+              if (!ifr || !ifr.contentDocument) { return null; }
+              var iframeDoc = ifr.contentDocument;
+              var container = iframeDoc.body || iframeDoc.documentElement;
+              return { doc: iframeDoc, win: ifr.contentWindow, container: container };
+            };
+
+            var ctx = initWithIframe(iframe);
+            var previewContainer = (ctx && ctx.container) ? ctx.container : (document.getElementById('editor-canvas') || document.querySelector('#visual-page-editor-wrapper'));
+            if (!previewContainer) { return; }
+
+            // Ensure hover CSS is available inside iframe
+            if (ctx && ctx.doc) {
+              var cssHref = '${ctx}/css/platform/preview-hover.css';
+              var exists = ctx.doc.querySelector('link[href$="/css/platform/preview-hover.css"]');
+              if (!exists) {
+                try {
+                  console.log('Preview hover: injecting CSS into iframe');
+                  var link = ctx.doc.createElement('link');
+                  link.rel = 'stylesheet';
+                  link.href = cssHref;
+                  (ctx.doc.head || ctx.doc.documentElement).appendChild(link);
+                } catch (e) { /* ignore */ }
+              }
+            }
+
+            var propertyApi = (window.PropertyEditorAPI || window.EditorPropertyAPI || null);
+            var manager = new (window.PreviewHoverManager || function(){}) (previewContainer, propertyApi);
+
+            // Expose for debugging
+            window.__previewHoverManager = manager;
+
+            // Set up iframe postMessage proxy for reliable event capture
+            function setupIframeEventProxy() {
+              if (!iframe || !iframe.contentWindow || !ctx || !ctx.doc) {
+                console.warn('Preview hover: iframe proxy setup skipped - missing context');
+                return;
+              }
+              
+              // Inject event proxy script into iframe
+              var proxyScript = ctx.doc.createElement('script');
+              proxyScript.textContent = '(function() {' +
+                'var throttle = 16;' +
+                'var lastTime = 0;' +
+                'var eventCount = 0;' +
+                'function forwardEvent(e) {' +
+                '  var now = Date.now();' +
+                '  if (now - lastTime < throttle) return;' +
+                '  lastTime = now;' +
+                '  eventCount++;' +
+                '  if (eventCount <= 3) {' +
+                '    console.log("Iframe proxy: forwarding event", e.type, e.clientX, e.clientY);' +
+                '  }' +
+                '  if (window.parent && e.clientX != null && e.clientY != null) {' +
+                '    try {' +
+                '      window.parent.postMessage({' +
+                '      type: "preview-hover-event",' +
+                '      eventType: e.type,' +
+                '      clientX: e.clientX,' +
+                '      clientY: e.clientY,' +
+                '      target: e.target ? (e.target.tagName || "unknown") : "unknown"' +
+                '      }, "*");' +
+                '    } catch (err) {' +
+                '      console.error("Iframe proxy: postMessage failed", err);' +
+                '    }' +
+                '  }' +
+                '}' +
+                'document.addEventListener("mousemove", forwardEvent, true);' +
+                'document.addEventListener("pointermove", forwardEvent, true);' +
+                'console.log("Preview hover: iframe event proxy active");' +
+              '})();';
+              
+              try {
+                (ctx.doc.body || ctx.doc.documentElement).appendChild(proxyScript);
+                console.log('Preview hover: iframe event proxy injected');
+              } catch (e) {
+                console.warn('Preview hover: failed to inject iframe proxy', e);
+              }
+              
+              // Parent listener for postMessage events
+              var messageCount = 0;
+              window.addEventListener('message', function(e) {
+                if (!e.data || e.data.type !== 'preview-hover-event') { return; }
+                
+                messageCount++;
+                if (messageCount <= 3) {
+                  console.log('Parent received hover event:', e.data.clientX, e.data.clientY);
+                }
+                
+                // Forward to element detector if manager is active
+                if (manager && manager.elementDetector && manager.isEnabled) {
+                  var detector = manager.elementDetector;
+                  if (detector && typeof detector.detectElementAtPoint === 'function') {
+                    var elementInfo = detector.detectElementAtPoint(e.data.clientX, e.data.clientY);
+                    if (elementInfo && detector.onElementDetected) {
+                      detector.onElementDetected(elementInfo);
+                    } else if (!elementInfo && detector.onElementLost) {
+                      detector.onElementLost();
+                    }
+                  }
+                } else {
+                  if (messageCount === 1) {
+                    console.warn('Preview hover: manager not active', {
+                      hasManager: !!manager,
+                      hasDetector: !!(manager && manager.elementDetector),
+                      isEnabled: !!(manager && manager.isEnabled)
+                    });
+                  }
+                }
+              });
+            }
+
+            // Helper: determine current preview mode from wrapper
+            function isPreviewMode() {
+              var wrapper = document.getElementById('visual-page-editor-wrapper');
+              if (!wrapper) return false;
+              var modeAttr = wrapper.getAttribute('data-mode');
+              if (modeAttr) return modeAttr === 'preview';
+              return wrapper.classList.contains('preview') || wrapper.classList.contains('preview-mode');
+            }
+
+            // Initial state (ensure iframe-ready)
+            if (iframe && iframe.contentDocument && iframe.contentDocument.readyState !== 'complete') {
+              iframe.addEventListener('load', function(){
+                setupIframeEventProxy();
+                manager.handlePreviewModeChange(isPreviewMode());
+              });
+            } else {
+              setupIframeEventProxy();
+              manager.handlePreviewModeChange(isPreviewMode());
+            }
+
+            // Listen for existing editor mode-change events if available
+            document.addEventListener('cms:editor:mode-change', function (e) {
+              var mode = e && e.detail && e.detail.mode ? e.detail.mode : null;
+              manager.handlePreviewModeChange(mode === 'preview');
+            });
+
+            // Fallback: observe class/attribute changes on wrapper
+            var wrapper = document.getElementById('visual-page-editor-wrapper');
+            if (wrapper && window.MutationObserver) {
+              var observer = new MutationObserver(function () {
+                manager.handlePreviewModeChange(isPreviewMode());
+              });
+              observer.observe(wrapper, { attributes: true, attributeFilter: ['class', 'data-mode'] });
+            }
+
+            // Clean up on unload
+            window.addEventListener('beforeunload', function () {
+              try { manager.disable(); } catch (e) {}
+            });
+          } catch (err) {
+            if (window.console && console.error) {
+              console.error('Preview Hover init failed:', err);
+            }
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', initPreviewHover);
+        } else {
+          initPreviewHover();
+        }
+      })();
+    </script>
     </div>
   </div>
 </div>
@@ -1587,6 +1774,9 @@
 
 <script>
   // Initialize the editor
+  // Declare propertiesPanel at module scope so it's accessible throughout
+  let propertiesPanel;
+  
   document.addEventListener('DOMContentLoaded', function() {
     const editorConfig = {
       webPageLink: '<c:out value="${webPage.link}" />',
@@ -1603,6 +1793,10 @@
     
     window.pageEditor = new PageEditor(editorConfig);
     
+    // Initialize PreviewHoverManager for hover functionality in preview mode
+    // const previewContainer = document.getElementById('preview-container');
+    // const previewIframe = document.getElementById('preview-iframe');
+    
     // Set up preview update listener BEFORE initializing the page editor
     let isPreviewMode = false;
     const togglePreviewBtn = document.getElementById('toggle-preview-btn');
@@ -1612,6 +1806,13 @@
     const previewLoading = document.getElementById('preview-loading');
     const previewError = document.getElementById('preview-error');
 
+    // Get the actual PropertiesPanel instance for use by PreviewHoverManager
+    propertiesPanel = window.pageEditor.getPropertiesPanel();
+    
+    // Initialize PreviewHoverManager with the preview iframe as the container
+    // The iframe content will be the actual preview container where hover detection occurs
+    window.previewHoverManager = new PreviewHoverManager(previewIframe, propertiesPanel);
+    
     // General function to open a page in the preview iframe
     window.openPageInIframe = function(url, loadingMessage = 'Loading...') {
       // Show loading indicator
@@ -1648,6 +1849,8 @@
       previewIframe.style.display = 'none';
       previewError.style.display = 'none';
       
+
+      
       // Show floating loading indicator for preview
       const previewLoadingIndicator = document.getElementById('preview-loading-indicator');
       if (previewLoadingIndicator) {
@@ -1658,11 +1861,16 @@
       if (window.pageEditor) {
         window.pageEditor.showLoadingIndicator('Loading preview...');
       }
+
       
+
+
+
+
       // Get the current editor data as XML
       const layoutManager = window.pageEditor.getLayoutManager();
       const designerData = layoutManager.toXML();
-      
+
       // Get the selected page link from the pages tab manager
       const webPageLink = window.pageEditor.pagesTabManager.getSelectedPageLink();
       
@@ -1702,10 +1910,34 @@
         iframeDoc.write(html);
         iframeDoc.close();
         
+        // Added by server...
+        // Inject the hover bridge script into the iframe document after content is written
+        // Use a small timeout to ensure body exists
+        // setTimeout(() => {
+        //   const freshDoc = previewIframe.contentDocument || previewIframe.contentWindow.document;
+        //   if (freshDoc && freshDoc.body) {
+        //     const bridgeScript = freshDoc.createElement('script');
+        //     bridgeScript.src = '${ctx}/javascript/widgets/editor/iframe-hover-bridge.js';
+        //     freshDoc.body.appendChild(bridgeScript);
+        //   }
+        // }, 10);
+
+        
         // Apply viewport styles to iframe after content loads
         previewIframe.onload = function() {
           if (window.pageEditor && window.pageEditor.getViewportManager()) {
             window.pageEditor.getViewportManager().applyPreviewViewportStyles();
+          }
+          
+          // Re-initialize hover manager for the new iframe content
+          if (window.previewHoverManager && isPreviewMode) {
+            // Refresh iframe references after preview reload
+            window.previewHoverManager.refreshIframeReferences();
+            
+            // Small delay to ensure iframe content is fully loaded
+            setTimeout(() => {
+              window.previewHoverManager.handlePreviewModeChange(true);
+            }, 100);
           }
         };
         
@@ -1768,6 +2000,11 @@
         previewContainer.classList.add('active');
         togglePreviewBtn.classList.add('active');
         
+        // Enable preview hover functionality
+        if (window.previewHoverManager) {
+          window.previewHoverManager.handlePreviewModeChange(true);
+        }
+        
         // Load preview
         refreshPreview();
       } else {
@@ -1775,6 +2012,11 @@
         editorCanvas.classList.remove('hidden');
         previewContainer.classList.remove('active');
         togglePreviewBtn.classList.remove('active');
+        
+        // Disable preview hover functionality
+        if (window.previewHoverManager) {
+          window.previewHoverManager.handlePreviewModeChange(false);
+        }
       }
     });
 
@@ -1800,6 +2042,21 @@
     // Set up middle section button handlers
     const returnPage = '<c:out value="${returnPage}" />';
     
+    // Exit button confirmation handler
+    const exitButtons = document.querySelectorAll('a.confirm-exit');
+    exitButtons.forEach(button => {
+      button.addEventListener('click', async function(e) {
+      const isDirty = window.pageEditor.isDirty && window.pageEditor.isDirty();
+      if (isDirty) {
+        e.preventDefault();
+        const confirmed = await window.pageEditor.showConfirmDialog('You have unsaved changes. Are you sure you want to exit?');
+        if (confirmed) {
+          window.location.href = button.href;
+        }
+      }
+      });
+    });
+
     // Add Page button handler
     document.getElementById('add-page-btn').addEventListener('click', async function(e) {
       e.preventDefault();
@@ -1913,7 +2170,7 @@
     // Calculate the container height dynamically
     function calculateContainerHeight() {
       const wrapper = document.getElementById('visual-page-editor-wrapper');
-const titlebar = document.getElementById('editor-titlebar');
+      const titlebar = document.getElementById('editor-titlebar');
       const toolbar = document.getElementById('editor-toolbar');
       const container = document.getElementById('visual-page-editor-container');
       
@@ -1924,7 +2181,7 @@ const titlebar = document.getElementById('editor-titlebar');
       
       // Calculate the height used by elements above the container
       const wrapperTop = wrapper.getBoundingClientRect().top;
-const titlebarHeight = titlebar.offsetHeight;
+      const titlebarHeight = titlebar.offsetHeight;
       const toolbarHeight = toolbar.offsetHeight;
       
       // Get any title element if it exists
@@ -2173,7 +2430,7 @@ const titlebarHeight = titlebar.offsetHeight;
     });
     
     // Properties Panel Resizing
-    const propertiesPanel = document.getElementById('properties-panel');
+    const propertiesPanelElement = document.getElementById('properties-panel');
     const resizeHandle = document.getElementById('properties-panel-resize-handle');
     let isResizing = false;
     let startX = 0;
@@ -2182,7 +2439,7 @@ const titlebarHeight = titlebar.offsetHeight;
     resizeHandle.addEventListener('mousedown', function(e) {
       isResizing = true;
       startX = e.clientX;
-      startWidth = parseInt(window.getComputedStyle(propertiesPanel).width, 10);
+      startWidth = parseInt(window.getComputedStyle(propertiesPanelElement).width, 10);
       resizeHandle.classList.add('resizing');
       document.body.style.cursor = 'col-resize';
       document.body.style.userSelect = 'none';
@@ -2198,7 +2455,7 @@ const titlebarHeight = titlebar.offsetHeight;
       const maxWidth = 600;
       
       if (newWidth >= minWidth && newWidth <= maxWidth) {
-        propertiesPanel.style.width = newWidth + 'px';
+        propertiesPanelElement.style.width = newWidth + 'px';
       }
     });
     
@@ -2209,14 +2466,14 @@ const titlebarHeight = titlebar.offsetHeight;
         document.body.style.cursor = '';
         document.body.style.userSelect = '';
         // Save width preference
-        localStorage.setItem('properties-panel-width', propertiesPanel.style.width);
+        localStorage.setItem('properties-panel-width', propertiesPanelElement.style.width);
       }
     });
     
     // Restore saved width
     const savedWidth = localStorage.getItem('properties-panel-width');
     if (savedWidth) {
-      propertiesPanel.style.width = savedWidth;
+      propertiesPanelElement.style.width = savedWidth;
     }
   });
 </script>

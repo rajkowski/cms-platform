@@ -19,6 +19,16 @@ class LayoutManager {
   }
 
   /**
+   * Reset internal ID counters for rows, columns, and widgets.
+   * Call when switching pages so IDs start fresh and align with preview.
+   */
+  resetIds() {
+    this.nextRowId = 1;
+    this.nextColumnId = 1;
+    this.nextWidgetId = 1;
+  }
+
+  /**
    * Add a new row with specified column layout
    * @param {Array} columnClasses Array of CSS classes for each column
    * @param {string|null} targetRowId Optional ID of the row to insert before

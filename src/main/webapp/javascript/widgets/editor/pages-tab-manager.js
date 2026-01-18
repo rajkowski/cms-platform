@@ -275,6 +275,10 @@ class PagesTabManager {
 
       // Clear current layout
       this.pageEditor.layoutManager.structure = { rows: [] };
+// Reset ID counters so row/column/widget IDs start fresh per page
+      if (this.pageEditor.layoutManager && this.pageEditor.layoutManager.resetIds) {
+        this.pageEditor.layoutManager.resetIds();
+      }
       
       // Render empty canvas
       const canvas = this.pageEditor.elements.canvas;
@@ -342,8 +346,11 @@ class PagesTabManager {
           this.pageEditor.config.existingXml = data.pageXml;
           this.pageEditor.config.hasExistingLayout = data.pageXml && data.pageXml.length > 0;
 
-          // Clear current layout and load the new one
+          // Clear current layout and reset ID counters before loading the new one
           this.pageEditor.layoutManager.structure = { rows: [] };
+if (this.pageEditor.layoutManager && this.pageEditor.layoutManager.resetIds) {
+            this.pageEditor.layoutManager.resetIds();
+          }
           if (this.pageEditor.config.hasExistingLayout) {
             this.pageEditor.loadExistingLayout(data.pageXml);
           } else {
