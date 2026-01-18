@@ -755,29 +755,529 @@ class PropertiesPanel {
    * Initialize XML array properties with add/edit/delete functionality
    */
   initXmlProperties(rowId, columnId, widgetId, widgetDef) {
-    // Find all XML property add buttons
-    const addButtons = this.content.querySelectorAll('button[id^="add-"]');
+    // Find all XML property edit buttons
+    const editButtons = this.content.querySelectorAll('button[id^="edit-"]');
     
-    addButtons.forEach((button) => {
-      const propName = button.id.replace('add-', '');
+    editButtons.forEach((button) => {
+      const propName = button.id.replace('edit-', '');
       const propDef = widgetDef.properties[propName];
       
       if (!propDef || propDef.type !== 'xml') return;
       
       button.addEventListener('click', (e) => {
         e.preventDefault();
-        this.addXmlItem(propName, propDef, rowId, columnId, widgetId);
+        this.openXmlPropertyModal(propName, propDef, rowId, columnId, widgetId);
       });
     });
+  }
+  
+  /**
+   * Open modal dialog for editing XML properties with table-like spreadsheet view
+   */
+  openXmlPropertyModal(propName, propDef, rowId, columnId, widgetId) {
+    const schema = propDef.schema || {};
+    const itemSchema = schema.items || {};
+    const itemName = itemSchema.name || 'item';
+    const attributes = itemSchema.attributes || {};
     
-    // Setup delete buttons and field listeners for each XML property
-    Object.entries(widgetDef.properties).forEach(([propName, propDef]) => {
-      if (propDef.type === 'xml') {
-        this.attachXmlItemListeners(propDef, propName, rowId, columnId, widgetId);
+    // Get current widget data to fetch existing items
+    const widgetData = this.editor.getLayoutManager().getWidget(rowId, columnId, widgetId);
+    const currentValue = widgetData?.properties[propName] || '';
+    
+    // Parse existing items
+    let items = [];
+    if (currentValue && typeof currentValue === 'string') {
+      items = this.parseXmlArrayFromString(currentValue, schema);
+    } else if (Array.isArray(currentValue)) {
+      items = currentValue;
+    }
+    
+    // Create and show modal
+    this.showXmlPropertyModal(propName, propDef.label, itemName, attributes, items, (updatedItems) => {
+      // Save the updated items
+      this.saveXmlProperty(propName, propDef, updatedItems, rowId, columnId, widgetId);
+      
+      // Update the summary in the panel
+      const summary = document.getElementById(`xml-summary-${propName}`);
+      if (summary) {
+        if (updatedItems.length === 0) {
+          summary.innerHTML = `<div style="color:var(--editor-text-muted);font-style:italic;flex:1;">No ${itemName} entries yet</div><button type="button" id="edit-${propName}" class="button small radius" style="margin-left:10px;">Edit</button>`;
+        } else {
+          summary.innerHTML = `<div style="color:var(--editor-text);flex:1;"><strong>${updatedItems.length}</strong> ${itemName}${updatedItems.length === 1 ? '' : 's'} configured</div><button type="button" id="edit-${propName}" class="button small radius" style="margin-left:10px;">Edit</button>`;
+        }
+        
+        // Re-attach edit button listener
+        const editBtn = summary.querySelector(`#edit-${propName}`);
+        if (editBtn) {
+          editBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.openXmlPropertyModal(propName, propDef, rowId, columnId, widgetId);
+          });
+        }
       }
     });
   }
   
+  /**
+   * Show modal dialog with spreadsheet-like view for XML property items
+   */
+  showXmlPropertyModal(propName, propLabel, itemName, attributes, items, onSave) {
+    // Create modal HTML
+    let modalHtml = `
+      <div id="xml-property-modal-${propName}" class="xml-property-modal" style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+      ">
+        <div class="xml-property-modal-content" style="
+          background: var(--editor-panel-bg);
+          border-radius: 8px;
+          padding: 30px;
+          max-width: 90%;
+          max-height: 90vh;
+          overflow: auto;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+          min-width: 600px;
+        ">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h4 style="margin: 0; color: var(--editor-text);">Edit ${propLabel}</h4>
+            <button type="button" class="close-modal" style="
+              background: none;
+              border: none;
+              font-size: 24px;
+              cursor: pointer;
+              color: var(--editor-text);
+              padding: 0;
+              width: 30px;
+              height: 30px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            ">×</button>
+          </div>
+          
+          <!-- Spreadsheet table -->
+          <div style="overflow-x: auto; margin-bottom: 20px; border: 1px solid var(--editor-border); border-radius: 4px;">
+            <table id="xml-items-table-${propName}" class="xml-items-table" style="
+              width: 100%;
+              border-collapse: collapse;
+              background: var(--editor-bg);
+            ">
+              <thead style="background: var(--editor-hover-bg); border-bottom: 2px solid var(--editor-border);">
+                <tr>
+                  <th style="padding: 10px; text-align: center; width: 30px; color: var(--editor-text); font-weight: bold;" title="Drag to reorder"><i class="fa fa-bars"></i></th>
+                  <th style="padding: 10px; text-align: center; width: 40px; color: var(--editor-text); font-weight: bold;">№</th>
+    `;
+    
+    // Add column headers for each attribute
+    for (const [attrName, attrDef] of Object.entries(attributes)) {
+      const columnLabel = attrDef.label || attrName;
+      const requiredMark = attrDef.required ? ' <span style="color: #dc3545;">*</span>' : '';
+      modalHtml += `<th style="padding: 10px; text-align: left; color: var(--editor-text); font-weight: bold; white-space: nowrap;">${columnLabel}${requiredMark}</th>`;
+    }
+    
+    modalHtml += `
+                  <th style="padding: 10px; text-align: center; width: 50px; color: var(--editor-text); font-weight: bold;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="xml-modal-tbody-${propName}">
+    `;
+    
+    // Add rows for each item
+    items.forEach((item, index) => {
+      modalHtml += this.renderXmlModalTableRow(propName, index, item, itemName, attributes);
+    });
+    
+    modalHtml += `
+              </tbody>
+            </table>
+          </div>
+          
+          <!-- Empty state -->
+          <div id="xml-modal-empty-${propName}" style="
+            display: ${items.length === 0 ? 'block' : 'none'};
+            text-align: center;
+            color: var(--editor-text-muted);
+            font-style: italic;
+            padding: 40px 20px;
+          ">
+            No ${itemName} entries yet
+          </div>
+          
+          <!-- Action buttons -->
+          <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <button type="button" id="add-item-${propName}" class="button radius" style="flex: 0 0 auto;">
+              Add ${itemName}
+            </button>
+            <button type="button" id="duplicate-row-${propName}" class="button radius secondary" style="flex: 0 0 auto; display: none;">
+              Duplicate Selected
+            </button>
+          </div>
+          
+          <!-- Modal footer -->
+          <div style="display: flex; gap: 10px; justify-content: flex-end; border-top: 1px solid var(--editor-border); padding-top: 20px;">
+            <button type="button" class="button radius secondary cancel-modal">Cancel</button>
+            <button type="button" class="button radius save-modal">Save Changes</button>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Insert modal into DOM
+    const modalContainer = document.createElement('div');
+    modalContainer.innerHTML = modalHtml;
+    document.body.appendChild(modalContainer);
+    
+    const modal = document.getElementById(`xml-property-modal-${propName}`);
+    const tbody = document.getElementById(`xml-modal-tbody-${propName}`);
+    const emptyState = document.getElementById(`xml-modal-empty-${propName}`);
+    const table = document.getElementById(`xml-items-table-${propName}`);
+    const addBtn = document.getElementById(`add-item-${propName}`);
+    const saveBtn = modal.querySelector('.save-modal');
+    const cancelBtn = modal.querySelector('.cancel-modal');
+    const closeBtn = modal.querySelector('.close-modal');
+    
+    // Track current items in modal
+    let currentItems = [...items];
+    
+    // Add button handler
+    addBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const newItem = {};
+      for (const [attrName, attrDef] of Object.entries(attributes)) {
+        newItem[attrName] = attrDef.default || '';
+      }
+      currentItems.push(newItem);
+      this.updateXmlModalTable(propName, itemName, attributes, currentItems, tbody, emptyState, table);
+    });
+    
+    // Save button handler
+    saveBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const savedItems = this.getXmlItemsFromModal(propName, attributes);
+      onSave(savedItems);
+      modal.remove();
+    });
+    
+    // Cancel button handler
+    const closeModal = () => {
+      modal.remove();
+    };
+    
+    cancelBtn.addEventListener('click', closeModal);
+    closeBtn.addEventListener('click', closeModal);
+    
+    // Close modal when clicking outside
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        closeModal();
+      }
+    });
+  }
+  
+  /**
+   * Render a single row in the XML items table
+   */
+  renderXmlModalTableRow(propName, index, item, itemName, attributes) {
+    let html = `<tr data-item-index="${index}" draggable="true" style="border-bottom: 1px solid var(--editor-border); background: var(--editor-bg); cursor: move;">`;
+    
+    // Drag handle
+    html += `<td class="drag-handle" style="padding: 10px; text-align: center; color: var(--editor-text-muted); font-size: 16px; cursor: grab; background: var(--editor-panel-bg);"><i class="fa fa-grip-vertical"></i></td>`;
+    
+    // Row number
+    html += `<td style="padding: 10px; text-align: center; color: var(--editor-text-muted); font-size: 12px; background: var(--editor-panel-bg);">${index + 1}</td>`;
+    
+    // Attribute fields
+    for (const [attrName, attrDef] of Object.entries(attributes)) {
+      const attrValue = (item && item[attrName]) || attrDef.default || '';
+      const fieldId = `xml-modal-field-${propName}-${index}-${attrName}`;
+      
+      html += `<td style="padding: 8px; color: var(--editor-text);">`;
+      
+      // Render based on attribute type
+      if (attrDef.type === 'select' && attrDef.options) {
+        html += `<select id="${fieldId}" class="xml-modal-field property-input no-gap" data-attr="${attrName}" data-index="${index}" style="width: 100%; padding: 5px; border: 1px solid var(--editor-border); border-radius: 3px;">`;
+        for (const option of attrDef.options) {
+          const optionValue = typeof option === 'object' ? option.value : option;
+          const optionLabel = typeof option === 'object' ? option.label : option;
+          const selected = attrValue === optionValue ? 'selected' : '';
+          html += `<option value="${optionValue}" ${selected}>${optionLabel}</option>`;
+        }
+        html += `</select>`;
+      } else if (attrDef.type === 'checkbox') {
+        const checked = attrValue === 'true' || attrValue === true ? 'checked' : '';
+        html += `<input type="checkbox" id="${fieldId}" class="xml-modal-field no-gap" data-attr="${attrName}" data-index="${index}" ${checked} style="cursor: pointer;" />`;
+      } else {
+        html += `<input type="text" id="${fieldId}" class="xml-modal-field property-input no-gap" data-attr="${attrName}" data-index="${index}" value="${this.escapeHtml(attrValue)}" style="width: 100%; padding: 5px; border: 1px solid var(--editor-border); border-radius: 3px;" />`;
+      }
+      
+      html += `</td>`;
+    }
+    
+    // Actions column
+    html += `<td style="padding: 8px; text-align: center;">`;
+    html += `<button type="button" class="delete-row-btn" data-index="${index}" style="
+      padding: 4px 8px;
+      font-size: 11px;
+      background: var(--editor-hover-bg);
+      border: 1px solid var(--editor-border);
+      border-radius: 3px;
+      cursor: pointer;
+      color: #dc3545;
+    ">Delete</button>`;
+    html += `</td>`;
+    
+    html += `</tr>`;
+    
+    return html;
+  }
+  
+  /**
+   * Update the modal table with current items
+   */
+  updateXmlModalTable(propName, itemName, attributes, currentItems, tbody, emptyState, table) {
+    // Clear and rebuild table body
+    tbody.innerHTML = '';
+    
+    currentItems.forEach((item, index) => {
+      const rowHtml = this.renderXmlModalTableRow(propName, index, item, itemName, attributes);
+      tbody.insertAdjacentHTML('beforeend', rowHtml);
+    });
+    
+    // Update empty state
+    if (currentItems.length === 0) {
+      emptyState.style.display = 'block';
+      table.style.display = 'none';
+    } else {
+      emptyState.style.display = 'none';
+      table.style.display = 'table';
+    }
+    
+    // Attach event listeners to delete buttons and input fields
+    this.attachXmlModalListeners(propName, attributes, currentItems, tbody, emptyState, table);
+    
+    // Attach drag and drop listeners
+    this.attachXmlModalDragListeners(propName, itemName, attributes, currentItems, tbody, emptyState, table);
+  }
+  
+  /**
+   * Attach drag and drop event listeners for row reordering
+   */
+  attachXmlModalDragListeners(propName, itemName, attributes, currentItems, tbody, emptyState, table) {
+    // Use event delegation on tbody for better performance and to handle dynamic rows
+    let draggedRow = null;
+    let draggedIndex = null;
+    
+    // Store handlers so we can reference them
+    if (!tbody._dragHandlers) {
+      tbody._dragHandlers = {
+        dragstart: (e) => {
+          const row = e.target.closest('tr[data-item-index]');
+          if (!row) return;
+          
+          draggedRow = row;
+          draggedIndex = Number.parseInt(row.dataset.itemIndex, 10);
+          row.style.opacity = '0.5';
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', draggedIndex.toString());
+        },
+        
+        dragend: (e) => {
+          const row = e.target.closest('tr[data-item-index]');
+          if (!row) return;
+          
+          row.style.opacity = '1';
+          // Remove all drag-over styling
+          tbody.querySelectorAll('tr[data-item-index]').forEach(r => {
+            r.style.borderTop = '';
+            r.style.borderBottom = '';
+          });
+          draggedRow = null;
+          draggedIndex = null;
+        },
+        
+        dragover: (e) => {
+          e.preventDefault();
+          const row = e.target.closest('tr[data-item-index]');
+          if (!row || !draggedRow) return;
+          
+          e.dataTransfer.dropEffect = 'move';
+          
+          if (row !== draggedRow) {
+            const rect = row.getBoundingClientRect();
+            const midpoint = rect.top + rect.height / 2;
+            
+            // Clear all borders first
+            tbody.querySelectorAll('tr[data-item-index]').forEach(r => {
+              r.style.borderTop = '';
+              r.style.borderBottom = '';
+            });
+            
+            // Show drop indicator
+            if (e.clientY < midpoint) {
+              row.style.borderTop = '2px solid var(--editor-selected-border)';
+            } else {
+              row.style.borderBottom = '2px solid var(--editor-selected-border)';
+            }
+          }
+        },
+        
+        dragleave: (e) => {
+          const row = e.target.closest('tr[data-item-index]');
+          if (!row) return;
+          
+          // Only clear if we're leaving the row entirely
+          const relatedTarget = e.relatedTarget;
+          if (!relatedTarget || !row.contains(relatedTarget)) {
+            row.style.borderTop = '';
+            row.style.borderBottom = '';
+          }
+        },
+        
+        drop: (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          const row = e.target.closest('tr[data-item-index]');
+          if (!row || !draggedRow || row === draggedRow) {
+            // Clear styling and reset
+            tbody.querySelectorAll('tr[data-item-index]').forEach(r => {
+              r.style.borderTop = '';
+              r.style.borderBottom = '';
+              r.style.opacity = '1';
+            });
+            return;
+          }
+          
+          const dropIndex = Number.parseInt(row.dataset.itemIndex, 10);
+          const rect = row.getBoundingClientRect();
+          const midpoint = rect.top + rect.height / 2;
+          
+          // Determine final position based on drop location
+          let finalIndex = dropIndex;
+          if (e.clientY >= midpoint) {
+            finalIndex = dropIndex + 1;
+          }
+          
+          // Adjust if dragging from above to below
+          if (draggedIndex < finalIndex) {
+            finalIndex--;
+          }
+          
+          // Only reorder if position actually changed
+          if (draggedIndex === finalIndex) {
+            // Just clear styling if no change
+            tbody.querySelectorAll('tr[data-item-index]').forEach(r => {
+              r.style.borderTop = '';
+              r.style.borderBottom = '';
+              r.style.opacity = '1';
+            });
+          } else {
+            // Reorder items in the array
+            const item = currentItems.splice(draggedIndex, 1)[0];
+            currentItems.splice(finalIndex, 0, item);
+            
+            // Re-render table with new order
+            this.updateXmlModalTable(propName, itemName, attributes, currentItems, tbody, emptyState, table);
+          }
+        }
+      };
+      
+      // Attach event listeners to tbody
+      tbody.addEventListener('dragstart', tbody._dragHandlers.dragstart);
+      tbody.addEventListener('dragend', tbody._dragHandlers.dragend);
+      tbody.addEventListener('dragover', tbody._dragHandlers.dragover);
+      tbody.addEventListener('dragleave', tbody._dragHandlers.dragleave);
+      tbody.addEventListener('drop', tbody._dragHandlers.drop);
+    }
+  }
+  
+  /**
+   * Attach event listeners to modal table elements
+   */
+  attachXmlModalListeners(propName, attributes, currentItems, tbody, emptyState, table) {
+    // Delete button listeners
+    const deleteButtons = tbody.querySelectorAll('.delete-row-btn');
+    deleteButtons.forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const indexToDelete = Number.parseInt(btn.dataset.index, 10);
+        currentItems.splice(indexToDelete, 1);
+        this.updateXmlModalTable(propName, '', '', attributes, currentItems, tbody, emptyState, table);
+      });
+    });
+    
+    // Input field change listeners
+    const fields = tbody.querySelectorAll('.xml-modal-field');
+    fields.forEach((field) => {
+      field.addEventListener('change', () => {
+        this.updateXmlModalItemsFromTable(propName, attributes, currentItems, tbody);
+      });
+      field.addEventListener('input', () => {
+        this.updateXmlModalItemsFromTable(propName, attributes, currentItems, tbody);
+      });
+    });
+  }
+  
+  /**
+   * Update currentItems array from modal table values
+   */
+  updateXmlModalItemsFromTable(propName, attributes, currentItems, tbody) {
+    const rows = tbody.querySelectorAll('tr[data-item-index]');
+    rows.forEach((row, index) => {
+      const item = {};
+      for (const [attrName] of Object.entries(attributes)) {
+        const fieldId = `xml-modal-field-${propName}-${index}-${attrName}`;
+        const field = document.getElementById(fieldId);
+        if (field) {
+          const attrDef = attributes[attrName];
+          if (attrDef.type === 'checkbox') {
+            item[attrName] = field.checked ? 'true' : 'false';
+          } else {
+            item[attrName] = field.value;
+          }
+        }
+      }
+      currentItems[index] = item;
+    });
+  }
+  
+  /**
+   * Get XML items from modal table
+   */
+  getXmlItemsFromModal(propName, attributes) {
+    const items = [];
+    const tbody = document.getElementById(`xml-modal-tbody-${propName}`);
+    if (!tbody) return items;
+    
+    const rows = tbody.querySelectorAll('tr[data-item-index]');
+    rows.forEach((row, index) => {
+      const item = {};
+      for (const [attrName] of Object.entries(attributes)) {
+        const fieldId = `xml-modal-field-${propName}-${index}-${attrName}`;
+        const field = document.getElementById(fieldId);
+        if (field) {
+          const attrDef = attributes[attrName];
+          if (attrDef.type === 'checkbox') {
+            item[attrName] = field.checked ? 'true' : 'false';
+          } else {
+            item[attrName] = field.value;
+          }
+        }
+      }
+      items.push(item);
+    });
+    
+    return items;
+  }
+
   /**
    * Add a new XML item to the array
    */
@@ -1229,7 +1729,7 @@ class PropertiesPanel {
   }
 
   /**
-   * Render an XML property with array management interface
+   * Render an XML property with modal-based array management interface
    */
   renderXmlProperty(name, definition, value) {
     let html = '<div class="property-group">';
@@ -1248,25 +1748,22 @@ class PropertiesPanel {
     const schema = definition.schema || {};
     const itemSchema = schema.items || {};
     const itemName = itemSchema.name || 'item';
-    const attributes = itemSchema.attributes || {};
     
-    // Create container for items
-    html += `<div id="xml-items-${name}" style="border:1px solid var(--editor-border);border-radius:4px;padding:10px;margin:10px 0;overflow-y:auto;background:var(--editor-bg);">`;
+    // Display summary of current values in the panel
+    html += `<div id="xml-summary-${name}" style="border:1px solid var(--editor-border);border-radius:4px;padding:10px;margin:10px 0;background:var(--editor-panel-bg);min-height:40px;display:flex;align-items:center;justify-content:space-between;">`;
     
-    // Render existing items
-    items.forEach((item, index) => {
-      html += this.renderXmlItem(name, index, item, itemName, attributes);
-    });
-    
-    // Empty state message
     if (items.length === 0) {
-      html += `<div style="color:var(--editor-text-muted);font-style:italic;text-align:center;padding:20px;">No ${itemName} entries yet</div>`;
+      html += `<div style="color:var(--editor-text-muted);font-style:italic;flex:1;">No ${itemName} entries yet</div>`;
+    } else {
+      html += `<div style="color:var(--editor-text);flex:1;">`;
+      html += `<strong>${items.length}</strong> ${itemName}${items.length === 1 ? '' : 's'} configured`;
+      html += `</div>`;
     }
     
-    html += `</div>`;
+    // Edit button to open modal
+    html += `<button type="button" id="edit-${name}" class="button small radius no-gap" style="margin-left:10px;">Edit</button>`;
     
-    // Add button
-    html += `<button type="button" id="add-${name}" class="button small radius" style="margin-top:10px;">Add ${itemName}</button>`;
+    html += `</div>`;
     
     // Hidden storage for array data
     html += `<input type="hidden" id="prop-${name}" data-items-count="${items.length}" />`;
