@@ -1698,7 +1698,7 @@ class PropertiesPanel {
             <i class="fa ${this.escapeHtml(displayValue)}"></i>
           </div>`;
         } else {
-          html += `<div id="icon-preview-${name}" style="font-size: 24px; padding-bottom: 15px; color: #ccc; min-width: 30px; text-align: center;"></div>`;
+          html += `<div id="icon-preview-${name}" style="font-size: 24px; padding-bottom: 15px; color: #6f6f6f; min-width: 30px; text-align: center;"></div>`;
         }
         html += `</div>`;
         break;
@@ -2409,10 +2409,10 @@ class PropertiesPanel {
                 if (preview) {
                   if (selectedIcon) {
                     preview.innerHTML = `<i class="fa ${selectedIcon}"></i>`;
-                    preview.style.color = '#333';
+                    preview.style.color = '#6f6f6f';
                   } else {
                     preview.innerHTML = '';
-                    preview.style.color = '#ccc';
+                    preview.style.color = '#6f6f6f';
                   }
                 }
                 
