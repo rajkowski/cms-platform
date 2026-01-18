@@ -2,6 +2,15 @@
  * Widget Registry
  * Manages available widgets and their metadata
  * 
+ * Properties Support:
+ * - Select fields can use two formats for options:
+ *   1. Simple array (value same as label): options: ['default', 'vertical']
+ *   2. Labeled objects (separate value and display label):
+ *      options: [
+ *        { value: 'default', label: 'Default Layout' },
+ *        { value: 'vertical', label: 'Vertical Stack' }
+ *      ]
+ * 
  * @author matt rajkowski
  * @created 10/16/25 12:00 PM
  */
@@ -448,7 +457,16 @@ class WidgetRegistry {
         subheaderColor: { type: 'color', label: 'Sub Header Color', default: '#000000' },
         progressColor: { type: 'color', label: 'Progress Color', default: '#ffcc02' },
         remainderColor: { type: 'color', label: 'Remained Color', default: '#1f1e22' },
-        view: { type: 'select', label: 'View', options: ['default', 'vertical'] , default: 'default'}
+        // Example of labeled options - display label different from saved value
+        view: { 
+          type: 'select', 
+          label: 'View', 
+          options: [
+            { value: 'default', label: 'Default Layout' },
+            { value: 'vertical', label: 'Vertical Stack' }
+          ],
+          default: 'default'
+        }
       }
     });
 

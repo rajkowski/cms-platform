@@ -1183,8 +1183,12 @@ class PropertiesPanel {
         html += `<select class="property-input" id="prop-${name}">`;
         if (definition.options) {
           for (const option of definition.options) {
-            const selected = displayValue === option ? 'selected' : '';
-            html += `<option value="${option}" ${selected}>${option}</option>`;
+            // Support both simple array format: ['value1', 'value2']
+            // and labeled format: [{value: 'value1', label: 'Display Label 1'}, {value: 'value2', label: 'Display Label 2'}]
+            const optionValue = typeof option === 'object' ? option.value : option;
+            const optionLabel = typeof option === 'object' ? option.label : option;
+            const selected = displayValue === optionValue ? 'selected' : '';
+            html += `<option value="${optionValue}" ${selected}>${optionLabel}</option>`;
           }
         }
         html += '</select>';
@@ -1299,8 +1303,12 @@ class PropertiesPanel {
       if (attrDef.type === 'select' && attrDef.options) {
         html += `<select id="${fieldId}" class="property-input" data-attr="${attrName}" style="width:100%;">`;
         for (const option of attrDef.options) {
-          const selected = attrValue === option ? 'selected' : '';
-          html += `<option value="${option}" ${selected}>${option}</option>`;
+          // Support both simple array format: ['value1', 'value2']
+          // and labeled format: [{value: 'value1', label: 'Display Label 1'}, {value: 'value2', label: 'Display Label 2'}]
+          const optionValue = typeof option === 'object' ? option.value : option;
+          const optionLabel = typeof option === 'object' ? option.label : option;
+          const selected = attrValue === optionValue ? 'selected' : '';
+          html += `<option value="${optionValue}" ${selected}>${optionLabel}</option>`;
         }
         html += `</select>`;
       } else if (attrDef.type === 'checkbox') {
