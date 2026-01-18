@@ -275,7 +275,7 @@ class PagesTabManager {
 
       // Clear current layout
       this.pageEditor.layoutManager.structure = { rows: [] };
-// Reset ID counters so row/column/widget IDs start fresh per page
+      // Reset ID counters so row/column/widget IDs start fresh per page
       if (this.pageEditor.layoutManager && this.pageEditor.layoutManager.resetIds) {
         this.pageEditor.layoutManager.resetIds();
       }
@@ -323,12 +323,6 @@ class PagesTabManager {
     
     // Show loading state in canvas
     const canvas = this.pageEditor.elements.canvas;
-    const loadingHTML = `
-      <div style="text-align: center; padding: 40px; color: #6c757d;">
-        <i class="fa fa-spinner fa-spin"></i> Loading page...
-      </div>
-    `;
-    canvas.innerHTML = loadingHTML;
 
     // Fetch the page content using the JSON service
     const encodedLink = encodeURIComponent(pageLink);
@@ -348,7 +342,7 @@ class PagesTabManager {
 
           // Clear current layout and reset ID counters before loading the new one
           this.pageEditor.layoutManager.structure = { rows: [] };
-if (this.pageEditor.layoutManager && this.pageEditor.layoutManager.resetIds) {
+          if (this.pageEditor.layoutManager && this.pageEditor.layoutManager.resetIds) {
             this.pageEditor.layoutManager.resetIds();
           }
           if (this.pageEditor.config.hasExistingLayout) {

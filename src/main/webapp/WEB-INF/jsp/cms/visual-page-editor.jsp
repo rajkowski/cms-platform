@@ -1056,11 +1056,7 @@
     color: var(--editor-text-muted);
   }
   
-  #pages-loading {
-    text-align: center;
-    padding: 20px;
-    color: var(--editor-text-muted);
-  }
+
 
   #pages-error {
     padding: 15px;
@@ -1178,12 +1174,6 @@
     display: none;
   }
 
-  #preview-loading {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--editor-text-muted);
-  }
-  
   #preview-error {
     padding: 20px;
     background: rgba(220, 53, 69, 0.1);
@@ -1202,12 +1192,6 @@
 
   #preview-iframe.active {
     display: block !important;
-  }
-
-  #preview-loading {
-    text-align: center;
-    padding: 60px 20px;
-    color: #6c757d;
   }
 
   #preview-error {
@@ -1253,47 +1237,12 @@
     box-shadow: 0 0 8px rgba(23, 162, 184, 0.5);
   }
 
-  /* Floating Loading Indicator Overlay */
-  .loading-indicator-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(255, 255, 255, 0.9);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    backdrop-filter: blur(2px);
-    transition: all 0.3s ease;
+
+  #loading-indicator {
+    color: #000000;
   }
 
-  [data-theme="dark"] .loading-indicator-overlay {
-    background: rgba(26, 26, 26, 0.9);
-  }
-
-  .loading-indicator-content {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    color: var(--editor-text);
-    font-size: 16px;
-    font-weight: 500;
-    padding: 20px 30px;
-    background: var(--editor-bg);
-    border: 1px solid var(--editor-border);
-    border-radius: 8px;
-    box-shadow: 0 4px 20px var(--editor-shadow);
-    backdrop-filter: blur(10px);
-  }
-
-  .loading-indicator-content i {
-    color: #007bff;
-    font-size: 18px;
-  }  
-
-  [data-theme="dark"] #preview-loading-indicator {
+  [data-theme="dark"] #loading-indicator {
     color: #ffffff;
   }
 </style>
@@ -1361,7 +1310,7 @@
 
     <!-- Right Section -->
     <div class="toolbar-section right">
-      <div id="preview-loading-indicator" style="display: none;">
+      <div id="loading-indicator" style="display: none;">
         <i class="${font:far()} fa-spinner fa-spin"></i>
       </div>
       <button id="dark-mode-toggle" class="button tiny secondary no-gap radius" title="Toggle Dark Mode"><i class="${font:far()} fa-moon"></i></button>
@@ -1464,9 +1413,6 @@
         </div>
 
         <div id="pages-tab" class="tab-content active">
-          <div id="pages-loading" style="display: none;">
-            <i class="${font:far()} fa-spinner fa-spin"></i> Loading pages...
-          </div>
           <div id="pages-error" style="display: none;"></div>
           <div id="pages-empty" style="display: none;">
             <p>No pages available</p>
@@ -1481,18 +1427,6 @@
     
     <!-- Preview Container -->
     <div id="preview-container">
-
-      <!-- Floating Loading Indicator for Preview -->
-      <!-- <div id="preview-loading-indicator" class="loading-indicator-overlay" style="display: none;">
-        <div class="loading-indicator-content">
-          <i class="${font:far()} fa-spinner fa-spin"></i> <span>Loading preview...</span>
-        </div>
-      </div> -->
-      
-      <!-- <div id="preview-loading" style="display: none;">
-        <i class="${font:far()} fa-spinner fa-spin"></i> Loading preview...
-      </div> -->
-
       <div id="preview-error" style="display: none;"></div>
       <div style="height: 100%; width: 100%;<c:if test="${!empty themePropertyMap['theme.body.backgroundColor']}">background-color:<c:out value="${themePropertyMap['theme.body.backgroundColor']}" /></c:if>">
         <iframe id="preview-iframe" style="<c:if test="${!empty themePropertyMap['theme.body.backgroundColor']}">background-color:<c:out value="${themePropertyMap['theme.body.backgroundColor']}" /></c:if>"></iframe>
@@ -1501,17 +1435,6 @@
     
     <!-- Editor Canvas -->
     <div id="editor-canvas">
-
-
-      <!-- Floating Loading Indicator -->
-       <!--
-      <div id="page-loading-indicator" class="loading-indicator-overlay" style="display: none;">
-        <div class="loading-indicator-content">
-          <i class="${font:far()} fa-spinner fa-spin"></i> <span id="loading-text">Loading...</span>
-        </div>
-      </div>
-      -->
-      
       <c:choose>
         <c:when test="${hasExistingLayout}">
           <!-- Existing layout will be rendered here via JavaScript -->
@@ -1988,14 +1911,6 @@
       previewIframe.style.display = 'none';
       previewError.style.display = 'none';
       
-
-      
-      // Show floating loading indicator for preview
-      const previewLoadingIndicator = document.getElementById('preview-loading-indicator');
-      if (previewLoadingIndicator) {
-        previewLoadingIndicator.style.display = 'block';
-      }
-      
       // Show loading indicator in toolbar
       if (window.pageEditor) {
         window.pageEditor.showLoadingIndicator('Loading preview...');
@@ -2036,10 +1951,7 @@
         return response.text();
       })
       .then(html => {
-        // Hide loading indicators
-        if (previewLoadingIndicator) {
-          previewLoadingIndicator.style.display = 'none';
-        }
+        // Hide loading indicator
         if (window.pageEditor) {
           window.pageEditor.hideLoadingIndicator();
         }
@@ -2085,10 +1997,7 @@
         cleanupDragulaArtifacts();
       })
       .catch(error => {
-        // Hide loading indicators
-        if (previewLoadingIndicator) {
-          previewLoadingIndicator.style.display = 'none';
-        }
+        // Hide loading indicator
         if (window.pageEditor) {
           window.pageEditor.hideLoadingIndicator();
         }

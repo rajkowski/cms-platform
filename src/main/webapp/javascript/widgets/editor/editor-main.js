@@ -128,8 +128,7 @@ class PageEditor {
    * Show the loading indicator in the toolbar
    */
   showLoadingIndicator(text = 'Loading...') {
-    if (this.elements.loadingIndicator && this.elements.loadingText) {
-      this.elements.loadingText.textContent = text;
+    if (this.elements.loadingIndicator) {
       this.elements.loadingIndicator.style.display = 'inline-block';
     }
   }
@@ -160,8 +159,7 @@ class PageEditor {
       widgetSearch: document.getElementById('widget-search'),
       editorForm: document.getElementById('editor-form'),
       designerData: document.getElementById('designer-data'),
-      loadingIndicator: document.getElementById('page-loading-indicator'),
-      loadingText: document.getElementById('loading-text')
+      loadingIndicator: document.getElementById('loading-indicator'),
     };
   }
   

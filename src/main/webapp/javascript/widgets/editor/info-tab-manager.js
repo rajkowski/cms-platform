@@ -292,6 +292,10 @@ class InfoTabManager {
           this.updateCurrentData();
           if (this.hasChanges()) {
             this.rightPanelTabs.markDirty('info');
+            // Trigger save indicator update in main editor
+            if (this.editor && typeof this.editor.updateSaveIndicator === 'function') {
+              this.editor.updateSaveIndicator();
+            }
           }
         });
       }
