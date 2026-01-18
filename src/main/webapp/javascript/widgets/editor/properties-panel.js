@@ -1460,7 +1460,11 @@ class PropertiesPanel {
       }
       
       // Enhancement: Auto-refresh preview when property is edited and preview is active
-      this.refreshPreviewIfActive();
+      // Use a small delay to ensure DOM updates have settled
+      setTimeout(() => {
+        this.refreshPreviewIfActive();
+        this.refreshPreviewIfActive();
+      }, 100);
     }
   }
   
