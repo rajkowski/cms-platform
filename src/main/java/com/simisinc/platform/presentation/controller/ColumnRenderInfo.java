@@ -32,6 +32,7 @@ public class ColumnRenderInfo implements Serializable {
 
   private List<WidgetRenderInfo> widgets = new ArrayList<WidgetRenderInfo>();
   private boolean hasWidgets = false;
+  private int pageColumnCount = -1;
 
   // Output properties
   private String htmlId = null;
@@ -44,6 +45,7 @@ public class ColumnRenderInfo implements Serializable {
   }
 
   public ColumnRenderInfo(Column column) {
+    this.pageColumnCount = column.getPageColumnCount();
     this.htmlId = column.getHtmlId();
     this.cssClass = column.getCssClass();
     this.cssStyle = column.getCssStyle();
@@ -57,6 +59,10 @@ public class ColumnRenderInfo implements Serializable {
 
   public boolean hasWidgets() {
     return hasWidgets;
+  }
+
+  public int getPageColumnCount() {
+    return pageColumnCount;
   }
 
   public void setHasWidgets(boolean hasWidgets) {
@@ -84,5 +90,7 @@ public class ColumnRenderInfo implements Serializable {
     return sticky;
   }
 
-  public boolean getHr() { return hr; }
+  public boolean getHr() {
+    return hr;
+  }
 }

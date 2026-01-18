@@ -263,6 +263,7 @@ public class PageServlet extends HttpServlet {
       request.setAttribute(CONTEXT_PATH, pageRequest.getContextPath());
       request.setAttribute(PAGE_RENDER_INFO, pageRenderInfo);
       request.setAttribute("sitePropertyMap", sitePropertyMap);
+      request.setAttribute("isPreviewMode", "true");
 
       // Determine if there is a global custom stylesheet
       Stylesheet globalStylesheet = LoadStylesheetCommand.loadStylesheetByWebPageId(-1L);

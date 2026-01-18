@@ -30,6 +30,9 @@ public class Column implements Serializable {
 
   static final long serialVersionUID = -8484048371911908893L;
 
+  // Sequence count for the column on the page
+  private int pageColumnCount = 0;
+
   // Layout and render properties
   private List<Widget> widgets = new ArrayList<Widget>();
   private List<String> roles = new ArrayList<String>();
@@ -43,6 +46,14 @@ public class Column implements Serializable {
   private boolean hr = false;
 
   public Column() {
+  }
+
+  public int getPageColumnCount() {
+    return pageColumnCount;
+  }
+
+  public void setPageColumnCount(int pageColumnCount) {
+    this.pageColumnCount = pageColumnCount;
   }
 
   public String getHtmlId() {

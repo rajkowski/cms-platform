@@ -93,7 +93,9 @@ public class WebContainerCommand implements Serializable {
       sharedWidgetValueMap = (HashMap) controllerSession.getWidgetData(REQUEST_SHARED_VALUE_MAP);
     }
 
+    // Each row/column/widget has a unique count on the page, whether displayed or not
     int widgetCount = 0;
+
     //if (!isPost && !isDelete && !isAction) {
     // Cycle the form token
     // @todo actually, keep a list and expire old ones eventually
@@ -142,7 +144,8 @@ public class WebContainerCommand implements Serializable {
             continue;
           }
 
-          // Each widget has a unique id on the page for forms, Javascript, etc.
+          // Each widget has a unique id on the page for forms, Javascript, etc.          
+          // The displayed value appears sequential to the user
           ++widgetCount;
           String thisWidgetUniqueId = widget.getWidgetName() + widgetCount;
 

@@ -28,6 +28,8 @@ public class WidgetRenderInfo implements Serializable {
 
   static final long serialVersionUID = -8484048371911908893L;
 
+  private int pageWidgetCount = -1;
+
   // Output properties
   private String htmlId = null;
   private String cssClass = null;
@@ -40,12 +42,17 @@ public class WidgetRenderInfo implements Serializable {
   }
 
   public WidgetRenderInfo(Widget widget, String content) {
+    this.pageWidgetCount = widget.getPageWidgetCount();
     this.htmlId = widget.getHtmlId();
     this.cssClass = widget.getCssClass();
     this.cssStyle = widget.getCssStyle();
     this.sticky = widget.isSticky();
     this.hr = widget.hasHr();
     this.content = content;
+  }
+
+  public int getPageWidgetCount() {
+    return pageWidgetCount;
   }
 
   public String getHtmlId() {
@@ -64,7 +71,9 @@ public class WidgetRenderInfo implements Serializable {
     return sticky;
   }
 
-  public boolean getHr() { return hr; }
+  public boolean getHr() {
+    return hr;
+  }
 
   public String getContent() {
     return content;

@@ -143,7 +143,10 @@ public class XMLPageFactory implements Serializable {
         page.setCssClass(e.getAttribute("class"));
       }
     }
-    XMLContainerCommands.appendSections(document, page.getSections(), e.getChildNodes());
+    // Create a shared context for the page to track the overall row/column/widget sequences
+    PageRenderContext pageRenderContext = new PageRenderContext();  
+    // Process the sections
+    XMLContainerCommands.appendSections(pageRenderContext, document, page.getSections(), e.getChildNodes());
     return page;
   }
 }
