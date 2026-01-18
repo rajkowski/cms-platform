@@ -16,38 +16,44 @@
 <c:set var="stickyMarginTop" scope="request" value="8"/>
 <article>
   <div class="${rendererClass}">
-    <c:if test="${!fn:startsWith(pageRenderInfo.name, '/admin') && userSession.hasRole('admin')}">
-      <div class="platform-content-container">
-        <div class="platform-content-editor">
-          <a class="hollow button small secondary" href="${ctx}/admin/visual-page-editor?webPage=${pageRenderInfo.pagePath}"><i class="fa-fw fa fa-object-ungroup"></i></a>
+    <%-- Attach the visual page editor button only when not in preview mode --%>
+    <%--
+    <c:if test="${isPreviewMode ne 'true'}">
+      <c:if test="${!fn:startsWith(pageRenderInfo.name, '/admin') && userSession.hasRole('admin')}">
+        <div class="platform-content-container">
+          <div class="platform-content-editor">
+            <a class="hollow button small secondary" href="${ctx}/admin/visual-page-editor?webPage=${pageRenderInfo.pagePath}"><i class="fa-fw fa fa-window-maximize"></i></a>
+          </div>
         </div>
-      </div>
+      </c:if>
     </c:if>
+    --%>
+    <%-- Render the page --%>
     <c:forEach items="${pageRenderInfo.sectionRenderInfoList}" var="section" varStatus="sectionStatus">
       <c:set var="sectionId" scope="request" value="random${sectionStatus.index}"/>
       <c:if test="${!empty section.htmlId}">
         <c:set var="sectionId" scope="request" value="${section.htmlId}"/>
       </c:if>
+      <%-- Determine row ID for preview mode hover functionality --%>
+      <c:set var="rowId" scope="request" value="row-${section.pageRowCount}"/>
       <c:if test="${section.hr}">
         <hr />
       </c:if>
       <%-- Determine the section container CSS --%>
       <c:choose>
         <c:when test="${empty section.cssClass && fn:startsWith(pageRenderInfo.name, '/admin')}">
-          <div id="${sectionId}" class="grid-x grid-padding-x"<c:if test="${!empty section.cssStyle}"> style="<c:out value="${section.cssStyle}" />"</c:if>>
+          <div id="${sectionId}" class="grid-x grid-padding-x"<c:if test="${!empty section.cssStyle}"> style="<c:out value="${section.cssStyle}" />"</c:if><c:if test="${isPreviewMode}"> data-row-id="${rowId}"</c:if>>
         </c:when>
         <c:when test="${!empty section.cssClass && (fn:contains(section.cssClass,'grid') || fn:contains(section.cssClass,'platform-no-margin'))}">
-          <div id="${sectionId}" class="${section.cssClass}"<c:if test="${!empty section.cssStyle}"> style="<c:out value="${section.cssStyle}" />"</c:if>>
+          <div id="${sectionId}" class="${section.cssClass}"<c:if test="${!empty section.cssStyle}"> style="<c:out value="${section.cssStyle}" />"</c:if><c:if test="${isPreviewMode}"> data-row-id="${rowId}"</c:if>>
         </c:when>
         <c:otherwise>
-          <div class="full-container" id="${sectionId}"<c:if test="${!empty section.cssStyle}"> style="<c:out value="${section.cssStyle}" />"</c:if>>
-<%--          <div class="full-container"<c:if test="${!empty section.htmlId}"> id="${section.htmlId}"</c:if>>--%>
+          <div class="full-container" id="${sectionId}"<c:if test="${!empty section.cssStyle}"> style="<c:out value="${section.cssStyle}" />"</c:if><c:if test="${isPreviewMode}"> data-row-id="${rowId}"</c:if>>
             <div class="grid-container">
               <div class="grid-x grid-margin-x<c:if test="${!empty section.cssClass}"> ${section.cssClass}</c:if>">
-<%--              <div class="grid-x grid-margin-x<c:if test="${!empty section.cssClass}"> ${section.cssClass}</c:if>"<c:if test="${!empty section.cssStyle}"> style="<c:out value="${section.cssStyle}" />"</c:if>>--%>
         </c:otherwise>
       </c:choose>
-      <%-- Detemine if a video background container is being used --%>
+      <%-- Determine if a video background container is being used --%>
       <c:if test="${!empty section.videoBackgroundUrl}">
         <div class="video-background">
           <video autoplay muted loop>
@@ -63,30 +69,43 @@
         <c:if test="${!empty column.htmlId}">
           <c:set var="columnId" scope="request" value="${column.htmlId}"/>
         </c:if>
+        <%-- Determine column ID for preview mode hover functionality --%>
+        <c:set var="colId" scope="request" value="col-${section.pageRowCount}-${column.pageColumnCount}"/>
         <c:choose>
           <c:when test="${!empty column.cssClass}">
-            <div id="${columnId}" class="${column.cssClass}"<c:if test="${!empty column.cssStyle}"> style="<c:out value="${column.cssStyle}" />"</c:if><c:if test="${column.sticky}"> data-sticky-container</c:if>>
+            <div id="${columnId}" class="${column.cssClass}"<c:if test="${!empty column.cssStyle}"> style="<c:out value="${column.cssStyle}" />"</c:if><c:if test="${column.sticky}"> data-sticky-container</c:if><c:if test="${isPreviewMode}"> data-col-id="${colId}"</c:if>>
           </c:when>
           <c:otherwise>
-            <div id="${columnId}" class="small-12 cell"<c:if test="${!empty column.cssStyle}"> style="<c:out value="${column.cssStyle}" />"</c:if><c:if test="${column.sticky}"> data-sticky-container</c:if>>
+            <div id="${columnId}" class="small-12 cell"<c:if test="${!empty column.cssStyle}"> style="<c:out value="${column.cssStyle}" />"</c:if><c:if test="${column.sticky}"> data-sticky-container</c:if><c:if test="${isPreviewMode}"> data-col-id="${colId}"</c:if>>
           </c:otherwise>
         </c:choose>
         <c:if test="${section.sticky && column.sticky}"><div class="sticky" data-sticky data-sticky-on="medium" data-margin-top="${stickyMarginTop}" data-top-anchor="${columnId}:top" data-btm-anchor="platform-footer"></c:if>
-        <c:forEach items="${column.widgetRenderInfoList}" var="widget">
+        <c:forEach items="${column.widgetRenderInfoList}" var="widget" varStatus="widgetStatus">
           <c:if test="${widget.hr}">
             <hr />
           </c:if>
+          <%-- Determine widget ID for preview mode hover functionality --%>
+          <c:set var="widgetId" scope="request" value="widget-${section.pageRowCount}-${column.pageColumnCount}-${widget.pageWidgetCount}"/>
           <c:choose>
             <c:when test="${empty widget.cssClass && empty widget.htmlId && empty widget.cssStyle && !widget.sticky}">
-              ${widget.content}
+              <c:choose>
+                <c:when test="${isPreviewMode}">
+                  <div data-widget="${widgetId}">
+                    ${widget.content}
+                  </div>
+                </c:when>
+                <c:otherwise>
+                  ${widget.content}
+                </c:otherwise>
+              </c:choose>
             </c:when>
             <c:when test="${!empty widget.cssClass}">
-              <div <c:if test="${!empty widget.htmlId}">id="${widget.htmlId}" </c:if>class="${widget.cssClass}"<c:if test="${!empty widget.cssStyle}"> style="<c:out value="${widget.cssStyle}" />"</c:if><c:if test="${widget.sticky}"> data-sticky data-margin-top="${stickyMarginTop}" data-top-anchor="${columnId}" data-btm-anchor="platform-footer"</c:if>>
+              <div <c:if test="${!empty widget.htmlId}">id="${widget.htmlId}" </c:if>class="${widget.cssClass}"<c:if test="${!empty widget.cssStyle}"> style="<c:out value="${widget.cssStyle}" />"</c:if><c:if test="${widget.sticky}"> data-sticky data-margin-top="${stickyMarginTop}" data-top-anchor="${columnId}" data-btm-anchor="platform-footer"</c:if><c:if test="${isPreviewMode}"> data-widget="${widgetId}"</c:if>>
                 ${widget.content}
               </div>
             </c:when>
             <c:otherwise>
-              <div<c:if test="${!empty widget.htmlId}"> id="${widget.htmlId}"</c:if><c:if test="${!empty widget.cssStyle}"> style="<c:out value="${widget.cssStyle}" />"</c:if><c:if test="${widget.sticky}"> data-sticky data-margin-top="${stickyMarginTop}" data-top-anchor="${columnId}" data-btm-anchor="platform-footer"</c:if>>
+              <div<c:if test="${!empty widget.htmlId}"> id="${widget.htmlId}"</c:if><c:if test="${!empty widget.cssStyle}"> style="<c:out value="${widget.cssStyle}" />"</c:if><c:if test="${widget.sticky}"> data-sticky data-margin-top="${stickyMarginTop}" data-top-anchor="${columnId}" data-btm-anchor="platform-footer"</c:if><c:if test="${isPreviewMode}"> data-widget="${widgetId}"</c:if>>
                 ${widget.content}
               </div>
             </c:otherwise>

@@ -225,14 +225,14 @@ public class MenuWidget extends GenericWidget {
           // Add Page Editing Links
           if (!thisPageIsSkipped) {
             addDivider(context, linkList, container, "admin,content-manager");
+            addLink(context, linkList, "Webpage Editor", "/admin/visual-page-editor?webPage=" + pagePath, "fa fa-window-maximize",
+                container, "admin,content-manager");
             addLink(context, linkList, "Page Info", "/admin/web-page?webPage=" + pagePath, "fa fa-info", container,
                 "admin,content-manager");
-            addLink(context, linkList, "Visual Editor", "/admin/visual-page-editor?webPage=" + pagePath, "fa fa-object-ungroup",
-                container, "admin,content-manager");
-            addLink(context, linkList, "Code Editor", "/admin/web-page-designer?webPage=" + pagePath, "fa fa-code",
-                container, "admin,content-manager");
             addLink(context, linkList, "Page CSS", "/admin/css-editor?webPage=" + pagePath + "&returnPage=" + pagePath,
                 "fa fa-css3", container, "admin");
+            addLink(context, linkList, "Code Editor", "/admin/web-page-designer?webPage=" + pagePath, "fa fa-code",
+                container, "admin,content-manager");
           }
 
           // Add Collection and Item Editing Links
