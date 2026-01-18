@@ -92,11 +92,12 @@ class PageEditor {
     // Save initial state to history
     this.saveToHistory();
     
-    // Set baseline for dirty detection
-    this.setSavedState();
-    
-    // Initialize save indicator
-    this.updateSaveIndicator();
+    // Set baseline for dirty detection AFTER loading initial data
+    // This ensures the Publish button is only active for new pages or when changes are made
+    setTimeout(() => {
+      this.setSavedState();
+      this.updateSaveIndicator();
+    }, 200);
     
     console.log('Editor initialized successfully');
   }
@@ -105,7 +106,12 @@ class PageEditor {
    * Update the save button indicator to show unsaved changes
    */
   updateSaveIndicator() {
-    if (this.isDirty()) {
+    const isNewPage = this.pagesTabManager?.selectedPageId === 'new';
+    const isDirty = this.isDirty();
+    
+    // For new pages, always show the Publish button as active (they need to be saved)
+    // For existing pages, only show active when there are changes
+    if (isNewPage || isDirty) {
       if (!this.elements.saveBtn.dataset.dirty) {
         this.elements.saveBtn.dataset.dirty = 'true';
         this.elements.saveBtn.innerHTML = '<i class="far fa-circle-dot"></i> Publish <span style="color: #ff6b6b;">●</span>';
