@@ -801,9 +801,9 @@ class PropertiesPanel {
       const summary = document.getElementById(`xml-summary-${propName}`);
       if (summary) {
         if (updatedItems.length === 0) {
-          summary.innerHTML = `<div style="color:var(--editor-text-muted);font-style:italic;flex:1;">No ${itemName} entries yet</div><button type="button" id="edit-${propName}" class="button small radius" style="margin-left:10px;">Edit</button>`;
+          summary.innerHTML = `<div style="color:var(--editor-text-muted);font-style:italic;flex:1;">No ${itemName} entries yet</div><button type="button" id="edit-${propName}" class="button small radius no-gap" style="margin-left:10px;">Edit</button>`;
         } else {
-          summary.innerHTML = `<div style="color:var(--editor-text);flex:1;"><strong>${updatedItems.length}</strong> ${itemName}${updatedItems.length === 1 ? '' : 's'} configured</div><button type="button" id="edit-${propName}" class="button small radius" style="margin-left:10px;">Edit</button>`;
+          summary.innerHTML = `<div style="color:var(--editor-text);flex:1;"><strong>${updatedItems.length}</strong> ${itemName}${updatedItems.length === 1 ? '' : 's'} configured</div><button type="button" id="edit-${propName}" class="button small radius no-gap" style="margin-left:10px;">Edit</button>`;
         }
         
         // Re-attach edit button listener

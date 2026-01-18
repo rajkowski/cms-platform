@@ -26,7 +26,7 @@
 <web:stylesheet package="dragula" file="dragula.min.css" />
 <web:script package="spectrum" file="spectrum.js" />
 <web:script package="tinymce" file="tinymce.min.js" />
-<web:script package="dragula" file="dragula.min.js" />
+
 <g:compress>
 <style>
   /* Light and Dark Mode Variables */
@@ -1311,6 +1311,7 @@
   <script src="<c:url value='/javascript/widgets/editor/property-editor-bridge.js'/>"></script>
   <script src="<c:url value='/javascript/widgets/editor/preview-hover-manager.js'/>"></script>
 </g:compress>
+<web:script package="dragula" file="dragula.min.js" />
 
 <div id="visual-page-editor-wrapper">
   <c:if test="${!empty title}">
