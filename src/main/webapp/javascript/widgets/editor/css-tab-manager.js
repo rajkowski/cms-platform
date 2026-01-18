@@ -142,6 +142,10 @@ class CSSTabManager {
       if (this.isInitialized && this.hasChanges()) {
         this.rightPanelTabs.markDirty('css');
         this.updateStatusText('Modified');
+        // Trigger save indicator update in main editor
+        if (this.editor && typeof this.editor.updateSaveIndicator === 'function') {
+          this.editor.updateSaveIndicator();
+        }
       }
     });
     
