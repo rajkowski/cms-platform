@@ -946,6 +946,8 @@ class PropertiesPanel {
     
     // Track current items in modal
     let currentItems = [...items];
+    // Initialize table, listeners, and Dragula on open
+    this.updateXmlModalTable(propName, itemName, attributes, currentItems, tbody, emptyState, table);
     
     // Add button handler
     addBtn.addEventListener('click', (e) => {
@@ -986,10 +988,10 @@ class PropertiesPanel {
    * Render a single row in the XML items table
    */
   renderXmlModalTableRow(propName, index, item, itemName, attributes) {
-    let html = `<tr data-item-index="${index}" draggable="true" style="border-bottom: 1px solid var(--editor-border); background: var(--editor-bg); cursor: move;">`;
+    let html = `<tr class="xml-modal-row" data-item-index="${index}" data-original-index="${index}" style="border-bottom: 1px solid var(--editor-border); background: var(--editor-bg); transition: background-color 0.2s ease;">`;
     
-    // Drag handle
-    html += `<td class="drag-handle" style="padding: 10px; text-align: center; color: var(--editor-text-muted); font-size: 16px; cursor: grab; background: var(--editor-panel-bg);"><i class="fa fa-grip-vertical"></i></td>`;
+    // Drag handle - only this cell is draggable
+    html += `<td class="drag-handle" draggable="true" style="padding: 10px; text-align: center; color: var(--editor-text-muted); font-size: 16px; cursor: grab; background: var(--editor-panel-bg); user-select: none;"><i class="fa fa-grip-vertical"></i></td>`;
     
     // Row number
     html += `<td style="padding: 10px; text-align: center; color: var(--editor-text-muted); font-size: 12px; background: var(--editor-panel-bg);">${index + 1}</td>`;
@@ -1043,6 +1045,17 @@ class PropertiesPanel {
    * Update the modal table with current items
    */
   updateXmlModalTable(propName, itemName, attributes, currentItems, tbody, emptyState, table) {
+    console.debug('XML Modal: updateXmlModalTable()', { propName, itemCount: currentItems.length });
+    // Remove old event listeners if they exist
+    if (tbody._dragHandlers) {
+      tbody.removeEventListener('dragstart', tbody._dragHandlers.dragstart);
+      tbody.removeEventListener('dragend', tbody._dragHandlers.dragend);
+      tbody.removeEventListener('dragover', tbody._dragHandlers.dragover);
+      tbody.removeEventListener('dragleave', tbody._dragHandlers.dragleave);
+      tbody.removeEventListener('drop', tbody._dragHandlers.drop);
+      tbody._dragHandlers = null;
+    }
+    
     // Clear and rebuild table body
     tbody.innerHTML = '';
     
@@ -1061,157 +1074,115 @@ class PropertiesPanel {
     }
     
     // Attach event listeners to delete buttons and input fields
-    this.attachXmlModalListeners(propName, attributes, currentItems, tbody, emptyState, table);
+    this.attachXmlModalListeners(propName, itemName, attributes, currentItems, tbody, emptyState, table);
+    console.debug('XML Modal: attached input/delete listeners', { propName });
     
     // Attach drag and drop listeners
     this.attachXmlModalDragListeners(propName, itemName, attributes, currentItems, tbody, emptyState, table);
+    console.debug('XML Modal: attached drag listeners', { propName });
   }
   
   /**
    * Attach drag and drop event listeners for row reordering
    */
   attachXmlModalDragListeners(propName, itemName, attributes, currentItems, tbody, emptyState, table) {
-    // Use event delegation on tbody for better performance and to handle dynamic rows
-    let draggedRow = null;
-    let draggedIndex = null;
-    
-    // Store handlers so we can reference them
-    if (!tbody._dragHandlers) {
-      tbody._dragHandlers = {
-        dragstart: (e) => {
-          const row = e.target.closest('tr[data-item-index]');
-          if (!row) return;
-          
-          draggedRow = row;
-          draggedIndex = Number.parseInt(row.dataset.itemIndex, 10);
-          row.style.opacity = '0.5';
-          e.dataTransfer.effectAllowed = 'move';
-          e.dataTransfer.setData('text/plain', draggedIndex.toString());
+    console.debug('Dragula: attachXmlModalDragListeners()', { propName, itemCount: currentItems.length });
+    this.ensureDragulaLoaded(() => {
+      console.debug('Dragula: ensure loaded callback start', { propName });
+      // Destroy any existing Dragula instance
+      if (tbody._dragula) {
+        console.debug('Dragula: destroying existing instance');
+        tbody._dragula.destroy();
+        tbody._dragula = null;
+      }
+      const drake = dragula([tbody], {
+        direction: 'vertical',
+        copy: false,
+        revertOnSpill: true,
+        accepts: (el, target, source, sibling) => target === source,
+        moves: (el, source, handle, sibling) => {
+          const allow = !!(handle && handle.classList && handle.classList.contains('drag-handle'));
+          if (handle) {
+            console.debug('Dragula: moves()', { allow, handleClass: handle.className });
+          }
+          return allow;
         },
-        
-        dragend: (e) => {
-          const row = e.target.closest('tr[data-item-index]');
-          if (!row) return;
-          
-          row.style.opacity = '1';
-          // Remove all drag-over styling
-          tbody.querySelectorAll('tr[data-item-index]').forEach(r => {
-            r.style.borderTop = '';
-            r.style.borderBottom = '';
-          });
-          draggedRow = null;
-          draggedIndex = null;
-        },
-        
-        dragover: (e) => {
-          e.preventDefault();
-          const row = e.target.closest('tr[data-item-index]');
-          if (!row || !draggedRow) return;
-          
-          e.dataTransfer.dropEffect = 'move';
-          
-          if (row !== draggedRow) {
-            const rect = row.getBoundingClientRect();
-            const midpoint = rect.top + rect.height / 2;
-            
-            // Clear all borders first
-            tbody.querySelectorAll('tr[data-item-index]').forEach(r => {
-              r.style.borderTop = '';
-              r.style.borderBottom = '';
-            });
-            
-            // Show drop indicator
-            if (e.clientY < midpoint) {
-              row.style.borderTop = '2px solid var(--editor-selected-border)';
-            } else {
-              row.style.borderBottom = '2px solid var(--editor-selected-border)';
-            }
-          }
-        },
-        
-        dragleave: (e) => {
-          const row = e.target.closest('tr[data-item-index]');
-          if (!row) return;
-          
-          // Only clear if we're leaving the row entirely
-          const relatedTarget = e.relatedTarget;
-          if (!relatedTarget || !row.contains(relatedTarget)) {
-            row.style.borderTop = '';
-            row.style.borderBottom = '';
-          }
-        },
-        
-        drop: (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          
-          const row = e.target.closest('tr[data-item-index]');
-          if (!row || !draggedRow || row === draggedRow) {
-            // Clear styling and reset
-            tbody.querySelectorAll('tr[data-item-index]').forEach(r => {
-              r.style.borderTop = '';
-              r.style.borderBottom = '';
-              r.style.opacity = '1';
-            });
-            return;
-          }
-          
-          const dropIndex = Number.parseInt(row.dataset.itemIndex, 10);
-          const rect = row.getBoundingClientRect();
-          const midpoint = rect.top + rect.height / 2;
-          
-          // Determine final position based on drop location
-          let finalIndex = dropIndex;
-          if (e.clientY >= midpoint) {
-            finalIndex = dropIndex + 1;
-          }
-          
-          // Adjust if dragging from above to below
-          if (draggedIndex < finalIndex) {
-            finalIndex--;
-          }
-          
-          // Only reorder if position actually changed
-          if (draggedIndex === finalIndex) {
-            // Just clear styling if no change
-            tbody.querySelectorAll('tr[data-item-index]').forEach(r => {
-              r.style.borderTop = '';
-              r.style.borderBottom = '';
-              r.style.opacity = '1';
-            });
-          } else {
-            // Reorder items in the array
-            const item = currentItems.splice(draggedIndex, 1)[0];
-            currentItems.splice(finalIndex, 0, item);
-            
-            // Re-render table with new order
-            this.updateXmlModalTable(propName, itemName, attributes, currentItems, tbody, emptyState, table);
-          }
+        invalid: (el, handle) => {
+          if (!handle) return true;
+          const isDelete = handle.classList.contains('delete-row-btn') || !!handle.closest('.delete-row-btn');
+          const isInput = ['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON'].includes(handle.tagName);
+          const invalid = isDelete || isInput;
+          console.debug('Dragula: invalid()', { isDelete, isInput, invalid });
+          return invalid;
         }
-      };
-      
-      // Attach event listeners to tbody
-      tbody.addEventListener('dragstart', tbody._dragHandlers.dragstart);
-      tbody.addEventListener('dragend', tbody._dragHandlers.dragend);
-      tbody.addEventListener('dragover', tbody._dragHandlers.dragover);
-      tbody.addEventListener('dragleave', tbody._dragHandlers.dragleave);
-      tbody.addEventListener('drop', tbody._dragHandlers.drop);
+      });
+      console.debug('Dragula: initialized', { rows: tbody.querySelectorAll('tr.xml-modal-row').length });
+      drake.on('drop', () => {
+        const rows = Array.from(tbody.querySelectorAll('tr.xml-modal-row'));
+        const order = rows.map(r => Number.parseInt(r.dataset.originalIndex, 10));
+        console.debug('Dragula: drop()', { order });
+        const newItems = order.map(i => currentItems[i]);
+        currentItems.splice(0, currentItems.length, ...newItems);
+        this.updateXmlModalTable(propName, itemName, attributes, currentItems, tbody, emptyState, table);
+      });
+      tbody._dragula = drake;
+      console.debug('Dragula: instance stored on tbody');
+    });
+  }
+
+  /**
+   * Ensure Dragula JS/CSS are loaded before usage
+   */
+  ensureDragulaLoaded(callback) {
+    if (typeof globalThis !== 'undefined' && globalThis.dragula) {
+      console.debug('Dragula: already loaded');
+      callback && callback();
+      return;
     }
+    if (this._dragulaLoading) {
+      console.debug('Dragula: load in progress; queueing callback');
+      this._dragulaCallbacks = this._dragulaCallbacks || [];
+      this._dragulaCallbacks.push(callback);
+      return;
+    }
+    this._dragulaLoading = true;
+    this._dragulaCallbacks = this._dragulaCallbacks || [];
+    if (callback) this._dragulaCallbacks.push(callback);
+    const head = document.head || document.getElementsByTagName('head')[0];
+    const cssHref = '/javascript/dragula-3.7.3/dragula.min.css';
+    if (!document.querySelector(`link[href="${cssHref}"]`)) {
+      console.debug('Dragula: injecting CSS', { href: cssHref });
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = cssHref;
+      head.appendChild(link);
+    }
+    
+    setTimeout(() => {
+      this._dragulaLoading = false;
+      const callbacks = this._dragulaCallbacks || [];
+      this._dragulaCallbacks = [];
+      console.debug('Dragula: script already present; executing callbacks', { count: callbacks.length });
+      callbacks.forEach(cb => { if (cb) cb(); });
+    }, 0);
+  
   }
   
   /**
    * Attach event listeners to modal table elements
    */
-  attachXmlModalListeners(propName, attributes, currentItems, tbody, emptyState, table) {
-    // Delete button listeners
+  attachXmlModalListeners(propName, itemName, attributes, currentItems, tbody, emptyState, table) {
+    // Delete button listeners - attach directly to buttons for reliability
     const deleteButtons = tbody.querySelectorAll('.delete-row-btn');
     deleteButtons.forEach((btn) => {
       btn.addEventListener('click', (e) => {
-        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        console.debug('XML Modal: delete clicked', { propName, index: Number.parseInt(btn.dataset.index, 10) });
         const indexToDelete = Number.parseInt(btn.dataset.index, 10);
         currentItems.splice(indexToDelete, 1);
-        this.updateXmlModalTable(propName, '', '', attributes, currentItems, tbody, emptyState, table);
-      });
+        this.updateXmlModalTable(propName, itemName, attributes, currentItems, tbody, emptyState, table);
+      }, true); // Use capture phase to ensure it fires first
     });
     
     // Input field change listeners

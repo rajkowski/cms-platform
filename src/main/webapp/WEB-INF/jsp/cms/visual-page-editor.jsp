@@ -23,8 +23,10 @@
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="webPage" class="com.simisinc.platform.domain.model.cms.WebPage" scope="request"/>
 <web:stylesheet package="spectrum" file="spectrum.css" />
+<web:stylesheet package="dragula" file="dragula.min.css" />
 <web:script package="spectrum" file="spectrum.js" />
 <web:script package="tinymce" file="tinymce.min.js" />
+<web:script package="dragula" file="dragula.min.js" />
 <g:compress>
 <style>
   /* Light and Dark Mode Variables */
