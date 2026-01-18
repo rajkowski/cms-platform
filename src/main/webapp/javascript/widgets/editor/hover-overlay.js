@@ -24,12 +24,248 @@ class HoverOverlay {
     this.doc = opts.document || (typeof document !== 'undefined' ? document : null);
     this.win = opts.window || (typeof globalThis !== 'undefined' ? globalThis.window : (typeof window !== 'undefined' ? window : null));
     
+    // Iframe context for proper event handling
+    this.iframeElement = opts.iframeElement || null;
+    this.iframeDoc = null;
+    this.iframeWin = null;
+    if (this.iframeElement && this.iframeElement.contentDocument) {
+      this.iframeDoc = this.iframeElement.contentDocument;
+      this.iframeWin = this.iframeElement.contentWindow;
+    }
+    
+    // Track current element for dynamic repositioning
+    this.currentElement = null;
+    this.currentElementType = null;
+    this.currentOutlinePosition = null;
+    
+    // Click handler for clickable outlines (row/column)
+    this._outlineClickHandler = null;
+    
+    // MutationObserver for tracking DOM changes
+    this._mutationObserver = null;
+    this._isObservingMutations = false;
+    
     // Event callbacks (set by PreviewHoverManager)
     this.onActionButtonClick = null;
     this.onActionButtonLeave = null;
     
     // Bind event handlers
     this._onButtonClick = this._onButtonClick.bind(this);
+    this._onScrollOrResize = this._onScrollOrResize.bind(this);
+    this._onMutation = this._onMutation.bind(this);
+    
+    // Throttle scroll/resize updates
+    this._scrollResizeThrottle = null;
+    this._isListeningForScrollResize = false;
+    this._mutationThrottle = null;
+  }
+  
+  /**
+   * Set up scroll and resize listeners for dynamic outline adjustment
+   * Handles both parent window and iframe contexts
+   * @private
+   */
+  _setupScrollResizeListeners() {
+    if (this._isListeningForScrollResize) {
+      return;
+    }
+    
+    // Listen on parent window
+    if (this.win) {
+      this.win.addEventListener('scroll', this._onScrollOrResize, true);
+      this.win.addEventListener('resize', this._onScrollOrResize, true);
+    }
+    
+    // Also listen on iframe window if present
+    if (this.iframeWin && this.iframeWin !== this.win) {
+      this.iframeWin.addEventListener('scroll', this._onScrollOrResize, true);
+      this.iframeWin.addEventListener('resize', this._onScrollOrResize, true);
+    }
+    
+    // Listen on iframe document for scroll events
+    if (this.iframeDoc && this.iframeDoc !== this.doc) {
+      this.iframeDoc.addEventListener('scroll', this._onScrollOrResize, true);
+    }
+    
+    this._isListeningForScrollResize = true;
+  }
+  
+  /**
+   * Remove scroll and resize listeners
+   * @private
+   */
+  _removeScrollResizeListeners() {
+    if (!this._isListeningForScrollResize) {
+      return;
+    }
+    
+    // Remove from parent window
+    if (this.win) {
+      this.win.removeEventListener('scroll', this._onScrollOrResize, true);
+      this.win.removeEventListener('resize', this._onScrollOrResize, true);
+    }
+    
+    // Remove from iframe window
+    if (this.iframeWin && this.iframeWin !== this.win) {
+      this.iframeWin.removeEventListener('scroll', this._onScrollOrResize, true);
+      this.iframeWin.removeEventListener('resize', this._onScrollOrResize, true);
+    }
+    
+    // Remove from iframe document
+    if (this.iframeDoc && this.iframeDoc !== this.doc) {
+      this.iframeDoc.removeEventListener('scroll', this._onScrollOrResize, true);
+    }
+    
+    this._isListeningForScrollResize = false;
+  }
+  
+  /**
+   * Handle scroll or resize events - update outline position
+   * @private
+   */
+  _onScrollOrResize() {
+    // Throttle updates to avoid excessive redraws
+    if (this._scrollResizeThrottle) {
+      clearTimeout(this._scrollResizeThrottle);
+    }
+    
+    this._scrollResizeThrottle = setTimeout(() => {
+      if (this.currentElement && this.isOutlineVisible) {
+        try {
+          const newPosition = this.calculateOutlinePosition(this.currentElement);
+          if (newPosition && this._isValidPosition(newPosition)) {
+            this.currentOutlinePosition = newPosition;
+            if (this.outlineElement) {
+              this._positionOutline(this.outlineElement, newPosition);
+            }
+            
+            // Update button position if visible
+            if (this.isButtonVisible && this.actionButtonElement) {
+              const buttonPos = this.calculateButtonPosition(newPosition, this.currentElementType);
+              if (buttonPos && this._isValidPosition(buttonPos)) {
+                this._positionButton(this.actionButtonElement, buttonPos);
+              }
+            }
+          }
+        } catch (error) {
+          console.error('HoverOverlay: Error updating outline on scroll/resize:', error);
+        }
+      }
+    }, 16); // 16ms for 60fps
+  }
+  
+  /**
+   * Set up MutationObserver to detect DOM changes that affect element size/position
+   * @private
+   */
+  _setupMutationObserver() {
+    if (this._isObservingMutations || !this.currentElement) {
+      return;
+    }
+    
+    // Check if MutationObserver is available
+    const MutationObserverConstructor = (this.win && this.win.MutationObserver) || 
+                                        (this.iframeWin && this.iframeWin.MutationObserver) ||
+                                        (typeof MutationObserver !== 'undefined' ? MutationObserver : null);
+    
+    if (!MutationObserverConstructor) {
+      console.debug('HoverOverlay: MutationObserver not available');
+      return;
+    }
+    
+    try {
+      this._mutationObserver = new MutationObserverConstructor(this._onMutation);
+      
+      // Observe the current element and its ancestors for changes
+      const observeTarget = this.currentElement.ownerDocument || this.iframeDoc || this.doc;
+      if (observeTarget && observeTarget.body) {
+        this._mutationObserver.observe(observeTarget.body, {
+          attributes: true,
+          childList: true,
+          subtree: true,
+          attributeFilter: ['style', 'class']
+        });
+        this._isObservingMutations = true;
+        console.debug('HoverOverlay: MutationObserver started');
+      }
+    } catch (error) {
+      console.error('HoverOverlay: Error setting up MutationObserver:', error);
+    }
+  }
+  
+  /**
+   * Remove MutationObserver
+   * @private
+   */
+  _removeMutationObserver() {
+    if (this._mutationObserver) {
+      try {
+        this._mutationObserver.disconnect();
+        this._mutationObserver = null;
+        this._isObservingMutations = false;
+        console.debug('HoverOverlay: MutationObserver stopped');
+      } catch (error) {
+        console.error('HoverOverlay: Error removing MutationObserver:', error);
+      }
+    }
+  }
+  
+  /**
+   * Handle DOM mutations - update outline when element changes
+   * @private
+   * @param {MutationRecord[]} mutations - Array of mutation records
+   */
+  _onMutation(mutations) {
+    // Throttle mutation updates to avoid excessive processing
+    if (this._mutationThrottle) {
+      return; // Already scheduled
+    }
+    
+    this._mutationThrottle = setTimeout(() => {
+      this._mutationThrottle = null;
+      
+      if (!this.currentElement || !this.isOutlineVisible) {
+        return;
+      }
+      
+      // Check if mutations affect the current element or its ancestors
+      let shouldUpdate = false;
+      for (const mutation of mutations) {
+        const target = mutation.target;
+        
+        // Check if the mutation affects our tracked element
+        if (target === this.currentElement || 
+            this.currentElement.contains(target) ||
+            (target.contains && target.contains(this.currentElement))) {
+          shouldUpdate = true;
+          break;
+        }
+      }
+      
+      if (shouldUpdate) {
+        try {
+          const newPosition = this.calculateOutlinePosition(this.currentElement);
+          if (newPosition && this._isValidPosition(newPosition)) {
+            this.currentOutlinePosition = newPosition;
+            if (this.outlineElement) {
+              this._positionOutline(this.outlineElement, newPosition);
+            }
+            
+            // Update button position if visible
+            if (this.isButtonVisible && this.actionButtonElement && this.currentElementType === 'widget') {
+              const buttonPos = this.calculateButtonPosition(newPosition, this.currentElementType);
+              if (buttonPos && this._isValidPosition(buttonPos)) {
+                this._positionButton(this.actionButtonElement, buttonPos);
+              }
+            }
+            
+            console.debug('HoverOverlay: Outline updated due to DOM mutation');
+          }
+        } catch (error) {
+          console.error('HoverOverlay: Error updating outline on mutation:', error);
+        }
+      }
+    }, 50); // 50ms throttle for mutations (less frequent than scroll)
   }
   
   /**
@@ -56,6 +292,10 @@ class HoverOverlay {
     }
     
     try {
+      // Store current element for dynamic repositioning
+      this.currentElement = element;
+      this.currentElementType = type;
+      
       // Calculate outline position
       const position = this.calculateOutlinePosition(element);
       if (!position) {
@@ -68,6 +308,9 @@ class HoverOverlay {
         console.warn('HoverOverlay: Invalid position calculated:', position);
         return;
       }
+      
+      // Store position for scroll/resize updates
+      this.currentOutlinePosition = position;
       
       // Implement singleton pattern - ensure only one outline exists
       this._ensureSingleOutline();
@@ -85,6 +328,9 @@ class HoverOverlay {
       this._positionOutline(this.outlineElement, position);
       this.applyOutlineStyle(this.outlineElement, type);
       
+      // Set up click handler for row/column outlines (they're clickable anywhere)
+      this._setupOutlineClickHandler(type);
+      
       // Add to DOM if not already present
       if (!this.outlineElement.parentNode) {
         const parentBody = this.doc && this.doc.body ? this.doc.body : null;
@@ -94,6 +340,12 @@ class HoverOverlay {
           return;
         }
       }
+      
+      // Set up scroll/resize listeners for dynamic positioning
+      this._setupScrollResizeListeners();
+      
+      // Set up mutation observer to detect DOM changes
+      this._setupMutationObserver();
       
       this.isOutlineVisible = true;
       console.debug('HoverOverlay: Outline shown successfully');
@@ -151,6 +403,9 @@ class HoverOverlay {
 
       // Apply type-specific styling
       this.applyOutlineStyle(this.outlineElement, type);
+      
+      // Set up click handler for row/column outlines (they're clickable anywhere)
+      this._setupOutlineClickHandler(type);
 
       // Add to DOM if not already present
       if (!this.outlineElement.parentNode) {
@@ -172,11 +427,18 @@ class HoverOverlay {
 
   /**
    * Render action button using bounding box coordinates (for iframe communication)
+   * Only widgets get action buttons - rows and columns are clicked directly
    * @param {Object} boundingBox - Bounding box with top, left, width, height
    * @param {string} type - Element type ('widget', 'column', 'row')
    * @param {HTMLElement} iframeElement - The iframe element (for offset calculation)
    */
   renderActionButtonFromBox(boundingBox, type, iframeElement) {
+    // Only render buttons for widgets - rows and columns are clicked directly
+    if (type === 'column' || type === 'row') {
+      console.debug(`HoverOverlay: Skipping button for ${type} - click outline instead`);
+      return;
+    }
+    
     if (!boundingBox || !this.outlineElement) {
       console.debug('HoverOverlay: Missing bounding box or outline for button');
       return;
@@ -201,17 +463,17 @@ class HoverOverlay {
       this.removeActionButton();
 
       // Create button element
-      this.actionButtonElement = this._createActionButtonElement();
+      this.actionButtonElement = this._createActionButtonElement(type);
       if (!this.actionButtonElement) {
         console.error('HoverOverlay: Failed to create action button');
         return;
       }
 
       // Calculate button position (top-right of bounding box)
-      const buttonSize = 32;
-      const offset = 5;
-      const buttonTop = boundingBox.top + offsetTop - offset;
-      const buttonLeft = boundingBox.left + offsetLeft + boundingBox.width - buttonSize + offset;
+      const buttonSize = 36; // Match updated button size
+      const offset = 6; // Match updated offset
+      const buttonTop = boundingBox.top + offsetTop - offset - (buttonSize / 2);
+      const buttonLeft = boundingBox.left + offsetLeft + boundingBox.width - (buttonSize / 2) - offset;
 
       this.actionButtonElement.style.position = 'fixed';
       this.actionButtonElement.style.top = buttonTop + 'px';
@@ -245,6 +507,35 @@ class HoverOverlay {
    * Hide the current outline
    */
   hideOutline() {
+    // Remove click handler if present
+    if (this._outlineClickHandler && this.outlineElement) {
+      this.outlineElement.removeEventListener('click', this._outlineClickHandler);
+      this._outlineClickHandler = null;
+    }
+    
+    // Clean up scroll/resize listeners
+    this._removeScrollResizeListeners();
+    
+    // Clear throttled scroll/resize timer
+    if (this._scrollResizeThrottle) {
+      clearTimeout(this._scrollResizeThrottle);
+      this._scrollResizeThrottle = null;
+    }
+    
+    // Clean up mutation observer
+    this._removeMutationObserver();
+    
+    // Clear throttled mutation timer
+    if (this._mutationThrottle) {
+      clearTimeout(this._mutationThrottle);
+      this._mutationThrottle = null;
+    }
+    
+    // Clear current element reference
+    this.currentElement = null;
+    this.currentElementType = null;
+    this.currentOutlinePosition = null;
+    
     if (this.outlineElement && this.outlineElement.parentNode) {
       try {
         // Verify element is still in DOM before attempting removal
@@ -273,10 +564,17 @@ class HoverOverlay {
   
   /**
    * Render action button for the current outline
+   * Only widgets get action buttons - rows and columns are clicked directly
    * @param {Element} element - DOM element the button is associated with
    * @param {string} type - Element type ('widget', 'column', 'row')
    */
   renderActionButton(element, type) {
+    // Only render buttons for widgets - rows and columns are clicked directly
+    if (type === 'column' || type === 'row') {
+      console.debug(`HoverOverlay: Skipping button for ${type} - click outline instead`);
+      return;
+    }
+    
     if (!element || !this.outlineElement) {
       console.debug('HoverOverlay: Missing element or outline for button rendering');
       return;
@@ -307,7 +605,7 @@ class HoverOverlay {
       
       // Create or update button element
       if (!this.actionButtonElement) {
-        this.actionButtonElement = this._createActionButtonElement();
+        this.actionButtonElement = this._createActionButtonElement(type);
         if (!this.actionButtonElement) {
           console.error('HoverOverlay: Failed to create action button element');
           return;
@@ -430,30 +728,40 @@ class HoverOverlay {
     }
     
     try {
-      // Consistent positioning: top-right corner of outline
-      const buttonSize = 32; // Button width/height in pixels
-      const offset = 8; // Offset from outline edge
+      // Use larger button size and better offset for improved visibility
+      const buttonSize = 36; // Increased button size (was 32px)
+      const offsetFromEdge = 6; // Offset from outline edge
       
-      const position = {
-        top: outlinePosition.top - offset,
-        left: outlinePosition.left + outlinePosition.width - buttonSize + offset,
-        placement: 'top-right'
-      };
-      
-      // Ensure button stays within viewport
+      // Get viewport dimensions
       const viewportWidth = (this.win && this.win.innerWidth) || (this.doc && this.doc.documentElement && this.doc.documentElement.clientWidth) || 0;
       const viewportHeight = (this.win && this.win.innerHeight) || (this.doc && this.doc.documentElement && this.doc.documentElement.clientHeight) || 0;
       
-      // Adjust if button would be outside viewport
-      if (position.left + buttonSize > viewportWidth) {
-        position.left = outlinePosition.left - buttonSize - offset;
+      // Calculate available space in each direction
+      const spaceLeft = outlinePosition.left;
+      const spaceBottom = viewportHeight - (outlinePosition.top + outlinePosition.height);
+      
+      // Default position: top-right corner with smart fallback
+      let position = {
+        top: Math.max(0, outlinePosition.top - offsetFromEdge - (buttonSize / 2)),
+        left: Math.max(0, outlinePosition.left + outlinePosition.width - (buttonSize / 2) - offsetFromEdge),
+        placement: 'top-right'
+      };
+      
+      // If button would go off the right edge and there's space on left, move it
+      if (position.left + buttonSize > viewportWidth && spaceLeft > buttonSize + 10) {
+        position.left = outlinePosition.left - buttonSize + (buttonSize / 2) + offsetFromEdge;
         position.placement = 'top-left';
       }
       
-      if (position.top < 0) {
-        position.top = outlinePosition.top + outlinePosition.height + offset;
+      // If button would go off the top and there's space at bottom, move it
+      if (position.top < 0 && spaceBottom > buttonSize + 10) {
+        position.top = outlinePosition.top + outlinePosition.height + offsetFromEdge - (buttonSize / 2);
         position.placement = position.placement.replace('top', 'bottom');
       }
+      
+      // Clamp to viewport bounds as last resort
+      position.top = Math.max(0, Math.min(position.top, viewportHeight - buttonSize));
+      position.left = Math.max(0, Math.min(position.left, viewportWidth - buttonSize));
       
       return position;
     } catch (error) {
@@ -481,6 +789,43 @@ class HoverOverlay {
   }
   
   /**
+   * Set up click handler on outline for row/column types
+   * Rows and columns are clickable anywhere in their outline
+   * Widgets are not clickable (only their cog button is)
+   * @private
+   * @param {string} type - Element type ('widget', 'column', 'row')
+   */
+  _setupOutlineClickHandler(type) {
+    if (!this.outlineElement) {
+      return;
+    }
+    
+    // Remove any existing click handler
+    if (this._outlineClickHandler) {
+      this.outlineElement.removeEventListener('click', this._outlineClickHandler);
+      this._outlineClickHandler = null;
+    }
+    
+    // Only rows and columns are clickable (widgets use the cog button)
+    if (type === 'column' || type === 'row') {
+      this._outlineClickHandler = (event) => {
+        // Prevent click from propagating to underlying elements
+        event.stopPropagation();
+        event.preventDefault();
+        
+        // Trigger the action button click callback
+        if (this.onActionButtonClick) {
+          this.onActionButtonClick(event);
+        }
+        
+        console.debug(`HoverOverlay: ${type} outline clicked`);
+      };
+      
+      this.outlineElement.addEventListener('click', this._outlineClickHandler);
+    }
+  }
+  
+  /**
    * Create outline DOM element
    * @private
    * @returns {Element} Outline element
@@ -494,18 +839,27 @@ class HoverOverlay {
   /**
    * Create action button DOM element
    * @private
+   * @param {string} type - Element type ('widget', 'column', 'row') for styling
    * @returns {Element} Button element
    */
-  _createActionButtonElement() {
+  _createActionButtonElement(type = 'widget') {
     const button = document.createElement('button');
     button.className = 'preview-hover-button';
+    
+    // Add type-specific styling class
+    button.classList.add(`preview-hover-button--${type}`);
+    
     button.type = 'button';
-    button.setAttribute('aria-label', 'Edit element properties');
-    button.title = 'Edit properties';
+    button.setAttribute('aria-label', `Edit ${type} properties`);
+    button.title = `Edit ${type} properties`;
+    
+    // Store element type for later reference
+    button.dataset.elementType = type;
     
     // Add cog icon (using Font Awesome or similar)
     const icon = document.createElement('i');
     icon.className = 'fas fa-cog';
+    icon.setAttribute('aria-hidden', 'true');
     button.appendChild(icon);
     
     // Attach click handler

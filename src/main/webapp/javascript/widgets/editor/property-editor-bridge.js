@@ -164,7 +164,8 @@ class PropertyEditorBridge {
       };
       
       console.debug('PropertyEditorBridge: Calling canvasController.selectElement with context:', context);
-      canvasController.selectElement(widgetElement, context);
+      // Pass skipPreviewRefresh=true to prevent auto-refresh when selecting from preview
+      canvasController.selectElement(widgetElement, context, { skipPreviewRefresh: true });
       console.debug('PropertyEditorBridge: Widget selected in canvas:', canvasWidgetId, 'from preview ID:', widgetId);
       return true;
       
@@ -251,7 +252,7 @@ class PropertyEditorBridge {
         columnId: canvasColumnId
       };
       
-      canvasController.selectElement(columnElement, context);
+      canvasController.selectElement(columnElement, context, { skipPreviewRefresh: true });
       console.debug('PropertyEditorBridge: Column selected in canvas:', canvasColumnId, 'from preview ID:', columnId);
       return true;
       
@@ -318,7 +319,7 @@ class PropertyEditorBridge {
         rowId: canvasRowId
       };
       
-      canvasController.selectElement(rowElement, context);
+      canvasController.selectElement(rowElement, context, { skipPreviewRefresh: true });
       console.debug('PropertyEditorBridge: Row selected in canvas:', canvasRowId, 'from preview ID:', rowId);
       return true;
       
@@ -700,10 +701,10 @@ class PropertyEditorBridge {
   
   /**
    * Map preview ID to main canvas ID
-   * Preview uses: widget-0-1-0, col-0-0, row-0 (0-indexed, per-column widget numbering)
-   * Main canvas uses: widget-1, col-1, row-1 (1-indexed, global widget numbering)
+   * Preview uses: widget-1-1-1, col-1-1, row-1 (1-indexed)
+   * Main canvas uses: widget-1, col-1, row-1 (1-indexed)
    * @private
-   * @param {string} previewId - ID from preview (e.g., widget-0-1-0, col-0-0, row-0)
+   * @param {string} previewId - ID from preview (e.g., widget-1-1-1, col-1-1, row-1)
    * @param {string} type - Element type (widget, column, row)
    * @returns {string} Mapped ID for main canvas
    */
@@ -715,20 +716,20 @@ class PropertyEditorBridge {
     const parts = previewId.split('-');
     
     if (type === 'widget' && parts[0] === 'widget' && parts.length >= 4) {
-      // widget-0-1-0 format in preview
+      // widget-1-1-1 format in preview
       const rowIndex = parseInt(parts[1], 10);
       const colIndex = parseInt(parts[2], 10);
       const widgetIndex = parseInt(parts[3], 10);
       return this._findCanvasWidgetId(rowIndex, colIndex, widgetIndex);
     } else if (type === 'column' && parts[0] === 'col' && parts.length >= 3) {
-      // col-0-0 format in preview -> main canvas column id
+      // col-1-1 format in preview -> main canvas column id
       const rowIndex = parseInt(parts[1], 10);
       const colIndex = parseInt(parts[2], 10);
       return this._findCanvasColumnId(rowIndex, colIndex);
     } else if (type === 'row' && parts[0] === 'row' && parts.length >= 2) {
-      // row-0 (0-indexed) -> row-1 (1-indexed)
+      // row-1 (1-indexed) -> row-1 (1-indexed)
       const rowIndex = parseInt(parts[1], 10);
-      return `row-${rowIndex + 1}`;
+      return `row-${rowIndex}`;
     }
     
     // Might already be a canvas ID
@@ -747,17 +748,17 @@ class PropertyEditorBridge {
     try {
       const rows = document.querySelectorAll('[data-row-id]');
       if (rowIndex >= rows.length) {
-        return `widget-${widgetIndex + 1}`;
+        return `widget-${widgetIndex}`;
       }
       const row = rows[rowIndex];
       const columns = row.querySelectorAll('[data-column-id]');
       if (colIndex >= columns.length) {
-        return `widget-${widgetIndex + 1}`;
+        return `widget-${widgetIndex}`;
       }
       const column = columns[colIndex];
       const widgets = column.querySelectorAll('[data-widget-id]');
       if (widgetIndex >= widgets.length) {
-        return `widget-${widgetIndex + 1}`;
+        return `widget-${widgetIndex}`;
       }
       const widget = widgets[widgetIndex];
       const widgetId = widget.getAttribute('data-widget-id');
@@ -765,7 +766,7 @@ class PropertyEditorBridge {
     } catch (error) {
       console.error('PropertyEditorBridge: Error finding canvas widget ID:', error);
     }
-    return `widget-${widgetIndex + 1}`;
+    return `widget-${widgetIndex}`;
   }
   
   /**
@@ -779,12 +780,12 @@ class PropertyEditorBridge {
     try {
       const rows = document.querySelectorAll('[data-row-id]');
       if (rowIndex >= rows.length) {
-        return `col-${colIndex + 1}`;
+        return `col-${colIndex}`;
       }
       const row = rows[rowIndex];
       const columns = row.querySelectorAll('[data-column-id]');
       if (colIndex >= columns.length) {
-        return `col-${colIndex + 1}`;
+        return `col-${colIndex}`;
       }
       const column = columns[colIndex];
       const columnId = column.getAttribute('data-column-id');
@@ -792,7 +793,7 @@ class PropertyEditorBridge {
     } catch (error) {
       console.error('PropertyEditorBridge: Error finding canvas column ID:', error);
     }
-    return `col-${colIndex + 1}`;
+    return `col-${colIndex}`;
   }
   
   /**

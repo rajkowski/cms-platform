@@ -1290,8 +1290,12 @@ class CanvasController {
   
   /**
    * Select an element
+   * @param {Element} element - The DOM element to select
+   * @param {Object} context - Context object with type, rowId, columnId, widgetId
+   * @param {Object} options - Options object (optional)
+   * @param {boolean} options.skipPreviewRefresh - If true, skip refreshing preview (for preview selections)
    */
-  selectElement(element, context) {
+  selectElement(element, context, options) {
     // Remove previous selection
     if (this.selectedElement) {
       this.selectedElement.classList.remove('selected');
@@ -1304,8 +1308,9 @@ class CanvasController {
     if (element) {
       element.classList.add('selected');
       
-      // Update properties panel
-      this.editor.getPropertiesPanel().show(context);
+      // Update properties panel with skip flag if provided
+      const opts = options || {};
+      this.editor.getPropertiesPanel().show(context, opts.skipPreviewRefresh);
     }
   }
   

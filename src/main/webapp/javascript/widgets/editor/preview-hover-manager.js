@@ -58,6 +58,10 @@ class PreviewHoverManager {
     
     this.isEnabled = false;
     
+    // Page change listener state
+    this._pageChangeListenerActive = false;
+    this._onPageChanged = null;
+    
     // Set up postMessage listener for iframe hover events
     if (isIframe) {
       this._setupIframeMessageListener();
@@ -127,9 +131,14 @@ class PreviewHoverManager {
           self._onActionButtonClick();
         });
         
-        // Render action button at bounding box location
-        self.hoverOverlay.renderActionButtonFromBox(data.boundingBox, data.type, self.previewContainer);
-        self.hoverState.isButtonVisible = true;
+        // Render action button only for widgets; hide for rows/columns
+        if (data.type === 'widget') {
+          self.hoverOverlay.renderActionButtonFromBox(data.boundingBox, data.type, self.previewContainer);
+          self.hoverState.isButtonVisible = true;
+        } else {
+          self.hoverOverlay.removeActionButton();
+          self.hoverState.isButtonVisible = false;
+        }
         
       } else if (event.data.type === 'previewHover:elementLost') {
         console.debug('PreviewHoverManager: Received element lost from iframe');
@@ -197,6 +206,9 @@ class PreviewHoverManager {
       this.hoverOverlay.hideOutline();
       this.hoverOverlay.removeActionButton();
       
+      // Remove page change listener when disabling
+      this._removePageChangeListener();
+      
       // Reset state
       this.isEnabled = false;
       this.hoverState.isActive = false;
@@ -251,9 +263,56 @@ class PreviewHoverManager {
     
     if (isPreviewMode) {
       this.enable();
+      // Set up page change listener when entering preview mode
+      this._setupPageChangeListener();
     } else {
       this.disable();
+      // Remove page change listener when leaving preview mode
+      this._removePageChangeListener();
     }
+  }
+  
+  /**
+   * Set up listener for page changes - auto-unselect when user switches pages
+   * @private
+   */
+  _setupPageChangeListener() {
+    if (this._pageChangeListenerActive) {
+      return; // Already set up
+    }
+    
+    const self = this;
+    this._onPageChanged = () => {
+      console.log('PreviewHoverManager: Page changed, clearing selections');
+      // Clear any active hover states
+      self.hoverOverlay.hideOutline();
+      self.hoverOverlay.removeActionButton();
+      self._resetCurrentElement();
+      
+      // Clear properties panel if available
+      if (self.propertyEditorAPI && typeof self.propertyEditorAPI.clear === 'function') {
+        self.propertyEditorAPI.clear();
+      }
+    };
+    
+    document.addEventListener('pageChanged', this._onPageChanged);
+    this._pageChangeListenerActive = true;
+    console.log('PreviewHoverManager: Page change listener installed');
+  }
+  
+  /**
+   * Remove listener for page changes
+   * @private
+   */
+  _removePageChangeListener() {
+    if (!this._pageChangeListenerActive || !this._onPageChanged) {
+      return;
+    }
+    
+    document.removeEventListener('pageChanged', this._onPageChanged);
+    this._pageChangeListenerActive = false;
+    this._onPageChanged = null;
+    console.log('PreviewHoverManager: Page change listener removed');
   }
   
   /**
@@ -308,9 +367,14 @@ class PreviewHoverManager {
       this.hoverOverlay.showOutline(elementInfo.element, elementInfo.type);
       this.hoverState.isOutlineVisible = true;
       
-      // Render action button
-      this.hoverOverlay.renderActionButton(elementInfo.element, elementInfo.type);
-      this.hoverState.isButtonVisible = true;
+      // Render action button only for widgets; hide for rows/columns
+      if (elementInfo.type === 'widget') {
+        this.hoverOverlay.renderActionButton(elementInfo.element, elementInfo.type);
+        this.hoverState.isButtonVisible = true;
+      } else {
+        this.hoverOverlay.removeActionButton();
+        this.hoverState.isButtonVisible = false;
+      }
       
     } catch (error) {
       console.error('PreviewHoverManager: Error handling element detection:', error);

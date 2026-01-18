@@ -2020,6 +2020,22 @@
       }
     });
 
+    // Add click handler to preview-container background to unselect elements
+    // This allows users to click outside the iframe to clear all selections
+    previewContainer.addEventListener('click', function(e) {
+      // Only trigger if clicking directly on the preview-container background (not on child elements like iframe)
+      if (e.target === previewContainer && window.previewHoverManager) {
+        console.log('Preview container background clicked, clearing selections');
+        // Disable and re-enable to clear the current outline
+        window.previewHoverManager.disable();
+        window.previewHoverManager.enable();
+        // Clear properties panel
+        if (window.pageEditor && window.pageEditor.getPropertiesPanel()) {
+          window.pageEditor.getPropertiesPanel().clear();
+        }
+      }
+    });
+
     // Now initialize the page editor
     window.pageEditor.init();
 
