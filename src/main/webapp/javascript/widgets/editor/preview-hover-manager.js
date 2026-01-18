@@ -131,14 +131,9 @@ class PreviewHoverManager {
           self._onActionButtonClick();
         });
         
-        // Render action button only for widgets; hide for rows/columns
-        if (data.type === 'widget') {
-          self.hoverOverlay.renderActionButtonFromBox(data.boundingBox, data.type, self.previewContainer);
-          self.hoverState.isButtonVisible = true;
-        } else {
-          self.hoverOverlay.removeActionButton();
-          self.hoverState.isButtonVisible = false;
-        }
+        // Render action button for all types (widget, column, row)
+        self.hoverOverlay.renderActionButtonFromBox(data.boundingBox, data.type, self.previewContainer);
+        self.hoverState.isButtonVisible = true;
         
       } else if (event.data.type === 'previewHover:elementLost') {
         console.debug('PreviewHoverManager: Received element lost from iframe');

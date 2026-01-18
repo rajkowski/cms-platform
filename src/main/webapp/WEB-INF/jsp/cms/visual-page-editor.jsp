@@ -1917,6 +1917,32 @@
     const previewLoading = document.getElementById('preview-loading');
     const previewError = document.getElementById('preview-error');
 
+    // Guard: cleanup any lingering Dragula artifacts that may affect scrolling
+    function cleanupDragulaArtifacts() {
+      try {
+        // Ensure iframe allows pointer interactions
+        if (previewIframe) {
+          previewIframe.style.pointerEvents = 'auto';
+        }
+        // Restore scrolling behavior in preview container
+        if (previewContainer) {
+          previewContainer.style.touchAction = 'auto';
+          previewContainer.style.overscrollBehavior = 'auto';
+        }
+        // Remove global dragula class if it lingers
+        if (document && document.body && document.body.classList) {
+          document.body.classList.remove('gu-unselectable');
+        }
+        // Remove any orphaned mirror nodes
+        Array.prototype.slice.call(document.querySelectorAll('.gu-mirror')).forEach(function(node){
+          if (node && node.parentNode && typeof node.remove === 'function') { node.remove(); }
+          else if (node && node.parentNode) { node.parentNode.removeChild(node); }
+        });
+      } catch (e) {
+        console.debug('Preview cleanupDragulaArtifacts error:', e);
+      }
+    }
+
     // Get the actual PropertiesPanel instance for use by PreviewHoverManager
     propertiesPanel = window.pageEditor.getPropertiesPanel();
     
@@ -1953,6 +1979,8 @@
       editorCanvas.classList.add('hidden');
       togglePreviewBtn.classList.add('active');
       isPreviewMode = true;
+      // Ensure scrolling remains functional after entering preview
+      cleanupDragulaArtifacts();
     };
 
     // Function to refresh the preview
@@ -2053,6 +2081,8 @@
         };
         
         previewIframe.style.display = 'block';
+        // Clean up any lingering drag state that could affect scrolling
+        cleanupDragulaArtifacts();
       })
       .catch(error => {
         // Hide loading indicators

@@ -1099,6 +1099,8 @@ class PropertiesPanel {
       console.debug('Dragula: ensure loaded callback start', { propName });
       // Note: destroy is now done in updateXmlModalTable BEFORE DOM rebuild
       const drake = dragula([tbody], {
+        // Scope mirror container to the modal/table to reduce global side-effects
+        mirrorContainer: (table && table.closest && table.closest('.modal-content')) || (table && table.parentElement) || document.body,
         direction: 'vertical',
         copy: false,
         revertOnSpill: true,
@@ -1119,6 +1121,19 @@ class PropertiesPanel {
         }
       });
       console.debug('Dragula: initialized', { rows: tbody.querySelectorAll('tr.xml-modal-row').length });
+      // Safety cleanup: remove any lingering dragula classes/mirror nodes after drag ends
+      drake.on('dragend', () => {
+        try {
+          if (document && document.body && document.body.classList) {
+            document.body.classList.remove('gu-unselectable');
+          }
+          Array.prototype.slice.call(document.querySelectorAll('.gu-mirror')).forEach(node => {
+            if (node && node.parentNode) node.parentNode.removeChild(node);
+          });
+        } catch (e) {
+          console.debug('Dragula cleanup guard error:', e);
+        }
+      });
       drake.on('drop', () => {
         const rows = Array.from(tbody.querySelectorAll('tr.xml-modal-row'));
         const order = rows.map(r => Number.parseInt(r.dataset.originalIndex, 10));

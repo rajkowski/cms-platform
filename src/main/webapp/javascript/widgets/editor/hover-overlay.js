@@ -433,12 +433,7 @@ class HoverOverlay {
    * @param {HTMLElement} iframeElement - The iframe element (for offset calculation)
    */
   renderActionButtonFromBox(boundingBox, type, iframeElement) {
-    // Only render buttons for widgets - rows and columns are clicked directly
-    if (type === 'column' || type === 'row') {
-      console.debug(`HoverOverlay: Skipping button for ${type} - click outline instead`);
-      return;
-    }
-    
+    // Render buttons for all types to avoid relying on outline click areas
     if (!boundingBox || !this.outlineElement) {
       console.debug('HoverOverlay: Missing bounding box or outline for button');
       return;
