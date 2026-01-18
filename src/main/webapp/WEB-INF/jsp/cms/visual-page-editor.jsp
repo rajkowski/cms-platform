@@ -2100,6 +2100,123 @@
     // Make refreshPreview globally available for property change events
     window.refreshPreview = refreshPreview;
 
+    // Re-attach hover/click when iframe navigates back to the current page link
+    // Track the currently selected page link (absolute URL) and compare on each iframe load
+    function toAbsolute(href) {
+      try { return new URL(href, window.location.origin).href; } catch (_) { return href; }
+    }
+    function normalizeAbs(href) {
+      try {
+        const u = new URL(href, window.location.origin);
+        const origin = u.origin;
+        const path = (u.pathname || '/').replace(/\/+$/, ''); // strip trailing slashes
+        return origin + path;
+      } catch (_) {
+        return href;
+      }
+    }
+    function getCurrentPageLinkAbs() {
+      try {
+        const link = window.pageEditor && window.pageEditor.pagesTabManager
+          ? window.pageEditor.pagesTabManager.getSelectedPageLink()
+          : null;
+        return link ? toAbsolute(link) : null;
+      } catch (_) { return null; }
+    }
+    let currentPageLinkAbs = getCurrentPageLinkAbs();
+
+    // Update cached link whenever the page selection changes
+    document.addEventListener('pageChanged', function(){
+      currentPageLinkAbs = getCurrentPageLinkAbs();
+    });
+
+    // Listen for all iframe load events (navigation inside preview)
+    if (previewIframe) {
+      previewIframe.addEventListener('load', function() {
+        // If iframe landed back on the exact current page link, re-attach hover
+        try {
+          const iframeHref = previewIframe.contentWindow && previewIframe.contentWindow.location
+            ? previewIframe.contentWindow.location.href
+            : null;
+          const iframeAbs = iframeHref ? normalizeAbs(toAbsolute(iframeHref)) : null;
+          // Refresh the cached link in case selection changed just before load
+          const selectedAbsRaw = getCurrentPageLinkAbs() || currentPageLinkAbs;
+          const selectedAbs = selectedAbsRaw ? normalizeAbs(selectedAbsRaw) : null;
+          console.debug('Preview iframe load: comparing URLs', { iframeAbs, selectedAbs, match: iframeAbs === selectedAbs });
+          if (iframeAbs && selectedAbs && iframeAbs === selectedAbs) {
+            console.log('Preview iframe returned to current page, reattaching hover');
+            // Ensure the iframe hover bridge and CSS are present after navigation
+            const iframeDoc = previewIframe.contentDocument || (previewIframe.contentWindow && previewIframe.contentWindow.document);
+            if (iframeDoc && iframeDoc.body) {
+              const existingBridge = iframeDoc.querySelector('script[src$="/javascript/widgets/editor/iframe-hover-bridge.js"]');
+              if (!existingBridge) {
+                console.debug('Preview iframe: injecting hover bridge script');
+                const bridgeScript = iframeDoc.createElement('script');
+                bridgeScript.src = '${ctx}/javascript/widgets/editor/iframe-hover-bridge.js';
+                iframeDoc.body.appendChild(bridgeScript);
+              } else {
+                console.debug('Preview iframe: hover bridge script already present');
+              }
+              const existingCss = iframeDoc.querySelector('link[href$="/css/platform/preview-hover.css"]');
+              if (!existingCss) {
+                console.debug('Preview iframe: injecting hover CSS');
+                const link = iframeDoc.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = '${ctx}/css/platform/preview-hover.css';
+                (iframeDoc.head || iframeDoc.documentElement).appendChild(link);
+              } else {
+                console.debug('Preview iframe: hover CSS already present');
+              }
+            }
+            if (window.previewHoverManager) {
+              window.previewHoverManager.refreshIframeReferences();
+              // Small delay ensures document is ready before enabling
+              setTimeout(function(){
+                console.debug('Preview iframe: reinitializing bridge for reattachment');
+                if (isPreviewMode) {
+                  window.previewHoverManager.reinitializeBridge();
+                } else {
+                  window.previewHoverManager.handlePreviewModeChange(true);
+                }
+              }, 100);
+            }
+          }
+        } catch (err) {
+          console.debug('Preview iframe load reattach check failed:', err);
+        }
+      });
+    }
+
+    // Listen for navigation detection messages from iframe bridge
+    window.addEventListener('message', function(e) {
+      if (e.data && e.data.type === 'previewHover:navigationDetected') {
+        console.log('Preview iframe navigation detected via bridge signal');
+        // Same reattachment logic as load handler
+        try {
+          const iframeHref = previewIframe.contentWindow && previewIframe.contentWindow.location
+            ? previewIframe.contentWindow.location.href
+            : null;
+          const iframeAbs = iframeHref ? normalizeAbs(toAbsolute(iframeHref)) : null;
+          const selectedAbsRaw = getCurrentPageLinkAbs() || currentPageLinkAbs;
+          const selectedAbs = selectedAbsRaw ? normalizeAbs(selectedAbsRaw) : null;
+          console.debug('Preview navigation signal: comparing URLs', { iframeAbs, selectedAbs, match: iframeAbs === selectedAbs });
+          if (iframeAbs && selectedAbs && iframeAbs === selectedAbs && window.previewHoverManager) {
+            console.log('Preview navigation returned to current page, reattaching hover');
+            window.previewHoverManager.refreshIframeReferences();
+            setTimeout(function(){
+              if (isPreviewMode) {
+                window.previewHoverManager.reinitializeBridge();
+              } else {
+                window.previewHoverManager.handlePreviewModeChange(true);
+              }
+            }, 100);
+          }
+        } catch (err) {
+          console.debug('Preview navigation reattach failed:', err);
+        }
+      }
+    });
+
     // Listen for page changes
     document.addEventListener('pageChanged', function(e) {
       console.log('pageChanged event fired, isPreviewMode:', isPreviewMode);

@@ -150,9 +150,10 @@ class PreviewHoverManager {
   /**
    * Enable hover functionality
    * Activates hover detection and visual feedback
+   * @param {boolean} forceSendEnable - If true, always send enable message even if already enabled (for iframe reattachment)
    */
-  enable() {
-    if (this.isEnabled) {
+  enable(forceSendEnable = false) {
+    if (this.isEnabled && !forceSendEnable) {
       return;
     }
     
@@ -160,6 +161,7 @@ class PreviewHoverManager {
       if (this.isIframeContainer) {
         // For iframe: send enable message to iframe's hover bridge
         if (this.previewContainer.contentWindow) {
+          console.debug('PreviewHoverManager: Sending enable message to iframe bridge');
           this.previewContainer.contentWindow.postMessage({ type: 'previewHover:enable' }, '*');
         }
       } else {
@@ -221,6 +223,25 @@ class PreviewHoverManager {
    */
   isHoverEnabled() {
     return this.isEnabled;
+  }
+  
+  /**
+   * Reinitialize bridge after iframe navigation
+   * Forces a clean enable message to be sent to the iframe
+   */
+  reinitializeBridge() {
+    console.log('PreviewHoverManager: Reinitializing bridge after navigation');
+    try {
+      // Clean up any visible hover elements
+      this.hoverOverlay.hideOutline();
+      this.hoverOverlay.removeActionButton();
+      this._resetCurrentElement();
+      
+      // Force send enable message to iframe even if already enabled
+      this.enable(true);
+    } catch (error) {
+      console.error('PreviewHoverManager: Error reinitializing bridge:', error);
+    }
   }
   
   /**

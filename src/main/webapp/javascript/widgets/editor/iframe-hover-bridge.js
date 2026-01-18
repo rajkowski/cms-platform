@@ -18,19 +18,41 @@
     lastElement: null,
     throttleDelay: 16, // 16ms for 60fps
     lastDetectionTime: 0,
+    boundMouseMove: null,
+    boundMouseLeave: null,
+    eventCount: 0,
 
     init() {
       console.debug('IframeHoverBridge: Initializing');
-      document.addEventListener('mousemove', this.onMouseMove.bind(this));
-      document.addEventListener('mouseleave', this.onMouseLeave.bind(this));
+      
+      // Store bound functions for proper cleanup
+      if (!this.boundMouseMove) {
+        this.boundMouseMove = this.onMouseMove.bind(this);
+      }
+      if (!this.boundMouseLeave) {
+        this.boundMouseLeave = this.onMouseLeave.bind(this);
+      }
+      
+      // Remove any existing listeners before adding new ones
+      document.removeEventListener('mousemove', this.boundMouseMove);
+      document.removeEventListener('mouseleave', this.boundMouseLeave);
+      
+      // Add listeners
+      document.addEventListener('mousemove', this.boundMouseMove);
+      document.addEventListener('mouseleave', this.boundMouseLeave);
       this.isEnabled = true;
-      console.debug('IframeHoverBridge: Initialized');
+      this.eventCount = 0;
+      console.debug('IframeHoverBridge: Initialized and listening for mousemove events');
     },
 
     disable() {
       console.debug('IframeHoverBridge: Disabling');
-      document.removeEventListener('mousemove', this.onMouseMove.bind(this));
-      document.removeEventListener('mouseleave', this.onMouseLeave.bind(this));
+      if (this.boundMouseMove) {
+        document.removeEventListener('mousemove', this.boundMouseMove);
+      }
+      if (this.boundMouseLeave) {
+        document.removeEventListener('mouseleave', this.boundMouseLeave);
+      }
       this.isEnabled = false;
       this.lastElement = null;
       // Tell parent to hide outline
@@ -38,7 +60,17 @@
     },
 
     onMouseMove(event) {
-      if (!this.isEnabled) return;
+      this.eventCount++;
+      if (this.eventCount <= 3) {
+        console.debug('IframeHoverBridge: mousemove event received', this.eventCount, 'enabled:', this.isEnabled);
+      }
+      
+      if (!this.isEnabled) {
+        if (this.eventCount === 1) {
+          console.warn('IframeHoverBridge: Received mousemove but bridge is disabled');
+        }
+        return;
+      }
 
       // Throttle
       const now = Date.now();
@@ -123,6 +155,7 @@
           }
         }
         
+        console.debug('IframeHoverBridge: Detected element', elementInfo.type, elementInfo.id, 'sending to parent');
         window.parent.postMessage({
           type: 'previewHover:elementDetected',
           data: {
@@ -141,6 +174,7 @@
       } else {
         if (this.lastElement) {
           this.lastElement = null;
+          console.debug('IframeHoverBridge: No element detected, sending elementLost to parent');
           window.parent.postMessage({ type: 'previewHover:elementLost' }, '*');
         }
       }
@@ -158,14 +192,28 @@
   // Listen for enable/disable messages from parent
   window.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'previewHover:enable') {
+      console.debug('IframeHoverBridge: Received enable message from parent');
       iframeHoverBridge.init();
     } else if (event.data && event.data.type === 'previewHover:disable') {
+      console.debug('IframeHoverBridge: Received disable message from parent');
       iframeHoverBridge.disable();
     }
   });
 
+  // Listen for navigation events (popstate/hashchange) and signal parent to reattach
+  window.addEventListener('popstate', () => {
+    console.debug('IframeHoverBridge: popstate event detected, signaling parent to reattach');
+    window.parent.postMessage({ type: 'previewHover:navigationDetected' }, '*');
+  });
+  
+  window.addEventListener('hashchange', () => {
+    console.debug('IframeHoverBridge: hashchange event detected, signaling parent to reattach');
+    window.parent.postMessage({ type: 'previewHover:navigationDetected' }, '*');
+  });
+
   // Auto-initialize if previewHover is enabled globally
   if (window.parent && window.parent.previewHoverManager && window.parent.previewHoverManager.isHoverEnabled()) {
+    console.debug('IframeHoverBridge: Auto-initializing as hover is enabled in parent');
     iframeHoverBridge.init();
   }
 })();
