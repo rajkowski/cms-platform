@@ -104,6 +104,9 @@ class PropertyEditorBridge {
    * @returns {boolean} True if successfully opened, false otherwise
    */
   openWidgetProperties(widgetId, rowId, columnId) {
+    // Log the values
+    console.debug('PropertyEditorBridge: openWidgetProperties called with:', { widgetId, rowId, columnId });
+    
     // Check if we've exceeded error threshold
     if (this.errorCount >= this.maxErrors) {
       this._showUserError('Property Editor integration has encountered too many errors and is temporarily disabled. Please refresh the page.');
@@ -127,10 +130,10 @@ class PropertyEditorBridge {
       const editor = window.pageEditor;
       const canvasController = editor && editor.getCanvasController ? editor.getCanvasController() : null;
       
-      // Map preview ID to canvas ID
-      const canvasWidgetId = this._mapPreviewIdToCanvasId(widgetId, 'widget');
-      const canvasRowId = rowId ? this._mapPreviewIdToCanvasId(rowId, 'row') : null;
-      const canvasColumnId = columnId ? this._mapPreviewIdToCanvasId(columnId, 'column') : null;
+      // Use the IDs from the editor context directly
+      const canvasWidgetId = widgetId;
+      const canvasRowId = rowId;
+      const canvasColumnId = columnId;
       
       console.debug('PropertyEditorBridge: ID mapping results:', {
         previewIds: { widgetId, rowId, columnId },
@@ -207,9 +210,9 @@ class PropertyEditorBridge {
       const editor = window.pageEditor;
       const canvasController = editor && editor.getCanvasController ? editor.getCanvasController() : null;
 
-      // Map preview IDs to canvas IDs
-      const canvasColumnId = this._mapPreviewIdToCanvasId(columnId, 'column');
-      const canvasRowId = rowId ? this._mapPreviewIdToCanvasId(rowId, 'row') : null;
+      // Use the IDs from the editor context directly
+      const canvasColumnId = columnId;
+      const canvasRowId = rowId;
       
       if (!canvasController) {
         console.error('PropertyEditorBridge: Canvas controller not available');
@@ -293,8 +296,8 @@ class PropertyEditorBridge {
       const editor = window.pageEditor;
       const canvasController = editor && editor.getCanvasController ? editor.getCanvasController() : null;
 
-      // Map preview ID to canvas ID
-      const canvasRowId = this._mapPreviewIdToCanvasId(rowId, 'row');
+      // Use the ID from the editor context directly
+      const canvasRowId = rowId;
       
       if (!canvasController) {
         console.error('PropertyEditorBridge: Canvas controller not available');
@@ -699,102 +702,6 @@ class PropertyEditorBridge {
     }
   }
   
-  /**
-   * Map preview ID to main canvas ID
-   * Preview uses: widget-1-1-1, col-1-1, row-1 (1-indexed)
-   * Main canvas uses: widget-1, col-1, row-1 (1-indexed)
-   * @private
-   * @param {string} previewId - ID from preview (e.g., widget-1-1-1, col-1-1, row-1)
-   * @param {string} type - Element type (widget, column, row)
-   * @returns {string} Mapped ID for main canvas
-   */
-  _mapPreviewIdToCanvasId(previewId, type) {
-    if (!previewId || typeof previewId !== 'string') {
-      return previewId;
-    }
-    
-    const parts = previewId.split('-');
-    
-    if (type === 'widget' && parts[0] === 'widget' && parts.length >= 4) {
-      // widget-1-1-1 format in preview
-      const rowIndex = parseInt(parts[1], 10);
-      const colIndex = parseInt(parts[2], 10);
-      const widgetIndex = parseInt(parts[3], 10);
-      return this._findCanvasWidgetId(rowIndex, colIndex, widgetIndex);
-    } else if (type === 'column' && parts[0] === 'col' && parts.length >= 3) {
-      // col-1-1 format in preview -> main canvas column id
-      const rowIndex = parseInt(parts[1], 10);
-      const colIndex = parseInt(parts[2], 10);
-      return this._findCanvasColumnId(rowIndex, colIndex);
-    } else if (type === 'row' && parts[0] === 'row' && parts.length >= 2) {
-      // row-1 (1-indexed) -> row-1 (1-indexed)
-      const rowIndex = parseInt(parts[1], 10);
-      return `row-${rowIndex}`;
-    }
-    
-    // Might already be a canvas ID
-    return previewId;
-  }
-  
-  /**
-   * Find canvas widget ID by position in preview
-   * @private
-   * @param {number} rowIndex - Row index (0-based)
-   * @param {number} colIndex - Column index within row (0-based)
-   * @param {number} widgetIndex - Widget index within column (0-based)
-   * @returns {string} Canvas widget ID (e.g., widget-5)
-   */
-  _findCanvasWidgetId(rowIndex, colIndex, widgetIndex) {
-    try {
-      const rows = document.querySelectorAll('[data-row-id]');
-      if (rowIndex >= rows.length) {
-        return `widget-${widgetIndex}`;
-      }
-      const row = rows[rowIndex];
-      const columns = row.querySelectorAll('[data-column-id]');
-      if (colIndex >= columns.length) {
-        return `widget-${widgetIndex}`;
-      }
-      const column = columns[colIndex];
-      const widgets = column.querySelectorAll('[data-widget-id]');
-      if (widgetIndex >= widgets.length) {
-        return `widget-${widgetIndex}`;
-      }
-      const widget = widgets[widgetIndex];
-      const widgetId = widget.getAttribute('data-widget-id');
-      if (widgetId) return widgetId;
-    } catch (error) {
-      console.error('PropertyEditorBridge: Error finding canvas widget ID:', error);
-    }
-    return `widget-${widgetIndex}`;
-  }
-  
-  /**
-   * Find canvas column ID by position in preview
-   * @private
-   * @param {number} rowIndex - Row index (0-based)
-   * @param {number} colIndex - Column index within row (0-based)
-   * @returns {string} Canvas column ID
-   */
-  _findCanvasColumnId(rowIndex, colIndex) {
-    try {
-      const rows = document.querySelectorAll('[data-row-id]');
-      if (rowIndex >= rows.length) {
-        return `col-${colIndex}`;
-      }
-      const row = rows[rowIndex];
-      const columns = row.querySelectorAll('[data-column-id]');
-      if (colIndex >= columns.length) {
-        return `col-${colIndex}`;
-      }
-      const column = columns[colIndex];
-      const columnId = column.getAttribute('data-column-id');
-      if (columnId) return columnId;
-    } catch (error) {
-      console.error('PropertyEditorBridge: Error finding canvas column ID:', error);
-    }
-    return `col-${colIndex}`;
-  }
   
   /**
    * Handle errors and track error count

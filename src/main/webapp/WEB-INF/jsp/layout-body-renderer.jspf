@@ -70,7 +70,7 @@
           <c:set var="columnId" scope="request" value="${column.htmlId}"/>
         </c:if>
         <%-- Determine column ID for preview mode hover functionality --%>
-        <c:set var="colId" scope="request" value="col-${section.pageRowCount}-${column.pageColumnCount}"/>
+        <c:set var="colId" scope="request" value="col-${column.pageColumnCount}"/>
         <c:choose>
           <c:when test="${!empty column.cssClass}">
             <div id="${columnId}" class="${column.cssClass}"<c:if test="${!empty column.cssStyle}"> style="<c:out value="${column.cssStyle}" />"</c:if><c:if test="${column.sticky}"> data-sticky-container</c:if><c:if test="${isPreviewMode}"> data-col-id="${colId}"</c:if>>
@@ -85,7 +85,7 @@
             <hr />
           </c:if>
           <%-- Determine widget ID for preview mode hover functionality --%>
-          <c:set var="widgetId" scope="request" value="widget-${section.pageRowCount}-${column.pageColumnCount}-${widget.pageWidgetCount}"/>
+          <c:set var="widgetId" scope="request" value="widget-${widget.pageWidgetCount}"/>
           <c:choose>
             <c:when test="${empty widget.cssClass && empty widget.htmlId && empty widget.cssStyle && !widget.sticky}">
               <c:choose>
