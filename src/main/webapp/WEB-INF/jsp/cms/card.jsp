@@ -35,17 +35,17 @@
         <c:choose>
           <c:when test="${fn:contains(icon, ',')}">
             <c:forEach items="${fn:split(icon, ',')}" var="thisIcon">
-              <i class="fa fa-3x fa-<c:out value="${thisIcon}"/>"></i>
+              <i class="fa fa-3x <c:out value="${thisIcon}"/>"></i>
             </c:forEach>
           </c:when>
           <c:otherwise>
-            <i class="fa fa-3x fa-<c:out value="${icon}"/>"></i>
+            <i class="fa fa-3x <c:out value="${icon}"/>"></i>
           </c:otherwise>
         </c:choose>
       </p>
     </c:if>
     <c:if test="${!empty linkTitle}">
-      <p class="button round tiny"><c:out value="${linkTitle}"/><c:if test="${!empty linkIcon}"> <i class="fa fa-<c:out value="${linkIcon}"/>"></i></c:if></p>
+      <p class="button round tiny"><c:out value="${linkTitle}"/><c:if test="${!empty linkIcon}"> <i class="fa <c:out value="${linkIcon}"/>"></i></c:if></p>
     </c:if>
   </div>
   <%--
