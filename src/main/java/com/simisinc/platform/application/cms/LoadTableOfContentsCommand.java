@@ -16,14 +16,16 @@
 
 package com.simisinc.platform.application.cms;
 
-import com.simisinc.platform.domain.model.cms.TableOfContents;
-import com.simisinc.platform.domain.model.cms.TableOfContentsLink;
-import com.simisinc.platform.infrastructure.cache.CacheManager;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.simisinc.platform.domain.model.cms.TableOfContents;
+import com.simisinc.platform.domain.model.cms.TableOfContentsLink;
+import com.simisinc.platform.infrastructure.cache.CacheManager;
 
 /**
  * Loads a table of contents, which are used for navigation
@@ -36,7 +38,11 @@ public class LoadTableOfContentsCommand {
   private static Log LOG = LogFactory.getLog(LoadTableOfContentsCommand.class);
 
   public static TableOfContents loadByUniqueId(String tableOfContentsUniqueId, boolean clone) {
-    TableOfContents cachedTableOfContents = (TableOfContents) CacheManager.getLoadingCache(CacheManager.TABLE_OF_CONTENTS_UNIQUE_ID_CACHE).get(tableOfContentsUniqueId);
+    if (StringUtils.isBlank(tableOfContentsUniqueId)) {
+      return null;
+    }
+    TableOfContents cachedTableOfContents = (TableOfContents) CacheManager
+        .getLoadingCache(CacheManager.TABLE_OF_CONTENTS_UNIQUE_ID_CACHE).get(tableOfContentsUniqueId);
     if (!clone || cachedTableOfContents == null) {
       return cachedTableOfContents;
     }
