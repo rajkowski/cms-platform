@@ -384,7 +384,7 @@ public class PageTemplateEngine {
       WebContainerContext webContainerContext = new WebContainerContext(applicationUrl, pageRequest, null,
           controllerSession, widgetInstances, webPackageList, webPage, pageRef);
 
-      // Render the page first
+      // Render the page widgets
       PageResponse pageResponse = WebContainerCommand.processWidgets(webContainerContext, pageRef.getSections(),
           pageRenderInfo, coreData, userSession, themePropertyMap, null);
 

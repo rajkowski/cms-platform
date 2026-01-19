@@ -89,6 +89,13 @@
         <i class="${font:far()} fa-spinner fa-spin"></i>
       </div>
       <button id="dark-mode-toggle" class="button tiny secondary no-gap radius" title="Toggle Dark Mode"><i class="${font:far()} fa-moon"></i></button>
+      <%-- Feature isn't ready for non-admins --%>
+      <c:if test="${userSession.hasRole('admin')}">
+        <div class="dropdown-pane" id="more-options-menu" data-dropdown data-auto-focus="true">
+          <a href="#" id="static-site-generator-btn">Static Site Generator...</a>
+        </div>
+        <button id="more-options-btn" class="button tiny secondary no-gap radius" title="More Options" data-toggle="more-options-menu"><i class="${font:far()} fa-ellipsis-v"></i></button>
+      </c:if>
     </div>
   </div>
   
@@ -296,6 +303,8 @@
     </form>
   </div>
 </div>
+
+<%@include file="static-site-modal.jsp" %>
 
 <!-- Pre-Designed Page Modal -->
 <div id="pre-designed-page-modal" class="modal-overlay" style="display:none;">
@@ -579,6 +588,7 @@
   <script src="${ctx}/javascript/widgets/editor/info-tab-manager.js"></script>
   <script src="${ctx}/javascript/widgets/editor/css-tab-manager.js"></script>
   <script src="${ctx}/javascript/widgets/editor/xml-tab-manager.js"></script>
+  <script src="${ctx}/javascript/static-site-manager.js"></script>
 </g:compress>
 
 <script>
@@ -1427,5 +1437,21 @@
     if (savedWidth) {
       propertiesPanelElement.style.width = savedWidth;
     }
+    
+    // Static Site Modal
+    const staticSiteManager = new StaticSiteManager({
+      modalId: 'static-site-modal',
+      openModalBtnId: 'static-site-generator-btn',
+      closeModalBtnId: 'close-static-site-modal',
+      generateBtnId: 'generate-static-site-btn',
+      fileListId: 'static-site-list',
+      pollingIndicatorId: 'static-site-polling-indicator',
+      listUrl: '${ctx}/json/static-sites/list?action=list',
+      generateUrl: '${ctx}/json/static-sites/generate',
+      deleteUrl: '${ctx}/json/static-sites/delete',
+      downloadUrl: '${ctx}/json/static-sites/download?action=download',
+      token: '<c:out value="${userSession.formToken}" />'
+    });
+    staticSiteManager.init();
   });
 </script>

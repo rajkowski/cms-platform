@@ -218,6 +218,9 @@ public class FileSystemCommand {
    */
   public static String generateUniqueFilename(long appendValue) {
     String filenameUUID = UUID.randomUUID().toString();
+    if (appendValue < 0) {
+      return System.currentTimeMillis() + "-" + filenameUUID;
+    }
     return System.currentTimeMillis() + "-" + filenameUUID + "-" + appendValue;
   }
 

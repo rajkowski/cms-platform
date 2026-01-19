@@ -70,6 +70,7 @@ public class SchedulerManager {
   public static final String WEB_PAGE_HITS_CLEANUP_JOB = "WebPageHitsCleanup";
   public static final String USER_TOKENS_CLEANUP_JOB = "UserTokensCleanup";
   public static final String OAUTH_STATE_CLEANUP_JOB = "OAuthStateCleanup";
+  public static final String STATIC_SITE_GENERATOR_JOB = "StaticSiteGeneratorJob";
   public static final String INSTAGRAM_MEDIA_SNAPSHOT_JOB = "InstagramMediaSnapshot";
   public static final String ORDER_MANAGEMENT_PROCESS_NEW_ORDERS_JOB = "OrderManagementProcessNewOrders";
   public static final String ORDER_MANAGEMENT_PROCESS_SHIPPING_UPDATES_JOB = "OrderManagementProcessShippingUpdates";
