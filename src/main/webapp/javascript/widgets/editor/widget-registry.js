@@ -29,7 +29,7 @@ class WidgetRegistry {
     this.register('content', {
       name: 'Content',
       category: 'Content',
-      icon: 'fa-paragraph',
+      icon: 'fa-file-lines',
       description: 'Rich text content block',
       properties: {
         icon: { type: 'icon', label: 'Widget Icon', required: false },
@@ -41,7 +41,7 @@ class WidgetRegistry {
     });
     
     this.register('contentAccordion', {
-      name: 'Content Accordion',
+      name: 'Accordion',
       category: 'Content',
       icon: 'fa-list',
       description: 'Collapsible content sections',
@@ -57,7 +57,7 @@ class WidgetRegistry {
     });
     
     this.register('contentCards', {
-      name: 'Content Cards',
+      name: 'Multiple Cards',
       category: 'Content',
       icon: 'fa-th',
       description: 'Content card grid',
@@ -88,7 +88,7 @@ class WidgetRegistry {
     });
     
     this.register('contentSlider', {
-      name: 'Content Slider',
+      name: 'Content Slideshow',
       category: 'Content',
       icon: 'fa-images',
       description: 'Image/content slider',
@@ -97,11 +97,11 @@ class WidgetRegistry {
         title: { type: 'text', label: 'Widget Title', required: false },
         uniqueId: { type: 'contentUniqueId', label: 'Content Repository ID', required: true, default: 'GENERATE' },
         html: { type: 'html', label: 'Fallback HTML Content (optional)', required: false, default: '<p>Multiple slide content separated by HR</p>' },
-        showControls: { type: 'checkbox', label: 'Show Controls', default: true },
+        showControls: { type: 'checkbox', label: 'Show Controls', default: false },
         showLeftControl: { type: 'checkbox', label: 'Show Left Control', default: true },
         showRightControl: { type: 'checkbox', label: 'Show Right Control', default: true },
         showPagination: { type: 'checkbox', label: 'Show Pagination', default: true },
-        loop: { type: 'checkbox', label: 'Loop', default: false },
+        loop: { type: 'checkbox', label: 'Loop', default: true },
         autoplayDelay: { type: 'number', label: 'Autoplay Delay (ms)', default: '5000' },
         carouselClass: { type: 'text', label: 'Carousel CSS Class', required: false },
         cardClass: { type: 'text', label: 'Card CSS Class', required: false },
@@ -109,16 +109,16 @@ class WidgetRegistry {
     });
 
     this.register('card', {
-      name: 'Card',
+      name: 'Icon Card',
       category: 'Content',
       icon: 'fa-vcard',
       description: 'A card with a title, icon, and link',
       properties: {
         title: { type: 'text', label: 'Title', required: false, default: 'Card Title' },
-        icon: { type: 'text', label: 'Icon', required: false, default: '' },
+        icon: { type: 'icon', label: 'Icon', required: false, default: '' },
         linkTitle: { type: 'text', label: 'Link Title', required: false, default: '' },
         link: { type: 'text', label: 'Link', required: false, default: '' },
-        linkIcon: { type: 'text', label: 'Link Icon', required: false },
+        linkIcon: { type: 'icon', label: 'Link Icon', required: false },
         classData: { type: 'text', label: 'CSS Class', required: false }
       }
     });
@@ -165,7 +165,7 @@ class WidgetRegistry {
     });
 
     this.register('contentReveal', {
-      name: 'Content Reveal',
+      name: 'Content with Panel Reveal',
       category: 'Content',
       icon: 'fa-plus',
       description: 'Reveals content when clicked',
