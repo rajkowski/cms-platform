@@ -47,7 +47,8 @@ public class XMLContainerCommands implements Serializable {
   private static final long serialVersionUID = 536435325324169646L;
   private static Log LOG = LogFactory.getLog(XMLContainerCommands.class);
 
-  public static void appendSections(PageRenderContext pageRenderContext, Document document, List<Section> sections, NodeList children) {
+  public static void appendSections(PageRenderContext pageRenderContext, Document document, List<Section> sections,
+      NodeList children) {
     // Process the sections
     boolean isWellFormed = false;
     int len = children.getLength();
@@ -65,6 +66,19 @@ public class XMLContainerCommands implements Serializable {
       }
       // Check for sections
       Section section = new Section();
+
+      // Determine its sequence number
+      int pageRowCount = pageRenderContext.incrementAndGetRowCount();
+      if (child.hasAttribute("num")) {
+        String numStr = child.getAttribute("num");
+        try {
+          pageRowCount = Integer.parseInt(numStr);
+        } catch (NumberFormatException nfe) {
+          LOG.warn("Invalid section num: " + numStr);
+        }
+      }
+      section.setPageRowCount(pageRowCount);
+
       String htmlId = child.getAttribute("id");
       if (StringUtils.isNotBlank(htmlId)) {
         section.setHtmlId(htmlId);
@@ -102,8 +116,6 @@ public class XMLContainerCommands implements Serializable {
       if (StringUtils.isNotBlank(videoBackgroundUrl)) {
         section.setVideoBackgroundUrl(videoBackgroundUrl);
       }
-      // It's a valid section; process columns
-      section.setPageRowCount(pageRenderContext.incrementAndGetRowCount());
       sections.add(section);
       LOG.trace("Adding section");
       appendColumns(pageRenderContext, document, section, section.getColumns(), child.getChildNodes());
@@ -132,7 +144,8 @@ public class XMLContainerCommands implements Serializable {
     }
   }
 
-  private static void appendColumns(PageRenderContext pageRenderContext, Document document, Section sectionInfo, List<Column> columns, NodeList children) {
+  private static void appendColumns(PageRenderContext pageRenderContext, Document document, Section sectionInfo, List<Column> columns,
+      NodeList children) {
     // Process the columns
     int len = children.getLength();
     for (int i = 0; i < len; i++) {
@@ -156,6 +169,19 @@ public class XMLContainerCommands implements Serializable {
           }
         }
         Column column = new Column();
+
+        // Determine its sequence number
+        int pageColumnCount = pageRenderContext.incrementAndGetColumnCount();
+        if (child.hasAttribute("num")) {
+          String numStr = child.getAttribute("num");
+          try {
+            pageColumnCount = Integer.parseInt(numStr);
+          } catch (NumberFormatException nfe) {
+            LOG.warn("Invalid column num: " + numStr);
+          }
+        }
+        column.setPageColumnCount(pageColumnCount);
+
         String htmlId = child.getAttribute("id");
         if (StringUtils.isNotBlank(htmlId)) {
           column.setHtmlId(htmlId);
@@ -191,7 +217,6 @@ public class XMLContainerCommands implements Serializable {
             column.setGroups(groups);
           }
         }
-        column.setPageColumnCount(pageRenderContext.incrementAndGetColumnCount());
         columns.add(column);
         LOG.trace("Adding column");
         appendWidgets(pageRenderContext, document, column, column.getWidgets(), child.getChildNodes());
@@ -207,7 +232,8 @@ public class XMLContainerCommands implements Serializable {
     }
   }
 
-  private static void appendWidgets(PageRenderContext pageRenderContext, Document document, Column columnInfo, List<Widget> widgets, NodeList children) {
+  private static void appendWidgets(PageRenderContext pageRenderContext, Document document, Column columnInfo, List<Widget> widgets,
+      NodeList children) {
     int len = children.getLength();
     for (int i = 0; i < len; i++) {
       if (children.item(i).getNodeType() != Element.ELEMENT_NODE) {
@@ -234,7 +260,21 @@ public class XMLContainerCommands implements Serializable {
         }
       }
       LOG.trace("Found name: " + name);
+
       Widget widget = new Widget(name);
+
+      // Determine its sequence number
+      int pageWidgetCount = pageRenderContext.incrementAndGetWidgetCount();
+      if (child.hasAttribute("num")) {
+        String numStr = child.getAttribute("num");
+        try {
+          pageWidgetCount = Integer.parseInt(numStr);
+        } catch (NumberFormatException nfe) {
+          LOG.warn("Invalid widget num: " + numStr);
+        }
+      }
+      widget.setPageWidgetCount(pageWidgetCount);
+
       String htmlId = child.getAttribute("id");
       if (StringUtils.isNotBlank(htmlId)) {
         widget.setHtmlId(htmlId);
@@ -280,7 +320,6 @@ public class XMLContainerCommands implements Serializable {
       }
       widget.setWidgetName(name);
       LOG.trace("Adding widget to layout: " + name);
-      widget.setPageWidgetCount(pageRenderContext.incrementAndGetWidgetCount());
       widgets.add(widget);
       addWidgetPreferences(widget, child.getChildNodes());
     }

@@ -693,7 +693,7 @@
 
       // Get the current editor data as XML
       const layoutManager = window.pageEditor.getLayoutManager();
-      const designerData = layoutManager.toXML();
+      const designerData = layoutManager.toXML(forPreview=true);
 
       // Get the selected page link from the pages tab manager
       const webPageLink = window.pageEditor.pagesTabManager.getSelectedPageLink();

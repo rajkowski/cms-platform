@@ -35,19 +35,23 @@ class LayoutManager {
    * @returns {string} Row ID
    */
   addRow(columnClasses, targetRowId = null) {
-    const rowId = 'row-' + (this.nextRowId++);
+    const rowNum = this.nextRowId++;
+    const rowId = 'row-' + rowNum;
 
     const row = {
       id: rowId,
+      num: rowNum,
       cssClass: '',
       columns: columnClasses.map(cssClass => {
-        const columnId = 'col-' + (this.nextColumnId++);
+        const colNum = this.nextColumnId++;
+        const columnId = 'col-' + colNum;
         
         // Only use the base class (typically small-X) - let Foundation handle inheritance
         const fullCssClass = cssClass + ' cell';
         
         return {
           id: columnId,
+          num: colNum,
           cssClass: fullCssClass,
           widgets: []
         };
@@ -192,10 +196,12 @@ class LayoutManager {
     const column = row.columns.find(c => c.id === columnId);
     if (!column) return null;
 
-    const widgetId = 'widget-' + (this.nextWidgetId++);
+    const widgetNum = this.nextWidgetId++;
+    const widgetId = 'widget-' + widgetNum;
     const defaultProps = this.getDefaultProperties(widgetType);
     const widget = {
       id: widgetId,
+      num: widgetNum,
       type: widgetType,
       properties: defaultProps
     };
@@ -388,11 +394,14 @@ class LayoutManager {
   /**
    * Convert structure to XML
    */
-  toXML() {
+  toXML(forPreview = false) {
     let xml = '<page>\n';
 
     for (const row of this.structure.rows) {
       xml += '  <section';
+      if (forPreview) {
+        xml += ` num="${this.escapeXml(row.num)}"`;
+      }
       if (row.cssClass) {
         xml += ` class="${this.escapeXml(row.cssClass)}"`;
       }
@@ -403,6 +412,9 @@ class LayoutManager {
 
       for (const column of row.columns) {
         xml += '    <column';
+        if (forPreview) {
+          xml += ` num="${this.escapeXml(column.num)}"`;
+        }
         if (column.cssClass) {
           xml += ` class="${this.escapeXml(column.cssClass)}"`;
         }
@@ -411,7 +423,7 @@ class LayoutManager {
         }
         xml += '>\n';
         for (const widget of column.widgets) {
-          xml += this.widgetToXml(widget, '      ');
+          xml += this.widgetToXml(widget, '      ', forPreview);
         }
         xml += '    </column>\n';
       }
@@ -427,7 +439,7 @@ class LayoutManager {
   /**
    * Convert widget to XML
    */
-  widgetToXml(widget, indent) {
+  widgetToXml(widget, indent, forPreview = false) {
 
     console.log('Converting widget to XML:', widget);
 
@@ -436,6 +448,9 @@ class LayoutManager {
     const widgetProperties = widgetDefinition ? (widgetDefinition.properties || {}) : {};
 
     let xml = indent + `<widget name="${this.escapeXml(widget.type)}"`;
+    if (forPreview) {
+      xml += ` num="${this.escapeXml(widget.num)}"`;
+    }
     if (widget.cssClass && widget.cssClass.trim()) {
       xml += ` class="${this.escapeXml(widget.cssClass)}"`;
     }
@@ -505,9 +520,11 @@ class LayoutManager {
     // Parse sections (rows)
     const sections = pageElement.getElementsByTagName('section');
     for (const section of sections) {
-      const rowId = 'row-' + (this.nextRowId++);
+      const rowNum = this.nextRowId++;
+      const rowId = 'row-' + rowNum;
       const row = {
         id: rowId,
+        num: rowNum,
         cssClass: section.getAttribute('class') || '',
         hr: section.getAttribute('hr') === 'true',
         columns: []
@@ -515,8 +532,9 @@ class LayoutManager {
 
       // Parse columns
       const columns = section.getElementsByTagName('column');
-      for (const column of columns) {
-        const columnId = 'col-' + (this.nextColumnId++);
+      for (const column of columns) {        
+        const colNum = this.nextColumnId++;
+        const columnId = 'col-' + colNum;
         let cssClass = column.getAttribute('class') || '';
         
         // Preserve original classes - don't add missing viewport classes
@@ -524,6 +542,7 @@ class LayoutManager {
         
         const col = {
           id: columnId,
+          num: colNum,
           cssClass: cssClass,
           hr: column.getAttribute('hr') === 'true',
           widgets: []
@@ -532,9 +551,11 @@ class LayoutManager {
         // Parse widgets
         const widgets = column.getElementsByTagName('widget');
         for (const widget of widgets) {
-          const widgetId = 'widget-' + (this.nextWidgetId++);
+          const widgetNum = this.nextWidgetId++;
+          const widgetId = 'widget-' + widgetNum;
           const w = {
             id: widgetId,
+            num: widgetNum,
             type: widget.getAttribute('name') || '',
             cssClass: widget.getAttribute('class') || '',
             hr: widget.getAttribute('hr') === 'true',
