@@ -30,6 +30,9 @@ public class Section implements Serializable {
 
   static final long serialVersionUID = -8484048371911908893L;
 
+  // Sequence count for the row on the page
+  private int pageRowCount = 0;
+
   // Layout and render properties
   private List<Column> columns = new ArrayList<>();
   private List<Section> sections = new ArrayList<>();
@@ -45,6 +48,14 @@ public class Section implements Serializable {
   private String videoBackgroundUrl = null;
 
   public Section() {
+  }
+
+  public int getPageRowCount() {
+    return pageRowCount;
+  }
+
+  public void setPageRowCount(int pageRowCount) {
+    this.pageRowCount = pageRowCount;
   }
 
   public String getHtmlId() {

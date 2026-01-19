@@ -43,9 +43,9 @@ public class FontCommand {
     // @todo When entry exists in DB whether true/false
 //    LoadSitePropertyCommand.loadByName("cms.fontawesome.pro", "false");
     if ("pro6".equals(version)) {
-      return "fontawesome-pro-6.1.1-web";
+      return "fontawesome-pro-7.1.0-web";
     }
-    return "fontawesome-free-6.1.1-web";
+    return "fontawesome-free-7.1.0-web";
   }
 
   private static String fa(String type) {

@@ -75,7 +75,11 @@ public class WebContainerCommand implements Serializable {
       UserSession userSession, Map<String, String> themePropertyMap, HttpServletRequest httpRequest)
       throws Exception {
 
-    LOG.debug("Processing container... " + containerRenderInfo.getName() + ": " + sections.size());
+    LOG.debug("Processing container layout... " + containerRenderInfo.getName());
+    if (webContainerContext.isTargeted()) {
+      LOG.debug("  Targeted widget: " + containerRenderInfo.getTargetWidget());
+    }
+    LOG.debug("  Sections: " + sections.size());
 
     PageRequest pageRequest = webContainerContext.getPageRequest();
     HttpServletResponse response = webContainerContext.getResponse();
@@ -89,7 +93,9 @@ public class WebContainerCommand implements Serializable {
       sharedWidgetValueMap = (HashMap) controllerSession.getWidgetData(REQUEST_SHARED_VALUE_MAP);
     }
 
+    // Each row/column/widget has a unique count on the page, whether displayed or not
     int widgetCount = 0;
+
     //if (!isPost && !isDelete && !isAction) {
     // Cycle the form token
     // @todo actually, keep a list and expire old ones eventually
@@ -138,18 +144,21 @@ public class WebContainerCommand implements Serializable {
             continue;
           }
 
-          // Each widget has a unique id on the page for forms, Javascript, etc.
+          // Each widget has a unique id on the page for forms, Javascript, etc.          
+          // The displayed value appears sequential to the user
           ++widgetCount;
           String thisWidgetUniqueId = widget.getWidgetName() + widgetCount;
 
           // On a POST/DELETE, only execute the action widget
           if (webContainerContext.isTargeted()) {
             if (!thisWidgetUniqueId.equals(containerRenderInfo.getTargetWidget())) {
+              LOG.debug("Skipping non-targeted widget: " + thisWidgetUniqueId);
               continue;
             }
             // Validate the token and fail immediately
             String formToken = pageRequest.getParameter("token");
             if (!userSession.getFormToken().equals(formToken)) {
+              LOG.debug("Invalid form token for widget: " + thisWidgetUniqueId);
               controllerSession.clearAllWidgetData();
               controllerSession.addWidgetData(thisWidgetUniqueId, MESSAGE,
                   "Your session may have expired before submitting the form, please try again");
@@ -160,6 +169,7 @@ public class WebContainerCommand implements Serializable {
             }
           }
 
+          LOG.debug("Processing widget: " + widget.getWidgetName() + " [" + thisWidgetUniqueId + "]");
           WidgetContext widgetContext = new WidgetContext(webContainerContext.getApplicationURL(), pageRequest, httpRequest, response,
               thisWidgetUniqueId,
               containerRenderInfo.getName());
@@ -353,6 +363,9 @@ public class WebContainerCommand implements Serializable {
             controllerSession.clearAllWidgetData();
             response.setContentType("application/json");
             response.setContentLength(widgetContext.getJson().length());
+            if (!widgetContext.isSuccess()) {
+              response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            }
             PrintWriter out = response.getWriter();
             out.print(widgetContext.getJson());
             out.flush();
@@ -372,6 +385,15 @@ public class WebContainerCommand implements Serializable {
           if (!webContainerContext.isTargeted()) {
             if (widgetContext.hasRedirect()) {
               controllerSession.clearAllWidgetData();
+              // External redirect for validated URL
+              if (widgetContext.getRedirect().startsWith("http://") ||
+                  widgetContext.getRedirect().startsWith("https://")) {
+                LOG.debug("Sending an external redirect to: " + widgetContext.getRedirect());
+                response.sendRedirect(widgetContext.getRedirect());
+                pageResponse.setHandled(true);
+                return pageResponse;
+              }
+              // Internal redirect
               String siteUrl = LoadSitePropertyCommand.loadByName("site.url");
               response.sendRedirect(siteUrl + pageRequest.getContextPath() + widgetContext.getRedirect());
               pageResponse.setHandled(true);

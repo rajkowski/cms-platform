@@ -58,8 +58,6 @@ public class WebPageDesignerWidget extends GenericWidget {
   protected static Log LOG = LogFactory.getLog(WebPageDesignerWidget.class);
 
   static String TEMPLATES_JSP = "/cms/web-page-templates.jsp";
-  static String DESIGNER_JSP = "/cms/web-page-designer.jsp";
-  static String RAW_XML_JSP = "/cms/web-page-editor.jsp";
   static String ACE_XML_EDITOR_JSP = "/cms/web-page-xml-editor.jsp";
 
   public WidgetContext execute(WidgetContext context) {
@@ -67,12 +65,6 @@ public class WebPageDesignerWidget extends GenericWidget {
     // The default JSP
     // @note the ACE editor is unstable for XML, CPU gets out of control; might be fixed
     context.setJsp(ACE_XML_EDITOR_JSP);
-
-    // See if an editor is specified
-    String editor = context.getParameter("editor");
-    if ("designer".equals(editor)) {
-      context.setJsp(DESIGNER_JSP);
-    }
 
     // Specify the return page
     String returnPage = UrlCommand.getValidReturnPage(context.getParameter("returnPage"));
@@ -85,13 +77,8 @@ public class WebPageDesignerWidget extends GenericWidget {
       // Determine the reason...
       webPage = (WebPage) context.getRequestObject();
       context.getRequest().setAttribute("webPage", webPage);
-      if (webPage.getPageXml().contains("editor=\"designer\"")) {
-        // An editor was specified, so use it
-        context.setJsp(DESIGNER_JSP);
-      } else {
-        // There was a post error
-        return context;
-      }
+      // There was a post error
+      return context;
     }
 
     // webPage must be specified, even if it doesn't exist
@@ -117,45 +104,26 @@ public class WebPageDesignerWidget extends GenericWidget {
     // Show some templates
     if (StringUtils.isBlank(webPage.getPageXml())) {
 
-      if ("designer".equals(editor)) {
-        // @todo use WebPageDesignerCommand.convertFromPageLayoutToBootstrap();
-        // Default to a single column template
-        webPage.setPageXml("<page>\n" +
-            "  <section>\n" +
-            "    <column class=\"small-12 cell\">\n" +
-            "      <widget name=\"content\">\n" +
-            "        <uniqueId>" + MakeContentUniqueIdCommand.parseToValidValue(webPageLinkValue.substring(1)) + "-hello</uniqueId>\n" +
-            "      </widget>\n" +
-            "    </column>\n" +
-            "  </section>\n" +
-            "</page>");
-        // Which will be... MakeContentUniqueIdCommand.getId(webPageLinkValue.substring(1)) + "-hello
-        // <div class="row">
-        //    <div class="column col-sm-12" data-unique-id="">
-        //      <p>Write your content</p>
-        //    </div>
-        //  </div>
-      } else {
-        // Load web templates from the filesystem and database
-        List<WebPageTemplate> webPageTemplateList = XMLWebPageTemplateLoader.retrieveTemplateList(context.getServletContext());
-        if (!webPageTemplateList.isEmpty()) {
-          LOG.debug("Found templates...");
+      // Load web templates from the filesystem and database
+      List<WebPageTemplate> webPageTemplateList = XMLWebPageTemplateLoader.retrieveTemplateList(context.getServletContext());
+      if (!webPageTemplateList.isEmpty()) {
+        LOG.debug("Found templates...");
 
-          // Look for additional database templates
-          List<WebPageTemplate> webPageTemplateList2 = WebPageTemplateRepository.findAll();
-          if (!webPageTemplateList2.isEmpty()) {
-            webPageTemplateList.addAll(webPageTemplateList2);
-          }
-
-          // Sort the list
-          webPageTemplateList.sort(Comparator.comparing(WebPageTemplate::getName));
-          webPageTemplateList.sort(Comparator.comparing(WebPageTemplate::getTemplateOrder));
-          webPageTemplateList.sort(Comparator.comparing(WebPageTemplate::getCategory));
-
-          context.getRequest().setAttribute("webPageTemplateList", webPageTemplateList);
-          context.setJsp(TEMPLATES_JSP);
+        // Look for additional database templates
+        List<WebPageTemplate> webPageTemplateList2 = WebPageTemplateRepository.findAll();
+        if (!webPageTemplateList2.isEmpty()) {
+          webPageTemplateList.addAll(webPageTemplateList2);
         }
+
+        // Sort the list
+        webPageTemplateList.sort(Comparator.comparing(WebPageTemplate::getName));
+        webPageTemplateList.sort(Comparator.comparing(WebPageTemplate::getTemplateOrder));
+        webPageTemplateList.sort(Comparator.comparing(WebPageTemplate::getCategory));
+
+        context.getRequest().setAttribute("webPageTemplateList", webPageTemplateList);
+        context.setJsp(TEMPLATES_JSP);
       }
+
     }
     context.getRequest().setAttribute("webPage", webPage);
     return context;
@@ -190,8 +158,6 @@ public class WebPageDesignerWidget extends GenericWidget {
 
     // Filesystem Template
     String templateUniqueIdValue = context.getRequest().getParameter("templateUniqueId");
-    // Designer Content
-    String pageDesignHtml = context.getParameter("content");
     // Text Field
     String pageXmlValue = context.getParameter("pageXml");
 
@@ -218,22 +184,6 @@ public class WebPageDesignerWidget extends GenericWidget {
       template = StringUtils.replace(template, "${webPageName}", webPageName);
       webPage.setPageXml(template);
       webPage.setTemplate(webPageTemplate.getName());
-    } else if (pageDesignHtml != null) {
-      // Page designer
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Found designer content...");
-        LOG.debug("Content found: " + pageDesignHtml);
-      }
-      String pageXml = WebPageDesignerToXmlCommand.convertFromBootstrapHtml(webPage, pageDesignHtml);
-      LOG.debug("Converted to: " + pageXml);
-      webPage.setPageXml(pageXml);
-      try {
-        SaveWebPageCommand.saveWebPage(webPage);
-        context.setJson("[{\"status\":\"0\"}]");
-      } catch (Exception e) {
-        context.setJson("[{\"message\":\"The web page could not be saved: " + e.getMessage() + "\"}]");
-      }
-      return context;
     } else {
       // Check for raw content
       if (StringUtils.isEmpty(pageXmlValue)) {
@@ -270,14 +220,15 @@ public class WebPageDesignerWidget extends GenericWidget {
       } catch (Exception e) {
         LOG.error("User input: pageXml did not validate: " + e.getMessage());
         context.setRequestObject(webPage);
-        context.setErrorMessage("The XML could not be validated. Use <page><section><column><widget> notation. Error reported: " + e.getMessage());
+        context.setErrorMessage(
+            "The XML could not be validated. Use <page><section><column><widget> notation. Error reported: " + e.getMessage());
         return context;
       }
 
-      // If the designer is specified in the template, no need to save...
-      if (webPage.getPageXml().contains("editor=\"designer\"")) {
+      // If the visual page editor is specified in the template, no need to save...
+      if (webPage.getPageXml().contains("editor=\"visual-page-editor\"")) {
         context.setRequestObject(webPage);
-        context.setRedirect("/admin/web-page-designer?editor=designer&webPage=" + webPage.getLink());
+        context.setRedirect("/admin/visual-page-editor?webPage=" + webPage.getLink());
         return context;
       }
     }

@@ -32,6 +32,9 @@ public class Widget implements Serializable {
 
   static final long serialVersionUID = -8484048371911908893L;
 
+  // Sequence count for the widget on the page
+  private int pageWidgetCount = 0;
+
   // Layout and render properties
   protected String widgetName = "";
   private List<String> roles = new ArrayList<String>();
@@ -46,6 +49,14 @@ public class Widget implements Serializable {
   private boolean hr = false;
 
   public Widget() {
+  }
+
+  public int getPageWidgetCount() {
+    return pageWidgetCount;
+  }
+
+  public void setPageWidgetCount(int pageWidgetCount) {
+    this.pageWidgetCount = pageWidgetCount;
   }
 
   public Widget(String widgetName) {

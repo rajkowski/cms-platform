@@ -32,6 +32,7 @@ public class SectionRenderInfo implements Serializable {
 
   private List<ColumnRenderInfo> columns = new ArrayList<>();
   private boolean hasWidgets = false;
+  private int pageRowCount = -1;
 
   // Output properties
   private String htmlId = null;
@@ -45,6 +46,7 @@ public class SectionRenderInfo implements Serializable {
   }
 
   public SectionRenderInfo(Section section) {
+    this.pageRowCount = section.getPageRowCount();
     this.htmlId = section.getHtmlId();
     this.cssClass = section.getCssClass();
     this.cssStyle = section.getCssStyle();
@@ -59,6 +61,10 @@ public class SectionRenderInfo implements Serializable {
 
   public boolean hasWidgets() {
     return hasWidgets;
+  }
+
+  public int getPageRowCount() {
+    return pageRowCount;
   }
 
   public void setHasWidgets(boolean hasWidgets) {

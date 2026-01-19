@@ -2,23 +2,15 @@
 <ul class="dropdown menu" th:classappend="${menuClass}" data-dropdown-menu>
   <th:block th:each="menuTab, menuTabStatus : ${masterMenuTabList}" th:switch="${not #arrays.isEmpty(menuTab.menuItemList)} ? ${true} : ${false}">
     <li th:case="${true}" class="is-dropdown-submenu-parent" th:classappend="${menuTab.active} ? 'active'">
-      <a th:href="${#strings.concat(ctx, menuTab.link)}"><i th:if="${not #strings.isEmpty(menuTab.icon)}" class="fa-solid fa-fw" th:classappend="${#strings.concat('fa-', menuTab.icon)}"></i> [[${menuTab.name}]]</a>
+      <a th:href="${#strings.concat(ctx, menuTab.link)}"><i th:if="${not #strings.isEmpty(menuTab.icon)}" class="fa-solid fa-fw" th:classappend="${menuTab.icon}"></i> [[${menuTab.name}]]</a>
       <ul class="menu vertical">
         <li th:each="menuItem : ${menuTab.menuItemList}" th:class="${menuItem.active} ? 'active'">
           <a th:href="${#strings.concat(ctx, menuItem.link)}"><i th:if="${not #strings.isEmpty(submenuIcon)}" th:class="${#strings.concat('fa', ' ', submenuIcon)}" th:classappend="${submenuIconClass}"></i> [[${menuItem.name}]]</a>
         </li>
-<!--/* <%-- @todo Implement a check for content to append here --%>
-            <li class="menu-item-callout" style="padding:0 16px 16px 16px">
-              <div style="border-top: 2px solid #E0A590;padding-top: 8px;font-weight:400">
-                Something<br />
-                <a target="_blank" class="button primary" style="margin: 10px 0 0 0;padding: 8px;" href="https://example.com">Visit Example.com</a>
-              </div>
-            </li>
- --*/-->
       </ul>
     </li>
     <li th:case="${false}" class="is-standalone" th:classappend="${menuTab.active} ? 'active'">
-      <a th:href="${#strings.concat(ctx, menuTab.link)}"><i th:if="${not #strings.isEmpty(menuTab.icon)}" class="fa-solid fa-fw" th:classappend="${#strings.concat('fa-', menuTab.icon)}" /> [[${menuTab.name}]]</a>
+      <a th:href="${#strings.concat(ctx, menuTab.link)}"><i th:if="${not #strings.isEmpty(menuTab.icon)}" class="fa-solid fa-fw" th:classappend="${menuTab.icon}"></i> [[${menuTab.name}]]</a>
     </li>
   </th>
 </ul>

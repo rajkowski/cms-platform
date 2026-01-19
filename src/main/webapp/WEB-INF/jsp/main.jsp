@@ -13,8 +13,6 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   --%>
-<%@ page import="static com.simisinc.platform.ApplicationInfo.PRODUCT_NAME" %>
-<%@ page import="static com.simisinc.platform.ApplicationInfo.VERSION" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
@@ -32,6 +30,7 @@
 <jsp:useBean id="themePropertyMap" class="java.util.HashMap" scope="request"/>
 <jsp:useBean id="analyticsPropertyMap" class="java.util.HashMap" scope="request"/>
 <jsp:useBean id="ecommercePropertyMap" class="java.util.HashMap" scope="request"/>
+<jsp:useBean id="isPreviewMode" class="java.lang.String" scope="request"/>
 <!doctype html>
 <html class="no-js" lang="en" xml:lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -98,6 +97,11 @@
     <web:stylesheets />
     <link rel="stylesheet" type="text/css" href="${ctx}/css/platform.css" />
   </g:compress>
+  <c:if test="${isPreviewMode eq 'true'}">
+    <g:compress>
+      <link rel="stylesheet" type="text/css" href="${ctx}/css/platform/preview-hover.css" />
+    </g:compress>
+  </c:if>
   <c:if test="${!empty themePropertyMap}">
     <g:compress>
       <style><%-- Prevent top-bar flicker --%>
@@ -255,229 +259,128 @@
   <web:scripts />
 </head>
 <body<c:if test="${pageRenderInfo.name eq '/'}"> id="body-home"</c:if><c:if test="${!empty pageRenderInfo.cssClass}"> class="<c:out value="${pageRenderInfo.cssClass}" />"</c:if>>
-  <c:choose>
-    <c:when test="${fn:startsWith(pageRenderInfo.name, '/admin') && pageRenderInfo.name ne '/admin/web-page' && pageRenderInfo.name ne '/admin/web-page-designer' && pageRenderInfo.name ne '/admin/web-container-designer' && pageRenderInfo.name ne '/admin/css-editor'}">
-      <%-- Draw the admin menu--%>
-      <div class="off-canvas-wrapper">
-        <div class="off-canvas position-left reveal-for-medium admin-menu hide-for-print" style="z-index: 1005 !important; padding-bottom: 50px" id="offCanvas" data-off-canvas>
-          <div class="app-title">
-            <c:out value="<%= PRODUCT_NAME %>"/><br />
-            <small>v<c:out value="<%= VERSION %>"/></small>
-          </div>
-          <div class="app-user">
-            <i class="${font:far()} fa-user fa-fw"></i>
-            <c:out value="${userSession.user.fullName}"/>
-          </div>
-          <%-- Admin Link --%>
-          <ul class="vertical menu">
-            <li class="section-title">Admin</li>
-            <li<c:if test="${pageRenderInfo.name eq '/admin'}"> class="is-active"</c:if>><a href="${ctx}/admin"><i class="${font:far()} fa-home fa-fw"></i> <span>Welcome</span></a></li>
-            <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/documentation')}"> class="is-active"</c:if>><a href="${ctx}/admin/documentation/wiki/Home"><i class="${font:far()} fa-book fa-fw"></i> <span>Documentation</span></a></li>
-            <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/activity')}"> class="is-active"</c:if>><a href="${ctx}/admin/activity"><i class="${font:far()} fa-exchange-alt fa-fw"></i> <span>Activity</span></a></li>
-          </ul>
-          <%-- Community menu --%>
-          <c:if test="${userSession.hasRole('admin') || userSession.hasRole('community-manager')}">
-            <ul class="vertical menu">
-              <li class="section-title">Community</li>
-              <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/community/analytics')}"> class="is-active"</c:if>><a href="${ctx}/admin/community/analytics"><i class="${font:far()} fa-chart-line fa-fw"></i> <span>Analytics</span></a></li>
-              <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/form-')}"> class="is-active"</c:if>><a href="${ctx}/admin/form-data"><i class="${font:far()} fa-list-alt fa-fw"></i> <span>Form Data</span></a></li>
-              <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/mailing-list') && !fn:startsWith(pageRenderInfo.name, '/admin/mailing-list-properties')}"> class="is-active"</c:if>><a href="${ctx}/admin/mailing-lists"><i class="${font:far()} fa-envelope fa-fw"></i> <span>Mailing Lists</span></a></li>
-              <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/user') || fn:startsWith(pageRenderInfo.name, '/admin/modify-user')}"> class="is-active"</c:if>><a href="${ctx}/admin/users"><i class="${font:far()} fa-user-circle fa-fw"></i> <span>Users</span></a></li>
-              <c:if test="${userSession.hasRole('admin')}">
-                <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/group')}"> class="is-active"</c:if>><a href="${ctx}/admin/groups"><i class="${font:far()} fa-users fa-fw"></i> <span>User Groups</span></a></li>
-              </c:if>
-            </ul>
-          </c:if>
-          <%-- Content menu --%>
-          <c:if test="${userSession.hasRole('admin') || userSession.hasRole('content-manager')}">
-            <ul class="vertical menu">
-              <li class="section-title">Content</li>
-              <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/content/analytics')}"> class="is-active"</c:if>><a href="${ctx}/admin/content/analytics"><i class="${font:far()} fa-chart-line fa-fw"></i> <span>Analytics</span></a></li>
-              <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/sitemap')}"> class="is-active"</c:if>><a href="${ctx}/admin/sitemap"><i class="${font:far()} fa-sitemap fa-fw"></i> <span>Site Map</span></a></li>
-              <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/web-page')}"> class="is-active"</c:if>><a href="${ctx}/admin/web-pages"><i class="${font:far()} fa-sticky-note fa-fw"></i> <span>Web Pages</span></a></li>
-              <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/image')}"> class="is-active"</c:if>><a href="${ctx}/admin/images"><i class="${font:far()} fa-image fa-fw"></i> <span>Images</span></a></li>
-              <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/content-list')}"> class="is-active"</c:if>><a href="${ctx}/admin/content-list"><i class="${font:far()} fa-th fa-fw"></i> <span>Content</span></a></li>
-              <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/blog')}"> class="is-active"</c:if>><a href="${ctx}/admin/blogs"><i class="${font:far()} fa-quote-right fa-fw"></i> <span>Blogs</span></a></li>
-              <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/calendar')}"> class="is-active"</c:if>><a href="${ctx}/admin/calendars"><i class="${font:far()} fa-calendar fa-fw"></i> <span>Calendars</span></a></li>
-              <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/folder')}"> class="is-active"</c:if>><a href="${ctx}/admin/folders"><i class="${font:far()} fa-copy fa-fw"></i> <span>Files &amp; Folders</span></a></li>
-              <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/wiki')}"> class="is-active"</c:if>><a href="${ctx}/admin/wikis"><i class="${font:far()} fa-file fa-fw"></i> <span>Wikis</span></a></li>
-              <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/sticky-footer-links')}"> class="is-active"</c:if>><a href="${ctx}/admin/sticky-footer-links"><i class="${font:far()} fa-file fa-fw"></i> <span>Sticky Page Buttons</span></a></li>
-            </ul>
-          </c:if>
-          <%-- Data menu --%>
-          <c:if test="${userSession.hasRole('admin') || userSession.hasRole('data-manager')}">
-            <ul class="vertical menu">
-              <li class="section-title">Data</li>
-              <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/collection')}"> class="is-active"</c:if>><a href="${ctx}/admin/collections"><i class="${font:far()} fa-database fa-fw"></i> <span>Collections</span></a></li>
-              <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/dataset')}"> class="is-active"</c:if>><a href="${ctx}/admin/datasets"><i class="${font:far()} fa-table fa-fw"></i> <span>Datasets</span></a></li>
-            </ul>
-          </c:if>
-          <%-- E-Commerce menu (if enabled if settings) --%>
-          <c:if test="${!empty ecommercePropertyMap['ecommerce.enabled'] && ecommercePropertyMap['ecommerce.enabled'] eq 'true'}">
-            <c:if test="${userSession.hasRole('admin') || userSession.hasRole('ecommerce-manager')}">
-              <ul class="vertical menu">
-                <li class="section-title">E-Commerce</li>
-                <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/e-commerce/analytics')}"> class="is-active"</c:if>><a href="${ctx}/admin/e-commerce/analytics"><i class="${font:far()} fa-chart-line fa-fw"></i> <span>Analytics</span></a></li>
-                <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/order')}"> class="is-active"</c:if>><a href="${ctx}/admin/orders"><i class="${font:far()} fa-receipt fa-fw"></i> <span>Orders</span></a></li>
-                <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/customer')}"> class="is-active"</c:if>><a href="${ctx}/admin/customers"><i class="${font:far()} fa-address-book fa-fw"></i> <span>Customers</span></a></li>
-                <li<c:if test="${pageRenderInfo.name eq '/admin/products' || pageRenderInfo.name eq '/admin/product'}"> class="is-active"</c:if>><a href="${ctx}/admin/products"><i class="${font:far()} fa-dolly fa-fw"></i> <span>Products</span></a></li>
-                <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/product-categor')}"> class="is-active"</c:if>><a href="${ctx}/admin/product-categories"><i class="${font:far()} fa-border-all fa-fw"></i> <span>Categories</span></a></li>
-                <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/pricing-rule')}"> class="is-active"</c:if>><a href="${ctx}/admin/pricing-rules"><i class="${font:far()} fa-tags fa-fw"></i> <span>Pricing Rules</span></a></li>
-                <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/sales-tax-nexus')}"> class="is-active"</c:if>><a href="${ctx}/admin/sales-tax-nexus"><i class="${font:far()} fa-balance-scale fa-fw"></i> <span>Sales Tax Nexus</span></a></li>
-                <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/shipping-rates')}"> class="is-active"</c:if>><a href="${ctx}/admin/shipping-rates"><i class="${font:far()} fa-shipping-fast fa-fw"></i> <span>Shipping Rates</span></a></li>
-              </ul>
+  <%-- Use Google Analytics --%>
+  <c:if test="${!fn:startsWith(pageRenderInfo.name, '/content-editor')}">
+    <c:if test="${!empty analyticsPropertyMap['analytics.google.tagmanager'] && fn:startsWith(analyticsPropertyMap['analytics.google.tagmanager'], 'GTM-')}">
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=${js:escape(analyticsPropertyMap['analytics.google.tagmanager'])}"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    </c:if>
+  </c:if>
+  <%-- Render the page --%>
+  <div class="web-content">
+    <jsp:include page="${PageBody}" flush="true"/>
+  </div>
+  <%-- Site Confirmation Modal --%>
+  <c:if test="${!empty sitePropertyMap['site.confirmation'] && sitePropertyMap['site.confirmation'] eq 'true'}">
+    <div id="site-confirmation" class="reveal full" data-reveal data-close-on-esc="false" data-close-on-click="false" data-animation-out="fade-out fast">
+      <div style="position:absolute; top: 50%; left: 50%; transform: translateY(-50%) translateX(-50%)">
+        <div class="modal-prompt">
+          <p>
+            <c:choose>
+              <c:when test="${!empty sitePropertyMap['site.logo']}">
+                <img alt="Logo" style="max-width: 75%" src="<c:out value="${sitePropertyMap['site.logo']}"/>" />
+              </c:when>
+              <c:otherwise>
+                <c:out value="${sitePropertyMap['site.name']}"/>
+              </c:otherwise>
+            </c:choose>
+          </p>
+          <p style="white-space: nowrap">
+            <c:if test="${!empty sitePropertyMap['site.confirmation.line1']}">
+              <c:out value="${sitePropertyMap['site.confirmation.line1']}" />
             </c:if>
-          </c:if>
-          <%-- API, Apps, etc. --%>
-          <c:if test="${userSession.hasRole('admin')}">
-            <ul class="vertical menu">
-              <li class="section-title">Access</li>
-              <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/api')}"> class="is-active"</c:if>><a href="${ctx}/admin/apis"><i class="${font:far()} fa-paper-plane fa-fw"></i> <span>APIs</span></a></li>
-              <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/app')}"> class="is-active"</c:if>><a href="${ctx}/admin/apps"><i class="${font:far()} fa-mobile fa-fw"></i> <span>Apps</span></a></li>
-              <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/blocked-ip-list')}"> class="is-active"</c:if>><a href="${ctx}/admin/blocked-ip-list"><i class="${font:far()} fa-shield-halved fa-fw"></i> <span>Blocked IPs</span></a></li>
-            </ul>
-          </c:if>
-          <%-- Settings menu --%>
-          <c:if test="${userSession.hasRole('admin')}">
-            <ul class="vertical menu">
-              <li class="section-title">Settings</li>
-              <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/theme')}"> class="is-active"</c:if>><a href="${ctx}/admin/theme-properties"><i class="${font:far()} fa-palette fa-fw"></i> <span>Theme</span></a></li>
-              <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/site-properties')}"> class="is-active"</c:if>><a href="${ctx}/admin/site-properties"><i class="${font:far()} fa-rocket fa-fw"></i> <span>Site Settings</span></a></li>
-              <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/social')}"> class="is-active"</c:if>><a href="${ctx}/admin/social-media-settings"><i class="${font:far()} fa-thumbs-up fa-fw"></i> <span>Social Media</span></a></li>
-              <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/configure-analytics')}"> class="is-active"</c:if>><a href="${ctx}/admin/configure-analytics"><i class="${font:far()} fa-chart-line fa-fw"></i> <span>Analytics Settings</span></a></li>
-              <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/captcha')}"> class="is-active"</c:if>><a href="${ctx}/admin/captcha-properties"><i class="${font:far()} fa-key fa-fw"></i> <span>Captcha Settings</span></a></li>
-              <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/bi')}"> class="is-active"</c:if>><a href="${ctx}/admin/bi-properties"><i class="${font:far()} fa-table-columns fa-fw"></i> <span>BI Settings</span></a></li>
-              <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/ecommerce')}"> class="is-active"</c:if>><a href="${ctx}/admin/ecommerce-properties"><i class="${font:far()} fa-shopping-cart fa-fw"></i> <span>E-commerce Settings</span></a></li>
-              <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/elearning')}"> class="is-active"</c:if>><a href="${ctx}/admin/elearning-properties"><i class="${font:far()} fa-chalkboard-teacher fa-fw"></i> <span>E-learning Settings</span></a></li>
-              <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/mail-properties')}"> class="is-active"</c:if>><a href="${ctx}/admin/mail-properties"><i class="${font:far()} fa-cogs fa-fw"></i> <span>Email Settings</span></a></li>
-              <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/mailing-list-properties')}"> class="is-active"</c:if>><a href="${ctx}/admin/mailing-list-properties"><i class="${font:far()} fa-envelope fa-fw"></i> <span>Mailing List Settings</span></a></li>
-              <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/maps')}"> class="is-active"</c:if>><a href="${ctx}/admin/maps-properties"><i class="${font:far()} fa-map fa-fw"></i> <span>Maps Settings</span></a></li>
-              <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/web-conferencing-properties')}"> class="is-active"</c:if>><a href="${ctx}/admin/web-conferencing-properties"><i class="${font:far()} fa-users-rectangle fa-fw"></i> <span>Web Conferencing Settings</span></a></li>
-              <%--<li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/email-templates')}"> class="is-active"</c:if>><a href="${ctx}/admin/email-templates"><i class="${font:far()} fa-file-text fa-fw"></i> <span>Email Templates</span></a></li>--%>
-            </ul>
-          </c:if>
+            <c:if test="${!empty sitePropertyMap['site.confirmation.line2']}">
+              <br /><c:out value="${sitePropertyMap['site.confirmation.line2']}" />
+            </c:if>
+          </p>
+          <p>
+            <button id="site-confirmation-yes" class="button secondary">Yes</button>
+            <span style="display:inline-block; vertical-align: middle; height:40px;">or</span>
+            <button id="site-confirmation-no" class="button secondary">No</button>
+          </p>
         </div>
-        <div class="off-canvas-content" data-off-canvas-content>
-          <div class="web-content admin-web-content">
-            <jsp:include page="${PageBody}" flush="true"/>
-          </div>
-        </div>
+      </div>
+    </div>
+  </c:if>
+  <%-- Site Newsletter / Promo Overlay --%>
+  <c:choose>
+    <c:when test="${!empty requestPricingRule.promoCode}">
+      <div id="site-promo-overlay" class="animated slideInUp faster delay-1s hide-for-print">
+        <button id="site-promo-close-button" class="close-button" type="button">
+          <span><i class="${font:fal()} fa-circle-xmark"></i></span>
+        </button>
+        <h4>Thanks for visiting!</h4>
+        <p>We've added a promo code for use on your next purchase</p>
       </div>
     </c:when>
-    <c:otherwise>
-      <%-- Draw a regular page --%>
-      <c:if test="${!fn:startsWith(pageRenderInfo.name, '/content-editor')}">
-        <c:if test="${!empty analyticsPropertyMap['analytics.google.tagmanager'] && fn:startsWith(analyticsPropertyMap['analytics.google.tagmanager'], 'GTM-')}">
-        <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=${js:escape(analyticsPropertyMap['analytics.google.tagmanager'])}"
-        height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-        </c:if>
-      </c:if>
-      <div class="web-content">
-        <jsp:include page="${PageBody}" flush="true"/>
-      </div>
-      <c:if test="${!empty sitePropertyMap['site.confirmation'] && sitePropertyMap['site.confirmation'] eq 'true'}">
-        <div id="site-confirmation" class="reveal full" data-reveal data-close-on-esc="false" data-close-on-click="false" data-animation-out="fade-out fast">
-          <div style="position:absolute; top: 50%; left: 50%; transform: translateY(-50%) translateX(-50%)">
-            <div class="modal-prompt">
-              <p>
-                <c:choose>
-                  <c:when test="${!empty sitePropertyMap['site.logo']}">
-                    <img alt="Logo" style="max-width: 75%" src="<c:out value="${sitePropertyMap['site.logo']}"/>" />
-                  </c:when>
-                  <c:otherwise>
-                    <c:out value="${sitePropertyMap['site.name']}"/>
-                  </c:otherwise>
-                </c:choose>
-              </p>
-              <p style="white-space: nowrap">
-                <c:if test="${!empty sitePropertyMap['site.confirmation.line1']}">
-                  <c:out value="${sitePropertyMap['site.confirmation.line1']}" />
-                </c:if>
-                <c:if test="${!empty sitePropertyMap['site.confirmation.line2']}">
-                  <br /><c:out value="${sitePropertyMap['site.confirmation.line2']}" />
-                </c:if>
-              </p>
-              <p>
-                <button id="site-confirmation-yes" class="button secondary">Yes</button>
-                <span style="display:inline-block; vertical-align: middle; height:40px;">or</span>
-                <button id="site-confirmation-no" class="button secondary">No</button>
-              </p>
+    <c:when test="${!empty requestOverlayHeadline}">
+      <div id="site-newsletter-overlay" class="animated slideInUp faster delay-3s hide-for-print">
+        <button id="site-newsletter-close-button" class="close-button" type="button">
+          <span><i class="${font:fal()} fa-circle-xmark"></i></span>
+        </button>
+        <h4><c:out value="${requestOverlayHeadline}" /></h4>
+        <p><c:out value="${requestOverlayMessage}" /></p>
+          <%-- Form Content --%>
+        <form method="get" onsubmit="return platformNewsletterOverlaySignUp()">
+          <div class="input-group">
+            <input class="input-group-field" type="text" id="platformOverlayEmail" name="email" placeholder="name@example.com" required>
+            <div class="input-group-button">
+              <button type="submit" class="button small">Sign Up</button>
             </div>
           </div>
-        </div>
-      </c:if>
-      <c:choose>
-        <c:when test="${!empty requestPricingRule.promoCode}">
-          <div id="site-promo-overlay" class="animated slideInUp faster delay-1s hide-for-print">
-            <button id="site-promo-close-button" class="close-button" type="button">
-              <span><i class="${font:fal()} fa-circle-xmark"></i></span>
-            </button>
-            <h4>Thanks for visiting!</h4>
-            <p>We've added a promo code for use on your next purchase</p>
-          </div>
-        </c:when>
-        <c:when test="${!empty requestOverlayHeadline}">
-          <div id="site-newsletter-overlay" class="animated slideInUp faster delay-3s hide-for-print">
-            <button id="site-newsletter-close-button" class="close-button" type="button">
-              <span><i class="${font:fal()} fa-circle-xmark"></i></span>
-            </button>
-            <h4><c:out value="${requestOverlayHeadline}" /></h4>
-            <p><c:out value="${requestOverlayMessage}" /></p>
-              <%-- Form Content --%>
-            <form method="get" onsubmit="return platformNewsletterOverlaySignUp()">
-              <div class="input-group">
-                <input class="input-group-field" type="text" id="platformOverlayEmail" name="email" placeholder="name@example.com" required>
-                <div class="input-group-button">
-                  <button type="submit" class="button small">Sign Up</button>
-                </div>
-              </div>
-              <p class="help-text" id="platformOverlayEmailHelpText"></p>
-            </form>
-          </div>
-        </c:when>
-      </c:choose>
-      <c:if test="${!empty footerStickyLinks && !fn:startsWith(pageRenderInfo.name, '/admin') && !fn:startsWith(pageRenderInfo.name, '/content-editor')}">
-        <style>
-          #site-sticky-footer {
-            position: fixed;
-            bottom: 0;
-            right: 0;
-            text-align: right;
-            padding-right: 30px;
-            z-index: 4;
-          }
-          .site-sticky-footer-button {
-            margin: 0 10px -12px 0;
-            padding: 24px 20px 30px 20px;
-          }
-        </style>
-        <div id="site-sticky-footer" class="animated slideInUp faster delay-1s hide-for-print">
-        <c:forEach items="${footerStickyLinks.entries}" var="link">
-          <c:choose>
-            <c:when test="${fn:startsWith(pageRenderInfo.name, link.link)}">
-
-            </c:when>
-            <c:when test="${fn:startsWith(link.link, 'http://') || fn:startsWith(link.link, 'https://')}">
-              <a class="button secondary site-sticky-footer-button" href="${link.link}" target="_blank"><c:out value="${link.name}"/></a>
-            </c:when>
-            <c:otherwise>
-              <a class="button secondary site-sticky-footer-button" href="${ctx}${link.link}"><c:out value="${link.name}"/></a>
-            </c:otherwise>
-          </c:choose>
-        </c:forEach>
-        </div>
-      </c:if>
-    </c:otherwise>
+          <p class="help-text" id="platformOverlayEmailHelpText"></p>
+        </form>
+      </div>
+    </c:when>
   </c:choose>
+  <%-- Sticky Footer Links --%>
+  <c:if test="${!empty footerStickyLinks && !fn:startsWith(pageRenderInfo.name, '/admin') && !fn:startsWith(pageRenderInfo.name, '/content-editor')}">
+    <style>
+      #site-sticky-footer {
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        text-align: right;
+        padding-right: 30px;
+        z-index: 4;
+      }
+      .site-sticky-footer-button {
+        margin: 0 10px -12px 0;
+        padding: 24px 20px 30px 20px;
+      }
+    </style>
+    <div id="site-sticky-footer" class="animated slideInUp faster delay-1s hide-for-print">
+    <c:forEach items="${footerStickyLinks.entries}" var="link">
+      <c:choose>
+        <c:when test="${fn:startsWith(pageRenderInfo.name, link.link)}">
+
+        </c:when>
+        <c:when test="${fn:startsWith(link.link, 'http://') || fn:startsWith(link.link, 'https://')}">
+          <a class="button secondary site-sticky-footer-button" href="${link.link}" target="_blank"><c:out value="${link.name}"/></a>
+        </c:when>
+        <c:otherwise>
+          <a class="button secondary site-sticky-footer-button" href="${ctx}${link.link}"><c:out value="${link.name}"/></a>
+        </c:otherwise>
+      </c:choose>
+    </c:forEach>
+    </div>
+  </c:if>
+
   <%-- Javascript after content--%>
   <script>
     var mainToken = '${userSession.formToken}';
   </script>
+  <c:if test="${isPreviewMode eq 'true'}">
+    <g:compress>
+      <script src="${ctx}/javascript/widgets/editor/iframe-hover-bridge.js"></script>
+    </g:compress>
+  </c:if>
   <g:compress>
     <web:script package="what-input" file="what-input.min.js" />
     <web:script package="foundation-sites" file="foundation.min.js" />
     <script>
       $(document).foundation();
+      <%-- Site Promo Overlay Close Button --%>
       <%--
       $('.card-profile-stats-more-link').click(function(e){
         e.preventDefault();

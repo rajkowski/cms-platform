@@ -120,10 +120,14 @@ public class XMLPageLoader implements Serializable {
   }
 
   public synchronized void load() {
-    try {
-      for (XMLPageLoaderFiles file : files) {
+    if (files.isEmpty()) {
+      LOG.debug("No files to load");
+      return;
+    }
+    for (XMLPageLoaderFiles file : files) {
+      try {
         URL url = file.getUrl();
-        LOG.info("Checking URL: " + url.toString());
+        LOG.debug("Checking URL: " + url.toString());
         long lastModified = url.openConnection().getLastModified();
         if (file.getLastModified() == -1 || (lastModified > 0 && lastModified > file.getLastModified())) {
           LOG.info("Loading page layout: " + url.getPath());
@@ -131,9 +135,9 @@ public class XMLPageLoader implements Serializable {
           loadAllPages(document);
           file.setLastModified(lastModified);
         }
+      } catch (Exception e) {
+        LOG.error("Error loading file: " + file, e);
       }
-    } catch (Exception e) {
-      LOG.error(e);
     }
   }
 
@@ -165,9 +169,9 @@ public class XMLPageLoader implements Serializable {
     NodeList pageTags = document.getElementsByTagName("page");
     if (pageTags == null || pageTags.getLength() == 0) {
       pageTags = document.getElementsByTagName("service");
-      LOG.info("Found service tags: " + pageTags.getLength());
+      LOG.trace("Found service tags: " + pageTags.getLength());
     } else {
-      LOG.info("Found page tags: " + pageTags.getLength());
+      LOG.trace("Found page tags: " + pageTags.getLength());
     }
     // From the XML, process into page objects
     for (int i = 0; i < pageTags.getLength(); i++) {

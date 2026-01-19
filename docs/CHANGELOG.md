@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the [Common Changelog](https://common-changelog.org/).
 
+## 2026-01-19
+
+- Visual Web Page Editor w/comprehensive drag/drop and widget properties
+- Static Site Generator exports the site as a functional static HTML+CSS+Javascript site
+
 ## 2025-04-03
 
 - OAuth authentication attempts can be accepted across multiple instances, previously the same instance was required

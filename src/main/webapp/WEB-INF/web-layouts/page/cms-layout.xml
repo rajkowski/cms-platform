@@ -11,7 +11,10 @@
           <h5>This is a new page and is not available to users yet.</h5>
           <p>You can edit the page design if you wish to create the page.</p>
           </div>
-          <p><a class="button tiny radius primary" href="${ctx}/admin/web-page-designer?webPage=${webPage.link}"><i class="fa fa-code"></i> Set a Page Layout</a></p>
+          <p>
+            <a class="button radius small primary" href="${ctx}/admin/web-page-designer?webPage=${webPage.link}"><i class="fa fa-bars"></i> Choose a Template</a><br/>
+            <a class="button radius small primary" href="${ctx}/admin/visual-page-editor?webPage=${webPage.link}"><i class="fa fa-window-maximize"></i> Create a Webpage</a>
+          </p>
           ]]></html>
         </widget>
       </column>

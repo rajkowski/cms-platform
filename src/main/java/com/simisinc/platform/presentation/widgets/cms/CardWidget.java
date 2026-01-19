@@ -16,11 +16,13 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
 
 /**
- * Displays a Card
+ * Displays a Simple Card
  *
  * @author matt rajkowski
  * @created 4/20/18 2:23 PM
@@ -36,10 +38,20 @@ public class CardWidget extends GenericWidget {
     // Preferences
     context.getRequest().setAttribute("classData", context.getPreferences().get("class"));
     context.getRequest().setAttribute("title", context.getPreferences().get("title"));
-    context.getRequest().setAttribute("icon", context.getPreferences().get("icon"));
+
+    String icon = context.getPreferences().getOrDefault("icon", null);
+    if (StringUtils.isNotEmpty(icon) && !icon.startsWith("fa-")) {
+      icon = "fa-" + icon.trim();
+    }
+    context.getRequest().setAttribute("icon", icon);
+
     context.getRequest().setAttribute("link", context.getPreferences().get("link"));
     context.getRequest().setAttribute("linkTitle", context.getPreferences().get("linkTitle"));
-    context.getRequest().setAttribute("linkIcon", context.getPreferences().get("linkIcon"));
+    String linkIcon = context.getPreferences().getOrDefault("linkIcon", null);
+    if (StringUtils.isNotEmpty(linkIcon) && !linkIcon.startsWith("fa-")) {
+      linkIcon = "fa-" + linkIcon.trim();
+    }
+    context.getRequest().setAttribute("linkIcon", linkIcon);
 
     // Show the JSP
     context.setJsp(JSP);

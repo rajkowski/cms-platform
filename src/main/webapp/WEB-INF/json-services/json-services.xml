@@ -16,6 +16,7 @@
   -->
 <services>
   <service endpoint="/json/activityList" class="com.simisinc.platform.presentation.widgets.items.ActivityListAjax" />
+  <service endpoint="/json/contentList" class="com.simisinc.platform.presentation.widgets.cms.ContentListAjax" />
   <service endpoint="/json/lookupItem" class="com.simisinc.platform.presentation.widgets.items.LookupItemAjax" />
   <service endpoint="/json/lookupLocation" class="com.simisinc.platform.presentation.widgets.items.LookupLocationAjax" />
   <service endpoint="/json/lookupUser" class="com.simisinc.platform.presentation.widgets.cms.LookupUserAjax" />
@@ -25,6 +26,18 @@
   <service endpoint="/json/photoList" class="com.simisinc.platform.presentation.widgets.cms.PhotoListAjax" />
   <service endpoint="/json/emailSubscribe" class="com.simisinc.platform.presentation.widgets.ecommerce.EmailSubscribeAjax" />
   <service endpoint="/json/mailingList" class="com.simisinc.platform.presentation.widgets.mailinglists.MailingListAjax" />
+  <!-- CMS Editing -->
+  <service endpoint="/json/webPageList" class="com.simisinc.platform.presentation.widgets.cms.WebPageListAjax" />
+  <service endpoint="/json/webPageContent" class="com.simisinc.platform.presentation.widgets.cms.WebPageContentAjax" />
+  <service endpoint="/json/webPageInfo" class="com.simisinc.platform.presentation.widgets.cms.WebPageInfoAjax" />
+  <service endpoint="/json/saveWebPageInfo" class="com.simisinc.platform.presentation.widgets.cms.SaveWebPageInfoAjax" />
+  <service endpoint="/json/saveWebPage" class="com.simisinc.platform.presentation.widgets.cms.SaveWebPageAjax" />
+  <service endpoint="/json/stylesheet" class="com.simisinc.platform.presentation.widgets.cms.StylesheetAjax" />
+  <service endpoint="/json/saveStylesheet" class="com.simisinc.platform.presentation.widgets.cms.SaveStylesheetAjax" />
+  <service method="get" endpoint="/json/static-sites/list" class="com.simisinc.platform.presentation.widgets.editor.StaticSiteEndpoint" />
+  <service method="get" endpoint="/json/static-sites/download" class="com.simisinc.platform.presentation.widgets.editor.StaticSiteEndpoint" />
+  <service method="post" endpoint="/json/static-sites/generate" class="com.simisinc.platform.presentation.widgets.editor.StaticSiteEndpoint" />
+  <service method="post" endpoint="/json/static-sites/delete" class="com.simisinc.platform.presentation.widgets.editor.StaticSiteEndpoint" />
   <!-- Dashboards -->
   <service endpoint="/json/supersetGuestToken" class="com.simisinc.platform.presentation.widgets.dashboard.SupersetGuestTokenAjax" />
 </services>

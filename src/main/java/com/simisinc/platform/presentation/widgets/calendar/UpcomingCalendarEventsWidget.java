@@ -173,7 +173,7 @@ public class UpcomingCalendarEventsWidget extends GenericWidget {
       context.getRequest().setAttribute("cardClass", context.getPreferences().get("cardClass"));
       context.getRequest().setAttribute("calendarLink", context.getPreferences().get("calendarLink"));
 
-      List<String> titles = Stream.of(context.getPreferences().get("titles").split("\\|"))
+      List<String> titles = Stream.of(context.getPreferences().getOrDefault("titles", "").split("\\|"))
           .map(String::trim)
           .collect(toList());
       context.getRequest().setAttribute("titles", titles);

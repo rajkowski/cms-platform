@@ -9,7 +9,7 @@
         </widget>
       </column>
     </section>
-    <section class="grid-container grid-x grid-margin-x">
+    <section class="grid-container grid-x grid-margin-x padding-left-1rem">
       <column class="small-12 medium-6 large-4 cell callout">
         <widget name="siteStats">
           <icon>fa-globe</icon>
@@ -77,23 +77,27 @@
   </page>
 
   <page name="/admin/documentation" title="Documentation" role="admin,content-manager,community-manager">
-    <column class="small-12 cell">
-      <widget name="content">
-        <html><![CDATA[<h3>App Platform Resources</h3>
-<ul>
-<li><a target="_blank" href="https://www.simisinc.com/mobile-apps-and-websites">Platform Product Information</a></li>
-<li><a href="/admin/documentation/wiki/Home">Platform Documentation Wiki</a></li>
-</ul>]]></html>
-      </widget>
-    </column>
+    <section>
+      <column class="small-12 cell">
+        <widget name="content">
+          <html><![CDATA[<h3>App Platform Resources</h3>
+  <ul>
+  <li><a target="_blank" href="https://www.simisinc.com/mobile-apps-and-websites">Platform Product Information</a></li>
+  <li><a href="/admin/documentation/wiki/Home">Platform Documentation Wiki</a></li>
+  </ul>]]></html>
+        </widget>
+      </column>
+    </section>
   </page>
   <page name="/admin/documentation/wiki" role="admin,content-manager,community-manager">
-    <column class="small-12 cell">
-      <widget name="wiki" class="padding-20 padding-width-30">
-        <title>Documentation</title>
-        <wikiUniqueId>site-documentation</wikiUniqueId>
-      </widget>
-    </column>
+    <section>
+      <column class="small-12 cell">
+        <widget name="wiki">
+          <title>Documentation</title>
+          <wikiUniqueId>site-documentation</wikiUniqueId>
+        </widget>
+      </column>
+    </section>
   </page>
 
   <page name="/admin/site-properties" role="admin" title="Site Settings">
@@ -487,7 +491,7 @@
         <!--</widget>-->
       <!--</column>-->
     <!--</section>-->
-    <section class="grid-container grid-x grid-margin-x">
+    <section class="grid-container grid-x grid-margin-x padding-left-1rem">
       <column class="small-12 medium-6 large-3 cell callout">
         <widget name="siteStats">
           <icon>fa-globe</icon>
@@ -719,16 +723,7 @@
   </page>
 
   <page name="/admin/sitemap" role="admin,content-manager" title="Site Map">
-    <!--<section>-->
-      <!--<column class="small-12 cell">-->
-        <!--<widget name="breadcrumbs">-->
-          <!--<links>-->
-            <!--<link name="Site Map" value="" />-->
-          <!--</links>-->
-        <!--</widget>-->
-      <!--</column>-->
-    <!--</section>-->
-    <section>
+    <section class="margin-top-25">
       <column class="small-12 cell">
         <widget name="siteMap">
           <title>Site Map Editor</title>
@@ -763,25 +758,6 @@
         <widget name="tableOfContentsEditor">
           <title>Sticky Footer Buttons</title>
           <uniqueId>footer-sticky-links</uniqueId>
-        </widget>
-      </column>
-    </section>
-  </page>
-
-  <page name="/admin/sitemap-editor" role="admin,content-manager" title="Site Map Editor">
-    <!--<section>-->
-      <!--<column class="small-12 cell">-->
-        <!--<widget name="breadcrumbs">-->
-          <!--<links>-->
-            <!--<link name="Site Map" value="" />-->
-          <!--</links>-->
-        <!--</widget>-->
-      <!--</column>-->
-    <!--</section>-->
-    <section>
-      <column class="small-12 cell">
-        <widget name="siteMapEditor">
-          <title>Site Map Renaming</title>
         </widget>
       </column>
     </section>
@@ -1218,6 +1194,16 @@
       <column class="small-12 cell">
         <widget name="xapiStatementList">
           <title>Activity</title>
+        </widget>
+      </column>
+    </section>
+  </page>
+
+  <page name="/admin/visual-page-editor" role="admin,content-manager" title="Visual Page Editor" class="full-page">
+    <section class="grid-x">
+      <column class="small-12 cell">
+        <widget name="visualPageEditor">
+          <title>Visual Page Editor</title>
         </widget>
       </column>
     </section>

@@ -14,12 +14,13 @@
   ~ limitations under the License.
   --%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="web" uri="/WEB-INF/tlds/web.tld" %>
 <jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="category" class="com.simisinc.platform.domain.model.items.Category" scope="request"/>
 <jsp:useBean id="collection" class="com.simisinc.platform.domain.model.items.Collection" scope="request"/>
-<link href="${ctx}/css/spectrum-1.8.1/spectrum.css" rel="stylesheet">
-<script src="${ctx}/javascript/spectrum-1.8.1/spectrum.js"></script>
+<web:stylesheet package="spectrum" file="spectrum.css" />
+<web:script package="spectrum" file="spectrum.js" />
 <form method="post">
   <%-- Required by controller --%>
   <input type="hidden" name="widget" value="${widgetContext.uniqueId}" />

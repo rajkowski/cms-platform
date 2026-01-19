@@ -152,7 +152,9 @@ public class XMLFooterLoader implements Serializable {
       // Applies the html class to the footer
       footer.setCssClass(container.getAttribute("class"));
     }
-    XMLContainerCommands.appendSections(document, footer.getSections(), container.getChildNodes());
+    // Create a shared context for the page to track the overall row/column/widget sequences
+    PageRenderContext pageRenderContext = new PageRenderContext();
+    XMLContainerCommands.appendSections(pageRenderContext, document, footer.getSections(), container.getChildNodes());
     return footer;
   }
 }

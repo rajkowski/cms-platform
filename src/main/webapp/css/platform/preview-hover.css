@@ -1,0 +1,327 @@
+/**
+ * Preview Hover Styles
+ * 
+ * Styles for the Visual Editor Preview Hover feature including
+ * hover outlines and action buttons.
+ * 
+ * Requirements: 2.2, 4.1, 4.2, 4.4, 4.5, 4.6
+ */
+
+/* Base hover outline styles */
+.preview-hover-outline {
+  position: fixed;
+  pointer-events: none; /* Allow clicks to pass through to underlying elements */
+  border: 2px solid #007bff;
+  background: transparent;
+  z-index: 9998;
+  box-sizing: border-box;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border-radius: 4px;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2), inset 0 0 0 1px rgba(0, 123, 255, 0.15);
+  will-change: transform, top, left, width, height;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Widget outline - solid border with bright glow (non-clickable) */
+/* Widgets have highest z-index so they appear on top */
+.preview-hover-outline--widget {
+  border-color: #0d5de8; /* Darker, richer blue */
+  border-style: solid;
+  border-width: 2px;
+  box-shadow: 0 0 0 2px rgba(13, 93, 232, 0.3), 
+              inset 0 0 0 1px rgba(13, 93, 232, 0.15), 
+              0 0 12px rgba(13, 93, 232, 0.25);
+  z-index: 10000;
+}
+
+/* Column outline - dashed border with green glow (clickable) */
+/* Columns have higher z-index than rows but lower than widgets */
+.preview-hover-outline--column {
+  border-color: #198754; /* Darker green */
+  border-style: dashed;
+  border-width: 2px;
+  box-shadow: 0 0 0 2px rgba(25, 135, 84, 0.25), 
+              inset 0 0 0 1px rgba(25, 135, 84, 0.1), 
+              0 0 12px rgba(25, 135, 84, 0.2);
+  pointer-events: none; /* Prevent scroll blocking; use action button for clicks */
+  z-index: 9999;
+}
+
+.preview-hover-outline--column:hover {
+  background: rgba(25, 135, 84, 0.05);
+  box-shadow: 0 0 0 2px rgba(25, 135, 84, 0.35), 
+              inset 0 0 0 1px rgba(25, 135, 84, 0.15), 
+              0 0 16px rgba(25, 135, 84, 0.3);
+}
+
+/* Row outline - dotted border with amber glow (clickable) */
+/* Rows have lower z-index so columns/widgets appear on top */
+.preview-hover-outline--row {
+  border-color: #ffa500; /* Vibrant orange */
+  border-style: dotted;
+  border-width: 2px;
+  box-shadow: 0 0 0 2px rgba(255, 165, 0, 0.25), 
+              inset 0 0 0 1px rgba(255, 165, 0, 0.1), 
+              0 0 12px rgba(255, 165, 0, 0.2);
+  pointer-events: none; /* Prevent scroll blocking; use action button for clicks */
+  /* Make row outlines semi-transparent to allow nested elements to be seen */
+  opacity: 0.7;
+  z-index: 9998;
+}
+
+.preview-hover-outline--row:hover {
+  background: rgba(255, 165, 0, 0.05);
+  box-shadow: 0 0 0 2px rgba(255, 165, 0, 0.35), 
+              inset 0 0 0 1px rgba(255, 165, 0, 0.15), 
+              0 0 16px rgba(255, 165, 0, 0.3);
+  opacity: 0.8;
+}
+
+/* Action button base styles */
+.preview-hover-button {
+  position: fixed;
+  pointer-events: auto; /* Enable button clicks */
+  z-index: 10000;
+  cursor: pointer;
+  background: #0d5de8;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 14px;
+  line-height: 1;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15), 0 0 0 2px rgba(13, 93, 232, 0.3);
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  outline: none;
+  will-change: transform, box-shadow;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Type-specific button colors */
+.preview-hover-button--widget {
+  background: #0d5de8;
+  box-shadow: 0 3px 8px rgba(13, 93, 232, 0.2), 0 0 0 2px rgba(13, 93, 232, 0.3);
+}
+
+/* Column and row buttons are hidden - click the outline instead */
+/* Show buttons for columns and rows to enable editing without intercepting scroll */
+.preview-hover-button--column {
+  background: #198754;
+  box-shadow: 0 3px 8px rgba(25, 135, 84, 0.2), 0 0 0 2px rgba(25, 135, 84, 0.3);
+}
+
+.preview-hover-button--row {
+  background: #ffa500;
+  box-shadow: 0 3px 8px rgba(255, 165, 0, 0.2), 0 0 0 2px rgba(255, 165, 0, 0.3);
+}
+
+/* Add subtle hit area around button to prevent flickering */
+.preview-hover-button::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  right: -6px;
+  bottom: -6px;
+  pointer-events: auto;
+  z-index: -1;
+  border-radius: 50%;
+}
+
+/* Button hover state - larger, darker, more prominent */
+.preview-hover-button:hover {
+  transform: scale(1.15);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25), 0 0 0 3px rgba(255, 255, 255, 0.5);
+}
+
+.preview-hover-button--widget:hover {
+  background: #094bb5;
+  box-shadow: 0 6px 12px rgba(13, 93, 232, 0.3), 0 0 0 3px rgba(13, 93, 232, 0.2);
+}
+
+/* Column and row button hover states removed - buttons are hidden */
+
+/* Button focus state for accessibility */
+.preview-hover-button:focus {
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15), 0 0 0 3px rgba(13, 93, 232, 0.35);
+  outline: 2px solid rgba(13, 93, 232, 0.5);
+  outline-offset: 2px;
+}
+
+/* Button active state */
+.preview-hover-button:active {
+  transform: scale(0.95);
+}
+
+/* Icon styles within button */
+.preview-hover-button i,
+.preview-hover-button span {
+  font-size: 16px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .preview-hover-outline {
+    border-width: 3px;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.3);
+  }
+  
+  .preview-hover-outline--widget {
+    border-color: #0000ff;
+  }
+  
+  .preview-hover-outline--column {
+    border-color: #008000;
+  }
+  
+  .preview-hover-outline--row {
+    border-color: #ff8c00;
+  }
+  
+  .preview-hover-button {
+    border-width: 3px;
+    width: 40px;
+    height: 40px;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3), 0 0 0 3px rgba(255, 255, 255, 0.5);
+  }
+  
+  .preview-hover-button:hover {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4), 0 0 0 4px rgba(255, 255, 255, 0.7);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .preview-hover-outline,
+  .preview-hover-button {
+    transition: none;
+    will-change: auto;
+  }
+  
+  .preview-hover-button:hover {
+    transform: none;
+  }
+  
+  .preview-hover-button:active {
+    transform: none;
+  }
+}
+
+/* Print styles - hide hover elements when printing */
+@media print {
+  .preview-hover-outline,
+  .preview-hover-button {
+    display: none !important;
+  }
+}
+
+/* Mobile/touch device optimizations */
+@media (max-width: 768px) {
+  .preview-hover-button {
+    width: 44px;
+    height: 44px;
+    font-size: 16px;
+  }
+  
+  .preview-hover-button i,
+  .preview-hover-button span {
+    font-size: 18px;
+  }
+  
+  .preview-hover-outline {
+    border-width: 2px;
+  }
+}
+
+/* Animation for smooth outline transitions */
+@keyframes preview-hover-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes preview-hover-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.1);
+  }
+}
+
+.preview-hover-outline.preview-hover-outline--pulse {
+  animation: preview-hover-pulse 1.5s ease-in-out infinite;
+}
+
+/* Ensure proper stacking context */
+.preview-hover-outline,
+.preview-hover-button {
+  isolation: isolate;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .preview-hover-outline--widget {
+    border-color: #66b3ff;
+    box-shadow: 0 0 0 2px rgba(102, 179, 255, 0.3), 
+                inset 0 0 0 1px rgba(102, 179, 255, 0.15), 
+                0 0 12px rgba(102, 179, 255, 0.25);
+  }
+  
+  .preview-hover-outline--column {
+    border-color: #66d966;
+    box-shadow: 0 0 0 2px rgba(102, 217, 102, 0.25), 
+                inset 0 0 0 1px rgba(102, 217, 102, 0.1), 
+                0 0 12px rgba(102, 217, 102, 0.2);
+  }
+  
+  .preview-hover-outline--row {
+    border-color: #ffd966;
+    box-shadow: 0 0 0 2px rgba(255, 217, 102, 0.25), 
+                inset 0 0 0 1px rgba(255, 217, 102, 0.1), 
+                0 0 12px rgba(255, 217, 102, 0.2);
+  }
+  
+  .preview-hover-button {
+    background: #0d5de8;
+    border-color: #333333;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(13, 93, 232, 0.4);
+  }
+  
+  .preview-hover-button--widget {
+    box-shadow: 0 3px 8px rgba(13, 93, 232, 0.3), 0 0 0 2px rgba(13, 93, 232, 0.4);
+  }
+  
+  .preview-hover-button--column {
+    box-shadow: 0 3px 8px rgba(25, 135, 84, 0.3), 0 0 0 2px rgba(25, 135, 84, 0.4);
+  }
+  
+  .preview-hover-button--row {
+    box-shadow: 0 3px 8px rgba(255, 165, 0, 0.3), 0 0 0 2px rgba(255, 165, 0, 0.4);
+  }
+  
+  .preview-hover-button:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.35), 0 0 0 3px rgba(102, 179, 255, 0.3);
+  }
+  
+  .preview-hover-button:focus {
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3), 0 0 0 3px rgba(13, 93, 232, 0.45);
+  }
+}

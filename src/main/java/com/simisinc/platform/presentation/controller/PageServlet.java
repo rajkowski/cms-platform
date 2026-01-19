@@ -181,6 +181,129 @@ public class PageServlet extends HttpServlet {
     ConvertUtils.register(converter, Timestamp.class);
   }
 
+  /**
+   * Handles preview requests from the visual page editor
+   * Renders the page using unsaved designer data from the editor
+   */
+  private void handlePreviewRequest(HttpServletRequest request, HttpServletResponse response,
+      PageRequest previewPageRequest, UserSession userSession) throws Exception {
+
+    // Only admins and content managers can use preview
+    if (!userSession.hasRole("admin") && !userSession.hasRole("content-manager")) {
+      response.sendError(HttpServletResponse.SC_FORBIDDEN);
+      return;
+    }
+
+    String designerData = request.getParameter("designerData");
+    if (StringUtils.isBlank(designerData)) {
+      response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+      return;
+    }
+
+    // This is a preview request with unsaved designer data
+    PageRequest pageRequest = new PageRequest("GET",
+        previewPageRequest.getScheme(),
+        previewPageRequest.getServerName(),
+        previewPageRequest.getPort(),
+        previewPageRequest.getContextPath(),
+        previewPageRequest.getUri(),
+        previewPageRequest.getQueryString(),
+        previewPageRequest.isSecure(),
+        previewPageRequest.getRemoteAddr());
+    pageRequest.setParameterMap(request.getParameterMap());
+
+    LOG.debug("Processing preview request for: " + pageRequest.getPagePath());
+
+    try {
+      // See if there's an existing web page
+      WebPage currentWebPage = LoadWebPageCommand.loadByLink(pageRequest.getPagePath());
+
+      // Create a temporary web page for the preview
+      WebPage webPage = new WebPage();
+      webPage.setTitle(currentWebPage != null ? currentWebPage.getTitle() : "Preview Page");
+      webPage.setLink(pageRequest.getPagePath());
+      webPage.setPageXml(designerData);
+
+      // Create the page design from the XML
+      Page pageRef = XMLPageFactory.createPage(webPage.getTitle(), webPage, WebPageXmlLayoutCommand.getWidgetLibrary());
+      if (pageRef == null) {
+        response.getWriter().print("<p>Error: Unable to render preview</p>");
+        return;
+      }
+
+      // Load properties needed for rendering
+      Map<String, String> sitePropertyMap = LoadSitePropertyCommand.loadAsMap("site");
+      Map<String, String> themePropertyMap = LoadSitePropertyCommand.loadAsMap("theme");
+
+      // Create a context for processing the widgets
+      ControllerSession controllerSession = (ControllerSession) request.getSession()
+          .getAttribute(SessionConstants.CONTROLLER);
+      URL applicationUrl = request.getServletContext().getResource("/");
+      WebContainerContext webContainerContext = new WebContainerContext(applicationUrl, pageRequest, request,
+          response, controllerSession, widgetInstances, webPackageList, webPage, pageRef);
+
+      // Prepare core data
+      Map<String, String> coreData = new HashMap<>();
+      coreData.put("userId", String.valueOf(userSession.getUserId()));
+
+      // Create page render info
+      PageRenderInfo pageRenderInfo = new PageRenderInfo(pageRef, pageRequest.getPagePath());
+
+      // Process and render the widgets
+      PageResponse pageResponse = WebContainerCommand.processWidgets(webContainerContext, pageRef.getSections(),
+          pageRenderInfo, coreData, userSession, themePropertyMap, request);
+
+      if (pageResponse.isHandled()) {
+        // The widget processor handled the response
+        LOG.debug("Widget processed handled the response");
+        return;
+      }
+
+      // Set up request attributes for the JSP
+      request.setAttribute(CONTEXT_PATH, pageRequest.getContextPath());
+      request.setAttribute(PAGE_RENDER_INFO, pageRenderInfo);
+      request.setAttribute("sitePropertyMap", sitePropertyMap);
+      request.setAttribute("isPreviewMode", "true");
+
+      // Determine if there is a global custom stylesheet
+      Stylesheet globalStylesheet = LoadStylesheetCommand.loadStylesheetByWebPageId(-1L);
+      if (globalStylesheet != null) {
+        LOG.debug("Adding global stylesheet...");
+        request.setAttribute("includeGlobalStylesheet", "true");
+        request.setAttribute("includeGlobalStylesheetLastModified", globalStylesheet.getModified().getTime());
+      } else {
+        LOG.debug("No global stylesheet.");
+      }
+      // Determine if the current webPage has an additional custom stylesheet (or if one was posted with the page)
+      if (false) {
+        // @todo Prepare the temporary css
+      } else if (currentWebPage != null && currentWebPage.getId() > -1) {
+        // For submitted XML... do we know the page???
+        Stylesheet pageStylesheet = LoadStylesheetCommand.loadStylesheetByWebPageId(currentWebPage.getId());
+        if (pageStylesheet != null) {
+          LOG.debug("Adding page stylesheet...");
+          request.setAttribute("includeStylesheet", pageStylesheet.getWebPageId());
+          request.setAttribute("includeStylesheetLastModified", pageStylesheet.getModified().getTime());
+        } else {
+          LOG.debug("No page stylesheet.");
+        }
+      }
+
+      // Set attributes for the layout JSP
+      request.setAttribute(RequestConstants.WEB_PACKAGE_LIST, webPackageList);
+
+      // For embedded mobile and API content
+      // request.setAttribute(PAGE_BODY, "/WEB-INF/jsp/container-layout.jsp");
+      request.setAttribute(PAGE_BODY, "/WEB-INF/jsp/layout.jsp");
+      request.getServletContext().getRequestDispatcher("/WEB-INF/jsp/main.jsp").forward(request, response);
+      LOG.debug("Finished dispatch.");
+
+    } catch (Exception e) {
+      LOG.error("Error processing preview request: " + e.getMessage(), e);
+      response.getWriter().print("<p>Error loading preview</p>");
+    }
+  }
+
   public void destroy() {
 
   }
@@ -233,6 +356,14 @@ public class PageServlet extends HttpServlet {
         response.setHeader("Expires", "-1");
       }
 
+      // Handle preview requests from the visual page editor
+      String previewParam = request.getParameter("containerPreview");
+      if ("true".equals(previewParam)) {
+        // Forward to the preview handler
+        handlePreviewRequest(request, response, pageRequest, userSession);
+        return;
+      }
+
       // Always access the WebPage record so it can be used downstream
       WebPage webPage = LoadWebPageCommand.loadByLink(pageRequest.getPagePath());
       if (webPage != null) {
@@ -265,7 +396,7 @@ public class PageServlet extends HttpServlet {
       // Determine the Page XML Layout for this request
       Page pageRef = WebPageXmlLayoutCommand.retrievePageForRequest(webPage, pageRequest.getPagePath());
 
-      // Load the properties
+      // Load the common properties
       Map<String, String> systemPropertyMap = LoadSitePropertyCommand.loadAsMap("system");
       Map<String, String> sitePropertyMap = LoadSitePropertyCommand.loadAsMap("site");
       Map<String, String> themePropertyMap = LoadSitePropertyCommand.loadAsMap("theme");
@@ -347,7 +478,7 @@ public class PageServlet extends HttpServlet {
           } else {
             collectionUniqueId = request.getParameter("collectionUniqueId");
           }
-        } else if (pageRef.getCollectionUniqueId().startsWith("/")) {
+        } else if (pageRef.getCollectionUniqueId().startsWith("/") && pageRef.getCollectionUniqueId().contains("*")) {
           collectionUniqueId = pageRequest.getUri().substring(pageRef.getCollectionUniqueId().indexOf("*"));
         }
         if (!StringUtils.isBlank(collectionUniqueId)) {
@@ -457,6 +588,11 @@ public class PageServlet extends HttpServlet {
 
         // Verify a target widget exists
         String targetWidget = request.getParameter("widget");
+        // Json requests use the only widget id
+        if (StringUtils.isEmpty(targetWidget) && pageRequest.getPagePath().startsWith("/json/")) {
+          targetWidget = pageRequest.getPagePath() + "1";
+        }
+        // Require targetWidget
         if (StringUtils.isEmpty(targetWidget)) {
           LOG.error(
               "DEVELOPER: TARGET WIDGET PARAMETER WAS NOT FOUND AND IS REQUIRED " + pageRequest.getPagePath() + " "
@@ -486,25 +622,40 @@ public class PageServlet extends HttpServlet {
         return;
       }
 
-      // Render the header
-      Header header = null;
-      if (pageRenderInfo.getName().startsWith("/checkout")) {
-        header = WebContainerLayoutCommand.retrieveHeader("header.plain",
-            request.getServletContext().getResource("/WEB-INF/web-layouts/header/header-layout.xml"));
-      } else {
-        header = WebContainerLayoutCommand.retrieveHeader("header.default",
-            request.getServletContext().getResource("/WEB-INF/web-layouts/header/header-layout.xml"));
+      // For normal pages, render the header and footer
+      boolean prepareHeaderFooter = true;
+      if ("iframe".equals(request.getHeader("Sec-Fetch-Dest"))) {
+        prepareHeaderFooter = false;
       }
-      HeaderRenderInfo headerRenderInfo = new HeaderRenderInfo(header, pageRequest.getPagePath());
-      WebContainerCommand.processWidgets(webContainerContext, header.getSections(), headerRenderInfo, coreData,
-          userSession, themePropertyMap, request);
+      if (pageRequest.getPagePath().startsWith("/admin/system") ||
+          pageRequest.getPagePath().startsWith("/admin/visual-page-editor")) {
+        prepareHeaderFooter = false;
+      }
 
-      // Render the footer
-      Footer footer = WebContainerLayoutCommand.retrieveFooter("footer.default",
-          request.getServletContext().getResource("/WEB-INF/web-layouts/footer/footer-layout.xml"));
-      FooterRenderInfo footerRenderInfo = new FooterRenderInfo(footer, pageRequest.getPagePath());
-      WebContainerCommand.processWidgets(webContainerContext, footer.getSections(), footerRenderInfo, coreData,
-          userSession, themePropertyMap, request);
+      HeaderRenderInfo headerRenderInfo = null;
+      FooterRenderInfo footerRenderInfo = null;
+      if (prepareHeaderFooter) {
+        LOG.debug("Rendering header and footer...");
+        // Render the header
+        Header header = null;
+        if (pageRenderInfo.getName().startsWith("/checkout")) {
+          header = WebContainerLayoutCommand.retrieveHeader("header.plain",
+              request.getServletContext().getResource("/WEB-INF/web-layouts/header/header-layout.xml"));
+        } else {
+          header = WebContainerLayoutCommand.retrieveHeader("header.default",
+              request.getServletContext().getResource("/WEB-INF/web-layouts/header/header-layout.xml"));
+        }
+        headerRenderInfo = new HeaderRenderInfo(header, pageRequest.getPagePath());
+        WebContainerCommand.processWidgets(webContainerContext, header.getSections(), headerRenderInfo, coreData,
+            userSession, themePropertyMap, request);
+
+        // Render the footer
+        Footer footer = WebContainerLayoutCommand.retrieveFooter("footer.default",
+            request.getServletContext().getResource("/WEB-INF/web-layouts/footer/footer-layout.xml"));
+        footerRenderInfo = new FooterRenderInfo(footer, pageRequest.getPagePath());
+        WebContainerCommand.processWidgets(webContainerContext, footer.getSections(), footerRenderInfo, coreData,
+            userSession, themePropertyMap, request);
+      }
 
       // Finalize the controller session (zero out the widget's session data)
       controllerSession.clearAllWidgetData();
@@ -581,13 +732,30 @@ public class PageServlet extends HttpServlet {
       if (webContainerContext.isEmbedded()) {
         request.getServletContext().getRequestDispatcher("/WEB-INF/jsp/embedded.jsp").forward(request, response);
       } else {
-        if ("container".equals(request.getSession().getAttribute(SessionConstants.X_VIEW_MODE))) {
+        // Check if this is an admin page accessed directly and prepare for iframe rendering
+        boolean isAdminPath = pageRequest.getPagePath().startsWith("/admin") &&
+            !pageRequest.getPagePath().startsWith("/admin/system") &&
+            !pageRequest.getPagePath().startsWith("/admin/visual-page-editor") &&
+            !pageRequest.getPagePath().startsWith("/admin/web-page-designer") &&
+            !pageRequest.getPagePath().startsWith("/admin/web-page") &&
+            !pageRequest.getPagePath().startsWith("/admin/css-editor") &&
+            !pageRequest.getPagePath().startsWith("/admin/web-container-designer");
+        boolean isIframeRequest = "iframe".equals(request.getHeader("Sec-Fetch-Dest"));
+        if (isAdminPath && !isIframeRequest) {
+          request.setAttribute("adminIframeUrl", pageRequest.getPagePath());
+          request.setAttribute(PAGE_BODY, "/WEB-INF/jsp/admin.jsp");
+        } else if ("container".equals(request.getSession().getAttribute(SessionConstants.X_VIEW_MODE))) {
           // For embedded mobile and API content
           request.setAttribute(PAGE_BODY, "/WEB-INF/jsp/container-layout.jsp");
         } else {
-          // For web content with a header and footer
-          request.setAttribute(HEADER_RENDER_INFO, headerRenderInfo);
-          request.setAttribute(FOOTER_RENDER_INFO, footerRenderInfo);
+          // For web content with a header and 
+          LOG.debug("Setting header and footer render info... " + (headerRenderInfo != null) + " " + (footerRenderInfo != null));
+          if (!prepareHeaderFooter) {
+            request.setAttribute(SHOW_MAIN_MENU, "false");
+          } else {
+            request.setAttribute(HEADER_RENDER_INFO, headerRenderInfo);
+            request.setAttribute(FOOTER_RENDER_INFO, footerRenderInfo);
+          }
           request.setAttribute(PAGE_BODY, "/WEB-INF/jsp/layout.jsp");
         }
         request.getServletContext().getRequestDispatcher("/WEB-INF/jsp/main.jsp").forward(request, response);

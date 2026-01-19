@@ -60,6 +60,13 @@ public class DateCommand {
     return (timestamp.getTime() < (System.currentTimeMillis() - (hoursToCheck * 60 * 60 * 1000)));
   }
 
+  public static boolean isDaysOld(Timestamp timestamp, int daysToCheck) {
+    if (timestamp == null) {
+      return false;
+    }
+    return (timestamp.getTime() < (System.currentTimeMillis() - (daysToCheck * 60 * 60 * 24 * 1000)));
+  }
+
   public static String relative(Timestamp timestamp) {
     if (timestamp == null) {
       return "";

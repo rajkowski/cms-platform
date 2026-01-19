@@ -153,7 +153,9 @@ public class XMLHeaderLoader implements Serializable {
       // Applies the html class to the header
       header.setCssClass(container.getAttribute("class"));
     }
-    XMLContainerCommands.appendSections(document, header.getSections(), container.getChildNodes());
+    // Create a shared context for the page to track the overall row/column/widget sequences
+    PageRenderContext pageRenderContext = new PageRenderContext();
+    XMLContainerCommands.appendSections(pageRenderContext,document, header.getSections(), container.getChildNodes());
     return header;
   }
 }

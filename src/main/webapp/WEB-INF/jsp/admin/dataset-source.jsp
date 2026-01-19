@@ -121,7 +121,7 @@
   </c:choose>
 </form>
 <hr />
-<form method="post" enctype="multipart/form-data">
+<form id="fileForm" method="post" enctype="multipart/form-data">
   <%-- Required by controller --%>
   <input type="hidden" name="command" value="uploadFile" />
   <input type="hidden" name="widget" value="${widgetContext.uniqueId}"/>
@@ -134,3 +134,8 @@
     <input type="file" id="file" name="file" class="show-for-sr">
   </fieldset>
 </form>
+<script>
+  document.getElementById("file").onchange = function() {
+    document.getElementById("fileForm").submit();
+  }
+</script>

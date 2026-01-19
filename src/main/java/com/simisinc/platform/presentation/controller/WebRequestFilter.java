@@ -119,6 +119,9 @@ public class WebRequestFilter implements Filter {
     String referer = httpServletRequest.getHeader("Referer");
     String userAgent = httpServletRequest.getHeader("USER-AGENT");
 
+    // Log the request
+    LOG.debug(httpServletRequest.getMethod() + " " + resource);
+
     // Show the resource and headers
     if (LOG.isTraceEnabled()) {
       LOG.trace("Resource: " + resource);
@@ -127,9 +130,6 @@ public class WebRequestFilter implements Filter {
         String name = (String) headerNames.nextElement();
         LOG.debug("Header: " + name + "=" + httpServletRequest.getHeader(name));
       }
-    }
-    if (LOG.isDebugEnabled()) {
-      LOG.debug(httpServletRequest.getMethod() + " uri " + resource);
     }
 
     // Check allowed host names
@@ -175,6 +175,16 @@ public class WebRequestFilter implements Filter {
     if (requireSSL && !"https".equalsIgnoreCase(scheme)) {
       if (!"localhost".equals(request.getServerName()) && !InetAddressUtils.isIPv4Address(request.getServerName())
           && !InetAddressUtils.isIPv6Address(request.getServerName())) {
+        // Check protocol, server name, port number, and server path
+        if (StringUtils.isBlank(httpServletRequest.getRequestURL())) {
+          LOG.error("No request URL found, cannot redirect to SSL");
+          do500(servletResponse);
+          return;
+        }
+        // Use the exact URL, but switch the scheme to https
+        LOG.debug("Redirecting to SSL: " + request.getServerName());
+        // If the request is not secure, redirect to the same URL with https
+        // Replace "http://" with "https://"
         String requestURL = httpServletRequest.getRequestURL().toString();
         requestURL = StringUtils.replace(requestURL, "http://", "https://");
         LOG.debug("Redirecting to: " + requestURL);

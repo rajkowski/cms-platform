@@ -34,7 +34,13 @@
       "version": "2.0.11"
     },
     "dragula": {
-      "version": "3.7.3"
+      "version": "3.7.3",
+      "paths": [
+        "node_modules/dragula/dist/dragula.css",
+        "node_modules/dragula/dist/dragula.js",
+        "node_modules/dragula/dist/dragula.min.css",
+        "node_modules/dragula/dist/dragula.min.js"
+      ]
     },
     "dropzone": {
       "version": "5.9.3",
@@ -163,8 +169,13 @@
         "node_modules/prismjs/themes/prism.min.css"
       ]
     },
-    "spectrum-colorpicker": {
-      "version": "1.8.1"
+    "spectrum": {
+      "package": "spectrum-colorpicker",
+      "version": "1.8.1",
+      "paths": [
+        "node_modules/spectrum-colorpicker/spectrum.css",
+        "node_modules/spectrum-colorpicker/spectrum.js"
+      ]
     },
     "sortablejs": {
       "version": "1.15.6",

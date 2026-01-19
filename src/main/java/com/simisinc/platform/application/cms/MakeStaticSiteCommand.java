@@ -31,6 +31,7 @@ import com.granule.CSSFastMin;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.application.admin.SaveTextFileCommand;
 import com.simisinc.platform.application.filesystem.FileSystemCommand;
+import com.simisinc.platform.application.filesystem.ZipCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.Blog;
 import com.simisinc.platform.domain.model.cms.BlogPost;
@@ -58,110 +59,134 @@ import com.simisinc.platform.presentation.controller.PageTemplateEngine;
 public class MakeStaticSiteCommand {
 
   private static Log LOG = LogFactory.getLog(MakeStaticSiteCommand.class);
+  private static boolean isRunning = false;
 
-  public static boolean execute(Properties templateEngineProperties) throws Exception {
-
-    long startTime = System.currentTimeMillis();
-
-    // Verify the source website application path is valid
-    String webAppPathValue = templateEngineProperties.getProperty("webAppPath");
-    if (webAppPathValue == null) {
-      LOG.error("Configuration missing webAppPathValue");
-      return false;
-    }
-    File webAppPath = new File(webAppPathValue);
-    if (!webAppPath.isDirectory()) {
-      LOG.error("Directory not found: " + webAppPath);
-      return false;
-    }
-    LOG.info("Using webAppPath: " + webAppPath);
-
-    // Verify the source website file library path is valid
-    File fileLibraryPath = FileSystemCommand.getFileServerRootPath();
-    if (!fileLibraryPath.isDirectory()) {
-      LOG.error("Directory not found: " + fileLibraryPath);
-      return false;
-    }
-    LOG.info("Using fileLibraryPath: " + fileLibraryPath);
-
-    // Determine the destination path where the static site will be created
-    File exportDir = FileSystemCommand.getFileServerStaticSitePath();
-    if (!exportDir.exists()) {
-      exportDir.mkdirs();
-    }
-    LOG.info("Using static site path: " + exportDir);
-
-    // Within the destination path, create a site directory for all of the website files
-    File sitePath = new File(exportDir, "/site");
-    sitePath.mkdir();
-
-    // The website's assets
-    File favIcon = new File(webAppPath, "/favicon.ico");
-    if (favIcon.exists()) {
-      FileUtils.copyFile(favIcon, new File(sitePath, "/favicon.ico"));
-    }
-    FileUtils.copyDirectory(new File(webAppPath, "/css"), new File(sitePath, "/css"));
-    FileUtils.copyDirectory(new File(webAppPath, "/fonts"), new File(sitePath, "/fonts"));
-    FileUtils.copyDirectory(new File(webAppPath, "/images"), new File(sitePath, "/images"));
-    FileUtils.copyDirectory(new File(webAppPath, "/javascript"), new File(sitePath, "/javascript"));
-
-    // The website's custom css files
-    Stylesheet siteStylesheet = StylesheetRepository.findByWebPageId(-1);
-    if (siteStylesheet != null) {
-      // The stylesheet modified timestamp is used to allow long term cache
-      CSSFastMin min = new CSSFastMin();
-      String minCss = min.minimize(siteStylesheet.getCss());
-      SaveTextFileCommand.save(minCss, new File(sitePath, "/css/stylesheet.css"));
-    }
-
-    // The website's custom images files
-    List<Image> imageList = ImageRepository.findAll();
-    LOG.info("Images: " + imageList.size());
-    for (Image image : imageList) {
-      // For example: assets/img/20200310012940-74/example-hero-fade.jpg
-      File sourceImage = new File(fileLibraryPath, image.getFileServerPath());
-      if (!sourceImage.exists()) {
-        LOG.warn("File not found: " + sourceImage);
-        continue;
-      }
-      File targetImage = new File(sitePath, "/assets/img/" + image.getWebPath() + "-" + image.getId() + "/" + image.getFilename());
-      if (!targetImage.exists()) {
-        FileUtils.copyFile(sourceImage, targetImage);
-      }
-    }
-
-    // Assets (like videos, pdfs, etc)
-    // alias /assets/view and /assets/file
-    List<FileItem> fileList = FileItemRepository.findAll();
-    LOG.info("Files: " + fileList.size());
-    for (FileItem fileItem : fileList) {
-      File sourceFile = new File(fileLibraryPath, fileItem.getFileServerPath());
-      if (!sourceFile.exists()) {
-        LOG.warn("File not found: " + sourceFile);
-        continue;
-      }
-      File targetFile = new File(sitePath,
-          "/assets/view/" + fileItem.getWebPath() + "-" + fileItem.getId() + "/" + fileItem.getFilename());
-      if (!targetFile.exists()) {
-        FileUtils.copyFile(sourceFile, targetFile);
-      }
-    }
-
-    try {
-      exportContent(webAppPath, sitePath, fileLibraryPath);
-    } catch (Exception e) {
-      LOG.error("**Error occurred: " + e.getMessage());
-      return false;
-    }
-
-    long endTime = System.currentTimeMillis();
-    long totalTime = endTime - startTime;
-    LOG.info("Processing time: " + totalTime + " ms");
-    LOG.info("Static site path: " + sitePath);
-    return true;
+  public static boolean isJobRunning() {
+    return isRunning;
   }
 
-  private static boolean exportContent(File webAppPath, File sitePath, File fileLibraryPath) throws Exception {
+  public static String execute(Properties templateEngineProperties) throws Exception {
+
+    if (isRunning) {
+      LOG.warn("Static site generation is already running.");
+      return null;
+    }
+    isRunning = true;
+
+    try {
+      long startTime = System.currentTimeMillis();
+
+      // Verify the source website application path is valid
+      String webAppPathValue = templateEngineProperties.getProperty("webAppPath");
+      if (webAppPathValue == null) {
+        LOG.error("Configuration missing webAppPathValue");
+        return null;
+      }
+      File webAppPath = new File(webAppPathValue);
+      if (!webAppPath.isDirectory()) {
+        LOG.error("Directory not found: " + webAppPath);
+        return null;
+      }
+      LOG.info("Using webAppPath: " + webAppPath);
+
+      // Verify the source website file library path is valid
+      File fileLibraryPath = FileSystemCommand.getFileServerRootPath();
+      if (!fileLibraryPath.isDirectory()) {
+        LOG.error("Directory not found: " + fileLibraryPath);
+        return null;
+      }
+      LOG.info("Using fileLibraryPath: " + fileLibraryPath);
+
+      // Determine the destination path where the static site will be created
+      File exportDir = FileSystemCommand.getFileServerStaticSitePath();
+      if (!exportDir.exists()) {
+        exportDir.mkdirs();
+      }
+      LOG.info("Using static site path: " + exportDir);
+
+      // Within the destination path, create a site directory for all of the website files
+      File sitePath = new File(exportDir, "/site");
+      sitePath.mkdir();
+
+      // The website's assets
+      File favIcon = new File(webAppPath, "/favicon.ico");
+      if (favIcon.exists()) {
+        FileUtils.copyFile(favIcon, new File(sitePath, "/favicon.ico"));
+      }
+      FileUtils.copyDirectory(new File(webAppPath, "/css"), new File(sitePath, "/css"));
+      FileUtils.copyDirectory(new File(webAppPath, "/fonts"), new File(sitePath, "/fonts"));
+      FileUtils.copyDirectory(new File(webAppPath, "/images"), new File(sitePath, "/images"));
+      FileUtils.copyDirectory(new File(webAppPath, "/javascript"), new File(sitePath, "/javascript"));
+
+      // The website's custom css files
+      Stylesheet siteStylesheet = StylesheetRepository.findByWebPageId(-1);
+      if (siteStylesheet != null) {
+        // The stylesheet modified timestamp is used to allow long term cache
+        CSSFastMin min = new CSSFastMin();
+        String minCss = min.minimize(siteStylesheet.getCss());
+        SaveTextFileCommand.save(minCss, new File(sitePath, "/css/stylesheet.css"));
+      }
+
+      // The website's custom images files
+      List<Image> imageList = ImageRepository.findAll();
+      LOG.info("Images: " + imageList.size());
+      for (Image image : imageList) {
+        // For example: assets/img/20200310012940-74/example-hero-fade.jpg
+        File sourceImage = new File(fileLibraryPath, image.getFileServerPath());
+        if (!sourceImage.exists()) {
+          LOG.warn("File not found: " + sourceImage);
+          continue;
+        }
+        File targetImage = new File(sitePath, "/assets/img/" + image.getWebPath() + "-" + image.getId() + "/" + image.getFilename());
+        if (!targetImage.exists()) {
+          FileUtils.copyFile(sourceImage, targetImage);
+        }
+      }
+
+      // Assets (like videos, pdfs, etc)
+      // alias /assets/view and /assets/file
+      List<FileItem> fileList = FileItemRepository.findAll();
+      LOG.info("Files: " + fileList.size());
+      for (FileItem fileItem : fileList) {
+
+        // Null check
+        if (fileItem.getFileServerPath() == null) {
+          LOG.warn("FileItem missing fileServerPath: " + fileItem.getId());
+          continue;
+        }
+        File sourceFile = new File(fileLibraryPath, fileItem.getFileServerPath());
+
+        if (!sourceFile.exists()) {
+          LOG.warn("File not found: " + sourceFile);
+          continue;
+        }
+        File targetFile = new File(sitePath,
+            "/assets/view/" + fileItem.getWebPath() + "-" + fileItem.getId() + "/" + fileItem.getFilename());
+        if (!targetFile.exists()) {
+          FileUtils.copyFile(sourceFile, targetFile);
+        }
+      }
+
+      String exportFile = null;
+      try {
+        exportFile = exportContent(webAppPath, sitePath, fileLibraryPath);
+      } catch (Exception e) {
+        LOG.error("**Error occurred: " + e.getMessage());
+        return null;
+      }
+
+      // Clean up the temporary directory
+      FileUtils.deleteDirectory(sitePath);
+
+      LOG.info("Finished making static site in " + (System.currentTimeMillis() - startTime) + "ms");
+
+      return exportFile;
+    } finally {
+      isRunning = false;
+    }
+  }
+
+  private static String exportContent(File webAppPath, File sitePath, File fileLibraryPath) throws Exception {
 
     File exportDir = FileSystemCommand.getFileServerStaticSitePath();
 
@@ -254,7 +279,24 @@ public class MakeStaticSiteCommand {
 
     // @todo export the redirects file
 
-    return true;
+    // Prepare to save the static-site zip file
+    String serverSubPath = FileSystemCommand.generateFileServerSubPath("static-sites");
+    String serverRootPath = FileSystemCommand.getFileServerRootPathValue();
+    String serverCompletePath = serverRootPath + serverSubPath;
+    String uniqueFilename = "static-site-" + FileSystemCommand.generateUniqueFilename(-1);
+    String filesystemPath = serverCompletePath + uniqueFilename + ".zip";
+    String applicationPath = serverSubPath + uniqueFilename + ".zip";
+
+    // Compress the site directory
+    File zipFile = new File(filesystemPath);
+    ZipCommand.zipDirectory(exportDir, zipFile);
+    LOG.info("Static site zip file: " + zipFile);
+
+    // Add it to the database
+    // @todo record it in the database
+    // example: static-sites/2026/01/19/static-site-1768855514298-a9a19fb9-a6bf-48a4-8ed8-b1afd29be42a.zip
+
+    return applicationPath;
   }
 
   /** The metadata describes the various CMS objects */
@@ -300,7 +342,8 @@ public class MakeStaticSiteCommand {
       return -1;
     }
     if (htmlPage.contains("\"${") || htmlPage.contains("[${")) {
-      throw new Exception("Possible engine value not processed for link: " + webPage.getLink());
+      // @todo keep track of these and report later
+      LOG.info("Possible unprocessed engine value in link: " + webPage.getLink());
     }
 
     // Save the complete web page
@@ -320,7 +363,7 @@ public class MakeStaticSiteCommand {
       // The stylesheet modified timestamp is used to allow long term cache
       CSSFastMin min = new CSSFastMin();
       String minCss = min.minimize(stylesheet.getCss());
-      SaveTextFileCommand.save(minCss, new File(sitePath, "/css/stylesheet_" + stylesheet.getId() + ".css"));
+      SaveTextFileCommand.save(minCss, new File(sitePath, "/css/stylesheet_" + stylesheet.getWebPageId() + ".css"));
     }
     return htmlPage.length();
   }

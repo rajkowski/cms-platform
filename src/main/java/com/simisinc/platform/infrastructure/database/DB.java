@@ -793,6 +793,11 @@ public class DB {
           fieldNamesSb.append(sqlValue.getFieldOrClause());
         } else {
           fieldNamesSb.append(sqlValue.getFieldOrClause()).append(" = ").append(sqlValue.getStringValue());
+          // fieldNamesSb.append(sqlValue.getFieldOrClause()).append(" = ").append(sqlValue.getStringValue());
+          // fieldNamesSb.append(sqlValue.getFieldOrClause()).append(" = ?");
+          // if (sqlValue.getCastType() == SqlValue.JSONB_TYPE) {
+          //   fieldNamesSb.append("::jsonb");
+          // }
         }
       }
       if (isFirst) {

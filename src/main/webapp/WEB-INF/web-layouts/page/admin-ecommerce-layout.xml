@@ -23,7 +23,7 @@
     <!--</widget>-->
     <!--</column>-->
     <!--</section>-->
-    <section class="grid-container grid-x grid-margin-x">
+    <section class="grid-container grid-x grid-margin-x padding-left-1rem">
       <column class="small-12 medium-4 cell callout">
         <widget name="ecommerceStats">
           <icon>fa-dolly</icon>
