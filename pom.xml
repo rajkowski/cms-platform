@@ -46,7 +46,7 @@
     <dependency>
       <groupId>com.bucket4j</groupId>
       <artifactId>bucket4j_jdk17-core</artifactId>
-      <version>8.15.0</version>
+      <version>8.16.0</version>
     </dependency>
     <dependency>
       <groupId>com.github.ben-manes.caffeine</groupId>
@@ -96,7 +96,7 @@
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-jexl3</artifactId>
-      <version>3.5.0</version>
+      <version>3.6.1</version>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
@@ -126,17 +126,17 @@
     <dependency>
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-core</artifactId>
-      <version>11.13.3</version>
+      <version>11.20.2</version>
     </dependency>
     <dependency>
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-database-postgresql</artifactId>
-      <version>11.13.3</version>
+      <version>11.20.2</version>
     </dependency>
     <dependency>
       <groupId>com.maxmind.geoip2</groupId>
       <artifactId>geoip2</artifactId>
-      <version>4.3.1</version>
+      <version>4.4.0</version>
     </dependency>
     <dependency>
       <groupId>com.github.rajkowski</groupId>
@@ -201,22 +201,22 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
-      <version>2.20.1</version>
+      <version>2.20.2</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
-      <version>2.20.1</version>
+      <version>2.20.2</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.datatype</groupId>
       <artifactId>jackson-datatype-jsr310</artifactId>
-      <version>2.20.1</version>
+      <version>2.20.2</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.dataformat</groupId>
       <artifactId>jackson-dataformat-toml</artifactId>
-      <version>2.20.1</version>
+      <version>2.20.2</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
@@ -278,12 +278,12 @@
     <dependency>
       <groupId>org.jsoup</groupId>
       <artifactId>jsoup</artifactId>
-      <version>1.21.2</version>
+      <version>1.22.1</version>
     </dependency>
     <dependency>
       <groupId>com.googlecode.libphonenumber</groupId>
       <artifactId>libphonenumber</artifactId>
-      <version>9.0.20</version>
+      <version>9.0.22</version>
     </dependency>
     <dependency>
       <groupId>org.projectlombok</groupId>
@@ -294,7 +294,7 @@
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
-      <version>42.7.8</version>
+      <version>42.7.9</version>
     </dependency>
     <dependency>
       <groupId>io.github.classgraph</groupId>
@@ -410,7 +410,7 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
-      <version>5.14.1</version>
+      <version>5.14.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
