@@ -15,7 +15,7 @@
       line-height: 1;
   }
 </style>
-<div class="grid-x align-middle text-middle">
+<div class="grid-x align-middle">
   <div th:if="${not #strings.isEmpty(statisticCard.icon)}" class="small-5 cell">
     <i th:id="${#strings.concat('icon', widgetContext.uniqueId)}" class="fa" th:classappend="${#strings.concat(statisticCard.icon, ' ', 'statistic-card-icon', widgetContext.uniqueId)}"></i>
   </div>

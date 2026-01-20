@@ -39,7 +39,7 @@
       line-height: 1;
   }
 </style>
-<div class="grid-x align-middle text-middle">
+<div class="grid-x align-middle">
   <c:if test="${!empty statisticCard.icon}">
     <div class="small-5 cell">
       <i id="icon${widgetContext.uniqueId}" class="fa <c:out value="${statisticCard.icon}" /> statistic-card-icon${widgetContext.uniqueId}"></i>
@@ -63,7 +63,6 @@
 
   $(document).ready(function() {
     updateFontSize${widgetContext.uniqueId}();
-    <%--$('#icon${widgetContext.uniqueId}').fadeIn(200);--%>
   });
 
   $(window).resize(function() {
