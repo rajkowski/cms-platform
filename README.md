@@ -2,11 +2,11 @@
 
 [![Java CI](https://github.com/rajkowski/cms-platform/actions/workflows/ant.yml/badge.svg)](https://github.com/rajkowski/cms-platform/actions/workflows/ant.yml)
 
-CMS Platform improves upon SimIS CMS.
+## What is CMS Platform?
 
-What is SimIS CMS? [Agile, Enterprise, Open Source Content Management System (CMS) and Portal](https://www.simiscms.com).
+CMS Platform comes out-of-the-box with modules, advanced security, easy setup, and powerful developer features. Use and configure what's there, and customize what's not. The flexible Open Source license lets you move beyond the technology to focus on delivering a quality website.
 
-SimIS CMS comes out-of-the-box with modules, advanced security, easy setup, and powerful developer features. Use and configure what's there, and customize what's not. The flexible Open Source license lets you move beyond the technology to focus on delivering a quality website.
+**New for 2026** – Build your web pages, styles, and SEO, with a comprehensive visual webpage editor.
 
 ## What's improved in CMS Platform?
 
@@ -33,7 +33,7 @@ Documentation is in MKDocs format intended for use in platforms which use MKDocs
 ## License
 
 ```text
-Copyright 2025
+Copyright 2026
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ Need a website or web portal? CMS Platform can be used from Day 1:
 
 ## Features
 
-- **CMS**: Site Map, Web Pages (Templates, UI Designer, SEO, Searchable) with Content and Images, HTML Editor, CSS Editor, Blogs, Form Data, Calendars, Folders and Files, Mailing Lists, Videos, Wikis, Search, Site Alerts, Form Pop-Ups, Sticky Header and Buttons, Responsive, Bot Detection, Static Site Generator (SSG)
+- **CMS**: Visual Webpage Editor, Site Map, Web Pages (Templates, UI Designer, SEO, Searchable) with Content and Images, HTML Editor, CSS Editor, Blogs, Form Data, Calendars, Folders and Files, Mailing Lists, Videos, Wikis, Search, Site Alerts, Form Pop-Ups, Sticky Header and Buttons, Responsive, Bot Detection, Static Site Generator (SSG)
 - **Analytics**: Tracking for Sessions, Hits, Geolocation, Content, Searches, Referrals; Charts; xAPI; Pixels
 - **Data Integration**: Datasets (CSV, TSV, JSON, GeoJSON, and RSS sources), Collections (Profiles, Geolocation, Multiple Categories, Relationships, Custom Fields, Indexed, Searchable), Data Sources
 - **Collaboration**: Users (Register, Validation, Login, Invite), User Groups, Collection Membership and Permissions, Chat
