@@ -2,20 +2,20 @@
   "dependencies": {
     "superset-embedded-sdk": {
       "package": "@superset-ui/embedded-sdk",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "paths": [
         "node_modules/@superset-ui/embedded-sdk/bundle/*"
       ]
     },
     "ace": {
       "package": "ace-builds",
-      "version": "1.43.3",
+      "version": "1.43.5",
       "paths": [
         "node_modules/ace-builds/src-min-noconflict/*"
       ]
     },
     "add-to-calendar-button": {
-      "version": "2.12.12",
+      "version": "2.12.13",
       "paths": [
         "node_modules/add-to-calendar-button/dist/atcb.js"
       ]
@@ -25,7 +25,7 @@
     },
     "chartjs": {
       "package": "chart.js",
-      "version": "4.5.0",
+      "version": "4.5.1",
       "paths": [
         "node_modules/chart.js/dist/chart.umd.js"
       ]
@@ -70,7 +70,7 @@
       ]
     },
     "fullcalendar": {
-      "version": "6.1.19",
+      "version": "6.1.20",
       "paths": [
         "node_modules/fullcalendar/index.global.min.js"
       ]
@@ -108,7 +108,7 @@
       ]
     },
     "jsuites": {
-      "version": "5.13.4",
+      "version": "5.13.5",
       "paths": [
         "node_modules/jsuites/dist/jsuites.css",
         "node_modules/jsuites/dist/jsuites.d.ts",
@@ -133,7 +133,7 @@
       "version": "4.2.2"
     },
     "mermaid": {
-      "version": "11.12.0",
+      "version": "11.12.2",
       "paths": [
         "node_modules/mermaid/dist/mermaid.js",
         "node_modules/mermaid/dist/mermaid.min.js"
