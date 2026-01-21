@@ -176,7 +176,7 @@
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty-resolver-dns</artifactId>
-      <version>4.2.8.Final</version>
+      <version>4.2.9.Final</version>
     </dependency>
     <dependency>
       <groupId>io.netty</groupId>
