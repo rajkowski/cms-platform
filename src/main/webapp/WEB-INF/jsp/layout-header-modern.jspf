@@ -39,7 +39,18 @@
       <a href="/" class="header-logo">
         <c:choose>
           <c:when test="${!empty sitePropertyMap['site.logo']}">
-            <img src="${sitePropertyMap['site.logo']}" alt="<c:out value="${sitePropertyMap['site.name']}"/>" />
+            <img class="logo-light" src="${sitePropertyMap['site.logo']}" alt="<c:out value="${sitePropertyMap['site.name']}"/>" />
+            <c:choose>
+              <c:when test="${!empty sitePropertyMap['site.logo.white']}">
+                <img class="logo-dark" src="${sitePropertyMap['site.logo.white']}" alt="<c:out value="${sitePropertyMap['site.name']}"/>" />
+              </c:when>
+              <c:when test="${!empty sitePropertyMap['site.logo.mixed']}">
+                <img class="logo-dark" src="${sitePropertyMap['site.logo.mixed']}" alt="<c:out value="${sitePropertyMap['site.name']}"/>" />
+              </c:when>
+              <c:otherwise>
+                <img class="logo-dark" src="${sitePropertyMap['site.logo']}" alt="<c:out value="${sitePropertyMap['site.name']}"/>" />
+              </c:otherwise>
+            </c:choose>
           </c:when>
           <c:otherwise>
             <i class="fas fa-cube"></i>

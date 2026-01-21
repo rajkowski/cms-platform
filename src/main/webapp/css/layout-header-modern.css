@@ -86,6 +86,19 @@
   margin-right: 0.75rem;
 }
 
+/* Swap logos based on theme */
+.header-logo img.logo-dark {
+  display: none;
+}
+
+[data-theme="dark"] .header-logo img.logo-light {
+  display: none;
+}
+
+[data-theme="dark"] .header-logo img.logo-dark {
+  display: inline-block;
+}
+
 .header-logo:hover {
   color: var(--button-primary);
 }
