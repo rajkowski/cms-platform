@@ -40,13 +40,15 @@
       <%@ include file="layout-header-renderer.jspf" %>
     </c:when>
     <c:otherwise>
-      <%@ include file="layout-header-standard.jspf" %>
+      <%@ include file="layout-header-modern.jspf" %>
     </c:otherwise>
   </c:choose>
 </c:if>
 <%-- Widget Renderer --%>
-<c:set var="rendererClass" scope="request">platform-body</c:set>
-<%@ include file="layout-body-renderer.jspf" %>
+<div class="web-content">
+  <c:set var="rendererClass" scope="request">platform-body</c:set>
+  <%@ include file="layout-body-renderer.jspf" %>
+</div>
 <%-- Footer --%>
 <c:if test="${(controllerShowMainMenu eq 'true' && !fn:startsWith(pageRenderInfo.name, '/admin') && pageRenderInfo.name ne '/content-editor') || pageRenderInfo.name eq '/admin/theme-properties'}">
   <c:choose>

@@ -122,11 +122,11 @@
     <noscript th:if="${not #strings.isEmpty(analyticsPropertyMap['analytics.google.tagmanager']) and #strings.startsWith(analyticsPropertyMap['analytics.google.tagmanager'], 'GTM-')}">
       <iframe th:src="${#strings.concat('https://www.googletagmanager.com/ns.html?id=', analyticsPropertyMap['analytics.google.tagmanager'])}" height="0" width="0" style="display:none;visibility:hidden"></iframe>
     </noscript>
+    <div th:if="${headerRenderInfo}" th:replace="~{layout-header-renderer :: nav}"></div>
     <div class="web-content">
-      <div th:if="${headerRenderInfo}" th:replace="~{layout-header-renderer :: nav}"></div>
       <div th:replace="~{layout-body-renderer :: article}"></div>
-      <div th:if="${footerRenderInfo}" th:replace="~{layout-footer-renderer :: footer}"></div>
     </div>
+    <div th:if="${footerRenderInfo}" th:replace="~{layout-footer-renderer :: footer}"></div>
     <th:block th:if="${not #strings.isEmpty(sitePropertyMap['site.confirmation']) and #strings.equals(sitePropertyMap['site.confirmation'], 'true')}">
       <div id="site-confirmation" class="reveal full" data-reveal data-close-on-esc="false" data-close-on-click="false" data-animation-out="fade-out fast">
         <div style="position:absolute; top: 50%; left: 50%; transform: translateY(-50%) translateX(-50%)">

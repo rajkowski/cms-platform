@@ -32,6 +32,7 @@ public class MenuItem extends Entity {
   private Integer itemOrder = 100;
   private String name = null;
   private String link = null;
+  private String icon = null;
   private String pageTitle = null;
   private String pageKeywords = null;
   private String pageDescription = null;
@@ -82,6 +83,14 @@ public class MenuItem extends Entity {
 
   public void setLink(String link) {
     this.link = link;
+  }
+
+  public String getIcon() {
+    return icon;
+  }
+
+  public void setIcon(String icon) {
+    this.icon = icon;
   }
 
   public String getPageTitle() {

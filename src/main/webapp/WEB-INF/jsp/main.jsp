@@ -267,9 +267,7 @@
     </c:if>
   </c:if>
   <%-- Render the page --%>
-  <div class="web-content">
-    <jsp:include page="${PageBody}" flush="true"/>
-  </div>
+  <jsp:include page="${PageBody}" flush="true"/>
   <%-- Site Confirmation Modal --%>
   <c:if test="${!empty sitePropertyMap['site.confirmation'] && sitePropertyMap['site.confirmation'] eq 'true'}">
     <div id="site-confirmation" class="reveal full" data-reveal data-close-on-esc="false" data-close-on-click="false" data-animation-out="fade-out fast">
