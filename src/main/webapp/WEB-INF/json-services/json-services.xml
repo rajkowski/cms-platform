@@ -34,6 +34,9 @@
   <service endpoint="/json/saveWebPage" class="com.simisinc.platform.presentation.widgets.cms.SaveWebPageAjax" />
   <service endpoint="/json/stylesheet" class="com.simisinc.platform.presentation.widgets.cms.StylesheetAjax" />
   <service endpoint="/json/saveStylesheet" class="com.simisinc.platform.presentation.widgets.cms.SaveStylesheetAjax" />
+  <!-- Image Editor -->
+  <service endpoint="/json/imageLibrary" class="com.simisinc.platform.presentation.widgets.cms.ImageLibraryAjax" />
+  <service endpoint="/json/imageContent" class="com.simisinc.platform.presentation.widgets.cms.ImageContentAjax" />
   <service method="get" endpoint="/json/static-sites/list" class="com.simisinc.platform.presentation.widgets.editor.StaticSiteEndpoint" />
   <service method="get" endpoint="/json/static-sites/download" class="com.simisinc.platform.presentation.widgets.editor.StaticSiteEndpoint" />
   <service method="post" endpoint="/json/static-sites/generate" class="com.simisinc.platform.presentation.widgets.editor.StaticSiteEndpoint" />

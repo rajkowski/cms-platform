@@ -1174,11 +1174,11 @@
     </section>
   </page>
 
-  <page name="/admin/blocked-ip-list" role="admin" title="Blocked IP list">
+  <page name="/admin/blocked-ip-list" role="admin" title="Website Blocked IP List">
     <section>
       <column class="small-12 medium-9 large-8 small-order-2 medium-order-1 small-margin-top-10 cell">
         <widget name="blockedIP">
-          <title>Blocked IP List</title>
+          <title>Website Blocked IP List</title>
         </widget>
       </column>
       <column class="small-12 medium-3 large-4 small-order-1 medium-order-2 cell">
@@ -1204,6 +1204,16 @@
       <column class="small-12 cell">
         <widget name="visualPageEditor">
           <title>Visual Page Editor</title>
+        </widget>
+      </column>
+    </section>
+  </page>
+
+  <page name="/admin/visual-image-editor" role="admin,content-manager" title="Visual Image Editor" class="full-page">
+    <section class="grid-x">
+      <column class="small-12 cell">
+        <widget name="visualImageEditor">
+          <title>Visual Image Editor</title>
         </widget>
       </column>
     </section>
