@@ -19,6 +19,7 @@ class PagesTabManager {
    */
   init() {
     this.setupEventListeners();
+    this.setupSearchListener();
     this.loadPages();
   }
 
@@ -29,6 +30,59 @@ class PagesTabManager {
     const pageList = document.getElementById('web-page-list');
     if (pageList) {
       pageList.addEventListener('click', (e) => this.handlePageClick(e));
+    }
+  }
+
+  /**
+   * Set up search/filter listener for the pages tab
+   */
+  setupSearchListener() {
+    const searchInput = document.getElementById('pages-search');
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        const filtered = query ? this.pages.filter(page => {
+          const searchText = (page.title + ' ' + page.link).toLowerCase();
+          const terms = query.split(/\s+/);
+          
+          // All search terms must exist in the text, in any order
+          return terms.every(term => searchText.includes(term));
+        }).sort((a, b) => {
+          // Sort by relevance: prioritize title matches, then by earliest match position
+          const aText = (a.title + ' ' + a.link).toLowerCase();
+          const bText = (b.title + ' ' + b.link).toLowerCase();
+          const aTitleText = a.title.toLowerCase();
+          const bTitleText = b.title.toLowerCase();
+          
+          // Find position of first matching term in each result
+          const queryTerms = query.split(/\s+/);
+          
+          // Calculate minimum position for a
+          let aMinPos = Infinity;
+          for (const t of queryTerms) {
+            const titlePos = aTitleText.indexOf(t);
+            const fullPos = aText.indexOf(t);
+            const pos = titlePos >= 0 ? titlePos : fullPos;
+            if (pos >= 0 && pos < aMinPos) {
+              aMinPos = pos;
+            }
+          }
+          
+          // Calculate minimum position for b
+          let bMinPos = Infinity;
+          for (const t of queryTerms) {
+            const titlePos = bTitleText.indexOf(t);
+            const fullPos = bText.indexOf(t);
+            const pos = titlePos >= 0 ? titlePos : fullPos;
+            if (pos >= 0 && pos < bMinPos) {
+              bMinPos = pos;
+            }
+          }
+          
+          return aMinPos - bMinPos;
+        }) : this.pages;
+        this.renderPageListFiltered(filtered);
+      });
     }
   }
 
@@ -140,6 +194,66 @@ class PagesTabManager {
         item.classList.add('selected');
         this.selectedPageId = page.id;
         this.selectedPageLink = page.link;
+      }
+
+      const info = document.createElement('div');
+      info.className = 'web-page-info';
+
+      const title = document.createElement('div');
+      title.className = 'web-page-title';
+      title.textContent = page.title;
+
+      const link = document.createElement('div');
+      link.className = 'web-page-link';
+      link.textContent = page.link;
+
+      info.appendChild(title);
+      info.appendChild(link);
+      item.appendChild(info);
+
+      li.appendChild(item);
+      listEl.appendChild(li);
+    });
+  }
+
+  /**
+   * Render a filtered list of pages in the UI
+   * @param {Array} pages - The filtered pages to render
+   */
+  renderPageListFiltered(pages) {
+    const listEl = document.getElementById('web-page-list');
+    if (!listEl) {
+      return;
+    }
+
+    listEl.innerHTML = '';
+
+    if (pages.length === 0) {
+      listEl.innerHTML = '<li style="text-align: center; padding: 40px; color: #999;"><i class="far fa-search"></i> No pages found</li>';
+      return;
+    }
+
+    // Check if the current page being edited exists in the filtered pages list
+    const currentPageLink = this.pageEditor.config.webPageLink;
+    const currentPageExists = pages.some(page => page.link === currentPageLink);
+
+    // If the current page doesn't exist in filtered results, still show it at the top
+    if (!currentPageExists && currentPageLink) {
+      const pageTitle = this.pageEditor.newPageTitle || null;
+      const newPageItem = this.createNewPageItem(currentPageLink, pageTitle);
+      listEl.appendChild(newPageItem);
+    }
+
+    pages.forEach(page => {
+      const li = document.createElement('li');
+      const item = document.createElement('div');
+      item.className = 'web-page-item';
+      item.setAttribute('data-page-id', page.id);
+      item.setAttribute('data-page-link', page.link);
+
+      // Check if this is the currently editing page
+      if (currentPageLink === page.link) {
+        item.classList.add('selected');
       }
 
       const info = document.createElement('div');

@@ -195,6 +195,9 @@
         </div>
 
         <div id="pages-tab" class="tab-content active">
+          <div style="margin-bottom: 15px;">
+            <input type="text" id="pages-search" class="property-input" placeholder="Search pages..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;" />
+          </div>
           <div id="pages-error" style="display: none;"></div>
           <div id="pages-empty" style="display: none;">
             <p>No pages available</p>
