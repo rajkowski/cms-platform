@@ -46,12 +46,16 @@
       <h2>Image Editor</h2>
     </div>
     <div class="titlebar-right">
+      <div class="button-group round">
+        <a href="${ctx}/admin/visual-page-editor" class="button confirm-exit">Pages</a>
+        <a href="${ctx}/admin/visual-image-editor" class="button confirm-exit active">Images</a>
+      </div>
       <c:choose>
         <c:when test="${!empty returnPage}">
-          <a href="${returnPage}" class="button tiny no-gap radius confirm-exit">Exit</a>
+          <a href="${returnPage}" class="button radius confirm-exit">Exit</a>
         </c:when>
         <c:otherwise>
-          <a href="${ctx}/admin" class="button tiny no-gap radius confirm-exit">Exit</a>
+          <a href="${ctx}/" class="button radius confirm-exit">Exit</a>
         </c:otherwise>
       </c:choose>
     </div>

@@ -34,10 +34,10 @@
   <link rel="stylesheet" type="text/css" href="${ctx}/css/platform/preview-hover.css" />
 </g:compress>
 <g:compress>
-  <script src="<c:url value='/javascript/widgets/editor/element-detector.js'/>"></script>
-  <script src="<c:url value='/javascript/widgets/editor/hover-overlay.js'/>"></script>
-  <script src="<c:url value='/javascript/widgets/editor/property-editor-bridge.js'/>"></script>
-  <script src="<c:url value='/javascript/widgets/editor/preview-hover-manager.js'/>"></script>
+  <script src="/javascript/widgets/editor/element-detector.js"></script>
+  <script src="/javascript/widgets/editor/hover-overlay.js"></script>
+  <script src="/javascript/widgets/editor/property-editor-bridge.js"></script>
+  <script src="/javascript/widgets/editor/preview-hover-manager.js"></script>
 </g:compress>
 <div id="visual-page-editor-wrapper">
   <c:if test="${!empty title}">
@@ -52,16 +52,19 @@
       <h2>Webpage Editor</h2>
     </div>
     <div class="titlebar-right">
-      <a href="${ctx}/admin/visual-page-editor" class="button tiny no-gap radius confirm-exit">Pages</a>
+      <div class="button-group round">
+        <a href="${ctx}/admin/visual-page-editor" class="button tiny confirm-exit active">Pages</a>
+        <a href="${ctx}/admin/visual-image-editor" class="button tiny confirm-exit">Images</a>
+      </div>
       <c:choose>
         <c:when test="${!empty returnPage}">
-          <a href="${returnPage}" class="button tiny no-gap radius confirm-exit">Exit</a>
+          <a href="${returnPage}" class="button radius confirm-exit">Exit</a>
         </c:when>
         <c:when test="${!empty webPage.link}">
-          <a href="${ctx}${webPage.link}" class="button tiny no-gap radius confirm-exit">Exit</a>
+          <a href="${ctx}${webPage.link}" class="button radius confirm-exit">Exit</a>
         </c:when>
         <c:otherwise>
-          <a href="${ctx}/" class="button tiny no-gap radius confirm-exit">Exit</a>
+          <a href="${ctx}/" class="button radius confirm-exit">Exit</a>
         </c:otherwise>
       </c:choose>
     </div>

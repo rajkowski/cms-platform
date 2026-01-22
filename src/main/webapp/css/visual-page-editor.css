@@ -469,6 +469,33 @@
   font-size: 12px;
 }
 
+/* Button Group Styles */
+.button-group.round {
+  display: flex;
+  gap: 0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.button-group.round .button {
+  border-radius: 0;
+  flex: 1;
+  text-align: center;
+}
+
+.button-group.round .button:first-child {
+  border-radius: 4px 0 0 4px;
+}
+
+.button-group.round .button:last-child {
+  border-radius: 0 4px 4px 0;
+}
+
+.button-group.round .button.active {
+  background-color: #0f4f79;
+  color: #fff;
+}
+
 .control-btn:hover {
   background: #0056b3;
 }
