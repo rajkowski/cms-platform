@@ -61,6 +61,16 @@ class ImageEditor {
       importBtn.addEventListener('click', () => this.triggerFileImport());
     }
 
+    const newFromClipboardBtn = document.getElementById('new-from-clipboard-btn');
+    if (newFromClipboardBtn) {
+      newFromClipboardBtn.addEventListener('click', () => this.createFromClipboard());
+    }
+
+    const newFromStockBtn = document.getElementById('new-from-stock-btn');
+    if (newFromStockBtn) {
+      newFromStockBtn.addEventListener('click', () => this.createFromStockPhoto());
+    }
+
     const fileInput = document.getElementById('image-file-input');
     if (fileInput) {
       fileInput.addEventListener('change', (e) => this.handleFileImport(e));
@@ -119,7 +129,7 @@ class ImageEditor {
   /**
    * Handle file import
    */
-  handleFileImport(event) {
+  async handleFileImport(event) {
     const file = event.target.files[0];
     if (!file) return;
 
@@ -130,11 +140,117 @@ class ImageEditor {
     }
 
     console.log('Importing file:', file.name);
-    // TODO: Implement file upload logic
-    alert('File upload feature coming soon!');
     
-    // Reset file input
-    event.target.value = '';
+    try {
+      this.showLoading();
+
+      // Upload the file
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch(`${this.config.apiBaseUrl}/imageUpload`, {
+        method: 'POST',
+        credentials: 'same-origin',
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      // Reload library and select the new image
+      await this.imageLibrary.loadImages();
+      if (result.imageId) {
+        this.imageLibrary.selectImage(result.imageId);
+      }
+
+      alert('Image imported successfully!');
+
+    } catch (error) {
+      console.error('Error importing file:', error);
+      alert('Failed to import image: ' + error.message);
+    } finally {
+      this.hideLoading();
+      event.target.value = '';
+    }
+  }
+
+  /**
+   * Create new image from clipboard
+   */
+  async createFromClipboard() {
+    try {
+      const items = await navigator.clipboard.read();
+      
+      for (const item of items) {
+        if (item.types.includes('image/png')) {
+          const blob = await item.getType('image/png');
+          await this.createImageFromBlob(blob, 'clipboard-image.png');
+          return;
+        }
+      }
+      
+      alert('No image found in clipboard. Copy an image first.');
+    } catch (error) {
+      console.error('Error reading from clipboard:', error);
+      alert('Failed to read from clipboard. Make sure you have copied an image and granted clipboard permissions.');
+    }
+  }
+
+  /**
+   * Create new image from stock photo
+   */
+  createFromStockPhoto() {
+    // TODO: Integrate with stock photo API (e.g., Unsplash, Pexels)
+    alert('Stock photo integration coming soon! This will allow you to search and import photos from stock photo services.');
+  }
+
+  /**
+   * Create new image from blob
+   */
+  async createImageFromBlob(blob, filename) {
+    try {
+      this.showLoading();
+
+      const formData = new FormData();
+      formData.append('file', blob, filename);
+
+      const response = await fetch(`${this.config.apiBaseUrl}/imageUpload`, {
+        method: 'POST',
+        credentials: 'same-origin',
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      // Reload library and select the new image
+      await this.imageLibrary.loadImages();
+      if (result.imageId) {
+        this.imageLibrary.selectImage(result.imageId);
+      }
+
+      alert('Image created successfully!');
+
+    } catch (error) {
+      console.error('Error creating image:', error);
+      alert('Failed to create image: ' + error.message);
+    } finally {
+      this.hideLoading();
+    }
   }
 
   /**
@@ -148,14 +264,81 @@ class ImageEditor {
 
     console.log('Saving changes...');
     
-    // Get form data from properties panel
-    const formData = this.imageProperties.getFormData();
+    const saveBtn = document.getElementById('save-btn');
+    const originalText = saveBtn ? saveBtn.innerHTML : '';
     
-    // TODO: Implement save logic
-    alert('Save functionality coming soon!');
+    try {
+      // Show loading state
+      if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="far fa-spinner fa-spin"></i> Saving...';
+      }
+      this.showLoading();
+
+      // Get the current image data from viewer (if modified)
+      const imageBlob = await this.imageViewer.getImageBlob();
+      const hasImageChanges = this.imageViewer.hasTransformations() || imageBlob;
+
+      // Save image file if there are visual changes
+      if (hasImageChanges && imageBlob) {
+        await this.saveImageFile(imageBlob);
+      }
+
+      // Note: Metadata fields (title, altText, description) would require database schema changes
+      // For now, only the visual changes are saved as a new image version
+
+      // Success
+      this.clearModified();
+      alert('Image changes saved successfully!');
+
+      // Reload the image library to show updated thumbnail
+      if (hasImageChanges) {
+        this.imageLibrary.loadImages();
+      }
+
+    } catch (error) {
+      console.error('Error saving changes:', error);
+      alert('Failed to save changes: ' + error.message);
+    } finally {
+      // Restore button state
+      if (saveBtn) {
+        saveBtn.innerHTML = originalText;
+        saveBtn.disabled = false;
+      }
+      this.hideLoading();
+    }
+  }
+
+  /**
+   * Save image file
+   */
+  async saveImageFile(blob) {
+    const currentImage = this.imageProperties.getCurrentImage();
+    if (!currentImage || !currentImage.id) {
+      throw new Error('No image selected');
+    }
+
+    const formData = new FormData();
+    formData.append('imageId', currentImage.id);
+    formData.append('file', blob, currentImage.filename || 'image.png');
+
+    const response = await fetch(`${this.config.apiBaseUrl}/imageUpload`, {
+      method: 'POST',
+      credentials: 'same-origin',
+      body: formData
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
     
-    // After successful save:
-    // this.clearModified();
+    if (result.error) {
+      throw new Error(result.error);
+    }
+
+    return result;
   }
 
   /**
