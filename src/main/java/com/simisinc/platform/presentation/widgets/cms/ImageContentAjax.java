@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Matt Rajkowski
+ * Copyright 2026 Matt Rajkowski
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,15 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.Image;
 import com.simisinc.platform.infrastructure.persistence.cms.ImageRepository;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 /**
  * Returns a single image's data for the visual image editor
@@ -69,25 +70,25 @@ public class ImageContentAjax extends GenericWidget {
     sb.append("{");
     sb.append("\"id\":").append(image.getId()).append(",");
     sb.append("\"filename\":\"").append(JsonCommand.toJson(image.getFilename())).append("\",");
-    sb.append("\"url\":\"").append(JsonCommand.toJson(image.getUrl())).append("\",");
+    sb.append("\"url\":\"").append(JsonCommand.toJson("/assets/img/" + image.getUrl())).append("\",");
     sb.append("\"width\":").append(image.getWidth()).append(",");
     sb.append("\"height\":").append(image.getHeight()).append(",");
     sb.append("\"fileLength\":").append(image.getFileLength()).append(",");
     sb.append("\"fileType\":\"").append(JsonCommand.toJson(StringUtils.defaultString(image.getFileType()))).append("\",");
-    
+
     // Format timestamps
     if (image.getCreated() != null) {
       sb.append("\"created\":\"").append(JsonCommand.toJson(image.getCreated().toString())).append("\",");
     } else {
       sb.append("\"created\":null,");
     }
-    
+
     if (image.getProcessed() != null) {
       sb.append("\"processed\":\"").append(JsonCommand.toJson(image.getProcessed().toString())).append("\"");
     } else {
       sb.append("\"processed\":null");
     }
-    
+
     sb.append("}");
 
     context.setJson(sb.toString());

@@ -137,12 +137,21 @@
   border-top: 1px solid var(--editor-border);
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: 5px;
+  flex-wrap: wrap;
 }
 
 #image-pagination button {
   padding: 5px 10px;
   font-size: 12px;
+  min-width: 32px;
+}
+
+.pagination-ellipsis {
+  padding: 5px 8px;
+  color: var(--editor-text-muted);
+  font-size: 14px;
 }
 
 /* Middle Panel: Image Viewer/Editor */

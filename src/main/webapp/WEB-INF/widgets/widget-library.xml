@@ -25,6 +25,7 @@
   <widget name="accountValidation" class="com.simisinc.platform.presentation.widgets.login.AccountValidationWidget" />
   <!-- Content Management -->
   <widget name="visualPageEditor" class="com.simisinc.platform.presentation.widgets.editor.VisualPageEditorWidget" />
+  <widget name="visualImageEditor" class="com.simisinc.platform.presentation.widgets.editor.VisualImageEditorWidget" />
   <widget name="logo" class="com.simisinc.platform.presentation.widgets.cms.LogoWidget" />
   <widget name="copyright" class="com.simisinc.platform.presentation.widgets.cms.CopyrightWidget" />
   <widget name="systemAlert" class="com.simisinc.platform.presentation.widgets.cms.SystemAlertWidget" />

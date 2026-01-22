@@ -24,8 +24,14 @@
 <web:stylesheet package="spectrum" file="spectrum.css" />
 <web:script package="spectrum" file="spectrum.js" />
 <g:compress>
-  <link rel="stylesheet" type="text/css" href="${ctx}/css/visual-page-editor.css" />
-  <link rel="stylesheet" type="text/css" href="${ctx}/css/visual-image-editor.css" />
+  <link rel="stylesheet" type="text/css" href="/css/visual-page-editor.css" />
+  <link rel="stylesheet" type="text/css" href="/css/visual-image-editor.css" />
+</g:compress>
+<g:compress>
+  <script src="/javascript/widgets/image-editor/image-library-manager.js"></script>
+  <script src="/javascript/widgets/image-editor/image-viewer-manager.js"></script>
+  <script src="/javascript/widgets/image-editor/image-properties-manager.js"></script>
+  <script src="/javascript/widgets/image-editor/image-editor-main.js"></script>
 </g:compress>
 <div id="visual-image-editor-wrapper">
   <c:if test="${!empty title}">
@@ -266,8 +272,11 @@
     apiBaseUrl: '${ctx}/json',
     contextPath: '${ctx}',
     returnPage: '<c:out value="${returnPage}" />',
-    userId: ${userSession.userId}
+    userId: <c:out value="${userSession.userId}" default="-1" />
   };
+  
+  // Global editor instance
+  let imageEditor;
   
   // Initialize the editor when DOM is ready
   document.addEventListener('DOMContentLoaded', function() {
@@ -277,142 +286,14 @@
     const savedTheme = localStorage.getItem('image-editor-theme');
     if (savedTheme === 'dark') {
       document.documentElement.setAttribute('data-theme', 'dark');
-      document.getElementById('dark-mode-toggle').querySelector('i').classList.replace('fa-moon', 'fa-sun');
-    }
-    
-    // Load the image library
-    loadImageLibrary();
-    
-    // Setup event listeners
-    setupEventListeners();
-    
-    // If a specific image was requested, load it
-    if (imageEditorConfig.selectedImageId > 0) {
-      loadImage(imageEditorConfig.selectedImageId);
-    }
-  });
-  
-  // Load image library with pagination
-  function loadImageLibrary(page = 1, searchTerm = '') {
-    const container = document.querySelector('#image-list-container .image-grid');
-    container.innerHTML = '<div class="loading-message"><i class="${font:far()} fa-spinner fa-spin"></i><p>Loading images...</p></div>';
-    
-    // TODO: Implement Ajax call to load images
-    // For now, show a placeholder
-    setTimeout(() => {
-      container.innerHTML = '<div class="no-images-message"><i class="${font:far()} fa-image fa-3x"></i><p>No images found</p><button id="upload-first-image-btn" class="button tiny primary">Upload Your First Image</button></div>';
-    }, 500);
-  }
-  
-  // Load a specific image
-  function loadImage(imageId) {
-    console.log('Loading image:', imageId);
-    // TODO: Implement image loading logic
-  }
-  
-  // Setup all event listeners
-  function setupEventListeners() {
-    // Dark mode toggle
-    document.getElementById('dark-mode-toggle').addEventListener('click', toggleDarkMode);
-    
-    // Search
-    document.getElementById('image-search').addEventListener('input', debounce(function(e) {
-      loadImageLibrary(1, e.target.value);
-    }, 300));
-    
-    // Toolbar buttons
-    document.getElementById('new-from-stock-btn').addEventListener('click', showStockPhotoDialog);
-    document.getElementById('new-from-clipboard-btn').addEventListener('click', pasteFromClipboard);
-    document.getElementById('import-btn').addEventListener('click', () => document.getElementById('image-file-input').click());
-    document.getElementById('reload-btn').addEventListener('click', reloadCurrentImage);
-    document.getElementById('save-btn').addEventListener('click', saveImageChanges);
-    
-    // File input
-    document.getElementById('image-file-input').addEventListener('change', handleFileImport);
-    
-    // Image tools
-    document.getElementById('crop-btn').addEventListener('click', startCrop);
-    document.getElementById('rotate-left-btn').addEventListener('click', () => rotateImage(-90));
-    document.getElementById('rotate-right-btn').addEventListener('click', () => rotateImage(90));
-    document.getElementById('flip-horizontal-btn').addEventListener('click', () => flipImage('horizontal'));
-    document.getElementById('flip-vertical-btn').addEventListener('click', () => flipImage('vertical'));
-    document.getElementById('adjustments-btn').addEventListener('click', showAdjustments);
-    document.getElementById('compare-btn').addEventListener('click', compareChanges);
-    document.getElementById('reset-btn').addEventListener('click', resetChanges);
-    
-    // Warn on exit if unsaved changes
-    window.addEventListener('beforeunload', function(e) {
-      if (hasUnsavedChanges()) {
-        e.preventDefault();
-        e.returnValue = '';
+      const darkModeIcon = document.querySelector('#dark-mode-toggle i');
+      if (darkModeIcon) {
+        darkModeIcon.classList.replace('fa-moon', 'fa-sun');
       }
-    });
-    
-    // Confirm exit links
-    document.querySelectorAll('.confirm-exit').forEach(link => {
-      link.addEventListener('click', function(e) {
-        if (hasUnsavedChanges()) {
-          e.preventDefault();
-          showUnsavedChangesModal(() => {
-            window.location.href = this.href;
-          });
-        }
-      });
-    });
-  }
-  
-  // Toggle dark mode
-  function toggleDarkMode() {
-    const html = document.documentElement;
-    const icon = this.querySelector('i');
-    const isDark = html.getAttribute('data-theme') === 'dark';
-    
-    if (isDark) {
-      html.removeAttribute('data-theme');
-      localStorage.setItem('image-editor-theme', 'light');
-      icon.classList.replace('fa-sun', 'fa-moon');
-    } else {
-      html.setAttribute('data-theme', 'dark');
-      localStorage.setItem('image-editor-theme', 'dark');
-      icon.classList.replace('fa-moon', 'fa-sun');
     }
-  }
-  
-  // Utility function for debouncing
-  function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-      const later = () => {
-        clearTimeout(timeout);
-        func(...args);
-      };
-      clearTimeout(timeout);
-      timeout = setTimeout(later, wait);
-    };
-  }
-  
-  // Check if there are unsaved changes
-  function hasUnsavedChanges() {
-    // TODO: Implement change tracking
-    return false;
-  }
-  
-  // Show unsaved changes modal
-  function showUnsavedChangesModal(onContinue) {
-    // TODO: Implement modal display
-    if (onContinue) onContinue();
-  }
-  
-  // Placeholder functions for toolbar actions
-  function showStockPhotoDialog() { console.log('Show stock photo dialog'); }
-  function pasteFromClipboard() { console.log('Paste from clipboard'); }
-  function handleFileImport(e) { console.log('Handle file import', e); }
-  function reloadCurrentImage() { console.log('Reload current image'); }
-  function saveImageChanges() { console.log('Save image changes'); }
-  function startCrop() { console.log('Start crop'); }
-  function rotateImage(degrees) { console.log('Rotate image', degrees); }
-  function flipImage(direction) { console.log('Flip image', direction); }
-  function showAdjustments() { console.log('Show adjustments'); }
-  function compareChanges() { console.log('Compare changes'); }
-  function resetChanges() { console.log('Reset changes'); }
+    
+    // Create and initialize the editor
+    imageEditor = new ImageEditor(imageEditorConfig);
+    imageEditor.init();
+  });
 </script>

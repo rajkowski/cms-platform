@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Matt Rajkowski
+ * Copyright 2026 Matt Rajkowski
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,12 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.Image;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
@@ -23,11 +29,6 @@ import com.simisinc.platform.infrastructure.persistence.cms.ImageRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.ImageSpecification;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import java.util.List;
 
 /**
  * Returns image library data for the visual image editor
@@ -78,33 +79,33 @@ public class ImageLibraryAjax extends GenericWidget {
     StringBuilder sb = new StringBuilder();
     sb.append("{");
     sb.append("\"images\":[");
-    
+
     boolean first = true;
     for (Image image : images) {
       if (!first) {
         sb.append(",");
       }
       first = false;
-      
+
       sb.append("{");
       sb.append("\"id\":").append(image.getId()).append(",");
       sb.append("\"filename\":\"").append(JsonCommand.toJson(image.getFilename())).append("\",");
-      sb.append("\"url\":\"").append(JsonCommand.toJson(image.getUrl())).append("\",");
+      sb.append("\"url\":\"").append(JsonCommand.toJson("/assets/img/" + image.getUrl())).append("\",");
       sb.append("\"width\":").append(image.getWidth()).append(",");
       sb.append("\"height\":").append(image.getHeight()).append(",");
       sb.append("\"fileLength\":").append(image.getFileLength()).append(",");
       sb.append("\"fileType\":\"").append(JsonCommand.toJson(StringUtils.defaultString(image.getFileType()))).append("\",");
-      
+
       // Format created timestamp
       if (image.getCreated() != null) {
         sb.append("\"created\":\"").append(JsonCommand.toJson(image.getCreated().toString())).append("\"");
       } else {
         sb.append("\"created\":null");
       }
-      
+
       sb.append("}");
     }
-    
+
     sb.append("],");
     sb.append("\"page\":").append(page).append(",");
     sb.append("\"limit\":").append(limit).append(",");
