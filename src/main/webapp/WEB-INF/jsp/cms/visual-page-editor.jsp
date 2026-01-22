@@ -112,7 +112,9 @@
         </ul>
 
         <div id="widgets-tab" class="tab-content">
-          <input type="text" id="widget-search" placeholder="Search widgets..." class="property-input" style="margin-bottom: 15px;" />
+          <div style="margin-bottom: 15px;">
+            <input type="text" id="widget-search" class="property-input" placeholder="Search widgets..." style="width: 100%; padding: 10px; font-size: 14px;" />
+          </div>
           <div id="widget-list-container">
             <!-- Widgets will be dynamically inserted here -->
           </div>
@@ -196,7 +198,7 @@
 
         <div id="pages-tab" class="tab-content active">
           <div style="margin-bottom: 15px;">
-            <input type="text" id="pages-search" class="property-input" placeholder="Search pages..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;" />
+            <input type="text" id="pages-search" class="property-input" placeholder="Search pages..." style="width: 100%; padding: 10px; font-size: 14px;" />
           </div>
           <div id="pages-error" style="display: none;"></div>
           <div id="pages-empty" style="display: none;">
