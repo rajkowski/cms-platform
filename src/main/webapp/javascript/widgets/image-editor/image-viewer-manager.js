@@ -667,17 +667,30 @@ class ImageViewerManager {
       return;
     }
 
-    // Get the cropped image data
+    // Save the selection bounds before clearing it
+    const cropRect = { ...this.selectionRect };
+
+    // Clear selection first so the rectangle is not drawn
+    this.selectionRect = null;
+    this.isDragging = false;
+    this.dragStart = null;
+    this.resizeHandle = null;
+    this.hideSelectionControls();
+    
+    // Redraw the image without the selection rectangle overlay
+    this.applyTransformations();
+
+    // Get the cropped image data from the clean canvas
     const croppedData = this.ctx.getImageData(
-      this.selectionRect.x,
-      this.selectionRect.y,
-      this.selectionRect.width,
-      this.selectionRect.height
+      cropRect.x,
+      cropRect.y,
+      cropRect.width,
+      cropRect.height
     );
 
     // Resize canvas to crop dimensions
-    this.canvas.width = this.selectionRect.width;
-    this.canvas.height = this.selectionRect.height;
+    this.canvas.width = cropRect.width;
+    this.canvas.height = cropRect.height;
 
     // Draw cropped data
     this.ctx.putImageData(croppedData, 0, 0);
@@ -690,12 +703,6 @@ class ImageViewerManager {
     croppedImage.src = this.canvas.toDataURL();
     this.currentImageElement = croppedImage;
 
-    // Clear selection (don't call applyTransformations as image is already drawn)
-    this.selectionRect = null;
-    this.isDragging = false;
-    this.dragStart = null;
-    this.resizeHandle = null;
-    this.hideSelectionControls();
     this.canvas.style.cursor = 'crosshair';
 
     // Mark as modified
