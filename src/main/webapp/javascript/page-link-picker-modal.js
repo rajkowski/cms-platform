@@ -36,6 +36,21 @@ class PageLinkPickerModal {
     
     this.modal.style.display = 'flex';
     
+    // Focus the search input after modal is visible
+    // Use requestAnimationFrame to ensure the browser has painted the modal
+    const focusInput = () => {
+      const input = this.modal.querySelector('#page-search');
+      if (input) {
+        input.focus();
+      }
+    };
+    
+    if (globalThis.requestAnimationFrame) {
+      globalThis.requestAnimationFrame(focusInput);
+    } else {
+      setTimeout(focusInput, 50);
+    }
+    
     // Add escape key listener when modal is shown
     this.escapeKeyHandler = (e) => {
       console.log('Page link picker - Key pressed:', e.key, 'Modal visible:', this.modal.style.display !== 'none');
@@ -125,9 +140,46 @@ class PageLinkPickerModal {
     if (searchInput) {
       searchInput.addEventListener('input', (e) => {
         const query = e.target.value.toLowerCase().trim();
-        const filtered = query ? this.pages.filter(page => 
-          page.title.toLowerCase().includes(query) || page.link.toLowerCase().includes(query)
-        ) : this.pages;
+        const filtered = query ? this.pages.filter(page => {
+          const searchText = (page.title + ' ' + page.link).toLowerCase();
+          const terms = query.split(/\s+/);
+          
+          // All search terms must exist in the text, in any order
+          return terms.every(term => searchText.includes(term));
+        }).sort((a, b) => {
+          // Sort by relevance: prioritize title matches, then by earliest match position
+          const aText = (a.title + ' ' + a.link).toLowerCase();
+          const bText = (b.title + ' ' + b.link).toLowerCase();
+          const aTitleText = a.title.toLowerCase();
+          const bTitleText = b.title.toLowerCase();
+          
+          // Find position of first matching term in each result
+          const queryTerms = query.split(/\s+/);
+          
+          // Calculate minimum position for a
+          let aMinPos = Infinity;
+          for (const t of queryTerms) {
+            const titlePos = aTitleText.indexOf(t);
+            const fullPos = aText.indexOf(t);
+            const pos = titlePos >= 0 ? titlePos : fullPos;
+            if (pos >= 0 && pos < aMinPos) {
+              aMinPos = pos;
+            }
+          }
+          
+          // Calculate minimum position for b
+          let bMinPos = Infinity;
+          for (const t of queryTerms) {
+            const titlePos = bTitleText.indexOf(t);
+            const fullPos = bText.indexOf(t);
+            const pos = titlePos >= 0 ? titlePos : fullPos;
+            if (pos >= 0 && pos < bMinPos) {
+              bMinPos = pos;
+            }
+          }
+          
+          return aMinPos - bMinPos;
+        }) : this.pages;
         this.renderPages(filtered);
       });
     }
@@ -259,4 +311,4 @@ class PageLinkPickerModal {
 }
 
 // Create global instance
-window.pageLinkPickerModal = new PageLinkPickerModal();
+globalThis.pageLinkPickerModal = new PageLinkPickerModal();
