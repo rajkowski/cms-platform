@@ -628,7 +628,7 @@ public class PageServlet extends HttpServlet {
         prepareHeaderFooter = false;
       }
       if (pageRequest.getPagePath().startsWith("/admin/system") ||
-          pageRequest.getPagePath().startsWith("/admin/visual-page-editor")) {
+          pageRequest.getPagePath().startsWith("/admin/visual-")) {
         prepareHeaderFooter = false;
       }
 
@@ -735,7 +735,7 @@ public class PageServlet extends HttpServlet {
         // Check if this is an admin page accessed directly and prepare for iframe rendering
         boolean isAdminPath = pageRequest.getPagePath().startsWith("/admin") &&
             !pageRequest.getPagePath().startsWith("/admin/system") &&
-            !pageRequest.getPagePath().startsWith("/admin/visual-page-editor") &&
+            !pageRequest.getPagePath().startsWith("/admin/visual-") &&
             !pageRequest.getPagePath().startsWith("/admin/web-page-designer") &&
             !pageRequest.getPagePath().startsWith("/admin/web-page") &&
             !pageRequest.getPagePath().startsWith("/admin/css-editor") &&

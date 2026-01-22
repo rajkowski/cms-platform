@@ -111,14 +111,16 @@
       <div class="panel-header">
         <h3 id="image-viewer-title">Select an Image</h3>
         <div id="image-tools">
-          <button id="crop-btn" class="tool-btn" title="Crop" disabled><i class="${font:far()} fa-crop"></i></button>
+          <button id="crop-selection-btn" class="tool-btn" title="Crop image to selection" disabled><i class="${font:far()} fa-crop"></i> Crop</button>
+          <button id="copy-selection-btn" class="tool-btn" title="Copy selection to clipboard" disabled><i class="${font:far()} fa-copy"></i> Copy</button>
+          <button id="clear-selection-btn" class="tool-btn" title="Clear selection" disabled><i class="${font:far()} fa-times"></i> Clear</button>
+          <div class="tool-divider"></div>
           <button id="rotate-left-btn" class="tool-btn" title="Rotate Left" disabled><i class="${font:far()} fa-undo"></i></button>
           <button id="rotate-right-btn" class="tool-btn" title="Rotate Right" disabled><i class="${font:far()} fa-redo"></i></button>
           <button id="flip-horizontal-btn" class="tool-btn" title="Flip Horizontal" disabled><i class="${font:far()} fa-arrows-h"></i></button>
           <button id="flip-vertical-btn" class="tool-btn" title="Flip Vertical" disabled><i class="${font:far()} fa-arrows-v"></i></button>
           <button id="adjustments-btn" class="tool-btn" title="Adjustments" disabled><i class="${font:far()} fa-sliders-h"></i></button>
           <div class="tool-divider"></div>
-          <button id="compare-btn" class="tool-btn" title="Compare Changes" disabled><i class="${font:far()} fa-eye"></i></button>
           <button id="reset-btn" class="tool-btn" title="Reset Changes" disabled><i class="${font:far()} fa-times-circle"></i></button>
         </div>
       </div>
@@ -129,14 +131,6 @@
         </div>
         <div id="image-canvas-container" style="display: none;">
           <canvas id="image-canvas"></canvas>
-        </div>
-      </div>
-      
-      <!-- Crop Tool Overlay -->
-      <div id="crop-overlay" style="display: none;">
-        <div class="crop-controls">
-          <button id="apply-crop-btn" class="button tiny success no-gap">Apply</button>
-          <button id="cancel-crop-btn" class="button tiny secondary no-gap">Cancel</button>
         </div>
       </div>
       

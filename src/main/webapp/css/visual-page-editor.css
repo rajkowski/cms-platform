@@ -525,6 +525,7 @@
   background: var(--editor-bg);
   color: var(--editor-text);
   transition: all 0.2s;
+  margin-bottom: 0;
 }
 
 .property-input::placeholder { 

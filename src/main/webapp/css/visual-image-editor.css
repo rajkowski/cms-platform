@@ -253,6 +253,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
 }
 
 #image-canvas {
@@ -260,29 +261,6 @@
   max-height: 100%;
   display: block;
   box-shadow: 0 4px 12px var(--editor-shadow);
-}
-
-/* Crop Overlay */
-#crop-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
-}
-
-.crop-controls {
-  background: var(--editor-panel-bg);
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 8px 24px var(--editor-shadow);
-  display: flex;
-  gap: 10px;
 }
 
 /* Adjustments Panel */
@@ -417,6 +395,7 @@
   background: var(--editor-panel-input);
   color: var(--editor-text);
   font-size: 14px;
+  margin-bottom: 0;
 }
 
 .property-input:focus {
