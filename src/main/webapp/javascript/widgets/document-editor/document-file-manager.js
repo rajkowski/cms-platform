@@ -233,7 +233,7 @@ class DocumentFileManager {
       row.dataset.fileId = file.id;
 
       row.innerHTML = `
-        <td>${file.title || file.filename || 'Untitled'}</td>
+        <td><span class="file-icon">${this.getMimeIcon(file.mimeType, file.filename)}</span> ${file.title || file.filename || 'Untitled'}</td>
         <td>${file.version || ''}</td>
         <td>${file.mimeType || ''}</td>
         <td>${file.fileLength ? this.formatSize(file.fileLength) : ''}</td>
@@ -285,5 +285,22 @@ class DocumentFileManager {
     } catch {
       return dateStr;
     }
+  }
+
+  getMimeIcon(mimeType, filename) {
+    const type = (mimeType || '').toLowerCase();
+    const name = (filename || '').toLowerCase();
+    if (type.startsWith('image/')) return '<i class="fas fa-file-image"></i>';
+    if (type === 'application/pdf') return '<i class="fas fa-file-pdf"></i>';
+    if (type.startsWith('video/')) return '<i class="fas fa-file-video"></i>';
+    if (type.startsWith('audio/')) return '<i class="fas fa-file-audio"></i>';
+    if (type.startsWith('text/') || type === 'application/json') return '<i class="fas fa-file-alt"></i>';
+    if (type.includes('spreadsheet') || type.includes('excel') || type === 'application/vnd.ms-excel') return '<i class="fas fa-file-excel"></i>';
+    if (type.includes('presentation') || type.includes('powerpoint')) return '<i class="fas fa-file-powerpoint"></i>';
+    if (type.includes('word')) return '<i class="fas fa-file-word"></i>';
+    if (type.includes('zip') || type.includes('compressed') || type.includes('tar')) return '<i class="fas fa-file-archive"></i>';
+    if (type.includes('xml') || type.includes('html') || type.includes('javascript')) return '<i class="fas fa-file-code"></i>';
+    if (name.endsWith('.drawio')) return '<i class="fas fa-project-diagram"></i>';
+    return '<i class="fas fa-file"></i>';
   }
 }
