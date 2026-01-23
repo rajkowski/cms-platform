@@ -96,10 +96,11 @@
               <th>Type</th>
               <th>Size</th>
               <th>Downloads</th>
+              <th>Modified</th>
             </tr>
           </thead>
           <tbody>
-            <tr><td colspan="5" class="empty-state">Select a folder to view files</td></tr>
+            <tr><td colspan="6" class="empty-state">Select a folder to view files</td></tr>
           </tbody>
         </table>
       </div>

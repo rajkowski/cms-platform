@@ -78,6 +78,7 @@ class DocumentFileManager {
         <td>${file.mimeType || ''}</td>
         <td>${file.fileLength ? this.formatSize(file.fileLength) : ''}</td>
         <td>${file.downloadCount || 0}</td>
+        <td>${file.modified ? this.formatDate(file.modified) : ''}</td>
       `;
 
       row.addEventListener('click', () => {
@@ -110,5 +111,17 @@ class DocumentFileManager {
     const power = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
     const size = bytes / Math.pow(1024, power);
     return `${size.toFixed(1)} ${units[power]}`;
+  }
+
+  formatDate(dateStr) {
+    if (!dateStr) {
+      return '';
+    }
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+    } catch {
+      return dateStr;
+    }
   }
 }

@@ -92,7 +92,8 @@ public class DocumentFileListAjax extends GenericWidget {
       sb.append("\"fileType\":\"").append(JsonCommand.toJson(StringUtils.defaultString(file.getFileType()))).append("\",");
       sb.append("\"fileLength\":").append(file.getFileLength()).append(",");
       sb.append("\"webPath\":\"").append(JsonCommand.toJson(StringUtils.defaultString(file.getWebPath()))).append("\",");
-      sb.append("\"downloadCount\":").append(file.getDownloadCount());
+      sb.append("\"downloadCount\":").append(file.getDownloadCount()).append(",");
+      sb.append("\"modified\":\"").append(file.getModified() != null ? JsonCommand.toJson(file.getModified().toString()) : "").append("\"");
       sb.append("}");
     }
 
