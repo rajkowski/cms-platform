@@ -84,6 +84,7 @@
       <div class="panel-header">
         <h3 id="document-browser-title">Files</h3>
         <div id="file-toolbar">
+          <button id="view-toggle-btn" class="button tiny secondary no-gap radius" title="Toggle view"><i class="fas fa-th-list"></i></button>
           <input type="text" id="file-search" class="property-input" placeholder="Search files..." />
         </div>
       </div>
@@ -104,6 +105,14 @@
           </tbody>
         </table>
       </div>
+      <div id="file-preview-container" style="display: none;">
+        <div class="file-preview-header">
+          <button id="close-preview-btn" class="button tiny secondary no-gap radius"><i class="fas fa-times"></i> Close Preview</button>
+        </div>
+        <div id="file-preview-content">
+          <div class="empty-state">Select a file to preview</div>
+        </div>
+      </div>
     </div>
 
     <!-- Right Panel -->
@@ -117,6 +126,25 @@
       </div>
     </div>
   </div>
+</div>
+
+<input type="file" id="file-upload-input" style="display: none;" multiple />
+
+<div id="upload-modal" class="reveal" data-reveal>
+  <h3>Upload Files</h3>
+  <div id="upload-progress" style="display: none;">
+    <progress id="upload-progress-bar" max="100" value="0"></progress>
+    <p id="upload-status">Uploading...</p>
+  </div>
+  <div id="upload-success" style="display: none;">
+    <p><i class="fas fa-check-circle" style="color: green;"></i> Files uploaded successfully!</p>
+  </div>
+  <div id="upload-error" style="display: none;">
+    <p style="color: red;"><i class="fas fa-exclamation-circle"></i> <span id="upload-error-message"></span></p>
+  </div>
+  <button class="close-button" data-close aria-label="Close modal" type="button">
+    <span aria-hidden="true">&times;</span>
+  </button>
 </div>
 
 <div id="unsaved-changes-modal" class="reveal" data-reveal>

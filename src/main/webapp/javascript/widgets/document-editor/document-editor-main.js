@@ -160,7 +160,11 @@ class DocumentEditor {
   }
 
   handleImport() {
-    alert('Import placeholder — connect to upload endpoint.');
+    this.fileManager.triggerFileUpload();
+  }
+
+  get files() {
+    return this.fileManager;
   }
 
   showLoading() {

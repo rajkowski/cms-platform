@@ -1,5 +1,5 @@
 /**
- * Handles right-panel metadata display for the document editor
+ * Handles right-panel metadata display and editing for the document editor
  */
 
 class DocumentPropertiesManager {
@@ -7,6 +7,8 @@ class DocumentPropertiesManager {
     this.editor = editor;
     this.contentEl = document.getElementById('document-properties-content');
     this.infoSection = null;
+    this.currentFile = null;
+    this.isEditing = false;
   }
 
   init() {
@@ -27,8 +29,9 @@ class DocumentPropertiesManager {
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
-      const file = await response.json();
-      this.render(file);
+      this.currentFile = await response.json();
+      this.isEditing = false;
+      this.render(this.currentFile);
       this.editor.setUnsavedChanges(false);
     } catch (err) {
       console.error('Unable to load file', err);
@@ -46,16 +49,24 @@ class DocumentPropertiesManager {
       return;
     }
 
+    const editModeClass = this.isEditing ? 'editable' : '';
+    const titleInput = this.isEditing 
+      ? `<input type="text" class="property-input" id="prop-title" value="${file.title || file.filename || ''}" />` 
+      : `<div class="property-value">${file.title || file.filename || 'Untitled'}</div>`;
+    const summaryInput = this.isEditing 
+      ? `<textarea class="property-input" id="prop-summary" rows="3">${file.summary || ''}</textarea>` 
+      : `<div class="property-value">${file.summary || ''}</div>`;
+
     this.contentEl.innerHTML = `
       <div class="property-tabs">
         <button class="property-tab active" data-tab="info">Properties</button>
         <button class="property-tab" data-tab="versions">Versions</button>
         <button class="property-tab" data-tab="downloads">Downloads</button>
       </div>
-      <div class="property-section active" data-tab="info">
-        <div class="property-group">
+      <div class="property-section active ${editModeClass}" data-tab="info">
+        <div class="property-group ${editModeClass}">
           <label>Title</label>
-          <div class="property-value">${file.title || file.filename || 'Untitled'}</div>
+          ${titleInput}
         </div>
         <div class="property-group">
           <label>Filename</label>
@@ -77,10 +88,20 @@ class DocumentPropertiesManager {
           <label>Downloads</label>
           <div class="property-value">${file.downloadCount || 0}</div>
         </div>
-        <div class="property-group">
+        <div class="property-group ${editModeClass}">
           <label>Summary</label>
-          <div class="property-value">${file.summary || ''}</div>
+          ${summaryInput}
         </div>
+        ${this.isEditing ? `
+          <div class="property-actions">
+            <button id="save-properties-btn" class="button primary tiny">Save</button>
+            <button id="cancel-edit-btn" class="button secondary tiny">Cancel</button>
+          </div>
+        ` : `
+          <div class="property-actions">
+            <button id="edit-properties-btn" class="button primary tiny">Edit</button>
+          </div>
+        `}
       </div>
       <div class="property-section" data-tab="versions">
         <div class="empty-state">Version history coming soon.</div>
@@ -91,6 +112,82 @@ class DocumentPropertiesManager {
     `;
 
     this.wireTabs();
+    this.wireButtons();
+  }
+
+  wireButtons() {
+    const editBtn = document.getElementById('edit-properties-btn');
+    const saveBtn = document.getElementById('save-properties-btn');
+    const cancelBtn = document.getElementById('cancel-edit-btn');
+
+    if (editBtn) {
+      editBtn.addEventListener('click', () => {
+        this.isEditing = true;
+        this.render(this.currentFile);
+      });
+    }
+
+    if (saveBtn) {
+      saveBtn.addEventListener('click', () => this.saveProperties());
+    }
+
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => {
+        this.isEditing = false;
+        this.render(this.currentFile);
+      });
+    }
+  }
+
+  async saveProperties() {
+    const titleInput = document.getElementById('prop-title');
+    const summaryInput = document.getElementById('prop-summary');
+
+    if (!titleInput || !this.currentFile) {
+      return;
+    }
+
+    const updates = {
+      id: this.currentFile.id,
+      title: titleInput.value.trim(),
+      summary: summaryInput ? summaryInput.value.trim() : ''
+    };
+
+    try {
+      this.editor.showLoading();
+      const response = await fetch('/json/documentUpdate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+        credentials: 'same-origin'
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const result = await response.json();
+      if (result.status === 0) {
+        throw new Error(result.message || 'Save failed');
+      }
+
+      // Update current file with saved values
+      this.currentFile.title = updates.title;
+      this.currentFile.summary = updates.summary;
+      this.isEditing = false;
+      this.render(this.currentFile);
+      this.editor.setUnsavedChanges(false);
+      
+      // Reload file list to show updated title
+      this.editor.files.reload();
+      
+      alert('Properties saved successfully');
+    } catch (err) {
+      console.error('Save failed', err);
+      alert(`Failed to save properties: ${err.message}`);
+    } finally {
+      this.editor.hideLoading();
+    }
   }
 
   wireTabs() {

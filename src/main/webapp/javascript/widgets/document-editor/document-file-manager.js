@@ -1,5 +1,5 @@
 /**
- * Handles file listing, selection, and basic preview wiring
+ * Handles file listing, selection, preview, and file uploads
  */
 
 class DocumentFileManager {
@@ -9,6 +9,8 @@ class DocumentFileManager {
     this.files = [];
     this.tableBody = null;
     this.searchInput = document.getElementById('file-search');
+    this.viewMode = 'table'; // 'table' or 'preview'
+    this.currentFile = null;
   }
 
   init() {
@@ -19,6 +21,164 @@ class DocumentFileManager {
     if (this.searchInput) {
       this.searchInput.addEventListener('input', () => this.reload());
     }
+    
+    // View toggle button
+    const viewToggleBtn = document.getElementById('view-toggle-btn');
+    if (viewToggleBtn) {
+      viewToggleBtn.addEventListener('click', () => this.toggleView());
+    }
+    
+    // Close preview button
+    const closePreviewBtn = document.getElementById('close-preview-btn');
+    if (closePreviewBtn) {
+      closePreviewBtn.addEventListener('click', () => this.closePreview());
+    }
+    
+    // File upload
+    const uploadInput = document.getElementById('file-upload-input');
+    if (uploadInput) {
+      uploadInput.addEventListener('change', (e) => this.handleFileUpload(e));
+    }
+  }
+
+  toggleView() {
+    if (this.viewMode === 'table') {
+      this.showPreview();
+    } else {
+      this.closePreview();
+    }
+  }
+
+  showPreview() {
+    if (!this.currentFile) {
+      return;
+    }
+    this.viewMode = 'preview';
+    document.getElementById('file-list-container').style.display = 'none';
+    document.getElementById('file-preview-container').style.display = 'block';
+    this.renderPreview(this.currentFile);
+  }
+
+  closePreview() {
+    this.viewMode = 'table';
+    document.getElementById('file-list-container').style.display = 'block';
+    document.getElementById('file-preview-container').style.display = 'none';
+  }
+
+  renderPreview(file) {
+    const previewContent = document.getElementById('file-preview-content');
+    if (!previewContent) {
+      return;
+    }
+
+    const mimeType = file.mimeType || '';
+    const webPath = file.webPath || '';
+
+    if (!webPath) {
+      previewContent.innerHTML = '<div class="empty-state">No preview available</div>';
+      return;
+    }
+
+    // Image preview
+    if (mimeType.startsWith('image/')) {
+      previewContent.innerHTML = `<img src="${webPath}" alt="${file.title || file.filename}" />`;
+    }
+    // PDF preview
+    else if (mimeType === 'application/pdf') {
+      previewContent.innerHTML = `<iframe src="${webPath}" type="application/pdf"></iframe>`;
+    }
+    // Text preview
+    else if (mimeType.startsWith('text/') || mimeType === 'application/json') {
+      fetch(webPath)
+        .then(response => response.text())
+        .then(text => {
+          previewContent.innerHTML = `<pre>${this.escapeHtml(text)}</pre>`;
+        })
+        .catch(() => {
+          previewContent.innerHTML = '<div class="empty-state">Unable to load text preview</div>';
+        });
+    }
+    // Default message
+    else {
+      previewContent.innerHTML = `<div class="empty-state">Preview not available for this file type<br><a href="${webPath}" target="_blank">Download File</a></div>`;
+    }
+  }
+
+  escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  triggerFileUpload() {
+    const uploadInput = document.getElementById('file-upload-input');
+    if (uploadInput) {
+      uploadInput.click();
+    }
+  }
+
+  async handleFileUpload(event) {
+    const files = event.target.files;
+    if (!files || files.length === 0 || this.folderId === -1) {
+      return;
+    }
+
+    const modal = new Foundation.Reveal($('#upload-modal'));
+    modal.open();
+
+    const progressContainer = document.getElementById('upload-progress');
+    const successContainer = document.getElementById('upload-success');
+    const errorContainer = document.getElementById('upload-error');
+    const progressBar = document.getElementById('upload-progress-bar');
+    const statusText = document.getElementById('upload-status');
+
+    progressContainer.style.display = 'block';
+    successContainer.style.display = 'none';
+    errorContainer.style.display = 'none';
+
+    try {
+      const formData = new FormData();
+      formData.append('folderId', this.folderId);
+      for (const file of files) {
+        formData.append('files', file);
+      }
+
+      statusText.textContent = `Uploading ${files.length} file(s)...`;
+      progressBar.value = 0;
+
+      const response = await fetch('/json/documentUpload', {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const result = await response.json();
+      if (result.status === 0) {
+        throw new Error(result.message || 'Upload failed');
+      }
+
+      progressBar.value = 100;
+      progressContainer.style.display = 'none';
+      successContainer.style.display = 'block';
+
+      setTimeout(() => {
+        modal.close();
+        this.reload();
+      }, 2000);
+
+    } catch (err) {
+      console.error('Upload failed', err);
+      progressContainer.style.display = 'none';
+      errorContainer.style.display = 'block';
+      document.getElementById('upload-error-message').textContent = err.message || 'Upload failed';
+    }
+
+    // Clear input
+    event.target.value = '';
   }
 
   setFolder(folderId) {
@@ -95,6 +255,8 @@ class DocumentFileManager {
         row.classList.toggle('active', Number(row.dataset.fileId) === Number(fileId));
       });
     }
+    // Store current file for preview
+    this.currentFile = this.files.find(f => f.id === fileId);
     this.editor.properties.loadFile(fileId);
   }
 

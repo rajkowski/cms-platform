@@ -39,6 +39,8 @@
   <service endpoint="/json/imageContent" class="com.simisinc.platform.presentation.widgets.cms.ImageContentAjax" />
   <!-- Document Editor -->
   <service endpoint="/json/documentLibrary" class="com.simisinc.platform.presentation.widgets.cms.DocumentLibraryAjax" />
+  <service endpoint="/json/documentSubfolders" class="com.simisinc.platform.presentation.widgets.cms.DocumentSubfoldersAjax" />
+  <service method="post" endpoint="/json/documentCreateSubfolder" class="com.simisinc.platform.presentation.widgets.cms.DocumentCreateSubfolderAjax" />
   <service endpoint="/json/documentFileList" class="com.simisinc.platform.presentation.widgets.cms.DocumentFileListAjax" />
   <service endpoint="/json/documentContent" class="com.simisinc.platform.presentation.widgets.cms.DocumentContentAjax" />
   <service method="get" endpoint="/json/static-sites/list" class="com.simisinc.platform.presentation.widgets.editor.StaticSiteEndpoint" />
