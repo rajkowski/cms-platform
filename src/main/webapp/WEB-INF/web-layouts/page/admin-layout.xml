@@ -1219,4 +1219,14 @@
     </section>
   </page>
 
+  <page name="/admin/visual-document-editor" role="admin,content-manager" title="Visual Document Editor" class="full-page">
+    <section class="grid-x">
+      <column class="small-12 cell">
+        <widget name="visualDocumentEditor">
+          <title>Visual Document Editor</title>
+        </widget>
+      </column>
+    </section>
+  </page>
+
 </pages>

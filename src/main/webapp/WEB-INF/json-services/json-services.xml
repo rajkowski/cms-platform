@@ -37,6 +37,10 @@
   <!-- Image Editor -->
   <service endpoint="/json/imageLibrary" class="com.simisinc.platform.presentation.widgets.cms.ImageLibraryAjax" />
   <service endpoint="/json/imageContent" class="com.simisinc.platform.presentation.widgets.cms.ImageContentAjax" />
+  <!-- Document Editor -->
+  <service endpoint="/json/documentLibrary" class="com.simisinc.platform.presentation.widgets.cms.DocumentLibraryAjax" />
+  <service endpoint="/json/documentFileList" class="com.simisinc.platform.presentation.widgets.cms.DocumentFileListAjax" />
+  <service endpoint="/json/documentContent" class="com.simisinc.platform.presentation.widgets.cms.DocumentContentAjax" />
   <service method="get" endpoint="/json/static-sites/list" class="com.simisinc.platform.presentation.widgets.editor.StaticSiteEndpoint" />
   <service method="get" endpoint="/json/static-sites/download" class="com.simisinc.platform.presentation.widgets.editor.StaticSiteEndpoint" />
   <service method="post" endpoint="/json/static-sites/generate" class="com.simisinc.platform.presentation.widgets.editor.StaticSiteEndpoint" />

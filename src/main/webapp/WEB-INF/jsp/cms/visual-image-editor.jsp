@@ -49,6 +49,7 @@
       <div class="button-group round">
         <a href="${ctx}/admin/visual-page-editor" class="button confirm-exit">Pages</a>
         <a href="${ctx}/admin/visual-image-editor" class="button confirm-exit active">Images</a>
+        <a href="${ctx}/admin/visual-document-editor" class="button confirm-exit">Documents</a>
       </div>
       <c:choose>
         <c:when test="${!empty returnPage}">
@@ -281,7 +282,7 @@
     console.log('Initializing Visual Image Editor...');
     
     // Initialize dark mode from localStorage
-    const savedTheme = localStorage.getItem('image-editor-theme');
+    const savedTheme = localStorage.getItem('editor-theme');
     if (savedTheme === 'dark') {
       document.documentElement.setAttribute('data-theme', 'dark');
       const darkModeIcon = document.querySelector('#dark-mode-toggle i');

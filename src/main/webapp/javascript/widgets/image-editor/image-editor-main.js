@@ -90,7 +90,7 @@ class ImageEditor {
         if (this.hasUnsavedChanges()) {
           e.preventDefault();
           this.showUnsavedChangesModal(() => {
-            window.location.href = link.href;
+            globalThis.location.href = link.href;
           });
         }
       });
@@ -103,15 +103,15 @@ class ImageEditor {
   toggleDarkMode() {
     const html = document.documentElement;
     const icon = document.querySelector('#dark-mode-toggle i');
-    const isDark = html.getAttribute('data-theme') === 'dark';
+    const isDark = html.dataset.theme === 'dark';
     
     if (isDark) {
-      html.removeAttribute('data-theme');
-      localStorage.setItem('image-editor-theme', 'light');
+      delete html.dataset.theme;
+      localStorage.setItem('editor-theme', 'light');
       if (icon) icon.classList.replace('fa-sun', 'fa-moon');
     } else {
-      html.setAttribute('data-theme', 'dark');
-      localStorage.setItem('image-editor-theme', 'dark');
+      html.dataset.theme = 'dark';
+      localStorage.setItem('editor-theme', 'dark');
       if (icon) icon.classList.replace('fa-moon', 'fa-sun');
     }
   }
@@ -207,7 +207,7 @@ class ImageEditor {
    * Create new image from stock photo
    */
   createFromStockPhoto() {
-    // TODO: Integrate with stock photo API (e.g., Unsplash, Pexels)
+    // Placeholder: integrate with a stock photo API (e.g., Unsplash, Pexels)
     alert('Stock photo integration coming soon! This will allow you to search and import photos from stock photo services.');
   }
 
@@ -399,7 +399,7 @@ class ImageEditor {
    * Show unsaved changes modal
    */
   showUnsavedChangesModal(onContinue) {
-    // TODO: Use Foundation modal
+    // Placeholder: wire up to Foundation modal for consistent UX
     const shouldContinue = confirm('You have unsaved changes. Do you want to discard them?');
     if (shouldContinue && onContinue) {
       onContinue();
