@@ -58,7 +58,7 @@ class DocumentLibraryManager {
     if (this.breadcrumbs.length > 0) {
       const breadcrumbContainer = document.createElement('div');
       breadcrumbContainer.className = 'folder-breadcrumbs';
-      
+
       const homeBtn = document.createElement('button');
       homeBtn.className = 'breadcrumb-btn';
       homeBtn.innerHTML = '<i class="fas fa-home"></i> All Folders';
@@ -85,11 +85,48 @@ class DocumentLibraryManager {
       this.listContainer.appendChild(breadcrumbContainer);
     }
 
-    // Render folders or subfolders
     const items = this.currentFolderId === -1 ? this.folders : this.subfolders;
-    if (!items.length) {
-      const emptyMsg = this.currentFolderId === -1 ? 'No folders found' : 'No subfolders in this folder';
-      this.listContainer.innerHTML += '<div class="empty-state">' + emptyMsg + '</div>';
+    if (this.currentFolderId === -1 && !items.length) {
+      this.listContainer.innerHTML += '<div class="empty-state">No folders found</div>';
+      return;
+    }
+
+    // When a folder is selected, keep it visible above its subfolders
+    if (this.currentFolderId > -1) {
+      const parentFolder = this.folders.find((f) => Number(f.id) === Number(this.currentFolderId)) || this.breadcrumbs[this.breadcrumbs.length - 1] || {};
+      const parentItem = document.createElement('div');
+      parentItem.className = 'folder-item parent-folder';
+      parentItem.dataset.folderId = parentFolder.id;
+
+      const header = document.createElement('div');
+      header.className = 'folder-header';
+
+      const icon = document.createElement('span');
+      icon.className = 'folder-icon';
+      icon.innerHTML = '<i class="fas fa-folder-open"></i>';
+      header.appendChild(icon);
+
+      const name = document.createElement('div');
+      name.className = 'folder-name';
+      name.textContent = parentFolder.name || 'Selected Folder';
+      header.appendChild(name);
+
+      parentItem.appendChild(header);
+
+      const meta = document.createElement('div');
+      meta.className = 'folder-meta';
+      meta.innerHTML = '<span>' + (parentFolder.fileCount || 0) + ' files</span>';
+      parentItem.appendChild(meta);
+
+      parentItem.addEventListener('click', () => {
+        this.selectFolder(parentFolder.id);
+      });
+
+      this.listContainer.appendChild(parentItem);
+    }
+
+    if (this.currentFolderId > -1 && !items.length) {
+      this.listContainer.innerHTML += '<div class="empty-state">No subfolders in this folder</div>';
       return;
     }
 
