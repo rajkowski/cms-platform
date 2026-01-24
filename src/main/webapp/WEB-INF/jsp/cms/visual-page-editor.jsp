@@ -607,6 +607,7 @@
   
   document.addEventListener('DOMContentLoaded', function() {
     const editorConfig = {
+      token: '<c:out value="${userSession.formToken}" />',
       webPageLink: '<c:out value="${webPage.link}" />',
       webPageId: <c:out value="${webPage.id}" default="-1"/>,
       existingXml: document.getElementById('existing-xml-data').textContent
@@ -1449,6 +1450,7 @@
     
     // Static Site Modal
     const staticSiteManager = new StaticSiteManager({
+      token: '<c:out value="${userSession.formToken}" />',
       modalId: 'static-site-modal',
       openModalBtnId: 'static-site-generator-btn',
       closeModalBtnId: 'close-static-site-modal',
@@ -1458,8 +1460,7 @@
       listUrl: '${ctx}/json/static-sites/list?action=list',
       generateUrl: '${ctx}/json/static-sites/generate',
       deleteUrl: '${ctx}/json/static-sites/delete',
-      downloadUrl: '${ctx}/json/static-sites/download?action=download',
-      token: '<c:out value="${userSession.formToken}" />'
+      downloadUrl: '${ctx}/json/static-sites/download?action=download'
     });
     staticSiteManager.init();
   });

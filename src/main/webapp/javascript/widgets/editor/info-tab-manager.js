@@ -9,6 +9,7 @@
 class InfoTabManager {
   constructor(editor, rightPanelTabs) {
     this.editor = editor;
+    this.token = editor.config.token;
     this.rightPanelTabs = rightPanelTabs;
     this.originalData = null;
     this.currentData = null;
@@ -398,7 +399,7 @@ class InfoTabManager {
     
     try {
       const formData = new FormData();
-      formData.append('token', document.querySelector('input[name="token"]')?.value || '');
+      formData.append('token', this.token);
       formData.append('link', this.currentPageLink);
       formData.append('title', this.currentData.title || '');
       formData.append('keywords', this.currentData.keywords || '');

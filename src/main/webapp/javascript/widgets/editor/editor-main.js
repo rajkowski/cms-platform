@@ -9,6 +9,7 @@
 class PageEditor {
   constructor(config) {
     this.config = config;
+    this.token = config.token;
     this.dragDropManager = new DragDropManager(this);
     this.widgetRegistry = new WidgetRegistry();
     this.layoutManager = new LayoutManager(this, this.widgetRegistry);
@@ -1025,7 +1026,7 @@ class PageEditor {
         
         // Create form data for submission
         const formData = new FormData();
-        formData.append('token', document.querySelector('input[name="token"]')?.value || '');
+        formData.append('token', this.token);
         formData.append('webPageLink', pageLink);
         formData.append('designerData', jsonData);
         

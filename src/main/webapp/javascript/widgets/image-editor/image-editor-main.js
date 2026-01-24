@@ -9,6 +9,7 @@
 class ImageEditor {
   constructor(config) {
     this.config = config;
+    this.token = config.token;
     this.imageLibrary = new ImageLibraryManager(this);
     this.imageViewer = new ImageViewerManager(this);
     this.imageProperties = new ImagePropertiesManager(this);
@@ -146,6 +147,7 @@ class ImageEditor {
 
       // Upload the file
       const formData = new FormData();
+      formData.append('token', this.token);
       formData.append('file', file);
 
       const response = await fetch(`${this.config.apiBaseUrl}/imageUpload`, {
@@ -219,6 +221,7 @@ class ImageEditor {
       this.showLoading();
 
       const formData = new FormData();
+      formData.append('token', this.token);
       formData.append('file', blob, filename);
 
       const response = await fetch(`${this.config.apiBaseUrl}/imageUpload`, {
@@ -319,6 +322,7 @@ class ImageEditor {
     }
 
     const formData = new FormData();
+    formData.append('token', this.token);
     formData.append('imageId', currentImage.id);
     formData.append('file', blob, currentImage.filename || 'image.png');
 

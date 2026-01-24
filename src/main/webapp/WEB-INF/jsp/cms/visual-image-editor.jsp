@@ -24,14 +24,14 @@
 <web:stylesheet package="spectrum" file="spectrum.css" />
 <web:script package="spectrum" file="spectrum.js" />
 <g:compress>
-  <link rel="stylesheet" type="text/css" href="/css/visual-page-editor.css" />
-  <link rel="stylesheet" type="text/css" href="/css/visual-image-editor.css" />
+  <link rel="stylesheet" type="text/css" href="${ctx}/css/visual-page-editor.css" />
+  <link rel="stylesheet" type="text/css" href="${ctx}/css/visual-image-editor.css" />
 </g:compress>
 <g:compress>
-  <script src="/javascript/widgets/image-editor/image-library-manager.js"></script>
-  <script src="/javascript/widgets/image-editor/image-viewer-manager.js"></script>
-  <script src="/javascript/widgets/image-editor/image-properties-manager.js"></script>
-  <script src="/javascript/widgets/image-editor/image-editor-main.js"></script>
+  <script src="${ctx}/javascript/widgets/image-editor/image-library-manager.js"></script>
+  <script src="${ctx}/javascript/widgets/image-editor/image-viewer-manager.js"></script>
+  <script src="${ctx}/javascript/widgets/image-editor/image-properties-manager.js"></script>
+  <script src="${ctx}/javascript/widgets/image-editor/image-editor-main.js"></script>
 </g:compress>
 <div id="visual-image-editor-wrapper">
   <c:if test="${!empty title}">
@@ -267,6 +267,7 @@
 <script>
   // Configuration and Initialization
   const imageEditorConfig = {
+    token: '<c:out value="${userSession.formToken}" />',
     selectedImageId: <c:out value="${selectedImageId}" default="-1" />,
     apiBaseUrl: '${ctx}/json',
     contextPath: '${ctx}',
@@ -294,5 +295,52 @@
     // Create and initialize the editor
     imageEditor = new ImageEditor(imageEditorConfig);
     imageEditor.init();
+    
+    // Properties Panel Resizing
+    const propertiesPanelElement = document.getElementById('image-properties-panel');
+    const resizeHandle = document.getElementById('properties-panel-resize-handle');
+    let isResizing = false;
+    let startX = 0;
+    let startWidth = 0;
+    
+    resizeHandle.addEventListener('mousedown', function(e) {
+      isResizing = true;
+      startX = e.clientX;
+      startWidth = parseInt(window.getComputedStyle(propertiesPanelElement).width, 10);
+      resizeHandle.classList.add('resizing');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      e.preventDefault();
+    });
+    
+    document.addEventListener('mousemove', function(e) {
+      if (!isResizing) return;
+      
+      const diff = startX - e.clientX; // Reverse because we're resizing from left
+      const newWidth = startWidth + diff;
+      const minWidth = 200;
+      const maxWidth = 600;
+      
+      if (newWidth >= minWidth && newWidth <= maxWidth) {
+        propertiesPanelElement.style.width = newWidth + 'px';
+      }
+    });
+    
+    document.addEventListener('mouseup', function() {
+      if (isResizing) {
+        isResizing = false;
+        resizeHandle.classList.remove('resizing');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        // Save width preference
+        localStorage.setItem('image-properties-panel-width', propertiesPanelElement.style.width);
+      }
+    });
+    
+    // Restore saved width
+    const savedWidth = localStorage.getItem('image-properties-panel-width');
+    if (savedWidth) {
+      propertiesPanelElement.style.width = savedWidth;
+    }
   });
 </script>

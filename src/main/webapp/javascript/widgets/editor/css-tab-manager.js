@@ -10,6 +10,7 @@
 class CSSTabManager {
   constructor(editor, rightPanelTabs) {
     this.editor = editor;
+    this.token = editor.config.token;
     this.rightPanelTabs = rightPanelTabs;
     this.aceEditor = null;
     this.originalCSS = '';
@@ -315,7 +316,7 @@ class CSSTabManager {
     
     try {
       const formData = new FormData();
-      formData.append('token', document.querySelector('input[name="token"]')?.value || '');
+      formData.append('token', this.token);
       formData.append('link', this.currentPageLink);
       formData.append('css', css);
       

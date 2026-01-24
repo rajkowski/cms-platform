@@ -162,6 +162,7 @@
 
 <script>
   const documentEditorConfig = {
+token: '<c:out value="${userSession.formToken}" />',
     apiBaseUrl: '${ctx}/json',
     contextPath: '${ctx}',
     returnPage: '<c:out value="${returnPage}" />',
