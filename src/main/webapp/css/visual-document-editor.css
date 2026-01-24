@@ -1,6 +1,9 @@
 /**
  * Visual Document Editor Styles
- * Shares base styles with visual-page-editor.css
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
+ * Licensed under the Apache License, Version 2.0
+ * 
+  * Shares base styles with visual-page-editor.css
  */
 
 #visual-document-editor-wrapper {
@@ -13,6 +16,7 @@
 #visual-document-editor-container {
   display: flex;
   flex: 1;
+  height: calc(100vh - 140px); /* Adjust based on titlebar and toolbar height */
   min-height: 520px;
 }
 

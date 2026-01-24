@@ -1,6 +1,6 @@
 /**
  * Visual Page Editor Styles
- * Copyright 2025 Matt Rajkowski (https://github.com/rajkowski)
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Licensed under the Apache License, Version 2.0
  */
 
@@ -42,7 +42,7 @@
 #editor-titlebar {
   background: var(--editor-panel-bg);
   border-bottom: 1px solid var(--editor-border);
-  padding: 10px 20px;
+  padding: 0 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -71,6 +71,15 @@
 .titlebar-right {
   display: flex;
   gap: 10px;
+}
+
+.titlebar-right .button-group {
+  margin: 0;
+}
+
+.titlebar-right a.button {
+  margin-top: 16px;
+  margin-bottom: 16px;
 }
 
 #editor-toolbar {
