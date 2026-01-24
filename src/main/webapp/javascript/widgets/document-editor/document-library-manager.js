@@ -104,7 +104,7 @@ class DocumentLibraryManager {
 
       const icon = document.createElement('span');
       icon.className = 'folder-icon';
-      icon.innerHTML = '<i class="fas fa-folder-open"></i>';
+      icon.innerHTML = '<i class="fas fa-book"></i>';
       header.appendChild(icon);
 
       const name = document.createElement('div');
@@ -141,7 +141,11 @@ class DocumentLibraryManager {
 
       const icon = document.createElement('span');
       icon.className = 'folder-icon';
-      icon.innerHTML = '<i class="fas fa-folder"></i>';
+      if (this.currentFolderId === -1) {
+        icon.innerHTML = '<i class="fas fa-book"></i>';
+      } else {
+        icon.innerHTML = '<i class="fas fa-folder"></i>';
+      }
       header.appendChild(icon);
 
       const name = document.createElement('div');
@@ -205,6 +209,38 @@ class DocumentLibraryManager {
     if (folder && this.editor.folderDetails) {
       this.editor.folderDetails.setFolderAndLoad(folder);
     }
+    // Enable file-toolbar buttons when a folder is selected
+    this.enableFileToolbar();
+  }
+
+  enableFileToolbar() {
+    const buttons = [
+      'new-subfolder-btn',
+      'import-doc-btn',
+      'new-url-btn',
+      'reload-files-btn'
+    ];
+    buttons.forEach((btnId) => {
+      const btn = document.getElementById(btnId);
+      if (btn) {
+        btn.disabled = false;
+      }
+    });
+  }
+
+  disableFileToolbar() {
+    const buttons = [
+      'new-subfolder-btn',
+      'import-doc-btn',
+      'new-url-btn',
+      'reload-files-btn'
+    ];
+    buttons.forEach((btnId) => {
+      const btn = document.getElementById(btnId);
+      if (btn) {
+        btn.disabled = true;
+      }
+    });
   }
 
   getCurrentFolder(folderId) {
@@ -215,8 +251,17 @@ class DocumentLibraryManager {
   }
 
   async navigateToFolder(folderId, folderName) {
+    // If clicking on an existing breadcrumb, remove entries after it
+    const existingIndex = this.breadcrumbs.findIndex((crumb) => Number(crumb.id) === Number(folderId));
+    if (existingIndex >= 0) {
+      // Keep only breadcrumbs up to and including this one
+      this.breadcrumbs = this.breadcrumbs.slice(0, existingIndex + 1);
+    } else {
+      // New navigation, add to breadcrumbs
+      this.breadcrumbs.push({ id: folderId, name: folderName });
+    }
+    
     this.currentFolderId = folderId;
-    this.breadcrumbs.push({ id: folderId, name: folderName });
     await this.loadSubfolders(folderId);
   }
 
@@ -225,6 +270,8 @@ class DocumentLibraryManager {
     this.breadcrumbs = [];
     this.subfolders = [];
     this.render();
+    // Disable file-toolbar buttons when no folder is selected
+    this.disableFileToolbar();
   }
 
   async loadSubfolders(folderId) {

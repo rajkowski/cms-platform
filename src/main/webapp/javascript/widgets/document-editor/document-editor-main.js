@@ -53,9 +53,14 @@ class DocumentEditor {
 
     const saveVersionBtn = document.getElementById('save-version-btn');
     const newFolderBtn = document.getElementById('new-folder-btn');
+    const newSubfolderBtn = document.getElementById('new-subfolder-btn');
 
     if (newFolderBtn) {
       newFolderBtn.addEventListener('click', () => this.handleNewFolder());
+    }
+
+    if (newSubfolderBtn) {
+      newSubfolderBtn.addEventListener('click', () => this.handleNewSubfolder());
     }
 
     if (saveVersionBtn) {
@@ -179,6 +184,10 @@ class DocumentEditor {
 
     handleNewFolder() {
       this.library.createFolder();
+    }
+
+    handleNewSubfolder() {
+      this.library.createSubfolder();
     }
 
   switchTab(tabName) {

@@ -67,14 +67,10 @@
     <!-- Left Section -->
     <div class="toolbar-section left">
       <button id="new-folder-btn" class="button tiny success no-gap radius"><i class="${font:far()} fa-folder-plus"></i> New Repository</button>
-      <button id="import-doc-btn" class="button tiny primary no-gap radius"><i class="${font:far()} fa-upload"></i> Upload Files</button>
-      <button id="new-url-btn" class="button tiny primary no-gap radius"><i class="${font:far()} fa-link"></i> Add URL</button>
     </div>
 
     <!-- Center Section -->
     <div class="toolbar-section center">
-      <button id="reload-files-btn" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-sync"></i> Reload</button>
-      <button id="save-version-btn" class="button tiny no-gap radius"><i class="${font:far()} fa-save"></i> Save Version</button>
       <span id="unsaved-indicator"><i class="${font:far()} fa-exclamation-triangle"></i> Unsaved changes</span>
     </div>
 
@@ -106,6 +102,10 @@
       <div class="panel-header">
         <h3 id="document-browser-title">Files</h3>
         <div id="file-toolbar">
+          <button id="new-subfolder-btn" class="button tiny success no-gap radius" disabled><i class="${font:far()} fa-folder-plus"></i> New Folder</button>
+          <button id="import-doc-btn" class="button tiny primary no-gap radius" disabled><i class="${font:far()} fa-upload"></i> Upload Files</button>
+          <button id="new-url-btn" class="button tiny primary no-gap radius" disabled><i class="${font:far()} fa-link"></i> Add URL</button>
+          <button id="reload-files-btn" class="button tiny secondary no-gap radius" disabled><i class="${font:far()} fa-sync"></i> Reload</button>
           <button id="view-toggle-btn" class="button tiny secondary no-gap radius" title="Toggle view"><i class="fas fa-th-list"></i></button>
           <input type="text" id="file-search" class="property-input" placeholder="Search files..." />
         </div>
@@ -145,12 +145,21 @@
       </div>
       <div id="properties-tabs" class="tab-navigation" style="display: none;">
         <button class="tab-btn active" data-tab="details" title="Details">Details</button>
+        <button class="tab-btn" data-tab="versions" title="Versions">Versions</button>
         <button class="tab-btn" data-tab="permissions" title="Permissions">Permissions</button>
       </div>
       <div id="document-properties-content">
         <div class="empty-state">Select a folder or file to view details</div>
       </div>
       <div id="folder-details-tab" style="display: none;"></div>
+      <div id="file-versions-tab" style="display: none;">
+        <div class="versions-toolbar">
+          <button id="save-version-btn" class="button tiny no-gap radius"><i class="${font:far()} fa-save"></i> Save Version</button>
+        </div>
+        <div id="versions-list-container">
+          <div class="empty-state">No versions available</div>
+        </div>
+      </div>
       <div id="folder-permissions-tab" style="display: none;"></div>
     </div>
   </div>
