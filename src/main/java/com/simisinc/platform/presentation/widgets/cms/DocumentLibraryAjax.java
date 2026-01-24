@@ -66,7 +66,10 @@ public class DocumentLibraryAjax extends GenericWidget {
     FolderSpecification specification = new FolderSpecification();
     long userId = context.getUserId();
     if (userId > -1) {
-      specification.setForUserId(userId);
+      // Determine role which can see all document repositories
+      if (!context.hasRole("admin")) {
+        specification.setForUserId(userId);
+      }
     } else {
       specification.setForUserId((long) UserSession.GUEST_ID);
     }
