@@ -8,7 +8,8 @@ class DocumentLibraryManager {
     this.token = editor.config.token;
     this.folders = [];
     this.subfolders = [];
-    this.currentFolderId = -1;
+    this.parentFolderId = -1;
+    this.currentSubFolderId = -1;
     this.breadcrumbs = [];
     this.searchInput = document.getElementById('document-search');
     this.listContainer = document.getElementById('folder-list-container');
@@ -86,15 +87,15 @@ class DocumentLibraryManager {
       this.listContainer.appendChild(breadcrumbContainer);
     }
 
-    const items = this.currentFolderId === -1 ? this.folders : this.subfolders;
-    if (this.currentFolderId === -1 && !items.length) {
-      this.listContainer.innerHTML += '<div class="empty-state">No repositories found</div>';
+    const items = this.parentFolderId === -1 ? this.folders : this.subfolders;
+    if (this.parentFolderId === -1 && !items.length) {
+      this.listContainer.insertAdjacentHTML('beforeend', '<div class="empty-state">No repositories found</div>');
       return;
     }
 
     // When a folder is selected, keep it visible above its subfolders
-    if (this.currentFolderId > -1) {
-      const parentFolder = this.folders.find((f) => Number(f.id) === Number(this.currentFolderId)) || this.breadcrumbs[this.breadcrumbs.length - 1] || {};
+    if (this.parentFolderId > -1) {
+      const parentFolder = this.folders.find((f) => Number(f.id) === Number(this.parentFolderId)) || this.breadcrumbs[this.breadcrumbs.length - 1] || {};
       const parentItem = document.createElement('div');
       parentItem.className = 'folder-item parent-folder';
       parentItem.dataset.folderId = parentFolder.id;
@@ -126,14 +127,18 @@ class DocumentLibraryManager {
       this.listContainer.appendChild(parentItem);
     }
 
-    if (this.currentFolderId > -1 && !items.length) {
-      this.listContainer.innerHTML += '<div class="empty-state">No subfolders in this repository</div>';
+    if (this.parentFolderId > -1 && !items.length) {
+      this.listContainer.insertAdjacentHTML('beforeend', '<div class="empty-state">No subfolders in this repository</div>');
       return;
     }
 
     items.forEach((folder) => {
       const item = document.createElement('div');
-      item.className = 'folder-item';
+      if (this.parentFolderId === -1) {
+        item.className = 'folder-item';
+      } else {
+        item.className = 'folder-item subfolder-item';
+      }
       item.dataset.folderId = folder.id;
 
       const header = document.createElement('div');
@@ -141,10 +146,10 @@ class DocumentLibraryManager {
 
       const icon = document.createElement('span');
       icon.className = 'folder-icon';
-      if (this.currentFolderId === -1) {
+      if (this.parentFolderId === -1) {
         icon.innerHTML = '<i class="fas fa-book"></i>';
       } else {
-        icon.innerHTML = '<i class="fas fa-folder"></i>';
+        icon.innerHTML = '<i class="fa-regular fa-folder"></i>';
       }
       header.appendChild(icon);
 
@@ -154,7 +159,7 @@ class DocumentLibraryManager {
       header.appendChild(name);
 
       // Add subfolder indicator if at root level
-      if (this.currentFolderId === -1) {
+      if (this.parentFolderId === -1) {
         const navBtn = document.createElement('button');
         navBtn.className = 'folder-nav-btn';
         navBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
@@ -187,7 +192,7 @@ class DocumentLibraryManager {
     });
 
     // Add "New Subfolder" button if in folder view
-    if (this.currentFolderId > 0) {
+    if (this.parentFolderId > 0) {
       const addBtn = document.createElement('button');
       addBtn.className = 'button tiny primary add-subfolder-btn';
       addBtn.innerHTML = '<i class="fas fa-plus"></i> New Subfolder';
@@ -203,7 +208,27 @@ class DocumentLibraryManager {
     this.listContainer.querySelectorAll('.folder-item').forEach((el) => {
       el.classList.toggle('active', Number(el.dataset.folderId) === Number(folderId));
     });
-    this.editor.fileManager.setFolder(folderId);
+    // Pass parent folder ID when viewing subfolders
+    if (this.parentFolderId > -1) {
+      // Check if clicking on the parent folder itself or a subfolder
+      if (Number(folderId) === Number(this.parentFolderId)) {
+        // Clicking the parent folder - reload its file list
+        this.currentSubFolderId = -1;
+        this.editor.fileManager.setFolder(folderId);
+      } else {
+        // Selecting a subfolder - get the subfolder's parent folder ID from the subfolder object
+        const subfolder = this.subfolders.find((f) => f.id === folderId);
+        if (subfolder) {
+          this.currentSubFolderId = folderId;
+          // Use the subfolder's folderId property as the parent folder ID
+          this.editor.fileManager.setFolder(folderId, subfolder.folderId);
+        }
+      }
+    } else {
+      // Selecting a root folder (don't change parentFolderId, just load files)
+      this.currentSubFolderId = -1;
+      this.editor.fileManager.setFolder(folderId);
+    }
     // Load folder details for the properties panel
     const folder = this.getCurrentFolder(folderId);
     if (folder && this.editor.folderDetails) {
@@ -244,7 +269,7 @@ class DocumentLibraryManager {
   }
 
   getCurrentFolder(folderId) {
-    if (this.currentFolderId === -1) {
+    if (this.parentFolderId === -1) {
       return this.folders.find((f) => f.id === folderId);
     }
     return this.subfolders.find((f) => f.id === folderId);
@@ -261,12 +286,14 @@ class DocumentLibraryManager {
       this.breadcrumbs.push({ id: folderId, name: folderName });
     }
     
-    this.currentFolderId = folderId;
+    this.parentFolderId = folderId;
+    this.currentSubFolderId = -1;
     await this.loadSubfolders(folderId);
   }
 
   navigateToRoot() {
-    this.currentFolderId = -1;
+    this.parentFolderId = -1;
+    this.currentSubFolderId = -1;
     this.breadcrumbs = [];
     this.subfolders = [];
     this.render();
@@ -300,68 +327,66 @@ class DocumentLibraryManager {
     }
   }
 
+  createFolder() {
+    const folderName = prompt('Enter repository name:');
+    if (!folderName || !folderName.trim()) {
+      return;
+    }
+
+    fetch('/json/documentCreateFolder', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        token: this.token,
+        folderName: folderName.trim()
+      })
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          this.loadFolders();
+        } else {
+          alert('Error creating repository: ' + (data.message || 'Unknown error'));
+        }
+      })
+      .catch((err) => {
+        console.error('Error creating repository:', err);
+        alert('Error creating repository');
+      });
+  }
+
   createSubfolder() {
-    const name = prompt('Enter subfolder name:');
-    if (!name || !name.trim()) {
+    const folderName = prompt('Enter folder name:');
+    if (!folderName) {
       return;
     }
 
     fetch('/json/documentCreateSubfolder', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
         token: this.token,
-        folderId: this.currentFolderId,
-        name: name.trim(),
-      }),
-      credentials: 'same-origin'
+        parentFolderId: this.currentFolderId,
+        folderName: folderName
+      })
     })
-      .then((response) => response.json())
-      .then((result) => {
-        if (result.status === 0) {
-          alert('Error: ' + (result.message || 'Could not create subfolder'));
-          return;
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          this.loadSubfolders(this.currentFolderId);
+        } else {
+          alert('Error creating subfolder: ' + (data.message || 'Unknown error'));
         }
-        // Reload subfolders
-        this.loadSubfolders(this.currentFolderId);
       })
       .catch((err) => {
-        console.error('Create subfolder failed', err);
-        alert('Failed to create subfolder');
-      });
-  }
-
-  createFolder() {
-    const name = prompt('Enter repository name:');
-    if (!name || !name.trim()) {
-      return;
-    }
-
-    this.editor.showLoading();
-    fetch('/json/documentCreateFolder', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        token: this.token,
-        name: name.trim(),
-      }),
-      credentials: 'same-origin'
-    })
-      .then((response) => response.json())
-      .then((result) => {
-        if (result.status === 0) {
-          alert('Error: ' + (result.message || 'Could not create repository'));
-          return;
-        }
-        // Reload folders
-        this.loadFolders();
-      })
-      .catch((err) => {
-        console.error('Create repository failed', err);
-        alert('Failed to create repository');
-      })
-      .finally(() => {
-        this.editor.hideLoading();
+        console.error('Error creating folder:', err);
+        alert('Error creating folder');
       });
   }
 }

@@ -7,6 +7,8 @@ class DocumentFileManager {
     this.editor = editor;
     this.token = editor.config.token;
     this.folderId = -1;
+    this.parentFolderId = -1;
+    this.subFolderId = -1;
     this.files = [];
     this.tableBody = null;
     this.searchInput = document.getElementById('file-search');
@@ -183,8 +185,17 @@ class DocumentFileManager {
     event.target.value = '';
   }
 
-  setFolder(folderId) {
+  setFolder(folderId, parentFolderId) {
     this.folderId = folderId;
+    if (parentFolderId) {
+      // When parentFolderId is provided, this is a subfolder selection
+      this.parentFolderId = parentFolderId;
+      this.subFolderId = folderId;
+    } else {
+      // When selecting a root folder, reset subfolder tracking
+      this.parentFolderId = -1;
+      this.subFolderId = -1;
+    }
     this.reload();
   }
 
@@ -195,7 +206,12 @@ class DocumentFileManager {
     try {
       const searchTerm = this.searchInput ? this.searchInput.value.trim() : '';
       const url = new URL(`${this.editor.config.apiBaseUrl}/documentFileList`, globalThis.location.origin);
-      url.searchParams.set('folderId', this.folderId);
+      if (this.subFolderId > -1) {
+        url.searchParams.set('folderId', this.parentFolderId);
+        url.searchParams.set('subFolderId', this.subFolderId);
+      } else {
+        url.searchParams.set('folderId', this.folderId);
+      }
       url.searchParams.set('page', 1);
       url.searchParams.set('limit', 50);
       if (searchTerm) {

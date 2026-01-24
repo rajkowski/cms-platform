@@ -72,6 +72,10 @@
   transition: all 0.2s ease;
 }
 
+.subfolder-item {
+  margin-left: 16px;
+}
+
 .folder-item:hover {
   border-color: var(--editor-selected-border);
   box-shadow: 0 2px 8px var(--editor-shadow);
