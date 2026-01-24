@@ -150,7 +150,7 @@
 .folder-name {
   font-weight: 600;
   margin: 0 0 4px 0;
-    flex: 1;
+  flex: 1;
   font-size: 14px;
 }
 
@@ -161,10 +161,10 @@
   gap: 8px;
   flex-wrap: wrap;
 
-.add-subfolder-btn {
-  margin-top: 12px;
-  width: 100%;
-}
+  .add-subfolder-btn {
+    margin-top: 12px;
+    width: 100%;
+  }
 }
 
 /* Middle: File browser */
@@ -282,7 +282,7 @@
   top: 0;
   bottom: 0;
   width: 5px;
-  cursor: ew-resize;
+  cursor: col-resize;
   background: transparent;
   z-index: 10;
 }
@@ -335,9 +335,16 @@
 
 .property-section {
   display: none;
+  margin-bottom: 20px;
 }
 
 .property-section.active {
+  display: block;
+}
+
+/* Property sections in folder tabs should always be visible */
+#folder-details-tab .property-section,
+#folder-permissions-tab .property-section {
   display: block;
 }
 
@@ -463,4 +470,360 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+
+/* Folder Details and Permissions Panels */
+#properties-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--editor-border);
+  background: var(--editor-bg);
+  padding: 0 20px;
+}
+
+#properties-tabs .info-text {
+  margin: 0;
+  font-size: 13px;
+  color: var(--editor-text-muted);
+  line-height: 1.4;
+}
+
+[data-theme="dark"] #properties-tabs .info-text {
+  color: var(--editor-text-muted);
+}
+
+.tab-navigation {
+  display: flex;
+  gap: 0;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--editor-text-muted);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+  color: var(--editor-text);
+  background: var(--editor-hover-bg);
+}
+
+.tab-btn.active {
+  color: var(--editor-selected-border);
+  border-bottom-color: var(--editor-selected-border);
+  background: var(--editor-panel-bg);
+}
+
+#folder-details-tab,
+#folder-permissions-tab {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.folder-details-content,
+.folder-permissions-content {
+  padding: 16px 20px;
+  flex: 1;
+}
+
+.folder-header-info {
+  margin-bottom: 12px;
+}
+
+.folder-header-info h4 {
+  margin: 0 0 6px 0;
+  font-size: 18px;
+  color: var(--editor-text);
+}
+
+/* Folder permissions and details specific styles */
+#folder-details-tab .property-section,
+#folder-permissions-tab .property-section {
+  display: block;
+  margin-bottom: 20px;
+}
+
+#folder-details-tab .property-section h4,
+#folder-permissions-tab .property-section h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--editor-text);
+  margin: 0 0 12px 0;
+}
+
+#folder-details-tab .property-section h5,
+#folder-permissions-tab .property-section h5 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--editor-text);
+  margin: 0 0 12px 0;
+}
+
+#folder-details-tab .property-section .info-text,
+#folder-permissions-tab .property-section .info-text {
+  font-size: 13px;
+  color: var(--editor-text-muted);
+  line-height: 1.4;
+  margin: 0 0 12px 0;
+}
+
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.section-header h5 {
+  margin: 0;
+}
+
+#add-folder-group-btn {
+  white-space: nowrap;
+}
+
+.property-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-top: 0;
+  background: var(--editor-bg);
+}
+
+.property-table th,
+.property-table td {
+  padding: 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--editor-border);
+  color: var(--editor-text);
+}
+
+.property-table th {
+  background: var(--editor-panel-bg);
+  font-weight: 600;
+  color: var(--editor-text);
+}
+
+.property-table tbody tr {
+  background: var(--editor-bg);
+}
+
+.property-table tbody tr:nth-child(even) {
+  background: var(--editor-panel-bg);
+}
+
+.property-table tbody tr:hover {
+  background: var(--editor-hover-bg);
+}
+
+[data-theme="dark"] .property-table {
+  background: var(--editor-bg);
+}
+
+[data-theme="dark"] .property-table th {
+  background: var(--editor-panel-bg);
+  color: var(--editor-text);
+  border-bottom-color: var(--editor-border);
+}
+
+[data-theme="dark"] .property-table tbody tr {
+  background: var(--editor-bg);
+}
+
+[data-theme="dark"] .property-table tbody tr:nth-child(even) {
+  background: var(--editor-panel-bg);
+}
+
+[data-theme="dark"] .property-table tbody tr:hover {
+  background: var(--editor-hover-bg);
+}
+
+[data-theme="dark"] .property-table td {
+  color: var(--editor-text);
+  border-bottom-color: var(--editor-border);
+}
+
+.folder-groups-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  background: var(--editor-bg);
+}
+
+.folder-groups-table th,
+.folder-groups-table td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--editor-border);
+  color: var(--editor-text);
+}
+
+.folder-groups-table th {
+  background: var(--editor-panel-bg);
+  font-weight: 600;
+  color: var(--editor-text);
+}
+
+.folder-groups-table tbody tr {
+  background: var(--editor-bg);
+}
+
+.folder-groups-table tbody tr:nth-child(even) {
+  background: var(--editor-panel-bg);
+}
+
+.folder-groups-table tbody tr:hover {
+  background: var(--editor-hover-bg);
+}
+
+[data-theme="dark"] .folder-groups-table {
+  background: var(--editor-bg);
+}
+
+[data-theme="dark"] .folder-groups-table th {
+  background: var(--editor-panel-bg);
+  color: var(--editor-text);
+  border-bottom-color: var(--editor-border);
+}
+
+[data-theme="dark"] .folder-groups-table tbody tr {
+  background: var(--editor-bg);
+}
+
+[data-theme="dark"] .folder-groups-table tbody tr:nth-child(even) {
+  background: var(--editor-panel-bg);
+}
+
+[data-theme="dark"] .folder-groups-table tbody tr:hover {
+  background: var(--editor-hover-bg);
+}
+
+[data-theme="dark"] .folder-groups-table td {
+  color: var(--editor-text);
+  border-bottom-color: var(--editor-border);
+}
+
+.folder-groups-table .edit-group-btn,
+.folder-groups-table .delete-group-btn {
+  padding: 4px 8px;
+  margin: 0 2px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: var(--editor-bg);
+  font-size: 12px;
+  color: var(--editor-text);
+  font-weight: 500;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--editor-text);
+  margin-bottom: 6px;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--editor-border);
+  border-radius: 4px;
+  background: var(--editor-panel-input);
+  color: var(--editor-text);
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  border-color: var(--editor-selected-border);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.1);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+fieldset {
+  border: 1px solid var(--editor-border);
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+fieldset legend {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--editor-text);
+  padding: 0 6px;
+  margin: 0 0 8px 0;
+}
+
+fieldset label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-weight: normal;
+}
+
+fieldset label:last-child {
+  margin-bottom: 0;
+}
+
+fieldset input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+  cursor: pointer;
+}
+
+#edit-folder-details-btn {
+  margin-bottom: 12px;
+}
+
+.button-group {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.button-group button {
+  flex: 1;
+}
+
+#folder-group-modal {
+  max-width: 500px;
+}
+
+#folder-group-modal form {
+  display: flex;
+  flex-direction: column;
+}
+
+#folder-group-modal .button-group {
+  margin-top: 24px;
 }
