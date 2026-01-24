@@ -1,5 +1,17 @@
 <%--
-  ~ Visual Document Editor
+  ~ Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
   --%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
@@ -35,9 +47,9 @@
     </div>
     <div class="titlebar-right">
       <div class="button-group round">
-        <a href="${ctx}/admin/visual-page-editor" class="button tiny confirm-exit">Pages</a>
-        <a href="${ctx}/admin/visual-image-editor" class="button tiny confirm-exit">Images</a>
-        <a href="${ctx}/admin/visual-document-editor" class="button tiny confirm-exit active">Documents</a>
+        <a href="${ctx}/admin/visual-page-editor" class="button confirm-exit">Pages</a>
+        <a href="${ctx}/admin/visual-image-editor" class="button confirm-exit">Images</a>
+        <a href="${ctx}/admin/visual-document-editor" class="button confirm-exit active">Documents</a>
       </div>
       <c:choose>
         <c:when test="${!empty returnPage}">
@@ -52,16 +64,21 @@
 
   <!-- Toolbar -->
   <div id="editor-toolbar">
+    <!-- Left Section -->
     <div class="toolbar-section left">
-      <button id="new-folder-btn" class="button tiny info no-gap radius"><i class="${font:far()} fa-folder-plus"></i> New Repository</button>
-      <button id="import-doc-btn" class="button tiny success no-gap radius"><i class="${font:far()} fa-upload"></i> Upload Files</button>
+      <button id="new-folder-btn" class="button tiny success no-gap radius"><i class="${font:far()} fa-folder-plus"></i> New Repository</button>
+      <button id="import-doc-btn" class="button tiny primary no-gap radius"><i class="${font:far()} fa-upload"></i> Upload Files</button>
       <button id="new-url-btn" class="button tiny primary no-gap radius"><i class="${font:far()} fa-link"></i> Add URL</button>
     </div>
+
+    <!-- Center Section -->
     <div class="toolbar-section center">
       <button id="reload-files-btn" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-sync"></i> Reload</button>
       <button id="save-version-btn" class="button tiny no-gap radius"><i class="${font:far()} fa-save"></i> Save Version</button>
       <span id="unsaved-indicator"><i class="${font:far()} fa-exclamation-triangle"></i> Unsaved changes</span>
     </div>
+
+    <!-- Right Section -->
     <div class="toolbar-section right">
       <div id="loading-indicator" style="display: none;">
         <i class="${font:far()} fa-spinner fa-spin"></i>
@@ -75,7 +92,9 @@
     <div id="document-library-panel">
       <div class="panel-header">
         <h3>Repositories</h3>
-        <input type="text" id="document-search" placeholder="Search repositories..." />
+        <div class="search-container">
+          <input type="text" id="document-search" placeholder="Search repositories..." />
+        </div>
       </div>
       <div id="folder-list-container">
         <div class="empty-state">Loading...</div>
