@@ -14,10 +14,12 @@
   <link rel="stylesheet" type="text/css" href="${ctx}/css/visual-document-editor.css" />
 </g:compress>
 <g:compress>
-  <script src="/javascript/widgets/document-editor/document-library-manager.js"></script>
-  <script src="/javascript/widgets/document-editor/document-file-manager.js"></script>
-  <script src="/javascript/widgets/document-editor/document-properties-manager.js"></script>
-  <script src="/javascript/widgets/document-editor/document-editor-main.js"></script>
+  <script src="${ctx}/javascript/widgets/document-editor/document-library-manager.js"></script>
+  <script src="${ctx}/javascript/widgets/document-editor/document-file-manager.js"></script>
+  <script src="${ctx}/javascript/widgets/document-editor/folder-details-manager.js"></script>
+  <script src="${ctx}/javascript/widgets/document-editor/folder-permissions-manager.js"></script>
+  <script src="${ctx}/javascript/widgets/document-editor/document-properties-manager.js"></script>
+  <script src="${ctx}/javascript/widgets/document-editor/document-editor-main.js"></script>
 </g:compress>
 <div id="visual-document-editor-wrapper">
   <c:if test="${!empty title}">
@@ -51,8 +53,9 @@
   <!-- Toolbar -->
   <div id="editor-toolbar">
     <div class="toolbar-section left">
-      <button id="new-url-btn" class="button tiny primary no-gap radius"><i class="${font:far()} fa-link"></i> New URL</button>
-      <button id="import-doc-btn" class="button tiny success no-gap radius"><i class="${font:far()} fa-upload"></i> Import</button>
+      <button id="new-folder-btn" class="button tiny info no-gap radius"><i class="${font:far()} fa-folder-plus"></i> New Repository</button>
+      <button id="import-doc-btn" class="button tiny success no-gap radius"><i class="${font:far()} fa-upload"></i> Upload Files</button>
+      <button id="new-url-btn" class="button tiny primary no-gap radius"><i class="${font:far()} fa-link"></i> Add URL</button>
     </div>
     <div class="toolbar-section center">
       <button id="reload-files-btn" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-sync"></i> Reload</button>
@@ -71,11 +74,11 @@
     <!-- Left Panel -->
     <div id="document-library-panel">
       <div class="panel-header">
-        <h3>Folders</h3>
-        <input type="text" id="document-search" placeholder="Search folders..." />
+        <h3>Repositories</h3>
+        <input type="text" id="document-search" placeholder="Search repositories..." />
       </div>
       <div id="folder-list-container">
-        <div class="empty-state">Loading folders...</div>
+        <div class="empty-state">Loading...</div>
       </div>
     </div>
 
@@ -119,16 +122,67 @@
     <div id="document-properties-panel">
       <div id="properties-panel-resize-handle"></div>
       <div class="panel-header">
-        <h3>File Details</h3>
+        <h3 id="properties-panel-title">File Details</h3>
+      </div>
+      <div id="properties-tabs" class="tab-navigation" style="display: none;">
+        <button class="tab-btn active" data-tab="details" title="Details">Details</button>
+        <button class="tab-btn" data-tab="permissions" title="Permissions">Permissions</button>
       </div>
       <div id="document-properties-content">
-        <div class="empty-state">Select a file to view details</div>
+        <div class="empty-state">Select a folder or file to view details</div>
       </div>
+      <div id="folder-details-tab" style="display: none;"></div>
+      <div id="folder-permissions-tab" style="display: none;"></div>
     </div>
   </div>
 </div>
 
 <input type="file" id="file-upload-input" style="display: none;" multiple />
+
+<!-- Folder Group Modal -->
+<div id="folder-group-modal" class="reveal" data-reveal>
+  <h3 id="folder-group-modal-title">Add Group Access</h3>
+  <form id="folder-group-form">
+    <div class="form-group">
+      <label for="folder-group-select">Group</label>
+      <select id="folder-group-select" required>
+        <option value="">-- Select Group --</option>
+      </select>
+    </div>
+    
+    <div class="form-group">
+      <label for="folder-group-privacy-type">Privacy Type</label>
+      <select id="folder-group-privacy-type">
+        <option value="0">Undefined</option>
+        <option value="1">Public</option>
+        <option value="2">Public Read Only</option>
+        <option value="3">Protected</option>
+        <option value="4">Private</option>
+      </select>
+    </div>
+
+    <fieldset>
+      <legend>Permissions</legend>
+      <label>
+        <input type="checkbox" id="folder-group-add-permission" /> Can Add Files
+      </label>
+      <label>
+        <input type="checkbox" id="folder-group-edit-permission" /> Can Edit Files
+      </label>
+      <label>
+        <input type="checkbox" id="folder-group-delete-permission" /> Can Delete Files
+      </label>
+    </fieldset>
+
+    <div class="button-group">
+      <button type="button" id="save-folder-group-btn" class="button primary">Save</button>
+      <button type="button" class="button secondary" data-close>Cancel</button>
+    </div>
+  </form>
+  <button class="close-button" data-close aria-label="Close modal" type="button">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
 
 <div id="upload-modal" class="reveal" data-reveal>
   <h3>Upload Files</h3>
@@ -162,7 +216,7 @@
 
 <script>
   const documentEditorConfig = {
-token: '<c:out value="${userSession.formToken}" />',
+    token: '<c:out value="${userSession.formToken}" />',
     apiBaseUrl: '${ctx}/json',
     contextPath: '${ctx}',
     returnPage: '<c:out value="${returnPage}" />',
@@ -182,5 +236,52 @@ token: '<c:out value="${userSession.formToken}" />',
     }
     const documentEditor = new DocumentEditor(documentEditorConfig);
     documentEditor.init();
+    
+    // Properties Panel Resizing
+    const propertiesPanelElement = document.getElementById('document-properties-panel');
+    const resizeHandle = document.getElementById('properties-panel-resize-handle');
+    let isResizing = false;
+    let startX = 0;
+    let startWidth = 0;
+    
+    resizeHandle.addEventListener('mousedown', function(e) {
+      isResizing = true;
+      startX = e.clientX;
+      startWidth = parseInt(window.getComputedStyle(propertiesPanelElement).width, 10);
+      resizeHandle.classList.add('resizing');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      e.preventDefault();
+    });
+    
+    document.addEventListener('mousemove', function(e) {
+      if (!isResizing) return;
+      
+      const diff = startX - e.clientX; // Reverse because we're resizing from left
+      const newWidth = startWidth + diff;
+      const minWidth = 200;
+      const maxWidth = 600;
+      
+      if (newWidth >= minWidth && newWidth <= maxWidth) {
+        propertiesPanelElement.style.width = newWidth + 'px';
+      }
+    });
+    
+    document.addEventListener('mouseup', function() {
+      if (isResizing) {
+        isResizing = false;
+        resizeHandle.classList.remove('resizing');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        // Save width preference
+        localStorage.setItem('document-properties-panel-width', propertiesPanelElement.style.width);
+      }
+    });
+    
+    // Restore saved width
+    const savedWidth = localStorage.getItem('document-properties-panel-width');
+    if (savedWidth) {
+      propertiesPanelElement.style.width = savedWidth;
+    }
   });
 </script>

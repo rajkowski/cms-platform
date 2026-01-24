@@ -5,6 +5,7 @@
 class DocumentPropertiesManager {
   constructor(editor) {
     this.editor = editor;
+    this.token = editor.config.token;
     this.contentEl = document.getElementById('document-properties-content');
     this.infoSection = null;
     this.currentFile = null;
@@ -44,6 +45,30 @@ class DocumentPropertiesManager {
     if (!this.contentEl) {
       return;
     }
+    
+    // Hide folder tabs and folder detail/permission tabs, show file content
+    const tabs = document.getElementById('properties-tabs');
+    if (tabs) {
+      tabs.style.display = 'none';
+    }
+
+    const detailsTab = document.getElementById('folder-details-tab');
+    if (detailsTab) {
+      detailsTab.style.display = 'none';
+    }
+
+    const permissionsTab = document.getElementById('folder-permissions-tab');
+    if (permissionsTab) {
+      permissionsTab.style.display = 'none';
+    }
+
+    this.contentEl.style.display = 'block';
+
+    const titleEl = document.getElementById('properties-panel-title');
+    if (titleEl) {
+      titleEl.textContent = 'File Details';
+    }
+
     if (!file || file.error) {
       this.contentEl.innerHTML = '<div class="empty-state">Select a file to see details</div>';
       return;
@@ -148,6 +173,7 @@ class DocumentPropertiesManager {
     }
 
     const updates = {
+      token: this.token,
       id: this.currentFile.id,
       title: titleInput.value.trim(),
       summary: summaryInput ? summaryInput.value.trim() : ''

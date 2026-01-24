@@ -5,6 +5,7 @@
 class DocumentFileManager {
   constructor(editor) {
     this.editor = editor;
+    this.token = editor.config.token;
     this.folderId = -1;
     this.files = [];
     this.tableBody = null;
@@ -138,6 +139,7 @@ class DocumentFileManager {
 
     try {
       const formData = new FormData();
+      formData.append('token', this.token);
       formData.append('folderId', this.folderId);
       for (const file of files) {
         formData.append('files', file);
@@ -290,6 +292,7 @@ class DocumentFileManager {
   getMimeIcon(mimeType, filename) {
     const type = (mimeType || '').toLowerCase();
     const name = (filename || '').toLowerCase();
+    if (type === 'text/uri-list') return '<i class="fas fa-link"></i>';
     if (type.startsWith('image/')) return '<i class="fas fa-file-image"></i>';
     if (type === 'application/pdf') return '<i class="fas fa-file-pdf"></i>';
     if (type.startsWith('video/')) return '<i class="fas fa-file-video"></i>';

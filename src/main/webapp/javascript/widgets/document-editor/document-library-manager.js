@@ -5,6 +5,7 @@
 class DocumentLibraryManager {
   constructor(editor) {
     this.editor = editor;
+    this.token = editor.config.token;
     this.folders = [];
     this.subfolders = [];
     this.currentFolderId = -1;
@@ -41,7 +42,7 @@ class DocumentLibraryManager {
     } catch (err) {
       console.error('Unable to load folders', err);
       if (this.listContainer) {
-        this.listContainer.innerHTML = '<div class="empty-state">Unable to load folders</div>';
+        this.listContainer.innerHTML = '<div class="empty-state">Unable to load repositories</div>';
       }
     } finally {
       this.editor.hideLoading();
@@ -61,7 +62,7 @@ class DocumentLibraryManager {
 
       const homeBtn = document.createElement('button');
       homeBtn.className = 'breadcrumb-btn';
-      homeBtn.innerHTML = '<i class="fas fa-home"></i> All Folders';
+      homeBtn.innerHTML = '<i class="fas fa-home"></i> All Repositories';
       homeBtn.addEventListener('click', () => this.navigateToRoot());
       breadcrumbContainer.appendChild(homeBtn);
 
@@ -87,7 +88,7 @@ class DocumentLibraryManager {
 
     const items = this.currentFolderId === -1 ? this.folders : this.subfolders;
     if (this.currentFolderId === -1 && !items.length) {
-      this.listContainer.innerHTML += '<div class="empty-state">No folders found</div>';
+      this.listContainer.innerHTML += '<div class="empty-state">No repositories found</div>';
       return;
     }
 
@@ -108,7 +109,7 @@ class DocumentLibraryManager {
 
       const name = document.createElement('div');
       name.className = 'folder-name';
-      name.textContent = parentFolder.name || 'Selected Folder';
+      name.textContent = parentFolder.name || 'Selected Repository';
       header.appendChild(name);
 
       parentItem.appendChild(header);
@@ -126,7 +127,7 @@ class DocumentLibraryManager {
     }
 
     if (this.currentFolderId > -1 && !items.length) {
-      this.listContainer.innerHTML += '<div class="empty-state">No subfolders in this folder</div>';
+      this.listContainer.innerHTML += '<div class="empty-state">No subfolders in this repository</div>';
       return;
     }
 
@@ -199,6 +200,18 @@ class DocumentLibraryManager {
       el.classList.toggle('active', Number(el.dataset.folderId) === Number(folderId));
     });
     this.editor.fileManager.setFolder(folderId);
+    // Load folder details for the properties panel
+    const folder = this.getCurrentFolder(folderId);
+    if (folder && this.editor.folderDetails) {
+      this.editor.folderDetails.setFolderAndLoad(folder);
+    }
+  }
+
+  getCurrentFolder(folderId) {
+    if (this.currentFolderId === -1) {
+      return this.folders.find((f) => f.id === folderId);
+    }
+    return this.subfolders.find((f) => f.id === folderId);
   }
 
   async navigateToFolder(folderId, folderName) {
@@ -250,13 +263,14 @@ class DocumentLibraryManager {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
+        token: this.token,
         folderId: this.currentFolderId,
-        name: name.trim()
+        name: name.trim(),
       }),
       credentials: 'same-origin'
     })
-      .then(response => response.json())
-      .then(result => {
+      .then((response) => response.json())
+      .then((result) => {
         if (result.status === 0) {
           alert('Error: ' + (result.message || 'Could not create subfolder'));
           return;
@@ -264,9 +278,43 @@ class DocumentLibraryManager {
         // Reload subfolders
         this.loadSubfolders(this.currentFolderId);
       })
-      .catch(err => {
+      .catch((err) => {
         console.error('Create subfolder failed', err);
         alert('Failed to create subfolder');
+      });
+  }
+
+  createFolder() {
+    const name = prompt('Enter repository name:');
+    if (!name || !name.trim()) {
+      return;
+    }
+
+    this.editor.showLoading();
+    fetch('/json/documentCreateFolder', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        token: this.token,
+        name: name.trim(),
+      }),
+      credentials: 'same-origin'
+    })
+      .then((response) => response.json())
+      .then((result) => {
+        if (result.status === 0) {
+          alert('Error: ' + (result.message || 'Could not create repository'));
+          return;
+        }
+        // Reload folders
+        this.loadFolders();
+      })
+      .catch((err) => {
+        console.error('Create repository failed', err);
+        alert('Failed to create repository');
+      })
+      .finally(() => {
+        this.editor.hideLoading();
       });
   }
 }

@@ -7,6 +7,7 @@ class DocumentEditor {
     this.config = config;
     this.library = new DocumentLibraryManager(this);
     this.fileManager = new DocumentFileManager(this);
+    this.folderDetails = new FolderDetailsManager(this);
     this.properties = new DocumentPropertiesManager(this);
     this.loadingIndicator = document.getElementById('loading-indicator');
     this.unsaved = false;
@@ -16,6 +17,7 @@ class DocumentEditor {
     this.applySavedTheme();
     this.library.init();
     this.fileManager.init();
+    this.folderDetails.init();
     this.properties.init();
     this.setupEventListeners();
 
@@ -50,9 +52,21 @@ class DocumentEditor {
     }
 
     const saveVersionBtn = document.getElementById('save-version-btn');
+    const newFolderBtn = document.getElementById('new-folder-btn');
+
+    if (newFolderBtn) {
+      newFolderBtn.addEventListener('click', () => this.handleNewFolder());
+    }
+
     if (saveVersionBtn) {
       saveVersionBtn.addEventListener('click', () => this.fileManager.saveVersion());
     }
+
+    // Tab switching for folder properties
+    const tabs = document.querySelectorAll('.tab-btn');
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => this.switchTab(tab.dataset.tab));
+    });
 
     // Unsaved changes guard
     window.addEventListener('beforeunload', (e) => {
@@ -161,6 +175,37 @@ class DocumentEditor {
 
   handleImport() {
     this.fileManager.triggerFileUpload();
+  }
+
+    handleNewFolder() {
+      this.library.createFolder();
+    }
+
+  switchTab(tabName) {
+    // Update tab buttons
+    const tabs = document.querySelectorAll('.tab-btn');
+    tabs.forEach((tab) => {
+      if (tab.dataset.tab === tabName) {
+        tab.classList.add('active');
+      } else {
+        tab.classList.remove('active');
+      }
+    });
+
+    // Update content visibility
+    const detailsTab = document.getElementById('folder-details-tab');
+    const permissionsTab = document.getElementById('folder-permissions-tab');
+    const contentArea = document.getElementById('document-properties-content');
+
+    if (tabName === 'details') {
+      if (detailsTab) detailsTab.style.display = 'flex';
+      if (permissionsTab) permissionsTab.style.display = 'none';
+      if (contentArea) contentArea.style.display = 'none';
+    } else if (tabName === 'permissions') {
+      if (detailsTab) detailsTab.style.display = 'none';
+      if (permissionsTab) permissionsTab.style.display = 'flex';
+      if (contentArea) contentArea.style.display = 'none';
+    }
   }
 
   get files() {
