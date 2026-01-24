@@ -62,9 +62,11 @@ class FolderDetailsManager {
         tabs.style.display = 'flex';
       }
       
+      // @todo determine if subfolder then change title accordingly
+
       const titleEl = document.getElementById('properties-panel-title');
       if (titleEl) {
-        titleEl.textContent = 'Folder: ' + (this.currentFolder.name || 'Untitled');
+        titleEl.textContent = 'Repository: ' + (this.currentFolder.name || 'Untitled');
       }
       
       const contentArea = document.getElementById('document-properties-content');
@@ -260,7 +262,7 @@ class FolderDetailsManager {
 
     } catch (err) {
       console.error('Error saving folder', err);
-      alert('Error saving folder: ' + err.message);
+      alert('Error saving repository: ' + err.message);
     }
   }
 

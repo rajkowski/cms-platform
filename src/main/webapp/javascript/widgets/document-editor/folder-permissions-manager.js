@@ -7,7 +7,7 @@ class FolderPermissionsManager {
   constructor(folderDetailsManager) {
     this.folderDetailsManager = folderDetailsManager;
     this.editor = folderDetailsManager.editor;
-    this.token = folderDetailsManager.editor.config.token;
+    this.token = this.editor.config.token;
     this.currentFolder = null;
     this.folderGroups = [];
     this.allGroups = [];
@@ -56,7 +56,7 @@ class FolderPermissionsManager {
     }
 
     if (!this.currentFolder) {
-      this.containerEl.innerHTML = '<div class="empty-state">Select a folder to manage permissions</div>';
+      this.containerEl.innerHTML = '<div class="empty-state">Select a repository to manage permissions</div>';
       return;
     }
 
@@ -64,8 +64,8 @@ class FolderPermissionsManager {
     
     // Privacy summary
     html += '<div class="property-section">';
-    html += '<h4>Folder Access</h4>';
-    html += '<p class="info-text">Configure which user groups can access and modify files in this folder.</p>';
+    html += '<h4>Repository Access</h4>';
+    html += '<p class="info-text">Configure which user groups can access and modify files in this repository.</p>';
     html += '</div>';
 
     // Groups list
