@@ -50,6 +50,14 @@
   <service endpoint="/json/folderGroupsList" class="com.simisinc.platform.presentation.widgets.cms.FolderGroupsListAjax" />
   <service endpoint="/json/folderGroupSave" class="com.simisinc.platform.presentation.widgets.cms.FolderGroupSaveAjax" />
   <service endpoint="/json/folderGroupDelete" class="com.simisinc.platform.presentation.widgets.cms.FolderGroupDeleteAjax" />
+  <!-- Data Editor -->
+  <service endpoint="/json/dataCollections" class="com.simisinc.platform.presentation.widgets.editor.DataCollectionsAjax" />
+  <service endpoint="/json/dataDatasets" class="com.simisinc.platform.presentation.widgets.editor.DataDatasetsAjax" />
+  <service endpoint="/json/saveCollection" class="com.simisinc.platform.presentation.widgets.editor.SaveCollectionAjax" />
+  <service endpoint="/json/saveDataset" class="com.simisinc.platform.presentation.widgets.editor.SaveDatasetAjax" />
+  <service endpoint="/json/datasetImport" class="com.simisinc.platform.presentation.widgets.editor.DatasetImportAjax" />
+  <service endpoint="/json/datasetSchedule" class="com.simisinc.platform.presentation.widgets.editor.DatasetScheduleAjax" />
+  <service endpoint="/json/datasetSync" class="com.simisinc.platform.presentation.widgets.editor.DatasetSyncAjax" />
   <!-- Static Sites -->
   <service endpoint="/json/static-sites/list" class="com.simisinc.platform.presentation.widgets.editor.StaticSiteEndpoint" />
   <service endpoint="/json/static-sites/download" class="com.simisinc.platform.presentation.widgets.editor.StaticSiteEndpoint" />

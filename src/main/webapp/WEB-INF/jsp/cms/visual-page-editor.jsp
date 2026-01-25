@@ -56,6 +56,7 @@
         <a href="${ctx}/admin/visual-page-editor" class="button tiny confirm-exit active">Pages</a>
         <a href="${ctx}/admin/visual-image-editor" class="button tiny confirm-exit">Images</a>
         <a href="${ctx}/admin/visual-document-editor" class="button tiny confirm-exit">Documents</a>
+        <a href="${ctx}/admin/visual-data-editor" class="button tiny confirm-exit">Data</a>
       </div>
       <c:choose>
         <c:when test="${!empty returnPage}">

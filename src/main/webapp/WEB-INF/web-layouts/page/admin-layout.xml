@@ -1229,4 +1229,14 @@
     </section>
   </page>
 
+  <page name="/admin/visual-data-editor" role="admin,data-manager" title="Visual Data Editor" class="full-page">
+    <section class="grid-x">
+      <column class="small-12 cell">
+        <widget name="visualDataEditor">
+          <title>Visual Data Editor</title>
+        </widget>
+      </column>
+    </section>
+  </page>
+
 </pages>
