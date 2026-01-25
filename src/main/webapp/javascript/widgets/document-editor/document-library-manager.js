@@ -208,6 +208,9 @@ class DocumentLibraryManager {
     this.listContainer.querySelectorAll('.folder-item').forEach((el) => {
       el.classList.toggle('active', Number(el.dataset.folderId) === Number(folderId));
     });
+    this.listContainer.querySelectorAll('.parent-folder').forEach((el) => {
+      el.classList.toggle('active', Number(el.dataset.folderId) === Number(folderId));
+    });
     // Pass parent folder ID when viewing subfolders
     if (this.parentFolderId > -1) {
       // Check if clicking on the parent folder itself or a subfolder
@@ -231,8 +234,19 @@ class DocumentLibraryManager {
     }
     // Load folder details for the properties panel
     const folder = this.getCurrentFolder(folderId);
-    if (folder && this.editor.folderDetails) {
-      this.editor.folderDetails.setFolderAndLoad(folder);
+    if (folder) {
+      // Determine if this is a repository or subfolder and show appropriate section
+      if (this.parentFolderId === -1) {
+        // Root folder (repository)
+        this.editor.showRepositoryProperties(folder);
+        // Also load full details via folder details manager
+        if (this.editor.folderDetails) {
+          this.editor.folderDetails.loadFolder(folderId);
+        }
+      } else {
+        // Subfolder
+        this.editor.showSubfolderProperties(folder);
+      }
     }
     // Enable file-toolbar buttons when a folder is selected
     this.enableFileToolbar();
@@ -328,61 +342,161 @@ class DocumentLibraryManager {
   }
 
   createFolder() {
-    const folderName = prompt('Enter repository name:');
-    if (!folderName || !folderName.trim()) {
+    const modal = document.getElementById('new-folder-modal');
+    if (!modal) {
+      alert('Modal not found');
       return;
     }
 
-    const formData = new FormData();
-    formData.append('token', this.token);
-    formData.append('name', folderName.trim());
+    // Reset form
+    const form = document.getElementById('new-folder-form');
+    if (form) {
+      form.reset();
+    }
 
-    fetch('/json/documentCreateFolder', {
-      method: 'POST',
-      credentials: 'same-origin',
-      body: formData
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success === false || data.error) {
-          alert('Error creating repository: ' + (data.message || 'Unknown error'));
-          return;
-        }
-        this.loadFolders();
+    // Clear error messages if any
+    const errorContainer = modal.querySelector('.error-message');
+    if (errorContainer) {
+      errorContainer.remove();
+    }
+
+    // Show modal using Foundation
+    const modalInstance = new Foundation.Reveal($(modal));
+    modalInstance.open();
+
+    // Setup form submission
+    const saveBtn = document.getElementById('save-folder-btn');
+    const handler = (e) => {
+      e.preventDefault();
+
+      const name = document.getElementById('folder-name').value.trim();
+      const summary = document.getElementById('folder-summary').value.trim();
+      const guestPublic = document.getElementById('folder-guest-public').checked;
+      const userPrivacy = document.getElementById('folder-user-privacy').value;
+
+      if (!name) {
+        alert('Repository name is required');
+        return;
+      }
+
+      if (!userPrivacy) {
+        alert('User access level is required');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('token', this.token);
+      formData.append('name', name);
+      if (summary) {
+        formData.append('summary', summary);
+      }
+      formData.append('guestPrivacyType', guestPublic ? 'public' : 'private');
+      formData.append('userPrivacyType', userPrivacy);
+
+      fetch('/json/documentCreateFolder', {
+        method: 'POST',
+        credentials: 'same-origin',
+        body: formData
       })
-      .catch((err) => {
-        console.error('Error creating repository:', err);
-        alert('Error creating repository');
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success === false || data.error) {
+            alert('Error creating repository: ' + (data.message || 'Unknown error'));
+            return;
+          }
+          modalInstance.close();
+          this.loadFolders();
+        })
+        .catch((err) => {
+          console.error('Error creating repository:', err);
+          alert('Error creating repository');
+        });
+    };
+
+    saveBtn.addEventListener('click', handler);
+
+    // Cleanup on modal close
+    const closeBtn = modal.querySelector('[data-close]');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        saveBtn.removeEventListener('click', handler);
       });
+    }
   }
 
   createSubfolder() {
-    const folderName = prompt('Enter folder name:');
-    if (!folderName) {
+    const modal = document.getElementById('new-subfolder-modal');
+    if (!modal) {
+      alert('Modal not found');
       return;
     }
 
-    const formData = new FormData();
-    formData.append('token', this.token);
-    formData.append('folderId', this.parentFolderId);
-    formData.append('name', folderName.trim());
+    // Reset form
+    const form = document.getElementById('new-subfolder-form');
+    if (form) {
+      form.reset();
+    }
 
-    fetch('/json/documentCreateSubfolder', {
-      method: 'POST',
-      credentials: 'same-origin',
-      body: formData
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success === false || data.error) {
-          alert('Error creating subfolder: ' + (data.message || 'Unknown error'));
-          return;
-        }
-        this.loadSubfolders(this.parentFolderId);
+    // Show modal using Foundation
+    const modalInstance = new Foundation.Reveal($(modal));
+    modalInstance.open();
+
+    // Setup form submission
+    const saveBtn = document.getElementById('save-subfolder-btn');
+    const handler = (e) => {
+      e.preventDefault();
+
+      const name = document.getElementById('subfolder-name').value.trim();
+      const summary = document.getElementById('subfolder-summary').value.trim();
+      const startDate = document.getElementById('subfolder-start-date').value;
+
+      if (!name) {
+        alert('Folder name is required');
+        return;
+      }
+
+      if (!summary) {
+        alert('Summary is required');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('token', this.token);
+      formData.append('folderId', this.parentFolderId);
+      formData.append('name', name);
+      formData.append('summary', summary);
+      if (startDate) {
+        formData.append('startDate', startDate);
+      }
+
+      fetch('/json/documentCreateSubfolder', {
+        method: 'POST',
+        credentials: 'same-origin',
+        body: formData
       })
-      .catch((err) => {
-        console.error('Error creating folder:', err);
-        alert('Error creating folder');
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success === false || data.error) {
+            alert('Error creating folder: ' + (data.message || 'Unknown error'));
+            return;
+          }
+          modalInstance.close();
+          this.loadSubfolders(this.parentFolderId);
+        })
+        .catch((err) => {
+          console.error('Error creating folder:', err);
+          alert('Error creating folder');
+        });
+    };
+
+    saveBtn.addEventListener('click', handler);
+
+    // Cleanup on modal close
+    const closeBtn = modal.querySelector('[data-close]');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        saveBtn.removeEventListener('click', handler);
       });
+    }
   }
 }

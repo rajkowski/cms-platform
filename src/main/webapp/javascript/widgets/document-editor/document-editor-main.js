@@ -204,17 +204,121 @@ class DocumentEditor {
     // Update content visibility
     const detailsTab = document.getElementById('folder-details-tab');
     const permissionsTab = document.getElementById('folder-permissions-tab');
-    const contentArea = document.getElementById('document-properties-content');
+    const versionsTab = document.getElementById('file-versions-tab');
+    
+    // Hide all tabs
+    if (detailsTab) detailsTab.style.display = 'none';
+    if (permissionsTab) permissionsTab.style.display = 'none';
+    if (versionsTab) versionsTab.style.display = 'none';
 
-    if (tabName === 'details') {
-      if (detailsTab) detailsTab.style.display = 'flex';
-      if (permissionsTab) permissionsTab.style.display = 'none';
-      if (contentArea) contentArea.style.display = 'none';
-    } else if (tabName === 'permissions') {
-      if (detailsTab) detailsTab.style.display = 'none';
-      if (permissionsTab) permissionsTab.style.display = 'flex';
-      if (contentArea) contentArea.style.display = 'none';
+    // Show selected tab
+    if (tabName === 'details' && detailsTab) {
+      detailsTab.style.display = 'block';
+    } else if (tabName === 'permissions' && permissionsTab) {
+      permissionsTab.style.display = 'block';
+    } else if (tabName === 'versions' && versionsTab) {
+      versionsTab.style.display = 'block';
     }
+  }
+
+  showRepositoryProperties(folder) {
+    // Hide all sections - repositories use folder-details-tab instead
+    document.getElementById('repository-properties-section').style.display = 'none';
+    document.getElementById('subfolder-properties-section').style.display = 'none';
+    document.getElementById('file-properties-section').style.display = 'none';
+
+    // Hide old document-properties-content
+    const contentArea = document.getElementById('document-properties-content');
+    if (contentArea) {
+      contentArea.style.display = 'none';
+    }
+
+    // Show tabs for folder (Details and Permissions)
+    const tabsNav = document.getElementById('properties-tabs');
+    if (tabsNav) {
+      tabsNav.style.display = 'flex';
+    }
+
+    // Show folder details tab (will be populated by FolderDetailsManager)
+    const folderDetailsTab = document.getElementById('folder-details-tab');
+    if (folderDetailsTab) {
+      folderDetailsTab.style.display = 'block';
+    }
+
+    // Hide folder permissions tab initially (will be shown when user clicks Permissions tab)
+    const folderPermissionsTab = document.getElementById('folder-permissions-tab');
+    if (folderPermissionsTab) {
+      folderPermissionsTab.style.display = 'none';
+    }
+
+    document.getElementById('properties-panel-title').textContent = 'Repository: ' + (folder.name || 'Untitled');
+  }
+
+  showSubfolderProperties(subfolder) {
+    // Hide all sections
+    document.getElementById('repository-properties-section').style.display = 'none';
+    document.getElementById('subfolder-properties-section').style.display = 'block';
+    document.getElementById('file-properties-section').style.display = 'none';
+
+    // Hide old document-properties-content
+    const contentArea = document.getElementById('document-properties-content');
+    if (contentArea) {
+      contentArea.style.display = 'none';
+    }
+
+    // Hide tabs (subfolders have no permissions tab)
+    const tabsNav = document.getElementById('properties-tabs');
+    if (tabsNav) {
+      tabsNav.style.display = 'none';
+    }
+
+    // Hide folder-specific tabs
+    const folderDetailsTab = document.getElementById('folder-details-tab');
+    if (folderDetailsTab) {
+      folderDetailsTab.style.display = 'none';
+    }
+    const folderPermissionsTab = document.getElementById('folder-permissions-tab');
+    if (folderPermissionsTab) {
+      folderPermissionsTab.style.display = 'none';
+    }
+
+    // Populate subfolder properties
+    document.getElementById('subfolder-name-display').value = subfolder.name || '';
+    document.getElementById('subfolder-summary-display').value = subfolder.summary || '';
+    document.getElementById('subfolder-start-date-display').value = subfolder.startDate || '';
+
+    document.getElementById('properties-panel-title').textContent = 'Folder: ' + (subfolder.name || 'Untitled');
+  }
+
+  showFileProperties(file) {
+    // Hide all sections
+    document.getElementById('repository-properties-section').style.display = 'none';
+    document.getElementById('subfolder-properties-section').style.display = 'none';
+    document.getElementById('file-properties-section').style.display = 'block';
+
+    // Show tabs for file (Properties, Versions, Downloads)
+    const tabsNav = document.getElementById('properties-tabs');
+    if (tabsNav) {
+      tabsNav.style.display = 'flex';
+    }
+
+    // Hide folder-specific tabs
+    const folderDetailsTab = document.getElementById('folder-details-tab');
+    if (folderDetailsTab) {
+      folderDetailsTab.style.display = 'none';
+    }
+    const folderPermissionsTab = document.getElementById('folder-permissions-tab');
+    if (folderPermissionsTab) {
+      folderPermissionsTab.style.display = 'none';
+    }
+
+    // Show the old document-properties-content for file display
+    const contentArea = document.getElementById('document-properties-content');
+    if (contentArea) {
+      contentArea.style.display = 'block';
+    }
+
+    document.getElementById('properties-panel-title').textContent = 'File: ' + (file.title || file.filename || 'Untitled');
   }
 
   get files() {

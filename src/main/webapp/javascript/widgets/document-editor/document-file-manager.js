@@ -10,6 +10,7 @@ class DocumentFileManager {
     this.parentFolderId = -1;
     this.subFolderId = -1;
     this.files = [];
+    this.subfolders = [];
     this.tableBody = null;
     this.searchInput = document.getElementById('file-search');
     this.viewMode = 'table'; // 'table' or 'preview'
@@ -225,6 +226,12 @@ class DocumentFileManager {
       }
       const payload = await response.json();
       this.files = payload.files || [];
+      
+      // Load subfolders if viewing a root folder
+      if (this.subFolderId === -1 && this.parentFolderId === -1) {
+        await this.loadSubfoldersForDisplay(this.folderId);
+      }
+      
       this.render();
     } catch (err) {
       console.error('Unable to load files', err);
@@ -236,13 +243,77 @@ class DocumentFileManager {
     }
   }
 
+  async loadSubfoldersForDisplay(folderId) {
+    try {
+      const url = new URL(
+        this.editor.config.apiBaseUrl + '/documentSubfolders',
+        globalThis.location.origin
+      );
+      url.searchParams.set('folderId', folderId);
+
+      const response = await fetch(url.toString(), { credentials: 'same-origin' });
+      if (!response.ok) {
+        throw new Error('HTTP ' + response.status);
+      }
+      const payload = await response.json();
+      this.subfolders = payload.subfolders || [];
+    } catch (err) {
+      console.error('Unable to load subfolders for display', err);
+      this.subfolders = [];
+    }
+  }
+
   render() {
     if (!this.tableBody) {
       return;
     }
     this.tableBody.innerHTML = '';
-    if (!this.files.length) {
-      this.tableBody.innerHTML = '<tr><td colspan="6" class="empty-state">No files in this folder</td></tr>';
+
+    // If viewing a subfolder, show parent navigation
+    if (this.subFolderId > -1 && this.parentFolderId > -1) {
+      const row = document.createElement('tr');
+      row.classList.add('parent-folder-row');
+      row.innerHTML = `
+        <td colspan="6">
+          <span class="file-icon"><i class="fa-regular fa-folder-open"></i></span>
+          <strong style="cursor: pointer;" class="parent-folder-link">.. (Parent Folder)</strong>
+        </td>
+      `;
+      row.addEventListener('click', () => {
+        this.navigateToParentFolder();
+      });
+      this.tableBody.appendChild(row);
+    }
+
+    // Render subfolders first (if viewing a root folder)
+    if (this.subfolders && this.subfolders.length > 0 && this.subFolderId === -1) {
+      this.subfolders.forEach((subfolder) => {
+        const row = document.createElement('tr');
+        row.dataset.subFolderId = subfolder.id;
+        row.classList.add('subfolder-row');
+
+        const startDateStr = subfolder.startDate ? this.formatDate(subfolder.startDate) : '—';
+
+        row.innerHTML = `
+          <td><span class="file-icon"><i class="fa-regular fa-folder"></i></span> <strong>${subfolder.name || 'Untitled'}</strong></td>
+          <td>—</td>
+          <td>Folder</td>
+          <td>—</td>
+          <td>—</td>
+          <td>${startDateStr}</td>
+        `;
+
+        row.addEventListener('click', () => {
+          this.navigateToSubfolder(subfolder.id);
+        });
+
+        this.tableBody.appendChild(row);
+      });
+    }
+
+    // Then render files
+    if (!this.files.length && (!this.subfolders || this.subfolders.length === 0)) {
+      this.tableBody.innerHTML = '<tr><td colspan="6" class="empty-state">No files or folders in this folder</td></tr>';
       return;
     }
 
@@ -267,6 +338,37 @@ class DocumentFileManager {
     });
   }
 
+  navigateToSubfolder(subFolderId) {
+    // Drill into subfolder
+    this.editor.fileManager.setFolder(subFolderId, this.folderId);
+    
+    // Update breadcrumb navigation
+    const breadcrumbNav = document.getElementById('breadcrumb-navigation');
+    if (breadcrumbNav && this.subfolders) {
+      const subfolder = this.subfolders.find(f => f.id === subFolderId);
+      if (subfolder) {
+        breadcrumbNav.style.display = 'block';
+        const breadcrumbPath = document.getElementById('breadcrumb-path');
+        if (breadcrumbPath) {
+          breadcrumbPath.innerHTML = `<span class="breadcrumb-item">${subfolder.name}</span>`;
+        }
+      }
+    }
+  }
+
+  navigateToParentFolder() {
+    // Navigate back to parent folder
+    if (this.parentFolderId > -1) {
+      // Hide breadcrumb
+      const breadcrumbNav = document.getElementById('breadcrumb-navigation');
+      if (breadcrumbNav) {
+        breadcrumbNav.style.display = 'none';
+      }
+      // Reset to parent folder
+      this.setFolder(this.parentFolderId);
+    }
+  }
+
   selectFile(fileId) {
     if (this.tableBody) {
       this.tableBody.querySelectorAll('tr').forEach((row) => {
@@ -275,6 +377,9 @@ class DocumentFileManager {
     }
     // Store current file for preview
     this.currentFile = this.files.find(f => f.id === fileId);
+    if (this.currentFile) {
+      this.editor.showFileProperties(this.currentFile);
+    }
     this.editor.properties.loadFile(fileId);
   }
 

@@ -78,6 +78,9 @@ class DocumentPropertiesManager {
     const titleInput = this.isEditing
       ? `<input type="text" class="property-input" id="prop-title" value="${file.title || file.filename || ''}" />`
       : `<div class="property-value">${file.title || file.filename || 'Untitled'}</div>`;
+    const filenameInput = this.isEditing
+      ? `<input type="text" class="property-input" id="prop-filename" value="${file.filename || ''}" />`
+      : `<div class="property-value">${file.filename || ''}</div>`;
     const summaryInput = this.isEditing
       ? `<textarea class="property-input" id="prop-summary" rows="3">${file.summary || ''}</textarea>`
       : `<div class="property-value">${file.summary || ''}</div>`;
@@ -93,9 +96,9 @@ class DocumentPropertiesManager {
           <label>Title</label>
           ${titleInput}
         </div>
-        <div class="property-group">
+        <div class="property-group ${editModeClass}">
           <label>Filename</label>
-          <div class="property-value">${file.filename || ''}</div>
+          ${filenameInput}
         </div>
         <div class="property-group">
           <label>Version</label>

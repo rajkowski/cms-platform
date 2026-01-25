@@ -191,6 +191,12 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
+}
+
+#document-browser-panel .panel-header #breadcrumb-navigation .breadcrumbs {
+  margin: 0;
+  font-size: 13px;
 }
 
 #document-browser-panel h3 {
@@ -198,9 +204,7 @@
   font-size: 16px;
   font-weight: 600;
   color: var(--editor-text);
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  flex: 1 1 50%;
   white-space: nowrap;
 }
 
@@ -254,6 +258,32 @@
 
 .file-table tbody tr:hover {
   background: var(--editor-selected-bg);
+}
+
+.parent-folder-row {
+  background: var(--editor-panel-bg) !important;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.parent-folder-row:hover {
+  background: var(--editor-hover-bg) !important;
+}
+
+.parent-folder-link {
+  color: var(--editor-selected-border);
+}
+
+.parent-folder-link:hover {
+  text-decoration: underline;
+}
+
+.subfolder-row {
+  cursor: pointer;
+}
+
+.subfolder-row:hover {
+  background: var(--editor-hover-bg) !important;
 }
 
 .file-table tbody tr.active {
@@ -316,7 +346,86 @@
 #document-properties-content {
   flex: 1;
   overflow-y: auto;
+}
+
+/* Repository, Subfolder, and File properties sections */
+#repository-properties-section,
+#subfolder-properties-section,
+#file-properties-section {
+  flex: 1;
+  overflow-y: auto;
   padding: 16px 20px;
+}
+
+.properties-section {
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--editor-border);
+}
+
+.properties-section:last-child {
+  border-bottom: none;
+}
+
+.properties-section h4 {
+  margin: 0 0 16px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--editor-text);
+}
+
+.properties-section .form-group {
+  margin-bottom: 16px;
+}
+
+.properties-section .form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--editor-text);
+  margin-bottom: 6px;
+}
+
+.properties-section .form-group label input[type="checkbox"] {
+  width: auto;
+  display: inline-block;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.properties-section .form-group input[type="text"],
+.properties-section .form-group input[type="date"],
+.properties-section .form-group textarea,
+.properties-section .form-group select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--editor-border);
+  border-radius: 4px;
+  background: var(--editor-panel-input);
+  color: var(--editor-text);
+  font-size: 13px;
+}
+
+.properties-section .form-group input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+.properties-section .property-input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--editor-border);
+  border-radius: 4px;
+  background: var(--editor-panel-input);
+  color: var(--editor-text);
+  font-size: 13px;
+}
+
+.properties-section .empty-state {
+  padding: 20px;
+  text-align: center;
+  color: var(--editor-text-muted);
+  font-size: 13px;
 }
 
 .property-tabs {
@@ -487,7 +596,7 @@
   gap: 0;
   border-bottom: 1px solid var(--editor-border);
   background: var(--editor-bg);
-  padding: 0 20px;
+  padding: 0;
 }
 
 #properties-tabs .info-text {
@@ -558,7 +667,6 @@
 /* Folder permissions and details specific styles */
 #folder-details-tab .property-section,
 #folder-permissions-tab .property-section {
-  display: block;
   margin-bottom: 20px;
 }
 
