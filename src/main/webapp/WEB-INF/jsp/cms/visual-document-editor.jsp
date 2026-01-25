@@ -101,6 +101,12 @@
     <div id="document-browser-panel">
       <div class="panel-header">
         <h3 id="document-browser-title">Files</h3>
+        <div id="breadcrumb-navigation" style="display: none">
+          <nav class="breadcrumbs">
+            <button id="breadcrumb-root" class="breadcrumb-link">Repository</button>
+            <span id="breadcrumb-path"></span>
+          </nav>
+        </div>
         <div id="file-toolbar">
           <button id="new-subfolder-btn" class="button tiny success no-gap radius" disabled><i class="${font:far()} fa-folder-plus"></i> New Folder</button>
           <button id="import-doc-btn" class="button tiny primary no-gap radius" disabled><i class="${font:far()} fa-upload"></i> Upload Files</button>
@@ -145,13 +151,77 @@
       </div>
       <div id="properties-tabs" class="tab-navigation" style="display: none;">
         <button class="tab-btn active" data-tab="details" title="Details">Details</button>
-        <button class="tab-btn" data-tab="versions" title="Versions">Versions</button>
         <button class="tab-btn" data-tab="permissions" title="Permissions">Permissions</button>
+        <button class="tab-btn" data-tab="versions" title="Versions">Versions</button>
       </div>
-      <div id="document-properties-content">
-        <div class="empty-state">Select a folder or file to view details</div>
+
+      <!-- Repository (Parent Folder) Properties -->
+      <div id="repository-properties-section" style="display: none;">
+        <div class="properties-section">
+          <h4>Repository Properties</h4>
+          <div class="form-group">
+            <label for="repo-name-display">Name</label>
+            <input type="text" id="repo-name-display" class="property-input" readonly />
+          </div>
+          <div class="form-group">
+            <label for="repo-summary-display">Summary</label>
+            <textarea id="repo-summary-display" class="property-input" readonly rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="repo-enabled" /> Enabled
+            </label>
+          </div>
+          <button class="button tiny primary" id="edit-repo-properties-btn">Edit Properties</button>
+        </div>
+
+        <div class="properties-section">
+          <h4>Categories</h4>
+          <div id="repo-categories-list">
+            <p class="empty-state">No categories</p>
+          </div>
+          <button class="button tiny secondary" id="add-repo-category-btn">Add Category</button>
+        </div>
+
+        <div class="properties-section">
+          <h4>Permissions</h4>
+          <div id="repo-permissions-list">
+            <p class="empty-state">No group permissions</p>
+          </div>
+          <button class="button tiny secondary" id="add-repo-permission-btn">Add Group Access</button>
+        </div>
       </div>
+
       <div id="folder-details-tab" style="display: none;"></div>
+      <div id="folder-permissions-tab" style="display: none;"></div>
+
+      <!-- Subfolder Properties -->
+      <div id="subfolder-properties-section" style="display: none;">
+        <div class="properties-section">
+          <h4>Folder Properties</h4>
+          <div class="form-group">
+            <label for="subfolder-name-display">Name</label>
+            <input type="text" id="subfolder-name-display" class="property-input" readonly />
+          </div>
+          <div class="form-group">
+            <label for="subfolder-summary-display">Summary</label>
+            <textarea id="subfolder-summary-display" class="property-input" readonly rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="subfolder-start-date-display">Start Date</label>
+            <input type="date" id="subfolder-start-date-display" class="property-input" readonly />
+          </div>
+          <button class="button tiny primary" id="edit-subfolder-properties-btn">Edit Properties</button>
+        </div>
+      </div>
+
+      <!-- File Properties -->
+      <div id="file-properties-section" style="display: none;">
+        <div id="document-properties-content">
+          <div class="empty-state">Select a file to view details</div>
+        </div>
+      </div>
+
       <div id="file-versions-tab" style="display: none;">
         <div class="versions-toolbar">
           <button id="save-version-btn" class="button tiny no-gap radius"><i class="${font:far()} fa-save"></i> Save Version</button>
@@ -160,12 +230,81 @@
           <div class="empty-state">No versions available</div>
         </div>
       </div>
-      <div id="folder-permissions-tab" style="display: none;"></div>
     </div>
   </div>
 </div>
 
 <input type="file" id="file-upload-input" style="display: none;" multiple />
+
+<!-- New Folder (Repository) Modal -->
+<div id="new-folder-modal" class="reveal" data-reveal>
+  <h3>Create Repository</h3>
+  <form id="new-folder-form">
+    <div class="form-group">
+      <label for="folder-name">Repository Name <span class="required">*</span></label>
+      <input type="text" id="folder-name" required placeholder="Enter repository name" />
+    </div>
+
+    <div class="form-group">
+      <label for="folder-summary">Summary</label>
+      <textarea id="folder-summary" placeholder="Enter optional summary" rows="3"></textarea>
+    </div>
+
+    <fieldset>
+      <legend>Guest Access</legend>
+      <label>
+        <input type="checkbox" id="folder-guest-public" /> Allow Guests to View (Public)
+      </label>
+    </fieldset>
+
+    <div class="form-group">
+      <label for="folder-user-privacy">Logged-In Users Access <span class="required">*</span></label>
+      <select id="folder-user-privacy" required>
+        <option value="">-- Select Access Level --</option>
+        <option value="public">All Files</option>
+        <option value="private">Own Files Only</option>
+        <option value="protected">No Files - Drop Box Only</option>
+      </select>
+    </div>
+
+    <div class="button-group">
+      <button type="button" id="save-folder-btn" class="button primary">Create Repository</button>
+      <button type="button" class="button secondary" data-close>Cancel</button>
+    </div>
+  </form>
+  <button class="close-button" data-close aria-label="Close modal" type="button">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+
+<!-- New Subfolder Modal -->
+<div id="new-subfolder-modal" class="reveal" data-reveal>
+  <h3>Create Folder</h3>
+  <form id="new-subfolder-form">
+    <div class="form-group">
+      <label for="subfolder-name">Folder Name <span class="required">*</span></label>
+      <input type="text" id="subfolder-name" required placeholder="Enter folder name" />
+    </div>
+
+    <div class="form-group">
+      <label for="subfolder-summary">Summary <span class="required">*</span></label>
+      <textarea id="subfolder-summary" required placeholder="Enter folder summary" rows="3"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="subfolder-start-date">Start Date (Optional)</label>
+      <input type="date" id="subfolder-start-date" />
+    </div>
+
+    <div class="button-group">
+      <button type="button" id="save-subfolder-btn" class="button primary">Create Folder</button>
+      <button type="button" class="button secondary" data-close>Cancel</button>
+    </div>
+  </form>
+  <button class="close-button" data-close aria-label="Close modal" type="button">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
 
 <!-- Folder Group Modal -->
 <div id="folder-group-modal" class="reveal" data-reveal>
