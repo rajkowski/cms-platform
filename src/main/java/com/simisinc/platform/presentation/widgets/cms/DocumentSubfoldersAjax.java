@@ -16,6 +16,12 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.SubFolder;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
@@ -24,11 +30,6 @@ import com.simisinc.platform.infrastructure.persistence.cms.SubFolderSpecificati
 import com.simisinc.platform.presentation.controller.UserSession;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import java.util.List;
 
 /**
  * Returns subfolder metadata for the visual document editor
@@ -51,6 +52,7 @@ public class DocumentSubfoldersAjax extends GenericWidget {
     long folderId = context.getParameterAsLong("folderId", -1);
     if (folderId <= 0) {
       context.setJson("{\"subfolders\":[],\"total\":0}");
+      context.setSuccess(false);
       return context;
     }
 
@@ -58,7 +60,10 @@ public class DocumentSubfoldersAjax extends GenericWidget {
     specification.setFolderId(folderId);
     long userId = context.getUserId();
     if (userId > -1) {
-      specification.setForUserId(userId);
+      // Determine role which can see all document repositories
+      if (!context.hasRole("admin")) {
+        specification.setForUserId(userId);
+      }
     } else {
       specification.setForUserId((long) UserSession.GUEST_ID);
     }

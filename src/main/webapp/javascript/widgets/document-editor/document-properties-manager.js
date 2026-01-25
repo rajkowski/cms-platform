@@ -45,7 +45,7 @@ class DocumentPropertiesManager {
     if (!this.contentEl) {
       return;
     }
-    
+
     // Hide folder tabs and folder detail/permission tabs, show file content
     const tabs = document.getElementById('properties-tabs');
     if (tabs) {
@@ -75,11 +75,11 @@ class DocumentPropertiesManager {
     }
 
     const editModeClass = this.isEditing ? 'editable' : '';
-    const titleInput = this.isEditing 
-      ? `<input type="text" class="property-input" id="prop-title" value="${file.title || file.filename || ''}" />` 
+    const titleInput = this.isEditing
+      ? `<input type="text" class="property-input" id="prop-title" value="${file.title || file.filename || ''}" />`
       : `<div class="property-value">${file.title || file.filename || 'Untitled'}</div>`;
-    const summaryInput = this.isEditing 
-      ? `<textarea class="property-input" id="prop-summary" rows="3">${file.summary || ''}</textarea>` 
+    const summaryInput = this.isEditing
+      ? `<textarea class="property-input" id="prop-summary" rows="3">${file.summary || ''}</textarea>`
       : `<div class="property-value">${file.summary || ''}</div>`;
 
     this.contentEl.innerHTML = `
@@ -181,10 +181,15 @@ class DocumentPropertiesManager {
 
     try {
       this.editor.showLoading();
+      const formData = new FormData();
+      formData.append('token', updates.token);
+      formData.append('id', updates.id);
+      formData.append('title', updates.title);
+      formData.append('summary', updates.summary);
+
       const response = await fetch('/json/documentUpdate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates),
+        body: formData,
         credentials: 'same-origin'
       });
 
@@ -193,7 +198,7 @@ class DocumentPropertiesManager {
       }
 
       const result = await response.json();
-      if (result.status === 0) {
+      if (result.success === false) {
         throw new Error(result.message || 'Save failed');
       }
 
@@ -203,10 +208,10 @@ class DocumentPropertiesManager {
       this.isEditing = false;
       this.render(this.currentFile);
       this.editor.setUnsavedChanges(false);
-      
+
       // Reload file list to show updated title
       this.editor.files.reload();
-      
+
       alert('Properties saved successfully');
     } catch (err) {
       console.error('Save failed', err);

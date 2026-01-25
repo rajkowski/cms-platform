@@ -27,6 +27,7 @@ import com.simisinc.platform.domain.model.cms.FileItem;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.cms.FileItemRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.FileSpecification;
+import com.simisinc.platform.presentation.controller.UserSession;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
 
@@ -52,13 +53,23 @@ public class DocumentFileListAjax extends GenericWidget {
     }
 
     long folderId = context.getParameterAsLong("folderId", -1);
+    long subFolderId = context.getParameterAsLong("subFolderId", -1);
     String searchTerm = context.getParameter("search");
     int limit = context.getParameterAsInt("limit", 25);
     int page = context.getParameterAsInt("page", 1);
 
     FileSpecification specification = new FileSpecification();
     specification.setFolderId(folderId);
-    specification.setForUserId(context.getUserId());
+    specification.setSubFolderId(subFolderId);
+    long userId = context.getUserId();
+    if (userId > -1) {
+      // Determine role which can see all document repositories
+      if (!context.hasRole("admin")) {
+        specification.setForUserId(userId);
+      }
+    } else {
+      specification.setForUserId((long) UserSession.GUEST_ID);
+    }
 
     if (StringUtils.isNotBlank(searchTerm)) {
       specification.setMatchesName(searchTerm);
@@ -93,7 +104,8 @@ public class DocumentFileListAjax extends GenericWidget {
       sb.append("\"fileLength\":").append(file.getFileLength()).append(",");
       sb.append("\"webPath\":\"").append(JsonCommand.toJson(StringUtils.defaultString(file.getWebPath()))).append("\",");
       sb.append("\"downloadCount\":").append(file.getDownloadCount()).append(",");
-      sb.append("\"modified\":\"").append(file.getModified() != null ? JsonCommand.toJson(file.getModified().toString()) : "").append("\"");
+      sb.append("\"modified\":\"").append(file.getModified() != null ? JsonCommand.toJson(file.getModified().toString()) : "")
+          .append("\"");
       sb.append("}");
     }
 

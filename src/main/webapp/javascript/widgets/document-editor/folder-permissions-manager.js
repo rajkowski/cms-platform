@@ -33,12 +33,12 @@ class FolderPermissionsManager {
         globalThis.location.origin
       );
       url.searchParams.set('folderId', folderId);
-      
+
       const response = await fetch(url.toString(), { credentials: 'same-origin' });
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
-      
+
       const payload = await response.json();
       this.folderGroups = payload.folderGroups || [];
       this.allGroups = payload.allGroups || [];
@@ -61,7 +61,7 @@ class FolderPermissionsManager {
     }
 
     let html = '<div class="folder-permissions-content">';
-    
+
     // Privacy summary
     html += '<div class="property-section">';
     html += '<h4>Repository Access</h4>';
@@ -158,11 +158,11 @@ class FolderPermissionsManager {
   openGroupModal(folderGroup) {
     const modal = new Foundation.Reveal($('#folder-group-modal'));
     const form = document.getElementById('folder-group-form');
-    
+
     if (!form) return;
 
     this.populateGroupForm(folderGroup);
-    
+
     // Handle save
     const saveBtn = document.getElementById('save-folder-group-btn');
     if (saveBtn) {
@@ -255,12 +255,14 @@ class FolderPermissionsManager {
         payload.id = existingGroup.id;
       }
 
+      const formData = new FormData();
+      Object.keys(payload).forEach(key => {
+        formData.append(key, payload[key]);
+      });
+
       const response = await fetch(`${this.editor.config.apiBaseUrl}/folderGroupSave`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload),
+        body: formData,
         credentials: 'same-origin'
       });
 
@@ -269,7 +271,7 @@ class FolderPermissionsManager {
       }
 
       const result = await response.json();
-      if (result.status === 0 || result.error) {
+      if (result.success === false || result.error) {
         alert(result.message || 'Failed to save group access');
         return;
       }
@@ -277,7 +279,7 @@ class FolderPermissionsManager {
       // Close modal and reload
       const modal = new Foundation.Reveal($('#folder-group-modal'));
       modal.close();
-      
+
       // Reload folder groups
       await this.loadFolderGroups(this.currentFolder.id);
       this.render();
@@ -301,12 +303,14 @@ class FolderPermissionsManager {
         folderId: this.currentFolder.id
       };
 
+      const formData = new FormData();
+      Object.keys(payload).forEach(key => {
+        formData.append(key, payload[key]);
+      });
+
       const response = await fetch(`${this.editor.config.apiBaseUrl}/folderGroupDelete`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload),
+        body: formData,
         credentials: 'same-origin'
       });
 
@@ -315,7 +319,7 @@ class FolderPermissionsManager {
       }
 
       const result = await response.json();
-      if (result.status === 0 || result.error) {
+      if (result.success === false || result.error) {
         alert(result.message || 'Failed to delete group access');
         return;
       }

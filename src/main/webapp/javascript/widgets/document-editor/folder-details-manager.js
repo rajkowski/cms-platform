@@ -15,7 +15,7 @@ class FolderDetailsManager {
 
   init() {
     this.permissionsManager.init();
-    
+
     // Setup edit/save buttons
     const editBtn = document.getElementById('edit-folder-details-btn');
     if (editBtn) {
@@ -55,36 +55,36 @@ class FolderDetailsManager {
       this.currentFolder = await response.json();
       this.isEditing = false;
       this.unsavedChanges = false;
-      
+
       // Show folder tabs and hide file content
       const tabs = document.getElementById('properties-tabs');
       if (tabs) {
         tabs.style.display = 'flex';
       }
-      
+
       // @todo determine if subfolder then change title accordingly
 
       const titleEl = document.getElementById('properties-panel-title');
       if (titleEl) {
         titleEl.textContent = 'Repository: ' + (this.currentFolder.name || 'Untitled');
       }
-      
+
       const contentArea = document.getElementById('document-properties-content');
       if (contentArea) {
         contentArea.style.display = 'none';
       }
-      
+
       this.render();
 
       // Load permissions for this folder
       await this.permissionsManager.loadFolderGroups(folderId);
-      
+
       // Render permissions after loading
       this.permissionsManager.render();
-      
+
       // Switch to details tab to show the content
       this.editor.switchTab('details');
-      
+
     } catch (err) {
       console.error('Unable to load folder details', err);
       this.clearDisplay();
@@ -127,7 +127,7 @@ class FolderDetailsManager {
 
     html += '</div>';
     this.containerEl.innerHTML = html;
-    
+
     this.attachEventListeners();
     this.permissionsManager.render();
   }
@@ -154,7 +154,7 @@ class FolderDetailsManager {
   renderEditMode() {
     let html = '<div class="property-section">';
     html += '<form id="folder-details-form">';
-    
+
     html += '<div class="form-group">';
     html += '<label>Folder Name</label>';
     html += `<input type="text" id="folder-name-input" class="property-input" value="${this.currentFolder.name || ''}" required />`;
@@ -231,12 +231,16 @@ class FolderDetailsManager {
         enabled: enabledInput ? enabledInput.checked : false
       };
 
+      const formData = new FormData();
+      formData.append('token', payload.token);
+      formData.append('id', payload.id);
+      formData.append('name', payload.name);
+      formData.append('summary', payload.summary);
+      formData.append('enabled', payload.enabled);
+
       const response = await fetch(`${this.editor.config.apiBaseUrl}/folderSave`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload),
+        body: formData,
         credentials: 'same-origin'
       });
 
@@ -245,7 +249,7 @@ class FolderDetailsManager {
       }
 
       const result = await response.json();
-      if (result.status === 0 || result.error) {
+      if (result.success === false || result.error) {
         alert(result.message || 'Failed to save folder');
         return;
       }
@@ -270,18 +274,18 @@ class FolderDetailsManager {
     if (this.containerEl) {
       this.containerEl.innerHTML = '<div class="empty-state">Select a folder to view details</div>';
     }
-    
+
     const tabs = document.getElementById('properties-tabs');
     if (tabs) {
       tabs.style.display = 'none';
     }
-    
+
     const contentArea = document.getElementById('document-properties-content');
     if (contentArea) {
       contentArea.style.display = 'block';
       contentArea.innerHTML = '<div class="empty-state">Select a folder or file to view details</div>';
     }
-    
+
     this.currentFolder = null;
     this.isEditing = false;
   }

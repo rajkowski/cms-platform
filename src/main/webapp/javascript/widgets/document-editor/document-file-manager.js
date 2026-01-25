@@ -24,19 +24,19 @@ class DocumentFileManager {
     if (this.searchInput) {
       this.searchInput.addEventListener('input', () => this.reload());
     }
-    
+
     // View toggle button
     const viewToggleBtn = document.getElementById('view-toggle-btn');
     if (viewToggleBtn) {
       viewToggleBtn.addEventListener('click', () => this.toggleView());
     }
-    
+
     // Close preview button
     const closePreviewBtn = document.getElementById('close-preview-btn');
     if (closePreviewBtn) {
       closePreviewBtn.addEventListener('click', () => this.closePreview());
     }
-    
+
     // File upload
     const uploadInput = document.getElementById('file-upload-input');
     if (uploadInput) {
@@ -161,7 +161,7 @@ class DocumentFileManager {
       }
 
       const result = await response.json();
-      if (result.status === 0) {
+      if (result.success === false || result.error) {
         throw new Error(result.message || 'Upload failed');
       }
 

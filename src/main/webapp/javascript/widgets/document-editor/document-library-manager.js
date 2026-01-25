@@ -285,7 +285,7 @@ class DocumentLibraryManager {
       // New navigation, add to breadcrumbs
       this.breadcrumbs.push({ id: folderId, name: folderName });
     }
-    
+
     this.parentFolderId = folderId;
     this.currentSubFolderId = -1;
     await this.loadSubfolders(folderId);
@@ -333,24 +333,22 @@ class DocumentLibraryManager {
       return;
     }
 
+    const formData = new FormData();
+    formData.append('token', this.token);
+    formData.append('name', folderName.trim());
+
     fetch('/json/documentCreateFolder', {
       method: 'POST',
       credentials: 'same-origin',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        token: this.token,
-        folderName: folderName.trim()
-      })
+      body: formData
     })
       .then((res) => res.json())
       .then((data) => {
-        if (data.success) {
-          this.loadFolders();
-        } else {
+        if (data.success === false || data.error) {
           alert('Error creating repository: ' + (data.message || 'Unknown error'));
+          return;
         }
+        this.loadFolders();
       })
       .catch((err) => {
         console.error('Error creating repository:', err);
@@ -364,25 +362,23 @@ class DocumentLibraryManager {
       return;
     }
 
+    const formData = new FormData();
+    formData.append('token', this.token);
+    formData.append('folderId', this.parentFolderId);
+    formData.append('name', folderName.trim());
+
     fetch('/json/documentCreateSubfolder', {
       method: 'POST',
       credentials: 'same-origin',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        token: this.token,
-        parentFolderId: this.currentFolderId,
-        folderName: folderName
-      })
+      body: formData
     })
       .then((res) => res.json())
       .then((data) => {
-        if (data.success) {
-          this.loadSubfolders(this.currentFolderId);
-        } else {
+        if (data.success === false || data.error) {
           alert('Error creating subfolder: ' + (data.message || 'Unknown error'));
+          return;
         }
+        this.loadSubfolders(this.parentFolderId);
       })
       .catch((err) => {
         console.error('Error creating folder:', err);

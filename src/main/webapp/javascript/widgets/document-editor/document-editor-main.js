@@ -182,13 +182,13 @@ class DocumentEditor {
     this.fileManager.triggerFileUpload();
   }
 
-    handleNewFolder() {
-      this.library.createFolder();
-    }
+  handleNewFolder() {
+    this.library.createFolder();
+  }
 
-    handleNewSubfolder() {
-      this.library.createSubfolder();
-    }
+  handleNewSubfolder() {
+    this.library.createSubfolder();
+  }
 
   switchTab(tabName) {
     // Update tab buttons
