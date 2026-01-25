@@ -1,6 +1,7 @@
 <?xml version="1.0" ?>
 <!--
-  ~ Copyright 2022 SimIS Inc. (https://www.simiscms.com)
+  ~ Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
+  ~ Portions Copyright 2022 SimIS Inc. (https://www.simiscms.com)
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -40,13 +41,20 @@
   <!-- Document Editor -->
   <service endpoint="/json/documentLibrary" class="com.simisinc.platform.presentation.widgets.cms.DocumentLibraryAjax" />
   <service endpoint="/json/documentSubfolders" class="com.simisinc.platform.presentation.widgets.cms.DocumentSubfoldersAjax" />
-  <service method="post" endpoint="/json/documentCreateSubfolder" class="com.simisinc.platform.presentation.widgets.cms.DocumentCreateSubfolderAjax" />
+  <service endpoint="/json/documentCreateFolder" class="com.simisinc.platform.presentation.widgets.cms.DocumentCreateFolderAjax" />
+  <service endpoint="/json/documentCreateSubfolder" class="com.simisinc.platform.presentation.widgets.cms.DocumentCreateSubfolderAjax" />
   <service endpoint="/json/documentFileList" class="com.simisinc.platform.presentation.widgets.cms.DocumentFileListAjax" />
   <service endpoint="/json/documentContent" class="com.simisinc.platform.presentation.widgets.cms.DocumentContentAjax" />
-  <service method="get" endpoint="/json/static-sites/list" class="com.simisinc.platform.presentation.widgets.editor.StaticSiteEndpoint" />
-  <service method="get" endpoint="/json/static-sites/download" class="com.simisinc.platform.presentation.widgets.editor.StaticSiteEndpoint" />
-  <service method="post" endpoint="/json/static-sites/generate" class="com.simisinc.platform.presentation.widgets.editor.StaticSiteEndpoint" />
-  <service method="post" endpoint="/json/static-sites/delete" class="com.simisinc.platform.presentation.widgets.editor.StaticSiteEndpoint" />
+  <service endpoint="/json/folderSave" class="com.simisinc.platform.presentation.widgets.cms.FolderSaveAjax" />
+  <service endpoint="/json/folderDetails" class="com.simisinc.platform.presentation.widgets.cms.FolderDetailsAjax" />
+  <service endpoint="/json/folderGroupsList" class="com.simisinc.platform.presentation.widgets.cms.FolderGroupsListAjax" />
+  <service endpoint="/json/folderGroupSave" class="com.simisinc.platform.presentation.widgets.cms.FolderGroupSaveAjax" />
+  <service endpoint="/json/folderGroupDelete" class="com.simisinc.platform.presentation.widgets.cms.FolderGroupDeleteAjax" />
+  <!-- Static Sites -->
+  <service endpoint="/json/static-sites/list" class="com.simisinc.platform.presentation.widgets.editor.StaticSiteEndpoint" />
+  <service endpoint="/json/static-sites/download" class="com.simisinc.platform.presentation.widgets.editor.StaticSiteEndpoint" />
+  <service endpoint="/json/static-sites/generate" class="com.simisinc.platform.presentation.widgets.editor.StaticSiteEndpoint" />
+  <service endpoint="/json/static-sites/delete" class="com.simisinc.platform.presentation.widgets.editor.StaticSiteEndpoint" />
   <!-- Dashboards -->
   <service endpoint="/json/supersetGuestToken" class="com.simisinc.platform.presentation.widgets.dashboard.SupersetGuestTokenAjax" />
 </services>
