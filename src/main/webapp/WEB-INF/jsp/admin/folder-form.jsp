@@ -23,7 +23,7 @@
   <c:when test="${folder.id eq -1}"><h4>New Folder</h4></c:when>
   <c:otherwise><h4>Update Folder</h4></c:otherwise>
 </c:choose>
-<form method="post">
+<form method="post" class="folder-form">
   <%-- Required by controller --%>
   <input type="hidden" name="widget" value="${widgetContext.uniqueId}"/>
   <input type="hidden" name="token" value="${userSession.formToken}"/>
@@ -38,27 +38,33 @@
   </c:if>
   <%@include file="../page_messages.jspf" %>
   <%-- Form Content --%>
-  <label>Folder Name <span class="required">*</span>
-    <input type="text" placeholder="Give it a name..." name="name" value="<c:out value="${folder.name}"/>" required>
-  </label>
-  <label>Description
-    <input type="text" placeholder="Describe it..." name="summary" value="<c:out value="${folder.summary}"/>">
-  </label>
   <fieldset>
-    <legend>File Categories</legend>
+    <legend>Folder Details</legend>
+    <label>Folder Name <span class="required">*</span>
+      <input type="text" placeholder="Give it a name..." name="name" value="<c:out value="${folder.name}"/>" required>
+    </label>
+    <label>Description
+      <input type="text" placeholder="Describe it..." name="summary" value="<c:out value="${folder.summary}"/>">
+    </label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Folder Tags (Categories)</legend>
+    <p class="help-text">Optional tags to organize files in this folder. Leave blank to remove.</p>
     <c:forEach items="${folder.folderCategoryList}" var="category" varStatus="categoryStatus">
       <input type="hidden" name="category${categoryStatus.index}id" value="${category.id}" />
       <input type="text" name="category${categoryStatus.index}name" placeholder="Category Name" value="<c:out value="${category.name}" />" style="width:200px; float:left; margin-right: 20px;" />
     </c:forEach>
     <c:forEach begin="${fn:length(folder.folderCategoryList)}" end="${fn:length(folder.folderCategoryList) + 4}" varStatus="loop">
-<%--      <input type="checkbox" name="category${loop.index + fn:length(folder.folderCategoryList)}enabled" value="true" />--%>
       <input type="text" name="category${loop.index}name" placeholder="Category Name" value="" style="width:200px; float:left; margin-right: 20px;" />
     </c:forEach>
   </fieldset>
+
   <c:if test="${!empty groupList}">
     <fieldset>
-      <legend>Access Groups</legend>
-      <table>
+      <legend>Folder Permissions</legend>
+      <p class="help-text">Set which users/groups can view and manage files in this folder.</p>
+      <table class="stack">
         <tr>
           <th class="text-left">Name</th>
           <th class="text-left">Allowed Access?</th>
@@ -73,7 +79,7 @@
           <td>
             <select name="guestPrivacyType">
               <option value="-1"></option>
-                <%--<option value="1000"<c:if test='${folder.guestPrivacyType == 1000}'> selected</c:if>>Own Files</option>--%>
+              <%--<option value="1000"<c:if test='${folder.guestPrivacyType == 1000}'> selected</c:if>>Own Files</option>--%>
               <option value="2000"<c:if test='${folder.guestPrivacyType == 2000}'> selected</c:if>>All Files</option>
               <option value="3000"<c:if test='${folder.guestPrivacyType == 3000}'> selected</c:if>>Files By Token Only</option>
               <%--<option value="4000"<c:if test='${folder.guestPrivacyType eq 4000}'> selected</c:if>>Drop Box Only</option>--%>
@@ -97,13 +103,16 @@
               </select>
             </td>
             <td class="text-center">
-              <input type="checkbox" id="groupId${group.id}add" name="groupId${group.id}add" value="${group.id}" <c:if test="${!empty folderGroup && folderGroup.addPermission}">checked</c:if>/><label for="groupId${group.id}add"></label>
+              <input type="checkbox" id="groupId${group.id}add" name="groupId${group.id}add" value="${group.id}" <c:if test="${!empty folderGroup && folderGroup.addPermission}">checked</c:if>/>
+              <label for="groupId${group.id}add" class="show-for-sr">Allow add for ${group.name}</label>
             </td>
             <td class="text-center">
-              <input type="checkbox" id="groupId${group.id}edit" name="groupId${group.id}edit" value="${group.id}" <c:if test="${!empty folderGroup && folderGroup.editPermission}">checked</c:if>/><label for="groupId${group.id}edit"></label>
+              <input type="checkbox" id="groupId${group.id}edit" name="groupId${group.id}edit" value="${group.id}" <c:if test="${!empty folderGroup && folderGroup.editPermission}">checked</c:if>/>
+              <label for="groupId${group.id}edit" class="show-for-sr">Allow edit for ${group.name}</label>
             </td>
             <td class="text-center">
-              <input type="checkbox" id="groupId${group.id}delete" name="groupId${group.id}delete" value="${group.id}" <c:if test="${!empty folderGroup && folderGroup.deletePermission}">checked</c:if>/><label for="groupId${group.id}delete"></label>
+              <input type="checkbox" id="groupId${group.id}delete" name="groupId${group.id}delete" value="${group.id}" <c:if test="${!empty folderGroup && folderGroup.deletePermission}">checked</c:if>/>
+              <label for="groupId${group.id}delete" class="show-for-sr">Allow delete for ${group.name}</label>
             </td>
           </tr>
         </c:forEach>
