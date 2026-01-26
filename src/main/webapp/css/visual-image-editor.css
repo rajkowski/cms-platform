@@ -171,6 +171,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 15px;
+  flex-wrap: wrap;
 }
 
 #image-viewer-panel .panel-header h3 {
@@ -178,7 +179,7 @@
   font-size: 16px;
   font-weight: 600;
   color: var(--editor-text);
-  flex: 1;
+  flex: 1 1 100%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -261,6 +262,14 @@
   max-height: 100%;
   display: block;
   box-shadow: 0 4px 12px var(--editor-shadow);
+  background-image: 
+    linear-gradient(45deg, #474747 25%, transparent 25%),
+    linear-gradient(-45deg, #474747 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #474747 75%),
+    linear-gradient(-45deg, transparent 75%, #474747 75%);
+  background-size: 10px 10px;
+  background-position: 0 0, 0 5px, 5px -5px, -5px 0px;
+  background-color: #5e5e5e;
 }
 
 /* Adjustments Panel */
