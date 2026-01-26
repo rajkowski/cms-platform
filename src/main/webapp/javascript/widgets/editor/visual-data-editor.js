@@ -167,6 +167,29 @@ class VisualDataEditor {
     });
   }
 
+  setupDatasetTabs() {
+    document.querySelectorAll('.dataset-tab').forEach(tab => {
+      tab.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const tabName = tab.dataset.tab;
+        
+        // Update tab navigation
+        document.querySelectorAll('.dataset-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        // Update tab content
+        document.querySelectorAll('.dataset-tab-content, .dataset-properties-content').forEach(c => c.classList.remove('active'));
+        const targetContent = document.getElementById(`dataset-${tabName}-content`);
+        if (targetContent) {
+          targetContent.classList.add('active');
+        }
+        
+        return false;
+      });
+    });
+  }
+
   switchLibraryTab(tabId) {
     // Update tab navigation
     document.querySelectorAll('.library-tabs-container .tabs-nav a').forEach(t => t.classList.remove('active'));
@@ -501,58 +524,63 @@ class VisualDataEditor {
     const syncStatus = this.getSyncStatusBadge(dataset);
     
     canvas.innerHTML = `
-      <div class="data-card">
-        <div class="data-card-header">
-          <div class="data-card-icon">
+      <div class="dataset-editor-container">
+        <div class="dataset-header">
+          <div class="dataset-header-icon">
             <i class="fa fa-database"></i>
           </div>
-          <div class="data-card-title">
+          <div class="dataset-header-content">
             <h3>${this.escapeHtml(dataset.name)}</h3>
-            <p>${this.escapeHtml(dataset.filename || 'No file')}</p>
+            <p>${this.escapeHtml(dataset.filename || 'No file')} • ${dataset.recordCount || 0} records • ${syncStatus}</p>
+          </div>
+          <div class="dataset-header-actions">
+            <button class="button tiny primary radius" id="sync-now-btn">
+              <i class="fa fa-sync"></i> Sync Now
+            </button>
+            <button class="button tiny secondary radius" id="refresh-dataset-btn">
+              <i class="fa fa-redo"></i> Refresh
+            </button>
           </div>
         </div>
-        <div class="data-card-body">
-          <div class="data-card-section">
-            <div class="data-card-section-title">Dataset Information</div>
-            <div class="data-card-field">
-              <span class="data-card-field-label">Records</span>
-              <span class="data-card-field-value">${dataset.recordCount || 0}</span>
-            </div>
-            <div class="data-card-field">
-              <span class="data-card-field-label">Rows</span>
-              <span class="data-card-field-value">${dataset.rowCount || 0}</span>
-            </div>
-            <div class="data-card-field">
-              <span class="data-card-field-label">Columns</span>
-              <span class="data-card-field-value">${dataset.columnCount || 0}</span>
-            </div>
-            <div class="data-card-field">
-              <span class="data-card-field-label">File Type</span>
-              <span class="data-card-field-value">${this.escapeHtml(dataset.fileType || 'N/A')}</span>
-            </div>
+        
+        <div class="dataset-tabs-container">
+          <ul class="dataset-tabs-nav">
+            <li><a href="#dataset-overview" class="dataset-tab active" data-tab="overview"><i class="fa fa-info-circle"></i> Overview</a></li>
+            <li><a href="#dataset-scheduling" class="dataset-tab" data-tab="scheduling"><i class="fa fa-clock"></i> Scheduling</a></li>
+            <li><a href="#dataset-mapping" class="dataset-tab" data-tab="mapping"><i class="fa fa-random"></i> Field Mapping</a></li>
+            <li><a href="#dataset-transform" class="dataset-tab" data-tab="transform"><i class="fa fa-magic"></i> Transformation</a></li>
+            <li><a href="#dataset-properties" class="dataset-tab" data-tab="properties"><i class="fa fa-cog"></i> Properties</a></li>
+          </ul>
+          
+          <div class="dataset-tab-content active" id="dataset-overview-content">
+            ${this.renderDatasetOverview(dataset)}
           </div>
-          <div class="data-card-section">
-            <div class="data-card-section-title">Synchronization</div>
-            <div class="data-card-field">
-              <span class="data-card-field-label">Status</span>
-              <span class="data-card-field-value">${syncStatus}</span>
-            </div>
-            ${dataset.collectionUniqueId ? `
-            <div class="data-card-field">
-              <span class="data-card-field-label">Collection</span>
-              <span class="data-card-field-value">${this.escapeHtml(dataset.collectionUniqueId)}</span>
-            </div>
-            ` : ''}
-            ${dataset.syncRecordCount > 0 ? `
-            <div class="data-card-field">
-              <span class="data-card-field-label">Last Sync</span>
-              <span class="data-card-field-value">${dataset.syncRecordCount} records (${dataset.syncAddCount} added, ${dataset.syncUpdateCount} updated)</span>
-            </div>
-            ` : ''}
+          
+          <div class="dataset-tab-content" id="dataset-scheduling-content">
+            ${this.renderDatasetScheduling(dataset)}
+          </div>
+          
+          <div class="dataset-tab-content" id="dataset-mapping-content">
+            ${this.renderDatasetMapping(dataset)}
+          </div>
+          
+          <div class="dataset-tab-content" id="dataset-transform-content">
+            ${this.renderDatasetTransformation(dataset)}
+          </div>
+          
+          <div class="dataset-tab-content" id="dataset-properties-content">
+            ${this.renderDatasetProperties(dataset)}
           </div>
         </div>
       </div>
     `;
+
+    // Setup dataset tab switching
+    this.setupDatasetTabs();
+    
+    // Setup dataset action buttons
+    document.getElementById('sync-now-btn')?.addEventListener('click', () => this.syncDatasetNow(dataset.id));
+    document.getElementById('refresh-dataset-btn')?.addEventListener('click', () => this.loadDatasetDetails(dataset.id));
 
     // Update info tab
     this.updateInfoTab(dataset, 'dataset');
@@ -561,6 +589,424 @@ class VisualDataEditor {
     // Load records for the Records tab (if we have an ID)
     if (dataset.id) {
       this.loadDatasetRecords(dataset.id);
+    }
+  }
+
+  renderDatasetOverview(dataset) {
+    return `
+      <div class="dataset-panel">
+        <div class="dataset-stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fa fa-table"></i></div>
+            <div class="stat-content">
+              <div class="stat-value">${dataset.recordCount || 0}</div>
+              <div class="stat-label">Records</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fa fa-columns"></i></div>
+            <div class="stat-content">
+              <div class="stat-value">${dataset.columnCount || 0}</div>
+              <div class="stat-label">Columns</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fa fa-file"></i></div>
+            <div class="stat-content">
+              <div class="stat-value">${this.escapeHtml(dataset.fileType || 'N/A')}</div>
+              <div class="stat-label">File Type</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fa fa-sync"></i></div>
+            <div class="stat-content">
+              <div class="stat-value">${dataset.syncRecordCount || 0}</div>
+              <div class="stat-label">Last Sync</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="dataset-info-section">
+          <h4>Dataset Information</h4>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">Source URL:</span>
+              <span class="info-value">${this.escapeHtml(dataset.sourceUrl || 'Not specified')}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Collection:</span>
+              <span class="info-value">${this.escapeHtml(dataset.collectionUniqueId || 'None')}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Last Modified:</span>
+              <span class="info-value">${dataset.modified ? new Date(dataset.modified).toLocaleString() : 'Never'}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">File Size:</span>
+              <span class="info-value">${dataset.fileLength ? this.formatBytes(dataset.fileLength) : 'Unknown'}</span>
+            </div>
+          </div>
+        </div>
+        
+        ${dataset.syncRecordCount > 0 ? `
+        <div class="dataset-sync-summary">
+          <h4>Last Synchronization</h4>
+          <div class="sync-summary-grid">
+            <div class="sync-stat">
+              <span class="sync-value success">${dataset.syncAddCount || 0}</span>
+              <span class="sync-label">Added</span>
+            </div>
+            <div class="sync-stat">
+              <span class="sync-value warning">${dataset.syncUpdateCount || 0}</span>
+              <span class="sync-label">Updated</span>
+            </div>
+            <div class="sync-stat">
+              <span class="sync-value info">${dataset.syncRecordCount || 0}</span>
+              <span class="sync-label">Total</span>
+            </div>
+          </div>
+        </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  renderDatasetScheduling(dataset) {
+    return `
+      <div class="dataset-panel">
+        <div class="panel-section">
+          <h4>Automatic Synchronization</h4>
+          <p class="help-text">Configure when this dataset should automatically sync with its source.</p>
+          
+          <div class="property-group">
+            <label class="property-label">
+              <input type="checkbox" id="schedule-enabled" ${dataset.scheduleEnabled ? 'checked' : ''} />
+              Enable automatic synchronization
+            </label>
+          </div>
+          
+          <div id="schedule-options" style="${dataset.scheduleEnabled ? '' : 'display:none;'}">
+            <div class="property-group">
+              <label class="property-label">Frequency</label>
+              <select id="schedule-frequency" class="property-input">
+                <option value="hourly" ${dataset.scheduleFrequency === 'hourly' ? 'selected' : ''}>Hourly</option>
+                <option value="daily" ${dataset.scheduleFrequency === 'daily' ? 'selected' : ''}>Daily</option>
+                <option value="weekly" ${dataset.scheduleFrequency === 'weekly' ? 'selected' : ''}>Weekly</option>
+                <option value="monthly" ${dataset.scheduleFrequency === 'monthly' ? 'selected' : ''}>Monthly</option>
+                <option value="custom" ${dataset.scheduleFrequency === 'custom' ? 'selected' : ''}>Custom (Cron)</option>
+              </select>
+            </div>
+            
+            <div class="property-group" id="daily-time-picker" style="display: ${dataset.scheduleFrequency === 'daily' ? 'block' : 'none'};">
+              <label class="property-label">Time of Day</label>
+              <input type="time" id="schedule-time" class="property-input" value="${dataset.scheduleTime || '00:00'}" />
+            </div>
+            
+            <div class="property-group" id="weekly-day-picker" style="display: ${dataset.scheduleFrequency === 'weekly' ? 'block' : 'none'};">
+              <label class="property-label">Day of Week</label>
+              <select id="schedule-day" class="property-input">
+                <option value="0" ${dataset.scheduleDay === 0 ? 'selected' : ''}>Sunday</option>
+                <option value="1" ${dataset.scheduleDay === 1 ? 'selected' : ''}>Monday</option>
+                <option value="2" ${dataset.scheduleDay === 2 ? 'selected' : ''}>Tuesday</option>
+                <option value="3" ${dataset.scheduleDay === 3 ? 'selected' : ''}>Wednesday</option>
+                <option value="4" ${dataset.scheduleDay === 4 ? 'selected' : ''}>Thursday</option>
+                <option value="5" ${dataset.scheduleDay === 5 ? 'selected' : ''}>Friday</option>
+                <option value="6" ${dataset.scheduleDay === 6 ? 'selected' : ''}>Saturday</option>
+              </select>
+            </div>
+            
+            <div class="property-group" id="cron-expression" style="display: ${dataset.scheduleFrequency === 'custom' ? 'block' : 'none'};">
+              <label class="property-label">Cron Expression</label>
+              <input type="text" id="schedule-cron" class="property-input" placeholder="0 0 * * *" value="${dataset.scheduleCron || ''}" />
+              <small class="help-text">Standard cron format (minute hour day month weekday)</small>
+            </div>
+            
+            <div class="property-group">
+              <label class="property-label">Next Scheduled Run</label>
+              <div class="property-value">${dataset.nextScheduledRun ? new Date(dataset.nextScheduledRun).toLocaleString() : 'Not scheduled'}</div>
+            </div>
+          </div>
+          
+          <div class="button-group" style="margin-top: 20px;">
+            <button class="button primary radius" id="save-schedule-btn">
+              <i class="fa fa-save"></i> Save Schedule
+            </button>
+            <button class="button secondary radius" id="test-sync-btn">
+              <i class="fa fa-play"></i> Test Sync
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  renderDatasetMapping(dataset) {
+    return `
+      <div class="dataset-panel">
+        <div class="panel-section">
+          <h4>Field Mapping Configuration</h4>
+          <p class="help-text">Map dataset columns to collection fields for proper data synchronization.</p>
+          
+          <div class="property-group">
+            <label class="property-label">Target Collection</label>
+            <select id="target-collection" class="property-input">
+              <option value="">Select a collection...</option>
+              ${this.collections.map(c => `
+                <option value="${c.uniqueId}" ${dataset.collectionUniqueId === c.uniqueId ? 'selected' : ''}>
+                  ${this.escapeHtml(c.name)}
+                </option>
+              `).join('')}
+            </select>
+          </div>
+          
+          <div id="mapping-table-container" style="${dataset.collectionUniqueId ? '' : 'display:none;'}">
+            <h5>Column Mappings</h5>
+            <div class="mapping-table">
+              <div class="mapping-header">
+                <div>Dataset Column</div>
+                <div>Maps To</div>
+                <div>Collection Field</div>
+                <div>Transform</div>
+                <div>Actions</div>
+              </div>
+              <div id="mapping-rows">
+                ${this.renderMappingRows(dataset)}
+              </div>
+            </div>
+            <button class="button tiny secondary radius" id="add-mapping-btn" style="margin-top: 10px;">
+              <i class="fa fa-plus"></i> Add Mapping
+            </button>
+          </div>
+          
+          <div class="button-group" style="margin-top: 20px;">
+            <button class="button primary radius" id="save-mappings-btn">
+              <i class="fa fa-save"></i> Save Mappings
+            </button>
+            <button class="button secondary radius" id="auto-map-btn">
+              <i class="fa fa-magic"></i> Auto-Map Fields
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  renderDatasetTransformation(dataset) {
+    return `
+      <div class="dataset-panel">
+        <div class="panel-section">
+          <h4>Data Transformation Rules</h4>
+          <p class="help-text">Apply transformations to dataset values during synchronization.</p>
+          
+          <div id="transformation-rules">
+            ${this.renderTransformationRules(dataset)}
+          </div>
+          
+          <button class="button tiny secondary radius" id="add-transformation-btn" style="margin-top: 10px;">
+            <i class="fa fa-plus"></i> Add Transformation
+          </button>
+          
+          <div class="panel-section" style="margin-top: 30px;">
+            <h5>Available Transformations</h5>
+            <div class="transformation-library">
+              <div class="transform-card">
+                <strong>Trim Whitespace</strong>
+                <p>Remove leading/trailing spaces</p>
+              </div>
+              <div class="transform-card">
+                <strong>Uppercase/Lowercase</strong>
+                <p>Convert text case</p>
+              </div>
+              <div class="transform-card">
+                <strong>Date Format</strong>
+                <p>Convert date formats</p>
+              </div>
+              <div class="transform-card">
+                <strong>Number Format</strong>
+                <p>Format numeric values</p>
+              </div>
+              <div class="transform-card">
+                <strong>Replace Text</strong>
+                <p>Find and replace patterns</p>
+              </div>
+              <div class="transform-card">
+                <strong>Split/Join</strong>
+                <p>Split or join text values</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="button-group" style="margin-top: 20px;">
+            <button class="button primary radius" id="save-transformations-btn">
+              <i class="fa fa-save"></i> Save Transformations
+            </button>
+            <button class="button secondary radius" id="test-transform-btn">
+              <i class="fa fa-flask"></i> Test Transformations
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  renderDatasetProperties(dataset) {
+    return `
+      <div class="dataset-panel">
+        <div class="panel-section">
+          <h4>Dataset Configuration</h4>
+          
+          <div class="property-group">
+            <label class="property-label" for="dataset-name-edit">Name</label>
+            <input type="text" id="dataset-name-edit" class="property-input" value="${this.escapeHtml(dataset.name)}" />
+          </div>
+          
+          <div class="property-group">
+            <label class="property-label" for="dataset-source-url-edit">Source URL</label>
+            <input type="text" id="dataset-source-url-edit" class="property-input" value="${this.escapeHtml(dataset.sourceUrl || '')}" />
+          </div>
+          
+          <div class="property-group">
+            <label class="property-label" for="dataset-file-type">File Type</label>
+            <select id="dataset-file-type" class="property-input">
+              <option value="csv" ${dataset.fileType === 'csv' ? 'selected' : ''}>CSV</option>
+              <option value="json" ${dataset.fileType === 'json' ? 'selected' : ''}>JSON</option>
+              <option value="geojson" ${dataset.fileType === 'geojson' ? 'selected' : ''}>GeoJSON</option>
+              <option value="xml" ${dataset.fileType === 'xml' ? 'selected' : ''}>XML</option>
+              <option value="rss" ${dataset.fileType === 'rss' ? 'selected' : ''}>RSS</option>
+            </select>
+          </div>
+          
+          <div class="property-group">
+            <label class="property-label">
+              <input type="checkbox" id="dataset-sync-enabled" ${dataset.syncEnabled ? 'checked' : ''} />
+              Enable synchronization
+            </label>
+          </div>
+          
+          <div class="property-group">
+            <label class="property-label">
+              <input type="checkbox" id="dataset-has-header-row" ${dataset.hasHeaderRow ? 'checked' : ''} />
+              First row contains headers
+            </label>
+          </div>
+          
+          <div class="property-group">
+            <label class="property-label" for="dataset-encoding">Character Encoding</label>
+            <select id="dataset-encoding" class="property-input">
+              <option value="UTF-8" ${dataset.encoding === 'UTF-8' ? 'selected' : ''}>UTF-8</option>
+              <option value="ISO-8859-1" ${dataset.encoding === 'ISO-8859-1' ? 'selected' : ''}>ISO-8859-1</option>
+              <option value="Windows-1252" ${dataset.encoding === 'Windows-1252' ? 'selected' : ''}>Windows-1252</option>
+            </select>
+          </div>
+          
+          <div class="property-group">
+            <label class="property-label" for="dataset-delimiter">CSV Delimiter</label>
+            <input type="text" id="dataset-delimiter" class="property-input" value="${this.escapeHtml(dataset.delimiter || ',')}" maxlength="1" />
+          </div>
+          
+          <div class="button-group" style="margin-top: 20px;">
+            <button class="button primary radius" id="save-dataset-properties-btn">
+              <i class="fa fa-save"></i> Save Properties
+            </button>
+            <button class="button secondary radius" id="reload-dataset-btn">
+              <i class="fa fa-redo"></i> Reload from Source
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  renderMappingRows(dataset) {
+    const mappings = dataset.fieldMappings || [];
+    if (mappings.length === 0) {
+      return '<div class="empty-mappings">No field mappings configured. Click "Auto-Map Fields" to get started.</div>';
+    }
+    return mappings.map((mapping, index) => `
+      <div class="mapping-row" data-index="${index}">
+        <select class="mapping-source property-input">
+          <option value="">Select column...</option>
+          ${(dataset.columns || []).map(col => `
+            <option value="${col}" ${mapping.source === col ? 'selected' : ''}>${this.escapeHtml(col)}</option>
+          `).join('')}
+        </select>
+        <div class="mapping-arrow"><i class="fa fa-arrow-right"></i></div>
+        <select class="mapping-target property-input">
+          <option value="name">Name</option>
+          <option value="description">Description</option>
+          <option value="location">Location</option>
+          <option value="latitude">Latitude</option>
+          <option value="longitude">Longitude</option>
+          <option value="custom">Custom Field</option>
+        </select>
+        <select class="mapping-transform property-input">
+          <option value="">None</option>
+          <option value="trim">Trim</option>
+          <option value="uppercase">Uppercase</option>
+          <option value="lowercase">Lowercase</option>
+        </select>
+        <button class="button tiny alert" onclick="this.parentElement.remove()">
+          <i class="fa fa-trash"></i>
+        </button>
+      </div>
+    `).join('');
+  }
+
+  renderTransformationRules(dataset) {
+    const rules = dataset.transformationRules || [];
+    if (rules.length === 0) {
+      return '<div class="empty-transformations">No transformation rules configured.</div>';
+    }
+    return rules.map((rule, index) => `
+      <div class="transformation-rule" data-index="${index}">
+        <div class="rule-header">
+          <strong>Rule ${index + 1}:</strong> ${this.escapeHtml(rule.name || 'Unnamed')}
+          <button class="button tiny alert" onclick="this.parentElement.parentElement.remove()">
+            <i class="fa fa-trash"></i>
+          </button>
+        </div>
+        <div class="rule-body">
+          <p>${this.escapeHtml(rule.description || 'No description')}</p>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  formatBytes(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  }
+
+  async syncDatasetNow(datasetId) {
+    if (!confirm('Sync this dataset now?')) return;
+    
+    this.showLoading(true);
+    try {
+      const response = await fetch('/json/datasetSync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({
+          datasetId: datasetId
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Sync failed');
+      }
+
+      await response.json();
+      this.showNotification('Dataset synced successfully');
+      this.loadDatasetDetails(datasetId);
+    } catch (error) {
+      console.error('Error syncing dataset:', error);
+      this.showNotification('Error syncing dataset: ' + error.message);
+    } finally {
+      this.showLoading(false);
     }
   }
 
