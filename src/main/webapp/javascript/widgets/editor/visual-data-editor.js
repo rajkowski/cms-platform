@@ -190,6 +190,29 @@ class VisualDataEditor {
     });
   }
 
+  setupCollectionTabs() {
+    document.querySelectorAll('.collection-tab').forEach(tab => {
+      tab.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const tabName = tab.dataset.tab;
+        
+        // Update tab navigation
+        document.querySelectorAll('.collection-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        // Update tab content
+        document.querySelectorAll('.collection-tab-content').forEach(c => c.classList.remove('active'));
+        const targetContent = document.getElementById(`collection-${tabName}-content`);
+        if (targetContent) {
+          targetContent.classList.add('active');
+        }
+        
+        return false;
+      });
+    });
+  }
+
   switchLibraryTab(tabId) {
     // Update tab navigation
     document.querySelectorAll('.library-tabs-container .tabs-nav a').forEach(t => t.classList.remove('active'));
@@ -470,44 +493,80 @@ class VisualDataEditor {
 
   renderCollectionDetails(collection) {
     const canvas = document.getElementById('data-editor-canvas');
+    
     canvas.innerHTML = `
-      <div class="data-card">
-        <div class="data-card-header">
-          <div class="data-card-icon">
+      <div class="collection-editor-container">
+        <div class="collection-header">
+          <div class="collection-header-icon">
             <i class="fa fa-folder"></i>
           </div>
-          <div class="data-card-title">
+          <div class="collection-header-content">
             <h3>${this.escapeHtml(collection.name)}</h3>
-            <p>${this.escapeHtml(collection.description || 'No description')}</p>
+            <p>${this.escapeHtml(collection.description || 'No description')} • ${collection.itemCount || 0} items</p>
+          </div>
+          <div class="collection-header-actions">
+            <button class="button tiny primary radius" id="save-collection-btn">
+              <i class="fa fa-save"></i> Save Changes
+            </button>
+            <button class="button tiny secondary radius" id="refresh-collection-btn">
+              <i class="fa fa-redo"></i> Refresh
+            </button>
           </div>
         </div>
-        <div class="data-card-body">
-          <div class="data-card-section">
-            <div class="data-card-section-title">Details</div>
-            <div class="data-card-field">
-              <span class="data-card-field-label">Unique ID</span>
-              <span class="data-card-field-value">${this.escapeHtml(collection.uniqueId)}</span>
-            </div>
-            <div class="data-card-field">
-              <span class="data-card-field-label">Items</span>
-              <span class="data-card-field-value">${collection.itemCount}</span>
-            </div>
-            <div class="data-card-field">
-              <span class="data-card-field-label">Categories</span>
-              <span class="data-card-field-value">${collection.categoryCount}</span>
-            </div>
-            <div class="data-card-field">
-              <span class="data-card-field-label">Guest Access</span>
-              <span class="data-card-field-value">${collection.allowsGuests ? 'Enabled' : 'Disabled'}</span>
-            </div>
-            <div class="data-card-field">
-              <span class="data-card-field-label">Search</span>
-              <span class="data-card-field-value">${collection.showSearch ? 'Enabled' : 'Disabled'}</span>
-            </div>
+        
+        <div class="collection-tabs-container">
+          <ul class="collection-tabs-nav">
+            <li><a href="#collection-overview" class="collection-tab active" data-tab="overview"><i class="fa fa-info-circle"></i> Overview</a></li>
+            <li><a href="#collection-permissions" class="collection-tab" data-tab="permissions"><i class="fa fa-lock"></i> Permissions</a></li>
+            <li><a href="#collection-theme" class="collection-tab" data-tab="theme"><i class="fa fa-palette"></i> Theme</a></li>
+            <li><a href="#collection-tabs" class="collection-tab" data-tab="tabs"><i class="fa fa-th-list"></i> Tabs</a></li>
+            <li><a href="#collection-categories" class="collection-tab" data-tab="categories"><i class="fa fa-tags"></i> Categories</a></li>
+            <li><a href="#collection-columns" class="collection-tab" data-tab="columns"><i class="fa fa-columns"></i> Table Columns</a></li>
+            <li><a href="#collection-fields" class="collection-tab" data-tab="fields"><i class="fa fa-th"></i> Custom Fields</a></li>
+            <li><a href="#collection-related" class="collection-tab" data-tab="related"><i class="fa fa-link"></i> Related</a></li>
+          </ul>
+          
+          <div class="collection-tab-content active" id="collection-overview-content">
+            ${this.renderCollectionOverview(collection)}
+          </div>
+          
+          <div class="collection-tab-content" id="collection-permissions-content">
+            ${this.renderCollectionPermissions(collection)}
+          </div>
+          
+          <div class="collection-tab-content" id="collection-theme-content">
+            ${this.renderCollectionTheme(collection)}
+          </div>
+          
+          <div class="collection-tab-content" id="collection-tabs-content">
+            ${this.renderCollectionTabs(collection)}
+          </div>
+          
+          <div class="collection-tab-content" id="collection-categories-content">
+            ${this.renderCollectionCategories(collection)}
+          </div>
+          
+          <div class="collection-tab-content" id="collection-columns-content">
+            ${this.renderCollectionTableColumns(collection)}
+          </div>
+          
+          <div class="collection-tab-content" id="collection-fields-content">
+            ${this.renderCollectionCustomFields(collection)}
+          </div>
+          
+          <div class="collection-tab-content" id="collection-related-content">
+            ${this.renderCollectionRelated(collection)}
           </div>
         </div>
       </div>
     `;
+
+    // Setup collection tab switching
+    this.setupCollectionTabs();
+    
+    // Setup collection action buttons
+    document.getElementById('save-collection-btn')?.addEventListener('click', () => this.saveCollectionConfig());
+    document.getElementById('refresh-collection-btn')?.addEventListener('click', () => this.loadCollectionDetails(collection.uniqueId));
 
     // Update info tab
     this.updateInfoTab(collection, 'collection');
@@ -590,6 +649,571 @@ class VisualDataEditor {
     if (dataset.id) {
       this.loadDatasetRecords(dataset.id);
     }
+  }
+
+  renderCollectionOverview(collection) {
+    return `
+      <div class="overview-section">
+        <div class="collection-stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fa fa-cube"></i></div>
+            <div class="stat-content">
+              <div class="stat-label">Total Items</div>
+              <div class="stat-value">${collection.itemCount || 0}</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fa fa-tags"></i></div>
+            <div class="stat-content">
+              <div class="stat-label">Categories</div>
+              <div class="stat-value">${collection.categoryCount || 0}</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fa fa-th"></i></div>
+            <div class="stat-content">
+              <div class="stat-label">Custom Fields</div>
+              <div class="stat-value">${collection.customFieldCount || 0}</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fa fa-link"></i></div>
+            <div class="stat-content">
+              <div class="stat-label">Related Collections</div>
+              <div class="stat-value">${collection.relatedCount || 0}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-section">
+          <h4>Collection Information</h4>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">Unique ID</span>
+              <span class="info-value">${this.escapeHtml(collection.uniqueId)}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Created</span>
+              <span class="info-value">${collection.created || 'Unknown'}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Modified</span>
+              <span class="info-value">${collection.modified || 'Never'}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Guest Access</span>
+              <span class="info-value">
+                <span class="status-badge ${collection.allowsGuests ? 'enabled' : 'disabled'}">
+                  ${collection.allowsGuests ? 'Enabled' : 'Disabled'}
+                </span>
+              </span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Search</span>
+              <span class="info-value">
+                <span class="status-badge ${collection.showSearch ? 'enabled' : 'disabled'}">
+                  ${collection.showSearch ? 'Enabled' : 'Disabled'}
+                </span>
+              </span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Listings Link</span>
+              <span class="info-value">
+                <span class="status-badge ${collection.showListingsLink ? 'enabled' : 'disabled'}">
+                  ${collection.showListingsLink ? 'Enabled' : 'Disabled'}
+                </span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-section">
+          <h4>Description</h4>
+          <p>${this.escapeHtml(collection.description || 'No description provided')}</p>
+        </div>
+      </div>
+    `;
+  }
+
+  renderCollectionPermissions(collection) {
+    return `
+      <div class="permissions-section">
+        <div class="permissions-header">
+          <h4>Access Control</h4>
+          <button class="button tiny primary radius" id="add-permission-btn">
+            <i class="fa fa-plus"></i> Add Permission
+          </button>
+        </div>
+
+        <div class="permission-group">
+          <h5>Guest Access</h5>
+          <label class="checkbox-label">
+            <input type="checkbox" id="perm-allows-guests" ${collection.allowsGuests ? 'checked' : ''} />
+            Allow guests (non-authenticated users) to view this collection
+          </label>
+        </div>
+
+        <div class="permission-group">
+          <h5>Role-Based Permissions</h5>
+          <table class="permissions-table">
+            <thead>
+              <tr>
+                <th>Role/Group</th>
+                <th>View</th>
+                <th>Add</th>
+                <th>Edit</th>
+                <th>Delete</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>All Users</td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+                <td><button class="button tiny alert" title="Remove"><i class="fa fa-trash"></i></button></td>
+              </tr>
+              <tr>
+                <td>Admins</td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><input type="checkbox" checked /></td>
+                <td><button class="button tiny alert" title="Remove"><i class="fa fa-trash"></i></button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="permission-actions">
+          <button class="button primary radius">Save Permissions</button>
+          <button class="button secondary radius">Reset</button>
+        </div>
+      </div>
+    `;
+  }
+
+  renderCollectionTheme(collection) {
+    return `
+      <div class="theme-section">
+        <h4>Visual Customization</h4>
+        
+        <div class="theme-group">
+          <h5>Header Colors</h5>
+          <div class="color-picker-row">
+            <div class="color-picker-item">
+              <label>Header Background</label>
+              <input type="color" id="theme-header-bg" value="${collection.headerBgColor || '#0f4f79'}" class="color-input" />
+              <input type="text" value="${collection.headerBgColor || '#0f4f79'}" class="color-text" />
+            </div>
+            <div class="color-picker-item">
+              <label>Header Text</label>
+              <input type="color" id="theme-header-text" value="${collection.headerTextColor || '#ffffff'}" class="color-input" />
+              <input type="text" value="${collection.headerTextColor || '#ffffff'}" class="color-text" />
+            </div>
+          </div>
+        </div>
+
+        <div class="theme-group">
+          <h5>Menu Colors</h5>
+          <div class="color-picker-row">
+            <div class="color-picker-item">
+              <label>Menu Background</label>
+              <input type="color" id="theme-menu-bg" value="${collection.menuBgColor || '#f4f4f4'}" class="color-input" />
+              <input type="text" value="${collection.menuBgColor || '#f4f4f4'}" class="color-text" />
+            </div>
+            <div class="color-picker-item">
+              <label>Menu Text</label>
+              <input type="color" id="theme-menu-text" value="${collection.menuTextColor || '#333333'}" class="color-input" />
+              <input type="text" value="${collection.menuTextColor || '#333333'}" class="color-text" />
+            </div>
+          </div>
+        </div>
+
+        <div class="theme-preview">
+          <h5>Preview</h5>
+          <div class="preview-box">
+            <div class="preview-header" style="background-color: ${collection.headerBgColor || '#0f4f79'}; color: ${collection.headerTextColor || '#ffffff'};">
+              <h3>Collection Header</h3>
+            </div>
+            <div class="preview-menu" style="background-color: ${collection.menuBgColor || '#f4f4f4'}; color: ${collection.menuTextColor || '#333333'};">
+              Menu Item 1 • Menu Item 2 • Menu Item 3
+            </div>
+          </div>
+        </div>
+
+        <div class="theme-actions">
+          <button class="button primary radius">Save Theme</button>
+          <button class="button secondary radius">Reset to Defaults</button>
+        </div>
+      </div>
+    `;
+  }
+
+  renderCollectionTabs(collection) {
+    return `
+      <div class="tabs-section">
+        <div class="tabs-header">
+          <h4>Navigation Tabs</h4>
+          <button class="button tiny primary radius" id="add-tab-btn">
+            <i class="fa fa-plus"></i> Add Tab
+          </button>
+        </div>
+
+        <div class="tabs-list">
+          <div class="tab-item">
+            <div class="tab-item-handle"><i class="fa fa-grip-vertical"></i></div>
+            <div class="tab-item-content">
+              <input type="text" value="All Items" class="tab-name-input" />
+              <label class="checkbox-label">
+                <input type="checkbox" checked /> Visible
+              </label>
+            </div>
+            <div class="tab-item-actions">
+              <button class="button tiny" title="Edit"><i class="fa fa-edit"></i></button>
+              <button class="button tiny alert" title="Delete"><i class="fa fa-trash"></i></button>
+            </div>
+          </div>
+          <div class="tab-item">
+            <div class="tab-item-handle"><i class="fa fa-grip-vertical"></i></div>
+            <div class="tab-item-content">
+              <input type="text" value="Featured" class="tab-name-input" />
+              <label class="checkbox-label">
+                <input type="checkbox" checked /> Visible
+              </label>
+            </div>
+            <div class="tab-item-actions">
+              <button class="button tiny" title="Edit"><i class="fa fa-edit"></i></button>
+              <button class="button tiny alert" title="Delete"><i class="fa fa-trash"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="tabs-settings">
+          <h5>Tab Settings</h5>
+          <label class="checkbox-label">
+            <input type="checkbox" id="tabs-show-counts" checked />
+            Show item counts on tabs
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="tabs-allow-multiple" />
+            Allow multiple tabs to be selected
+          </label>
+        </div>
+
+        <div class="tabs-actions">
+          <button class="button primary radius">Save Tabs</button>
+          <button class="button secondary radius">Reset</button>
+        </div>
+      </div>
+    `;
+  }
+
+  renderCollectionCategories(collection) {
+    return `
+      <div class="categories-section">
+        <div class="categories-header">
+          <h4>Manage Categories</h4>
+          <button class="button tiny primary radius" id="add-category-btn">
+            <i class="fa fa-plus"></i> Add Category
+          </button>
+        </div>
+
+        <div class="categories-list">
+          <div class="category-item">
+            <div class="category-item-handle"><i class="fa fa-grip-vertical"></i></div>
+            <div class="category-item-content">
+              <input type="text" value="Technology" class="category-name-input" />
+              <span class="category-count">12 items</span>
+            </div>
+            <div class="category-item-actions">
+              <button class="button tiny" title="Edit"><i class="fa fa-edit"></i></button>
+              <button class="button tiny alert" title="Delete"><i class="fa fa-trash"></i></button>
+            </div>
+          </div>
+          <div class="category-item">
+            <div class="category-item-handle"><i class="fa fa-grip-vertical"></i></div>
+            <div class="category-item-content">
+              <input type="text" value="Business" class="category-name-input" />
+              <span class="category-count">8 items</span>
+            </div>
+            <div class="category-item-actions">
+              <button class="button tiny" title="Edit"><i class="fa fa-edit"></i></button>
+              <button class="button tiny alert" title="Delete"><i class="fa fa-trash"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="categories-settings">
+          <h5>Category Settings</h5>
+          <label class="checkbox-label">
+            <input type="checkbox" id="cat-hierarchical" />
+            Enable hierarchical categories
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="cat-multiple" checked />
+            Allow items to have multiple categories
+          </label>
+        </div>
+
+        <div class="categories-actions">
+          <button class="button primary radius">Save Categories</button>
+          <button class="button secondary radius">Reset</button>
+        </div>
+      </div>
+    `;
+  }
+
+  renderCollectionTableColumns(collection) {
+    return `
+      <div class="columns-section">
+        <div class="columns-header">
+          <h4>Table Column Designer</h4>
+          <button class="button tiny primary radius" id="add-column-btn">
+            <i class="fa fa-plus"></i> Add Column
+          </button>
+        </div>
+
+        <table class="columns-table">
+          <thead>
+            <tr>
+              <th width="30"></th>
+              <th>Column Name</th>
+              <th>Field</th>
+              <th>Width</th>
+              <th>Sortable</th>
+              <th>Visible</th>
+              <th width="80"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><i class="fa fa-grip-vertical"></i></td>
+              <td><input type="text" value="Name" class="column-input" /></td>
+              <td>
+                <select class="column-input">
+                  <option value="name" selected>Name</option>
+                  <option value="title">Title</option>
+                  <option value="summary">Summary</option>
+                </select>
+              </td>
+              <td><input type="text" value="40%" class="column-input" /></td>
+              <td><input type="checkbox" checked /></td>
+              <td><input type="checkbox" checked /></td>
+              <td>
+                <button class="button tiny alert" title="Remove"><i class="fa fa-trash"></i></button>
+              </td>
+            </tr>
+            <tr>
+              <td><i class="fa fa-grip-vertical"></i></td>
+              <td><input type="text" value="Category" class="column-input" /></td>
+              <td>
+                <select class="column-input">
+                  <option value="category" selected>Category</option>
+                  <option value="tags">Tags</option>
+                </select>
+              </td>
+              <td><input type="text" value="20%" class="column-input" /></td>
+              <td><input type="checkbox" checked /></td>
+              <td><input type="checkbox" checked /></td>
+              <td>
+                <button class="button tiny alert" title="Remove"><i class="fa fa-trash"></i></button>
+              </td>
+            </tr>
+            <tr>
+              <td><i class="fa fa-grip-vertical"></i></td>
+              <td><input type="text" value="Date" class="column-input" /></td>
+              <td>
+                <select class="column-input">
+                  <option value="created" selected>Created Date</option>
+                  <option value="modified">Modified Date</option>
+                </select>
+              </td>
+              <td><input type="text" value="20%" class="column-input" /></td>
+              <td><input type="checkbox" checked /></td>
+              <td><input type="checkbox" checked /></td>
+              <td>
+                <button class="button tiny alert" title="Remove"><i class="fa fa-trash"></i></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="columns-settings">
+          <h5>Table Settings</h5>
+          <label class="checkbox-label">
+            <input type="checkbox" id="table-striped" checked />
+            Striped rows
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="table-hover" checked />
+            Hover effect
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="table-responsive" checked />
+            Responsive layout
+          </label>
+        </div>
+
+        <div class="columns-actions">
+          <button class="button primary radius">Save Columns</button>
+          <button class="button secondary radius">Reset to Defaults</button>
+        </div>
+      </div>
+    `;
+  }
+
+  renderCollectionCustomFields(collection) {
+    return `
+      <div class="fields-section">
+        <div class="fields-header">
+          <h4>Custom Fields</h4>
+          <button class="button tiny primary radius" id="add-field-btn">
+            <i class="fa fa-plus"></i> Add Field
+          </button>
+        </div>
+
+        <div class="fields-list">
+          <div class="field-item">
+            <div class="field-item-header">
+              <div class="field-item-handle"><i class="fa fa-grip-vertical"></i></div>
+              <div class="field-item-title">
+                <strong>Price</strong>
+                <span class="field-type-badge">Number</span>
+              </div>
+              <div class="field-item-actions">
+                <button class="button tiny" title="Edit"><i class="fa fa-edit"></i></button>
+                <button class="button tiny alert" title="Delete"><i class="fa fa-trash"></i></button>
+              </div>
+            </div>
+            <div class="field-item-details">
+              <div class="field-detail"><strong>Name:</strong> price</div>
+              <div class="field-detail"><strong>Label:</strong> Price</div>
+              <div class="field-detail"><strong>Required:</strong> No</div>
+              <div class="field-detail"><strong>Searchable:</strong> Yes</div>
+            </div>
+          </div>
+
+          <div class="field-item">
+            <div class="field-item-header">
+              <div class="field-item-handle"><i class="fa fa-grip-vertical"></i></div>
+              <div class="field-item-title">
+                <strong>Location</strong>
+                <span class="field-type-badge">Text</span>
+              </div>
+              <div class="field-item-actions">
+                <button class="button tiny" title="Edit"><i class="fa fa-edit"></i></button>
+                <button class="button tiny alert" title="Delete"><i class="fa fa-trash"></i></button>
+              </div>
+            </div>
+            <div class="field-item-details">
+              <div class="field-detail"><strong>Name:</strong> location</div>
+              <div class="field-detail"><strong>Label:</strong> Location</div>
+              <div class="field-detail"><strong>Required:</strong> Yes</div>
+              <div class="field-detail"><strong>Searchable:</strong> Yes</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="field-types">
+          <h5>Available Field Types</h5>
+          <div class="field-type-grid">
+            <div class="field-type-card">
+              <i class="fa fa-font"></i>
+              <span>Text</span>
+            </div>
+            <div class="field-type-card">
+              <i class="fa fa-paragraph"></i>
+              <span>Textarea</span>
+            </div>
+            <div class="field-type-card">
+              <i class="fa fa-hashtag"></i>
+              <span>Number</span>
+            </div>
+            <div class="field-type-card">
+              <i class="fa fa-calendar"></i>
+              <span>Date</span>
+            </div>
+            <div class="field-type-card">
+              <i class="fa fa-check-square"></i>
+              <span>Checkbox</span>
+            </div>
+            <div class="field-type-card">
+              <i class="fa fa-list"></i>
+              <span>Select</span>
+            </div>
+            <div class="field-type-card">
+              <i class="fa fa-image"></i>
+              <span>Image</span>
+            </div>
+            <div class="field-type-card">
+              <i class="fa fa-file"></i>
+              <span>File</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="fields-actions">
+          <button class="button primary radius">Save Fields</button>
+          <button class="button secondary radius">Reset</button>
+        </div>
+      </div>
+    `;
+  }
+
+  renderCollectionRelated(collection) {
+    return `
+      <div class="related-section">
+        <div class="related-header">
+          <h4>Related Collections</h4>
+          <button class="button tiny primary radius" id="add-related-btn">
+            <i class="fa fa-plus"></i> Add Relationship
+          </button>
+        </div>
+
+        <div class="related-list">
+          <div class="related-item">
+            <div class="related-item-icon"><i class="fa fa-folder"></i></div>
+            <div class="related-item-content">
+              <div class="related-item-title">Products</div>
+              <div class="related-item-meta">Linked as "Parent Collection" • 25 items</div>
+            </div>
+            <div class="related-item-actions">
+              <button class="button tiny" title="Configure"><i class="fa fa-cog"></i></button>
+              <button class="button tiny alert" title="Remove"><i class="fa fa-unlink"></i></button>
+            </div>
+          </div>
+
+          <div class="related-item">
+            <div class="related-item-icon"><i class="fa fa-folder"></i></div>
+            <div class="related-item-content">
+              <div class="related-item-title">Reviews</div>
+              <div class="related-item-meta">Linked as "Child Collection" • 100 items</div>
+            </div>
+            <div class="related-item-actions">
+              <button class="button tiny" title="Configure"><i class="fa fa-cog"></i></button>
+              <button class="button tiny alert" title="Remove"><i class="fa fa-unlink"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="related-info">
+          <h5>Relationship Types</h5>
+          <ul>
+            <li><strong>Parent-Child:</strong> Items in this collection can have items from another collection</li>
+            <li><strong>Related:</strong> Items can reference items from another collection</li>
+            <li><strong>Many-to-Many:</strong> Items can be linked to multiple items in another collection</li>
+          </ul>
+        </div>
+
+        <div class="related-actions">
+          <button class="button primary radius">Save Relationships</button>
+          <button class="button secondary radius">Reset</button>
+        </div>
+      </div>
+    `;
   }
 
   renderDatasetOverview(dataset) {
