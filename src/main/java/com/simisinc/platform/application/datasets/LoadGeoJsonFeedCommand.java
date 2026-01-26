@@ -48,11 +48,15 @@ public class LoadGeoJsonFeedCommand {
   private static Log LOG = LogFactory.getLog(LoadGeoJsonFeedCommand.class);
 
   public static List<String[]> loadRows(Dataset dataset, int maxRowCountToReturn) throws DataException {
+    return loadRows(dataset, 0, maxRowCountToReturn);
+  }
+
+  public static List<String[]> loadRows(Dataset dataset, int offset, int maxRowCountToReturn) throws DataException {
     File file = DatasetFileCommand.getFile(dataset);
     if (file == null) {
       throw new DataException("Dataset file not found");
     }
-    return loadRows(dataset, file, maxRowCountToReturn);
+    return loadRows(dataset, file, offset, maxRowCountToReturn);
   }
 
   public static List<GeoJsonObject> loadRecords(Dataset dataset) throws DataException {
@@ -63,7 +67,7 @@ public class LoadGeoJsonFeedCommand {
     return loadRecords(dataset, file);
   }
 
-  private static List<String[]> loadRows(Dataset dataset, File file, int maxRowCountToReturn) throws DataException {
+  private static List<String[]> loadRows(Dataset dataset, File file, int offset, int maxRowCountToReturn) throws DataException {
     List<String[]> rows = new ArrayList<>();
     if (file == null) {
       return rows;
@@ -76,6 +80,11 @@ public class LoadGeoJsonFeedCommand {
           return rows;
         }
         JsonNode thisFeature = features.next();
+        // Offset
+        if (offset > 0) {
+          --offset;
+          continue;
+        }
         LOG.debug("Got next feature...");
         JsonNode node = thisFeature.get("attributes");
         List<String> fields = new ArrayList<>();

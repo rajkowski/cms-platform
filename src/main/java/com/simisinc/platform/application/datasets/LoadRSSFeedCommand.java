@@ -16,21 +16,22 @@
 
 package com.simisinc.platform.application.datasets;
 
-import com.rometools.rome.feed.synd.SyndEntry;
-import com.rometools.rome.feed.synd.SyndFeed;
-import com.rometools.rome.io.SyndFeedInput;
-import com.simisinc.platform.application.DataException;
-import com.simisinc.platform.application.cms.HtmlCommand;
-import com.simisinc.platform.domain.model.datasets.Dataset;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.io.File;
 import java.io.FileReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.rometools.rome.feed.synd.SyndEntry;
+import com.rometools.rome.feed.synd.SyndFeed;
+import com.rometools.rome.io.SyndFeedInput;
+import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.application.cms.HtmlCommand;
+import com.simisinc.platform.domain.model.datasets.Dataset;
 
 /**
  * Reads in dataset rows from an RSS feed dataset file
@@ -57,14 +58,18 @@ public class LoadRSSFeedCommand {
   }
 
   public static List<String[]> loadRows(Dataset dataset, int maxRowCountToReturn) throws DataException {
+    return loadRows(dataset, 0, maxRowCountToReturn);
+  }
+
+  public static List<String[]> loadRows(Dataset dataset, int offset, int maxRowCountToReturn) throws DataException {
     SyndFeed feed = LoadRSSFeedCommand.loadFeed(dataset);
     if (feed == null) {
       throw new DataException("Dataset file not found");
     }
-    return loadRows(dataset, feed, maxRowCountToReturn);
+    return loadRows(dataset, feed, offset, maxRowCountToReturn);
   }
 
-  public static List<String[]> loadRows(Dataset dataset, SyndFeed feed, int maxRowCountToReturn) {
+  public static List<String[]> loadRows(Dataset dataset, SyndFeed feed, int offset, int maxRowCountToReturn) {
     List<String[]> rows = new ArrayList<>();
     if (feed == null || feed.getEntries().isEmpty()) {
       return rows;
@@ -72,7 +77,8 @@ public class LoadRSSFeedCommand {
     if (feed.getEntries().size() < maxRowCountToReturn) {
       maxRowCountToReturn = feed.getEntries().size();
     }
-    for (int i = 0; i < maxRowCountToReturn; i++) {
+    // Load the rows and use the offset
+    for (int i = offset; i < (offset + maxRowCountToReturn); i++) {
       List<String> row = new ArrayList<>();
       SyndEntry syndEntry = feed.getEntries().get(i);
       for (String column : dataset.getColumnNamesList()) {

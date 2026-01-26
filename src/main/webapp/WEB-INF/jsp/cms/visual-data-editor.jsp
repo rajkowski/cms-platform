@@ -63,7 +63,6 @@
     <div class="toolbar-section left">
       <button id="new-collection-btn" class="button tiny success no-gap radius"><i class="${font:far()} fa-folder-plus"></i> New Collection</button>
       <button id="new-dataset-btn" class="button tiny primary no-gap radius"><i class="${font:far()} fa-file-import"></i> New Dataset</button>
-      <button id="import-dataset-btn" class="button tiny primary no-gap radius"><i class="${font:far()} fa-upload"></i> Import</button>
       <button id="reload-btn" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-sync"></i> Reload</button>
     </div>
 
@@ -208,7 +207,7 @@
           Allow guest access
         </label>
       </div>
-      <div class="button-group">
+      <div>
         <button type="submit" class="button success radius">Create Collection</button>
         <button type="button" class="button secondary radius modal-cancel">Cancel</button>
       </div>
@@ -263,8 +262,8 @@
           <option value="geo">Geographic Data</option>
         </select>
       </div>
-      <div class="button-group">
-        <button type="submit" class="button primary radius">Import Dataset</button>
+      <div>
+        <button type="submit" class="button success radius">Import Dataset</button>
         <button type="button" class="button secondary radius modal-cancel">Cancel</button>
       </div>
     </form>
@@ -273,7 +272,7 @@
 
 <!-- JavaScript for Data Editor -->
 <g:compress>
-  <script src="/javascript/widgets/editor/visual-data-editor.js"></script>
+  <script src="${ctx}/javascript/widgets/editor/visual-data-editor.js"></script>
 </g:compress>
 
 <script>
@@ -281,9 +280,9 @@
   document.addEventListener('DOMContentLoaded', function() {
     if (typeof VisualDataEditor !== 'undefined') {
       const editor = new VisualDataEditor({
+        token: '<c:out value="${userSession.formToken}" />',
         viewMode: '<c:out value="${viewMode}"/>',
-        uniqueId: '<c:out value="${uniqueId}"/>',
-        userId: ${userSession.userId}
+        uniqueId: '<c:out value="${uniqueId}"/>'
       });
       editor.init();
     }

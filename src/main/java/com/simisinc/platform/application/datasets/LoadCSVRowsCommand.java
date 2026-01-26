@@ -16,12 +16,8 @@
 
 package com.simisinc.platform.application.datasets;
 
-import com.simisinc.platform.application.DataException;
-import com.simisinc.platform.domain.model.datasets.Dataset;
-import com.univocity.parsers.csv.CsvParser;
-import com.univocity.parsers.csv.CsvParserSettings;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import static com.simisinc.platform.application.datasets.DatasetFieldOptionCommand.applyOptionsToField;
+import static com.simisinc.platform.application.datasets.DatasetFieldOptionCommand.isSkipped;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -31,8 +27,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.simisinc.platform.application.datasets.DatasetFieldOptionCommand.applyOptionsToField;
-import static com.simisinc.platform.application.datasets.DatasetFieldOptionCommand.isSkipped;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.domain.model.datasets.Dataset;
+import com.univocity.parsers.csv.CsvParser;
+import com.univocity.parsers.csv.CsvParserSettings;
 
 /**
  * Reads in dataset rows from a CSV dataset file
@@ -45,6 +46,10 @@ public class LoadCSVRowsCommand {
   private static Log LOG = LogFactory.getLog(LoadCSVRowsCommand.class);
 
   public static List<String[]> loadRows(Dataset dataset, int rowCountToReturn, boolean applyOptions) throws DataException {
+    return loadRows(dataset, 0, rowCountToReturn, applyOptions);
+  }
+
+  public static List<String[]> loadRows(Dataset dataset, int offset, int rowCountToReturn, boolean applyOptions) throws DataException {
 
     // Get a file handle
     File file = DatasetFileCommand.getFile(dataset);
@@ -79,6 +84,11 @@ public class LoadCSVRowsCommand {
       parser.beginParsing(inputStream, "ISO-8859-1");
       String[] row;
       while ((row = parser.parseNext()) != null) {
+        // Skip rows until the offset is reached
+        if (count < offset) {
+          count++;
+          continue;
+        }
         // See if the count to return has been reached
         if (rowCountToReturn > -1 && count >= rowCountToReturn) {
           break;

@@ -149,20 +149,24 @@ public class DatasetFileCommand {
   }
 
   public static List<String[]> loadRows(Dataset dataset, int rowsToReturn, boolean applyOptions) throws Exception {
+    return loadRows(dataset, 0, rowsToReturn, applyOptions);
+  }
+
+  public static List<String[]> loadRows(Dataset dataset, int offset, int rowsToReturn, boolean applyOptions) throws Exception {
     int type = type(dataset.getFileType());
     switch (type) {
       case CSV:
-        return LoadCSVRowsCommand.loadRows(dataset, rowsToReturn, applyOptions);
+        return LoadCSVRowsCommand.loadRows(dataset, offset, rowsToReturn, applyOptions);
       case JSON:
-        return LoadJsonCommand.loadRecords(dataset, rowsToReturn, applyOptions);
+        return LoadJsonCommand.loadRecords(dataset, offset, rowsToReturn, applyOptions);
       case JSON_API:
-        return LoadJsonCommand.loadRecords(dataset, rowsToReturn, applyOptions);
+        return LoadJsonCommand.loadRecords(dataset, offset, rowsToReturn, applyOptions);
       case GEO_JSON:
-        return LoadGeoJsonFeedCommand.loadRows(dataset, rowsToReturn);
+        return LoadGeoJsonFeedCommand.loadRows(dataset, offset, rowsToReturn);
       case RSS:
-        return LoadRSSFeedCommand.loadRows(dataset, rowsToReturn);
+        return LoadRSSFeedCommand.loadRows(dataset, offset, rowsToReturn);
       case TSV:
-        return LoadTSVRowsCommand.loadRows(dataset, rowsToReturn, applyOptions);
+        return LoadTSVRowsCommand.loadRows(dataset, offset, rowsToReturn, applyOptions);
       default:
         return null;
     }

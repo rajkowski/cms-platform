@@ -47,6 +47,11 @@ public class LoadTSVRowsCommand {
 
   public static List<String[]> loadRows(Dataset dataset, int rowCountToReturn, boolean applyOptions)
       throws DataException {
+    return loadRows(dataset, 0, rowCountToReturn, applyOptions);
+  }
+
+  public static List<String[]> loadRows(Dataset dataset, int offset, int rowCountToReturn, boolean applyOptions)
+      throws DataException {
 
     // Get a file handle
     File file = DatasetFileCommand.getFile(dataset);
@@ -81,6 +86,11 @@ public class LoadTSVRowsCommand {
       parser.beginParsing(inputStream, "ISO-8859-1");
       String[] row;
       while ((row = parser.parseNext()) != null) {
+        // Offset
+        if (count < offset) {
+          ++count;
+          continue;
+        }
         // See if the count to return has been reached
         if (rowCountToReturn > -1 && count >= rowCountToReturn) {
           break;

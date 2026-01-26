@@ -48,14 +48,19 @@ public class LoadJsonCommand {
 
   public static List<String[]> loadRecords(Dataset dataset, int maxRowCountToReturn, boolean applyOptions)
       throws DataException {
+    return loadRecords(dataset, 0, maxRowCountToReturn, applyOptions);
+  }
+
+  public static List<String[]> loadRecords(Dataset dataset, int offset, int maxRowCountToReturn, boolean applyOptions)
+      throws DataException {
     File file = DatasetFileCommand.getFile(dataset);
     if (file == null) {
       throw new DataException("Dataset file not found");
     }
-    return loadRecords(dataset, file, maxRowCountToReturn, applyOptions);
+    return loadRecords(dataset, file, offset, maxRowCountToReturn, applyOptions);
   }
 
-  private static List<String[]> loadRecords(Dataset dataset, File file, int maxRowCountToReturn, boolean applyOptions)
+  private static List<String[]> loadRecords(Dataset dataset, File file, int offset, int maxRowCountToReturn, boolean applyOptions)
       throws DataException {
     List<String[]> rows = new ArrayList<>();
     if (file == null) {
@@ -103,6 +108,12 @@ public class LoadJsonCommand {
 
         // Determine if the row meets the criteria
         JsonNode thisRecord = records.next();
+
+        // Skip to the offset
+        if (offset > 0) {
+          --offset;
+          continue;
+        }
 
         // Process the row's fields
         List<String> row = new ArrayList<>();

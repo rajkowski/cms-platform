@@ -16,6 +16,7 @@
 
 class VisualDataEditor {
   constructor(options) {
+    this.token = options.token || '';
     this.viewMode = options.viewMode || 'collections';
     this.uniqueId = options.uniqueId || null;
     this.userId = options.userId || -1;
@@ -28,6 +29,7 @@ class VisualDataEditor {
   init() {
     this.setupEventListeners();
     this.setupDarkMode();
+    this.setupPropertiesPanelResize();
     this.loadInitialData();
     this.setupTabs();
     this.setupModals();
@@ -37,7 +39,6 @@ class VisualDataEditor {
     // Toolbar buttons
     document.getElementById('new-collection-btn')?.addEventListener('click', () => this.showNewCollectionModal());
     document.getElementById('new-dataset-btn')?.addEventListener('click', () => this.showNewDatasetModal());
-    document.getElementById('import-dataset-btn')?.addEventListener('click', () => this.showImportDatasetModal());
     document.getElementById('reload-btn')?.addEventListener('click', () => this.reloadData());
     document.getElementById('save-btn')?.addEventListener('click', () => this.saveCurrentItem());
     
@@ -68,24 +69,84 @@ class VisualDataEditor {
     if (!darkModeToggle) return;
 
     // Load saved preference
-    const isDarkMode = localStorage.getItem('dataEditorDarkMode') === 'true';
+    const isDarkMode = localStorage.getItem('editor-theme') === 'dark';
     if (isDarkMode) {
-      document.body.classList.add('dark-mode');
-      darkModeToggle.querySelector('i').classList.replace('fa-moon', 'fa-sun');
+      document.body.dataset.theme = 'dark';
+      const icon = darkModeToggle.querySelector('i');
+      if (icon) {
+        icon.classList.remove('fa-moon');
+        icon.classList.add('fa-sun');
+      }
     }
 
     darkModeToggle.addEventListener('click', () => {
-      document.body.classList.toggle('dark-mode');
-      const isDark = document.body.classList.contains('dark-mode');
-      localStorage.setItem('dataEditorDarkMode', isDark);
+      const isDark = document.body.dataset.theme === 'dark';
+      if (isDark) {
+        delete document.body.dataset.theme;
+        localStorage.setItem('editor-theme', 'light');
+      } else {
+        document.body.dataset.theme = 'dark';
+        localStorage.setItem('editor-theme', 'dark');
+      }
       
       const icon = darkModeToggle.querySelector('i');
-      if (isDark) {
-        icon.classList.replace('fa-moon', 'fa-sun');
-      } else {
-        icon.classList.replace('fa-sun', 'fa-moon');
+      if (icon) {
+        if (isDark) {
+          icon.classList.remove('fa-sun');
+          icon.classList.add('fa-moon');
+        } else {
+          icon.classList.remove('fa-moon');
+          icon.classList.add('fa-sun');
+        }
       }
     });
+  }
+
+  setupPropertiesPanelResize() {
+    const resizeHandle = document.getElementById('properties-panel-resize-handle');
+    const propertiesPanel = document.getElementById('data-properties-panel');
+    if (!resizeHandle || !propertiesPanel) return;
+
+    let isResizing = false;
+    let startX = 0;
+    let startWidth = 0;
+
+    const onMouseDown = (e) => {
+      isResizing = true;
+      startX = e.clientX;
+      startWidth = propertiesPanel.offsetWidth;
+      resizeHandle.classList.add('resizing');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      e.preventDefault();
+    };
+
+    const onMouseMove = (e) => {
+      if (!isResizing) return;
+      
+      const deltaX = startX - e.clientX;
+      const newWidth = startWidth + deltaX;
+      const minWidth = 250;
+      const maxWidth = 600;
+      
+      if (newWidth >= minWidth && newWidth <= maxWidth) {
+        propertiesPanel.style.width = `${newWidth}px`;
+      }
+      e.preventDefault();
+    };
+
+    const onMouseUp = () => {
+      if (isResizing) {
+        isResizing = false;
+        resizeHandle.classList.remove('resizing');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      }
+    };
+
+    resizeHandle.addEventListener('mousedown', onMouseDown);
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
   }
 
   setupTabs() {
@@ -313,15 +374,424 @@ class VisualDataEditor {
   }
 
   selectCollection(uniqueId) {
-    // TODO: Load and display collection details
-    console.log('Selected collection:', uniqueId);
+    this.loadCollectionDetails(uniqueId);
     this.hideEmptyCanvas();
+    
+    // Update active state in list
+    document.querySelectorAll('#collections-list .data-list-item').forEach(item => {
+      item.classList.remove('active');
+      if (item.dataset.uniqueId === uniqueId) {
+        item.classList.add('active');
+      }
+    });
   }
 
   selectDataset(id) {
-    // TODO: Load and display dataset details
-    console.log('Selected dataset:', id);
+    this.loadDatasetDetails(id);
     this.hideEmptyCanvas();
+    
+    // Update active state in list
+    document.querySelectorAll('#datasets-list .data-list-item').forEach(item => {
+      item.classList.remove('active');
+      if (item.dataset.id === id) {
+        item.classList.add('active');
+      }
+    });
+  }
+
+  async loadCollectionDetails(uniqueId) {
+    this.showLoading(true);
+    try {
+      const response = await fetch(`/json/collectionDetails?uniqueId=${encodeURIComponent(uniqueId)}`);
+      const data = await response.json();
+      
+      if (data.error) {
+        alert('Error loading collection: ' + data.error);
+        return;
+      }
+
+      this.selectedItem = data;
+      this.renderCollectionDetails(data);
+      document.getElementById('save-btn').disabled = false;
+      
+    } catch (error) {
+      console.error('Error loading collection details:', error);
+      alert('Failed to load collection details');
+    } finally {
+      this.showLoading(false);
+    }
+  }
+
+  async loadDatasetDetails(id) {
+    this.showLoading(true);
+    try {
+      const response = await fetch(`/json/datasetDetails?id=${id}`);
+      const data = await response.json();
+      
+      if (data.error) {
+        alert('Error loading dataset: ' + data.error);
+        return;
+      }
+
+      this.selectedItem = data;
+      this.renderDatasetDetails(data);
+      document.getElementById('save-btn').disabled = false;
+      
+    } catch (error) {
+      console.error('Error loading dataset details:', error);
+      alert('Failed to load dataset details');
+    } finally {
+      this.showLoading(false);
+    }
+  }
+
+  renderCollectionDetails(collection) {
+    const canvas = document.getElementById('data-editor-canvas');
+    canvas.innerHTML = `
+      <div class="data-card">
+        <div class="data-card-header">
+          <div class="data-card-icon">
+            <i class="fa fa-folder"></i>
+          </div>
+          <div class="data-card-title">
+            <h3>${this.escapeHtml(collection.name)}</h3>
+            <p>${this.escapeHtml(collection.description || 'No description')}</p>
+          </div>
+        </div>
+        <div class="data-card-body">
+          <div class="data-card-section">
+            <div class="data-card-section-title">Details</div>
+            <div class="data-card-field">
+              <span class="data-card-field-label">Unique ID</span>
+              <span class="data-card-field-value">${this.escapeHtml(collection.uniqueId)}</span>
+            </div>
+            <div class="data-card-field">
+              <span class="data-card-field-label">Items</span>
+              <span class="data-card-field-value">${collection.itemCount}</span>
+            </div>
+            <div class="data-card-field">
+              <span class="data-card-field-label">Categories</span>
+              <span class="data-card-field-value">${collection.categoryCount}</span>
+            </div>
+            <div class="data-card-field">
+              <span class="data-card-field-label">Guest Access</span>
+              <span class="data-card-field-value">${collection.allowsGuests ? 'Enabled' : 'Disabled'}</span>
+            </div>
+            <div class="data-card-field">
+              <span class="data-card-field-label">Search</span>
+              <span class="data-card-field-value">${collection.showSearch ? 'Enabled' : 'Disabled'}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Update info tab
+    this.updateInfoTab(collection, 'collection');
+    this.updateConfigTab(collection, 'collection');
+    
+    // Load items for the Records tab
+    if (collection.uniqueId) {
+      this.loadCollectionItems(collection.uniqueId);
+    }
+  }
+
+  renderDatasetDetails(dataset) {
+    const canvas = document.getElementById('data-editor-canvas');
+    const syncStatus = this.getSyncStatusBadge(dataset);
+    
+    canvas.innerHTML = `
+      <div class="data-card">
+        <div class="data-card-header">
+          <div class="data-card-icon">
+            <i class="fa fa-database"></i>
+          </div>
+          <div class="data-card-title">
+            <h3>${this.escapeHtml(dataset.name)}</h3>
+            <p>${this.escapeHtml(dataset.filename || 'No file')}</p>
+          </div>
+        </div>
+        <div class="data-card-body">
+          <div class="data-card-section">
+            <div class="data-card-section-title">Dataset Information</div>
+            <div class="data-card-field">
+              <span class="data-card-field-label">Records</span>
+              <span class="data-card-field-value">${dataset.recordCount || 0}</span>
+            </div>
+            <div class="data-card-field">
+              <span class="data-card-field-label">Rows</span>
+              <span class="data-card-field-value">${dataset.rowCount || 0}</span>
+            </div>
+            <div class="data-card-field">
+              <span class="data-card-field-label">Columns</span>
+              <span class="data-card-field-value">${dataset.columnCount || 0}</span>
+            </div>
+            <div class="data-card-field">
+              <span class="data-card-field-label">File Type</span>
+              <span class="data-card-field-value">${this.escapeHtml(dataset.fileType || 'N/A')}</span>
+            </div>
+          </div>
+          <div class="data-card-section">
+            <div class="data-card-section-title">Synchronization</div>
+            <div class="data-card-field">
+              <span class="data-card-field-label">Status</span>
+              <span class="data-card-field-value">${syncStatus}</span>
+            </div>
+            ${dataset.collectionUniqueId ? `
+            <div class="data-card-field">
+              <span class="data-card-field-label">Collection</span>
+              <span class="data-card-field-value">${this.escapeHtml(dataset.collectionUniqueId)}</span>
+            </div>
+            ` : ''}
+            ${dataset.syncRecordCount > 0 ? `
+            <div class="data-card-field">
+              <span class="data-card-field-label">Last Sync</span>
+              <span class="data-card-field-value">${dataset.syncRecordCount} records (${dataset.syncAddCount} added, ${dataset.syncUpdateCount} updated)</span>
+            </div>
+            ` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Update info tab
+    this.updateInfoTab(dataset, 'dataset');
+    this.updateConfigTab(dataset, 'dataset');
+    
+    // Load records for the Records tab (if we have an ID)
+    if (dataset.id) {
+      this.loadDatasetRecords(dataset.id);
+    }
+  }
+
+  getSyncStatusBadge(dataset) {
+    if (!dataset.syncEnabled) {
+      return '<span class="status-badge inactive">Not Enabled</span>';
+    }
+    if (dataset.syncStatus === 0) {
+      return '<span class="status-badge active">Ready</span>';
+    }
+    return '<span class="status-badge scheduled">Scheduled</span>';
+  }
+
+  updateInfoTab(item, type) {
+    const infoContent = document.getElementById('info-tab-content');
+    if (type === 'collection') {
+      infoContent.innerHTML = `
+        <div style="padding: 15px;">
+          <h5 style="margin-top: 0;">Collection Information</h5>
+          <div class="property-group">
+            <label class="property-label">Name</label>
+            <div>${this.escapeHtml(item.name)}</div>
+          </div>
+          <div class="property-group">
+            <label class="property-label">Unique ID</label>
+            <div><code>${this.escapeHtml(item.uniqueId)}</code></div>
+          </div>
+          <div class="property-group">
+            <label class="property-label">Description</label>
+            <div>${this.escapeHtml(item.description || 'No description')}</div>
+          </div>
+          <div class="property-group">
+            <label class="property-label">Statistics</label>
+            <div>${item.itemCount} items, ${item.categoryCount} categories</div>
+          </div>
+        </div>
+      `;
+    } else if (type === 'dataset') {
+      infoContent.innerHTML = `
+        <div style="padding: 15px;">
+          <h5 style="margin-top: 0;">Dataset Information</h5>
+          <div class="property-group">
+            <label class="property-label">Name</label>
+            <div>${this.escapeHtml(item.name)}</div>
+          </div>
+          <div class="property-group">
+            <label class="property-label">File</label>
+            <div>${this.escapeHtml(item.filename || 'N/A')}</div>
+          </div>
+          <div class="property-group">
+            <label class="property-label">Records</label>
+            <div>${item.recordCount || 0} records in ${item.rowCount || 0} rows</div>
+          </div>
+          ${item.sourceUrl ? `
+          <div class="property-group">
+            <label class="property-label">Source URL</label>
+            <div style="word-break: break-all;">${this.escapeHtml(item.sourceUrl)}</div>
+          </div>
+          ` : ''}
+        </div>
+      `;
+    }
+  }
+
+  updateConfigTab(item, type) {
+    const configContent = document.getElementById('config-tab-content');
+    if (type === 'collection') {
+      configContent.innerHTML = `
+        <div style="padding: 15px;">
+          <h5 style="margin-top: 0;">Collection Settings</h5>
+          <div class="property-group">
+            <label class="property-label" for="edit-collection-name">Name</label>
+            <input type="text" id="edit-collection-name" class="property-input" value="${this.escapeHtml(item.name)}" />
+          </div>
+          <div class="property-group">
+            <label class="property-label" for="edit-collection-description">Description</label>
+            <textarea id="edit-collection-description" class="property-input" rows="3">${this.escapeHtml(item.description || '')}</textarea>
+          </div>
+          <div class="property-group">
+            <label class="property-label">
+              <input type="checkbox" id="edit-collection-allows-guests" ${item.allowsGuests ? 'checked' : ''} />
+              Allow guest access
+            </label>
+          </div>
+          <div class="property-group">
+            <label class="property-label">
+              <input type="checkbox" id="edit-collection-show-search" ${item.showSearch ? 'checked' : ''} />
+              Show search
+            </label>
+          </div>
+          <div class="property-group">
+            <label class="property-label">
+              <input type="checkbox" id="edit-collection-show-listings" ${item.showListingsLink ? 'checked' : ''} />
+              Show listings link
+            </label>
+          </div>
+          <div class="property-group" style="margin-top: 20px;">
+            <button id="save-collection-config-btn" class="button tiny primary radius expanded">
+              <i class="fa fa-save"></i> Save Changes
+            </button>
+          </div>
+        </div>
+      `;
+      
+      // Add save listener
+      document.getElementById('save-collection-config-btn')?.addEventListener('click', () => {
+        this.saveCollectionConfig();
+      });
+      
+    } else if (type === 'dataset') {
+      configContent.innerHTML = `
+        <div style="padding: 15px;">
+          <h5 style="margin-top: 0;">Dataset Settings</h5>
+          <div class="property-group">
+            <label class="property-label" for="edit-dataset-name">Name</label>
+            <input type="text" id="edit-dataset-name" class="property-input" value="${this.escapeHtml(item.name)}" />
+          </div>
+          <div class="property-group">
+            <label class="property-label" for="edit-dataset-source-url">Source URL</label>
+            <input type="text" id="edit-dataset-source-url" class="property-input" value="${this.escapeHtml(item.sourceUrl || '')}" />
+          </div>
+          <div class="property-group">
+            <label class="property-label">
+              <input type="checkbox" id="edit-dataset-sync-enabled" ${item.syncEnabled ? 'checked' : ''} />
+              Enable synchronization
+            </label>
+          </div>
+          <div class="property-group">
+            <label class="property-label">
+              <input type="checkbox" id="edit-dataset-schedule-enabled" ${item.scheduleEnabled ? 'checked' : ''} />
+              Enable scheduling
+            </label>
+          </div>
+          ${item.collectionUniqueId ? `
+          <div class="property-group">
+            <label class="property-label">Collection</label>
+            <div><code>${this.escapeHtml(item.collectionUniqueId)}</code></div>
+          </div>
+          ` : ''}
+          <div class="property-group" style="margin-top: 20px;">
+            <button id="save-dataset-config-btn" class="button tiny primary radius expanded">
+              <i class="fa fa-save"></i> Save Changes
+            </button>
+          </div>
+        </div>
+      `;
+      
+      // Add save listener
+      document.getElementById('save-dataset-config-btn')?.addEventListener('click', () => {
+        this.saveDatasetConfig();
+      });
+    }
+  }
+
+  async saveCollectionConfig() {
+    if (!this.selectedItem || !this.selectedItem.id) {
+      alert('No collection selected');
+      return;
+    }
+
+    this.showLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('token', this.token);
+      formData.append('id', this.selectedItem.id);
+      formData.append('name', document.getElementById('edit-collection-name').value);
+      formData.append('description', document.getElementById('edit-collection-description').value);
+      formData.append('allowsGuests', document.getElementById('edit-collection-allows-guests').checked);
+      formData.append('showSearch', document.getElementById('edit-collection-show-search')?.checked || false);
+      formData.append('showListingsLink', document.getElementById('edit-collection-show-listings')?.checked || false);
+
+      const response = await fetch('/json/saveCollection', {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        this.showNotification('Collection saved successfully');
+        // Reload the collection details
+        this.loadCollectionDetails(this.selectedItem.uniqueId);
+        // Reload the list
+        this.loadCollections();
+      } else {
+        alert('Error: ' + (result.message || 'Failed to save collection'));
+      }
+    } catch (error) {
+      console.error('Error saving collection:', error);
+      alert('Failed to save collection');
+    } finally {
+      this.showLoading(false);
+    }
+  }
+
+  async saveDatasetConfig() {
+    if (!this.selectedItem || !this.selectedItem.id) {
+      alert('No dataset selected');
+      return;
+    }
+
+    this.showLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('token', this.token);
+      formData.append('id', this.selectedItem.id);
+      formData.append('name', document.getElementById('edit-dataset-name').value);
+      formData.append('sourceUrl', document.getElementById('edit-dataset-source-url').value);
+      formData.append('syncEnabled', document.getElementById('edit-dataset-sync-enabled').checked);
+      formData.append('scheduleEnabled', document.getElementById('edit-dataset-schedule-enabled').checked);
+      
+      const response = await fetch('/json/saveDataset', {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        this.showNotification('Dataset saved successfully');
+        // Reload the dataset details
+        this.loadDatasetDetails(this.selectedItem.id);
+        // Reload the list
+        this.loadDatasets();
+      } else {
+        alert('Error: ' + (result.message || 'Failed to save dataset'));
+      }
+    } catch (error) {
+      console.error('Error saving dataset:', error);
+      alert('Failed to save dataset');
+    } finally {
+      this.showLoading(false);
+    }
   }
 
   hideEmptyCanvas() {
@@ -357,16 +827,18 @@ class VisualDataEditor {
   }
 
   async handleNewCollection() {
-    const name = document.getElementById('collection-name').value;
-    const uniqueId = document.getElementById('collection-unique-id').value;
-    const description = document.getElementById('collection-description').value;
-    const allowsGuests = document.getElementById('collection-allows-guests').checked;
 
     try {
+      const formData = new FormData();
+      formData.append('token', this.token);
+      formData.append('name', document.getElementById('collection-name').value);
+      formData.append('uniqueId', document.getElementById('collection-unique-id').value);
+      formData.append('description', document.getElementById('collection-description').value);
+      formData.append('allowsGuests', document.getElementById('collection-allows-guests').checked);
+
       const response = await fetch('/json/saveCollection', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, uniqueId, description, allowsGuests })
+        body: formData
       });
 
       const result = await response.json();
@@ -394,6 +866,108 @@ class VisualDataEditor {
     console.log('Saving current item...');
     this.isDirty = false;
     document.getElementById('save-btn').disabled = true;
+  }
+
+  async loadCollectionItems(uniqueId) {
+    try {
+      const response = await fetch(`/json/collectionItems?uniqueId=${encodeURIComponent(uniqueId)}&limit=50&offset=0`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to load items');
+      }
+
+      const data = await response.json();
+      this.updateRecordsTab(data.items || [], 'collection');
+      return data;
+    } catch (error) {
+      console.error('Error loading collection items:', error);
+      this.showNotification('Error loading items: ' + error.message);
+      return { items: [] };
+    }
+  }
+
+  updateRecordsTab(items, type) {
+    const recordsTab = document.getElementById('records-tab');
+    if (!recordsTab) return;
+
+    if (items.length === 0) {
+      const emptyMessage = type === 'dataset' ? 'No dataset records found' : 'No items found';
+      recordsTab.innerHTML = `
+        <div style="padding: 20px; text-align: center; color: #999;">
+          <i class="fa fa-inbox" style="font-size: 48px; margin-bottom: 10px;"></i>
+          <p>${emptyMessage}</p>
+        </div>
+      `;
+      return;
+    }
+
+    let html = '<div class="items-list" style="padding: 15px;">';
+    
+    items.forEach(item => {
+      const displayName = item.name || item.title || 'Unnamed';
+      const uniqueId = item.uniqueId || item.id || '';
+      html += `
+        <div class="item-card" data-item-id="${item.id}" style="
+          padding: 12px;
+          margin-bottom: 10px;
+          border: 1px solid var(--border-color);
+          border-radius: 4px;
+          cursor: pointer;
+          transition: background-color 0.2s;
+        ">
+          <div style="font-weight: 500; margin-bottom: 4px;">${this.escapeHtml(displayName)}</div>
+          ${item.summary ? `<div style="font-size: 0.9em; color: #666;">${this.escapeHtml(item.summary)}</div>` : ''}
+          <div style="font-size: 0.85em; color: #999; margin-top: 4px;">
+            ID: ${item.id}${uniqueId ? ` | Unique ID: ${this.escapeHtml(uniqueId)}` : ''}
+          </div>
+        </div>
+      `;
+    });
+    
+    html += '</div>';
+    recordsTab.innerHTML = html;
+
+    // Add hover effects using CSS
+    const style = document.createElement('style');
+    style.textContent = `
+      .item-card:hover {
+        background-color: var(--hover-bg, #f0f0f0);
+      }
+    `;
+    if (!document.getElementById('item-card-styles')) {
+      style.id = 'item-card-styles';
+      document.head.appendChild(style);
+    }
+  }
+
+  async loadDatasetRecords(datasetId) {
+    try {
+      const response = await fetch(`/json/datasetRecords?datasetId=${datasetId}&limit=50&offset=0`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to load records');
+      }
+
+      const data = await response.json();
+      this.updateRecordsTab(data.records || [], 'dataset');
+      return data;
+    } catch (error) {
+      console.error('Error loading dataset records:', error);
+      this.showNotification('Error loading records: ' + error.message);
+      return { records: [] };
+    }
   }
 
   async reloadData() {
