@@ -113,8 +113,8 @@
           <button id="import-doc-btn" class="button tiny primary no-gap radius" disabled><i class="${font:far()} fa-upload"></i> Upload Files</button>
           <button id="new-url-btn" class="button tiny primary no-gap radius" disabled><i class="${font:far()} fa-link"></i> Add URL</button>
           <button id="reload-files-btn" class="button tiny secondary no-gap radius" disabled><i class="${font:far()} fa-sync"></i> Reload</button>
-          <button id="view-toggle-btn" class="button tiny secondary no-gap radius" title="Toggle view"><i class="fas fa-th-list"></i></button>
           <input type="text" id="file-search" class="property-input" placeholder="Search files..." />
+          <button id="view-toggle-btn" class="button tiny secondary no-gap radius" title="Toggle preview"><i class="fas fa-eye"></i> Preview</button>
         </div>
       </div>
       <div id="file-list-container">
@@ -135,9 +135,9 @@
         </table>
       </div>
       <div id="file-preview-container" style="display: none;">
-        <div class="file-preview-header">
+        <!-- <div class="file-preview-header">
           <button id="close-preview-btn" class="button tiny secondary no-gap radius"><i class="fas fa-times"></i> Close Preview</button>
-        </div>
+        </div> -->
         <div id="file-preview-content">
           <div class="empty-state">Select a file to preview</div>
         </div>

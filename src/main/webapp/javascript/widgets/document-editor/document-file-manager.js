@@ -76,24 +76,28 @@ class DocumentFileManager {
     }
 
     const mimeType = file.mimeType || '';
-    const webPath = file.webPath || '';
+    const fileUrl = file.url || '';
 
-    if (!webPath) {
+    if (!fileUrl) {
       previewContent.innerHTML = '<div class="empty-state">No preview available</div>';
       return;
     }
 
     // Image preview
     if (mimeType.startsWith('image/')) {
-      previewContent.innerHTML = `<img src="${webPath}" alt="${file.title || file.filename}" />`;
+      previewContent.innerHTML = `<img src="/assets/view/${fileUrl}" alt="${file.title || file.filename}" />`;
     }
     // PDF preview
     else if (mimeType === 'application/pdf') {
-      previewContent.innerHTML = `<iframe src="${webPath}" type="application/pdf"></iframe>`;
+      previewContent.innerHTML = `<iframe src="/assets/view/${fileUrl}" type="application/pdf"></iframe>`;
+    }
+    // URL preview
+    else if (mimeType === 'text/uri-list') {
+      previewContent.innerHTML = `<div class="url-preview"><a href="${file.filename}" target="_blank">${file.filename}</a></div>`;
     }
     // Text preview
     else if (mimeType.startsWith('text/') || mimeType === 'application/json') {
-      fetch(webPath)
+      fetch(fileUrl)
         .then(response => response.text())
         .then(text => {
           previewContent.innerHTML = `<pre>${this.escapeHtml(text)}</pre>`;
@@ -104,7 +108,7 @@ class DocumentFileManager {
     }
     // Default message
     else {
-      previewContent.innerHTML = `<div class="empty-state">Preview not available for this file type<br><a href="${webPath}" target="_blank">Download File</a></div>`;
+      previewContent.innerHTML = `<div class="empty-state">Preview not available for this file type<br><a href="${fileUrl}" target="_blank">Download File</a></div>`;
     }
   }
 
