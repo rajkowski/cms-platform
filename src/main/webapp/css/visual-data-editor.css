@@ -90,6 +90,11 @@
   margin: 5px 0;
 }
 
+#data-editor-canvas .new-collection-action i,
+#data-editor-canvas .import-dataset-action i {
+  color: #ffffff !important;
+}
+
 /* Right Panel: Properties and Options */
 #data-properties-panel {
   width: 320px;
@@ -212,7 +217,9 @@
 }
 
 .radio-label input[type="radio"] {
-  margin: 0;
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .radio-label input[type="radio"]:checked + i,
@@ -327,25 +334,129 @@
   color: #856404;
 }
 
-/* Dark Mode Adjustments */
+/* Dark Mode Status Badge Adjustments */
+[data-theme="dark"] .status-badge.active,
 body.dark-mode .status-badge.active {
   background: #155724;
   color: #d4edda;
 }
 
+[data-theme="dark"] .status-badge.inactive,
 body.dark-mode .status-badge.inactive {
   background: #721c24;
   color: #f8d7da;
 }
 
+[data-theme="dark"] .status-badge.scheduled,
 body.dark-mode .status-badge.scheduled {
   background: #0c5460;
   color: #d1ecf1;
 }
 
+[data-theme="dark"] .status-badge.syncing,
 body.dark-mode .status-badge.syncing {
   background: #856404;
   color: #fff3cd;
+}
+
+/* Properties Panel Resize Handle */
+#properties-panel-resize-handle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  cursor: col-resize;
+  background: transparent;
+  z-index: 10;
+  transition: background 0.2s;
+}
+
+#properties-panel-resize-handle:hover {
+  background: var(--editor-selected-border);
+}
+
+#properties-panel-resize-handle.resizing {
+  background: var(--editor-selected-border);
+}
+
+/* Light Mode Variables (Default) */
+:root {
+  --editor-canvas-bg: #ffffff;
+  --editor-primary: #007bff;
+  --editor-success: #28a745;
+  --editor-warning: #ffc107;
+  --editor-danger: #dc3545;
+  --editor-active-bg: #e7f3ff;
+  --border-color: #dee2e6;
+  --hover-bg: #f8f9fa;
+  --editor-border-light: #e9ecef;
+}
+
+/* Dark Mode Variables */
+[data-theme="dark"],
+body.dark-mode {
+  --editor-bg: #1a1a1a;
+  --editor-panel-bg: #2d2d2d;
+  --editor-panel-input: #2d2d2d;
+  --editor-panel-input-placeholder: #646464;
+  --editor-border: #404040;
+  --editor-text: #ffffff;
+  --editor-text-muted: #a0a0a0;
+  --editor-hover-bg: #1e1e1e;
+  --editor-selected-bg: #1e3a5f;
+  --editor-selected-border: #4a9eff;
+  --editor-shadow: rgba(0,0,0,0.3);
+  --editor-canvas-bg: #1a1a1a;
+  --editor-primary: #4a9eff;
+  --editor-success: #28a745;
+  --editor-warning: #ffc107;
+  --editor-danger: #dc3545;
+  --editor-active-bg: #1e3a5f;
+  --border-color: #404040;
+  --hover-bg: #333333;
+  --editor-border-light: #4a4a4a;
+}
+
+/* Help Text */
+.help-text {
+  display: block;
+  margin-top: 5px;
+  font-size: 0.875rem;
+  color: var(--editor-text-muted);
+  font-style: italic;
+}
+
+/* Item Card Styles */
+.item-card {
+  padding: 12px;
+  margin-bottom: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  background: var(--editor-panel-bg);
+}
+
+.item-card:hover {
+  background-color: var(--hover-bg);
+}
+
+.item-card-title {
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: var(--editor-text);
+}
+
+.item-card-summary {
+  font-size: 0.9em;
+  color: var(--editor-text-muted);
+}
+
+.item-card-meta {
+  font-size: 0.85em;
+  color: var(--editor-text-muted);
+  margin-top: 4px;
 }
 
 /* Responsive adjustments for smaller screens */
