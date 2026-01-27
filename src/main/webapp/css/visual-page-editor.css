@@ -1345,6 +1345,12 @@ input[type="range"].property-input:focus::-moz-range-thumb {
   background: var(--editor-hover-bg);
 }
 
+.apps-item.active {
+  background: var(--editor-hover-bg);
+  border: 2px solid var(--editor-border-accent, #666);
+  font-weight: 600;
+}
+
 .apps-item i {
   font-size: 1.5rem;
   margin-bottom: 0.5rem;

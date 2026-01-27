@@ -75,7 +75,7 @@
                 <i class="${font:far()} fa-file"></i>
                 <span class="apps-item-label">Documents</span>
               </a>
-              <a href="${ctx}/admin/visual-data-editor" class="apps-item confirm-exit" title="Manage Data">
+              <a href="${ctx}/admin/visual-data-editor" class="apps-item active confirm-exit" title="Manage Data">
                 <i class="${font:far()} fa-table"></i>
                 <span class="apps-item-label">Data</span>
               </a>

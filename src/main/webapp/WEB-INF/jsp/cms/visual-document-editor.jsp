@@ -75,7 +75,7 @@
                 <i class="${font:far()} fa-image"></i>
                 <span class="apps-item-label">Images</span>
               </a>
-              <a href="${ctx}/admin/visual-document-editor" class="apps-item confirm-exit" title="Manage Documents">
+              <a href="${ctx}/admin/visual-document-editor" class="apps-item active confirm-exit" title="Manage Documents">
                 <i class="${font:far()} fa-file"></i>
                 <span class="apps-item-label">Documents</span>
               </a>

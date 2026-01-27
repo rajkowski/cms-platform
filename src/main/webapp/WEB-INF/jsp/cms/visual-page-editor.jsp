@@ -77,7 +77,7 @@
           <!-- Quick Access Apps -->
           <div class="apps-menu-section">
             <div class="apps-grid">
-              <a href="${ctx}/admin/visual-page-editor" class="apps-item confirm-exit" title="Edit Pages">
+              <a href="${ctx}/admin/visual-page-editor" class="apps-item active confirm-exit" title="Edit Pages">
                 <i class="${font:far()} fa-file-lines"></i>
                 <span class="apps-item-label">Pages</span>
               </a>

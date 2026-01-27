@@ -74,7 +74,7 @@
                 <i class="${font:far()} fa-file-lines"></i>
                 <span class="apps-item-label">Pages</span>
               </a>
-              <a href="${ctx}/admin/visual-image-editor" class="apps-item confirm-exit" title="Manage Images">
+              <a href="${ctx}/admin/visual-image-editor" class="apps-item active confirm-exit" title="Manage Images">
                 <i class="${font:far()} fa-image"></i>
                 <span class="apps-item-label">Images</span>
               </a>
