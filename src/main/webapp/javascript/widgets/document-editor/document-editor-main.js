@@ -31,7 +31,7 @@ class DocumentEditor {
   }
 
   setupEventListeners() {
-    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    const darkModeToggle = document.getElementById('dark-mode-toggle-menu');
     if (darkModeToggle) {
       darkModeToggle.addEventListener('click', () => this.toggleDarkMode());
     }
@@ -98,7 +98,7 @@ class DocumentEditor {
     const savedTheme = localStorage.getItem('editor-theme');
     if (savedTheme === 'dark') {
       document.documentElement.dataset.theme = 'dark';
-      const icon = document.querySelector('#dark-mode-toggle i');
+      const icon = document.querySelector('#dark-mode-toggle-menu i');
       if (icon) {
         icon.classList.replace('fa-moon', 'fa-sun');
       }
@@ -107,7 +107,7 @@ class DocumentEditor {
 
   toggleDarkMode() {
     const html = document.documentElement;
-    const icon = document.querySelector('#dark-mode-toggle i');
+    const icon = document.querySelector('#dark-mode-toggle-menu i');
     const isDark = html.dataset.theme === 'dark';
 
     if (isDark) {

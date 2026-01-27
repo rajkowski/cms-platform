@@ -42,7 +42,7 @@
 
 #visual-page-editor-container {
   display: flex;
-flex: 1;
+  flex: 1;
   height: calc(100vh - 140px);
   min-height: 500px;
 }
@@ -1264,4 +1264,115 @@ input[type="range"].property-input:focus::-moz-range-thumb {
 
 [data-theme="dark"] #loading-indicator {
   color: #ffffff;
+}
+
+/* Apps Menu Styles */
+.apps-menu {
+  position: relative;
+  display: inline-block;
+}
+
+.apps-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--editor-panel-bg);
+  color: var(--editor-text);
+  border: 1px solid var(--editor-border);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.apps-btn:hover {
+  background: var(--editor-hover-bg);
+  color: var(--editor-text);
+}
+
+.apps-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  min-width: 320px;
+  background: var(--editor-panel-bg);
+  border: 1px solid var(--editor-border);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px var(--editor-shadow);
+  padding: 0;
+  z-index: 1001;
+}
+
+.apps-menu:hover .apps-dropdown {
+  display: block;
+}
+
+.apps-menu-section {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--editor-border);
+}
+
+.apps-menu-section:last-child {
+  border-bottom: none;
+}
+
+/* Apps Grid Layout */
+.apps-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  padding: 0.5rem;
+}
+
+.apps-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 0.5rem;
+  color: var(--editor-text);
+  text-decoration: none;
+  border-radius: 4px;
+  transition: background 0.2s;
+  text-align: center;
+}
+
+.apps-item:hover {
+  background: var(--editor-hover-bg);
+}
+
+.apps-item i {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.apps-item-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+/* Apps Menu Items (List Style) */
+.apps-menu-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  color: var(--editor-text);
+  text-decoration: none;
+  transition: background 0.2s;
+  gap: 0.75rem;
+}
+
+.apps-menu-item:hover {
+  background: var(--editor-hover-bg);
+}
+
+.apps-menu-item i {
+  width: 16px;
+  text-align: center;
+  font-size: 14px;
 }

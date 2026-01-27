@@ -65,7 +65,7 @@ class VisualDataEditor {
   }
 
   setupDarkMode() {
-    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    const darkModeToggle = document.getElementById('dark-mode-toggle-menu');
     if (!darkModeToggle) return;
 
     // Load saved preference

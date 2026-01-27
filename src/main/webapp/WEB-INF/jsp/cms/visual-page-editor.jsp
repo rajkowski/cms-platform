@@ -45,35 +45,13 @@
   </c:if>
   <%@include file="../page_messages.jspf" %>
 
-  <!-- Title Bar -->
-  <div id="editor-titlebar">
+  <!-- Toolbar -->
+  <div id="editor-toolbar">
     <div class="titlebar-left">
       <img src="${ctx}/images/favicon.png" alt="Logo" />
       <h2>Webpage Editor</h2>
     </div>
-    <div class="titlebar-right">
-      <div class="button-group round">
-        <a href="${ctx}/admin/visual-page-editor" class="button tiny confirm-exit active">Pages</a>
-        <a href="${ctx}/admin/visual-image-editor" class="button tiny confirm-exit">Images</a>
-        <a href="${ctx}/admin/visual-document-editor" class="button tiny confirm-exit">Documents</a>
-        <a href="${ctx}/admin/visual-data-editor" class="button tiny confirm-exit">Data</a>
-      </div>
-      <c:choose>
-        <c:when test="${!empty returnPage}">
-          <a href="${returnPage}" class="button radius confirm-exit">Exit</a>
-        </c:when>
-        <c:when test="${!empty webPage.link}">
-          <a href="${ctx}${webPage.link}" class="button radius confirm-exit">Exit</a>
-        </c:when>
-        <c:otherwise>
-          <a href="${ctx}/" class="button radius confirm-exit">Exit</a>
-        </c:otherwise>
-      </c:choose>
-    </div>
-  </div>
 
-  <!-- Toolbar -->
-  <div id="editor-toolbar">
     <!-- Left Section -->
     <div class="toolbar-section left">
       <button id="add-page-btn" class="button tiny success no-gap radius"><i class="${font:far()} fa-file-circle-plus"></i> Add a Page</button>
@@ -88,19 +66,82 @@
       <button id="save-btn" class="button tiny no-gap radius"><i class="${font:far()} fa-save"></i> Publish</button>
     </div>
 
+    <div class="titlebar-right">
+      <!-- Apps Dropdown -->
+      <div class="apps-menu">
+        <button id="apps-btn" class="apps-btn" title="Apps">
+          <i class="${font:far()} fa-th"></i>
+          <i class="fas fa-chevron-down" style="font-size: 0.75rem; margin-left: 0.35rem;"></i>
+        </button>
+        <div class="apps-dropdown">
+          <!-- Quick Access Apps -->
+          <div class="apps-menu-section">
+            <div class="apps-grid">
+              <a href="${ctx}/admin/visual-page-editor" class="apps-item confirm-exit" title="Edit Pages">
+                <i class="${font:far()} fa-file-lines"></i>
+                <span class="apps-item-label">Pages</span>
+              </a>
+              <a href="${ctx}/admin/visual-image-editor" class="apps-item confirm-exit" title="Manage Images">
+                <i class="${font:far()} fa-image"></i>
+                <span class="apps-item-label">Images</span>
+              </a>
+              <a href="${ctx}/admin/visual-document-editor" class="apps-item confirm-exit" title="Manage Documents">
+                <i class="${font:far()} fa-file"></i>
+                <span class="apps-item-label">Documents</span>
+              </a>
+              <a href="${ctx}/admin/visual-data-editor" class="apps-item confirm-exit" title="Manage Data">
+                <i class="${font:far()} fa-table"></i>
+                <span class="apps-item-label">Data</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Actions Section -->
+          <div class="apps-menu-section">
+            <a href="#" id="dark-mode-toggle-menu" class="apps-menu-item">
+              <i class="${font:far()} fa-moon"></i>
+              <span>Dark Mode</span>
+            </a>
+            <c:if test="${userSession.hasRole('admin')}">
+              <a href="#" id="static-site-generator-btn" class="apps-menu-item">
+                <i class="${font:far()} fa-globe"></i>
+                <span>Static Site Generator...</span>
+              </a>
+            </c:if>
+          </div>
+
+          <!-- Exit Section -->
+          <div class="apps-menu-section">
+            <c:choose>
+              <c:when test="${!empty returnPage}">
+                <a href="${returnPage}" class="apps-menu-item confirm-exit">
+                  <i class="${font:far()} fa-arrow-right-from-bracket"></i>
+                  <span>Exit back to site</span>
+                </a>
+              </c:when>
+              <c:when test="${!empty webPage.link}">
+                <a href="${ctx}${webPage.link}" class="apps-menu-item confirm-exit">
+                  <i class="${font:far()} fa-arrow-right-from-bracket"></i>
+                  <span>Exit back to site</span>
+                </a>
+              </c:when>
+              <c:otherwise>
+                <a href="${ctx}/" class="apps-menu-item confirm-exit">
+                  <i class="${font:far()} fa-arrow-right-from-bracket"></i>
+                  <span>Exit back to site</span>
+                </a>
+              </c:otherwise>
+            </c:choose>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Right Section -->
     <div class="toolbar-section right">
       <div id="loading-indicator" style="display: none;">
         <i class="${font:far()} fa-spinner fa-spin"></i>
       </div>
-      <button id="dark-mode-toggle" class="button tiny secondary no-gap radius" title="Toggle Dark Mode"><i class="${font:far()} fa-moon"></i></button>
-      <%-- Feature isn't ready for non-admins --%>
-      <c:if test="${userSession.hasRole('admin')}">
-        <div class="dropdown-pane" id="more-options-menu" data-dropdown data-auto-focus="true">
-          <a href="#" id="static-site-generator-btn">Static Site Generator...</a>
-        </div>
-        <button id="more-options-btn" class="button tiny secondary no-gap radius" title="More Options" data-toggle="more-options-menu"><i class="${font:far()} fa-ellipsis-v"></i></button>
-      </c:if>
     </div>
   </div>
   
@@ -1379,25 +1420,34 @@
     window.addEventListener('resize', calculateContainerHeight);
     
     // Dark Mode Toggle
-    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    const darkModeToggleMenu = document.getElementById('dark-mode-toggle-menu');
     const editorWrapper = document.getElementById('visual-page-editor-wrapper');
     
     // Check for saved theme preference
     const savedTheme = localStorage.getItem('editor-theme') || 'light';
     if (savedTheme === 'dark') {
       editorWrapper.setAttribute('data-theme', 'dark');
-      darkModeToggle.innerHTML = '<i class="${font:far()} fa-sun"></i>';
+      const iconElement = darkModeToggleMenu.querySelector('i');
+      if (iconElement) {
+        iconElement.className = '${font:far()} fa-sun';
+      }
     }
     
-    darkModeToggle.addEventListener('click', function() {
+    darkModeToggleMenu.addEventListener('click', function(e) {
+      e.preventDefault();
       const currentTheme = editorWrapper.getAttribute('data-theme');
+      const iconElement = darkModeToggleMenu.querySelector('i');
       if (currentTheme === 'dark') {
         editorWrapper.removeAttribute('data-theme');
-        darkModeToggle.innerHTML = '<i class="${font:far()} fa-moon"></i>';
+        if (iconElement) {
+          iconElement.className = '${font:far()} fa-moon';
+        }
         localStorage.setItem('editor-theme', 'light');
       } else {
         editorWrapper.setAttribute('data-theme', 'dark');
-        darkModeToggle.innerHTML = '<i class="${font:far()} fa-sun"></i>';
+        if (iconElement) {
+          iconElement.className = '${font:far()} fa-sun';
+        }
         localStorage.setItem('editor-theme', 'dark');
       }
     });

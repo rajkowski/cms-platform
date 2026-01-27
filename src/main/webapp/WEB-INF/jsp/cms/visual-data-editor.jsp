@@ -33,32 +33,13 @@
   </c:if>
   <%@include file="../page_messages.jspf" %>
 
-  <!-- Title Bar -->
-  <div id="editor-titlebar">
+  <!-- Toolbar -->
+  <div id="editor-toolbar">
     <div class="titlebar-left">
       <img src="${ctx}/images/favicon.png" alt="Logo" />
       <h2>Data Editor</h2>
     </div>
-    <div class="titlebar-right">
-      <div class="button-group round">
-        <a href="${ctx}/admin/visual-page-editor" class="button tiny confirm-exit">Pages</a>
-        <a href="${ctx}/admin/visual-image-editor" class="button tiny confirm-exit">Images</a>
-        <a href="${ctx}/admin/visual-document-editor" class="button tiny confirm-exit">Documents</a>
-        <a href="${ctx}/admin/visual-data-editor" class="button tiny confirm-exit active">Data</a>
-      </div>
-      <c:choose>
-        <c:when test="${!empty returnPage}">
-          <a href="${returnPage}" class="button radius confirm-exit">Exit</a>
-        </c:when>
-        <c:otherwise>
-          <a href="${ctx}/" class="button radius confirm-exit">Exit</a>
-        </c:otherwise>
-      </c:choose>
-    </div>
-  </div>
 
-  <!-- Toolbar -->
-  <div id="editor-toolbar">
     <!-- Left Section -->
     <div class="toolbar-section left">
       <button id="new-collection-btn" class="button tiny success no-gap radius"><i class="${font:far()} fa-folder-plus"></i> New Collection</button>
@@ -71,12 +52,70 @@
       <button id="save-btn" class="button tiny no-gap radius" disabled><i class="${font:far()} fa-save"></i> Save</button>
     </div>
 
+    <div class="titlebar-right">
+      <!-- Apps Dropdown -->
+      <div class="apps-menu">
+        <button id="apps-btn" class="apps-btn" title="Apps">
+          <i class="${font:far()} fa-th"></i>
+          <i class="fas fa-chevron-down" style="font-size: 0.75rem; margin-left: 0.35rem;"></i>
+        </button>
+        <div class="apps-dropdown">
+          <!-- Quick Access Apps -->
+          <div class="apps-menu-section">
+            <div class="apps-grid">
+              <a href="${ctx}/admin/visual-page-editor" class="apps-item confirm-exit" title="Edit Pages">
+                <i class="${font:far()} fa-file-lines"></i>
+                <span class="apps-item-label">Pages</span>
+              </a>
+              <a href="${ctx}/admin/visual-image-editor" class="apps-item confirm-exit" title="Manage Images">
+                <i class="${font:far()} fa-image"></i>
+                <span class="apps-item-label">Images</span>
+              </a>
+              <a href="${ctx}/admin/visual-document-editor" class="apps-item confirm-exit" title="Manage Documents">
+                <i class="${font:far()} fa-file"></i>
+                <span class="apps-item-label">Documents</span>
+              </a>
+              <a href="${ctx}/admin/visual-data-editor" class="apps-item confirm-exit" title="Manage Data">
+                <i class="${font:far()} fa-table"></i>
+                <span class="apps-item-label">Data</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Actions Section -->
+          <div class="apps-menu-section">
+            <a href="#" id="dark-mode-toggle-menu" class="apps-menu-item">
+              <i class="${font:far()} fa-moon"></i>
+              <span>Dark Mode</span>
+            </a>
+          </div>
+
+          <!-- Exit Section -->
+          <div class="apps-menu-section">
+            <c:choose>
+              <c:when test="${!empty returnPage}">
+                <a href="${returnPage}" class="apps-menu-item confirm-exit">
+                  <i class="${font:far()} fa-arrow-right-from-bracket"></i>
+                  <span>Exit back to site</span>
+                </a>
+              </c:when>
+              <c:otherwise>
+                <a href="${ctx}/" class="apps-menu-item confirm-exit">
+                  <i class="${font:far()} fa-arrow-right-from-bracket"></i>
+                  <span>Exit back to site</span>
+                </a>
+              </c:otherwise>
+            </c:choose>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Right Section -->
     <div class="toolbar-section right">
       <div id="loading-indicator" style="display: none;">
         <i class="${font:far()} fa-spinner fa-spin"></i>
       </div>
-      <button id="dark-mode-toggle" class="button tiny secondary no-gap radius" title="Toggle Dark Mode"><i class="${font:far()} fa-moon"></i></button>
     </div>
   </div>
   

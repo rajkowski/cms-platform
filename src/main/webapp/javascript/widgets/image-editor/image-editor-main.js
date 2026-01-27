@@ -41,7 +41,7 @@ class ImageEditor {
    */
   setupEventListeners() {
     // Dark mode toggle
-    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    const darkModeToggle = document.getElementById('dark-mode-toggle-menu');
     if (darkModeToggle) {
       darkModeToggle.addEventListener('click', () => this.toggleDarkMode());
     }
