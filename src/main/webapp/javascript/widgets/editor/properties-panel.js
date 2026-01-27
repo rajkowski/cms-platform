@@ -801,13 +801,13 @@ class PropertiesPanel {
       const summary = document.getElementById(`xml-summary-${propName}`);
       if (summary) {
         if (updatedItems.length === 0) {
-          summary.innerHTML = `<div style="color:var(--editor-text-muted);font-style:italic;flex:1;">No ${itemName} entries yet</div><button type="button" id="edit-${propName}" class="button small radius no-gap" style="margin-left:10px;">Edit</button>`;
+          summary.innerHTML = `<div style="color:var(--editor-text-muted);font-style:italic;flex:1;">No ${itemName} entries yet</div><button type="button" class="button small radius no-gap" style="margin-left:10px;">Edit</button>`;
         } else {
-          summary.innerHTML = `<div style="color:var(--editor-text);flex:1;"><strong>${updatedItems.length}</strong> ${itemName}${updatedItems.length === 1 ? '' : 's'} configured</div><button type="button" id="edit-${propName}" class="button small radius no-gap" style="margin-left:10px;">Edit</button>`;
+          summary.innerHTML = `<div style="color:var(--editor-text);flex:1;"><strong>${updatedItems.length}</strong> ${itemName}${updatedItems.length === 1 ? '' : 's'} configured</div><button type="button" class="button small radius no-gap" style="margin-left:10px;">Edit</button>`;
         }
         
         // Re-attach edit button listener
-        const editBtn = summary.querySelector(`#edit-${propName}`);
+        const editBtn = summary.querySelector('button');
         if (editBtn) {
           editBtn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -1690,7 +1690,7 @@ class PropertiesPanel {
         html += `<div class="property-label">${definition.label}${definition.required ? ' *' : ''}</div>`;
         html += `<div style="display: flex; gap: 8px; align-items: center;">`;
         html += `<input type="text" class="property-input" id="prop-${name}" value="${this.escapeHtml(displayValue)}" placeholder="fa-icon" style="flex: 1;" />`;
-        html += `<button type="button" class="button tiny radius" id="pick-icon-${name}" style="white-space: nowrap;">
+        html += `<button type="button" class="button tiny radius no-gap" id="pick-icon-${name}" style="white-space: nowrap;">
           <i class="fa fa-icons"></i> Pick
         </button>`;
         if (displayValue) {
