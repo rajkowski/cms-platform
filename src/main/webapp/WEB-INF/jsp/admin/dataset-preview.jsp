@@ -34,7 +34,6 @@
 <style>
   #dataset-preview {
     font-size: 12px;
-    max-width: calc(100vw - 280px);
   }
   .jexcel_content {
     padding-right: 5px;
