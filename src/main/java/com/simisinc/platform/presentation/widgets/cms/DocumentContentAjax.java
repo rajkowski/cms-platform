@@ -70,7 +70,8 @@ public class DocumentContentAjax extends GenericWidget {
     sb.append("\"mimeType\":\"").append(JsonCommand.toJson(StringUtils.defaultString(fileItem.getMimeType()))).append("\",");
     sb.append("\"fileType\":\"").append(JsonCommand.toJson(StringUtils.defaultString(fileItem.getFileType()))).append("\",");
     sb.append("\"fileLength\":").append(fileItem.getFileLength()).append(",");
-    sb.append("\"webPath\":\"").append(JsonCommand.toJson(StringUtils.defaultString(fileItem.getWebPath()))).append("\",");
+    sb.append("\"url\":\"").append(JsonCommand.toJson(StringUtils.defaultString(fileItem.getUrl()))).append("\",");
+    sb.append("\"versionCount\":").append(fileItem.getVersionCount()).append(",");
     sb.append("\"downloadCount\":").append(fileItem.getDownloadCount()).append(",");
     sb.append("\"summary\":\"").append(JsonCommand.toJson(StringUtils.defaultString(fileItem.getSummary()))).append("\",");
     sb.append("\"created\":\"").append(fileItem.getCreated() != null ? JsonCommand.toJson(fileItem.getCreated().toString()) : "").append("\",");

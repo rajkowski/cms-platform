@@ -28,6 +28,7 @@
   <link rel="stylesheet" type="text/css" href="${ctx}/css/visual-image-editor.css" />
 </g:compress>
 <g:compress>
+  <script src="${ctx}/javascript/apps-menu-controller.js"></script>
   <script src="${ctx}/javascript/widgets/image-editor/image-library-manager.js"></script>
   <script src="${ctx}/javascript/widgets/image-editor/image-viewer-manager.js"></script>
   <script src="${ctx}/javascript/widgets/image-editor/image-properties-manager.js"></script>
@@ -57,6 +58,13 @@
     <div class="toolbar-section center">
       <button id="reload-btn" class="button tiny secondary no-gap radius" title="Reload"><i class="${font:far()} fa-sync"></i> Reload</button>
       <button id="save-btn" class="button tiny no-gap radius" disabled title="Save Changes"><i class="${font:far()} fa-save"></i> Save</button>
+    </div>
+
+    <!-- Right Section -->
+    <div class="toolbar-section right">
+      <div id="loading-indicator" style="display: none;">
+        <i class="${font:far()} fa-spinner fa-spin"></i>
+      </div>
     </div>
 
     <div class="titlebar-right">
@@ -115,13 +123,6 @@
             </c:choose>
           </div>
         </div>
-      </div>
-    </div>
-
-    <!-- Right Section -->
-    <div class="toolbar-section right">
-      <div id="loading-indicator" style="display: none;">
-        <i class="${font:far()} fa-spinner fa-spin"></i>
       </div>
     </div>
   </div>
@@ -321,6 +322,8 @@
   // Initialize the editor when DOM is ready
   document.addEventListener('DOMContentLoaded', function() {
     console.log('Initializing Visual Image Editor...');
+
+    setupAppsMenu();
     
     // Initialize dark mode from localStorage
     const savedTheme = localStorage.getItem('editor-theme');

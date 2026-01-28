@@ -66,6 +66,13 @@
       <button id="save-btn" class="button tiny no-gap radius"><i class="${font:far()} fa-save"></i> Publish</button>
     </div>
 
+    <!-- Right Section -->
+    <div class="toolbar-section right">
+      <div id="loading-indicator" style="display: none;">
+        <i class="${font:far()} fa-spinner fa-spin"></i>
+      </div>
+    </div>
+
     <div class="titlebar-right">
       <!-- Apps Dropdown -->
       <div class="apps-menu">
@@ -134,13 +141,6 @@
             </c:choose>
           </div>
         </div>
-      </div>
-    </div>
-
-    <!-- Right Section -->
-    <div class="toolbar-section right">
-      <div id="loading-indicator" style="display: none;">
-        <i class="${font:far()} fa-spinner fa-spin"></i>
       </div>
     </div>
   </div>
@@ -624,6 +624,7 @@
 <web:script package="ace" file="theme-chrome.js" charset="utf-8" />
 <web:script package="ace" file="theme-monokai.js" charset="utf-8" />
 <g:compress>
+  <script src="${ctx}/javascript/apps-menu-controller.js"></script>
   <script src="${ctx}/javascript/icon-picker-modal.js"></script>
   <script src="${ctx}/javascript/page-link-picker-modal.js"></script>
   <script src="${ctx}/javascript/widgets/editor/widget-registry.js"></script>
@@ -648,6 +649,8 @@
   let propertiesPanel;
   
   document.addEventListener('DOMContentLoaded', function() {
+    setupAppsMenu();
+    
     const editorConfig = {
       token: '<c:out value="${userSession.formToken}" />',
       webPageLink: '<c:out value="${webPage.link}" />',

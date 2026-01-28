@@ -154,23 +154,23 @@ public class ValidateFileCommand {
     // image, video, pdf, zip, xls/xlsx, doc/docx, other
     if (mimeType.contains("/")) {
       if (mimeType.endsWith("/pdf")) {
-        return "PDF";
+        return "pdf";
       } else if (mimeType.endsWith("/zip")) {
-        return "Archive";
+        return "archive";
       } else if (mimeType.endsWith("/cpp")) {
-        return "Code";
+        return "code";
       } else if (mimeType.endsWith("/java")) {
-        return "Code";
+        return "code";
       } else if (mimeType.endsWith("/py")) {
-        return "Code";
+        return "code";
       } else if (mimeType.contains("wordprocessing") || mimeType.contains("msword")) {
-        return "Document";
+        return "document";
       } else if (mimeType.contains("spreadsheet") || mimeType.contains("ms-excel")) {
-        return "Spreadsheet";
+        return "spreadsheet";
       } else if (mimeType.contains("visio")) {
-        return "Diagram";
+        return "diagram";
       } else if (mimeType.contains("presentation") || mimeType.contains("powerpoint")) {
-        return "Presentation";
+        return "presentation";
       } else {
         return StringUtils.capitalize(mimeType.substring(0, mimeType.indexOf("/")));
       }

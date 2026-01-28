@@ -26,6 +26,7 @@
   <link rel="stylesheet" type="text/css" href="${ctx}/css/visual-document-editor.css" />
 </g:compress>
 <g:compress>
+  <script src="${ctx}/javascript/apps-menu-controller.js"></script>
   <script src="${ctx}/javascript/widgets/document-editor/document-library-manager.js"></script>
   <script src="${ctx}/javascript/widgets/document-editor/document-file-manager.js"></script>
   <script src="${ctx}/javascript/widgets/document-editor/folder-details-manager.js"></script>
@@ -56,6 +57,14 @@
       <span id="unsaved-indicator"><i class="${font:far()} fa-exclamation-triangle"></i> Unsaved changes</span>
     </div>
 
+    <!-- Right Section -->
+    <div class="toolbar-section right">
+      <div id="loading-indicator" style="display: none;">
+        <i class="${font:far()} fa-spinner fa-spin"></i>
+      </div>
+    </div>
+
+    <!-- App Grid -->
     <div class="titlebar-right">
       <!-- Apps Dropdown -->
       <div class="apps-menu">
@@ -114,13 +123,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Right Section -->
-    <div class="toolbar-section right">
-      <div id="loading-indicator" style="display: none;">
-        <i class="${font:far()} fa-spinner fa-spin"></i>
-      </div>
-    </div>
   </div>
 
   <div id="visual-document-editor-container">
@@ -153,7 +155,6 @@
           <button id="new-url-btn" class="button tiny primary no-gap radius" disabled><i class="${font:far()} fa-link"></i> Add URL</button>
           <button id="reload-files-btn" class="button tiny secondary no-gap radius" disabled><i class="${font:far()} fa-sync"></i> Reload</button>
           <input type="text" id="file-search" class="property-input" placeholder="Search files..." />
-          <button id="view-toggle-btn" class="button tiny secondary no-gap radius" title="Toggle preview"><i class="fas fa-eye"></i> Preview</button>
         </div>
       </div>
       <div id="file-list-container">
@@ -172,14 +173,6 @@
             <tr><td colspan="6" class="empty-state">Select a folder to view files</td></tr>
           </tbody>
         </table>
-      </div>
-      <div id="file-preview-container" style="display: none;">
-        <!-- <div class="file-preview-header">
-          <button id="close-preview-btn" class="button tiny secondary no-gap radius"><i class="fas fa-times"></i> Close Preview</button>
-        </div> -->
-        <div id="file-preview-content">
-          <div class="empty-state">Select a file to preview</div>
-        </div>
       </div>
     </div>
 
@@ -433,6 +426,8 @@
   };
 
   document.addEventListener('DOMContentLoaded', function() {
+    setupAppsMenu();
+
     const savedTheme = localStorage.getItem('editor-theme');
     if (savedTheme === 'dark') {
       document.documentElement.dataset.theme = 'dark';

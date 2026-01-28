@@ -433,7 +433,7 @@
   z-index: 1001;
 }
 
-.user-menu:hover .user-menu-dropdown {
+.user-menu.open .user-menu-dropdown {
   display: block;
 }
 

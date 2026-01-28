@@ -26,96 +26,11 @@ class DocumentFileManager {
       this.searchInput.addEventListener('input', () => this.reload());
     }
 
-    // View toggle button
-    const viewToggleBtn = document.getElementById('view-toggle-btn');
-    if (viewToggleBtn) {
-      viewToggleBtn.addEventListener('click', () => this.toggleView());
-    }
-
-    // Close preview button
-    const closePreviewBtn = document.getElementById('close-preview-btn');
-    if (closePreviewBtn) {
-      closePreviewBtn.addEventListener('click', () => this.closePreview());
-    }
-
     // File upload
     const uploadInput = document.getElementById('file-upload-input');
     if (uploadInput) {
       uploadInput.addEventListener('change', (e) => this.handleFileUpload(e));
     }
-  }
-
-  toggleView() {
-    if (this.viewMode === 'table') {
-      this.showPreview();
-    } else {
-      this.closePreview();
-    }
-  }
-
-  showPreview() {
-    if (!this.currentFile) {
-      return;
-    }
-    this.viewMode = 'preview';
-    document.getElementById('file-list-container').style.display = 'none';
-    document.getElementById('file-preview-container').style.display = 'block';
-    this.renderPreview(this.currentFile);
-  }
-
-  closePreview() {
-    this.viewMode = 'table';
-    document.getElementById('file-list-container').style.display = 'block';
-    document.getElementById('file-preview-container').style.display = 'none';
-  }
-
-  renderPreview(file) {
-    const previewContent = document.getElementById('file-preview-content');
-    if (!previewContent) {
-      return;
-    }
-
-    const mimeType = file.mimeType || '';
-    const fileUrl = file.url || '';
-
-    if (!fileUrl) {
-      previewContent.innerHTML = '<div class="empty-state">No preview available</div>';
-      return;
-    }
-
-    // Image preview
-    if (mimeType.startsWith('image/')) {
-      previewContent.innerHTML = `<img src="/assets/view/${fileUrl}" alt="${file.title || file.filename}" />`;
-    }
-    // PDF preview
-    else if (mimeType === 'application/pdf') {
-      previewContent.innerHTML = `<iframe src="/assets/view/${fileUrl}" type="application/pdf"></iframe>`;
-    }
-    // URL preview
-    else if (mimeType === 'text/uri-list') {
-      previewContent.innerHTML = `<div class="url-preview"><a href="${file.filename}" target="_blank">${file.filename}</a></div>`;
-    }
-    // Text preview
-    else if (mimeType.startsWith('text/') || mimeType === 'application/json') {
-      fetch(fileUrl)
-        .then(response => response.text())
-        .then(text => {
-          previewContent.innerHTML = `<pre>${this.escapeHtml(text)}</pre>`;
-        })
-        .catch(() => {
-          previewContent.innerHTML = '<div class="empty-state">Unable to load text preview</div>';
-        });
-    }
-    // Default message
-    else {
-      previewContent.innerHTML = `<div class="empty-state">Preview not available for this file type<br><a href="${fileUrl}" target="_blank">Download File</a></div>`;
-    }
-  }
-
-  escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
   }
 
   triggerFileUpload() {
@@ -201,7 +116,44 @@ class DocumentFileManager {
       this.parentFolderId = -1;
       this.subFolderId = -1;
     }
+    
+    // Update the document browser title with the folder icon and name
+    this.updateBrowserTitle(folderId, parentFolderId);
+    
     this.reload();
+  }
+
+  updateBrowserTitle(folderId, parentFolderId) {
+    const titleElement = document.getElementById('document-browser-title');
+    if (!titleElement) {
+      return;
+    }
+
+    // Get the folder object from the library manager
+    const folder = this.editor.library.getCurrentFolder(folderId);
+    if (!folder) {
+      titleElement.innerHTML = 'Files';
+      return;
+    }
+
+    // Determine icon and title based on folder type
+    if (parentFolderId && parentFolderId > -1) {
+      // This is a subfolder - show both parent repo and subfolder
+      const parentFolder = this.editor.library.folders.find(f => f.id === parentFolderId);
+      if (parentFolder) {
+        const repoIcon = '<i class="fas fa-book"></i>';
+        const subfolderIcon = '<i class="fa-regular fa-folder"></i>';
+        titleElement.innerHTML = `${repoIcon} ${parentFolder.name || 'Untitled'} <i class="fas fa-chevron-right" style="font-size: 0.8em; margin: 0 0.25em;"></i> ${subfolderIcon} ${folder.name || 'Untitled'}`;
+      } else {
+        // Fallback if parent not found
+        const subfolderIcon = '<i class="fa-regular fa-folder"></i>';
+        titleElement.innerHTML = `${subfolderIcon} ${folder.name || 'Untitled'}`;
+      }
+    } else {
+      // This is a root repository folder
+      const repoIcon = '<i class="fas fa-book"></i>';
+      titleElement.innerHTML = `${repoIcon} ${folder.name || 'Untitled'}`;
+    }
   }
 
   async reload() {
@@ -297,9 +249,12 @@ class DocumentFileManager {
         row.classList.add('subfolder-row');
 
         const startDateStr = subfolder.startDate ? this.formatDate(subfolder.startDate) : '—';
+        const fileCountText = subfolder.fileCount || 0;
+        const fileCountLabel = fileCountText === 1 ? 'file' : 'files';
+        const titleWithCount = `${subfolder.name || 'Untitled'} (${fileCountText} ${fileCountLabel})`;
 
         row.innerHTML = `
-          <td><span class="file-icon"><i class="fa-regular fa-folder"></i></span> <strong>${subfolder.name || 'Untitled'}</strong></td>
+          <td><span class="file-icon"><i class="fa-regular fa-folder"></i></span> <strong>${titleWithCount}</strong></td>
           <td>—</td>
           <td>Folder</td>
           <td>—</td>
@@ -390,6 +345,49 @@ class DocumentFileManager {
   async saveVersion() {
     // Placeholder for upload new version wiring
     alert('Save version is not wired yet.');
+  }
+
+  downloadFile() {
+    if (!this.currentFile) {
+      alert('No file selected');
+      return;
+    }
+    if (!this.currentFile.url) {
+      alert('File URL not available');
+      return;
+    }
+    // Open download in new window/tab
+    window.open(`/assets/file/${this.currentFile.url}`, '_blank');
+  }
+
+  addVersion() {
+    if (!this.currentFile) {
+      alert('No file selected');
+      return;
+    }
+    // TODO: Wire up add version functionality
+    alert(`Add new version for file: ${this.currentFile.title || this.currentFile.filename}`);
+  }
+
+  moveFile() {
+    if (!this.currentFile) {
+      alert('No file selected');
+      return;
+    }
+    // TODO: Wire up move file functionality
+    alert(`Move file: ${this.currentFile.title || this.currentFile.filename}`);
+  }
+
+  async deleteFile() {
+    if (!this.currentFile) {
+      alert('No file selected');
+      return;
+    }
+    if (!confirm(`Are you sure you want to delete "${this.currentFile.title || this.currentFile.filename}"?`)) {
+      return;
+    }
+    // TODO: Wire up delete file functionality
+    alert(`Delete file: ${this.currentFile.title || this.currentFile.filename}`);
   }
 
   formatSize(bytes) {

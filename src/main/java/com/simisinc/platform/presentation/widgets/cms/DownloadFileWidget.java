@@ -85,7 +85,7 @@ public class DownloadFileWidget extends GenericWidget {
     }
 
     // Determine if this file is a remote URL
-    if (record.getFileType() != null && record.getFileType().equals("URL")) {
+    if (record.getFileType() != null && record.getFileType().equals("url")) {
       String url = record.getFilename();
       if (url.startsWith("http://") || url.startsWith("https://")) {
         // Update the download counter

@@ -1307,7 +1307,7 @@ input[type="range"].property-input:focus::-moz-range-thumb {
   z-index: 1001;
 }
 
-.apps-menu:hover .apps-dropdown {
+.apps-menu.open .apps-dropdown {
   display: block;
 }
 

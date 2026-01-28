@@ -514,7 +514,7 @@
 }
 
 #file-preview-content {
-  background-color: white;
+  background-color: var(--editor-bg);
   border: 1px solid var(--editor-border);
   border-radius: 4px;
   padding: 1rem;

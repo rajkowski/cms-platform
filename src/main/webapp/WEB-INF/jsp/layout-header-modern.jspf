@@ -270,7 +270,7 @@
                       
                       <a href="/admin/e-commerce/analytics" class="admin-app-item" title="Products and orders">
                         <i class="fas fa-shopping-bag"></i>
-                        <span class="admin-app-item-label">E-Commerce</span>
+                        <span class="admin-app-item-label">Commerce</span>
                       </a>
                       
                       <a href="/admin/theme-properties#theme" class="admin-app-item" title="Customize appearance">
@@ -309,6 +309,24 @@
                 <!-- User Actions Section -->
                 <div class="user-menu-section">
 
+                  <c:if test="${userSession.hasRole('admin')}">
+                    <div class="user-menu-section-title">Page Tools</div>
+                    <div class="admin-apps-grid">
+                      <a href="${ctx}/admin/web-page?webPage=${pageRenderInfo.pagePath}" class="admin-app-item" title="View page information">
+                        <i class="fas fa-info-circle"></i>
+                        <span class="admin-app-item-label">Page Info</span>
+                      </a>
+                      <a href="${ctx}/admin/web-page-designer?webPage=${masterWebPage.link}" class="admin-app-item" title="Edit page CSS styles">
+                        <i class="fas fa-paint-brush"></i>
+                        <span class="admin-app-item-label">Page CSS</span>
+                      </a>
+                      <a href="${ctx}/admin/web-page-designer?webPage=${masterWebPage.link}" class="admin-app-item" title="Edit page XML structure">
+                        <i class="fas fa-code"></i>
+                        <span class="admin-app-item-label">Page XML</span>
+                      </a>
+                    </div>
+                  </c:if>
+
                   <a href="javascript:void(0);" onclick="toggleDarkMode()" class="user-menu-item" title="Toggle Light/Dark Mode">
                     <i class="fas fa-moon" id="themeIconMenu"></i>
                     <div class="user-menu-item-content">
@@ -322,17 +340,6 @@
                       <span class="user-menu-item-label">My Account</span>
                     </div>
                   </a>
-                  
-                  <%--
-                  <c:if test="${userSession.hasRole('admin')}">
-                    <a href="/admin" class="user-menu-item">
-                      <i class="fas fa-sliders-h"></i>
-                      <div class="user-menu-item-content">
-                        <span class="user-menu-item-label">Settings</span>
-                      </div>
-                    </a>
-                  </c:if>
-                  --%>
                   
                   <a href="/logout" class="user-menu-item">
                     <i class="fas fa-sign-out-alt"></i>
@@ -395,47 +402,93 @@
     }
   });
 
+  function applyTheme(theme) {
+    const header = document.querySelector('.modern-header');
+    if (!header) {
+      return;
+    }
+    header.setAttribute('data-theme', theme);
+    document.documentElement.setAttribute('data-theme', theme);
+
+    const icon = document.getElementById('themeIcon');
+    const menuIcon = document.getElementById('themeIconMenu');
+    [icon, menuIcon].forEach(function(el) {
+      if (!el) {
+        return;
+      }
+      if (theme === 'dark') {
+        el.classList.remove('fa-moon');
+        el.classList.add('fa-sun');
+      } else {
+        el.classList.remove('fa-sun');
+        el.classList.add('fa-moon');
+      }
+    });
+  }
+
   // Dark Mode Toggle
   function toggleDarkMode() {
     const header = document.querySelector('.modern-header');
-    const currentTheme = header.getAttribute('data-theme');
+    const currentTheme = header ? header.getAttribute('data-theme') : 'light';
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    
-    header.setAttribute('data-theme', newTheme);
-    document.documentElement.setAttribute('data-theme', newTheme);
-    
-    // Update icon
-    const icon = document.getElementById('themeIcon');
-    if (newTheme === 'dark') {
-      icon.classList.remove('fa-moon');
-      icon.classList.add('fa-sun');
-    } else {
-      icon.classList.remove('fa-sun');
-      icon.classList.add('fa-moon');
-    }
-    
-    // Save preference
+    applyTheme(newTheme);
     localStorage.setItem('theme', newTheme);
   }
 
-  // Load saved theme preference
-  document.addEventListener('DOMContentLoaded', function() {
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    const header = document.querySelector('.modern-header');
-    header.setAttribute('data-theme', savedTheme);
-    document.documentElement.setAttribute('data-theme', savedTheme);
-    
-    // Update icon on load
-    const icon = document.getElementById('themeIcon');
-    if (icon) {
-      if (savedTheme === 'dark') {
-        icon.classList.remove('fa-moon');
-        icon.classList.add('fa-sun');
-      } else {
-        icon.classList.remove('fa-sun');
-        icon.classList.add('fa-moon');
+  function setupUserMenu() {
+    const userMenu = document.querySelector('.user-menu');
+    if (!userMenu) {
+      return;
+    }
+
+    const trigger = userMenu.querySelector('.user-menu-trigger');
+    const dropdown = userMenu.querySelector('.user-menu-dropdown');
+    if (!trigger || !dropdown) {
+      return;
+    }
+
+    let isOpen = false;
+
+    function closeMenu() {
+      if (!isOpen) {
+        return;
+      }
+      isOpen = false;
+      userMenu.classList.remove('open');
+      document.removeEventListener('click', handleOutsideClick);
+    }
+
+    function handleOutsideClick(event) {
+      if (!userMenu.contains(event.target)) {
+        closeMenu();
       }
     }
+
+    trigger.addEventListener('click', function(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      isOpen = !isOpen;
+      userMenu.classList.toggle('open', isOpen);
+      if (isOpen) {
+        document.addEventListener('click', handleOutsideClick);
+      } else {
+        document.removeEventListener('click', handleOutsideClick);
+      }
+    });
+
+    dropdown.addEventListener('click', function(event) {
+      if (event.target.closest('a')) {
+        closeMenu();
+      }
+    });
+  }
+
+  // Load saved theme preference and initialize interactive menus
+  document.addEventListener('DOMContentLoaded', function() {
+    const header = document.querySelector('.modern-header');
+    const savedTheme = localStorage.getItem('theme') || (header ? header.getAttribute('data-theme') : 'light');
+    applyTheme(savedTheme || 'light');
+    setupUserMenu();
   });
 
   // Sticky header scroll effect

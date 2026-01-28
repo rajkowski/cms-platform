@@ -16,6 +16,30 @@ class DocumentPropertiesManager {
     if (this.contentEl) {
       this.infoSection = this.contentEl.querySelector('.property-section.info');
     }
+    this.setupResizeListener();
+  }
+
+  setupResizeListener() {
+    window.addEventListener('resize', () => this.resizePreviewContainer());
+    // Initial resize to set the correct height
+    setTimeout(() => this.resizePreviewContainer(), 100);
+  }
+
+  resizePreviewContainer() {
+    const previewContent = document.getElementById('file-preview-content');
+    if (!previewContent) {
+      return;
+    }
+
+    // Get the preview content element's position
+    const rect = previewContent.getBoundingClientRect();
+    const topOffset = rect.top;
+    
+    // Calculate available height: window height - top position - padding
+    const availableHeight = window.innerHeight - topOffset - 16; // 16px for bottom padding
+    
+    // Set the height
+    previewContent.style.height = Math.max(availableHeight, 200) + 'px';
   }
 
   async loadFile(fileId) {
@@ -87,11 +111,23 @@ class DocumentPropertiesManager {
 
     this.contentEl.innerHTML = `
       <div class="property-tabs">
-        <button class="property-tab active" data-tab="info">Properties</button>
+        <button class="property-tab active" data-tab="preview">Preview</button>
+        <button class="property-tab" data-tab="info">Properties</button>
         <button class="property-tab" data-tab="versions">Versions</button>
         <button class="property-tab" data-tab="downloads">Downloads</button>
       </div>
-      <div class="property-section active ${editModeClass}" data-tab="info">
+      <div class="property-section active" data-tab="preview">
+        <div class="preview-toolbar" style="padding: 0.5rem; display: flex; gap: 0.5rem;">
+          <button id="preview-download-btn" class="button tiny success no-gap radius" title="Download this file"><i class="fas fa-download"></i> Download</button>
+          <button id="preview-add-version-btn" class="button tiny primary no-gap radius" title="Add a new version of this file"><i class="fas fa-plus"></i> Add Version</button>
+          <button id="preview-move-file-btn" class="button tiny secondary no-gap radius" title="Move file to another folder"><i class="fas fa-folder"></i> Move...</button>
+          <button id="preview-delete-file-btn" class="button tiny alert no-gap radius" title="Delete this file"><i class="fas fa-trash"></i> Delete File</button>
+        </div>
+        <div id="file-preview-content" style="padding: 1rem; overflow: auto; height: 300px;">
+          ${this.renderPreviewContent(file)}
+        </div>
+      </div>
+      <div class="property-section ${editModeClass}" data-tab="info">
         <div class="property-group ${editModeClass}">
           <label>Title</label>
           ${titleInput}
@@ -141,6 +177,10 @@ class DocumentPropertiesManager {
 
     this.wireTabs();
     this.wireButtons();
+    this.wirePreviewButtons();
+    
+    // Resize preview container after render
+    setTimeout(() => this.resizePreviewContainer(), 50);
   }
 
   wireButtons() {
@@ -244,5 +284,123 @@ class DocumentPropertiesManager {
     const power = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
     const size = bytes / Math.pow(1024, power);
     return `${size.toFixed(1)} ${units[power]}`;
+  }
+
+  renderPreviewContent(file) {
+    if (!file) {
+      return '<div class="empty-state">No preview available</div>';
+    }
+
+    const fileType = file.fileType || '';
+    const mimeType = file.mimeType || '';
+    const fileUrl = file.url || '';
+
+    // If we don't have a URL yet, show a loading state
+    if (!fileUrl && !fileType && !mimeType) {
+      return '<div class="empty-state">Loading preview...</div>';
+    }
+
+    // If no URL but we have type info, show type-based message
+    if (!fileUrl) {
+      return '<div class="empty-state">No preview available</div>';
+    }
+
+    // Image preview
+    if (fileType === 'image' || mimeType.startsWith('image/')) {
+      return `<img src="/assets/view/${fileUrl}" alt="${this.escapeHtml(file.title || file.filename)}" style="max-width: 100%; height: auto;" />`;
+    }
+    // PDF preview
+    else if (fileType === 'pdf' || mimeType === 'application/pdf') {
+      return `<iframe src="/assets/view/${fileUrl}" type="application/pdf" style="width: 100%; height: 500px; border: none;"></iframe>`;
+    }
+    // URL preview
+    else if (fileType === 'url' || mimeType === 'text/uri-list') {
+      return `<div class="url-preview" style="padding: 1rem;"><a href="${this.escapeHtml(file.filename)}" target="_blank">${this.escapeHtml(file.filename)}</a></div>`;
+    }
+    // Video preview
+    else if (fileType === 'video' || mimeType.startsWith('video/')) {
+      return `
+        <video controls style="max-width: 100%; height: auto;">
+          <source src="/assets/view/${fileUrl}" type="${mimeType}">
+          Your browser does not support the video tag.
+        </video>
+      `;
+    }
+    // Text preview (will be loaded asynchronously)
+    else if (mimeType.startsWith('text/') || mimeType === 'application/json') {
+      // Return placeholder that will be replaced
+      setTimeout(() => this.loadTextPreview(fileUrl), 100);
+      return '<div id="text-preview-loading">Loading text preview...</div>';
+    }
+    // Default message
+    else {
+      const icon = this.getMimeIcon(mimeType, file.filename);
+      return `
+        <div class="empty-state">
+          ${icon}
+          <div style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--text-muted);">${this.escapeHtml(mimeType || 'Unknown type')}</div>
+          <div style="margin-top: 0.5rem;">Preview not available for this file type</div>
+          <a href="/assets/file/${fileUrl}" target="_blank" style="margin-top: 0.5rem; display: inline-block;">Download File</a>
+        </div>
+      `;
+    }
+  }
+
+  async loadTextPreview(fileUrl) {
+    const container = document.getElementById('text-preview-loading');
+    if (!container) {
+      return;
+    }
+    try {
+      const response = await fetch(fileUrl);
+      const text = await response.text();
+      container.outerHTML = `<pre style="white-space: pre-wrap; word-wrap: break-word;">${this.escapeHtml(text)}</pre>`;
+    } catch (err) {
+      console.error('Unable to load text preview', err);
+      container.outerHTML = '<div class="empty-state">Unable to load text preview</div>';
+    }
+  }
+
+  getMimeIcon(mimeType, filename) {
+    const type = (mimeType || '').toLowerCase();
+    if (type === 'text/uri-list') return '<i class="fas fa-link fa-3x"></i>';
+    if (type.startsWith('image/')) return '<i class="fas fa-file-image fa-3x"></i>';
+    if (type === 'application/pdf') return '<i class="fas fa-file-pdf fa-3x"></i>';
+    if (type.startsWith('video/')) return '<i class="fas fa-file-video fa-3x"></i>';
+    if (type.startsWith('audio/')) return '<i class="fas fa-file-audio fa-3x"></i>';
+    if (type.startsWith('text/') || type === 'application/json') return '<i class="fas fa-file-alt fa-3x"></i>';
+    if (type.includes('spreadsheet') || type.includes('excel') || type === 'application/vnd.ms-excel') return '<i class="fas fa-file-excel fa-3x"></i>';
+    if (type.includes('presentation') || type.includes('powerpoint')) return '<i class="fas fa-file-powerpoint fa-3x"></i>';
+    if (type.includes('word')) return '<i class="fas fa-file-word fa-3x"></i>';
+    if (type.includes('zip') || type.includes('compressed') || type.includes('tar')) return '<i class="fas fa-file-archive fa-3x"></i>';
+    if (type.includes('xml') || type.includes('html') || type.includes('javascript')) return '<i class="fas fa-file-code fa-3x"></i>';
+    return '<i class="fas fa-file fa-3x"></i>';
+  }
+
+  escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  wirePreviewButtons() {
+    const downloadBtn = document.getElementById('preview-download-btn');
+    const addVersionBtn = document.getElementById('preview-add-version-btn');
+    const moveFileBtn = document.getElementById('preview-move-file-btn');
+    const deleteFileBtn = document.getElementById('preview-delete-file-btn');
+
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => this.editor.fileManager.downloadFile());
+    }
+    if (addVersionBtn) {
+      addVersionBtn.addEventListener('click', () => this.editor.fileManager.addVersion());
+    }
+    if (moveFileBtn) {
+      moveFileBtn.addEventListener('click', () => this.editor.fileManager.moveFile());
+    }
+    if (deleteFileBtn) {
+      deleteFileBtn.addEventListener('click', () => this.editor.fileManager.deleteFile());
+    }
   }
 }

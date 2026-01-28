@@ -52,6 +52,13 @@
       <button id="save-btn" class="button tiny no-gap radius" disabled><i class="${font:far()} fa-save"></i> Save</button>
     </div>
 
+    <!-- Right Section -->
+    <div class="toolbar-section right">
+      <div id="loading-indicator" style="display: none;">
+        <i class="${font:far()} fa-spinner fa-spin"></i>
+      </div>
+    </div>
+
     <div class="titlebar-right">
       <!-- Apps Dropdown -->
       <div class="apps-menu">
@@ -108,13 +115,6 @@
             </c:choose>
           </div>
         </div>
-      </div>
-    </div>
-
-    <!-- Right Section -->
-    <div class="toolbar-section right">
-      <div id="loading-indicator" style="display: none;">
-        <i class="${font:far()} fa-spinner fa-spin"></i>
       </div>
     </div>
   </div>
@@ -311,12 +311,15 @@
 
 <!-- JavaScript for Data Editor -->
 <g:compress>
+  <script src="${ctx}/javascript/apps-menu-controller.js"></script>
   <script src="${ctx}/javascript/widgets/editor/visual-data-editor.js"></script>
 </g:compress>
 
 <script>
   // Initialize the Visual Data Editor
   document.addEventListener('DOMContentLoaded', function() {
+    setupAppsMenu();
+
     if (typeof VisualDataEditor !== 'undefined') {
       const editor = new VisualDataEditor({
         token: '<c:out value="${userSession.formToken}" />',
