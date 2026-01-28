@@ -296,11 +296,11 @@ class DocumentEditor {
     document.getElementById('subfolder-properties-section').style.display = 'none';
     document.getElementById('file-properties-section').style.display = 'block';
 
-    // Show tabs for file (Properties, Versions, Downloads)
-    const tabsNav = document.getElementById('properties-tabs');
-    if (tabsNav) {
-      tabsNav.style.display = 'flex';
-    }
+    // Don't show properties-tabs here - render() will create its own tabs to avoid flickering
+    // const tabsNav = document.getElementById('properties-tabs');
+    // if (tabsNav) {
+    //   tabsNav.style.display = 'flex';
+    // }
 
     // Hide folder-specific tabs
     const folderDetailsTab = document.getElementById('folder-details-tab');

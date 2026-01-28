@@ -88,10 +88,8 @@ class DocumentPropertiesManager {
 
     this.contentEl.style.display = 'block';
 
-    const titleEl = document.getElementById('properties-panel-title');
-    if (titleEl) {
-      titleEl.textContent = 'File Details';
-    }
+    // Title is set by showFileProperties() to avoid flickering
+    // Don't update it here since it's already correct
 
     if (!file || file.error) {
       this.contentEl.innerHTML = '<div class="empty-state">Select a file to see details</div>';
