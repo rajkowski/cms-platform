@@ -25,6 +25,8 @@
 <web:stylesheet package="spectrum" file="spectrum.css" />
 <g:compress>
   <link rel="stylesheet" type="text/css" href="${ctx}/css/visual-page-editor.css" />
+</g:compress>
+<g:compress>
   <link rel="stylesheet" type="text/css" href="${ctx}/css/visual-data-editor.css" />
 </g:compress>
 <div id="visual-data-editor-wrapper">
@@ -312,6 +314,8 @@
 <!-- JavaScript for Data Editor -->
 <g:compress>
   <script src="${ctx}/javascript/apps-menu-controller.js"></script>
+</g:compress>
+<g:compress>
   <script src="${ctx}/javascript/widgets/editor/visual-data-editor.js"></script>
 </g:compress>
 

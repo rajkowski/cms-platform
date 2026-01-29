@@ -625,6 +625,8 @@
 <web:script package="ace" file="theme-monokai.js" charset="utf-8" />
 <g:compress>
   <script src="${ctx}/javascript/apps-menu-controller.js"></script>
+</g:compress>
+<g:compress>
   <script src="${ctx}/javascript/icon-picker-modal.js"></script>
   <script src="${ctx}/javascript/page-link-picker-modal.js"></script>
   <script src="${ctx}/javascript/widgets/editor/widget-registry.js"></script>

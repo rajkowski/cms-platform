@@ -23,10 +23,14 @@
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <g:compress>
   <link rel="stylesheet" type="text/css" href="${ctx}/css/visual-page-editor.css" />
+</g:compress>
+<g:compress>
   <link rel="stylesheet" type="text/css" href="${ctx}/css/visual-document-editor.css" />
 </g:compress>
 <g:compress>
   <script src="${ctx}/javascript/apps-menu-controller.js"></script>
+</g:compress>
+<g:compress>
   <script src="${ctx}/javascript/widgets/document-editor/document-library-manager.js"></script>
   <script src="${ctx}/javascript/widgets/document-editor/document-file-manager.js"></script>
   <script src="${ctx}/javascript/widgets/document-editor/folder-details-manager.js"></script>

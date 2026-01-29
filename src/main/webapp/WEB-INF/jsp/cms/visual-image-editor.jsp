@@ -25,10 +25,14 @@
 <web:script package="spectrum" file="spectrum.js" />
 <g:compress>
   <link rel="stylesheet" type="text/css" href="${ctx}/css/visual-page-editor.css" />
+</g:compress>
+<g:compress>
   <link rel="stylesheet" type="text/css" href="${ctx}/css/visual-image-editor.css" />
 </g:compress>
 <g:compress>
   <script src="${ctx}/javascript/apps-menu-controller.js"></script>
+</g:compress>
+<g:compress>
   <script src="${ctx}/javascript/widgets/image-editor/image-library-manager.js"></script>
   <script src="${ctx}/javascript/widgets/image-editor/image-viewer-manager.js"></script>
   <script src="${ctx}/javascript/widgets/image-editor/image-properties-manager.js"></script>
