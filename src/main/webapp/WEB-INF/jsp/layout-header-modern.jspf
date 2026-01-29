@@ -235,7 +235,6 @@
                     </div>
 
                     <div class="user-menu-section-title">Classic Tools</div>
-
                     <div class="admin-apps-grid">
                       
                       <a href="/admin/sitemap" class="admin-app-item" title="Manage site navigation and structure">
@@ -303,20 +302,15 @@
                         <span class="admin-app-item-label">Setup</span>
                       </a>
                     </div>
-                  </div>
-                </c:if>
 
-                <!-- User Actions Section -->
-                <div class="user-menu-section">
-
-                  <c:if test="${userSession.hasRole('admin')}">
+                    <c:if test="${userSession.hasRole('admin')}">
                     <div class="user-menu-section-title">Page Tools</div>
                     <div class="admin-apps-grid">
                       <a href="${ctx}/admin/web-page?webPage=${pageRenderInfo.pagePath}" class="admin-app-item" title="View page information">
                         <i class="fas fa-info-circle"></i>
                         <span class="admin-app-item-label">Page Info</span>
                       </a>
-                      <a href="${ctx}/admin/web-page-designer?webPage=${masterWebPage.link}" class="admin-app-item" title="Edit page CSS styles">
+                      <a href="/admin/css-editor?webPage=${masterWebPage.link}&returnPage=${masterWebPage.link}" class="admin-app-item" title="Edit page CSS styles">
                         <i class="fas fa-paint-brush"></i>
                         <span class="admin-app-item-label">Page CSS</span>
                       </a>
@@ -326,6 +320,13 @@
                       </a>
                     </div>
                   </c:if>
+
+                  </div>
+
+                </c:if>
+
+                <!-- User Actions Section -->
+                <div class="user-menu-section">
 
                   <a href="javascript:void(0);" onclick="toggleDarkMode()" class="user-menu-item" title="Toggle Light/Dark Mode">
                     <i class="fas fa-moon" id="themeIconMenu"></i>
