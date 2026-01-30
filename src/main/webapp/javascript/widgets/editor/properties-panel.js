@@ -924,7 +924,7 @@ class PropertiesPanel {
           <!-- Modal footer -->
           <div style="display: flex; gap: 10px; justify-content: flex-end; border-top: 1px solid var(--editor-border); padding-top: 20px;">
             <button type="button" class="button radius secondary cancel-modal">Cancel</button>
-            <button type="button" class="button radius save-modal">Save Changes</button>
+            <button type="button" class="button radius save-modal">Apply Changes</button>
           </div>
         </div>
       </div>
