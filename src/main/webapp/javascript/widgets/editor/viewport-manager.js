@@ -55,7 +55,14 @@ class ViewportManager {
     Object.keys(this.viewports).forEach(viewportKey => {
       const viewport = this.viewports[viewportKey];
       const button = document.createElement('button');
-      button.className = `button tiny no-gap radius viewport-btn ${viewportKey === this.currentViewport ? 'active' : 'secondary'}`;
+      // if the button is the first or last, add left/right class for rounded corners
+      if (viewportKey === 'small') {
+        button.className = `button tiny no-gap left viewport-btn ${viewportKey === this.currentViewport ? 'active' : 'secondary'}`;
+      } else if (viewportKey === 'large') {
+        button.className = `button tiny no-gap right viewport-btn ${viewportKey === this.currentViewport ? 'active' : 'secondary'}`;
+      } else {
+        button.className = `button tiny no-gap viewport-btn ${viewportKey === this.currentViewport ? 'active' : 'secondary'}`;
+      }
       button.setAttribute('data-viewport', viewportKey);
       button.innerHTML = `<i class="far ${viewport.icon}"></i> ${viewport.name}`;
       button.title = `Switch to ${viewport.name} viewport`;
@@ -130,10 +137,10 @@ class ViewportManager {
       this.canvas.style.maxWidth = '600px';
       this.canvas.style.margin = '0 auto';
     } else if (this.currentViewport === 'medium') {
-      this.canvas.style.maxWidth = '';
-      this.canvas.style.margin = '';
+      this.canvas.style.maxWidth = '47em';
+      this.canvas.style.margin = '0 auto';
     } else {
-      this.canvas.style.maxWidth = '64em';
+      this.canvas.style.maxWidth = '67em';
       this.canvas.style.margin = '0 auto';
     }
 
@@ -162,15 +169,15 @@ class ViewportManager {
     if (this.currentViewport === 'small') {
       previewContainer.style.maxWidth = '600px';
       previewContainer.style.margin = '0 auto';
-      previewIframe.style.width = '600px';
+      previewIframe.style.width = '100%';
       previewIframe.style.maxWidth = '600px';
     } else if (this.currentViewport === 'medium') {
-      previewContainer.style.maxWidth = '';
-      previewContainer.style.margin = '';
-      previewIframe.style.width = '100%';
-      previewIframe.style.maxWidth = '';
+      previewContainer.style.maxWidth = '47em';
+      previewContainer.style.margin = '0 auto';
+      previewIframe.style.width = '44em';
+      previewIframe.style.maxWidth = '59em';
     } else {
-      previewContainer.style.maxWidth = '64em';
+      previewContainer.style.maxWidth = '67em';
       previewContainer.style.margin = '0 auto';
       previewIframe.style.width = '64em';
       previewIframe.style.maxWidth = '';

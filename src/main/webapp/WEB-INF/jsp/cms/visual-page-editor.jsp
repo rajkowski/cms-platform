@@ -62,10 +62,24 @@
 
     <!-- Center Section -->
     <div class="toolbar-section center">
-      <button id="toggle-preview-btn" class="button tiny no-gap radius"><i class="${font:far()} fa-eye"></i> Preview</button>
-      <button id="save-btn" class="button tiny no-gap radius"><i class="${font:far()} fa-save"></i> Publish</button>
+      <div id="preview-state-group" class="button-group">
+        <button type="button" class="button tiny secondary no-gap left" data-preview-state="preview" title="Preview" aria-label="Preview">
+          <i class="${font:far()} fa-eye"></i>
+        </button>
+        <button type="button" class="button tiny secondary no-gap" data-preview-state="layout" title="Layout" aria-label="Layout">
+          <i class="${font:far()} fa-table-columns"></i>
+        </button>
+        <button type="button" class="button tiny secondary no-gap right" data-preview-state="preview-layout" title="Preview + Layout" aria-label="Preview + Layout">
+          <i class="${font:far()} fa-eye"></i>
+          <i class="${font:far()} fa-table-columns"></i>
+        </button>
+      </div>
     </div>
 
+    <div class="toolbar-section next">
+      <button id="save-btn" class="button tiny no-gap radius"><i class="${font:far()} fa-save"></i> Publish</button>
+    </div>
+    
     <!-- Right Section -->
     <div class="toolbar-section right">
       <div id="loading-indicator" style="display: none;">
@@ -146,7 +160,7 @@
   </div>
   
   <!-- Main Editor Container -->
-  <div id="visual-page-editor-container">
+  <div id="visual-page-editor-container" class="preview-only">
     
     <!-- Widget Palette -->
     <div id="widget-palette">
@@ -548,12 +562,16 @@
               });
             }
 
-            // Helper: determine current preview mode from wrapper
+            // Helper: determine current preview mode from wrapper or toggle state
             function isPreviewMode() {
+              var toggle = document.getElementById('preview-state-group');
+              if (toggle && toggle.dataset && toggle.dataset.previewState) {
+                return toggle.dataset.previewState !== 'layout';
+              }
               var wrapper = document.getElementById('visual-page-editor-wrapper');
               if (!wrapper) return false;
               var modeAttr = wrapper.getAttribute('data-mode');
-              if (modeAttr) return modeAttr === 'preview';
+              if (modeAttr) return modeAttr === 'preview' || modeAttr === 'preview-layout';
               return wrapper.classList.contains('preview') || wrapper.classList.contains('preview-mode');
             }
 
@@ -674,8 +692,12 @@
     // const previewIframe = document.getElementById('preview-iframe');
     
     // Set up preview update listener BEFORE initializing the page editor
-    let isPreviewMode = false;
-    const togglePreviewBtn = document.getElementById('toggle-preview-btn');
+    let previewState = 'preview';
+    const previewStates = ['preview', 'preview-layout', 'layout'];
+    const previewStateGroup = document.getElementById('preview-state-group');
+    const previewStateButtons = previewStateGroup ? previewStateGroup.querySelectorAll('[data-preview-state]') : [];
+    const previewWrapper = document.getElementById('visual-page-editor-wrapper');
+    const editorContainer = document.getElementById('visual-page-editor-container');
     const previewContainer = document.getElementById('preview-container');
     const editorCanvas = document.getElementById('editor-canvas');
     const previewIframe = document.getElementById('preview-iframe');
@@ -705,6 +727,59 @@
         });
       } catch (e) {
         console.debug('Preview cleanupDragulaArtifacts error:', e);
+      }
+    }
+
+    function isPreviewEnabled() {
+      return previewState !== 'layout';
+    }
+
+    function applyPreviewState(state, { refresh = false } = {}) {
+      previewState = state;
+
+      if (previewStateGroup) {
+        previewStateGroup.dataset.previewState = state;
+      }
+
+      if (previewStateButtons && previewStateButtons.length) {
+        previewStateButtons.forEach(button => {
+          const buttonState = button.dataset.previewState;
+          const isActive = buttonState === state;
+          button.classList.toggle('active', isActive);
+          button.setAttribute('aria-pressed', String(isActive));
+        });
+      }
+
+      if (previewWrapper) {
+        previewWrapper.setAttribute('data-mode', state);
+      }
+
+      if (editorContainer) {
+        editorContainer.classList.remove('preview-only', 'preview-layout', 'layout-only');
+        if (state === 'preview') {
+          editorContainer.classList.add('preview-only');
+        } else if (state === 'preview-layout') {
+          editorContainer.classList.add('preview-layout');
+        } else {
+          editorContainer.classList.add('layout-only');
+        }
+      }
+
+      if (isPreviewEnabled()) {
+        previewContainer.classList.add('active');
+        previewIframe.classList.add('active');
+        if (window.previewHoverManager) {
+          window.previewHoverManager.handlePreviewModeChange(true);
+        }
+        if (refresh) {
+          refreshPreview();
+        }
+      } else {
+        previewContainer.classList.remove('active');
+        previewIframe.classList.remove('active');
+        if (window.previewHoverManager) {
+          window.previewHoverManager.handlePreviewModeChange(false);
+        }
       }
     }
 
@@ -739,17 +814,21 @@
       };
       
       // Switch to preview mode
-      previewIframe.classList.add('active');
-      previewContainer.classList.add('active');
-      editorCanvas.classList.add('hidden');
-      togglePreviewBtn.classList.add('active');
-      isPreviewMode = true;
+      applyPreviewState('preview');
       // Ensure scrolling remains functional after entering preview
       cleanupDragulaArtifacts();
     };
+    
+    // Default to preview mode on load
+    function initializePreviewMode() {
+      applyPreviewState('preview', { refresh: true });
+    }
 
     // Function to refresh the preview
     function refreshPreview() {
+      if (!isPreviewEnabled()) {
+        return;
+      }
       previewIframe.style.display = 'none';
       previewError.style.display = 'none';
       
@@ -817,7 +896,7 @@
           }
           
           // Re-initialize hover manager for the new iframe content
-          if (window.previewHoverManager && isPreviewMode) {
+          if (window.previewHoverManager && isPreviewEnabled()) {
             // Refresh iframe references after preview reload
             window.previewHoverManager.refreshIframeReferences();
             
@@ -918,7 +997,7 @@
               // Small delay ensures document is ready before enabling
               setTimeout(function(){
                 console.debug('Preview iframe: reinitializing bridge for reattachment');
-                if (isPreviewMode) {
+                if (isPreviewEnabled()) {
                   window.previewHoverManager.reinitializeBridge();
                 } else {
                   window.previewHoverManager.handlePreviewModeChange(true);
@@ -949,7 +1028,7 @@
             console.log('Preview navigation returned to current page, reattaching hover');
             window.previewHoverManager.refreshIframeReferences();
             setTimeout(function(){
-              if (isPreviewMode) {
+              if (isPreviewEnabled()) {
                 window.previewHoverManager.reinitializeBridge();
               } else {
                 window.previewHoverManager.handlePreviewModeChange(true);
@@ -964,14 +1043,14 @@
 
     // Listen for page changes
     document.addEventListener('pageChanged', function(e) {
-      console.log('pageChanged event fired, isPreviewMode:', isPreviewMode);
+      console.log('pageChanged event fired, previewState:', previewState);
       // Reset the properties panel (unselect any previously selected widget)
       if (window.pageEditor && window.pageEditor.getPropertiesPanel()) {
         window.pageEditor.getPropertiesPanel().clear();
       }
       
       // If in preview mode, refresh the preview when page is switched
-      if (isPreviewMode) {
+      if (isPreviewEnabled()) {
         console.log('Refreshing preview due to page change');
         // Add a small delay to ensure the layout is fully processed
         setTimeout(() => {
@@ -982,10 +1061,10 @@
 
     // Listen for viewport changes
     document.addEventListener('viewportChanged', function(e) {
-      console.log('viewportChanged event fired, isPreviewMode:', isPreviewMode);
+      console.log('viewportChanged event fired, previewState:', previewState);
       
       // If in preview mode, refresh the preview when viewport is switched
-      if (isPreviewMode) {
+      if (isPreviewEnabled()) {
         console.log('Refreshing preview due to viewport change');
         // Add a small delay to ensure the viewport styles are applied
         setTimeout(() => {
@@ -994,40 +1073,29 @@
       }
     });
 
-    togglePreviewBtn.addEventListener('click', function() {
-      isPreviewMode = !isPreviewMode;
-      
-      if (isPreviewMode) {
-        // Switch to preview mode
-        editorCanvas.classList.add('hidden');
-        previewContainer.classList.add('active');
-        togglePreviewBtn.classList.add('active');
-        
-        // Enable preview hover functionality
-        if (window.previewHoverManager) {
-          window.previewHoverManager.handlePreviewModeChange(true);
-        }
-        
-        // Load preview
-        refreshPreview();
-      } else {
-        // Switch back to editor mode
-        editorCanvas.classList.remove('hidden');
-        previewContainer.classList.remove('active');
-        togglePreviewBtn.classList.remove('active');
-        
-        // Disable preview hover functionality
-        if (window.previewHoverManager) {
-          window.previewHoverManager.handlePreviewModeChange(false);
-        }
+    // Listen for layout changes to keep preview in sync
+    document.addEventListener('layoutChanged', function(e) {
+      if (isPreviewEnabled()) {
+        setTimeout(() => {
+          refreshPreview();
+        }, 50);
       }
     });
+
+    if (previewStateButtons && previewStateButtons.length) {
+      previewStateButtons.forEach(button => {
+        button.addEventListener('click', function() {
+          const nextState = button.dataset.previewState || 'preview';
+          applyPreviewState(nextState, { refresh: nextState !== 'layout' });
+        });
+      });
+    }
 
     // Add click handler to preview-container background to unselect elements
     // This allows users to click outside the iframe to clear all selections
     previewContainer.addEventListener('click', function(e) {
       // Only trigger if clicking directly on the preview-container background (not on child elements like iframe)
-      if (e.target === previewContainer && window.previewHoverManager) {
+      if (isPreviewEnabled() && e.target === previewContainer && window.previewHoverManager) {
         console.log('Preview container background clicked, clearing selections');
         // Disable and re-enable to clear the current outline
         window.previewHoverManager.disable();
@@ -1041,6 +1109,11 @@
 
     // Now initialize the page editor
     window.pageEditor.init();
+
+    // Initialize preview mode by default
+    setTimeout(() => {
+      initializePreviewMode();
+    }, 500);
 
     // Enhancement: Add canvas background click handler to unselect everything
     if (editorCanvas) {

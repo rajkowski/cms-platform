@@ -7,6 +7,7 @@
 /* Light and Dark Mode Variables */
 :root {
   --editor-bg: #ffffff;
+  --editor-canvas-bg: #dee2e6;
   --editor-panel-bg: #f8f9fa;
   --editor-panel-input: #ffffff;
   --editor-panel-input-placeholder: #999999;
@@ -21,6 +22,7 @@
 
 [data-theme="dark"] {
   --editor-bg: #1a1a1a;
+  --editor-canvas-bg: #000000;
   --editor-panel-bg: #2d2d2d;
   --editor-panel-input: #2d2d2d;
   --editor-panel-input-placeholder: #646464;
@@ -45,6 +47,25 @@
   flex: 1;
   height: calc(100vh - 140px);
   min-height: 500px;
+  background: var(--editor-canvas-bg);
+}
+
+#visual-page-editor-container.preview-only #preview-container,
+#visual-page-editor-container.preview-layout #preview-container {
+  display: flex;
+}
+
+#visual-page-editor-container.preview-only #editor-canvas {
+  display: none;
+}
+
+#visual-page-editor-container.preview-layout #editor-canvas,
+#visual-page-editor-container.layout-only #editor-canvas {
+  display: block;
+}
+
+#visual-page-editor-container.layout-only #preview-container {
+  display: none;
 }
 
 #editor-titlebar {
@@ -110,7 +131,6 @@
 .toolbar-section.center {
   display: flex;
   justify-content: start;
-  flex-grow: 1;
   gap: 5px;
 }
 
@@ -118,6 +138,8 @@
   display: flex;
   justify-content: flex-end;
   gap: 5px;
+  flex-grow: 1;
+  flex-basis: 1%;
 }
 
 #widget-palette {
@@ -136,6 +158,7 @@
   padding: 20px;
   position: relative;
   transition: background 0.3s ease;
+  display: block;
 }
 
 #properties-panel {
@@ -487,30 +510,21 @@
 }
 
 /* Button Group Styles */
-.button-group.round {
-  display: flex;
-  gap: 0;
-  border-radius: 4px;
-  overflow: hidden;
+
+.button-group .button {
+  transition: all 0.2s ease;
 }
 
-.button-group.round .button {
-  border-radius: 0;
-  flex: 1;
-  text-align: center;
+.button-group .button.left,
+.viewport-controls .button.left {
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
 }
 
-.button-group.round .button:first-child {
-  border-radius: 4px 0 0 4px;
-}
-
-.button-group.round .button:last-child {
-  border-radius: 0 4px 4px 0;
-}
-
-.button-group.round .button.active {
-  background-color: #0f4f79;
-  color: #fff;
+.button-group .button.right,
+.viewport-controls .button.right {
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
 }
 
 .control-btn:hover {
@@ -1096,27 +1110,27 @@ input[type="range"].property-input:focus::-moz-range-thumb {
 /* Viewport Controls */
 .viewport-controls {
   display: flex;
-  gap: 5px;
   align-items: center;
   margin-left: 15px;
 }
 
 .viewport-btn {
   transition: all 0.2s ease;
-  border: 1px solid var(--editor-border);
-  background: var(--editor-bg);
-  color: var(--editor-text);
+  /* background: var(--editor-bg); */
+  /* color: var(--editor-text); */
+  margin-right: 1px;
 }
 
 .viewport-btn:hover {
-  background: var(--editor-hover-bg);
-  border-color: var(--editor-selected-border);
+  /* background: var(--editor-hover-bg); */
+  /* border-color: var(--editor-selected-border); */
 }
 
 .viewport-btn.active {
-  background: var(--editor-selected-border);
+  background-color: #43AC6A;
+  /* background: var(--editor-selected-border); */
   color: white;
-  border-color: var(--editor-selected-border);
+  /* border-color: var(--editor-selected-border); */
 }
 
 /* Viewport-specific canvas styles */
@@ -1178,7 +1192,7 @@ input[type="range"].property-input:focus::-moz-range-thumb {
 
 /* Preview Toggle */
 #preview-container {
-  display: none;
+  display: flex;
   flex: 1;
   background: var(--editor-bg);
   overflow-y: auto;
@@ -1187,7 +1201,7 @@ input[type="range"].property-input:focus::-moz-range-thumb {
 }
 
 #preview-container.active {
-  display: block !important;
+  display: flex !important;
 }
 
 #editor-canvas.hidden {
@@ -1223,38 +1237,27 @@ input[type="range"].property-input:focus::-moz-range-thumb {
   margin: 20px;
 }
 
-/* Toggle Switch Styles */
-#toggle-preview-btn {
-  /* border: 2px solid #dee2e6; */
-  /* padding: 6px 12px; */
-  /* font-size: 13px; */
-  /* font-weight: 600; */
-  transition: all 0.3s ease;
+/* Preview State Toggle Group */
+#preview-state-group {
+  display: inline-flex;
+  margin-bottom: 0;
+}
+
+#preview-state-group .button {
+  transition: all 0.2s ease;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  position: relative;
+  gap: 6px;
+  padding: 0 1rem;
 }
 
-#toggle-preview-btn::after {
-  content: '';
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #dee2e6;
-  transition: all 0.3s ease;
-}
-
-#toggle-preview-btn.active {
+#preview-state-group .button.active {
   color: #ffffff;
   background-color: #43AC6A;
 }
 
-#toggle-preview-btn.active::after {
-  background: #0dd757;
-  box-shadow: 0 0 8px rgba(23, 162, 184, 0.5);
+#preview-state-group .button i + i {
+  margin-left: 4px;
 }
 
 
