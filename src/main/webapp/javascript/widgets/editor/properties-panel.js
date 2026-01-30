@@ -1694,11 +1694,11 @@ class PropertiesPanel {
           <i class="fa fa-icons"></i> Pick
         </button>`;
         if (displayValue) {
-          html += `<div id="icon-preview-${name}" style="font-size: 24px; padding-bottom: 15px; color: #6f6f6f; min-width: 30px; text-align: center;">
+          html += `<div id="icon-preview-${name}" style="font-size: 24px; color: #6f6f6f; min-width: 30px; text-align: center;">
             <i class="fa ${this.escapeHtml(displayValue)}"></i>
           </div>`;
         } else {
-          html += `<div id="icon-preview-${name}" style="font-size: 24px; padding-bottom: 15px; color: #6f6f6f; min-width: 30px; text-align: center;"></div>`;
+          html += `<div id="icon-preview-${name}" style="font-size: 24px; color: #6f6f6f; min-width: 30px; text-align: center;"></div>`;
         }
         html += `</div>`;
         break;
