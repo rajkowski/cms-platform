@@ -151,9 +151,6 @@ public class FileItem extends Entity {
   }
 
   public String getFileType() {
-    if (fileType != null) {
-      return fileType.toLowerCase();
-    }
     return fileType;
   }
 

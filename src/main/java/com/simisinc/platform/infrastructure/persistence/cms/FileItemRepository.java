@@ -359,7 +359,12 @@ public class FileItemRepository {
       record.setExtension(rs.getString("extension"));
       record.setFileServerPath(rs.getString("path"));
       record.setFileLength(rs.getLong("file_length"));
-      record.setFileType(rs.getString("file_type"));
+      String fileType = rs.getString("file_type");
+      if (fileType != null) {
+        record.setFileType(fileType.toLowerCase());
+      } else {
+        record.setFileType(null);
+      }
       record.setMimeType(rs.getString("mime_type"));
       record.setFileHash(rs.getString("file_hash"));
       record.setWidth(rs.getInt("width"));
