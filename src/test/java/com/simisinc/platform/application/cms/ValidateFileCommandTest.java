@@ -46,6 +46,6 @@ class ValidateFileCommandTest {
 
   @Test
   void getFileType() {
-    Assertions.assertEquals("PDF", ValidateFileCommand.getFileType("application/pdf", null));
+    Assertions.assertEquals("pdf", ValidateFileCommand.getFileType("application/pdf", null));
   }
 }
