@@ -785,6 +785,11 @@ body.dark-mode {
   font-size: 14px;
 }
 
+/* Property Groups */
+#dataset-file, #dataset-url, #stock-data-source {
+  min-height: 40px;
+}
+
 /* Button Groups */
 .button-group {
   display: flex;

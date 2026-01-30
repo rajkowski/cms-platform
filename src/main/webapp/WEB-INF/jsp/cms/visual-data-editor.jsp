@@ -302,6 +302,7 @@
           <option value="covid">COVID-19 Statistics</option>
           <option value="geo">Geographic Data</option>
         </select>
+        <small class="help-text">Sample datasets provided for quick import</small>
       </div>
       <div>
         <button type="submit" class="button success radius">Import Dataset</button>

@@ -2493,8 +2493,10 @@ class PropertiesPanel {
     }
     
     // Check if preview mode is active by looking at the toggle button state
-    const togglePreviewBtn = document.getElementById('toggle-preview-btn');
-    if (togglePreviewBtn && togglePreviewBtn.classList.contains('active')) {
+    const previewStateGroup = document.getElementById('preview-state-group');
+    const previewState = previewStateGroup && previewStateGroup.dataset ? previewStateGroup.dataset.previewState : null;
+    const isPreviewEnabled = previewState ? previewState !== 'layout' : false;
+    if (isPreviewEnabled) {
       // Call the global refreshPreview function if it exists
       if (typeof window.refreshPreview === 'function') {
         window.refreshPreview();
