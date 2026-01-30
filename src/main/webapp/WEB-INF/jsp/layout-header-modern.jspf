@@ -136,7 +136,7 @@
                         <div class="cart-item-info">
                           <div class="cart-item-name">${item.name}</div>
                           <div class="cart-item-price">
-                            ${item.quantity} × <fmt:formatNumber value="${item.price}" type="currency"/>
+                            ${item.quantity} x <fmt:formatNumber value="${item.price}" type="currency"/>
                           </div>
                         </div>
                       </div>
