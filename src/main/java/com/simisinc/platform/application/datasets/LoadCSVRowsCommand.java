@@ -90,7 +90,7 @@ public class LoadCSVRowsCommand {
           continue;
         }
         // See if the count to return has been reached
-        if (rowCountToReturn > -1 && count >= rowCountToReturn) {
+        if (rowCountToReturn > -1 && count >= rowCountToReturn + offset) {
           break;
         }
         // See if this row is being skipped, based on column rules
