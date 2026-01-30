@@ -517,7 +517,7 @@
         <executions>
           <execution>
             <id>update-dependencies</id>
-            <phase>validate</phase>
+            <phase>package</phase>
             <configuration>
               <target>
                 <ant antfile="${basedir}/build.xml">
