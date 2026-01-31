@@ -690,7 +690,9 @@
     // const previewIframe = document.getElementById('preview-iframe');
     
     // Set up preview update listener BEFORE initializing the page editor
-    let previewState = 'preview';
+    // Default to 'layout' for new pages, 'preview' for existing pages
+    const isNewPage = editorConfig.webPageId === -1 || editorConfig.webPageId === 0;
+    let previewState = isNewPage ? 'layout' : 'preview';
     const previewStates = ['preview', 'preview-layout', 'layout'];
     const previewStateGroup = document.getElementById('preview-state-group');
     const previewStateButtons = previewStateGroup ? previewStateGroup.querySelectorAll('[data-preview-state]') : [];
@@ -806,6 +808,17 @@
         window.pageEditor.getPropertiesPanel().clear();
       }
       
+      // Clear any locked selections and hide selection boxes
+      if (window.previewHoverManager) {
+        if (typeof window.previewHoverManager.clearLockedSelection === 'function') {
+          window.previewHoverManager.clearLockedSelection();
+        }
+        // Disable hover manager to hide all selection boxes
+        if (typeof window.previewHoverManager.disable === 'function') {
+          window.previewHoverManager.disable();
+        }
+      }
+      
       // Set iframe source
       previewIframe.src = url;
       
@@ -823,9 +836,9 @@
       cleanupDragulaArtifacts();
     };
     
-    // Default to preview mode on load
+    // Initialize preview mode based on page type
     function initializePreviewMode() {
-      applyPreviewState('preview', { refresh: true });
+      applyPreviewState(previewState, { refresh: isPreviewEnabled() });
     }
 
     // Function to refresh the preview
