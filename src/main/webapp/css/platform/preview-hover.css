@@ -13,7 +13,7 @@
   pointer-events: none; /* Allow clicks to pass through to underlying elements */
   border: 2px solid #007bff;
   background: transparent;
-  z-index: 9998;
+  z-index: 5;
   box-sizing: border-box;
   transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
   border-radius: 4px;
@@ -26,7 +26,7 @@
 }
 
 /* Widget outline - solid border with bright glow (non-clickable) */
-/* Widgets have highest z-index so they appear on top */
+/* Widgets have low z-index so they appear behind panels but visible on preview */
 .preview-hover-outline--widget {
   border-color: #0d5de8; /* Darker, richer blue */
   border-style: solid;
@@ -34,11 +34,11 @@
   box-shadow: 0 0 0 2px rgba(13, 93, 232, 0.3), 
               inset 0 0 0 1px rgba(13, 93, 232, 0.15), 
               0 0 12px rgba(13, 93, 232, 0.25);
-  z-index: 10000;
+  z-index: 5;
 }
 
 /* Column outline - dashed border with green glow (clickable) */
-/* Columns have higher z-index than rows but lower than widgets */
+/* Columns have low z-index so they appear behind panels but visible on preview */
 .preview-hover-outline--column {
   border-color: #198754; /* Darker green */
   border-style: dashed;
@@ -47,7 +47,7 @@
               inset 0 0 0 1px rgba(25, 135, 84, 0.1), 
               0 0 12px rgba(25, 135, 84, 0.2);
   pointer-events: none; /* Prevent scroll blocking; use action button for clicks */
-  z-index: 9999;
+  z-index: 5;
 }
 
 .preview-hover-outline--column:hover {
@@ -58,7 +58,7 @@
 }
 
 /* Row outline - dotted border with amber glow (clickable) */
-/* Rows have lower z-index so columns/widgets appear on top */
+/* Rows have low z-index so they appear behind panels but visible on preview */
 .preview-hover-outline--row {
   border-color: #ffa500; /* Vibrant orange */
   border-style: dotted;
@@ -69,7 +69,7 @@
   pointer-events: none; /* Prevent scroll blocking; use action button for clicks */
   /* Make row outlines semi-transparent to allow nested elements to be seen */
   opacity: 0.7;
-  z-index: 9998;
+  z-index: 5;
 }
 
 .preview-hover-outline--row:hover {
@@ -80,11 +80,32 @@
   opacity: 0.8;
 }
 
+/* Locked outline - selected element with more prominent styling */
+.preview-hover-outline--locked {
+  border-width: 3px;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.4), inset 0 0 0 2px rgba(0, 123, 255, 0.2) !important;
+}
+
+.preview-hover-outline--widget.preview-hover-outline--locked {
+  border-color: #0052cc;
+  box-shadow: 0 0 0 3px rgba(13, 93, 232, 0.5), inset 0 0 0 2px rgba(13, 93, 232, 0.25) !important;
+}
+
+.preview-hover-outline--column.preview-hover-outline--locked {
+  border-color: #135a2f;
+  box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.4), inset 0 0 0 2px rgba(25, 135, 84, 0.15) !important;
+}
+
+.preview-hover-outline--row.preview-hover-outline--locked {
+  border-color: #cc7700;
+  box-shadow: 0 0 0 3px rgba(255, 165, 0, 0.4), inset 0 0 0 2px rgba(255, 165, 0, 0.15) !important;
+}
+
 /* Action button base styles */
 .preview-hover-button {
   position: fixed;
   pointer-events: auto; /* Enable button clicks */
-  z-index: 10000;
+  z-index: 5;
   cursor: pointer;
   background: #0d5de8;
   border: 2px solid #ffffff;

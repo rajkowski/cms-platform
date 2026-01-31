@@ -57,6 +57,9 @@ class CanvasController {
       // Re-render the layout to apply viewport-specific column classes
       const structure = this.editor.getLayoutManager().getStructure();
       this.renderLayout(structure);
+
+      // Restore selection after re-render to keep layout selection persistent
+      this.restoreSelection({ updateProperties: true, syncPreview: true });
       
       console.log('Canvas updated for viewport change:', e.detail.current);
     });
@@ -1311,6 +1314,55 @@ class CanvasController {
       // Update properties panel with skip flag if provided
       const opts = options || {};
       this.editor.getPropertiesPanel().show(context, opts.skipPreviewRefresh);
+
+      if (!opts.skipPreviewRefresh && typeof globalThis !== 'undefined' && globalThis.previewHoverManager &&
+          typeof globalThis.previewHoverManager.selectElementByContext === 'function') {
+        globalThis.previewHoverManager.selectElementByContext(context);
+      }
+    }
+  }
+
+  /**
+   * Restore selection after layout re-render
+   * @param {Object} options
+   * @param {boolean} options.updateProperties - Whether to refresh the properties panel
+   * @param {boolean} options.syncPreview - Whether to sync selection to preview
+   */
+  restoreSelection(options) {
+    if (!this.selectedContext) {
+      return;
+    }
+
+    const opts = options || {};
+    const { type, rowId, columnId, widgetId } = this.selectedContext;
+    let element = null;
+
+    if (type === 'row') {
+      element = this.canvas.querySelector(`[data-row-id="${rowId}"]`);
+    } else if (type === 'column') {
+      element = this.canvas.querySelector(`[data-row-id="${rowId}"] [data-column-id="${columnId}"]`);
+    } else if (type === 'widget') {
+      element = this.canvas.querySelector(`[data-row-id="${rowId}"] [data-column-id="${columnId}"] [data-widget-id="${widgetId}"]`);
+    }
+
+    if (!element) {
+      return;
+    }
+
+    if (this.selectedElement && this.selectedElement !== element) {
+      this.selectedElement.classList.remove('selected');
+    }
+
+    this.selectedElement = element;
+    element.classList.add('selected');
+
+    if (opts.updateProperties !== false) {
+      this.editor.getPropertiesPanel().show(this.selectedContext, true);
+    }
+
+    if (opts.syncPreview !== false && typeof globalThis !== 'undefined' && globalThis.previewHoverManager &&
+        typeof globalThis.previewHoverManager.selectElementByContext === 'function') {
+      globalThis.previewHoverManager.selectElementByContext(this.selectedContext);
     }
   }
   
@@ -1403,6 +1455,12 @@ class CanvasController {
    * Show row settings
    */
   showRowSettings(rowId) {
+    const rowElement = this.canvas ? this.canvas.querySelector(`[data-row-id="${rowId}"]`) : null;
+    if (rowElement) {
+      this.selectElement(rowElement, { type: 'row', rowId });
+      return;
+    }
+
     this.editor.getPropertiesPanel().show({
       type: 'row',
       rowId: rowId

@@ -67,6 +67,20 @@ class PropertiesPanel {
   showRowProperties(rowId) {
     const row = this.editor.getLayoutManager().getRow(rowId);
     if (!row) return;
+
+    // Highlight the row in the preview if preview is enabled (for preview-layout mode)
+    if (typeof globalThis !== 'undefined' && globalThis.previewHoverManager &&
+        typeof globalThis.previewHoverManager.selectElementByContext === 'function') {
+      const previewStateGroup = document.getElementById('preview-state-group');
+      const currentPreviewState = previewStateGroup ? previewStateGroup.dataset.previewState : 'preview';
+      if (currentPreviewState !== 'layout') {
+        console.debug('PropertiesPanel: Highlighting row in preview');
+        globalThis.previewHoverManager.selectElementByContext({
+          type: 'row',
+          rowId
+        });
+      }
+    }
     
     // Parse current CSS classes
     const cssClasses = (row.cssClass || '').split(' ').filter(c => c.trim());
@@ -260,6 +274,21 @@ class PropertiesPanel {
     
     const column = row.columns.find(c => c.id === columnId);
     if (!column) return;
+
+    // Highlight the column in the preview if preview is enabled (for preview-layout mode)
+    if (typeof globalThis !== 'undefined' && globalThis.previewHoverManager &&
+        typeof globalThis.previewHoverManager.selectElementByContext === 'function') {
+      const previewStateGroup = document.getElementById('preview-state-group');
+      const currentPreviewState = previewStateGroup ? previewStateGroup.dataset.previewState : 'preview';
+      if (currentPreviewState !== 'layout') {
+        console.debug('PropertiesPanel: Highlighting column in preview');
+        globalThis.previewHoverManager.selectElementByContext({
+          type: 'column',
+          rowId,
+          columnId
+        });
+      }
+    }
     
     // Parse current CSS classes
     const cssClasses = (column.cssClass || '').split(' ').filter(c => c.trim());
@@ -574,6 +603,22 @@ class PropertiesPanel {
     if (!widget) {
       console.warn('PropertiesPanel: Widget not found in layout manager:', { rowId, columnId, widgetId });
       return;
+    }
+
+    // Highlight the widget in the preview if preview is enabled (for preview-layout mode)
+    if (globalThis.previewHoverManager && typeof globalThis.previewHoverManager.selectElementByContext === 'function') {
+      const previewStateGroup = document.getElementById('preview-state-group');
+      const currentPreviewState = previewStateGroup ? previewStateGroup.dataset.previewState : 'preview';
+      // Only highlight in preview if preview is enabled (preview or preview-layout mode)
+      if (currentPreviewState !== 'layout') {
+        console.debug('PropertiesPanel: Highlighting widget in preview');
+        globalThis.previewHoverManager.selectElementByContext({
+          type: 'widget',
+          rowId: rowId,
+          columnId: columnId,
+          widgetId: widgetId
+        });
+      }
     }
     
     console.debug('PropertiesPanel: Found widget:', widget);
@@ -2074,6 +2119,10 @@ class PropertiesPanel {
     this.currentContext = null;
     this.clearHighlight();
     this.content.innerHTML = '<p style="color: var(--editor-text-muted); font-size: 14px;">Select an element to edit its properties</p>';
+
+    if (typeof globalThis !== 'undefined' && globalThis.previewHoverManager && typeof globalThis.previewHoverManager.clearSelection === 'function') {
+      globalThis.previewHoverManager.clearSelection();
+    }
     
     // Restore to previous non-properties tab when clearing
     if (this.rightPanelTabs) {

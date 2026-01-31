@@ -79,7 +79,7 @@
     <div class="toolbar-section next">
       <button id="save-btn" class="button tiny no-gap radius"><i class="${font:far()} fa-save"></i> Publish</button>
     </div>
-    
+
     <!-- Right Section -->
     <div class="toolbar-section right">
       <div id="loading-indicator" style="display: none;">
@@ -477,7 +477,12 @@
             }
 
             var propertyApi = (window.PropertyEditorAPI || window.EditorPropertyAPI || null);
-            var manager = new (window.PreviewHoverManager || function(){}) (previewContainer, propertyApi);
+            
+            // Only create manager if PreviewHoverManager class is available
+            var manager = null;
+            if (typeof window.PreviewHoverManager === 'function') {
+              manager = new window.PreviewHoverManager(previewContainer, propertyApi);
+            }
 
             // Expose for debugging
             window.__previewHoverManager = manager;
@@ -579,24 +584,32 @@
             if (iframe && iframe.contentDocument && iframe.contentDocument.readyState !== 'complete') {
               iframe.addEventListener('load', function(){
                 setupIframeEventProxy();
-                manager.handlePreviewModeChange(isPreviewMode());
+                if (manager && typeof manager.handlePreviewModeChange === 'function') {
+                  manager.handlePreviewModeChange(isPreviewMode());
+                }
               });
             } else {
               setupIframeEventProxy();
-              manager.handlePreviewModeChange(isPreviewMode());
+              if (manager && typeof manager.handlePreviewModeChange === 'function') {
+                manager.handlePreviewModeChange(isPreviewMode());
+              }
             }
 
             // Listen for existing editor mode-change events if available
             document.addEventListener('cms:editor:mode-change', function (e) {
               var mode = e && e.detail && e.detail.mode ? e.detail.mode : null;
-              manager.handlePreviewModeChange(mode === 'preview');
+              if (manager && typeof manager.handlePreviewModeChange === 'function') {
+                manager.handlePreviewModeChange(mode === 'preview');
+              }
             });
 
             // Fallback: observe class/attribute changes on wrapper
             var wrapper = document.getElementById('visual-page-editor-wrapper');
             if (wrapper && window.MutationObserver) {
               var observer = new MutationObserver(function () {
-                manager.handlePreviewModeChange(isPreviewMode());
+                if (manager && typeof manager.handlePreviewModeChange === 'function') {
+                  manager.handlePreviewModeChange(isPreviewMode());
+                }
               });
               observer.observe(wrapper, { attributes: true, attributeFilter: ['class', 'data-mode'] });
             }
@@ -768,7 +781,7 @@
       if (isPreviewEnabled()) {
         previewContainer.classList.add('active');
         previewIframe.classList.add('active');
-        if (window.previewHoverManager) {
+        if (window.previewHoverManager && typeof window.previewHoverManager.handlePreviewModeChange === 'function') {
           window.previewHoverManager.handlePreviewModeChange(true);
         }
         if (refresh) {
@@ -777,7 +790,7 @@
       } else {
         previewContainer.classList.remove('active');
         previewIframe.classList.remove('active');
-        if (window.previewHoverManager) {
+        if (window.previewHoverManager && typeof window.previewHoverManager.handlePreviewModeChange === 'function') {
           window.previewHoverManager.handlePreviewModeChange(false);
         }
       }
@@ -788,7 +801,9 @@
     
     // Initialize PreviewHoverManager with the preview iframe as the container
     // The iframe content will be the actual preview container where hover detection occurs
-    window.previewHoverManager = new PreviewHoverManager(previewIframe, propertiesPanel);
+    if (typeof PreviewHoverManager === 'function') {
+      window.previewHoverManager = new PreviewHoverManager(previewIframe, propertiesPanel);
+    }
     
     // General function to open a page in the preview iframe
     window.openPageInIframe = function(url, loadingMessage = 'Loading...') {
@@ -896,13 +911,15 @@
           }
           
           // Re-initialize hover manager for the new iframe content
-          if (window.previewHoverManager && isPreviewEnabled()) {
+          if (window.previewHoverManager && typeof window.previewHoverManager.refreshIframeReferences === 'function' && isPreviewEnabled()) {
             // Refresh iframe references after preview reload
             window.previewHoverManager.refreshIframeReferences();
             
             // Small delay to ensure iframe content is fully loaded
             setTimeout(() => {
-              window.previewHoverManager.handlePreviewModeChange(true);
+              if (window.previewHoverManager && typeof window.previewHoverManager.handlePreviewModeChange === 'function') {
+                window.previewHoverManager.handlePreviewModeChange(true);
+              }
             }, 100);
           }
         };
@@ -992,15 +1009,19 @@
                 console.debug('Preview iframe: hover CSS already present');
               }
             }
-            if (window.previewHoverManager) {
+            if (window.previewHoverManager && typeof window.previewHoverManager.refreshIframeReferences === 'function') {
               window.previewHoverManager.refreshIframeReferences();
               // Small delay ensures document is ready before enabling
               setTimeout(function(){
                 console.debug('Preview iframe: reinitializing bridge for reattachment');
                 if (isPreviewEnabled()) {
-                  window.previewHoverManager.reinitializeBridge();
+                  if (typeof window.previewHoverManager.reinitializeBridge === 'function') {
+                    window.previewHoverManager.reinitializeBridge();
+                  }
                 } else {
-                  window.previewHoverManager.handlePreviewModeChange(true);
+                  if (typeof window.previewHoverManager.handlePreviewModeChange === 'function') {
+                    window.previewHoverManager.handlePreviewModeChange(true);
+                  }
                 }
               }, 100);
             }
@@ -1126,6 +1147,8 @@
               el.classList.remove('selected');
             });
             window.pageEditor.getPropertiesPanel().clear();
+            // Dispatch event for PreviewHoverManager to clear preview lock
+            document.dispatchEvent(new CustomEvent('propertiesPanelCleared'));
           }
         }
       });

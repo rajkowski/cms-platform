@@ -56,6 +56,14 @@ class PreviewHoverManager {
       isButtonVisible: false
     };
     
+    // Separate state for locked (selected) element
+    this.lockedElement = {
+      type: null,
+      element: null,
+      id: null,
+      boundingBox: null
+    };
+    
     this.isEnabled = false;
     
     // Page change listener state
@@ -88,63 +96,94 @@ class PreviewHoverManager {
       return;
     }
     
-    const self = this;
-    window.addEventListener('message', function(event) {
+    window.addEventListener('message', (event) => {
       if (!event.data || !event.data.type) {
         return;
       }
       
       // Handle iframe hover detection messages
       if (event.data.type === 'previewHover:elementDetected' && event.data.data) {
-        const data = event.data.data;
-        console.debug('PreviewHoverManager: Received element detected from iframe:', data.type, data.id);
-        
-        // Create synthetic element info using the bounding box from iframe
-        const elementInfo = {
-          type: data.type,
-          id: data.id,
-          element: null, // No element reference from iframe
-          boundingBox: data.boundingBox
-        };
-        
-        // Check if same element
-        if (self.hoverState.currentElement.type === data.type &&
-            self.hoverState.currentElement.id === data.id) {
-          return; // No change
-        }
-        
-        self.hoverState.currentElement = {
-          type: data.type,
-          element: null,
-          id: data.id,
-          rowId: data.rowId,
-          columnId: data.columnId,
-          boundingBox: data.boundingBox
-        };
-        
-        // Show outline using bounding box coordinates
-        self.hoverOverlay.showOutlineFromBox(data.boundingBox, data.type, self.previewContainer);
-        self.hoverState.isOutlineVisible = true;
-        
-        // Set up button click callback before rendering
-        self.hoverOverlay.setActionButtonClickCallback(function() {
-          self._onActionButtonClick();
-        });
-        
-        // Render action button for all types (widget, column, row)
-        self.hoverOverlay.renderActionButtonFromBox(data.boundingBox, data.type, self.previewContainer);
-        self.hoverState.isButtonVisible = true;
-        
+        this._handleIframeElementDetected(event.data.data);
       } else if (event.data.type === 'previewHover:elementLost') {
-        console.debug('PreviewHoverManager: Received element lost from iframe');
-        
-        if (self.hoverState.currentElement.id) {
-          self.hoverOverlay.hideOutline();
-          self.hoverOverlay.removeActionButton();
-          self._resetCurrentElement();
-        }
+        this._handleIframeElementLost();
       }
     });
+  }
+
+  /**
+   * Handle iframe element detected events
+   * @private
+   * @param {Object} data - Detected element data from iframe
+   */
+  _handleIframeElementDetected(data) {
+    console.debug('PreviewHoverManager: Received element detected from iframe:', data.type, data.id);
+
+    // Check if this is the locked element - if so, don't update hover state
+    if (this.lockedElement &&
+        this.lockedElement.type === data.type &&
+        this.lockedElement.id === data.id) {
+      console.debug('PreviewHoverManager: Detected locked element from iframe, ignoring detection');
+      return; // This is the locked element, don't change anything
+    }
+
+    // Check if same element
+    if (this.hoverState.currentElement.type === data.type &&
+        this.hoverState.currentElement.id === data.id) {
+      return; // No change
+    }
+
+    this.hoverState.currentElement = {
+      type: data.type,
+      element: null,
+      id: data.id,
+      rowId: data.rowId,
+      columnId: data.columnId,
+      boundingBox: data.boundingBox
+    };
+
+    // Show outline using bounding box coordinates
+    this.hoverOverlay.showOutlineFromBox(data.boundingBox, data.type, this.previewContainer);
+    this.hoverState.isOutlineVisible = true;
+
+    // Set up button click callback before rendering
+    this.hoverOverlay.setActionButtonClickCallback(() => {
+      this._onActionButtonClick();
+    });
+
+    // Render action button for all types (widget, column, row)
+    this.hoverOverlay.renderActionButtonFromBox(data.boundingBox, data.type, this.previewContainer);
+    this.hoverState.isButtonVisible = true;
+  }
+
+  /**
+   * Handle iframe element lost events
+   * @private
+   */
+  _handleIframeElementLost() {
+    console.debug('PreviewHoverManager: Received element lost from iframe');
+
+    // Check if the lost element is NOT the locked element before hiding
+    if (this.hoverState.currentElement.id &&
+        !(this.lockedElement && this.lockedElement.id === this.hoverState.currentElement.id)) {
+      this.hoverOverlay.hideOutline();
+      this.hoverOverlay.removeActionButton();
+      this._resetCurrentElement();
+    } else if (this.lockedElement && this.lockedElement.id === this.hoverState.currentElement.id) {
+      console.debug('PreviewHoverManager: Element lost from iframe but element is locked, keeping outline visible');
+    }
+
+    // Re-show locked outline and action button when applicable
+    if (this.lockedElement && this.lockedElement.type) {
+      if (this.lockedElement.element) {
+        this.hoverOverlay.showLockedOutline(this.lockedElement.element, this.lockedElement.type);
+        if (this.lockedElement.type === 'widget') {
+          this.hoverOverlay.renderActionButton(this.lockedElement.element, this.lockedElement.type);
+        }
+      } else if (this.lockedElement.boundingBox) {
+        this.hoverOverlay.showLockedOutlineFromBox(this.lockedElement.boundingBox, this.lockedElement.type, this.previewContainer);
+        this.hoverOverlay.renderActionButtonFromBox(this.lockedElement.boundingBox, this.lockedElement.type, this.previewContainer);
+      }
+    }
   }
   
   /**
@@ -279,6 +318,13 @@ class PreviewHoverManager {
     
     if (isPreviewMode) {
       this.enable();
+      // If there's a locked selection, redraw it after enabling preview
+      if (this.lockedElement && this.lockedElement.type) {
+        console.log('PreviewHoverManager: Redrawing locked outline after preview mode enabled');
+        setTimeout(() => {
+          this._redrawLockedOutline();
+        }, 100);
+      }
       // Set up page change listener when entering preview mode
       this._setupPageChangeListener();
     } else {
@@ -297,23 +343,86 @@ class PreviewHoverManager {
       return; // Already set up
     }
     
-    const self = this;
     this._onPageChanged = () => {
       console.log('PreviewHoverManager: Page changed, clearing selections');
+      // Hide locked outline
+      this.hoverOverlay.hideLockedOutline();
+      // Clear locked element
+      this.lockedElement = {
+        type: null,
+        element: null,
+        id: null,
+        boundingBox: null
+      };
       // Clear any active hover states
-      self.hoverOverlay.hideOutline();
-      self.hoverOverlay.removeActionButton();
-      self._resetCurrentElement();
+      this.hoverOverlay.hideOutline();
+      this.hoverOverlay.removeActionButton();
+      this._resetCurrentElement();
       
       // Clear properties panel if available
-      if (self.propertyEditorAPI && typeof self.propertyEditorAPI.clear === 'function') {
-        self.propertyEditorAPI.clear();
+      if (this.propertyEditorAPI && typeof this.propertyEditorAPI.clear === 'function') {
+        this.propertyEditorAPI.clear();
       }
     };
     
+    // Listen for layout editor deselection (when user clicks empty space in layout editor)
+    this._onLayoutEditorDeselect = () => {
+      console.log('PreviewHoverManager: Layout editor deselected, clearing preview lock');
+      // Hide locked outline
+      this.hoverOverlay.hideLockedOutline();
+      // Clear locked element
+      this.lockedElement = {
+        type: null,
+        element: null,
+        id: null,
+        boundingBox: null
+      };
+      // Clear any active hover states
+      this.hoverOverlay.hideOutline();
+      this.hoverOverlay.removeActionButton();
+      this._resetCurrentElement();
+      
+      // Clear properties panel if available
+      if (this.propertyEditorAPI && typeof this.propertyEditorAPI.clear === 'function') {
+        this.propertyEditorAPI.clear();
+      }
+    };
+    
+    // Listen for viewport/view mode changes to redraw locked outline
+    this._onViewportOrModeChange = () => {
+      console.log('PreviewHoverManager: Viewport or view mode changed, redrawing locked outline');
+      // Redraw locked outline after viewport/mode change
+      if (this.lockedElement && this.lockedElement.type) {
+        // Use small timeout to allow positioning to settle
+        setTimeout(() => {
+          this._redrawLockedOutline();
+        }, 500); // Wait for layout to settle
+      }
+    };
+    
+    // Listen for window resize to redraw locked outline
+    this._onWindowResize = () => {
+      console.log('PreviewHoverManager: Window resize detected, queuing locked outline redraw');
+      // Clear any pending resize timer
+      if (this._resizeTimer) {
+        clearTimeout(this._resizeTimer);
+      }
+      // Queue redraw after resize settles
+      this._resizeTimer = setTimeout(() => {
+        this._redrawLockedOutline();
+        this._resizeTimer = null;
+      }, 500); // Wait for resize to complete
+    };
+    
     document.addEventListener('pageChanged', this._onPageChanged);
+    document.addEventListener('propertiesPanelCleared', this._onLayoutEditorDeselect);
+    document.addEventListener('viewportChanged', this._onViewportOrModeChange);
+    document.addEventListener('cms:editor:mode-change', this._onViewportOrModeChange);
+    window.addEventListener('resize', this._onWindowResize);
+    
     this._pageChangeListenerActive = true;
-    console.log('PreviewHoverManager: Page change listener installed');
+    this._resizeTimer = null;
+    console.log('PreviewHoverManager: Page change and event listeners installed');
   }
   
   /**
@@ -321,14 +430,34 @@ class PreviewHoverManager {
    * @private
    */
   _removePageChangeListener() {
-    if (!this._pageChangeListenerActive || !this._onPageChanged) {
+    if (!this._pageChangeListenerActive) {
       return;
     }
     
-    document.removeEventListener('pageChanged', this._onPageChanged);
+    if (this._onPageChanged) {
+      document.removeEventListener('pageChanged', this._onPageChanged);
+      this._onPageChanged = null;
+    }
+    if (this._onLayoutEditorDeselect) {
+      document.removeEventListener('propertiesPanelCleared', this._onLayoutEditorDeselect);
+      this._onLayoutEditorDeselect = null;
+    }
+    if (this._onViewportOrModeChange) {
+      document.removeEventListener('viewportChanged', this._onViewportOrModeChange);
+      document.removeEventListener('cms:editor:mode-change', this._onViewportOrModeChange);
+      this._onViewportOrModeChange = null;
+    }
+    if (this._onWindowResize) {
+      window.removeEventListener('resize', this._onWindowResize);
+      this._onWindowResize = null;
+    }
+    if (this._resizeTimer) {
+      clearTimeout(this._resizeTimer);
+      this._resizeTimer = null;
+    }
+    
     this._pageChangeListenerActive = false;
-    this._onPageChanged = null;
-    console.log('PreviewHoverManager: Page change listener removed');
+    console.log('PreviewHoverManager: Page change and event listeners removed');
   }
   
   /**
@@ -337,6 +466,150 @@ class PreviewHoverManager {
    */
   getHoverState() {
     return { ...this.hoverState };
+  }
+
+  /**
+   * Programmatically highlight an element in the preview based on editor context
+   * @param {Object} context - Context object with type, rowId, columnId, widgetId
+   */
+  selectElementByContext(context) {
+    if (!context || !context.type) {
+      return;
+    }
+
+    if (!this.isEnabled) {
+      return;
+    }
+
+    const elementInfo = this._getPreviewElementInfo(context);
+    if (!elementInfo || !elementInfo.element) {
+      this.clearSelection();
+      return;
+    }
+
+    const { element, type, id, rowId, columnId } = elementInfo;
+    const rect = element.getBoundingClientRect ? element.getBoundingClientRect() : null;
+    if (!rect) {
+      return;
+    }
+      let top = rect.top;
+      let left = rect.left;
+      if (this.isIframeContainer && this.previewContainer && this.previewContainer.getBoundingClientRect) {
+        const iframeRect = this.previewContainer.getBoundingClientRect();
+        top += iframeRect.top;
+        left += iframeRect.left;
+      }
+
+      const boundingBox = {
+        top,
+        left,
+        width: rect.width,
+        height: rect.height
+      };
+
+    // Clear previous locked selection and hover outline
+    this.hoverOverlay.hideLockedOutline();
+    this.hoverOverlay.hideOutline();
+    this.hoverOverlay.removeActionButton();
+
+    // Update state
+    this.hoverState.currentElement = {
+      type: type,
+      element: null,
+      id: id,
+      rowId: rowId || null,
+      columnId: columnId || null,
+      boundingBox: boundingBox
+    };
+
+    // Lock selection to match layout editor focus
+    this.lockedElement = {
+      type: type,
+      element: null,
+      id: id,
+      rowId: rowId || null,
+      columnId: columnId || null,
+      boundingBox: boundingBox
+    };
+
+    // Show locked outline (no action button for selection syncing)
+    this.hoverOverlay.showLockedOutlineFromBox(boundingBox, type, this.isIframeContainer ? this.previewContainer : null);
+    this.hoverState.isOutlineVisible = false;
+    this.hoverState.isButtonVisible = false;
+  }
+
+  /**
+   * Clear any active preview selection/outline
+   */
+  clearSelection() {
+    this.hoverOverlay.hideOutline();
+    this.hoverOverlay.removeActionButton();
+    this._resetCurrentElement();
+  }
+
+  /**
+   * Get preview element info from context
+   * @private
+   * @param {Object} context - Context object with type, rowId, columnId, widgetId
+   * @returns {Object|null} element info
+   */
+  _getPreviewElementInfo(context) {
+    const previewDoc = this._getPreviewDocument();
+    if (!previewDoc) {
+      return null;
+    }
+
+    let selector = null;
+    let id = null;
+    let type = context.type;
+
+    if (type === 'widget' && context.widgetId) {
+      id = context.widgetId;
+      selector = `[data-widget="${context.widgetId}"]`;
+    } else if (type === 'column' && context.columnId) {
+      id = context.columnId;
+      selector = `[data-col-id="${context.columnId}"]`;
+    } else if (type === 'row' && context.rowId) {
+      id = context.rowId;
+      selector = `[data-row-id="${context.rowId}"]`;
+    }
+
+    if (!selector) {
+      return null;
+    }
+
+    const element = previewDoc.querySelector(selector);
+    if (!element) {
+      return null;
+    }
+
+    return {
+      type,
+      id,
+      rowId: context.rowId || null,
+      columnId: context.columnId || null,
+      element
+    };
+  }
+
+  /**
+   * Resolve the preview document (iframe-aware)
+   * @private
+   * @returns {Document|null}
+   */
+  _getPreviewDocument() {
+    if (this.isIframeContainer) {
+      return this.previewContainer && (this.previewContainer.contentDocument || this.previewContainer.contentWindow?.document) || null;
+    }
+
+    if (this.previewContainer && this.previewContainer.ownerDocument) {
+      return this.previewContainer.ownerDocument;
+    }
+
+    if (typeof globalThis !== 'undefined' && globalThis.document) {
+      return globalThis.document;
+    }
+    return null;
   }
   
   /**
@@ -365,7 +638,15 @@ class PreviewHoverManager {
     
     try {
       console.debug('PreviewHoverManager: Detected element', elementInfo.type, elementInfo.id);
-      // Check if this is the same element we're already showing
+      
+      // Check if this is the locked element - if so, no need to show hover outline
+      if (this.lockedElement && this.lockedElement.element && 
+          this.lockedElement.type === elementInfo.type &&
+          this.lockedElement.id === elementInfo.id) {
+        return; // This is the locked element, keep showing its outline
+      }
+      
+      // Check if this is the same element we're already hovering
       if (this.hoverState.currentElement.type === elementInfo.type &&
           this.hoverState.currentElement.id === elementInfo.id) {
         return; // No change needed
@@ -407,12 +688,22 @@ class PreviewHoverManager {
     }
     
     try {
-      // Hide outline and button
+      // Hide hover outline and button
       this.hoverOverlay.hideOutline();
       this.hoverOverlay.removeActionButton();
       
-      // Reset state
+      // Reset hover state but keep locked element
       this._resetCurrentElement();
+      
+      // If there's a locked element, re-show its outline
+      if (this.lockedElement && this.lockedElement.element && this.lockedElement.type) {
+        console.debug('PreviewHoverManager: Re-showing locked element outline');
+        this.hoverOverlay.showOutline(this.lockedElement.element, this.lockedElement.type);
+          this.hoverOverlay.showLockedOutline(this.lockedElement.element, this.lockedElement.type);
+        if (this.lockedElement.type === 'widget') {
+          this.hoverOverlay.renderActionButton(this.lockedElement.element, this.lockedElement.type);
+        }
+      }
       
     } catch (error) {
       console.error('PreviewHoverManager: Error handling element lost:', error);
@@ -458,6 +749,24 @@ class PreviewHoverManager {
       
       if (success) {
         console.log(`PreviewHoverManager: Successfully opened ${type} properties for ID:`, id);
+        // Lock the selection so it stays visible
+        this.lockedElement = {
+          type: this.hoverState.currentElement.type,
+          element: this.hoverState.currentElement.element,
+          id: this.hoverState.currentElement.id,
+          boundingBox: this.hoverState.currentElement.boundingBox
+        };
+        console.debug('PreviewHoverManager: Locked element:', this.lockedElement.type, this.lockedElement.id);
+
+          // Hide any existing locked outline to avoid a brief incorrect position
+          this.hoverOverlay.hideLockedOutline();
+
+          // After opening properties panel, recalculate locked outline position after layout settles
+          // This fixes cases where opening the properties panel or action menu causes layout shifts
+          setTimeout(() => {
+            console.debug('PreviewHoverManager: Recalculating locked outline position after action button click');
+            this._redrawLockedOutline();
+          }, 300);
       } else {
         console.warn(`PreviewHoverManager: Failed to open ${type} properties for ID:`, id);
       }
@@ -491,11 +800,145 @@ class PreviewHoverManager {
     this.hoverState.isOutlineVisible = false;
     this.hoverState.isButtonVisible = false;
   }
+
+  /**
+   * Clear locked selection - hides locked outline and clears locked element state
+   * Called when switching preview modes to clean up UI
+   */
+  clearLockedSelection() {
+    console.log('PreviewHoverManager: Clearing locked selection');
+    // Hide locked outline
+    this.hoverOverlay.hideLockedOutline();
+    // Clear locked element
+    this.lockedElement = {
+      type: null,
+      element: null,
+      id: null,
+      boundingBox: null
+    };
+  }
+
+  /**
+   * Get the current locked element
+   * @returns {Object} The locked element object
+   */
+  getLockedElement() {
+    return this.lockedElement;
+  }
+
+  /**
+   * Public method to redraw the locked outline
+   * Called when viewport or layout changes
+   */
+  redrawLockedOutline() {
+    console.log('PreviewHoverManager: Redrawing locked outline');
+    this._redrawLockedOutline();
+  }
+
+  /**
+   * Redraw locked outline with recalculated bounding box from current DOM position
+   * @private
+   */
+  _redrawLockedOutline() {
+    if (!this.lockedElement || !this.lockedElement.type) {
+      return;
+    }
+
+    try {
+      // For iframe mode: requery the element from the iframe DOM to get updated position/size
+      if (this.isIframeContainer && (this.lockedElement.id || this.lockedElement.rowId)) {
+        const updatedInfo = this._getPreviewElementInfo({
+          type: this.lockedElement.type,
+          rowId: this.lockedElement.rowId,
+          columnId: this.lockedElement.columnId,
+          widgetId: this.lockedElement.id
+        });
+
+        if (updatedInfo && updatedInfo.element) {
+          const rect = updatedInfo.element.getBoundingClientRect();
+          if (rect && rect.width > 0 && rect.height > 0) {
+            // Calculate iframe offset
+            let offsetTop = 0;
+            let offsetLeft = 0;
+            if (this.previewContainer && this.previewContainer.getBoundingClientRect) {
+              const iframeRect = this.previewContainer.getBoundingClientRect();
+              offsetTop = iframeRect.top;
+              offsetLeft = iframeRect.left;
+            }
+
+            // Update bounding box with current position and offset
+            this.lockedElement.boundingBox = {
+              top: rect.top + offsetTop,
+              left: rect.left + offsetLeft,
+              width: rect.width,
+              height: rect.height
+            };
+            console.debug('PreviewHoverManager: Updated locked element bounding box from iframe:', this.lockedElement.boundingBox);
+            this.hoverOverlay.showLockedOutlineFromBox(this.lockedElement.boundingBox, this.lockedElement.type, this.previewContainer);
+            return;
+          }
+        }
+      }
+
+      // For non-iframe mode: requery element from regular DOM
+      if (!this.isIframeContainer && (this.lockedElement.id || this.lockedElement.rowId)) {
+        const updatedInfo = this._getPreviewElementInfo({
+          type: this.lockedElement.type,
+          rowId: this.lockedElement.rowId,
+          columnId: this.lockedElement.columnId,
+          widgetId: this.lockedElement.id
+        });
+
+        if (updatedInfo && updatedInfo.element) {
+          const rect = updatedInfo.element.getBoundingClientRect();
+          if (rect && rect.width > 0 && rect.height > 0) {
+            // Update bounding box with current position
+            this.lockedElement.boundingBox = {
+              top: rect.top,
+              left: rect.left,
+              width: rect.width,
+              height: rect.height
+            };
+            console.debug('PreviewHoverManager: Updated locked element bounding box from DOM:', this.lockedElement.boundingBox);
+            this.hoverOverlay.showOutlineFromBox(this.lockedElement.boundingBox, this.lockedElement.type, null);
+            return;
+          }
+        }
+      }
+
+      // Fall back to stored element reference if lookup failed
+      if (this.lockedElement.element && typeof this.lockedElement.element.getBoundingClientRect === 'function') {
+        const rect = this.lockedElement.element.getBoundingClientRect();
+        if (rect && rect.width > 0 && rect.height > 0) {
+          this.lockedElement.boundingBox = {
+            top: rect.top,
+            left: rect.left,
+            width: rect.width,
+            height: rect.height
+          };
+          console.debug('PreviewHoverManager: Updated locked element bounding box from element ref:', this.lockedElement.boundingBox);
+          this.hoverOverlay.showLockedOutline(this.lockedElement.element, this.lockedElement.type);
+          return;
+        }
+      }
+
+      // Fall back to bounding box if element lookup failed
+      if (this.lockedElement.boundingBox && this.lockedElement.type) {
+        console.debug('PreviewHoverManager: Using stored bounding box (element not found for requery)');
+        this.hoverOverlay.showLockedOutlineFromBox(this.lockedElement.boundingBox, this.lockedElement.type, this.previewContainer);
+        return;
+      }
+
+      console.warn('PreviewHoverManager: Could not redraw locked outline - no element reference or bounding box');
+    } catch (error) {
+      console.error('PreviewHoverManager: Error redrawing locked outline:', error);
+    }
+  }
 }
 
 // Export for module systems or make globally available
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = PreviewHoverManager;
-} else if (typeof window !== 'undefined') {
-  window.PreviewHoverManager = PreviewHoverManager;
+} else if (typeof globalThis !== 'undefined') {
+  globalThis.PreviewHoverManager = PreviewHoverManager;
 }

@@ -72,7 +72,7 @@ class ElementDetector {
       containerInDom = !!(this.doc && this.doc.contains && this.doc.contains(this.previewContainer));
     }
     if (!containerInDom) {
-      console.error('ElementDetector: Preview container is not in DOM');
+      console.warn('ElementDetector: Preview container is not in DOM yet, deferring mouse listener attachment');
       return;
     }
     
