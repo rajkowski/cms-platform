@@ -94,14 +94,28 @@ public class JsonCommand {
       // Determine how the value is appended
       if (value instanceof List) {
         sb.append("[");
-        boolean isFirstMap = true;
-        for (Object map : (List) value) {
-          if (!isFirstMap) {
+        boolean isFirstItem = true;
+        for (Object item : (List) value) {
+          if (!isFirstItem) {
             sb.append(", ");
           } else {
-            isFirstMap = false;
+            isFirstItem = false;
           }
-          sb.append(createJsonNode((Map) map));
+          // Handle different types in the list
+          if (item instanceof Map) {
+            sb.append(createJsonNode((Map) item));
+          } else if (item instanceof String) {
+            sb.append("\"").append(toJson((String) item)).append("\"");
+          } else if (item instanceof Boolean) {
+            sb.append((boolean) item ? "true" : "false");
+          } else if (item instanceof List) {
+            // Recursively handle nested lists
+            sb.append(createJsonNode(Map.of("temp", item)).toString().replaceFirst("\\{\"temp\":", "").replaceFirst("\\}$", ""));
+          } else if (item != null) {
+            sb.append(item);
+          } else {
+            sb.append("null");
+          }
         }
         sb.append("]");
       } else if (value instanceof String) {
@@ -110,6 +124,31 @@ public class JsonCommand {
         sb.append((boolean) value ? "true" : "false");
       } else if (value instanceof Map) {
         sb.append(createJsonNode((Map) value));
+      } else if (value.getClass().isArray()) {
+        // Handle arrays by converting them to JSON arrays
+        sb.append("[");
+        Object[] arrayValue = (Object[]) value;
+        boolean isFirstItem = true;
+        for (Object item : arrayValue) {
+          if (!isFirstItem) {
+            sb.append(", ");
+          } else {
+            isFirstItem = false;
+          }
+          // Handle different types in the array
+          if (item instanceof Map) {
+            sb.append(createJsonNode((Map) item));
+          } else if (item instanceof String) {
+            sb.append("\"").append(toJson((String) item)).append("\"");
+          } else if (item instanceof Boolean) {
+            sb.append((boolean) item ? "true" : "false");
+          } else if (item != null) {
+            sb.append(item);
+          } else {
+            sb.append("null");
+          }
+        }
+        sb.append("]");
       } else {
         sb.append(value);
       }
