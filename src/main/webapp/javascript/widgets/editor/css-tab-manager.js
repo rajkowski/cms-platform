@@ -140,7 +140,8 @@ class CSSTabManager {
     
     // Set up change listener for dirty state tracking
     this.aceEditor.on('change', () => {
-      if (this.isInitialized && this.hasChanges()) {
+      // Don't mark as dirty if we're in the middle of loading a stylesheet
+      if (this.isInitialized && !this.isLoading && this.hasChanges()) {
         this.rightPanelTabs.markDirty('css');
         this.updateStatusText('Modified');
         // Trigger save indicator update in main editor
