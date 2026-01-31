@@ -375,6 +375,22 @@ class PagesTabManager {
     // Check if this is a new page (doesn't exist in the server yet)
     const isNewPage = this.selectedPageId === 'new';
     
+    // Clear any selections in the canvas controller
+    if (this.pageEditor.canvasController) {
+      this.pageEditor.canvasController.selectedElement = null;
+      this.pageEditor.canvasController.selectedContext = null;
+    }
+    
+    // Clear any locked selections in the preview hover manager
+    if (window.previewHoverManager && typeof window.previewHoverManager.clearLockedSelection === 'function') {
+      window.previewHoverManager.clearLockedSelection();
+    }
+    
+    // Clear the properties panel
+    if (this.pageEditor.propertiesPanel && typeof this.pageEditor.propertiesPanel.clear === 'function') {
+      this.pageEditor.propertiesPanel.clear();
+    }
+    
     if (isNewPage) {
       // For new pages, start with empty content
       console.log('Loading new page:', pageLink);
@@ -471,16 +487,18 @@ class PagesTabManager {
           this.pageEditor.historyIndex = -1;
           this.pageEditor.saveToHistory();
           
-          // Set baseline for dirty detection
+          // Set baseline for dirty detection - must be called AFTER saveToHistory
           this.pageEditor.setSavedState();
           
-          // Update save indicator to reflect clean state
-          this.pageEditor.updateSaveIndicator();
+          // Force update save indicator to reflect clean state
+          if (this.pageEditor.updateSaveIndicator) {
+            this.pageEditor.updateSaveIndicator();
+          }
 
           // Dispatch a custom event to notify that the page has been switched
           document.dispatchEvent(new CustomEvent('pageChanged', { detail: { pageLink } }));
 
-          console.log('Page content loaded successfully');
+          console.log('Page content loaded successfully - state is clean');
         } else {
           throw new Error('No page content returned');
         }

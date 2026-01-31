@@ -461,21 +461,6 @@
             var previewContainer = (ctx && ctx.container) ? ctx.container : (document.getElementById('editor-canvas') || document.querySelector('#visual-page-editor-wrapper'));
             if (!previewContainer) { return; }
 
-            // Ensure hover CSS is available inside iframe
-            if (ctx && ctx.doc) {
-              var cssHref = '${ctx}/css/platform/preview-hover.css';
-              var exists = ctx.doc.querySelector('link[href$="/css/platform/preview-hover.css"]');
-              if (!exists) {
-                try {
-                  console.log('Preview hover: injecting CSS into iframe');
-                  var link = ctx.doc.createElement('link');
-                  link.rel = 'stylesheet';
-                  link.href = cssHref;
-                  (ctx.doc.head || ctx.doc.documentElement).appendChild(link);
-                } catch (e) { /* ignore */ }
-              }
-            }
-
             var propertyApi = (window.PropertyEditorAPI || window.EditorPropertyAPI || null);
             
             // Only create manager if PreviewHoverManager class is available
@@ -790,6 +775,10 @@
       } else {
         previewContainer.classList.remove('active');
         previewIframe.classList.remove('active');
+        // Clear any locked selections in the preview hover system when disabling preview
+        if (window.previewHoverManager && typeof window.previewHoverManager.clearLockedSelection === 'function') {
+          window.previewHoverManager.clearLockedSelection();
+        }
         if (window.previewHoverManager && typeof window.previewHoverManager.handlePreviewModeChange === 'function') {
           window.previewHoverManager.handlePreviewModeChange(false);
         }
@@ -891,23 +880,19 @@
         iframeDoc.open();
         iframeDoc.write(html);
         iframeDoc.close();
-        
-        // Added by server...
-        // Inject the hover bridge script into the iframe document after content is written
-        // Use a small timeout to ensure body exists
-        // setTimeout(() => {
-        //   const freshDoc = previewIframe.contentDocument || previewIframe.contentWindow.document;
-        //   if (freshDoc && freshDoc.body) {
-        //     const bridgeScript = freshDoc.createElement('script');
-        //     bridgeScript.src = '${ctx}/javascript/widgets/editor/iframe-hover-bridge.js';
-        //     freshDoc.body.appendChild(bridgeScript);
-        //   }
-        // }, 10);
 
         // Apply viewport styles to iframe after content loads
         previewIframe.onload = function() {
           if (window.pageEditor && window.pageEditor.getViewportManager()) {
             window.pageEditor.getViewportManager().applyPreviewViewportStyles();
+          }
+
+          // Re-apply layout selection after preview refresh (keeps selection persistent)
+          if (window.pageEditor && window.pageEditor.getCanvasController && typeof window.pageEditor.getCanvasController === 'function') {
+            const canvasController = window.pageEditor.getCanvasController();
+            if (canvasController && typeof canvasController.restoreSelection === 'function') {
+              canvasController.restoreSelection({ updateProperties: false, syncPreview: true });
+            }
           }
           
           // Re-initialize hover manager for the new iframe content
@@ -985,30 +970,7 @@
           const selectedAbs = selectedAbsRaw ? normalizeAbs(selectedAbsRaw) : null;
           console.debug('Preview iframe load: comparing URLs', { iframeAbs, selectedAbs, match: iframeAbs === selectedAbs });
           if (iframeAbs && selectedAbs && iframeAbs === selectedAbs) {
-            console.log('Preview iframe returned to current page, reattaching hover');
             // Ensure the iframe hover bridge and CSS are present after navigation
-            const iframeDoc = previewIframe.contentDocument || (previewIframe.contentWindow && previewIframe.contentWindow.document);
-            if (iframeDoc && iframeDoc.body) {
-              const existingBridge = iframeDoc.querySelector('script[src$="/javascript/widgets/editor/iframe-hover-bridge.js"]');
-              if (!existingBridge) {
-                console.debug('Preview iframe: injecting hover bridge script');
-                const bridgeScript = iframeDoc.createElement('script');
-                bridgeScript.src = '${ctx}/javascript/widgets/editor/iframe-hover-bridge.js';
-                iframeDoc.body.appendChild(bridgeScript);
-              } else {
-                console.debug('Preview iframe: hover bridge script already present');
-              }
-              const existingCss = iframeDoc.querySelector('link[href$="/css/platform/preview-hover.css"]');
-              if (!existingCss) {
-                console.debug('Preview iframe: injecting hover CSS');
-                const link = iframeDoc.createElement('link');
-                link.rel = 'stylesheet';
-                link.href = '${ctx}/css/platform/preview-hover.css';
-                (iframeDoc.head || iframeDoc.documentElement).appendChild(link);
-              } else {
-                console.debug('Preview iframe: hover CSS already present');
-              }
-            }
             if (window.previewHoverManager && typeof window.previewHoverManager.refreshIframeReferences === 'function') {
               window.previewHoverManager.refreshIframeReferences();
               // Small delay ensures document is ready before enabling
@@ -1083,6 +1045,19 @@
     // Listen for viewport changes
     document.addEventListener('viewportChanged', function(e) {
       console.log('viewportChanged event fired, previewState:', previewState);
+      
+      // If there's a locked selection in the preview hover, redraw it after viewport change
+      if (window.previewHoverManager && typeof window.previewHoverManager.getLockedElement === 'function') {
+        const lockedEl = window.previewHoverManager.getLockedElement();
+        if (lockedEl && lockedEl.type) {
+          console.log('Redrawing locked selection after viewport change');
+          setTimeout(() => {
+            if (window.previewHoverManager && typeof window.previewHoverManager.redrawLockedOutline === 'function') {
+              window.previewHoverManager.redrawLockedOutline();
+            }
+          }, 150);
+        }
+      }
       
       // If in preview mode, refresh the preview when viewport is switched
       if (isPreviewEnabled()) {
