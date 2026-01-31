@@ -7,6 +7,11 @@
  * Shares base editor styles with visual-page-editor.css
  */
 
+/* Utility Classes */
+.hidden {
+  display: none !important;
+}
+
 /* Image Editor Specific Container */
 #visual-image-editor-wrapper {
   width: 100%;
@@ -388,6 +393,7 @@
   display: flex;
   flex-direction: column;
   gap: 5px;
+  margin-bottom: 0;
 }
 
 .property-group label {
@@ -426,6 +432,37 @@
   color: var(--editor-text-muted);
 }
 
+.url-display-container {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.property-url {
+  flex: 1;
+  padding: 8px;
+  background: var(--editor-hover-bg);
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--editor-primary-color);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+
+.property-url:hover {
+  text-decoration: underline;
+  background: var(--editor-panel-input);
+}
+
+#copy-url-btn {
+  margin: 0;
+  padding: 8px 12px;
+  flex-shrink: 0;
+}
+
 /* Modals */
 .reveal {
   background: var(--editor-panel-bg);
@@ -449,40 +486,63 @@
 }
 
 .version-item {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  padding: 10px;
+  padding: 12px;
+  background: var(--editor-panel-bg);
   border: 1px solid var(--editor-border);
   border-radius: 4px;
   margin-bottom: 10px;
-  cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .version-item:hover {
-  background: var(--editor-hover-bg);
   border-color: var(--editor-selected-border);
+  box-shadow: 0 2px 4px var(--editor-shadow);
 }
 
-.version-item img {
-  width: 60px;
-  height: 60px;
-  object-fit: cover;
-  border-radius: 4px;
+.version-item.current {
+  border-color: var(--editor-selected-border);
+  background: rgba(74, 158, 255, 0.05);
 }
 
-.version-info {
-  flex: 1;
+.version-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
 }
 
-.version-info .version-number {
+.version-number {
   font-weight: 600;
+  font-size: 14px;
   color: var(--editor-text);
 }
 
-.version-info .version-date {
+.version-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.version-info {
+  display: flex;
+  gap: 12px;
   font-size: 12px;
+  color: var(--editor-text-muted);
+}
+
+.version-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.version-actions .button {
+  font-size: 12px;
+  padding: 4px 8px;
+}
+
+.no-versions-message {
+  text-align: center;
+  padding: 30px 15px;
   color: var(--editor-text-muted);
 }
 
@@ -511,6 +571,137 @@
 .button-group.round .button.active {
   background-color: #0f4f79;
   color: #fff;
+}
+
+/* Tab Styles */
+.properties-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--editor-border);
+  background: var(--editor-panel-bg);
+  padding: 0 15px;
+}
+
+.tab-button {
+  flex: 1;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--editor-text-muted);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tab-button:hover {
+  color: var(--editor-text);
+  background: var(--editor-hover);
+}
+
+.tab-button.active {
+  color: var(--editor-selected-border);
+  border-bottom-color: var(--editor-selected-border);
+}
+
+.tab-content {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  overflow-y: auto;
+  padding: 15px;
+}
+
+.tab-content.active {
+  display: flex;
+}
+
+/* Badge Styles */
+.badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-left: 8px;
+}
+
+.badge.secondary {
+  background: var(--editor-border);
+  color: var(--editor-text);
+}
+
+.badge.success {
+  background: #28a745;
+  color: #fff;
+}
+
+.badge.primary {
+  background: #007bff;
+  color: #fff;
+}
+
+/* Version List Styles */
+#versions-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.versions-info {
+  padding: 15px;
+  background: var(--editor-panel-bg);
+  border: 1px solid var(--editor-border);
+  border-radius: 4px;
+  margin-bottom: 15px;
+}
+
+.versions-info p {
+  margin: 5px 0;
+  font-size: 14px;
+  color: var(--editor-text);
+}
+
+.versions-list-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Property Actions */
+.property-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid var(--editor-border);
+}
+
+/* Lazy Load Sentinel */
+#lazy-load-sentinel {
+  height: 1px;
+  width: 100%;
+  visibility: hidden;
+}
+
+/* Tool Button Styles */
+.tool-btn.primary {
+  background: var(--editor-selected-border);
+  color: #fff;
+}
+
+.tool-btn.primary:hover:not(:disabled) {
+  background: #0056b3;
+}
+
+.tool-btn.primary:disabled {
+  background: var(--editor-border);
+  color: var(--editor-text-muted);
+  cursor: not-allowed;
 }
 
 /* Responsive Adjustments */

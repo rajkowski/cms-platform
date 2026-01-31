@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
+ * Copyright 2026 Matt Rajkowski
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,36 +17,33 @@
 package com.simisinc.platform.domain.model.cms;
 
 import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 
-import com.simisinc.platform.application.cms.UrlCommand;
 import com.simisinc.platform.domain.model.Entity;
 
 /**
- * Represents an image which can be sent by the website
+ * Represents a version of an image
  *
  * @author matt rajkowski
- * @created 5/3/18 3:24 PM
+ * @created 1/31/26 9:15 AM
  */
-public class Image extends Entity {
+public class ImageVersion extends Entity {
 
   private Long id = -1L;
+  private long imageId = -1L;
+  private int versionNumber = 1;
   private String filename = null;
   private String fileServerPath = null;
   private long fileLength = -1;
-  private long createdBy = -1;
-  private Timestamp created = null;
-  private Timestamp processed = null;
   private String fileType = null;
-  private String webPath = null;
   private int width = -1;
   private int height = -1;
-  private String title = null;
-  private String altText = null;
-  private String description = null;
-  private int versionNumber = 1;
+  private boolean isCurrent = false;
+  private long createdBy = -1;
+  private Timestamp created = null;
+  private String notes = null;
 
-  public Image() {
+  public ImageVersion() {
+    // Default constructor
   }
 
   public Long getId() {
@@ -55,6 +52,22 @@ public class Image extends Entity {
 
   public void setId(Long id) {
     this.id = id;
+  }
+
+  public long getImageId() {
+    return imageId;
+  }
+
+  public void setImageId(long imageId) {
+    this.imageId = imageId;
+  }
+
+  public int getVersionNumber() {
+    return versionNumber;
+  }
+
+  public void setVersionNumber(int versionNumber) {
+    this.versionNumber = versionNumber;
   }
 
   public String getFilename() {
@@ -81,30 +94,6 @@ public class Image extends Entity {
     this.fileLength = fileLength;
   }
 
-  public long getCreatedBy() {
-    return createdBy;
-  }
-
-  public void setCreatedBy(long createdBy) {
-    this.createdBy = createdBy;
-  }
-
-  public Timestamp getCreated() {
-    return created;
-  }
-
-  public void setCreated(Timestamp created) {
-    this.created = created;
-  }
-
-  public Timestamp getProcessed() {
-    return processed;
-  }
-
-  public void setProcessed(Timestamp processed) {
-    this.processed = processed;
-  }
-
   public String getFileType() {
     return fileType;
   }
@@ -129,47 +118,35 @@ public class Image extends Entity {
     this.height = height;
   }
 
-  public String getWebPath() {
-    return webPath;
+  public boolean getIsCurrent() {
+    return isCurrent;
   }
 
-  public void setWebPath(String webPath) {
-    this.webPath = webPath;
+  public void setIsCurrent(boolean isCurrent) {
+    this.isCurrent = isCurrent;
   }
 
-  public String getUrl() {
-    return webPath + "-" + id + "/" + UrlCommand.encodeUri(filename);
+  public long getCreatedBy() {
+    return createdBy;
   }
 
-  public String getTitle() {
-    return title;
+  public void setCreatedBy(long createdBy) {
+    this.createdBy = createdBy;
   }
 
-  public void setTitle(String title) {
-    this.title = title;
+  public Timestamp getCreated() {
+    return created;
   }
 
-  public String getAltText() {
-    return altText;
+  public void setCreated(Timestamp created) {
+    this.created = created;
   }
 
-  public void setAltText(String altText) {
-    this.altText = altText;
+  public String getNotes() {
+    return notes;
   }
 
-  public String getDescription() {
-    return description;
-  }
-
-  public void setDescription(String description) {
-    this.description = description;
-  }
-
-  public int getVersionNumber() {
-    return versionNumber;
-  }
-
-  public void setVersionNumber(int versionNumber) {
-    this.versionNumber = versionNumber;
+  public void setNotes(String notes) {
+    this.notes = notes;
   }
 }

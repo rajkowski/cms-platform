@@ -47,9 +47,9 @@ class ImageEditor {
     }
 
     // Toolbar buttons
-    const saveBtn = document.getElementById('save-btn');
-    if (saveBtn) {
-      saveBtn.addEventListener('click', () => this.saveChanges());
+    const saveImageBtn = document.getElementById('save-image-btn');
+    if (saveImageBtn) {
+      saveImageBtn.addEventListener('click', () => this.saveImageVersion());
     }
 
     const reloadBtn = document.getElementById('reload-btn');
@@ -148,9 +148,10 @@ class ImageEditor {
       // Upload the file
       const formData = new FormData();
       formData.append('token', this.token);
+      formData.append('widget', 'imageUpload1');
       formData.append('file', file);
 
-      const response = await fetch(`${this.config.apiBaseUrl}/imageUpload`, {
+      const response = await fetch(`${this.config.contextPath}/image-upload`, {
         method: 'POST',
         credentials: 'same-origin',
         body: formData
@@ -172,7 +173,7 @@ class ImageEditor {
         this.imageLibrary.selectImage(result.imageId);
       }
 
-      alert('Image imported successfully!');
+      this.showToast('Image imported successfully!', 'success');
 
     } catch (error) {
       console.error('Error importing file:', error);
@@ -180,6 +181,53 @@ class ImageEditor {
     } finally {
       this.hideLoading();
       event.target.value = '';
+    }
+  }
+
+  /**
+   * Save image as a new version (from viewer modifications)
+   */
+  async saveImageVersion() {
+    console.log('Saving image as new version...');
+    
+    const saveBtn = document.getElementById('save-image-btn');
+    const originalText = saveBtn ? saveBtn.innerHTML : '';
+    
+    try {
+      // Show loading state
+      if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="far fa-spinner fa-spin"></i> Saving...';
+      }
+      this.showLoading();
+
+      // Get the current image data from viewer (if modified)
+      const imageBlob = await this.imageViewer.getImageBlob();
+      
+      if (!imageBlob) {
+        throw new Error('No image data to save');
+      }
+
+      // Save as new version
+      await this.saveImageFile(imageBlob, true);
+
+      // Success
+      this.clearModified();
+      this.showToast('Image version saved successfully!', 'success');
+
+      // Reload the image library to show updated thumbnail
+      this.imageLibrary.loadImages();
+
+    } catch (error) {
+      console.error('Error saving image version:', error);
+      alert('Failed to save image version: ' + error.message);
+    } finally {
+      // Restore button state
+      if (saveBtn) {
+        saveBtn.innerHTML = originalText;
+        saveBtn.disabled = false;
+      }
+      this.hideLoading();
     }
   }
 
@@ -222,9 +270,10 @@ class ImageEditor {
 
       const formData = new FormData();
       formData.append('token', this.token);
+      formData.append('widget', 'imageUpload1');
       formData.append('file', blob, filename);
 
-      const response = await fetch(`${this.config.apiBaseUrl}/imageUpload`, {
+      const response = await fetch(`${this.config.contextPath}/image-upload`, {
         method: 'POST',
         credentials: 'same-origin',
         body: formData
@@ -246,7 +295,7 @@ class ImageEditor {
         this.imageLibrary.selectImage(result.imageId);
       }
 
-      alert('Image created successfully!');
+      this.showToast('Image created successfully!', 'success');
 
     } catch (error) {
       console.error('Error creating image:', error);
@@ -257,65 +306,9 @@ class ImageEditor {
   }
 
   /**
-   * Save changes
+   * Save image file (used by saveImageVersion)
    */
-  async saveChanges() {
-    if (!this.modified) {
-      console.log('No changes to save');
-      return;
-    }
-
-    console.log('Saving changes...');
-    
-    const saveBtn = document.getElementById('save-btn');
-    const originalText = saveBtn ? saveBtn.innerHTML : '';
-    
-    try {
-      // Show loading state
-      if (saveBtn) {
-        saveBtn.disabled = true;
-        saveBtn.innerHTML = '<i class="far fa-spinner fa-spin"></i> Saving...';
-      }
-      this.showLoading();
-
-      // Get the current image data from viewer (if modified)
-      const imageBlob = await this.imageViewer.getImageBlob();
-      const hasImageChanges = this.imageViewer.hasTransformations() || imageBlob;
-
-      // Save image file if there are visual changes
-      if (hasImageChanges && imageBlob) {
-        await this.saveImageFile(imageBlob);
-      }
-
-      // Note: Metadata fields (title, altText, description) would require database schema changes
-      // For now, only the visual changes are saved as a new image version
-
-      // Success
-      this.clearModified();
-      alert('Image changes saved successfully!');
-
-      // Reload the image library to show updated thumbnail
-      if (hasImageChanges) {
-        this.imageLibrary.loadImages();
-      }
-
-    } catch (error) {
-      console.error('Error saving changes:', error);
-      alert('Failed to save changes: ' + error.message);
-    } finally {
-      // Restore button state
-      if (saveBtn) {
-        saveBtn.innerHTML = originalText;
-        saveBtn.disabled = false;
-      }
-      this.hideLoading();
-    }
-  }
-
-  /**
-   * Save image file
-   */
-  async saveImageFile(blob) {
+  async saveImageFile(blob, asNewVersion = false) {
     const currentImage = this.imageProperties.getCurrentImage();
     if (!currentImage || !currentImage.id) {
       throw new Error('No image selected');
@@ -323,10 +316,11 @@ class ImageEditor {
 
     const formData = new FormData();
     formData.append('token', this.token);
+    formData.append('widget', 'imageUpload1');
     formData.append('imageId', currentImage.id);
     formData.append('file', blob, currentImage.filename || 'image.png');
 
-    const response = await fetch(`${this.config.apiBaseUrl}/imageUpload`, {
+    const response = await fetch(`${this.config.contextPath}/image-upload`, {
       method: 'POST',
       credentials: 'same-origin',
       body: formData
@@ -386,9 +380,9 @@ class ImageEditor {
    * Update save button state
    */
   updateSaveButton() {
-    const saveBtn = document.getElementById('save-btn');
-    if (saveBtn) {
-      saveBtn.disabled = !this.modified;
+    const saveImageBtn = document.getElementById('save-image-btn');
+    if (saveImageBtn) {
+      saveImageBtn.disabled = !this.modified;
     }
   }
 
@@ -428,5 +422,172 @@ class ImageEditor {
     if (indicator) {
       indicator.style.display = 'none';
     }
+  }
+
+  /**
+   * Show a toast notification
+   * @param {string} message - The message to display
+   * @param {string} type - The type of toast: 'success', 'error', 'warning', 'info'
+   */
+  showToast(message, type = 'info') {
+    // Remove any existing toast
+    const existingToast = document.getElementById('image-editor-toast');
+    if (existingToast) {
+      existingToast.remove();
+    }
+    
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.id = 'image-editor-toast';
+    toast.className = `save-toast save-toast-${type}`;
+    
+    // Set icon based on type
+    let icon = 'fa-info-circle';
+    if (type === 'success') {
+      icon = 'fa-check-circle';
+    } else if (type === 'error') {
+      icon = 'fa-exclamation-circle';
+    } else if (type === 'warning') {
+      icon = 'fa-exclamation-triangle';
+    }
+    
+    toast.innerHTML = `
+      <i class="far ${icon}"></i>
+      <span class="save-toast-message">${message}</span>
+      <button class="save-toast-close" onclick="this.parentElement.remove()">
+        <i class="far fa-times"></i>
+      </button>
+    `;
+    
+    // Add toast styles if not already present
+    this.ensureToastStyles();
+    
+    // Add to DOM
+    document.body.appendChild(toast);
+    
+    // Trigger animation
+    setTimeout(() => {
+      toast.classList.add('show');
+    }, 10);
+    
+    // Auto-remove after delay (longer for errors)
+    let duration = 3000;
+    if (type === 'error') {
+      duration = 6000;
+    } else if (type === 'warning') {
+      duration = 5000;
+    }
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => {
+        if (toast.parentElement) {
+          toast.remove();
+        }
+      }, 300);
+    }, duration);
+  }
+
+  /**
+   * Ensure toast styles are added to the document
+   */
+  ensureToastStyles() {
+    if (document.getElementById('save-toast-styles')) {
+      return;
+    }
+    
+    const styles = document.createElement('style');
+    styles.id = 'save-toast-styles';
+    styles.textContent = `
+      .save-toast {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 12px 16px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 14px;
+        font-weight: 500;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 10001;
+        transform: translateY(100px);
+        opacity: 0;
+        transition: transform 0.3s ease, opacity 0.3s ease;
+        max-width: 400px;
+      }
+      
+      .save-toast.show {
+        transform: translateY(0);
+        opacity: 1;
+      }
+      
+      .save-toast-success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      
+      .save-toast-error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+      
+      .save-toast-warning {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeeba;
+      }
+      
+      .save-toast-info {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+      }
+      
+      .save-toast-message {
+        flex: 1;
+      }
+      
+      .save-toast-close {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+        opacity: 0.7;
+        color: inherit;
+      }
+      
+      .save-toast-close:hover {
+        opacity: 1;
+      }
+      
+      /* Dark mode support */
+      [data-theme="dark"] .save-toast-success {
+        background: #1e4620;
+        color: #a3d9a5;
+        border-color: #2d5a2e;
+      }
+      
+      [data-theme="dark"] .save-toast-error {
+        background: #4a1c1c;
+        color: #f5a5a5;
+        border-color: #6b2c2c;
+      }
+      
+      [data-theme="dark"] .save-toast-warning {
+        background: #4a3c1c;
+        color: #f5d9a5;
+        border-color: #6b5a2c;
+      }
+      
+      [data-theme="dark"] .save-toast-info {
+        background: #1c3a4a;
+        color: #a5d9f5;
+        border-color: #2c5a6b;
+      }
+    `;
+    document.head.appendChild(styles);
   }
 }

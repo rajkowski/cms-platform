@@ -47,21 +47,20 @@
   <!-- Toolbar -->
   <div id="editor-toolbar">
     <div class="titlebar-left">
-      <img src="${ctx}/images/favicon.png" alt="Logo" />
+      <a href="${ctx}/"><img src="${ctx}/images/favicon.png" alt="Logo" /></a>
       <h2>Image Editor</h2>
     </div>
 
     <!-- Left Section -->
     <div class="toolbar-section left">
-      <button id="new-from-stock-btn" class="button tiny success no-gap radius" title="New from Stock Photo"><i class="${font:far()} fa-images"></i> Stock Photo</button>
-      <button id="new-from-clipboard-btn" class="button tiny primary no-gap radius" title="New from Clipboard"><i class="${font:far()} fa-clipboard"></i> From Clipboard</button>
       <button id="import-btn" class="button tiny primary no-gap radius" title="Import Image"><i class="${font:far()} fa-upload"></i> Import</button>
+      <button id="new-from-clipboard-btn" class="button tiny primary no-gap radius" title="New from Clipboard"><i class="${font:far()} fa-clipboard"></i> From Clipboard</button>
+      <button id="new-from-stock-btn" class="button tiny success no-gap radius" title="New from Stock Photo"><i class="${font:far()} fa-images"></i> Stock Photo...</button>
     </div>
 
     <!-- Center Section -->
     <div class="toolbar-section center">
       <button id="reload-btn" class="button tiny secondary no-gap radius" title="Reload"><i class="${font:far()} fa-sync"></i> Reload</button>
-      <button id="save-btn" class="button tiny no-gap radius" disabled title="Save Changes"><i class="${font:far()} fa-save"></i> Save</button>
     </div>
 
     <!-- Right Section -->
@@ -137,7 +136,7 @@
     <!-- Left Panel: Image Library -->
     <div id="image-library-panel">
       <div class="panel-header">
-        <h3>Image Library</h3>
+        <h3>Image Library <span id="image-count-badge" class="badge secondary">0</span></h3>
         <div class="search-container">
           <input type="text" id="image-search" placeholder="Search images..." />
         </div>
@@ -172,6 +171,7 @@
           <button id="adjustments-btn" class="tool-btn" title="Adjustments" disabled><i class="${font:far()} fa-sliders-h"></i></button>
           <div class="tool-divider"></div>
           <button id="reset-btn" class="tool-btn" title="Reset Changes" disabled><i class="${font:far()} fa-times-circle"></i></button>
+          <button id="save-image-btn" class="tool-btn primary" title="Save Copy" disabled><i class="${font:far()} fa-save"></i> Save Copy</button>
         </div>
       </div>
       <div id="image-viewer-content">
@@ -213,21 +213,39 @@
     <div id="image-properties-panel">
       <div id="properties-panel-resize-handle"></div>
       <div class="panel-header">
-        <h3>Image Properties</h3>
+        <h3>Image Details</h3>
       </div>
-      <div id="properties-content">
+      
+      <!-- Tabs -->
+      <div class="properties-tabs">
+        <button class="tab-button active" data-tab="properties">Properties</button>
+        <button class="tab-button" data-tab="versions">Versions</button>
+      </div>
+      
+      <!-- Properties Tab Content -->
+      <div id="properties-tab-content" class="tab-content active">
         <div class="no-image-selected">
           <p>Select an image to view properties</p>
         </div>
-        <form id="image-metadata-form" style="display: none;">
+        <form id="image-metadata-form" class="hidden">
           <div class="property-group">
             <label for="image-title">Title</label>
             <input type="text" id="image-title" class="property-input" />
           </div>
           
           <div class="property-group">
+            <label for="image-url">URL</label>
+            <div class="url-display-container">
+              <a id="image-url" href="#" target="_blank" class="property-url" title="Click to open in new tab">-</a>
+              <button type="button" id="copy-url-btn" class="button tiny secondary" title="Copy URL to clipboard">
+                <i class="${font:far()} fa-copy"></i>
+              </button>
+            </div>
+          </div>
+          
+          <div class="property-group">
             <label for="image-filename">Filename</label>
-            <input type="text" id="image-filename" class="property-input" readonly />
+            <input type="text" id="image-filename" class="property-input" />
           </div>
           
           <div class="property-group">
@@ -265,18 +283,42 @@
             <div id="image-modified" class="property-value">-</div>
           </div>
           
-          <div class="property-group">
-            <label>Version</label>
-            <div id="image-version-info" class="property-value">-</div>
-            <button type="button" id="view-versions-btn" class="button tiny expanded secondary">View Versions</button>
+          <div class="property-actions">
+            <button type="button" id="save-metadata-btn" class="button tiny expanded primary" disabled>
+              <i class="${font:far()} fa-save"></i> Save Properties
+            </button>
+            <button type="button" id="delete-image-btn" class="button tiny expanded alert">
+              <i class="${font:far()} fa-trash"></i> Delete Image
+            </button>
           </div>
-          
+        </form>
+      </div>
+      
+      <!-- Versions Tab Content -->
+      <div id="versions-tab-content" class="tab-content">
+        <div class="no-image-selected">
+          <p>Select an image to view versions</p>
+        </div>
+        <div id="versions-list-container" class="hidden">
           <div class="property-group">
             <button type="button" id="upload-new-version-btn" class="button tiny expanded primary">
               <i class="${font:far()} fa-upload"></i> Upload New Version
             </button>
           </div>
-        </form>
+          
+          <div class="versions-info">
+            <p><strong>Current Version:</strong> <span id="current-version-number">1</span></p>
+            <p><strong>Total Versions:</strong> <span id="total-versions-count">1</span></p>
+          </div>
+          
+          <div id="versions-list">
+            <!-- Version history will be loaded here -->
+            <div class="loading-message">
+              <i class="${font:far()} fa-spinner fa-spin"></i>
+              <p>Loading versions...</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -288,7 +330,7 @@
 <!-- Modals and Dialogs -->
 <div id="versions-modal" class="reveal" data-reveal>
   <h3>Image Versions</h3>
-  <div id="versions-list">
+  <div id="versions-modal-list">
     <!-- Versions will be loaded here -->
   </div>
   <button class="close-button" data-close aria-label="Close modal" type="button">
@@ -327,7 +369,55 @@
   document.addEventListener('DOMContentLoaded', function() {
     console.log('Initializing Visual Image Editor...');
 
+    // Setup tab switching function
+    function setupTabs() {
+      const tabButtons = document.querySelectorAll('.tab-button');
+      const tabContents = document.querySelectorAll('.tab-content');
+      
+      console.log('Tab buttons found:', tabButtons.length);
+      console.log('Tab contents found:', tabContents.length);
+      
+      tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          const targetTab = button.getAttribute('data-tab');
+          console.log('Clicked tab:', targetTab);
+          
+          if (!targetTab) {
+            console.error('No data-tab attribute found on button:', button);
+            return;
+          }
+          
+          // Remove active class from all buttons and contents
+          tabButtons.forEach(btn => btn.classList.remove('active'));
+          tabContents.forEach(content => {
+            content.classList.remove('active');
+            content.classList.add('hidden');
+          });
+          
+          // Add active class to clicked button and corresponding content
+          button.classList.add('active');
+          const targetContentId = targetTab + '-tab-content';
+          const targetContent = document.getElementById(targetContentId);
+          
+          if (targetContent) {
+            targetContent.classList.add('active');
+            targetContent.classList.remove('hidden');
+          } else {
+            console.error('Tab content element not found. ID:', targetContentId);
+          }
+          
+          // If switching to versions tab, load versions
+          if (targetTab === 'versions' && imageEditor) {
+            imageEditor.imageProperties.loadVersions();
+          }
+        });
+      });
+    }
+
     setupAppsMenu();
+    
+    // Setup tab switching
+    setupTabs();
     
     // Initialize dark mode from localStorage
     const savedTheme = localStorage.getItem('editor-theme');

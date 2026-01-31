@@ -75,6 +75,9 @@ public class ImageContentAjax extends GenericWidget {
     sb.append("\"height\":").append(image.getHeight()).append(",");
     sb.append("\"fileLength\":").append(image.getFileLength()).append(",");
     sb.append("\"fileType\":\"").append(JsonCommand.toJson(StringUtils.defaultString(image.getFileType()))).append("\",");
+    sb.append("\"title\":\"").append(JsonCommand.toJson(StringUtils.defaultString(image.getTitle()))).append("\",");
+    sb.append("\"altText\":\"").append(JsonCommand.toJson(StringUtils.defaultString(image.getAltText()))).append("\",");
+    sb.append("\"description\":\"").append(JsonCommand.toJson(StringUtils.defaultString(image.getDescription()))).append("\",");
 
     // Format timestamps
     if (image.getCreated() != null) {

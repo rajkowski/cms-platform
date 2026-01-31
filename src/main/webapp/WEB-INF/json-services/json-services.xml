@@ -38,6 +38,11 @@
   <!-- Image Editor -->
   <service endpoint="/json/imageLibrary" class="com.simisinc.platform.presentation.widgets.cms.ImageLibraryAjax" />
   <service endpoint="/json/imageContent" class="com.simisinc.platform.presentation.widgets.cms.ImageContentAjax" />
+  <service endpoint="/json/imageMetadata" class="com.simisinc.platform.presentation.widgets.cms.ImageMetadataAjax" />
+  <service endpoint="/json/imageDelete" class="com.simisinc.platform.presentation.widgets.cms.ImageDeleteAjax" />
+  <service endpoint="/json/imageVersions" class="com.simisinc.platform.presentation.widgets.cms.ImageVersionsAjax" />
+  <service endpoint="/json/imageVersionRevert" class="com.simisinc.platform.presentation.widgets.cms.ImageVersionRevertAjax" />
+  <service endpoint="/json/imageVersionDelete" class="com.simisinc.platform.presentation.widgets.cms.ImageVersionDeleteAjax" />
   <!-- Document Editor -->
   <service endpoint="/json/documentLibrary" class="com.simisinc.platform.presentation.widgets.cms.DocumentLibraryAjax" />
   <service endpoint="/json/documentSubfolders" class="com.simisinc.platform.presentation.widgets.cms.DocumentSubfoldersAjax" />

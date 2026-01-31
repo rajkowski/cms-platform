@@ -121,7 +121,17 @@ public class ImageRepository {
 
   private static Image update(Image record) {
     SqlUtils updateValues = new SqlUtils()
-        .add("processed", record.getProcessed());
+        .add("processed", record.getProcessed())
+        .add("title", StringUtils.trimToNull(record.getTitle()))
+        .add("alt_text", StringUtils.trimToNull(record.getAltText()))
+        .add("description", StringUtils.trimToNull(record.getDescription()))
+        .add("version_number", record.getVersionNumber())
+        .add("filename", StringUtils.trimToNull(record.getFilename()))
+        .add("path", StringUtils.trimToNull(record.getFileServerPath()))
+        .add("file_length", record.getFileLength())
+        .add("file_type", StringUtils.trimToNull(record.getFileType()))
+        .add("width", record.getWidth())
+        .add("height", record.getHeight());
     if (DB.update(TABLE_NAME, updateValues, DB.WHERE("image_id = ?", record.getId()))) {
       return record;
     }
@@ -147,6 +157,10 @@ public class ImageRepository {
       record.setWidth(rs.getInt("width"));
       record.setHeight(rs.getInt("height"));
       record.setWebPath(rs.getString("web_path"));
+      record.setTitle(rs.getString("title"));
+      record.setAltText(rs.getString("alt_text"));
+      record.setDescription(rs.getString("description"));
+      record.setVersionNumber(rs.getInt("version_number"));
       return record;
     } catch (SQLException se) {
       LOG.error("buildRecord", se);
