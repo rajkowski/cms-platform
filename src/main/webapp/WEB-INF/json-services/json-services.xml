@@ -75,4 +75,11 @@
   <service endpoint="/json/static-sites/delete" class="com.simisinc.platform.presentation.widgets.editor.StaticSiteEndpoint" />
   <!-- Dashboards -->
   <service endpoint="/json/supersetGuestToken" class="com.simisinc.platform.presentation.widgets.dashboard.SupersetGuestTokenAjax" />
+  <!-- Analytics Dashboard -->
+  <service endpoint="/json/analyticsFiltersOptions" class="com.simisinc.platform.presentation.widgets.cms.AnalyticsFiltersOptionsAjax" />
+  <service endpoint="/json/analyticsOverviewLoad" class="com.simisinc.platform.presentation.widgets.cms.AnalyticsOverviewLoadAjax" />
+  <service endpoint="/json/analyticsLiveLoad" class="com.simisinc.platform.presentation.widgets.cms.AnalyticsLiveLoadAjax" />
+  <service endpoint="/json/analyticsContentLoad" class="com.simisinc.platform.presentation.widgets.cms.AnalyticsContentLoadAjax" />
+  <service endpoint="/json/analyticsAudienceLoad" class="com.simisinc.platform.presentation.widgets.cms.AnalyticsAudienceLoadAjax" />
+  <service endpoint="/json/analyticsTechnicalLoad" class="com.simisinc.platform.presentation.widgets.cms.AnalyticsTechnicalLoadAjax" />
 </services>

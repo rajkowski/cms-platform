@@ -33,6 +33,7 @@ import org.apache.commons.logging.LogFactory;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.domain.model.Session;
 import com.simisinc.platform.domain.model.Visitor;
+import com.simisinc.platform.domain.model.dashboard.ActiveSessionData;
 import com.simisinc.platform.domain.model.dashboard.StatisticsData;
 import com.simisinc.platform.infrastructure.database.DB;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
@@ -150,6 +151,79 @@ public class SessionRepository {
       LOG.error("SQLException: " + se.getMessage());
     }
     return count;
+  }
+
+  public static List<ActiveSessionData> findActiveSessions(int minutes, int recordLimit) {
+    String sqlQuery = "SELECT * FROM (" +
+        "SELECT DISTINCT ON (wph.session_id) " +
+        "wph.session_id, wph.page_path, wph.hit_date, wph.is_logged_in, " +
+        "s.user_agent, s.city, s.state, s.country, s.created " +
+        "FROM web_page_hits wph " +
+        "JOIN sessions s ON s.session_id = wph.session_id " +
+        "WHERE wph.hit_date > NOW() - INTERVAL '" + minutes + " minutes' " +
+        "AND s.is_bot = false " +
+        "ORDER BY wph.session_id, wph.hit_date DESC" +
+        ") recent " +
+        "ORDER BY hit_date DESC " +
+        "LIMIT " + recordLimit;
+
+    List<ActiveSessionData> records = null;
+    try (Connection connection = DB.getConnection();
+        PreparedStatement pst = connection.prepareStatement(sqlQuery);
+        ResultSet rs = pst.executeQuery()) {
+      records = new ArrayList<>();
+      while (rs.next()) {
+        ActiveSessionData data = new ActiveSessionData();
+        data.setSessionId(rs.getString("session_id"));
+        data.setPage(rs.getString("page_path"));
+        data.setUserType(rs.getBoolean("is_logged_in") ? "Authenticated" : "Guest");
+        data.setDevice(resolveDeviceType(rs.getString("user_agent")));
+        data.setLocation(buildLocation(rs.getString("city"), rs.getString("state"), rs.getString("country")));
+
+        Timestamp created = rs.getTimestamp("created");
+        Timestamp lastHit = rs.getTimestamp("hit_date");
+        long durationSeconds = 0;
+        if (created != null && lastHit != null) {
+          durationSeconds = Math.max(0, (lastHit.getTime() - created.getTime()) / 1000);
+        }
+        data.setDuration(durationSeconds);
+        records.add(data);
+      }
+    } catch (SQLException se) {
+      LOG.error("SQLException: " + se.getMessage());
+    }
+    return records;
+  }
+
+  private static String resolveDeviceType(String userAgent) {
+    if (StringUtils.isBlank(userAgent)) {
+      return "Desktop";
+    }
+    String normalized = userAgent.toLowerCase();
+    if (normalized.contains("mobile") || normalized.contains("android") || normalized.contains("iphone")) {
+      return "Mobile";
+    }
+    if (normalized.contains("tablet") || normalized.contains("ipad")) {
+      return "Tablet";
+    }
+    return "Desktop";
+  }
+
+  private static String buildLocation(String city, String state, String country) {
+    List<String> parts = new ArrayList<>();
+    if (StringUtils.isNotBlank(city)) {
+      parts.add(city);
+    }
+    if (StringUtils.isNotBlank(state)) {
+      parts.add(state);
+    }
+    if (StringUtils.isNotBlank(country)) {
+      parts.add(country);
+    }
+    if (parts.isEmpty()) {
+      return "Unknown";
+    }
+    return String.join(", ", parts);
   }
 
   private static PreparedStatement createPreparedStatementTopReferrals(Connection connection, int value, char intervalType,
@@ -284,6 +358,147 @@ public class SessionRepository {
     }
     SqlUtils setValues = new SqlUtils().add("visitor_id", visitor.getId());
     DB.update(TABLE_NAME, setValues, DB.WHERE("session_id = ?", userSession.getSessionId()));
+  }
+
+  /**
+   * Find top devices from sessions based on user agent
+   */
+  public static List<StatisticsData> findTopDevices(int daysToLimit) {
+    String sqlQuery = "SELECT " +
+        "CASE " +
+        "  WHEN user_agent ILIKE '%mobile%' OR user_agent ILIKE '%android%' OR user_agent ILIKE '%iphone%' THEN 'Mobile' " +
+        "  WHEN user_agent ILIKE '%tablet%' OR user_agent ILIKE '%ipad%' THEN 'Tablet' " +
+        "  ELSE 'Desktop' " +
+        "END AS device_type, " +
+        "COUNT(DISTINCT session_id) AS session_count " +
+        "FROM sessions " +
+        "WHERE created > NOW() - INTERVAL '" + daysToLimit + " days' " +
+        "AND is_bot = false " +
+        "AND user_agent IS NOT NULL " +
+        "GROUP BY device_type " +
+        "ORDER BY session_count DESC";
+    List<StatisticsData> records = null;
+    try (Connection connection = DB.getConnection();
+        PreparedStatement pst = connection.prepareStatement(sqlQuery);
+        ResultSet rs = pst.executeQuery()) {
+      records = new ArrayList<>();
+      while (rs.next()) {
+        StatisticsData data = new StatisticsData();
+        data.setLabel(rs.getString("device_type"));
+        data.setValue(String.valueOf(rs.getLong("session_count")));
+        records.add(data);
+      }
+    } catch (SQLException se) {
+      LOG.error("SQLException: " + se.getMessage());
+    }
+    return records;
+  }
+
+  /**
+   * Find top browsers from sessions based on user agent
+   */
+  public static List<StatisticsData> findTopBrowsers(int daysToLimit) {
+    String sqlQuery = "SELECT " +
+        "CASE " +
+        "  WHEN user_agent ILIKE '%chrome%' AND user_agent NOT ILIKE '%chromium%' THEN 'Chrome' " +
+        "  WHEN user_agent ILIKE '%safari%' AND user_agent NOT ILIKE '%chrome%' THEN 'Safari' " +
+        "  WHEN user_agent ILIKE '%firefox%' THEN 'Firefox' " +
+        "  WHEN user_agent ILIKE '%edge%' OR user_agent ILIKE '%edg%' THEN 'Edge' " +
+        "  WHEN user_agent ILIKE '%opera%' THEN 'Opera' " +
+        "  WHEN user_agent ILIKE '%trident%' OR user_agent ILIKE '%msie%' THEN 'Internet Explorer' " +
+        "  ELSE 'Other' " +
+        "END AS browser_type, " +
+        "COUNT(DISTINCT session_id) AS session_count " +
+        "FROM sessions " +
+        "WHERE created > NOW() - INTERVAL '" + daysToLimit + " days' " +
+        "AND is_bot = false " +
+        "AND user_agent IS NOT NULL " +
+        "GROUP BY browser_type " +
+        "ORDER BY session_count DESC";
+    List<StatisticsData> records = null;
+    try (Connection connection = DB.getConnection();
+        PreparedStatement pst = connection.prepareStatement(sqlQuery);
+        ResultSet rs = pst.executeQuery()) {
+      records = new ArrayList<>();
+      while (rs.next()) {
+        StatisticsData data = new StatisticsData();
+        data.setLabel(rs.getString("browser_type"));
+        data.setValue(String.valueOf(rs.getLong("session_count")));
+        records.add(data);
+      }
+    } catch (SQLException se) {
+      LOG.error("SQLException: " + se.getMessage());
+    }
+    return records;
+  }
+
+  /**
+   * Calculate bounce rate based on single-page sessions
+   * Bounce rate = sessions with only 1 page view / total sessions * 100
+   */
+  public static double findBounceRate(int daysToLimit) {
+    String sqlQuery = "WITH session_page_counts AS ( " +
+        "  SELECT session_id, COUNT(DISTINCT hit_id) AS page_count " +
+        "  FROM web_page_hits " +
+        "  WHERE hit_date > NOW() - INTERVAL '" + daysToLimit + " days' " +
+        "  AND NOT EXISTS (SELECT 1 FROM sessions WHERE session_id = web_page_hits.session_id AND is_bot = TRUE) " +
+        "  GROUP BY session_id " +
+        "), " +
+        "bounce_sessions AS ( " +
+        "  SELECT COUNT(*) AS bounce_count " +
+        "  FROM session_page_counts " +
+        "  WHERE page_count = 1 " +
+        "), " +
+        "total_sessions AS ( " +
+        "  SELECT COUNT(*) AS total_count " +
+        "  FROM session_page_counts " +
+        ") " +
+        "SELECT " +
+        "  CASE WHEN total.total_count > 0 THEN (bounce.bounce_count::float / total.total_count) * 100 ELSE 0 END AS bounce_rate " +
+        "FROM bounce_sessions bounce, total_sessions total";
+    double bounceRate = 0;
+    try (Connection connection = DB.getConnection();
+        PreparedStatement pst = connection.prepareStatement(sqlQuery);
+        ResultSet rs = pst.executeQuery()) {
+      if (rs.next()) {
+        Double value = rs.getDouble("bounce_rate");
+        if (!rs.wasNull()) {
+          bounceRate = value;
+        }
+      }
+    } catch (SQLException se) {
+      LOG.error("SQLException: " + se.getMessage());
+    }
+    return bounceRate;
+  }
+
+  /**
+   * Calculate average session duration by checking session creation date to last web_page_hits hit_date
+   */
+  public static double findAverageSessionDuration(int daysToLimit) {
+    String sqlQuery = "SELECT AVG(EXTRACT(EPOCH FROM (MAX_HIT_DATE - created))) AS avg_duration_seconds " +
+        "FROM ( " +
+        "  SELECT s.session_id, s.created, MAX(wph.hit_date) AS MAX_HIT_DATE " +
+        "  FROM sessions s " +
+        "  LEFT JOIN web_page_hits wph ON s.session_id = wph.session_id " +
+        "  WHERE s.created > NOW() - INTERVAL '" + daysToLimit + " days' " +
+        "  AND s.is_bot = false " +
+        "  GROUP BY s.session_id, s.created " +
+        ") AS session_durations";
+    double avgDuration = 0;
+    try (Connection connection = DB.getConnection();
+        PreparedStatement pst = connection.prepareStatement(sqlQuery);
+        ResultSet rs = pst.executeQuery()) {
+      if (rs.next()) {
+        Double value = rs.getDouble("avg_duration_seconds");
+        if (!rs.wasNull()) {
+          avgDuration = value;
+        }
+      }
+    } catch (SQLException se) {
+      LOG.error("SQLException: " + se.getMessage());
+    }
+    return avgDuration;
   }
 
   private static Session buildRecord(ResultSet rs) {

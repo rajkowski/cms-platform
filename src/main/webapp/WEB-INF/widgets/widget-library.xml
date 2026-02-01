@@ -24,6 +24,7 @@
   <widget name="forgotPassword" class="com.simisinc.platform.presentation.widgets.login.ForgotPasswordWidget" />
   <widget name="accountValidation" class="com.simisinc.platform.presentation.widgets.login.AccountValidationWidget" />
   <!-- Content Management -->
+  <widget name="visualAnalyticsDashboard" class="com.simisinc.platform.presentation.widgets.cms.VisualAnalyticsDashboardWidget" />
   <widget name="visualPageEditor" class="com.simisinc.platform.presentation.widgets.editor.VisualPageEditorWidget" />
   <widget name="visualImageEditor" class="com.simisinc.platform.presentation.widgets.editor.VisualImageEditorWidget" />
   <widget name="visualDocumentEditor" class="com.simisinc.platform.presentation.widgets.editor.VisualDocumentEditorWidget" />

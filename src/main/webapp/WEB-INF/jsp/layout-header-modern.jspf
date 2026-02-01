@@ -208,7 +208,7 @@
                     <div class="user-menu-section-title">Admin Tools</div>
                     
                     <div class="admin-apps-grid">
-                      <a href="/admin/community/analytics" class="admin-app-item" title="View site statistics">
+                      <a href="${ctx}/admin/visual-analytics-dashboard" class="admin-app-item" title="View site analytics and reports">
                         <i class="fas fa-chart-line"></i>
                         <span class="admin-app-item-label">Analytics</span>
                       </a>

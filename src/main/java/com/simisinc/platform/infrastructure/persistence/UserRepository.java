@@ -228,6 +228,29 @@ public class UserRepository {
     return count;
   }
 
+  /**
+   * Count users created within a date range
+   */
+  public static long countNewUsers(Timestamp startDate, Timestamp endDate) {
+    long count = 0;
+    String sqlQuery = "SELECT COUNT(user_id) AS new_user_count " +
+        "FROM users " +
+        "WHERE created >= ? " +
+        "AND created < ?";
+    try (Connection connection = DB.getConnection();
+        PreparedStatement pst = connection.prepareStatement(sqlQuery)) {
+      pst.setTimestamp(1, startDate);
+      pst.setTimestamp(2, endDate);
+      ResultSet rs = pst.executeQuery();
+      if (rs.next()) {
+        count = rs.getLong("new_user_count");
+      }
+    } catch (SQLException se) {
+      LOG.error("SQLException: " + se.getMessage());
+    }
+    return count;
+  }
+
   public static User save(User record) {
     if (record.getId() > -1) {
       return update(record);

@@ -1042,7 +1042,9 @@ body.dark-mode {
 .columns-table {
   width: 100%;
   border-collapse: collapse;
+  border-spacing: 0;
   margin-bottom: 20px;
+  border: none;
 }
 
 .permissions-table th,
@@ -1051,7 +1053,7 @@ body.dark-mode {
 .columns-table td {
   padding: 10px;
   text-align: left;
-  border-bottom: 1px solid var(--editor-border);
+  border: none;
 }
 
 .permissions-table th,
@@ -1060,6 +1062,15 @@ body.dark-mode {
   font-weight: 600;
   font-size: 13px;
   color: var(--editor-text);
+}
+
+.permissions-table tbody tr {
+  background: var(--editor-panel-bg);
+}
+
+.permissions-table tbody tr:nth-child(even),
+.columns-table tbody tr:nth-child(even) {
+  background: var(--editor-hover-bg);
 }
 
 .permissions-table td,

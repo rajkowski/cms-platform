@@ -161,7 +161,7 @@
         <h3 id="image-viewer-title">Select an Image</h3>
         <div id="image-tools">
           <button id="crop-selection-btn" class="tool-btn" title="Crop image to selection" disabled><i class="${font:far()} fa-crop"></i> Crop</button>
-          <button id="copy-selection-btn" class="tool-btn" title="Copy selection to clipboard" disabled><i class="${font:far()} fa-copy"></i> Copy</button>
+          <%-- <button id="copy-selection-btn" class="tool-btn" title="Copy selection to clipboard" disabled><i class="${font:far()} fa-copy"></i> Copy</button> --%>
           <button id="clear-selection-btn" class="tool-btn" title="Clear selection" disabled><i class="${font:far()} fa-times"></i> Clear</button>
           <div class="tool-divider"></div>
           <button id="rotate-left-btn" class="tool-btn" title="Rotate Left" disabled><i class="${font:far()} fa-undo"></i></button>
@@ -170,8 +170,9 @@
           <button id="flip-vertical-btn" class="tool-btn" title="Flip Vertical" disabled><i class="${font:far()} fa-arrows-v"></i></button>
           <button id="adjustments-btn" class="tool-btn" title="Adjustments" disabled><i class="${font:far()} fa-sliders-h"></i></button>
           <div class="tool-divider"></div>
-          <button id="reset-btn" class="tool-btn" title="Reset Changes" disabled><i class="${font:far()} fa-times-circle"></i></button>
+          <button id="reset-btn" class="tool-btn" title="Reset Changes" disabled><i class="${font:far()} fa-times-circle"></i> Reset</button>
           <button id="save-image-btn" class="tool-btn primary" title="Save Copy" disabled><i class="${font:far()} fa-save"></i> Save Copy</button>
+          <button id="create-thumbnail-btn" class="tool-btn" title="Create Thumbnail (240x240)" disabled><i class="${font:far()} fa-image"></i> Thumbnail</button>
         </div>
       </div>
       <div id="image-viewer-content">
@@ -282,6 +283,11 @@
             <label>Modified</label>
             <div id="image-modified" class="property-value">-</div>
           </div>
+          
+            <div class="property-group" id="thumbnail-info-group" style="display: none;">
+              <label>Thumbnail</label>
+              <div id="image-thumbnail-info" class="property-value">-</div>
+            </div>
           
           <div class="property-actions">
             <button type="button" id="save-metadata-btn" class="button tiny expanded primary" disabled>

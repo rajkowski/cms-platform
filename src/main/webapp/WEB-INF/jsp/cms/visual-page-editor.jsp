@@ -48,7 +48,7 @@
   <!-- Toolbar -->
   <div id="editor-toolbar">
     <div class="titlebar-left">
-      <img src="${ctx}/images/favicon.png" alt="Logo" />
+      <a href="${ctx}/"><img src="${ctx}/images/favicon.png" alt="Logo" /></a>
       <h2>Webpage Editor</h2>
     </div>
 
