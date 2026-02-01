@@ -248,12 +248,23 @@ public class AnalyticsDataService {
     response.put("rangeEnd", rangeEnd);
     response.put("generatedAt", System.currentTimeMillis());
 
+    // Get visitor segmentation metrics
+    long newVisitors = SessionRepository.findNewVisitors(days);
+    long returningVisitors = SessionRepository.findReturningVisitors(days);
+    long authenticatedUsers = UserLoginRepository.findUniqueAuthenticatedUsers(days);
+
     // Get devices and browsers data from sessions
     List<StatisticsData> devices = SessionRepository.findTopDevices(days);
     List<StatisticsData> browsers = SessionRepository.findTopBrowsers(days);
     
     // Get average session duration
     double avgSessionDuration = SessionRepository.findAverageSessionDuration(days);
+
+    // Visitor segments
+    ObjectNode segments = response.putObject("segments");
+    segments.put("newVisitors", newVisitors);
+    segments.put("returningVisitors", returningVisitors);
+    segments.put("authenticatedUsers", authenticatedUsers);
 
     // Devices
     ArrayNode devicesArray = MAPPER.valueToTree(devices);

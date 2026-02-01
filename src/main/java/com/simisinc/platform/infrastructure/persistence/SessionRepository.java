@@ -550,6 +550,52 @@ public class SessionRepository {
     return avgDuration;
   }
 
+  /**
+   * Count new visitors (first-time visitors based on visitor_id creation)
+   */
+  public static long findNewVisitors(int daysToLimit) {
+    String sqlQuery = "SELECT COUNT(DISTINCT s.visitor_id) AS new_visitor_count " +
+        "FROM sessions s " +
+        "INNER JOIN visitors v ON s.visitor_id = v.visitor_id " +
+        "WHERE s.created > NOW() - INTERVAL '" + daysToLimit + " days' " +
+        "AND s.is_bot = false " +
+        "AND v.created > NOW() - INTERVAL '" + daysToLimit + " days'";
+    long count = 0;
+    try (Connection connection = DB.getConnection();
+        PreparedStatement pst = connection.prepareStatement(sqlQuery);
+        ResultSet rs = pst.executeQuery()) {
+      if (rs.next()) {
+        count = rs.getLong("new_visitor_count");
+      }
+    } catch (SQLException se) {
+      LOG.error("SQLException: " + se.getMessage());
+    }
+    return count;
+  }
+
+  /**
+   * Count returning visitors (visitors who have sessions before the time period)
+   */
+  public static long findReturningVisitors(int daysToLimit) {
+    String sqlQuery = "SELECT COUNT(DISTINCT s.visitor_id) AS returning_visitor_count " +
+        "FROM sessions s " +
+        "INNER JOIN visitors v ON s.visitor_id = v.visitor_id " +
+        "WHERE s.created > NOW() - INTERVAL '" + daysToLimit + " days' " +
+        "AND s.is_bot = false " +
+        "AND v.created <= NOW() - INTERVAL '" + daysToLimit + " days'";
+    long count = 0;
+    try (Connection connection = DB.getConnection();
+        PreparedStatement pst = connection.prepareStatement(sqlQuery);
+        ResultSet rs = pst.executeQuery()) {
+      if (rs.next()) {
+        count = rs.getLong("returning_visitor_count");
+      }
+    } catch (SQLException se) {
+      LOG.error("SQLException: " + se.getMessage());
+    }
+    return count;
+  }
+
   private static Session buildRecord(ResultSet rs) {
     try {
       Session record = new Session();

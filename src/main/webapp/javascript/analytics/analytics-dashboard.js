@@ -688,6 +688,28 @@ const AnalyticsDashboard = (function() {
     if (segmentsContainer) {
       segmentsContainer.classList.remove('skeleton');
       segmentsContainer.innerHTML = '';
+      
+      // Render visitor segments
+      if (data.segments) {
+        const newVisitorsCard = createSegmentCard({
+          name: 'New Visitors',
+          count: data.segments.newVisitors || 0
+        });
+        segmentsContainer.appendChild(newVisitorsCard);
+
+        const returningVisitorsCard = createSegmentCard({
+          name: 'Returning Visitors',
+          count: data.segments.returningVisitors || 0
+        });
+        segmentsContainer.appendChild(returningVisitorsCard);
+
+        const authenticatedUsersCard = createSegmentCard({
+          name: 'Authenticated Users',
+          count: data.segments.authenticatedUsers || 0
+        });
+        segmentsContainer.appendChild(authenticatedUsersCard);
+      }
+
       // Show average session duration as primary metric
       const durationCard = createSegmentCard({
         name: 'Avg Session Duration',
