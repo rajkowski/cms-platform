@@ -276,11 +276,9 @@ class VisualDataEditor {
   }
 
   loadInitialData() {
-    if (this.viewMode === 'collections') {
-      this.loadCollections();
-    } else if (this.viewMode === 'datasets') {
-      this.loadDatasets();
-    }
+    // Load both collections and datasets to populate the counts in tabs
+    this.loadCollections();
+    this.loadDatasets();
 
     // If a specific item is selected, load it
     if (this.uniqueId) {
@@ -327,14 +325,18 @@ class VisualDataEditor {
   renderCollectionsList() {
     const list = document.getElementById('collections-list');
     const emptyDiv = document.getElementById('collections-empty');
+    const countElement = document.getElementById('collections-count');
     
     if (!this.collections || this.collections.length === 0) {
       list.innerHTML = '';
       emptyDiv.style.display = 'block';
+      if (countElement) countElement.textContent = '(0)';
       return;
     }
 
     emptyDiv.style.display = 'none';
+    if (countElement) countElement.textContent = `(${this.collections.length})`;
+    
     list.innerHTML = this.collections.map(collection => `
       <li class="data-list-item" data-id="${collection.id}" data-unique-id="${collection.uniqueId}">
         <div class="data-list-item-icon">
@@ -343,14 +345,6 @@ class VisualDataEditor {
         <div class="data-list-item-content">
           <div class="data-list-item-title">${this.escapeHtml(collection.name)}</div>
           <div class="data-list-item-meta">${collection.itemCount || 0} items</div>
-        </div>
-        <div class="data-list-item-actions">
-          <button class="data-list-item-action" data-action="edit" title="Edit">
-            <i class="fa fa-edit"></i>
-          </button>
-          <button class="data-list-item-action" data-action="delete" title="Delete">
-            <i class="fa fa-trash"></i>
-          </button>
         </div>
       </li>
     `).join('');
@@ -364,14 +358,18 @@ class VisualDataEditor {
   renderDatasetsList() {
     const list = document.getElementById('datasets-list');
     const emptyDiv = document.getElementById('datasets-empty');
+    const countElement = document.getElementById('datasets-count');
     
     if (!this.datasets || this.datasets.length === 0) {
       list.innerHTML = '';
       emptyDiv.style.display = 'block';
+      if (countElement) countElement.textContent = '(0)';
       return;
     }
 
     emptyDiv.style.display = 'none';
+    if (countElement) countElement.textContent = `(${this.datasets.length})`;
+    
     list.innerHTML = this.datasets.map(dataset => `
       <li class="data-list-item" data-id="${dataset.id}">
         <div class="data-list-item-icon">
@@ -380,20 +378,9 @@ class VisualDataEditor {
         <div class="data-list-item-content">
           <div class="data-list-item-title">${this.escapeHtml(dataset.name)}</div>
           <div class="data-list-item-meta">
-            ${dataset.recordCount ? `${dataset.recordCount} records` : 'No data'}
+            ${dataset.recordCount && dataset.recordCount > 0 ? `${dataset.recordCount} records` : '0 records'}
             ${dataset.syncEnabled ? ' • <span class="status-badge scheduled">Scheduled</span>' : ''}
           </div>
-        </div>
-        <div class="data-list-item-actions">
-          <button class="data-list-item-action" data-action="edit" title="Edit">
-            <i class="fa fa-edit"></i>
-          </button>
-          <button class="data-list-item-action" data-action="sync" title="Sync">
-            <i class="fa fa-sync"></i>
-          </button>
-          <button class="data-list-item-action" data-action="delete" title="Delete">
-            <i class="fa fa-trash"></i>
-          </button>
         </div>
       </li>
     `).join('');
@@ -590,11 +577,14 @@ class VisualDataEditor {
           </div>
           <div class="dataset-header-content">
             <h3>${this.escapeHtml(dataset.name)}</h3>
-            <p>${this.escapeHtml(dataset.filename || 'No file')} • ${dataset.recordCount || 0} records • ${syncStatus}</p>
+            <p>${this.escapeHtml(dataset.filename || 'No file')} • ${dataset.recordCount && dataset.recordCount > 0 ? dataset.recordCount : 0} records • ${syncStatus}</p>
           </div>
           <div class="dataset-header-actions">
             <button class="button tiny primary radius" id="sync-now-btn">
               <i class="fa fa-sync"></i> Sync Now
+            </button>
+            <button class="button tiny alert radius" id="delete-dataset-btn">
+              <i class="fa fa-trash"></i> Delete
             </button>
             <button class="button tiny secondary radius" id="refresh-dataset-btn">
               <i class="fa fa-redo"></i> Refresh
@@ -639,6 +629,7 @@ class VisualDataEditor {
     
     // Setup dataset action buttons
     document.getElementById('sync-now-btn')?.addEventListener('click', () => this.syncDatasetNow(dataset.id));
+    document.getElementById('delete-dataset-btn')?.addEventListener('click', () => this.deleteDataset(dataset.id));
     document.getElementById('refresh-dataset-btn')?.addEventListener('click', () => this.loadDatasetDetails(dataset.id));
 
     // Update info tab
@@ -1634,6 +1625,40 @@ class VisualDataEditor {
     }
   }
 
+  async deleteDataset(datasetId) {
+    if (!confirm('Are you sure you want to delete this dataset? This action cannot be undone.')) return;
+    
+    this.showLoading(true);
+    try {
+      const response = await fetch('/json/datasetDelete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({
+          datasetId: datasetId,
+          token: this.token
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Delete failed');
+      }
+
+      await response.json();
+      this.showNotification('Dataset deleted successfully');
+      
+      // Clear the canvas and reload the datasets list
+      this.showEmptyCanvas();
+      this.loadDatasets();
+    } catch (error) {
+      console.error('Error deleting dataset:', error);
+      this.showNotification('Error deleting dataset: ' + error.message);
+    } finally {
+      this.showLoading(false);
+    }
+  }
+
   getSyncStatusBadge(dataset) {
     if (!dataset.syncEnabled) {
       return '<span class="status-badge inactive">Not Enabled</span>';
@@ -1869,6 +1894,39 @@ class VisualDataEditor {
     const emptyCanvas = canvas.querySelector('.empty-canvas');
     if (emptyCanvas) {
       emptyCanvas.style.display = 'none';
+    }
+  }
+
+  showEmptyCanvas() {
+    const canvas = document.getElementById('data-editor-canvas');
+    const emptyCanvas = canvas.querySelector('.empty-canvas');
+    if (emptyCanvas) {
+      emptyCanvas.style.display = 'block';
+    } else {
+      // If empty canvas doesn't exist, recreate it
+      canvas.innerHTML = `
+        <div class="empty-canvas">
+          <i class="fa fa-database fa-3x margin-bottom-10"></i>
+          <h5>Welcome to the Data Editor</h5>
+          <p>Select a collection or dataset from the left panel to get started</p>
+          <p style="margin-top: 20px;">Or create something new:</p>
+          <div style="margin-top: 15px;">
+            <button class="button radius success new-collection-action">
+              <i class="fa fa-folder-plus"></i> Create Collection
+            </button>
+            <button class="button radius primary import-dataset-action">
+              <i class="fa fa-file-import"></i> Import Dataset
+            </button>
+          </div>
+        </div>
+      `;
+      // Re-attach event listeners for the action buttons
+      document.querySelectorAll('.new-collection-action').forEach(btn => {
+        btn.addEventListener('click', () => this.showNewCollectionModal());
+      });
+      document.querySelectorAll('.import-dataset-action').forEach(btn => {
+        btn.addEventListener('click', () => this.showImportDatasetModal());
+      });
     }
   }
 
