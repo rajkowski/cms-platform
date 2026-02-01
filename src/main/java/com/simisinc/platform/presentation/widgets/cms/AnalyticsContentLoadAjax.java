@@ -40,6 +40,7 @@ public class AnalyticsContentLoadAjax extends GenericWidget {
   @Override
   public WidgetContext execute(WidgetContext context) {
     String range = context.getParameter("range");
+    String assetType = context.getParameter("assetType");
     String rangeStart = null;
     String rangeEnd = null;
     int days = 7; // default
@@ -80,7 +81,7 @@ public class AnalyticsContentLoadAjax extends GenericWidget {
 
     try {
       // Get data from service
-      ObjectNode response = AnalyticsDataService.loadContent(rangeStart, rangeEnd, days);
+      ObjectNode response = AnalyticsDataService.loadContent(rangeStart, rangeEnd, days, assetType);
       context.setJson(response.toString());
     } catch (Exception e) {
       LOG.error("Error loading content analytics", e);

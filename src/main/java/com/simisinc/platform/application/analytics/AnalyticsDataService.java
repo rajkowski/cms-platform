@@ -204,14 +204,14 @@ public class AnalyticsDataService {
   /**
    * Load content performance data
    */
-  public static ObjectNode loadContent(String rangeStart, String rangeEnd, int daysToLimit) {
+  public static ObjectNode loadContent(String rangeStart, String rangeEnd, int daysToLimit, String assetType) {
     ObjectNode response = MAPPER.createObjectNode();
 
     // Get top pages with metrics
     List<ObjectNode> topPages = WebPageHitRepository.findTopPagesWithMetrics(daysToLimit, 10);
 
     // Get top assets
-    List<ObjectNode> topAssets = WebPageHitRepository.findTopAssets(daysToLimit, 10);
+    List<ObjectNode> topAssets = WebPageHitRepository.findTopAssets(daysToLimit, 10, assetType);
 
     response.put("success", true);
     response.put("rangeStart", rangeStart);

@@ -20,7 +20,8 @@ const AnalyticsDashboard = (function() {
     filters: {
       page: '',
       pageId: '',
-      device: ''
+      device: '',
+      assetType: ''
     },
     cachedData: {},
     lastFetch: {},
@@ -86,6 +87,7 @@ const AnalyticsDashboard = (function() {
     // Filters
     const filterPage = document.getElementById('filter-page');
     const filterDevice = document.getElementById('filter-device');
+    const filterAssetType = document.getElementById('filter-asset-type');
     const clearFiltersBtn = document.getElementById('clear-filters-btn');
 
     if (filterPage) {
@@ -94,6 +96,7 @@ const AnalyticsDashboard = (function() {
       filterPage.addEventListener('keyup', debounce(handleFilterChange, 500));
     }
     if (filterDevice) filterDevice.addEventListener('change', handleFilterChange);
+    if (filterAssetType) filterAssetType.addEventListener('change', handleFilterChange);
     if (clearFiltersBtn) clearFiltersBtn.addEventListener('click', clearFilters);
 
     // Refresh button
@@ -228,8 +231,10 @@ const AnalyticsDashboard = (function() {
     // Sync filter inputs
     const filterPage = document.getElementById('filter-page');
     const filterDevice = document.getElementById('filter-device');
+    const filterAssetType = document.getElementById('filter-asset-type');
     if (filterPage) filterPage.value = state.filters.page || '';
     if (filterDevice) filterDevice.value = state.filters.device || '';
+    if (filterAssetType) filterAssetType.value = state.filters.assetType || '';
 
     // Update clear button state
     updateClearButtonState();
@@ -919,9 +924,11 @@ const AnalyticsDashboard = (function() {
   function handleFilterChange() {
     const filterPage = document.getElementById('filter-page');
     const filterDevice = document.getElementById('filter-device');
+    const filterAssetType = document.getElementById('filter-asset-type');
 
     state.filters.page = filterPage ? filterPage.value : '';
     state.filters.device = filterDevice ? filterDevice.value : '';
+    state.filters.assetType = filterAssetType ? filterAssetType.value : '';
     state.lastFetch = {}; // Clear cache
     saveState();
 
@@ -938,7 +945,7 @@ const AnalyticsDashboard = (function() {
     const clearBtn = document.getElementById('clear-filters-btn');
     if (!clearBtn) return;
 
-    const hasActiveFilters = state.filters.page || state.filters.device;
+    const hasActiveFilters = state.filters.page || state.filters.device || state.filters.assetType;
     if (hasActiveFilters) {
       clearBtn.classList.add('active');
       clearBtn.setAttribute('aria-label', 'Clear all active filters');
@@ -956,11 +963,13 @@ const AnalyticsDashboard = (function() {
   function clearFilters() {
     const filterPage = document.getElementById('filter-page');
     const filterDevice = document.getElementById('filter-device');
+    const filterAssetType = document.getElementById('filter-asset-type');
 
     if (filterPage) filterPage.value = '';
     if (filterDevice) filterDevice.value = '';
+    if (filterAssetType) filterAssetType.value = '';
 
-    state.filters = { page: '', pageId: '', device: '' };
+    state.filters = { page: '', pageId: '', device: '', assetType: '' };
     state.lastFetch = {};
     saveState();
 

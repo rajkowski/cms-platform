@@ -210,6 +210,20 @@
           <!-- Top Assets -->
           <div class="section-header" style="margin-top: 30px;">
             <h3><i class="${font:far()} fa-image"></i> Top Assets</h3>
+            <div class="filter-group">
+              <label for="filter-asset-type">Asset Type:</label>
+              <select id="filter-asset-type" class="filter-select">
+                <option value="">All Types</option>
+                <option value="PDF">PDF</option>
+                <option value="Document">Document</option>
+                <option value="Spreadsheet">Spreadsheet</option>
+                <option value="Presentation">Presentation</option>
+                <option value="Diagram">Diagram</option>
+                <option value="Image">Image</option>
+                <option value="Archive">Archive</option>
+                <option value="Executable">Executable</option>
+              </select>
+            </div>
           </div>
           <div id="top-assets" class="data-table skeleton">
             <table>

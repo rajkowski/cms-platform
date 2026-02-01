@@ -321,33 +321,74 @@ public class WebPageHitRepository {
   /**
    * Find top assets with metrics (downloads, views)
    */
-  public static List<ObjectNode> findTopAssets(int days, int recordLimit) {
-    String sqlQuery = "SELECT " +
-        "page_path, " +
-        "COUNT(*) AS view_count, " +
-        "COUNT(CASE WHEN method = 'GET' THEN 1 END) AS download_count " +
-        "FROM web_page_hits " +
-        "WHERE hit_date > NOW() - INTERVAL '" + days + " days' " +
-        "AND (page_path LIKE '%.pdf' OR page_path LIKE '%.doc%' OR page_path LIKE '%.xls%' OR " +
-        "     page_path LIKE '%.jpg' OR page_path LIKE '%.png' OR page_path LIKE '%.gif' OR " +
-        "     page_path LIKE '%.zip' OR page_path LIKE '%.exe') " +
-        "AND NOT EXISTS (SELECT 1 FROM sessions WHERE session_id = web_page_hits.session_id AND is_bot = TRUE) " +
-        "GROUP BY page_path " +
-        "ORDER BY view_count DESC " +
-        "LIMIT " + recordLimit;
+  public static List<ObjectNode> findTopAssets(int days, int recordLimit, String assetType) {
+    StringBuilder sqlQuery = new StringBuilder();
+    sqlQuery.append("SELECT ");
+    sqlQuery.append("page_path, ");
+    sqlQuery.append("COUNT(*) AS view_count, ");
+    sqlQuery.append("COUNT(CASE WHEN method = 'GET' THEN 1 END) AS download_count ");
+    sqlQuery.append("FROM web_page_hits ");
+    sqlQuery.append("WHERE hit_date > NOW() - INTERVAL '").append(days).append(" days' ");
+    sqlQuery.append("AND (page_path LIKE '%.pdf' OR page_path LIKE '%.doc%' OR page_path LIKE '%.xls%' OR ");
+    sqlQuery.append("     page_path LIKE '%.jpg' OR page_path LIKE '%.png' OR page_path LIKE '%.gif' OR ");
+    sqlQuery.append("     page_path LIKE '%.zip' OR page_path LIKE '%.exe' OR page_path LIKE '%.ppt%' OR ");
+    sqlQuery.append("     page_path LIKE '%.drawio' OR page_path LIKE '%.vsdx') ");
+    sqlQuery.append("AND NOT EXISTS (SELECT 1 FROM sessions WHERE session_id = web_page_hits.session_id AND is_bot = TRUE) ");
+    
+    // Add asset type filter if specified
+    if (assetType != null && !assetType.trim().isEmpty()) {
+      sqlQuery.append("AND (");
+      switch (assetType) {
+        case "PDF":
+          sqlQuery.append("page_path LIKE '%.pdf'");
+          break;
+        case "Document":
+          sqlQuery.append("page_path LIKE '%.doc' OR page_path LIKE '%.docx'");
+          break;
+        case "Spreadsheet":
+          sqlQuery.append("page_path LIKE '%.xls' OR page_path LIKE '%.xlsx'");
+          break;
+        case "Presentation":
+          sqlQuery.append("page_path LIKE '%.ppt' OR page_path LIKE '%.pptx'");
+          break;
+        case "Diagram":
+          sqlQuery.append("page_path LIKE '%.drawio' OR page_path LIKE '%.vsdx'");
+          break;
+        case "Image":
+          sqlQuery.append("page_path LIKE '%.jpg' OR page_path LIKE '%.jpeg' OR page_path LIKE '%.png' OR page_path LIKE '%.gif'");
+          break;
+        case "Archive":
+          sqlQuery.append("page_path LIKE '%.zip'");
+          break;
+        case "Executable":
+          sqlQuery.append("page_path LIKE '%.exe'");
+          break;
+        case "File":
+          // File is a catch-all for unknown types, so we don't filter further
+          sqlQuery.append("1=1");
+          break;
+        default:
+          sqlQuery.append("1=1"); // No additional filtering for unknown types
+      }
+      sqlQuery.append(") ");
+    }
+    
+    sqlQuery.append("GROUP BY page_path ");
+    sqlQuery.append("ORDER BY view_count DESC ");
+    sqlQuery.append("LIMIT ").append(recordLimit);
 
     List<ObjectNode> records = new ArrayList<>();
     try (Connection connection = DB.getConnection();
-        PreparedStatement pst = connection.prepareStatement(sqlQuery);
+        PreparedStatement pst = connection.prepareStatement(sqlQuery.toString());
         ResultSet rs = pst.executeQuery()) {
       com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
       while (rs.next()) {
         String assetPath = rs.getString("page_path");
-        String assetType = getAssetType(assetPath);
+        String assetFileType = getAssetType(assetPath);
         ObjectNode node = mapper.createObjectNode();
         node.put("assetPath", assetPath);
         node.put("assetName", assetPath.substring(assetPath.lastIndexOf("/") + 1));
-        node.put("assetType", assetType);
+        node.put("assetType", assetFileType);
         node.put("downloads", rs.getLong("download_count"));
         node.put("views", rs.getLong("view_count"));
         records.add(node);
