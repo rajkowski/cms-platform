@@ -62,7 +62,7 @@
         <option value="mobile">Mobile</option>
         <option value="tablet">Tablet</option>
       </select>
-      <button id="clear-filters-btn" class="button tiny radius secondary no-gap" title="Clear all filters">
+      <button id="clear-filters-btn" class="button tiny radius secondary no-gap" title="No active filters" aria-label="No active filters">
         <i class="${font:far()} fa-times"></i> Clear
       </button>
     </div>

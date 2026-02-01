@@ -46,7 +46,7 @@ public class AnalyticsFiltersOptionsAjax extends GenericWidget {
       ObjectNode response = MAPPER.createObjectNode();
       response.put("success", true);
       response.put("generatedAt", System.currentTimeMillis());
-      
+
       // Get available pages for filter options
       List<WebPage> pages = WebPageRepository.findAll();
       var pagesArray = response.putArray("pages");
@@ -58,13 +58,13 @@ public class AnalyticsFiltersOptionsAjax extends GenericWidget {
           pageObj.put("path", page.getLink());
         }
       }
-      
+
       // Device options (static)
       var devicesArray = response.putArray("devices");
       devicesArray.add("desktop");
       devicesArray.add("mobile");
       devicesArray.add("tablet");
-      
+
       // Location options (static - common regions)
       var locationsArray = response.putArray("locations");
       locationsArray.add("North America");
@@ -73,7 +73,7 @@ public class AnalyticsFiltersOptionsAjax extends GenericWidget {
       locationsArray.add("South America");
       locationsArray.add("Africa");
       locationsArray.add("Oceania");
-      
+
       // Browser options (static)
       var browsersArray = response.putArray("browsers");
       browsersArray.add("Chrome");
@@ -81,10 +81,11 @@ public class AnalyticsFiltersOptionsAjax extends GenericWidget {
       browsersArray.add("Firefox");
       browsersArray.add("Safari");
       browsersArray.add("Other");
-      
+
       context.setJson(response.toString());
     } catch (Exception e) {
       LOG.error("Error loading analytics filter options", e);
+      context.setJson("{\"success\": false, \"error\": \"Error loading filter options\"}");
       context.setSuccess(false);
     }
     return context;

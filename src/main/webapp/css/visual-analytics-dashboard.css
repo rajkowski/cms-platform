@@ -180,6 +180,34 @@
   box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
 }
 
+/* Clear Filters Button Styling */
+#clear-filters-btn {
+  transition: all 0.2s ease;
+  opacity: 0.6;
+  cursor: default;
+}
+
+#clear-filters-btn.active {
+  background: var(--kpi-negative-color) !important;
+  color: white !important;
+  border-color: var(--kpi-negative-color) !important;
+  opacity: 1;
+  cursor: pointer;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+}
+
+#clear-filters-btn.active:hover {
+  background: var(--kpi-negative-color) !important;
+  border-color: var(--kpi-negative-color) !important;
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.4);
+  transform: scale(1.05);
+}
+
+#clear-filters-btn:not(.active):hover {
+  opacity: 0.7;
+}
+
 /* Data Freshness Indicator */
 .data-freshness-indicator {
   font-size: 12px;

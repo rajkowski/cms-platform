@@ -70,11 +70,9 @@ public class AnalyticsLiveLoadAjax extends GenericWidget {
         int idx = 0;
         for (var page : topPages) {
           var eventObj = eventsArray.addObject();
-          // @todo find timestamp, user, etc.
           long timestamp = System.currentTimeMillis() - (idx * 60000); // Spread across last hour
           eventObj.put("timestamp", timestamp);
           eventObj.put("page", page.getLabel());
-          eventObj.put("user", "Anonymous");
           eventObj.put("type", "pageview");
           eventObj.put("views", Long.parseLong(page.getValue()));
           idx++;

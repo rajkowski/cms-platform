@@ -19,10 +19,12 @@ const AnalyticsDashboard = (function() {
     timeRange: '7d',
     filters: {
       page: '',
+      pageId: '',
       device: ''
     },
     cachedData: {},
-    lastFetch: {}
+    lastFetch: {},
+    pageOptions: {} // Map of page names/links to IDs
   };
 
   const CACHE_DURATION = 60000; // 60 seconds
@@ -39,6 +41,9 @@ const AnalyticsDashboard = (function() {
 
     // Setup event listeners
     setupEventListeners();
+
+    // Load filter options
+    loadAndPopulateFilterOptions();
 
     // Sync UI with loaded state
     syncUIWithState();
@@ -85,6 +90,7 @@ const AnalyticsDashboard = (function() {
 
     if (filterPage) {
       filterPage.addEventListener('change', handleFilterChange);
+      filterPage.addEventListener('blur', handlePageFilterBlur);
       filterPage.addEventListener('keyup', debounce(handleFilterChange, 500));
     }
     if (filterDevice) filterDevice.addEventListener('change', handleFilterChange);
@@ -97,6 +103,68 @@ const AnalyticsDashboard = (function() {
     // Dark mode toggle
     const darkModeToggle = document.getElementById('dark-mode-toggle');
     if (darkModeToggle) darkModeToggle.addEventListener('click', toggleDarkMode);
+  }
+
+  /**
+   * Load filter options and populate filter dropdowns
+   */
+  function loadAndPopulateFilterOptions() {
+    AnalyticsAPI.getFilterOptions()
+      .then(data => {
+        if (data && data.success !== false) {
+          populateFilterDropdowns(data);
+        }
+      })
+      .catch(error => {
+        console.warn('Failed to load filter options:', error);
+        // Continue without filter options populated
+      });
+  }
+
+  /**
+   * Populate filter dropdowns with options from the API
+   */
+  function populateFilterDropdowns(filterData) {
+    // Populate page filter
+    const filterPageInput = document.getElementById('filter-page');
+    if (filterPageInput && filterData.pages && Array.isArray(filterData.pages)) {
+      // Create a datalist for autocomplete
+      let datalist = document.getElementById('pages-list');
+      if (!datalist) {
+        datalist = document.createElement('datalist');
+        datalist.id = 'pages-list';
+        document.body.appendChild(datalist);
+        filterPageInput.setAttribute('list', 'pages-list');
+      }
+      datalist.innerHTML = '';
+      filterData.pages.forEach(page => {
+        const option = document.createElement('option');
+        const displayValue = page.title || page.name || page.link || '';
+        option.value = displayValue;
+        option.dataset.id = page.id || '';
+        datalist.appendChild(option);
+        // Store page ID mapping for quick lookup
+        state.pageOptions[displayValue] = page.id || '';
+        if (page.link) {
+          state.pageOptions[page.link] = page.id || '';
+        }
+      });
+    }
+
+    // Populate device filter
+    const filterDeviceSelect = document.getElementById('filter-device');
+    if (filterDeviceSelect && filterData.devices && Array.isArray(filterData.devices)) {
+      // Keep the existing "All Devices" option
+      const currentValue = filterDeviceSelect.value;
+      filterDeviceSelect.innerHTML = '<option value="">All Devices</option>';
+      filterData.devices.forEach(device => {
+        const option = document.createElement('option');
+        option.value = device.toLowerCase();
+        option.textContent = device;
+        filterDeviceSelect.appendChild(option);
+      });
+      filterDeviceSelect.value = currentValue;
+    }
   }
 
   /**
@@ -162,6 +230,9 @@ const AnalyticsDashboard = (function() {
     const filterDevice = document.getElementById('filter-device');
     if (filterPage) filterPage.value = state.filters.page || '';
     if (filterDevice) filterDevice.value = state.filters.device || '';
+
+    // Update clear button state
+    updateClearButtonState();
   }
 
   /**
@@ -802,6 +873,25 @@ const AnalyticsDashboard = (function() {
   }
 
   /**
+   * Handle page filter blur to resolve page ID
+   */
+  function handlePageFilterBlur() {
+    const filterPage = document.getElementById('filter-page');
+    if (!filterPage) return;
+
+    const pageValue = filterPage.value;
+    if (pageValue && state.pageOptions[pageValue]) {
+      // Valid page was selected, store the ID
+      state.filters.pageId = state.pageOptions[pageValue];
+    } else if (!pageValue) {
+      // Filter was cleared
+      state.filters.pageId = '';
+    }
+    // If pageValue exists but no ID mapping, we keep the page name as-is
+    updateClearButtonState();
+  }
+
+  /**
    * Handle filter changes
    */
   function handleFilterChange() {
@@ -813,7 +903,29 @@ const AnalyticsDashboard = (function() {
     state.lastFetch = {}; // Clear cache
     saveState();
 
+    // Update clear button state
+    updateClearButtonState();
+
     loadTabData(state.currentTab);
+  }
+
+  /**
+   * Update clear button visibility and styling based on active filters
+   */
+  function updateClearButtonState() {
+    const clearBtn = document.getElementById('clear-filters-btn');
+    if (!clearBtn) return;
+
+    const hasActiveFilters = state.filters.page || state.filters.device;
+    if (hasActiveFilters) {
+      clearBtn.classList.add('active');
+      clearBtn.setAttribute('aria-label', 'Clear all active filters');
+      clearBtn.title = 'Clear all active filters';
+    } else {
+      clearBtn.classList.remove('active');
+      clearBtn.setAttribute('aria-label', 'No active filters');
+      clearBtn.title = 'No active filters';
+    }
   }
 
   /**
@@ -826,9 +938,12 @@ const AnalyticsDashboard = (function() {
     if (filterPage) filterPage.value = '';
     if (filterDevice) filterDevice.value = '';
 
-    state.filters = { page: '', device: '' };
+    state.filters = { page: '', pageId: '', device: '' };
     state.lastFetch = {};
     saveState();
+
+    // Update clear button state
+    updateClearButtonState();
 
     loadTabData(state.currentTab);
   }
@@ -953,7 +1068,7 @@ const AnalyticsDashboard = (function() {
       const data = JSON.parse(saved);
       state.currentTab = data.currentTab || 'overview';
       state.timeRange = data.timeRange || config.defaultTimeRange;
-      state.filters = data.filters || { page: '', device: '' };
+      state.filters = data.filters || { page: '', pageId: '', device: '' };
     }
 
     // Load theme preference

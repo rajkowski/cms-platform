@@ -259,6 +259,10 @@ CREATE TABLE web_page_hits (
 
 CREATE INDEX web_pg_hits_dt_idx ON web_page_hits(hit_date);
 CREATE INDEX web_pg_hits_ss_idx ON web_page_hits(session_id);
+CREATE INDEX web_page_hits_session_bot_idx ON web_page_hits(session_id, is_bot);
+CREATE INDEX web_page_hits_page_path_idx ON web_page_hits(page_path);
+CREATE INDEX web_page_hits_composite_analytics_idx ON web_page_hits(hit_date, page_path, session_id) INCLUDE (ip_address, method);
+CREATE INDEX web_page_hits_hit_date_method_idx ON web_page_hits(hit_date, method);
 
 CREATE TABLE web_page_hit_snapshots (
   snapshot_id BIGSERIAL PRIMARY KEY,
