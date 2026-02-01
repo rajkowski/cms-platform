@@ -95,6 +95,8 @@
     <web:stylesheet package="autocomplete" file="auto-complete.css" />
     <web:stylesheet package="swiper" file="swiper-bundle.min.css" />
     <web:stylesheets />
+  </g:compress>
+  <g:compress>
     <link rel="stylesheet" type="text/css" href="${ctx}/css/platform.css" />
   </g:compress>
   <c:if test="${isPreviewMode eq 'true'}">

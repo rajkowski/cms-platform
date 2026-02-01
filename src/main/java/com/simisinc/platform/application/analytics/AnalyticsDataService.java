@@ -226,7 +226,9 @@ public class AnalyticsDataService {
     ArrayNode topAssetsArray = MAPPER.valueToTree(topAssets);
     response.set("topAssets", topAssetsArray);
 
+    // @todo additional data
     response.putArray("searchQueries");
+    
     response.putArray("referrers");
 
     return response;

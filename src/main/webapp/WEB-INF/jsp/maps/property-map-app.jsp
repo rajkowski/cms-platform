@@ -58,7 +58,7 @@
     </div>
     <div class="float-left size-125 card">
       <h4 id="interstateDistance" class="no-gap">--</h4>
-      <span class="subheader">Interstate</span>
+      <span class="subheader">Highway</span>
     </div>
     <div class="float-left size-125 card">
       <h4 id="portDistance" class="no-gap">--</h4>
@@ -104,7 +104,7 @@
       </div>
       <div class="input-group">
         <span class="input-group-label">
-          Zoning
+          Category
         </span>
         <select class="input-group-field" id="zoning" onchange="updateMap${widgetContext.uniqueId}()">
           <option value=""></option>
@@ -145,7 +145,7 @@
         <thead>
           <tr>
             <th id="propertyTitle">Location</th>
-            <th colspan="2">Zoning</th>
+            <th colspan="2">Category</th>
           </tr>
         </thead>
         <tbody id="tbody${widgetContext.uniqueId}">
@@ -219,14 +219,14 @@
           "<a class=\"small button success no-gap\" target=\"_blank\" href=\"<c:out value="${js:escape(feature.properties['RealEstate'])}" />\">Real Estate</a>&nbsp;" +
           </c:when>
           </c:choose>
-          "<a class=\"small button success no-gap\" target=\"_blank\" href=\"${ctx}/contact-us\">Contact Us</a>" +
+          "<a class=\"small button success no-gap\" target=\"_blank\" href=\"${ctx}/contact-us\">Select</a>" +
           "</p>" +
           <c:if test="${feature.properties['ACRES'] != '0' || feature.properties['TOT_SQ_FT'] != '0'}">
             "<p>" +
-              <c:if test="${feature.properties['ACRES'] != '0'}">
+              <c:if test="${!empty feature.properties['ACRES'] && feature.properties['ACRES'] != '0'}">
               "<fmt:formatNumber value="${feature.properties['ACRES']}" /> acres" +
               </c:if>
-              <c:if test="${feature.properties['TOT_SQ_FT'] != '0'}">
+              <c:if test="${!empty feature.properties['TOT_SQ_FT'] && feature.properties['TOT_SQ_FT'] != '0'}">
                 <c:if test="${feature.properties['ACRES'] != '0'}">"<br />" +</c:if>
                 "<fmt:formatNumber value="${feature.properties['TOT_SQ_FT']}" /> total sq ft" +
               </c:if>

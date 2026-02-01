@@ -63,6 +63,7 @@ public class AnalyticsLiveLoadAjax extends GenericWidget {
         }
       }
       
+      // @todo event types - String[] eventTypes = {"pageview", "download", "video-play", "form-submit"};
       // Get top pages from last 1 hour for recent events
       var eventsArray = response.putArray("recentEvents");
       var topPages = WebPageHitRepository.findTopPaths(1, 'h', 5);
