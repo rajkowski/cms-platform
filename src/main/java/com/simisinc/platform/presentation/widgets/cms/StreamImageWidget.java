@@ -45,7 +45,7 @@ public class StreamImageWidget extends GenericWidget {
   public WidgetContext execute(WidgetContext context) {
 
     // GET uri /assets/img/20180503171549-5/logo.png
-    // GET uri /assets/img/20180503171549-5/thumb-logo.png (for thumbnails)
+    // GET uri /assets/img/20180503171549-5/logo-thumb.png (for thumbnails)
     LOG.debug("Found request uri: " + context.getUri());
     
     // Check if this is a thumbnail request
