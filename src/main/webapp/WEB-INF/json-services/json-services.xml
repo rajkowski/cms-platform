@@ -43,6 +43,7 @@
   <service endpoint="/json/imageVersions" class="com.simisinc.platform.presentation.widgets.cms.ImageVersionsAjax" />
   <service endpoint="/json/imageVersionRevert" class="com.simisinc.platform.presentation.widgets.cms.ImageVersionRevertAjax" />
   <service endpoint="/json/imageVersionDelete" class="com.simisinc.platform.presentation.widgets.cms.ImageVersionDeleteAjax" />
+  <service endpoint="/json/imageThumbnail" class="com.simisinc.platform.presentation.widgets.cms.ImageThumbnailAjax" />
   <!-- Document Editor -->
   <service endpoint="/json/documentLibrary" class="com.simisinc.platform.presentation.widgets.cms.DocumentLibraryAjax" />
   <service endpoint="/json/documentSubfolders" class="com.simisinc.platform.presentation.widgets.cms.DocumentSubfoldersAjax" />

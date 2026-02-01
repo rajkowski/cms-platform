@@ -112,6 +112,12 @@ class ImageViewerManager {
       }
     });
 
+      // Create thumbnail button
+      const createThumbnailBtn = document.getElementById('create-thumbnail-btn');
+      if (createThumbnailBtn) {
+        createThumbnailBtn.addEventListener('click', () => this.createThumbnail());
+      }
+
     // Apply adjustments button
     const applyAdjustmentsBtn = document.getElementById('apply-adjustments-btn');
     if (applyAdjustmentsBtn) {
@@ -962,6 +968,95 @@ class ImageViewerManager {
     toolButtons.forEach(btn => {
       btn.disabled = false;
     });
+  }
+
+  /**
+   * Create a thumbnail for the current image
+   */
+  async createThumbnail() {
+    if (!this.currentImage || !this.currentImage.id) {
+      console.error('No image loaded to create thumbnail');
+      return;
+    }
+
+    // Confirm action
+    if (!confirm('Create a thumbnail (240x240 max) for this image? This will replace any existing thumbnail.')) {
+      return;
+    }
+
+    console.log('Creating thumbnail for image:', this.currentImage.id);
+
+    try {
+      // Show loading state
+      const btn = document.getElementById('create-thumbnail-btn');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-regular fa-spinner fa-spin"></i> Creating...';
+      }
+
+      const response = await fetch(`${this.editor.config.apiBaseUrl}/imageThumbnail`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({
+          'token': this.editor.config.token,
+          'imageId': this.currentImage.id
+        }),
+        credentials: 'same-origin'
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.status === 'error') {
+        throw new Error(result.message || 'Failed to create thumbnail');
+      }
+
+      // Show success message
+      if (result.thumbnail) {
+        const thumbInfo = `${result.thumbnail.width}x${result.thumbnail.height}, ${this.formatFileSize(result.thumbnail.fileLength)}`;
+        this.editor.showToast(`Thumbnail created successfully! Dimensions: ${thumbInfo}`, 'success');
+        
+        // Reload the image to update thumbnail info
+        this.currentImage.hasThumbnail = true;
+        this.currentImage.thumbnailUrl = result.thumbnail.url;
+        this.currentImage.thumbnailWidth = result.thumbnail.width;
+        this.currentImage.thumbnailHeight = result.thumbnail.height;
+        
+        // Refresh the library to show thumbnail
+        if (this.editor.imageLibrary) {
+          this.editor.imageLibrary.loadImages();
+        }
+      } else {
+        this.editor.showToast('Thumbnail created successfully!', 'success');
+      }
+
+    } catch (error) {
+      console.error('Error creating thumbnail:', error);
+      alert('Failed to create thumbnail: ' + error.message);
+    } finally {
+      // Restore button state
+      const btn = document.getElementById('create-thumbnail-btn');
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-regular fa-image"></i> Thumbnail';
+      }
+    }
+  }
+
+  /**
+   * Format file size for display
+   */
+  formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
   }
 
   /**

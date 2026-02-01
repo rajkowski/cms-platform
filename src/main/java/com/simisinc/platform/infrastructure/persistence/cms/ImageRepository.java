@@ -122,6 +122,11 @@ public class ImageRepository {
   private static Image update(Image record) {
     SqlUtils updateValues = new SqlUtils()
         .add("processed", record.getProcessed())
+        .add("processed_path", StringUtils.trimToNull(record.getProcessedPath()))
+        .add("processed_file_length", record.getProcessedFileLength())
+        .add("processed_file_type", StringUtils.trimToNull(record.getProcessedFileType()))
+        .add("processed_width", record.getProcessedWidth())
+        .add("processed_height", record.getProcessedHeight())
         .add("title", StringUtils.trimToNull(record.getTitle()))
         .add("alt_text", StringUtils.trimToNull(record.getAltText()))
         .add("description", StringUtils.trimToNull(record.getDescription()))
@@ -156,6 +161,11 @@ public class ImageRepository {
       record.setFileType(rs.getString("file_type"));
       record.setWidth(rs.getInt("width"));
       record.setHeight(rs.getInt("height"));
+      record.setProcessedPath(rs.getString("processed_path"));
+      record.setProcessedFileLength(rs.getLong("processed_file_length"));
+      record.setProcessedFileType(rs.getString("processed_file_type"));
+      record.setProcessedWidth(rs.getInt("processed_width"));
+      record.setProcessedHeight(rs.getInt("processed_height"));
       record.setWebPath(rs.getString("web_path"));
       record.setTitle(rs.getString("title"));
       record.setAltText(rs.getString("alt_text"));

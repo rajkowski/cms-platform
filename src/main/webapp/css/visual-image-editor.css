@@ -106,6 +106,18 @@
   object-fit: cover;
 }
 
+.image-grid-item img.contain {
+  object-fit: contain;
+  background-image: 
+    linear-gradient(45deg, #474747 25%, transparent 25%),
+    linear-gradient(-45deg, #474747 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #474747 75%),
+    linear-gradient(-45deg, transparent 75%, #474747 75%);
+  background-size: 10px 10px;
+  background-position: 0 0, 0 5px, 5px -5px, -5px 0px;
+  background-color: #5e5e5e;  
+}
+
 .image-grid-item .image-name {
   position: absolute;
   bottom: 0;
@@ -119,6 +131,26 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+  /* Thumbnail indicator badge */
+  .image-grid-item.has-thumbnail::before {
+    content: "T";
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 20px;
+    height: 20px;
+    background: rgba(76, 175, 80, 0.9);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: bold;
+    z-index: 1;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
 
 .loading-message,
 .no-images-message {

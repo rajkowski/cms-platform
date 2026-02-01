@@ -91,7 +91,7 @@ class ImageLibraryManager {
    */
   async loadImages(append = false) {
     if (this.loading) return;
-    
+
     this.loading = true;
     if (!append) {
       this.showLoadingState();
@@ -128,10 +128,10 @@ class ImageLibraryManager {
         this.images = data.images || [];
       }
       this.totalImages = data.total || 0;
-      
+
       // Check if there are more images to load
       this.hasMore = this.images.length < this.totalImages;
-      
+
       this.updateImageCount();
       this.renderImages(append);
       this.renderPagination();
@@ -149,7 +149,7 @@ class ImageLibraryManager {
    */
   async loadMoreImages() {
     if (!this.hasMore || this.loading) return;
-    
+
     this.currentPage++;
     await this.loadImages(true);
   }
@@ -251,7 +251,7 @@ class ImageLibraryManager {
             <button id="clear-search-btn" class="button tiny secondary">Clear Search</button>
           </div>
         `;
-        
+
         const clearBtn = document.getElementById('clear-search-btn');
         if (clearBtn) {
           clearBtn.addEventListener('click', () => {
@@ -280,17 +280,34 @@ class ImageLibraryManager {
     const item = document.createElement('div');
     item.className = 'image-grid-item';
     item.dataset.imageId = image.id;
-    
+
     if (this.selectedImageId === image.id) {
       item.classList.add('selected');
     }
 
     // Create image element
     const img = document.createElement('img');
-    img.src = `${this.editor.config.contextPath}${image.url}`;
+    // Use thumbnail if available to save bandwidth
+    const imageSrc = image.hasThumbnail && image.thumbnailUrl
+      ? `${this.editor.config.contextPath}${image.thumbnailUrl}`
+      : `${this.editor.config.contextPath}${image.url}`;
+    img.src = imageSrc;
     img.alt = image.filename;
     img.loading = 'lazy'; // Native lazy loading
-    
+
+    // Determine object-fit based on image dimensions (oblong)
+    if (image.width && image.height) {
+      // If it's not close to square, user contain
+      if (Math.abs(image.width - image.height) / Math.max(image.width, image.height) > 0.4) {
+        img.classList.add('contain');
+      }
+    }
+
+    // Add thumbnail indicator
+    if (image.hasThumbnail) {
+      item.classList.add('has-thumbnail');
+    }
+
     // Handle image load errors
     img.onerror = () => {
       // Use a data URI for placeholder instead of referencing a file
@@ -432,11 +449,11 @@ class ImageLibraryManager {
     // Add to the beginning of the array
     this.images.unshift(image);
     this.totalImages++;
-    
+
     // Re-render
     this.renderImages();
     this.renderPagination();
-    
+
     // Auto-select the new image
     this.selectImage(image.id);
   }
@@ -447,14 +464,14 @@ class ImageLibraryManager {
   removeImage(imageId) {
     this.images = this.images.filter(img => img.id !== imageId);
     this.totalImages--;
-    
+
     // If this was the selected image, clear selection
     if (this.selectedImageId === imageId) {
       this.selectedImageId = null;
       this.editor.imageViewer.clear();
       this.editor.imageProperties.clear();
     }
-    
+
     this.renderImages();
     this.renderPagination();
   }

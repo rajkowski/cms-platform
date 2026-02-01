@@ -45,15 +45,35 @@ public class StreamImageWidget extends GenericWidget {
   public WidgetContext execute(WidgetContext context) {
 
     // GET uri /assets/img/20180503171549-5/logo.png
+    // GET uri /assets/img/20180503171549-5/thumb-logo.png (for thumbnails)
     LOG.debug("Found request uri: " + context.getUri());
+    
+    // Check if this is a thumbnail request
+    boolean isThumbnail = context.getUri().contains("/thumb-");
+    
     Image record = ImageUrlCommand.decodeToImageRecord(context.getUri());
     if (record == null) {
       return null;
     }
-    File file = FileSystemCommand.getFileServerRootPath(record.getFileServerPath());
+    
+    // Use thumbnail path if requested and available
+    String filePath = isThumbnail && record.hasThumbnail() 
+        ? record.getProcessedPath() 
+        : record.getFileServerPath();
+    
+    File file = FileSystemCommand.getFileServerRootPath(filePath);
     if (!file.isFile()) {
-      LOG.warn("Server file does not exist: " + record.getFileServerPath());
-      return null;
+      LOG.warn("Server file does not exist: " + filePath);
+      // If thumbnail doesn't exist, fall back to original
+      if (isThumbnail && !record.getFileServerPath().equals(filePath)) {
+        file = FileSystemCommand.getFileServerRootPath(record.getFileServerPath());
+        if (!file.isFile()) {
+          LOG.warn("Original image file also does not exist: " + record.getFileServerPath());
+          return null;
+        }
+      } else {
+        return null;
+      }
     }
 
     // Check for a last-modified header and return 304 if possible

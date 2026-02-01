@@ -134,6 +134,19 @@ class ImagePropertiesManager {
     this.setTextContent('image-created', this.formatDate(imageData.created));
     this.setTextContent('image-modified', this.formatDate(imageData.processed) || '-');
 
+      // Display thumbnail information if available
+      const thumbnailGroup = document.getElementById('thumbnail-info-group');
+      const thumbnailInfo = document.getElementById('image-thumbnail-info');
+      if (imageData.hasThumbnail && imageData.thumbnailWidth && imageData.thumbnailHeight) {
+        if (thumbnailGroup) thumbnailGroup.style.display = 'block';
+        if (thumbnailInfo) {
+          const thumbSize = this.formatFileSize(imageData.thumbnailFileLength);
+          thumbnailInfo.textContent = `${imageData.thumbnailWidth} × ${imageData.thumbnailHeight} px (${thumbSize})`;
+        }
+      } else {
+        if (thumbnailGroup) thumbnailGroup.style.display = 'none';
+      }
+
     // Show versions tab content
     const versionsNoImage = document.querySelector('#versions-tab-content .no-image-selected');
     const versionsContainer = document.getElementById('versions-list-container');
