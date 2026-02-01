@@ -44,7 +44,7 @@ const AnalyticsAPI = (function() {
    * Get available filter options
    */
   function getFilterOptions() {
-    return fetchData('/json/analyticsFilterOptions');
+    return fetchData('/json/analyticsFiltersOptions');
   }
 
   // Public API

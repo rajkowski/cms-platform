@@ -473,6 +473,55 @@ public class SessionRepository {
   }
 
   /**
+   * Calculate daily bounce rate based on single-page sessions per day
+   * Bounce rate = sessions with only 1 page view / total sessions * 100
+   */
+  public static List<StatisticsData> findDailyBounceRate(int daysToLimit) {
+    String SQL_QUERY = "WITH daily_session_counts AS ( " +
+        "  SELECT DATE_TRUNC('day', wph.hit_date)::VARCHAR(10) AS date_column, wph.session_id, COUNT(DISTINCT wph.hit_id) AS page_count " +
+        "  FROM web_page_hits wph " +
+        "  WHERE wph.hit_date > NOW() - INTERVAL '" + daysToLimit + " days' " +
+        "  AND NOT EXISTS (SELECT 1 FROM sessions WHERE session_id = wph.session_id AND is_bot = TRUE) " +
+        "  GROUP BY DATE_TRUNC('day', wph.hit_date), wph.session_id " +
+        "), " +
+        "daily_bounce_sessions AS ( " +
+        "  SELECT date_column, COUNT(*) AS bounce_count " +
+        "  FROM daily_session_counts " +
+        "  WHERE page_count = 1 " +
+        "  GROUP BY date_column " +
+        "), " +
+        "daily_total_sessions AS ( " +
+        "  SELECT date_column, COUNT(*) AS total_count " +
+        "  FROM daily_session_counts " +
+        "  GROUP BY date_column " +
+        "), " +
+        "date_series AS ( " +
+        "  SELECT generate_series(NOW() - INTERVAL '" + daysToLimit + " days', NOW(), INTERVAL '1 day')::date::VARCHAR(10) AS date_column " +
+        ") " +
+        "SELECT ds.date_column, " +
+        "  COALESCE(CASE WHEN dts.total_count > 0 THEN (dbs.bounce_count::float / dts.total_count) * 100 ELSE 0 END, 0) AS bounce_rate " +
+        "FROM date_series ds " +
+        "LEFT JOIN daily_total_sessions dts ON ds.date_column = dts.date_column " +
+        "LEFT JOIN daily_bounce_sessions dbs ON ds.date_column = dbs.date_column " +
+        "ORDER BY ds.date_column";
+    List<StatisticsData> records = null;
+    try (Connection connection = DB.getConnection();
+        PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
+        ResultSet rs = pst.executeQuery()) {
+      records = new ArrayList<>();
+      while (rs.next()) {
+        StatisticsData data = new StatisticsData();
+        data.setLabel(rs.getString("date_column"));
+        data.setValue(String.format("%.1f", rs.getDouble("bounce_rate")));
+        records.add(data);
+      }
+    } catch (SQLException se) {
+      LOG.error("SQLException: " + se.getMessage());
+    }
+    return records;
+  }
+
+  /**
    * Calculate average session duration by checking session creation date to last web_page_hits hit_date
    */
   public static double findAverageSessionDuration(int daysToLimit) {
