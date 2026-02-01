@@ -16,6 +16,8 @@ class ImageLibraryManager {
     this.images = [];
     this.selectedImageId = null;
     this.loading = false;
+    this.lazyLoadObserver = null;
+    this.hasMore = true;
   }
 
   /**
@@ -24,6 +26,7 @@ class ImageLibraryManager {
   init() {
     console.log('Initializing Image Library Manager...');
     this.setupEventListeners();
+    this.setupLazyLoading();
     this.loadImages();
   }
 
@@ -50,13 +53,49 @@ class ImageLibraryManager {
   }
 
   /**
+   * Setup lazy loading with Intersection Observer
+   */
+  setupLazyLoading() {
+    const container = document.getElementById('image-list-container');
+    if (!container) return;
+
+    // Create a sentinel element for lazy loading trigger
+    const sentinel = document.createElement('div');
+    sentinel.id = 'lazy-load-sentinel';
+    sentinel.style.height = '1px';
+    container.appendChild(sentinel);
+
+    // Create Intersection Observer
+    this.lazyLoadObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !this.loading && this.hasMore) {
+            console.log('Lazy loading more images...');
+            this.loadMoreImages();
+          }
+        });
+      },
+      {
+        root: container,
+        rootMargin: '50px',
+        threshold: 0.1
+      }
+    );
+
+    // Start observing the sentinel
+    this.lazyLoadObserver.observe(sentinel);
+  }
+
+  /**
    * Load images from the server
    */
-  async loadImages() {
+  async loadImages(append = false) {
     if (this.loading) return;
-    
+
     this.loading = true;
-    this.showLoadingState();
+    if (!append) {
+      this.showLoadingState();
+    }
 
     try {
       const params = new URLSearchParams({
@@ -83,10 +122,18 @@ class ImageLibraryManager {
       const data = await response.json();
       console.log('Loaded images:', data);
 
-      this.images = data.images || [];
+      if (append) {
+        this.images = [...this.images, ...(data.images || [])];
+      } else {
+        this.images = data.images || [];
+      }
       this.totalImages = data.total || 0;
-      
-      this.renderImages();
+
+      // Check if there are more images to load
+      this.hasMore = this.images.length < this.totalImages;
+
+      this.updateImageCount();
+      this.renderImages(append);
       this.renderPagination();
 
     } catch (error) {
@@ -94,6 +141,26 @@ class ImageLibraryManager {
       this.showErrorState('Failed to load images. Please try again.');
     } finally {
       this.loading = false;
+    }
+  }
+
+  /**
+   * Load more images for lazy loading
+   */
+  async loadMoreImages() {
+    if (!this.hasMore || this.loading) return;
+
+    this.currentPage++;
+    await this.loadImages(true);
+  }
+
+  /**
+   * Update the image count badge
+   */
+  updateImageCount() {
+    const badge = document.getElementById('image-count-badge');
+    if (badge) {
+      badge.textContent = this.totalImages.toLocaleString();
     }
   }
 
@@ -137,21 +204,37 @@ class ImageLibraryManager {
   /**
    * Render images in the grid
    */
-  renderImages() {
+  renderImages(append = false) {
     const container = document.querySelector('#image-list-container .image-grid');
     if (!container) return;
 
-    if (this.images.length === 0) {
+    if (this.images.length === 0 && !append) {
       this.showEmptyState();
       return;
     }
 
-    container.innerHTML = '';
+    if (!append) {
+      container.innerHTML = '';
+    }
 
-    this.images.forEach(image => {
+    // Get sentinel element and temporarily remove it
+    const sentinel = document.getElementById('lazy-load-sentinel');
+    if (sentinel && sentinel.parentNode === container) {
+      sentinel.remove();
+    }
+
+    const startIndex = append ? this.images.length - (this.pageSize) : 0;
+    const imagesToRender = append ? this.images.slice(startIndex) : this.images;
+
+    imagesToRender.forEach(image => {
       const imageItem = this.createImageGridItem(image);
       container.appendChild(imageItem);
     });
+
+    // Re-append sentinel for lazy loading
+    if (sentinel) {
+      container.appendChild(sentinel);
+    }
   }
 
   /**
@@ -168,7 +251,7 @@ class ImageLibraryManager {
             <button id="clear-search-btn" class="button tiny secondary">Clear Search</button>
           </div>
         `;
-        
+
         const clearBtn = document.getElementById('clear-search-btn');
         if (clearBtn) {
           clearBtn.addEventListener('click', () => {
@@ -197,17 +280,34 @@ class ImageLibraryManager {
     const item = document.createElement('div');
     item.className = 'image-grid-item';
     item.dataset.imageId = image.id;
-    
+
     if (this.selectedImageId === image.id) {
       item.classList.add('selected');
     }
 
     // Create image element
     const img = document.createElement('img');
-    img.src = `${this.editor.config.contextPath}${image.url}`;
+    // Use thumbnail if available to save bandwidth
+    const imageSrc = image.hasThumbnail && image.thumbnailUrl
+      ? `${this.editor.config.contextPath}${image.thumbnailUrl}`
+      : `${this.editor.config.contextPath}${image.url}`;
+    img.src = imageSrc;
     img.alt = image.filename;
     img.loading = 'lazy'; // Native lazy loading
-    
+
+    // Determine object-fit based on image dimensions (oblong)
+    if (image.width && image.height) {
+      // If it's not close to square, user contain
+      if (Math.abs(image.width - image.height) / Math.max(image.width, image.height) > 0.4) {
+        img.classList.add('contain');
+      }
+    }
+
+    // Add thumbnail indicator
+    if (image.hasThumbnail) {
+      item.classList.add('has-thumbnail');
+    }
+
     // Handle image load errors
     img.onerror = () => {
       // Use a data URI for placeholder instead of referencing a file
@@ -349,11 +449,11 @@ class ImageLibraryManager {
     // Add to the beginning of the array
     this.images.unshift(image);
     this.totalImages++;
-    
+
     // Re-render
     this.renderImages();
     this.renderPagination();
-    
+
     // Auto-select the new image
     this.selectImage(image.id);
   }
@@ -364,14 +464,14 @@ class ImageLibraryManager {
   removeImage(imageId) {
     this.images = this.images.filter(img => img.id !== imageId);
     this.totalImages--;
-    
+
     // If this was the selected image, clear selection
     if (this.selectedImageId === imageId) {
       this.selectedImageId = null;
       this.editor.imageViewer.clear();
       this.editor.imageProperties.clear();
     }
-    
+
     this.renderImages();
     this.renderPagination();
   }

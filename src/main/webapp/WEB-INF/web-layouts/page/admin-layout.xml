@@ -1199,6 +1199,16 @@
     </section>
   </page>
 
+  <page name="/admin/visual-analytics-dashboard" role="admin,content-manager" title="Visual Analytics Dashboard" class="full-page">
+    <section class="grid-x">
+      <column class="small-12 cell">
+        <widget name="visualAnalyticsDashboard">
+          <title>Visual Analytics Dashboard</title>
+        </widget>
+      </column>
+    </section>
+  </page>
+
   <page name="/admin/visual-page-editor" role="admin,content-manager" title="Visual Page Editor" class="full-page">
     <section class="grid-x">
       <column class="small-12 cell">

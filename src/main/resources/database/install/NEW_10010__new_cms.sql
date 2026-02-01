@@ -184,10 +184,35 @@ CREATE TABLE images (
   processed_file_type VARCHAR(20),
   processed_width INTEGER NOT NULL DEFAULT 0,
   processed_height INTEGER NOT NULL DEFAULT 0,
-  web_path VARCHAR(50) NOT NULL
+  web_path VARCHAR(50) NOT NULL,
+  title VARCHAR(255),
+  alt_text VARCHAR(500),
+  description TEXT,
+  version_number INTEGER DEFAULT 1
 );
 CREATE INDEX images_created_idx ON images(created);
 CREATE INDEX images_web_path_idx ON images(web_path);
+CREATE INDEX images_title_idx ON images(title);
+
+-- Create image_versions table to track all versions of an image
+CREATE TABLE image_versions (
+  version_id BIGSERIAL PRIMARY KEY,
+  image_id BIGINT REFERENCES images(image_id) NOT NULL,
+  version_number INTEGER NOT NULL,
+  filename VARCHAR(255) NOT NULL,
+  path VARCHAR(255) NOT NULL,
+  file_length BIGINT DEFAULT 0,
+  file_type VARCHAR(20),
+  width INTEGER NOT NULL,
+  height INTEGER NOT NULL,
+  is_current BOOLEAN DEFAULT false,
+  created_by BIGINT REFERENCES users(user_id) NOT NULL,
+  created TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+  notes TEXT
+);
+CREATE INDEX image_versions_img_idx ON image_versions(image_id);
+CREATE INDEX image_versions_current_idx ON image_versions(image_id, is_current);
+CREATE INDEX image_versions_created_idx ON image_versions(created);
 
 CREATE TABLE form_data (
   form_data_id BIGSERIAL PRIMARY KEY,
@@ -234,6 +259,10 @@ CREATE TABLE web_page_hits (
 
 CREATE INDEX web_pg_hits_dt_idx ON web_page_hits(hit_date);
 CREATE INDEX web_pg_hits_ss_idx ON web_page_hits(session_id);
+-- CREATE INDEX web_page_hits_session_bot_idx ON web_page_hits(session_id, is_bot);
+CREATE INDEX web_page_hits_page_path_idx ON web_page_hits(page_path);
+CREATE INDEX web_page_hits_composite_analytics_idx ON web_page_hits(hit_date, page_path, session_id) INCLUDE (ip_address, method);
+CREATE INDEX web_page_hits_hit_date_method_idx ON web_page_hits(hit_date, method);
 
 CREATE TABLE web_page_hit_snapshots (
   snapshot_id BIGSERIAL PRIMARY KEY,

@@ -394,7 +394,9 @@ CREATE TABLE sessions (
 CREATE INDEX sessions_created_idx ON sessions(created);
 CREATE INDEX sessions_sess_id_idx ON sessions(session_id);
 CREATE INDEX sessions_is_bot_idx ON sessions(is_bot);
+CREATE INDEX sessions_bot_created_idx ON sessions(is_bot, created);
 CREATE INDEX sessions_referer_idx ON sessions(referer);
+CREATE INDEX sessions_referer_created_idx ON sessions(referer, created);
 
 -- CREATE TABLE session_country_snapshots (
 --   snapshot_id BIGSERIAL PRIMARY KEY,
@@ -416,6 +418,8 @@ CREATE TABLE user_logins (
   source VARCHAR(50)
 );
 CREATE INDEX user_logins_date_idx ON user_logins(created);
+CREATE INDEX user_logins_user_id_idx ON user_logins(user_id);
+CREATE INDEX user_logins_user_id_created_idx ON user_logins(user_id, created DESC);
 
 CREATE TABLE user_tokens (
   token_id BIGSERIAL PRIMARY KEY,

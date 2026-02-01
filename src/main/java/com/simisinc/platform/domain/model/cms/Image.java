@@ -17,7 +17,6 @@
 package com.simisinc.platform.domain.model.cms;
 
 import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 
 import com.simisinc.platform.application.cms.UrlCommand;
 import com.simisinc.platform.domain.model.Entity;
@@ -41,6 +40,15 @@ public class Image extends Entity {
   private String webPath = null;
   private int width = -1;
   private int height = -1;
+  private String processedPath = null;
+  private long processedFileLength = -1;
+  private String processedFileType = null;
+  private int processedWidth = -1;
+  private int processedHeight = -1;
+  private String title = null;
+  private String altText = null;
+  private String description = null;
+  private int versionNumber = 1;
 
   public Image() {
   }
@@ -125,6 +133,57 @@ public class Image extends Entity {
     this.height = height;
   }
 
+  public String getProcessedPath() {
+    return processedPath;
+  }
+
+  public void setProcessedPath(String processedPath) {
+    this.processedPath = processedPath;
+  }
+
+  public long getProcessedFileLength() {
+    return processedFileLength;
+  }
+
+  public void setProcessedFileLength(long processedFileLength) {
+    this.processedFileLength = processedFileLength;
+  }
+
+  public String getProcessedFileType() {
+    return processedFileType;
+  }
+
+  public void setProcessedFileType(String processedFileType) {
+    this.processedFileType = processedFileType;
+  }
+
+  public int getProcessedWidth() {
+    return processedWidth;
+  }
+
+  public void setProcessedWidth(int processedWidth) {
+    this.processedWidth = processedWidth;
+  }
+
+  public int getProcessedHeight() {
+    return processedHeight;
+  }
+
+  public void setProcessedHeight(int processedHeight) {
+    this.processedHeight = processedHeight;
+  }
+
+  public boolean hasThumbnail() {
+    return processedPath != null && processedWidth > 0 && processedHeight > 0;
+  }
+
+  public String getThumbnailUrl() {
+    if (!hasThumbnail()) {
+      return null;
+    }
+    return webPath + "-" + id + "/thumb-" + UrlCommand.encodeUri(filename);
+  }
+
   public String getWebPath() {
     return webPath;
   }
@@ -135,5 +194,37 @@ public class Image extends Entity {
 
   public String getUrl() {
     return webPath + "-" + id + "/" + UrlCommand.encodeUri(filename);
+  }
+
+  public String getTitle() {
+    return title;
+  }
+
+  public void setTitle(String title) {
+    this.title = title;
+  }
+
+  public String getAltText() {
+    return altText;
+  }
+
+  public void setAltText(String altText) {
+    this.altText = altText;
+  }
+
+  public String getDescription() {
+    return description;
+  }
+
+  public void setDescription(String description) {
+    this.description = description;
+  }
+
+  public int getVersionNumber() {
+    return versionNumber;
+  }
+
+  public void setVersionNumber(int versionNumber) {
+    this.versionNumber = versionNumber;
   }
 }

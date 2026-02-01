@@ -96,6 +96,14 @@ public class ImageLibraryAjax extends GenericWidget {
       sb.append("\"fileLength\":").append(image.getFileLength()).append(",");
       sb.append("\"fileType\":\"").append(JsonCommand.toJson(StringUtils.defaultString(image.getFileType()))).append("\",");
 
+        // Include thumbnail information if available
+        sb.append("\"hasThumbnail\":").append(image.hasThumbnail()).append(",");
+        if (image.hasThumbnail()) {
+          sb.append("\"thumbnailUrl\":\"").append(JsonCommand.toJson("/assets/img/" + image.getThumbnailUrl())).append("\",");
+          sb.append("\"thumbnailWidth\":").append(image.getProcessedWidth()).append(",");
+          sb.append("\"thumbnailHeight\":").append(image.getProcessedHeight()).append(",");
+        }
+
       // Format created timestamp
       if (image.getCreated() != null) {
         sb.append("\"created\":\"").append(JsonCommand.toJson(image.getCreated().toString())).append("\"");

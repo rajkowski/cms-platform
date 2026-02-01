@@ -38,7 +38,7 @@
   <!-- Toolbar -->
   <div id="editor-toolbar">
     <div class="titlebar-left">
-      <img src="${ctx}/images/favicon.png" alt="Logo" />
+      <a href="${ctx}/"><img src="${ctx}/images/favicon.png" alt="Logo" /></a>
       <h2>Data Editor</h2>
     </div>
 
@@ -128,8 +128,8 @@
     <div id="data-library-panel">
       <div class="library-tabs-container">
         <ul class="tabs-nav">
-          <li><a href="#collections-tab" class="active">Collections</a></li>
-          <li><a href="#datasets-tab">Datasets</a></li>
+          <li><a href="#collections-tab" class="active">Collections <span id="collections-count" class="tab-count"></span></a></li>
+          <li><a href="#datasets-tab">Datasets <span id="datasets-count" class="tab-count"></span></a></li>
         </ul>
 
         <!-- Collections Tab -->

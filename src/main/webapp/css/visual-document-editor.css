@@ -225,32 +225,36 @@
 .file-table {
   width: 100%;
   border-collapse: collapse;
+  border-spacing: 0;
   color: var(--editor-text);
   background: var(--editor-bg);
+  border: none;
 }
 
 .file-table thead {
   background: var(--editor-panel-bg);
   font-weight: 600;
+  border: none;
 }
 
 .file-table th {
   padding: 10px 8px;
-  border-bottom: 1px solid var(--editor-border);
   text-align: left;
   font-size: 13px;
   color: var(--editor-text);
+  border: none;
 }
 
 .file-table td {
   padding: 10px 8px;
-  border-bottom: 1px solid var(--editor-border);
   text-align: left;
   font-size: 13px;
+  border: none;
 }
 
 .file-table tbody tr {
   background: var(--editor-bg);
+  border: none;
 }
 
 .file-table tbody tr:nth-child(even) {

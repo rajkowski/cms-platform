@@ -137,6 +137,26 @@ public class UserLoginRepository {
     return records;
   }
 
+  /**
+   * Count unique authenticated users (users who have logged in) during the time period
+   */
+  public static long findUniqueAuthenticatedUsers(int daysToLimit) {
+    String SQL_QUERY = "SELECT COUNT(DISTINCT user_id) AS authenticated_user_count " +
+        "FROM user_logins " +
+        "WHERE created > NOW() - INTERVAL '" + daysToLimit + " days'";
+    long count = 0;
+    try (Connection connection = DB.getConnection();
+        PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
+        ResultSet rs = pst.executeQuery()) {
+      if (rs.next()) {
+        count = rs.getLong("authenticated_user_count");
+      }
+    } catch (SQLException se) {
+      LOG.error("SQLException: " + se.getMessage());
+    }
+    return count;
+  }
+
   public static UserLogin save(UserLogin record) {
     //    if (record.getId() > -1) {
     //      return update(record);
