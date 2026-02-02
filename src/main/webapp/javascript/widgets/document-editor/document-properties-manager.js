@@ -114,7 +114,7 @@ class DocumentPropertiesManager {
         <button class="property-tab" data-tab="versions">Versions</button>
         <button class="property-tab" data-tab="downloads">Downloads</button>
       </div>
-      <div class="property-section active" data-tab="preview">
+      <div class="property-section no-gap active" data-tab="preview">
         <div class="preview-toolbar" style="padding: 0.5rem; display: flex; gap: 0.5rem;">
           <button id="preview-download-btn" class="button tiny success no-gap radius" title="Download this file"><i class="fas fa-download"></i> Download</button>
           <button id="preview-add-version-btn" class="button tiny primary no-gap radius" title="Add a new version of this file"><i class="fas fa-plus"></i> Add Version</button>
@@ -324,10 +324,16 @@ class DocumentPropertiesManager {
         </video>
       `;
     }
+    // DrawIO preview
+    else if (mimeType === 'application/vnd.jgraph.mxfile') {
+      return `
+        <iframe src="/assets/drawio/${fileUrl}" style="width: 100%; height: 450px; border: none;"></iframe>
+      `;
+    }
     // Text preview (will be loaded asynchronously)
     else if (mimeType.startsWith('text/') || mimeType === 'application/json') {
       // Return placeholder that will be replaced
-      setTimeout(() => this.loadTextPreview(fileUrl), 100);
+      setTimeout(() => this.loadTextPreview('/assets/view/' + fileUrl), 100);
       return '<div id="text-preview-loading">Loading text preview...</div>';
     }
     // Default message

@@ -162,6 +162,7 @@ This project uses and licenses several technologies:
    Clipboard.JS                MIT      Clipboard utility                                 https://github.com/zenorocha/clipboard.js
    DatePicker                  Apache   Date and time picker                              https://github.com/najlepsiwebdesigner/foundation-datepicker
    Dragula                     MIT      Drag and drop utilities                           https://github.com/bevacqua/dragula
+   DrawIO Viewer               Apache   Diagramming                                       https://github.com/jgraph/drawio
    DropZoneJS                  MIT      Drag and drop utilities                           https://gitlab.com/meno/dropzone
    FontAwesome                 CC       Icons                                             https://github.com/FortAwesome/Font-Awesome
    FullCalendar                MIT      Calendar                                          https://github.com/fullcalendar/fullcalendar

@@ -260,6 +260,19 @@
       <view>true</view>
     </widget>
   </page>
+  <page name="/assets/drawio" title="Diagram Viewer" class="full-page">
+    <widget name="drawIOViewer">
+      <toolbar>zoom layers pages</toolbar>
+      <toolbar-position>top</toolbar-position>
+      <toolbar-nohide>true</toolbar-nohide>
+      <zoom>1</zoom>
+      <nav>true</nav>
+      <resize>true</resize>
+      <editable>false</editable>
+      <edit>false</edit>
+      <lightbox>false</lightbox>
+    </widget>
+  </page>
   <page name="/assets/captcha">
     <widget name="captchaImage" />
   </page>

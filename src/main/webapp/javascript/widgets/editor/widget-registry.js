@@ -416,6 +416,17 @@ class WidgetRegistry {
       }
     });
 
+    this.register('drawIOViewer', {
+      name: 'Draw.io Viewer',
+      description: 'Displays a Draw.io diagram from the document repository.',
+      category: 'Content',
+      icon: 'fa-diagram-project',
+      properties: {
+        icon: { type: 'icon', label: 'Widget Icon', required: false },
+        title: { type: 'text', label: 'Widget Title', required: false }
+      }
+    });
+
     this.register('leaderboard', {
       name: 'Dataset Leaderboard',
       description: 'Displays a leaderboard from a dataset.',
