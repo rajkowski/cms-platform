@@ -138,6 +138,8 @@ public class ValidateFileCommand {
         return "application/vnd.ms-excel";
       } else if ("xlsx".equals(extension)) {
         return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+      } else if ("drawio".equals(extension)) {
+        return "application/vnd.jgraph.mxfile";
       } else if ("vsdx".equals(extension)) {
         return "application/vnd.visio";
       }
@@ -167,6 +169,8 @@ public class ValidateFileCommand {
         return "document";
       } else if (mimeType.contains("spreadsheet") || mimeType.contains("ms-excel")) {
         return "spreadsheet";
+      } else if (mimeType.contains("drawio")) {
+        return "diagram";
       } else if (mimeType.contains("visio")) {
         return "diagram";
       } else if (mimeType.contains("presentation") || mimeType.contains("powerpoint")) {

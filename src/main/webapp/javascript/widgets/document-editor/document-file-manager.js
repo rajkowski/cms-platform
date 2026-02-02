@@ -64,7 +64,7 @@ class DocumentFileManager {
       formData.append('token', this.token);
       formData.append('folderId', this.folderId);
       for (const file of files) {
-        formData.append('files', file);
+        formData.append('file', file);
       }
 
       statusText.textContent = `Uploading ${files.length} file(s)...`;

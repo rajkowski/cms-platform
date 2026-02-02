@@ -18,6 +18,9 @@ package com.simisinc.platform.application.cms;
 
 import java.io.File;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 import javax.servlet.http.Part;
 
@@ -102,5 +105,73 @@ public class SaveFilePartCommand {
       LOG.warn("Deleting an uploaded file: " + tempFile.getPath());
       tempFile.delete();
     }
+  }
+
+  /**
+   * Processes multiple file parts from a request
+   *
+   * @param fileParts collection of file parts to process
+   * @param userId the user ID creating the files
+   * @return list of FileItem objects for the saved files
+   * @throws DataException if any file cannot be processed
+   */
+  public static List<FileItem> saveFiles(Collection<Part> fileParts, long userId) throws DataException {
+    List<FileItem> savedFiles = new ArrayList<>();
+
+    // Prepare to save files
+    String serverRootPath = FileSystemCommand.getFileServerRootPathValue();
+    String serverSubPath = FileSystemCommand.generateFileServerSubPath("uploads");
+    String serverCompletePath = serverRootPath + serverSubPath;
+
+    for (Part filePart : fileParts) {
+      String submittedFilename = null;
+      String extension = null;
+      long fileLength = 0;
+      String uniqueFilename = FileSystemCommand.generateUniqueFilename(userId);
+      File tempFile = null;
+
+      try {
+        fileLength = filePart.getSize();
+        if (fileLength <= 0) {
+          LOG.debug("Skipping file with size 0");
+          continue;
+        }
+
+        LOG.debug("Processing file...");
+        submittedFilename = Paths.get(filePart.getSubmittedFileName()).getFileName().toString(); // MSIE fix.
+        extension = FilenameUtils.getExtension(submittedFilename);
+        tempFile = new File(serverCompletePath + uniqueFilename + "." + extension);
+
+        LOG.debug("Writing file " + fileLength + " bytes");
+        filePart.write(serverCompletePath + uniqueFilename + "." + extension);
+
+        // Populate the fields
+        FileItem fileItemBean = new FileItem();
+        fileItemBean.setFilename(submittedFilename);
+        fileItemBean.setFileLength(fileLength);
+        fileItemBean.setFileServerPath(serverSubPath + uniqueFilename + "." + extension);
+        fileItemBean.setExtension(extension);
+        fileItemBean.setCreatedBy(userId);
+        fileItemBean.setModifiedBy(userId);
+
+        savedFiles.add(fileItemBean);
+
+      } catch (Exception e) {
+        LOG.warn("Could not handle file: " + e.getMessage());
+        // Clean up the file if it was created
+        if (tempFile != null && tempFile.exists()) {
+          LOG.warn("Deleting an uploaded file: " + serverCompletePath + uniqueFilename + "." + extension);
+          tempFile.delete();
+        }
+        // Continue processing other files instead of throwing
+        LOG.warn("Continuing with remaining files after error");
+      }
+    }
+
+    if (savedFiles.isEmpty()) {
+      throw new DataException("No files were successfully uploaded");
+    }
+
+    return savedFiles;
   }
 }

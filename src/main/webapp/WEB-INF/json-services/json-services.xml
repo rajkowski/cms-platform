@@ -51,6 +51,7 @@
   <service endpoint="/json/documentCreateSubfolder" class="com.simisinc.platform.presentation.widgets.cms.DocumentCreateSubfolderAjax" />
   <service endpoint="/json/documentFileList" class="com.simisinc.platform.presentation.widgets.cms.DocumentFileListAjax" />
   <service endpoint="/json/documentContent" class="com.simisinc.platform.presentation.widgets.cms.DocumentContentAjax" />
+  <service endpoint="/json/documentUpload" class="com.simisinc.platform.presentation.widgets.cms.DocumentUploadAjax" />
   <service endpoint="/json/folderSave" class="com.simisinc.platform.presentation.widgets.cms.FolderSaveAjax" />
   <service endpoint="/json/folderDetails" class="com.simisinc.platform.presentation.widgets.cms.FolderDetailsAjax" />
   <service endpoint="/json/folderGroupsList" class="com.simisinc.platform.presentation.widgets.cms.FolderGroupsListAjax" />
