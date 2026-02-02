@@ -388,7 +388,7 @@ const AnalyticsDashboard = (function() {
     trendsContainer.innerHTML = '';
 
     if (!data.trends || data.trends.length === 0) {
-      trendsContainer.innerHTML = '<p class="text-muted">No trend data available</p>';
+      trendsContainer.innerHTML = '<p class="text-muted no-gap">No trend data available</p>';
       return;
     }
 
@@ -455,7 +455,7 @@ const AnalyticsDashboard = (function() {
       const canvas = document.getElementById('trend-chart');
       if (!canvas) {
         console.error('Failed to create or find trend chart canvas');
-        trendChartContainer.innerHTML = '<p class="text-muted">Error rendering trend chart</p>';
+        trendChartContainer.innerHTML = '<p class="text-muted no-gap">Error rendering trend chart</p>';
         return;
       }
 
@@ -487,10 +487,10 @@ const AnalyticsDashboard = (function() {
 
       // Priority 4: Show placeholder message
       console.warn('No trend data available for chart rendering');
-      trendChartContainer.innerHTML = '<p class="text-muted">No trend data available</p>';
+      trendChartContainer.innerHTML = '<p class="text-muted no-gap">No trend data available</p>';
     } catch (error) {
       console.error('Error rendering trend chart:', error);
-      trendChartContainer.innerHTML = '<p class="text-muted">Error loading trend chart</p>';
+      trendChartContainer.innerHTML = '<p class="text-muted no-gap">Error loading trend chart</p>';
     }
   }
 
@@ -620,12 +620,14 @@ const AnalyticsDashboard = (function() {
     const eventsContainer = document.getElementById('recent-events');
     if (eventsContainer) {
       eventsContainer.classList.remove('skeleton');
-      if (data.recentEvents) {
+      if (data.recentEvents && data.recentEvents.length > 0) {
         eventsContainer.innerHTML = '';
         data.recentEvents.forEach(event => {
           const eventEl = createEventElement(event);
           eventsContainer.appendChild(eventEl);
         });
+      } else {
+        eventsContainer.innerHTML = '<p class="text-muted no-gap">No recent events available</p>';
       }
     }
   }
@@ -639,25 +641,29 @@ const AnalyticsDashboard = (function() {
     if (pagesTable) {
       pagesTable.classList.remove('skeleton');
     }
-    if (pagesContainer && data.topPages) {
-      pagesContainer.innerHTML = '';
-      data.topPages.forEach(page => {
-        const row = document.createElement('tr');
-        const pageLabel = page.pagePath || page.label || page.title || page.pageId || '-';
-        const views = page.views || page.value || 0;
-        const uniqueUsers = page.uniqueUsers || page.unique_users || page.users || 0;
-        const avgTime = page.avgTime || page.avg_time_on_page || 0;
-        const bounceRate = page.bounceRate || page.bounce_rate || 0;
-        
-        row.innerHTML = `
-          <td><a href="${escapeHtml(pageLabel)}" target="_blank">${escapeHtml(pageLabel)}</a></td>
-          <td>${formatNumber(views)}</td>
-          <td>${formatNumber(uniqueUsers)}</td>
-          <td>${formatDuration(avgTime)}</td>
-          <td>${formatPercent(bounceRate)}</td>
-        `;
-        pagesContainer.appendChild(row);
-      });
+    if (pagesContainer) {
+      if (data.topPages && data.topPages.length > 0) {
+        pagesContainer.innerHTML = '';
+        data.topPages.forEach(page => {
+          const row = document.createElement('tr');
+          const pageLabel = page.pagePath || page.label || page.title || page.pageId || '-';
+          const views = page.views || page.value || 0;
+          const uniqueUsers = page.uniqueUsers || page.unique_users || page.users || 0;
+          const avgTime = page.avgTime || page.avg_time_on_page || 0;
+          const bounceRate = page.bounceRate || page.bounce_rate || 0;
+          
+          row.innerHTML = `
+            <td><a href="${escapeHtml(pageLabel)}" target="_blank">${escapeHtml(pageLabel)}</a></td>
+            <td>${formatNumber(views)}</td>
+            <td>${formatNumber(uniqueUsers)}</td>
+            <td>${formatDuration(avgTime)}</td>
+            <td>${formatPercent(bounceRate)}</td>
+          `;
+          pagesContainer.appendChild(row);
+        });
+      } else {
+        pagesContainer.innerHTML = '<tr><td colspan="5" class="text-muted text-center">No top pages available</td></tr>';
+      }
     }
 
     const assetsContainer = document.getElementById('assets-tbody');
@@ -665,23 +671,27 @@ const AnalyticsDashboard = (function() {
     if (assetsTable) {
       assetsTable.classList.remove('skeleton');
     }
-    if (assetsContainer && data.topAssets) {
-      assetsContainer.innerHTML = '';
-      data.topAssets.forEach(asset => {
-        const row = document.createElement('tr');
-        const assetName = asset.assetName || asset.name || '-';
-        const assetType = asset.assetType || asset.type || 'Unknown';
-        const downloads = asset.downloads || 0;
-        const views = asset.views || 0;
-        
-        row.innerHTML = `
-          <td><a href="${escapeHtml(asset.assetPath || '')}" target="_blank">${escapeHtml(assetName)}</a></td>
-          <td>${escapeHtml(assetType)}</td>
-          <td>${formatNumber(downloads)}</td>
-          <td>${formatNumber(views)}</td>
-        `;
-        assetsContainer.appendChild(row);
-      });
+    if (assetsContainer) {
+      if (data.topAssets && data.topAssets.length > 0) {
+        assetsContainer.innerHTML = '';
+        data.topAssets.forEach(asset => {
+          const row = document.createElement('tr');
+          const assetName = asset.assetName || asset.name || '-';
+          const assetType = asset.assetType || asset.type || 'Unknown';
+          const downloads = asset.downloads || 0;
+          const views = asset.views || 0;
+          
+          row.innerHTML = `
+            <td><a href="${escapeHtml(asset.assetPath || '')}" target="_blank">${escapeHtml(assetName)}</a></td>
+            <td>${escapeHtml(assetType)}</td>
+            <td>${formatNumber(downloads)}</td>
+            <td>${formatNumber(views)}</td>
+          `;
+          assetsContainer.appendChild(row);
+        });
+      } else {
+        assetsContainer.innerHTML = '<tr><td colspan="4" class="text-muted text-center">No top assets available</td></tr>';
+      }
     }
   }
 
@@ -787,17 +797,21 @@ const AnalyticsDashboard = (function() {
     if (errorsTable) {
       errorsTable.classList.remove('skeleton');
     }
-    if (errorsContainer && data.errors) {
-      errorsContainer.innerHTML = '';
-      data.errors.forEach(error => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${error.statusCode}</td>
-          <td>${formatNumber(error.count)}</td>
-          <td>${formatPercent(error.percentage)}</td>
-        `;
-        errorsContainer.appendChild(row);
-      });
+    if (errorsContainer) {
+      if (data.errors && data.errors.length > 0) {
+        errorsContainer.innerHTML = '';
+        data.errors.forEach(error => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${error.statusCode}</td>
+            <td>${formatNumber(error.count)}</td>
+            <td>${formatPercent(error.percentage)}</td>
+          `;
+          errorsContainer.appendChild(row);
+        });
+      } else {
+        errorsContainer.innerHTML = '<tr><td colspan="3" class="text-muted text-center">No error metrics available</td></tr>';
+      }
     }
   }
 

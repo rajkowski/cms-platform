@@ -711,6 +711,14 @@
   font-size: 13px;
 }
 
+/* Distribution Grid */
+.distribution-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  margin-top: 30px;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .dashboard-nav {
@@ -722,6 +730,10 @@
   }
 
   .kpi-cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .distribution-grid {
     grid-template-columns: 1fr;
   }
 

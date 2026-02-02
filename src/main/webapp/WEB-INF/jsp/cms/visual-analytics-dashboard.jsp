@@ -106,6 +106,14 @@
       <!-- Overview Tab -->
       <section id="overview-tab" class="dashboard-tab active">
         <div class="tab-content active">
+
+          <!-- Trend Chart -->
+          <div id="trend-chart-container" class="chart-container skeleton">
+            <h3><i class="fas fa-chart-line"></i> Page Views Trend</h3>
+            <!-- Canvas will be created dynamically by JavaScript if needed -->
+            <canvas id="trend-chart" style="max-height: 300px;"></canvas>
+          </div>
+
           <!-- KPI Cards Grid -->
           <div id="kpi-cards" class="kpi-cards-grid">
             <div class="kpi-card skeleton">
@@ -128,13 +136,6 @@
               <div class="kpi-label"></div>
               <div class="kpi-trend"></div>
             </div>
-          </div>
-
-          <!-- Trend Chart -->
-          <div id="trend-chart-container" class="chart-container skeleton">
-            <h3><i class="fas fa-chart-line"></i> Page Views Trend</h3>
-            <!-- Canvas will be created dynamically by JavaScript if needed -->
-            <canvas id="trend-chart" style="max-height: 300px;"></canvas>
           </div>
 
           <!-- Empty State -->
@@ -270,20 +271,27 @@
             </div>
           </div>
 
-          <!-- Device Distribution -->
-          <div class="section-header" style="margin-top: 30px;">
-            <h3><i class="${font:far()} fa-mobile"></i> Device Distribution</h3>
-          </div>
-          <div class="chart-container skeleton" style="height: 250px;">
-            <canvas id="device-chart"></canvas>
-          </div>
+          <!-- Device and Browser Distribution -->
+          <div class="distribution-grid">
+            <!-- Device Distribution -->
+            <div>
+              <div class="section-header">
+                <h3><i class="${font:far()} fa-mobile"></i> Device Distribution</h3>
+              </div>
+              <div class="chart-container skeleton" style="height: 250px;">
+                <canvas id="device-chart"></canvas>
+              </div>
+            </div>
 
-          <!-- Browser Distribution -->
-          <div class="section-header" style="margin-top: 30px;">
-            <h3><i class="${font:far()} fa-globe"></i> Browser Distribution</h3>
-          </div>
-          <div class="chart-container skeleton" style="height: 250px;">
-            <canvas id="browser-chart"></canvas>
+            <!-- Browser Distribution -->
+            <div>
+              <div class="section-header">
+                <h3><i class="${font:far()} fa-globe"></i> Browser Distribution</h3>
+              </div>
+              <div class="chart-container skeleton" style="height: 250px;">
+                <canvas id="browser-chart"></canvas>
+              </div>
+            </div>
           </div>
 
           <!-- Empty State -->

@@ -213,6 +213,35 @@ const AnalyticsCharts = (function() {
     return result;
   }
 
+  /**
+   * Handle window resize to update chart dimensions
+   */
+  function handleWindowResize() {
+    Object.values(chartInstances).forEach(function(chart) {
+      if (chart && chart.resize) {
+        chart.resize();
+      }
+    });
+  }
+
+  /**
+   * Setup resize listener for responsive charts
+   */
+  function setupResizeListener() {
+    let resizeTimeout;
+    window.addEventListener('resize', function() {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(handleWindowResize, 250); // Debounce resize events
+    });
+  }
+
+  // Initialize resize listener when module loads
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupResizeListener);
+  } else {
+    setupResizeListener();
+  }
+
   // Public API
   return {
     renderTrendChart: renderTrendChart,
