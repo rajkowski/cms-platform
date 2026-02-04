@@ -131,27 +131,45 @@ class ImageEditor {
    * Handle file import
    */
   async handleFileImport(event) {
-    const file = event.target.files[0];
-    if (!file) return;
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      alert('Please select a valid image file.');
-      return;
+    // Validate file types
+    for (const file of files) {
+      if (!file.type.startsWith('image/')) {
+        alert('Please select only valid image files.');
+        return;
+      }
     }
 
-    console.log('Importing file:', file.name);
+    // Open the upload modal
+    const modal = new Foundation.Reveal($('#upload-modal'));
+    modal.open();
+
+    const progressContainer = document.getElementById('upload-progress');
+    const successContainer = document.getElementById('upload-success');
+    const errorContainer = document.getElementById('upload-error');
+    const progressBar = document.getElementById('upload-progress-bar');
+    const statusText = document.getElementById('upload-status');
+
+    progressContainer.style.display = 'block';
+    successContainer.style.display = 'none';
+    errorContainer.style.display = 'none';
+
+    console.log('Importing files:', Array.from(files).map(f => f.name).join(', '));
     
     try {
-      this.showLoading();
-
-      // Upload the file
+      // Upload the files
       const formData = new FormData();
       formData.append('token', this.token);
-      formData.append('widget', 'imageUpload1');
-      formData.append('file', file);
+      for (const file of files) {
+        formData.append('file', file);
+      }
 
-      const response = await fetch(`${this.config.contextPath}/image-upload`, {
+      statusText.textContent = `Uploading ${files.length} image(s)...`;
+      progressBar.style.width = '0%';
+
+      const response = await fetch(`${this.config.contextPath}/json/imageUpload`, {
         method: 'POST',
         credentials: 'same-origin',
         body: formData
@@ -163,23 +181,31 @@ class ImageEditor {
 
       const result = await response.json();
       
-      if (result.error) {
-        throw new Error(result.error);
+      if (result.success === false || result.error) {
+        throw new Error(result.error || 'Upload failed');
       }
 
-      // Reload library and select the new image
+      progressBar.style.width = '100%';
+      progressContainer.style.display = 'none';
+      successContainer.style.display = 'block';
+
+      // Reload library and select the first uploaded image
       await this.imageLibrary.loadImages();
-      if (result.imageId) {
-        this.imageLibrary.selectImage(result.imageId);
+      if (result.images && result.images.length > 0 && result.images[0].id) {
+        this.imageLibrary.selectImage(result.images[0].id);
       }
 
-      this.showToast('Image imported successfully!', 'success');
+      setTimeout(() => {
+        modal.close();
+        this.showToast(`${files.length} image(s) imported successfully!`, 'success');
+      }, 2000);
 
     } catch (error) {
-      console.error('Error importing file:', error);
-      alert('Failed to import image: ' + error.message);
+      console.error('Error importing files:', error);
+      progressContainer.style.display = 'none';
+      errorContainer.style.display = 'block';
+      document.getElementById('upload-error-message').textContent = error.message || 'Upload failed';
     } finally {
-      this.hideLoading();
       event.target.value = '';
     }
   }
@@ -200,6 +226,9 @@ class ImageEditor {
         saveBtn.innerHTML = '<i class="far fa-spinner fa-spin"></i> Saving...';
       }
       this.showLoading();
+
+      // When saving, hide any active crop boxes or overlays
+      this.imageViewer.clearSelection();
 
       // Get the current image data from viewer (if modified)
       const imageBlob = await this.imageViewer.getImageBlob();
@@ -270,10 +299,9 @@ class ImageEditor {
 
       const formData = new FormData();
       formData.append('token', this.token);
-      formData.append('widget', 'imageUpload1');
       formData.append('file', blob, filename);
 
-      const response = await fetch(`${this.config.contextPath}/image-upload`, {
+      const response = await fetch(`${this.config.contextPath}/json/imageUpload`, {
         method: 'POST',
         credentials: 'same-origin',
         body: formData
@@ -316,11 +344,10 @@ class ImageEditor {
 
     const formData = new FormData();
     formData.append('token', this.token);
-    formData.append('widget', 'imageUpload1');
     formData.append('imageId', currentImage.id);
     formData.append('file', blob, currentImage.filename || 'image.png');
 
-    const response = await fetch(`${this.config.contextPath}/image-upload`, {
+    const response = await fetch(`${this.config.contextPath}/json/imageUpload`, {
       method: 'POST',
       credentials: 'same-origin',
       body: formData

@@ -10,14 +10,15 @@
 
 - **Backend:** Java (JDK 17+), custom MVC framework, servlets, JSP, scheduled tasks, workflows, caching, permissions.
 - **Frontend:** JSP templates, widgets, static asset management, Foundation for Sites, Font Awesome.
-- **API:** REST endpoints with OAuth2 and API key authentication. See `docs/api.md` for usage patterns.
+- **API:** REST endpoints are for external clients (not the frontend) with OAuth2 and API key authentication. See `docs/api.md` for usage patterns.
+- **Frontend API:** endpoints to use the /json/ AJAX pattern with form data parameters, matching the CMS Platform's convention for dynamic JavaScript services.
 - **Data:** PostgreSQL database, external config lists in `config/`, support for CSV/JSON/GeoJSON/RSS datasets.
 - **Build System:** Apache Ant (`build.xml`), with tasks for compile, test, package, deploy, and clean deploy.
 - **Containerization:** Docker support via `docker-compose.yaml`, with `.env` for environment variables.
 
 ## Developer Workflow
 
-- **Build:** Use Ant tasks (`ant compile`, `ant test`, `ant package`, `ant webapp`, `ant clean webapp`).
+- **Build:** Use Ant tasks (`ant compile`, `ant test`, `ant deploy`, `ant package`).
 - **Local Dev:** Exploded Tomcat webapp in `out/exploded/ROOT`. Configure Tomcat to point here for hot-reload.
 - **Testing:** Unit tests in `src/test/java`, run with `ant test`. Linting via Checkstyle (`checkstyle.xml`).
 - **Static Site:** Use the UI to compose content, then publish static copies for SEO/caching.

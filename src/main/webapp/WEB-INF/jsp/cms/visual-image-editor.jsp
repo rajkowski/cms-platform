@@ -171,7 +171,7 @@
           <button id="adjustments-btn" class="tool-btn" title="Adjustments" disabled><i class="${font:far()} fa-sliders-h"></i></button>
           <div class="tool-divider"></div>
           <button id="reset-btn" class="tool-btn" title="Reset Changes" disabled><i class="${font:far()} fa-times-circle"></i> Reset</button>
-          <button id="save-image-btn" class="tool-btn primary" title="Save Copy" disabled><i class="${font:far()} fa-save"></i> Save Copy</button>
+          <button id="save-image-btn" class="tool-btn primary" title="Save" disabled><i class="${font:far()} fa-save"></i> Save</button>
           <button id="create-thumbnail-btn" class="tool-btn" title="Create Thumbnail (240x240)" disabled><i class="${font:far()} fa-image"></i> Thumbnail</button>
         </div>
       </div>
@@ -331,7 +331,7 @@
 </div>
 
 <!-- Hidden file input for image import -->
-<input type="file" id="image-file-input" accept="image/*" style="display: none;" />
+<input type="file" id="image-file-input" accept="image/*" style="display: none;" multiple />
 
 <!-- Modals and Dialogs -->
 <div id="versions-modal" class="reveal" data-reveal>
@@ -351,6 +351,30 @@
     <button id="save-and-continue-btn" class="button primary">Save & Continue</button>
     <button id="discard-changes-btn" class="button alert">Discard Changes</button>
     <button class="button secondary" data-close>Cancel</button>
+  </div>
+  <button class="close-button" data-close aria-label="Close modal" type="button">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+
+<div id="upload-modal" class="reveal" data-reveal>
+  <h3>Uploading Images</h3>
+  <div id="upload-progress" style="display: block;">
+    <p id="upload-status">Preparing upload...</p>
+    <div class="progress" role="progressbar" tabindex="0" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+      <div class="progress-meter" id="upload-progress-bar" style="width: 0%"></div>
+    </div>
+  </div>
+  <div id="upload-success" style="display: none;">
+    <div class="callout success">
+      <p><i class="${font:far()} fa-check-circle"></i> Images uploaded successfully!</p>
+    </div>
+  </div>
+  <div id="upload-error" style="display: none;">
+    <div class="callout alert">
+      <p><i class="${font:far()} fa-exclamation-triangle"></i> <span id="upload-error-message">Upload failed</span></p>
+    </div>
+    <button class="button secondary" data-close>Close</button>
   </div>
   <button class="close-button" data-close aria-label="Close modal" type="button">
     <span aria-hidden="true">&times;</span>

@@ -53,6 +53,7 @@ public class DocumentUploadAjax extends GenericWidget {
    */
   public WidgetContext post(WidgetContext context) {
 
+    // /json/documentUpload
     LOG.debug("DocumentUploadAjax...");
 
     // Check permissions

@@ -36,7 +36,7 @@ import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
 
 /**
- * Description
+ * Handles image uploads
  *
  * @author matt rajkowski
  * @created 5/3/18 4:00 PM
@@ -49,6 +49,9 @@ public class ImageUploadWidget extends GenericWidget {
 
   public WidgetContext post(WidgetContext context) throws InvocationTargetException, IllegalAccessException {
 
+    // /image-upload
+    LOG.debug("ImageUploadWidget...");
+    
     // Prepare to save the file
     String serverSubPath = FileSystemCommand.generateFileServerSubPath("images");
     String serverRootPath = FileSystemCommand.getFileServerRootPathValue();
