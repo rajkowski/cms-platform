@@ -120,7 +120,8 @@ CREATE TABLE web_pages (
   show_in_sitemap BOOLEAN DEFAULT true,
   has_redirect BOOLEAN DEFAULT false,
   sitemap_priority NUMERIC(2,1) DEFAULT 0.5,
-  sitemap_changefreq VARCHAR(20)
+  sitemap_changefreq VARCHAR(20),
+  tags JSONB
 );
 CREATE INDEX web_pages_link_idx ON web_pages(link);
 CREATE INDEX web_pages_search_idx ON web_pages(searchable);
@@ -128,6 +129,7 @@ CREATE INDEX web_pages_draft_idx ON web_pages(draft);
 CREATE INDEX web_pages_enabled_idx ON web_pages(enabled);
 CREATE INDEX web_pages_sitemap_idx ON web_pages(show_in_sitemap);
 CREATE INDEX web_pages_redirect_idx ON web_pages(has_redirect);
+CREATE INDEX web_pages_tags_idx ON web_pages USING GIN (tags);
 
 CREATE TABLE content (
   content_id BIGSERIAL PRIMARY KEY,
