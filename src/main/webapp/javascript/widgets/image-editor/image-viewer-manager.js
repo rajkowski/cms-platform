@@ -165,6 +165,35 @@ class ImageViewerManager {
       // Listen for mouse up on document to catch releases outside canvas
       document.addEventListener('mouseup', (e) => this.onCanvasMouseUp(e));
     }
+
+    // Drag and drop for image upload
+    const imageViewerContent = document.getElementById('image-viewer-content');
+    if (imageViewerContent) {
+      // Prevent default drag behaviors
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        imageViewerContent.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        });
+      });
+
+      // Add visual feedback for drag over
+      imageViewerContent.addEventListener('dragenter', (e) => {
+        imageViewerContent.classList.add('drag-over');
+      });
+
+      imageViewerContent.addEventListener('dragleave', (e) => {
+        // Only remove if leaving the container (not a child element)
+        if (e.target === imageViewerContent) {
+          imageViewerContent.classList.remove('drag-over');
+        }
+      });
+
+      imageViewerContent.addEventListener('drop', (e) => {
+        imageViewerContent.classList.remove('drag-over');
+        this.handleImageDrop(e);
+      });
+    }
   }
 
   /**
@@ -1255,5 +1284,34 @@ class ImageViewerManager {
     this.canvas.style.maxHeight = 'none';
     this.canvas.style.width = (this.currentImageElement.width * finalScale) + 'px';
     this.canvas.style.height = (this.currentImageElement.height * finalScale) + 'px';
+  }
+  /**
+   * Handle image drop event
+   */
+  async handleImageDrop(event) {
+    const files = event.dataTransfer.files;
+    
+    if (!files || files.length === 0) {
+      console.log('No files dropped');
+      return;
+    }
+
+    // Filter for image files only
+    const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+    
+    if (imageFiles.length === 0) {
+      alert('Please drop only image files.');
+      return;
+    }
+
+    console.log(`Dropped ${imageFiles.length} image file(s)`);
+
+    // Upload the images using the editor's upload mechanism
+    try {
+      await this.editor.uploadDroppedImages(imageFiles);
+    } catch (error) {
+      console.error('Error handling dropped images:', error);
+      alert('Failed to upload images. Please try again.');
+    }
   }
 }

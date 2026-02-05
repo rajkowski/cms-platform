@@ -276,6 +276,29 @@
   justify-content: center;
   overflow: hidden;
   position: relative;
+  transition: background-color 0.2s ease, border 0.2s ease;
+}
+
+#image-viewer-content.drag-over {
+  background-color: var(--editor-selected-bg);
+  border: 3px dashed var(--editor-selected-border);
+}
+
+#image-viewer-content.drag-over::after {
+  content: 'Drop image here to upload';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--editor-text);
+  background: var(--editor-panel-bg);
+  padding: 20px 40px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px var(--editor-shadow);
+  pointer-events: none;
+  z-index: 1000;
 }
 
 .no-image-selected {

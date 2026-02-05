@@ -199,7 +199,7 @@ public class Image extends Entity {
     if (!hasThumbnail()) {
       return null;
     }
-    return webPath + "-" + id + "/thumb-" + UrlCommand.encodeUri(filename) + "?v=" + versionNumber;
+    return webPath + "-" + id + "/thumb-" + UrlCommand.encodeUri(filename) + (versionNumber > 1 ? "?v=" + versionNumber : "");
   }
 
   public String getWebPath() {
@@ -211,7 +211,7 @@ public class Image extends Entity {
   }
 
   public String getUrl() {
-    return webPath + "-" + id + "/" + UrlCommand.encodeUri(filename) + "?v=" + versionNumber;
+    return webPath + "-" + id + "/" + UrlCommand.encodeUri(filename) + (versionNumber > 1 ? "?v=" + versionNumber : "");
   }
 
   public String getTitle() {

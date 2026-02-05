@@ -131,6 +131,7 @@ public class ImageUploadAjax extends GenericWidget {
           imageBean.setFileLength(fileLength);
           imageBean.setFileServerPath(serverSubPath + uniqueFilename + "." + extension);
           imageBean.setCreatedBy(context.getUserId());
+          imageBean.setModifiedBy(context.getUserId());
 
           // Validate the image
           ValidateImageCommand.checkFile(imageBean);

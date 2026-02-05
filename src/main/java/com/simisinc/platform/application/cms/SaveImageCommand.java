@@ -52,6 +52,9 @@ public class SaveImageCommand {
     if (imageBean.getCreatedBy() == -1) {
       throw new DataException("The user creating this record was not set");
     }
+    if (imageBean.getModifiedBy() == -1) {
+      throw new DataException("The user modifying this record was not set");
+    }
 
     // Transform the fields and store...
     Image image;

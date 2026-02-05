@@ -104,6 +104,7 @@ public class ImageUploadWidget extends GenericWidget {
     imageBean.setFileLength(fileLength);
     imageBean.setFileServerPath(serverSubPath + uniqueFilename + "." + extension);
     imageBean.setCreatedBy(context.getUserId());
+    imageBean.setModifiedBy(context.getUserId());
 
     // Save the record
     Image image = null;

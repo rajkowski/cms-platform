@@ -334,6 +334,87 @@ class ImageEditor {
   }
 
   /**
+   * Upload dropped images
+   */
+  async uploadDroppedImages(files) {
+    if (!files || files.length === 0) return;
+
+    // Validate file types
+    for (const file of files) {
+      if (!file.type.startsWith('image/')) {
+        alert('Please drop only valid image files.');
+        return;
+      }
+    }
+
+    // Open the upload modal
+    const modal = new Foundation.Reveal($('#upload-modal'));
+    modal.open();
+
+    const progressContainer = document.getElementById('upload-progress');
+    const successContainer = document.getElementById('upload-success');
+    const errorContainer = document.getElementById('upload-error');
+    const progressBar = document.getElementById('upload-progress-bar');
+    const statusText = document.getElementById('upload-status');
+
+    progressContainer.style.display = 'block';
+    successContainer.style.display = 'none';
+    errorContainer.style.display = 'none';
+
+    console.log('Uploading dropped files:', Array.from(files).map(f => f.name).join(', '));
+    
+    try {
+      // Upload the files
+      const formData = new FormData();
+      formData.append('token', this.token);
+      
+      for (const file of files) {
+        formData.append('file', file);
+      }
+
+      statusText.textContent = `Uploading ${files.length} image(s)...`;
+      progressBar.style.width = '0%';
+
+      const response = await fetch(`${this.config.contextPath}/json/imageUpload`, {
+        method: 'POST',
+        credentials: 'same-origin',
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.success === false || result.error) {
+        throw new Error(result.error || 'Upload failed');
+      }
+
+      progressBar.style.width = '100%';
+      progressContainer.style.display = 'none';
+      successContainer.style.display = 'block';
+
+      // Reload library and select the first uploaded image
+      await this.imageLibrary.loadImages();
+      if (result.images && result.images.length > 0 && result.images[0].id) {
+        this.imageLibrary.selectImage(result.images[0].id);
+      }
+
+      setTimeout(() => {
+        modal.close();
+        this.showToast(`${files.length} image(s) uploaded successfully!`, 'success');
+      }, 2000);
+
+    } catch (error) {
+      console.error('Error uploading dropped files:', error);
+      progressContainer.style.display = 'none';
+      errorContainer.style.display = 'block';
+      document.getElementById('upload-error-message').textContent = error.message || 'Upload failed';
+    }
+  }
+
+  /**
    * Create new image from clipboard
    */
   async createFromClipboard() {
