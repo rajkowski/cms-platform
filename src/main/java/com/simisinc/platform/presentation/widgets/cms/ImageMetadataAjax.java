@@ -66,6 +66,7 @@ public class ImageMetadataAjax extends GenericWidget {
     image.setFilename(StringUtils.trimToNull(context.getParameter("filename")));
     image.setAltText(StringUtils.trimToNull(context.getParameter("altText")));
     image.setDescription(StringUtils.trimToNull(context.getParameter("description")));
+    image.setModifiedBy(context.getUserId());
 
     Image saved = ImageRepository.save(image);
     if (saved != null) {

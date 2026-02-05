@@ -16,6 +16,7 @@
 
 package com.simisinc.platform.infrastructure.persistence.cms;
 
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
@@ -24,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.domain.model.cms.Image;
 import com.simisinc.platform.domain.model.cms.ImageVersion;
 import com.simisinc.platform.infrastructure.database.DB;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
@@ -104,6 +106,10 @@ public class ImageVersionRepository {
 
   public static void remove(ImageVersion record) {
     DB.deleteFrom(TABLE_NAME, DB.WHERE("version_id = ?", record.getId()));
+  }
+
+  public static void removeAll(Connection connection, Image record) throws SQLException {
+    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("image_id = ?", record.getId()));
   }
 
   public static boolean markAsNotCurrent(long imageId) {

@@ -35,6 +35,8 @@ public class Image extends Entity {
   private long fileLength = -1;
   private long createdBy = -1;
   private Timestamp created = null;
+  private long modifiedBy = -1;
+  private Timestamp modified = null;
   private Timestamp processed = null;
   private String fileType = null;
   private String webPath = null;
@@ -99,6 +101,22 @@ public class Image extends Entity {
 
   public void setCreated(Timestamp created) {
     this.created = created;
+  }
+
+  public long getModifiedBy() {
+    return modifiedBy;
+  }
+
+  public void setModifiedBy(long modifiedBy) {
+    this.modifiedBy = modifiedBy;
+  }
+
+  public Timestamp getModified() {
+    return modified;
+  }
+
+  public void setModified(Timestamp modified) {
+    this.modified = modified;
   }
 
   public Timestamp getProcessed() {
@@ -181,7 +199,7 @@ public class Image extends Entity {
     if (!hasThumbnail()) {
       return null;
     }
-    return webPath + "-" + id + "/thumb-" + UrlCommand.encodeUri(filename);
+    return webPath + "-" + id + "/thumb-" + UrlCommand.encodeUri(filename) + "?v=" + versionNumber;
   }
 
   public String getWebPath() {
@@ -193,7 +211,7 @@ public class Image extends Entity {
   }
 
   public String getUrl() {
-    return webPath + "-" + id + "/" + UrlCommand.encodeUri(filename);
+    return webPath + "-" + id + "/" + UrlCommand.encodeUri(filename) + "?v=" + versionNumber;
   }
 
   public String getTitle() {

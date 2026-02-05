@@ -134,6 +134,16 @@ class ImageEditor {
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
+    const fileInput = event.target;
+    
+    // Check if this is a version upload
+    const isVersionUpload = fileInput.dataset.uploadType === 'version';
+    const imageId = fileInput.dataset.imageId;
+    
+    // Clear the dataset flags
+    delete fileInput.dataset.uploadType;
+    delete fileInput.dataset.imageId;
+
     // Validate file types
     for (const file of files) {
       if (!file.type.startsWith('image/')) {
@@ -162,11 +172,17 @@ class ImageEditor {
       // Upload the files
       const formData = new FormData();
       formData.append('token', this.token);
+      
+      // If this is a version upload, add the imageId
+      if (isVersionUpload && imageId) {
+        formData.append('imageId', imageId);
+      }
+      
       for (const file of files) {
         formData.append('file', file);
       }
 
-      statusText.textContent = `Uploading ${files.length} image(s)...`;
+      statusText.textContent = isVersionUpload ? 'Uploading new version...' : `Uploading ${files.length} image(s)...`;
       progressBar.style.width = '0%';
 
       const response = await fetch(`${this.config.contextPath}/json/imageUpload`, {
@@ -189,16 +205,27 @@ class ImageEditor {
       progressContainer.style.display = 'none';
       successContainer.style.display = 'block';
 
-      // Reload library and select the first uploaded image
-      await this.imageLibrary.loadImages();
-      if (result.images && result.images.length > 0 && result.images[0].id) {
-        this.imageLibrary.selectImage(result.images[0].id);
-      }
+      // For version uploads, reload the image and versions list
+      if (isVersionUpload && imageId) {
+        await this.imageProperties.loadImage(imageId);
+        await this.imageProperties.loadVersions();
+        
+        setTimeout(() => {
+          modal.close();
+          this.showToast('New version uploaded successfully!', 'success');
+        }, 2000);
+      } else {
+        // For new image uploads, reload library and select the first uploaded image
+        await this.imageLibrary.loadImages();
+        if (result.images && result.images.length > 0 && result.images[0].id) {
+          this.imageLibrary.selectImage(result.images[0].id);
+        }
 
-      setTimeout(() => {
-        modal.close();
-        this.showToast(`${files.length} image(s) imported successfully!`, 'success');
-      }, 2000);
+        setTimeout(() => {
+          modal.close();
+          this.showToast(`${files.length} image(s) imported successfully!`, 'success');
+        }, 2000);
+      }
 
     } catch (error) {
       console.error('Error importing files:', error);
@@ -214,8 +241,40 @@ class ImageEditor {
    * Save image as a new version (from viewer modifications)
    */
   async saveImageVersion() {
-    console.log('Saving image as new version...');
+    console.log('Opening save options modal...');
     
+    // Show the save options modal
+    const modal = new Foundation.Reveal($('#save-options-modal'));
+    modal.open();
+    
+    // Setup button handlers
+    const saveAsVersionBtn = document.getElementById('save-as-version-btn');
+    const saveAsCopyBtn = document.getElementById('save-as-copy-btn');
+    
+    // Remove any existing listeners
+    const newSaveAsVersionBtn = saveAsVersionBtn.cloneNode(true);
+    const newSaveAsCopyBtn = saveAsCopyBtn.cloneNode(true);
+    saveAsVersionBtn.replaceWith(newSaveAsVersionBtn);
+    saveAsCopyBtn.replaceWith(newSaveAsCopyBtn);
+    
+    // Save as version handler
+    document.getElementById('save-as-version-btn').addEventListener('click', async () => {
+      modal.close();
+      await this.performSave(true); // true = save as version
+    });
+    
+    // Save as copy handler
+    document.getElementById('save-as-copy-btn').addEventListener('click', async () => {
+      modal.close();
+      await this.performSave(false); // false = save as new copy
+    });
+  }
+
+  /**
+   * Perform the actual save operation
+   * @param {boolean} asVersion - true to save as version, false to save as new copy
+   */
+  async performSave(asVersion) {
     const saveBtn = document.getElementById('save-image-btn');
     const originalText = saveBtn ? saveBtn.innerHTML : '';
     
@@ -237,19 +296,33 @@ class ImageEditor {
         throw new Error('No image data to save');
       }
 
-      // Save as new version
-      await this.saveImageFile(imageBlob, true);
+      // Save the image
+      const result = await this.saveImageFile(imageBlob, asVersion);
 
       // Success
       this.clearModified();
-      this.showToast('Image version saved successfully!', 'success');
+      if (asVersion) {
+        this.showToast('Image version saved successfully!', 'success');
+        // Reload the image to show the new version
+        const currentImageId = this.imageProperties.getCurrentImage()?.id;
+        if (currentImageId) {
+          await this.imageProperties.loadImage(currentImageId);
+          await this.imageProperties.loadVersions();
+        }
+      } else {
+        this.showToast('Image copy created successfully!', 'success');
+        // Select the new image
+        if (result.imageId) {
+          this.imageLibrary.selectImage(result.imageId);
+        }
+      }
 
       // Reload the image library to show updated thumbnail
       this.imageLibrary.loadImages();
 
     } catch (error) {
-      console.error('Error saving image version:', error);
-      alert('Failed to save image version: ' + error.message);
+      console.error('Error saving image:', error);
+      alert('Failed to save image: ' + error.message);
     } finally {
       // Restore button state
       if (saveBtn) {
@@ -334,18 +407,30 @@ class ImageEditor {
   }
 
   /**
-   * Save image file (used by saveImageVersion)
+   * Save image file (used by performSave)
+   * @param {Blob} blob - The image data
+   * @param {boolean} asVersion - true to save as version of current image, false to save as new copy
    */
-  async saveImageFile(blob, asNewVersion = false) {
-    const currentImage = this.imageProperties.getCurrentImage();
-    if (!currentImage || !currentImage.id) {
-      throw new Error('No image selected');
-    }
-
+  async saveImageFile(blob, asVersion = false) {
     const formData = new FormData();
     formData.append('token', this.token);
-    formData.append('imageId', currentImage.id);
-    formData.append('file', blob, currentImage.filename || 'image.png');
+    
+    if (asVersion) {
+      // Save as version of current image
+      const currentImage = this.imageProperties.getCurrentImage();
+      if (!currentImage || !currentImage.id) {
+        throw new Error('No image selected');
+      }
+      formData.append('imageId', currentImage.id);
+      formData.append('file', blob, currentImage.filename || 'image.png');
+    } else {
+      // Save as new copy
+      const currentImage = this.imageProperties.getCurrentImage();
+      const filename = currentImage?.filename || 'image.png';
+      const baseName = filename.replace(/\.[^/.]+$/, ''); // Remove extension
+      const extension = filename.split('.').pop();
+      formData.append('file', blob, `${baseName}-copy.${extension}`);
+    }
 
     const response = await fetch(`${this.config.contextPath}/json/imageUpload`, {
       method: 'POST',
@@ -361,6 +446,11 @@ class ImageEditor {
     
     if (result.error) {
       throw new Error(result.error);
+    }
+    
+    // Return the result with imageId if new image was created
+    if (!asVersion && result.images && result.images.length > 0) {
+      return { imageId: result.images[0].id };
     }
 
     return result;

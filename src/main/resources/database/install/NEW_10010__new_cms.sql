@@ -190,11 +190,17 @@ CREATE TABLE images (
   title VARCHAR(255),
   alt_text VARCHAR(500),
   description TEXT,
-  version_number INTEGER DEFAULT 1
+  version_number INTEGER DEFAULT 1,
+  modified_by BIGINT REFERENCES users(user_id) NOT NULL,
+  modified TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX images_created_idx ON images(created);
 CREATE INDEX images_web_path_idx ON images(web_path);
 CREATE INDEX images_title_idx ON images(title);
+CREATE INDEX images_filename_lower_idx ON images(LOWER(filename) text_pattern_ops);
+CREATE INDEX images_title_lower_idx ON images(LOWER(title) text_pattern_ops);
+CREATE INDEX images_alt_text_lower_idx ON images(LOWER(alt_text) text_pattern_ops);
+CREATE INDEX images_description_lower_idx ON images(LOWER(description) text_pattern_ops);
 
 -- Create image_versions table to track all versions of an image
 CREATE TABLE image_versions (

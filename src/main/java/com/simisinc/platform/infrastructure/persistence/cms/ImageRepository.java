@@ -16,6 +16,7 @@
 
 package com.simisinc.platform.infrastructure.persistence.cms;
 
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
@@ -25,6 +26,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.domain.model.cms.Image;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
 import com.simisinc.platform.infrastructure.database.DB;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.database.DataResult;
@@ -55,6 +58,11 @@ public class ImageRepository {
       }
       if (specification.getFileType() != null) {
         where.AND("LOWER(file_type) = ?", specification.getFileType().toLowerCase());
+      }
+      if (specification.getSearchTerm() != null) {
+        String searchValue = "%" + specification.getSearchTerm().toLowerCase() + "%";
+        where.AND("(LOWER(filename) LIKE ? OR LOWER(title) LIKE ? OR LOWER(alt_text) LIKE ? OR LOWER(description) LIKE ?)",
+            new String[] { searchValue, searchValue, searchValue, searchValue });
       }
     }
     return DB.selectAllFrom(TABLE_NAME, where, constraints, ImageRepository::buildRecord);
@@ -107,6 +115,7 @@ public class ImageRepository {
         .add("path", StringUtils.trimToNull(record.getFileServerPath()))
         .add("web_path", StringUtils.trimToNull(record.getWebPath()))
         .add("created_by", record.getCreatedBy())
+        .add("modified_by", record.getModifiedBy())
         .add("file_length", record.getFileLength())
         .add("file_type", record.getFileType())
         .add("width", record.getWidth())
@@ -121,6 +130,8 @@ public class ImageRepository {
 
   private static Image update(Image record) {
     SqlUtils updateValues = new SqlUtils()
+        .addIfExists("modified_by", record.getModifiedBy(), -1)
+        .add("modified", new java.sql.Timestamp(System.currentTimeMillis()))
         .add("processed", record.getProcessed())
         .add("processed_path", StringUtils.trimToNull(record.getProcessedPath()))
         .add("processed_file_length", record.getProcessedFileLength())
@@ -144,8 +155,21 @@ public class ImageRepository {
     return null;
   }
 
-  public static void remove(Image record) {
-    DB.deleteFrom(TABLE_NAME, DB.WHERE("image_id = ?", record.getId()));
+  public static boolean remove(Image record) {
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Delete the references
+      ImageVersionRepository.removeAll(connection, record);
+      // Delete the record
+      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("image_id = ?", record.getId()));
+      // Finish transaction
+      transaction.commit();
+      return true;
+    } catch (SQLException se) {
+      LOG.error("SQLException: " + se.getMessage());
+    }
+    return false;
   }
 
   private static Image buildRecord(ResultSet rs) {
@@ -171,6 +195,8 @@ public class ImageRepository {
       record.setAltText(rs.getString("alt_text"));
       record.setDescription(rs.getString("description"));
       record.setVersionNumber(rs.getInt("version_number"));
+      record.setModifiedBy(rs.getLong("modified_by"));
+      record.setModified(rs.getTimestamp("modified"));
       return record;
     } catch (SQLException se) {
       LOG.error("buildRecord", se);

@@ -77,7 +77,7 @@ public class StreamImageWidget extends GenericWidget {
     }
 
     // Check for a last-modified header and return 304 if possible
-    long lastModified = record.getCreated().getTime();
+    long lastModified = record.getModified().getTime();
     long headerValue = context.getRequest().getDateHeader("If-Modified-Since");
     if (lastModified <= headerValue + 1000) {
       context.getResponse().setStatus(HttpServletResponse.SC_NOT_MODIFIED);

@@ -19,10 +19,9 @@ package com.simisinc.platform.presentation.widgets.cms;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.application.cms.SetCurrentImageVersionCommand;
 import com.simisinc.platform.domain.model.cms.Image;
-import com.simisinc.platform.domain.model.cms.ImageVersion;
-import com.simisinc.platform.infrastructure.persistence.cms.ImageRepository;
-import com.simisinc.platform.infrastructure.persistence.cms.ImageVersionRepository;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
 
@@ -58,44 +57,18 @@ public class ImageVersionRevertAjax extends GenericWidget {
       return context;
     }
 
-    Image image = ImageRepository.findById(imageId);
-    if (image == null) {
-      context.setJson("{\"success\": false, \"error\": \"Image not found\"}");
-      context.setSuccess(false);
-      return context;
-    }
-
-    ImageVersion version = ImageVersionRepository.findById(versionId);
-    if (version == null || version.getImageId() != imageId) {
-      context.setJson("{\"success\": false, \"error\": \"Version not found\"}");
-      context.setSuccess(false);
-      return context;
-    }
-
     try {
-      // Mark all versions as not current
-      ImageVersionRepository.markAsNotCurrent(imageId);
-
-      // Mark this version as current
-      version.setIsCurrent(true);
-      ImageVersionRepository.save(version);
-
-      // Update image with version details
-      image.setFilename(version.getFilename());
-      image.setFileServerPath(version.getFileServerPath());
-      image.setFileLength(version.getFileLength());
-      image.setFileType(version.getFileType());
-      image.setWidth(version.getWidth());
-      image.setHeight(version.getHeight());
-      image.setVersionNumber(version.getVersionNumber());
-      
-      Image saved = ImageRepository.save(image);
-      if (saved != null) {
-        context.setJson("{\"success\": true, \"message\": \"Reverted to version " + version.getVersionNumber() + "\"}");
+      Image image = SetCurrentImageVersionCommand.setCurrentVersion(imageId, versionId, context.getUserId());
+      if (image != null) {
+        context.setJson("{\"success\": true, \"message\": \"Reverted to version " + image.getVersionNumber() + "\"}");
       } else {
         context.setJson("{\"success\": false, \"error\": \"Failed to update image\"}");
         context.setSuccess(false);
       }
+    } catch (DataException e) {
+      LOG.error("Error reverting version", e);
+      context.setJson("{\"success\": false, \"error\": \"" + e.getMessage() + "\"}");
+      context.setSuccess(false);
     } catch (Exception e) {
       LOG.error("Error reverting version", e);
       context.setJson("{\"success\": false, \"error\": \"Failed to revert: " + e.getMessage() + "\"}");

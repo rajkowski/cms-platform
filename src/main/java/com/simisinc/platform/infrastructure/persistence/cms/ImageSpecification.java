@@ -30,6 +30,7 @@ public class ImageSpecification extends Entity {
   private String filename = null;
   private long createdBy = -1;
   private String fileType = null;
+  private String searchTerm = null;
 
   public ImageSpecification() {
   }
@@ -64,6 +65,14 @@ public class ImageSpecification extends Entity {
 
   public void setFileType(String fileType) {
     this.fileType = fileType;
+  }
+
+  public String getSearchTerm() {
+    return searchTerm;
+  }
+
+  public void setSearchTerm(String searchTerm) {
+    this.searchTerm = searchTerm;
   }
 
 }

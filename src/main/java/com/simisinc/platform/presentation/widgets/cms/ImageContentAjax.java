@@ -79,20 +79,27 @@ public class ImageContentAjax extends GenericWidget {
     sb.append("\"altText\":\"").append(JsonCommand.toJson(StringUtils.defaultString(image.getAltText()))).append("\",");
     sb.append("\"description\":\"").append(JsonCommand.toJson(StringUtils.defaultString(image.getDescription()))).append("\",");
 
-      // Include thumbnail information
-      sb.append("\"hasThumbnail\":").append(image.hasThumbnail()).append(",");
-      if (image.hasThumbnail()) {
-        sb.append("\"thumbnailUrl\":\"").append(JsonCommand.toJson("/assets/img/" + image.getThumbnailUrl())).append("\",");
-        sb.append("\"thumbnailWidth\":").append(image.getProcessedWidth()).append(",");
-        sb.append("\"thumbnailHeight\":").append(image.getProcessedHeight()).append(",");
-        sb.append("\"thumbnailFileLength\":").append(image.getProcessedFileLength()).append(",");
-      }
+    // Include thumbnail information
+    sb.append("\"hasThumbnail\":").append(image.hasThumbnail()).append(",");
+    if (image.hasThumbnail()) {
+      sb.append("\"thumbnailUrl\":\"").append(JsonCommand.toJson("/assets/img/" + image.getThumbnailUrl())).append("\",");
+      sb.append("\"thumbnailWidth\":").append(image.getProcessedWidth()).append(",");
+      sb.append("\"thumbnailHeight\":").append(image.getProcessedHeight()).append(",");
+      sb.append("\"thumbnailFileLength\":").append(image.getProcessedFileLength()).append(",");
+    }
 
     // Format timestamps
     if (image.getCreated() != null) {
       sb.append("\"created\":\"").append(JsonCommand.toJson(image.getCreated().toString())).append("\",");
     } else {
       sb.append("\"created\":null,");
+    }
+
+    // Format timestamps
+    if (image.getModified() != null) {
+      sb.append("\"modified\":\"").append(JsonCommand.toJson(image.getModified().toString())).append("\",");
+    } else {
+      sb.append("\"modified\":null,");
     }
 
     if (image.getProcessed() != null) {

@@ -160,9 +160,9 @@
       <div class="panel-header">
         <h3 id="image-viewer-title">Select an Image</h3>
         <div id="image-tools">
-          <button id="crop-selection-btn" class="tool-btn" title="Crop image to selection" disabled><i class="${font:far()} fa-crop"></i> Crop</button>
+          <button id="crop-selection-btn" class="tool-btn" title="Crop image to selection" disabled><i class="${font:far()} fa-crop"></i></button>
           <%-- <button id="copy-selection-btn" class="tool-btn" title="Copy selection to clipboard" disabled><i class="${font:far()} fa-copy"></i> Copy</button> --%>
-          <button id="clear-selection-btn" class="tool-btn" title="Clear selection" disabled><i class="${font:far()} fa-times"></i> Clear</button>
+          <button id="clear-selection-btn" class="tool-btn" title="Clear selection" disabled><i class="${font:far()} fa-border-none"></i></button>
           <div class="tool-divider"></div>
           <button id="rotate-left-btn" class="tool-btn" title="Rotate Left" disabled><i class="${font:far()} fa-undo"></i></button>
           <button id="rotate-right-btn" class="tool-btn" title="Rotate Right" disabled><i class="${font:far()} fa-redo"></i></button>
@@ -170,8 +170,13 @@
           <button id="flip-vertical-btn" class="tool-btn" title="Flip Vertical" disabled><i class="${font:far()} fa-arrows-v"></i></button>
           <button id="adjustments-btn" class="tool-btn" title="Adjustments" disabled><i class="${font:far()} fa-sliders-h"></i></button>
           <div class="tool-divider"></div>
-          <button id="reset-btn" class="tool-btn" title="Reset Changes" disabled><i class="${font:far()} fa-times-circle"></i> Reset</button>
+          <button id="zoom-in-btn" class="tool-btn" title="Zoom In" disabled><i class="${font:far()} fa-search-plus"></i></button>
+          <button id="zoom-out-btn" class="tool-btn" title="Zoom Out" disabled><i class="${font:far()} fa-search-minus"></i></button>
+          <button id="zoom-fit-btn" class="tool-btn" title="Zoom to Fit" disabled><i class="${font:far()} fa-expand"></i></button>
+          <button id="zoom-actual-btn" class="tool-btn" title="Actual Size" disabled><i class="${font:far()} fa-1"></i></button>
+          <div class="tool-divider"></div>
           <button id="save-image-btn" class="tool-btn primary" title="Save" disabled><i class="${font:far()} fa-save"></i> Save</button>
+          <button id="reset-btn" class="tool-btn" title="Reset Changes" disabled><i class="${font:far()} fa-times-circle"></i> Reset</button>
           <button id="create-thumbnail-btn" class="tool-btn" title="Create Thumbnail (240x240)" disabled><i class="${font:far()} fa-image"></i> Thumbnail</button>
         </div>
       </div>
@@ -312,11 +317,6 @@
             </button>
           </div>
           
-          <div class="versions-info">
-            <p><strong>Current Version:</strong> <span id="current-version-number">1</span></p>
-            <p><strong>Total Versions:</strong> <span id="total-versions-count">1</span></p>
-          </div>
-          
           <div id="versions-list">
             <!-- Version history will be loaded here -->
             <div class="loading-message">
@@ -376,6 +376,29 @@
     </div>
     <button class="button secondary" data-close>Close</button>
   </div>
+  <button class="close-button" data-close aria-label="Close modal" type="button">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+
+<div id="save-options-modal" class="reveal" data-reveal>
+  <h3>Save Image</h3>
+  <p>How would you like to save this modified image?</p>
+  <div class="button-group expanded stacked-for-small">
+    <button id="save-as-version-btn" class="button primary">
+      <i class="${font:far()} fa-layer-group"></i> Save a Version
+      <small style="display: block; font-weight: normal; font-size: 0.85rem; margin-top: 0.25rem;">
+        Updates the current image (same URL)
+      </small>
+    </button>
+    <button id="save-as-copy-btn" class="button secondary">
+      <i class="${font:far()} fa-clone"></i> Save a Copy
+      <small style="display: block; font-weight: normal; font-size: 0.85rem; margin-top: 0.25rem;">
+        Creates a new image (new URL)
+      </small>
+    </button>
+  </div>
+  <button class="button hollow expanded" data-close>Cancel</button>
   <button class="close-button" data-close aria-label="Close modal" type="button">
     <span aria-hidden="true">&times;</span>
   </button>

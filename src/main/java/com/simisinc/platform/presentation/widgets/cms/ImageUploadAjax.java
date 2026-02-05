@@ -31,10 +31,13 @@ import org.thymeleaf.util.StringUtils;
 
 import com.simisinc.platform.application.DataException;
 import com.simisinc.platform.application.cms.SaveImageCommand;
+import com.simisinc.platform.application.cms.SaveImageVersionCommand;
 import com.simisinc.platform.application.cms.ValidateImageCommand;
 import com.simisinc.platform.application.filesystem.FileSystemCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.Image;
+import com.simisinc.platform.domain.model.cms.ImageVersion;
+import com.simisinc.platform.infrastructure.persistence.cms.ImageRepository;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
 
@@ -72,6 +75,10 @@ public class ImageUploadAjax extends GenericWidget {
     jsonResponse.append("\"images\": [");
 
     try {
+      // Check if this is a version upload (imageId parameter present)
+      long imageId = context.getParameterAsLong("imageId", -1);
+      boolean isVersionUpload = (imageId > -1);
+      
       // Get all file parts from the request
       Collection<Part> fileParts = context.getParts();
       List<Image> uploadedImages = new ArrayList<>();
@@ -128,20 +135,50 @@ public class ImageUploadAjax extends GenericWidget {
           // Validate the image
           ValidateImageCommand.checkFile(imageBean);
 
-          // Determine if this is a new version or an update
-          
-          // Save the record
-          Image image = SaveImageCommand.saveImage(imageBean);
-          if (image == null) {
-            LOG.warn("Failed to save image: " + submittedFilename);
-            if (tempFile != null && tempFile.exists()) {
-              tempFile.delete();
+          // Determine if this is a new version or a new image
+          if (isVersionUpload) {
+            // Save as a new version of existing image
+            Image existingImage = ImageRepository.findById(imageId);
+            if (existingImage == null) {
+              throw new DataException("Image not found with ID: " + imageId);
             }
-            continue;
-          }
+            
+            ImageVersion versionBean = new ImageVersion();
+            versionBean.setFilename(imageBean.getFilename());
+            versionBean.setFileServerPath(imageBean.getFileServerPath());
+            versionBean.setFileLength(imageBean.getFileLength());
+            versionBean.setFileType(imageBean.getFileType());
+            versionBean.setWidth(imageBean.getWidth());
+            versionBean.setHeight(imageBean.getHeight());
+            versionBean.setCreatedBy(context.getUserId());
+            
+            ImageVersion version = SaveImageVersionCommand.addNewVersion(imageId, versionBean);
+            if (version == null) {
+              LOG.warn("Failed to save image version: " + submittedFilename);
+              if (tempFile != null && tempFile.exists()) {
+                tempFile.delete();
+              }
+              continue;
+            }
+            
+            // Add the updated image to the response
+            uploadedImages.add(existingImage);
+            LOG.debug("Uploaded image version: " + version.getFilename() + " for image ID: " + imageId);
+            
+          } else {
+            // Save as a new image
+            Image image = SaveImageCommand.saveImage(imageBean);
+            if (image == null) {
+              LOG.warn("Failed to save image: " + submittedFilename);
+              if (tempFile != null && tempFile.exists()) {
+                tempFile.delete();
+              }
+              continue;
+            }
 
-          uploadedImages.add(image);
-          LOG.debug("Uploaded image: " + image.getFilename() + " with ID: " + image.getId());
+            uploadedImages.add(image);
+            LOG.debug("Uploaded image: " + image.getFilename() + " with ID: " + image.getId());
+          }
 
         } catch (DataException e) {
           LOG.warn("Failed to save image: " + submittedFilename + " - " + e.getMessage());

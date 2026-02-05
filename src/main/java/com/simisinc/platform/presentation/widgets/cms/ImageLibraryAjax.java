@@ -67,9 +67,8 @@ public class ImageLibraryAjax extends GenericWidget {
     // Build specification (for future search functionality)
     ImageSpecification specification = null;
     if (StringUtils.isNotBlank(searchTerm)) {
-      // Note: ImageSpecification doesn't currently support search
-      // This would need to be enhanced for full search capability
-      LOG.debug("Search term provided but not yet implemented: " + searchTerm);
+      specification = new ImageSpecification();
+      specification.setSearchTerm(searchTerm);
     }
 
     // Query images

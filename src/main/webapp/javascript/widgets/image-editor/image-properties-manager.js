@@ -92,6 +92,9 @@ class ImagePropertiesManager {
 
       this.currentImage = imageData;
       this.displayProperties(imageData);
+      
+      // Load versions and update tab badge
+      await this.loadVersions();
 
     } catch (error) {
       console.error('Error loading image properties:', error);
@@ -132,7 +135,7 @@ class ImagePropertiesManager {
     this.setTextContent('image-file-size', this.formatFileSize(imageData.fileLength));
     this.setTextContent('image-file-type', imageData.fileType || '-');
     this.setTextContent('image-created', this.formatDate(imageData.created));
-    this.setTextContent('image-modified', this.formatDate(imageData.processed) || '-');
+    this.setTextContent('image-modified', this.formatDate(imageData.modified) || '-');
 
       // Display thumbnail information if available
       const thumbnailGroup = document.getElementById('thumbnail-info-group');
@@ -449,11 +452,13 @@ class ImagePropertiesManager {
 
       this.displayVersions(data.versions || []);
       
-      // Update version counts
-      const currentVersionNum = document.getElementById('current-version-number');
-      const totalVersionsCount = document.getElementById('total-versions-count');
-      if (currentVersionNum) currentVersionNum.textContent = data.currentVersion || 1;
-      if (totalVersionsCount) totalVersionsCount.textContent = data.versions.length || 1;
+      // Update Versions tab with count badge
+      const versionsTab = document.querySelector('[data-tab="versions"]');
+      if (versionsTab && data.versions && data.versions.length > 0) {
+        const versionCount = data.versions.length;
+        const tabText = versionsTab.innerHTML.replace(/\s*<span class="badge">.*?<\/span>/, ''); // Remove existing badge
+        versionsTab.innerHTML = `${tabText} <span class="badge">${versionCount}</span>`;
+      }
 
     } catch (error) {
       console.error('Error loading versions:', error);
@@ -466,7 +471,7 @@ class ImagePropertiesManager {
   }
 
   /**
-   * Display version history
+   * Display version history with thumbnails
    */
   displayVersions(versions) {
     const versionsList = document.getElementById('versions-list');
@@ -484,27 +489,36 @@ class ImagePropertiesManager {
     let html = '<div class="versions-list-items">';
     
     versions.forEach((version, index) => {
-      const isCurrent = version.isCurrent || index === 0;
+      const isCurrent = !!version.isCurrent;
+      const thumbnailUrl = `${this.editor.config.contextPath}${version.url || this.currentImage.url}`;
+      
       html += `
         <div class="version-item ${isCurrent ? 'current' : ''}">
-          <div class="version-header">
-            <span class="version-number">Version ${version.versionNumber || versions.length - index}</span>
-            ${isCurrent ? '<span class="badge success">Current</span>' : ''}
+          <div class="version-thumbnail">
+            <img src="${thumbnailUrl}" alt="Version ${version.versionNumber}" 
+                 style="max-width: 60px; max-height: 60px; border-radius: 4px; border: 1px solid #e0e0e0;" />
           </div>
-          <div class="version-details">
-            <div class="version-info">
-              <small>${this.formatDate(version.created)}</small>
-              <small>${this.formatFileSize(version.fileLength)}</small>
+          <div class="version-content">
+            <div class="version-header">
+              <span class="version-number">Version ${version.versionNumber || versions.length - index}</span>
+              ${isCurrent ? '<span class="badge success">Current</span>' : ''}
             </div>
-            <div class="version-actions">
-              ${!isCurrent ? `
-                <button class="button tiny secondary no-gap" onclick="imageEditor.imageProperties.revertToVersion(${version.id})">
-                  <i class="far fa-undo"></i> Revert
-                </button>
-                <button class="button tiny alert no-gap" onclick="imageEditor.imageProperties.deleteVersion(${version.id})">
-                  <i class="far fa-trash"></i>
-                </button>
-              ` : ''}
+            <div class="version-details">
+              <div class="version-info">
+                <small>${this.formatDate(version.created)}</small>
+                <small>${this.formatFileSize(version.fileLength)}</small>
+                ${version.width && version.height ? `<small>${version.width}×${version.height}</small>` : ''}
+              </div>
+              <div class="version-actions">
+                ${!isCurrent ? `
+                  <button class="button tiny secondary no-gap" onclick="imageEditor.imageProperties.revertToVersion(${version.id})" title="Make this version current">
+                    <i class="far fa-undo"></i> Make Current
+                  </button>
+                  <button class="button tiny alert no-gap" onclick="imageEditor.imageProperties.deleteVersion(${version.id})" title="Delete this version">
+                    <i class="far fa-trash"></i>
+                  </button>
+                ` : ''}
+              </div>
             </div>
           </div>
         </div>

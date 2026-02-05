@@ -28,7 +28,12 @@ class ImageViewerManager {
     this.isDragging = false;
     this.dragStart = null;
     this.resizeHandle = null;
-    this.HANDLE_SIZE = 12;
+    this.HANDLE_SIZE = 20;  // Size for corner handles
+    this.EDGE_HANDLE_LENGTH = 50;  // Length of edge handles along the rectangle
+    this.zoomLevel = 1;  // Track current zoom level
+    this.imageScaleX = 1;  // Scale for fitting image in container
+    this.imageScaleY = 1;
+    this.canvasContainer = null;  // Reference to canvas container for zoom
   }
 
   /**
@@ -37,6 +42,7 @@ class ImageViewerManager {
   init() {
     console.log('Initializing Image Viewer Manager...');
     this.canvas = document.getElementById('image-canvas');
+    this.canvasContainer = document.getElementById('image-canvas-container');
     if (this.canvas) {
       this.ctx = this.canvas.getContext('2d');
     }
@@ -101,7 +107,7 @@ class ImageViewerManager {
     ['brightness', 'contrast', 'saturation'].forEach(adjustment => {
       const slider = document.getElementById(`${adjustment}-slider`);
       const valueSpan = document.getElementById(`${adjustment}-value`);
-      
+
       if (slider && valueSpan) {
         slider.addEventListener('input', (e) => {
           const value = Number.parseInt(e.target.value, 10);
@@ -112,11 +118,32 @@ class ImageViewerManager {
       }
     });
 
-      // Create thumbnail button
-      const createThumbnailBtn = document.getElementById('create-thumbnail-btn');
-      if (createThumbnailBtn) {
-        createThumbnailBtn.addEventListener('click', () => this.createThumbnail());
-      }
+    // Create thumbnail button
+    const createThumbnailBtn = document.getElementById('create-thumbnail-btn');
+    if (createThumbnailBtn) {
+      createThumbnailBtn.addEventListener('click', () => this.createThumbnail());
+    }
+
+    // Zoom buttons
+    const zoomInBtn = document.getElementById('zoom-in-btn');
+    if (zoomInBtn) {
+      zoomInBtn.addEventListener('click', () => this.zoomIn());
+    }
+
+    const zoomOutBtn = document.getElementById('zoom-out-btn');
+    if (zoomOutBtn) {
+      zoomOutBtn.addEventListener('click', () => this.zoomOut());
+    }
+
+    const zoomFitBtn = document.getElementById('zoom-fit-btn');
+    if (zoomFitBtn) {
+      zoomFitBtn.addEventListener('click', () => this.zoomToFit());
+    }
+
+    const zoomActualBtn = document.getElementById('zoom-actual-btn');
+    if (zoomActualBtn) {
+      zoomActualBtn.addEventListener('click', () => this.zoomActualSize());
+    }
 
     // Apply adjustments button
     const applyAdjustmentsBtn = document.getElementById('apply-adjustments-btn');
@@ -134,7 +161,7 @@ class ImageViewerManager {
       this.canvas.addEventListener('mousedown', (e) => this.onCanvasMouseDown(e));
       this.canvas.addEventListener('mousemove', (e) => this.onCanvasMouseMove(e));
       this.canvas.addEventListener('mouseup', (e) => this.onCanvasMouseUp(e));
-      
+
       // Listen for mouse up on document to catch releases outside canvas
       document.addEventListener('mouseup', (e) => this.onCanvasMouseUp(e));
     }
@@ -145,7 +172,7 @@ class ImageViewerManager {
    */
   async loadImage(imageId) {
     console.log('Loading image in viewer:', imageId);
-    
+
     this.showLoadingState();
 
     try {
@@ -162,7 +189,7 @@ class ImageViewerManager {
       }
 
       const imageData = await response.json();
-      
+
       if (imageData.error) {
         throw new Error(imageData.error);
       }
@@ -183,7 +210,7 @@ class ImageViewerManager {
   async displayImage(imageData) {
     return new Promise((resolve, reject) => {
       const img = new Image();
-      
+
       img.onload = () => {
         // Store the original image element
         this.currentImageElement = img;
@@ -198,9 +225,13 @@ class ImageViewerManager {
         // Show canvas container
         const noImageDiv = document.querySelector('#image-viewer-content .no-image-selected');
         const canvasContainer = document.getElementById('image-canvas-container');
-        
+
         if (noImageDiv) noImageDiv.style.display = 'none';
-        if (canvasContainer) canvasContainer.style.display = 'flex';
+        if (canvasContainer) {
+          canvasContainer.style.display = 'flex';
+          canvasContainer.style.alignItems = 'center';
+          canvasContainer.style.justifyContent = 'center';
+        }
 
         // Set canvas size to match image
         this.canvas.width = img.width;
@@ -218,6 +249,9 @@ class ImageViewerManager {
 
         // Reset transformations
         this.resetTransformations();
+
+        // Apply zoom to fit for newly loaded images
+        this.zoomToFit();
 
         resolve();
       };
@@ -248,7 +282,7 @@ class ImageViewerManager {
     ['brightness', 'contrast', 'saturation'].forEach(adjustment => {
       const slider = document.getElementById(`${adjustment}-slider`);
       const valueSpan = document.getElementById(`${adjustment}-value`);
-      
+
       if (slider) slider.value = 0;
       if (valueSpan) valueSpan.textContent = '0';
     });
@@ -287,11 +321,11 @@ class ImageViewerManager {
 
     const img = this.currentImageElement;
     const rotation = this.transformations.rotation;
-    
+
     // Calculate new canvas dimensions based on rotation
     let canvasWidth = img.width;
     let canvasHeight = img.height;
-    
+
     if (rotation === 90 || rotation === 270) {
       canvasWidth = img.height;
       canvasHeight = img.width;
@@ -321,9 +355,9 @@ class ImageViewerManager {
     this.ctx.restore();
 
     // Apply color adjustments
-    if (this.transformations.brightness !== 0 || 
-        this.transformations.contrast !== 0 || 
-        this.transformations.saturation !== 0) {
+    if (this.transformations.brightness !== 0 ||
+      this.transformations.contrast !== 0 ||
+      this.transformations.saturation !== 0) {
       this.applyColorAdjustments();
     }
   }
@@ -372,7 +406,7 @@ class ImageViewerManager {
     const cropBtn = document.getElementById('crop-selection-btn');
     const copyBtn = document.getElementById('copy-selection-btn');
     const clearBtn = document.getElementById('clear-selection-btn');
-    
+
     if (cropBtn) cropBtn.disabled = false;
     if (copyBtn) copyBtn.disabled = false;
     if (clearBtn) clearBtn.disabled = false;
@@ -382,11 +416,9 @@ class ImageViewerManager {
    * Hide selection controls - disable toolbar buttons
    */
   hideSelectionControls() {
-    const cropBtn = document.getElementById('crop-selection-btn');
     const copyBtn = document.getElementById('copy-selection-btn');
     const clearBtn = document.getElementById('clear-selection-btn');
-    
-    if (cropBtn) cropBtn.disabled = true;
+
     if (copyBtn) copyBtn.disabled = true;
     if (clearBtn) clearBtn.disabled = true;
   }
@@ -399,7 +431,7 @@ class ImageViewerManager {
     const rect = this.canvas.getBoundingClientRect();
     const scaleX = this.canvas.width / rect.width;
     const scaleY = this.canvas.height / rect.height;
-    
+
     return {
       x: (e.clientX - rect.left) * scaleX,
       y: (e.clientY - rect.top) * scaleY
@@ -437,11 +469,11 @@ class ImageViewerManager {
     this.dragStart = { x, y };
     // Center the 50x50 rectangle on the click point
     const rectSize = 50;
-    this.selectionRect = { 
-      x: Math.max(0, Math.min(x - rectSize / 2, this.canvas.width - rectSize)), 
-      y: Math.max(0, Math.min(y - rectSize / 2, this.canvas.height - rectSize)), 
-      width: rectSize, 
-      height: rectSize 
+    this.selectionRect = {
+      x: Math.max(0, Math.min(x - rectSize / 2, this.canvas.width - rectSize)),
+      y: Math.max(0, Math.min(y - rectSize / 2, this.canvas.height - rectSize)),
+      width: rectSize,
+      height: rectSize
     };
     this.canvas.style.cursor = 'crosshair';
   }
@@ -458,19 +490,19 @@ class ImageViewerManager {
       // Snap to edges when dragging near or past bounds
       const snapX = Math.max(0, Math.min(x, this.canvas.width));
       const snapY = Math.max(0, Math.min(y, this.canvas.height));
-      
+
       if (this.resizeHandle) {
         // Resize selection with edge snapping
         this.resizeSelection(snapX, snapY);
-      } else if (this.selectionRect && this.dragStart && 
-                 this.selectionRect.width > 50 && this.selectionRect.height > 50 &&
-                 this.isPointInSelection(this.dragStart.x, this.dragStart.y)) {
+      } else if (this.selectionRect && this.dragStart &&
+        this.selectionRect.width > 50 && this.selectionRect.height > 50 &&
+        this.isPointInSelection(this.dragStart.x, this.dragStart.y)) {
         // Move selection
         const dx = snapX - this.dragStart.x;
         const dy = snapY - this.dragStart.y;
         const newX = this.selectionRect.x + dx;
         const newY = this.selectionRect.y + dy;
-        
+
         // Constrain to canvas boundaries
         this.selectionRect.x = Math.max(0, Math.min(newX, this.canvas.width - this.selectionRect.width));
         this.selectionRect.y = Math.max(0, Math.min(newY, this.canvas.height - this.selectionRect.height));
@@ -481,7 +513,7 @@ class ImageViewerManager {
         const minY = Math.min(this.dragStart.y, snapY);
         const maxX = Math.max(this.dragStart.x, snapX);
         const maxY = Math.max(this.dragStart.y, snapY);
-        
+
         this.selectionRect = {
           x: Math.max(0, minX),
           y: Math.max(0, minY),
@@ -536,10 +568,10 @@ class ImageViewerManager {
    */
   isPointInSelection(x, y) {
     if (!this.selectionRect) return false;
-    return x >= this.selectionRect.x && 
-           x <= this.selectionRect.x + this.selectionRect.width &&
-           y >= this.selectionRect.y && 
-           y <= this.selectionRect.y + this.selectionRect.height;
+    return x >= this.selectionRect.x &&
+      x <= this.selectionRect.x + this.selectionRect.width &&
+      y >= this.selectionRect.y &&
+      y <= this.selectionRect.y + this.selectionRect.height;
   }
 
   /**
@@ -549,8 +581,28 @@ class ImageViewerManager {
     if (!this.selectionRect) return null;
 
     const handles = this.getHandlePositions();
+    const halfSize = this.HANDLE_SIZE / 2;
+    const halfLength = this.EDGE_HANDLE_LENGTH / 2;
+
     for (const [name, pos] of Object.entries(handles)) {
-      if (Math.hypot(x - pos.x, y - pos.y) <= this.HANDLE_SIZE) {
+      let hitDetected = false;
+
+      // Edge handles have different dimensions
+      if (name === 'n' || name === 's') {
+        // North/South: wide horizontally, narrow vertically
+        hitDetected = x >= pos.x - halfLength && x <= pos.x + halfLength &&
+          y >= pos.y - halfSize && y <= pos.y + halfSize;
+      } else if (name === 'w' || name === 'e') {
+        // West/East: narrow horizontally, tall vertically
+        hitDetected = x >= pos.x - halfSize && x <= pos.x + halfSize &&
+          y >= pos.y - halfLength && y <= pos.y + halfLength;
+      } else {
+        // Corner handles: square
+        hitDetected = x >= pos.x - halfSize && x <= pos.x + halfSize &&
+          y >= pos.y - halfSize && y <= pos.y + halfSize;
+      }
+
+      if (hitDetected) {
         return name;
       }
     }
@@ -581,8 +633,8 @@ class ImageViewerManager {
     const cursors = {
       'nw': 'nw-resize', 'ne': 'ne-resize',
       'sw': 'sw-resize', 'se': 'se-resize',
-      'n': 'n-resize', 's': 's-resize',
-      'w': 'w-resize', 'e': 'e-resize'
+      'n': 'row-resize', 's': 'row-resize',
+      'w': 'col-resize', 'e': 'col-resize'
     };
     return cursors[handle] || 'default';
   }
@@ -626,7 +678,32 @@ class ImageViewerManager {
     if (!this.selectionRect) return;
 
     this.ctx.save();
-    
+
+    // Draw darkened overlay outside the selection area
+    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';  // 50% black overlay
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+    // Clear the selection area to show the original image
+    this.ctx.clearRect(
+      this.selectionRect.x,
+      this.selectionRect.y,
+      this.selectionRect.width,
+      this.selectionRect.height
+    );
+
+    // Redraw the selection area from the original image data
+    if (this.originalImageData) {
+      this.ctx.putImageData(
+        this.originalImageData,
+        0,
+        0,
+        this.selectionRect.x,
+        this.selectionRect.y,
+        this.selectionRect.width,
+        this.selectionRect.height
+      );
+    }
+
     // Draw selection rectangle
     this.ctx.strokeStyle = '#4a9eff';
     this.ctx.lineWidth = 2;
@@ -640,24 +717,41 @@ class ImageViewerManager {
 
     // Draw handles with white border for better visibility
     const handles = this.getHandlePositions();
-    
-    Object.values(handles).forEach(pos => {
+
+    Object.entries(handles).forEach(([name, pos]) => {
+      let width, height;
+
+      // Edge handles are longer along their respective edges
+      if (name === 'n' || name === 's') {
+        // North/South: wide horizontally, narrow vertically
+        width = this.EDGE_HANDLE_LENGTH;
+        height = this.HANDLE_SIZE;
+      } else if (name === 'w' || name === 'e') {
+        // West/East: narrow horizontally, tall vertically
+        width = this.HANDLE_SIZE;
+        height = this.EDGE_HANDLE_LENGTH;
+      } else {
+        // Corner handles: square
+        width = this.HANDLE_SIZE;
+        height = this.HANDLE_SIZE;
+      }
+
       // White outline
       this.ctx.fillStyle = '#ffffff';
       this.ctx.fillRect(
-        pos.x - this.HANDLE_SIZE / 2 - 1,
-        pos.y - this.HANDLE_SIZE / 2 - 1,
-        this.HANDLE_SIZE + 2,
-        this.HANDLE_SIZE + 2
+        pos.x - width / 2 - 1,
+        pos.y - height / 2 - 1,
+        width + 2,
+        height + 2
       );
-      
+
       // Blue handle
       this.ctx.fillStyle = '#4a9eff';
       this.ctx.fillRect(
-        pos.x - this.HANDLE_SIZE / 2,
-        pos.y - this.HANDLE_SIZE / 2,
-        this.HANDLE_SIZE,
-        this.HANDLE_SIZE
+        pos.x - width / 2,
+        pos.y - height / 2,
+        width,
+        height
       );
     });
 
@@ -668,8 +762,17 @@ class ImageViewerManager {
    * Crop the image to the current selection
    */
   cropSelection() {
+    // If no selection exists, create one covering the entire image
     if (!this.selectionRect || this.selectionRect.width === 0 || this.selectionRect.height === 0) {
-      alert('Please select an area to crop');
+      this.selectionRect = {
+        x: 0,
+        y: 0,
+        width: this.canvas.width,
+        height: this.canvas.height
+      };
+      this.showSelectionControls();
+      this.applyTransformations();
+      this.drawSelectionRectangle();
       return;
     }
 
@@ -682,7 +785,7 @@ class ImageViewerManager {
     this.dragStart = null;
     this.resizeHandle = null;
     this.hideSelectionControls();
-    
+
     // Redraw the image without the selection rectangle overlay
     this.applyTransformations();
 
@@ -706,8 +809,15 @@ class ImageViewerManager {
 
     // Create a new image element from the cropped canvas for future transformations
     const croppedImage = new Image();
+    croppedImage.onload = () => {
+      this.zoomToFit();
+    };
     croppedImage.src = this.canvas.toDataURL();
     this.currentImageElement = croppedImage;
+
+    if (croppedImage.complete) {
+      this.zoomToFit();
+    }
 
     this.canvas.style.cursor = 'crosshair';
 
@@ -818,7 +928,7 @@ class ImageViewerManager {
     ['brightness', 'contrast', 'saturation'].forEach(adjustment => {
       const slider = document.getElementById(`${adjustment}-slider`);
       const valueSpan = document.getElementById(`${adjustment}-value`);
-      
+
       if (slider) slider.value = 0;
       if (valueSpan) valueSpan.textContent = '0';
     });
@@ -838,16 +948,16 @@ class ImageViewerManager {
       this.canvas.width = this.savedOriginalImageData.width;
       this.canvas.height = this.savedOriginalImageData.height;
       this.ctx.putImageData(this.savedOriginalImageData, 0, 0);
-      
+
       // Update working original to match saved original
       this.originalImageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
-      
+
       // Reset transformations
       this.resetTransformations();
-      
+
       // Clear any selection
       this.clearSelection();
-      
+
       this.editor.clearModified();
     }
   }
@@ -899,7 +1009,7 @@ class ImageViewerManager {
     this.currentImage = null;
     this.currentImageElement = null;
     this.resetTransformations();
-    
+
     const titleElement = document.getElementById('image-viewer-title');
     if (titleElement) {
       titleElement.textContent = 'Select an Image';
@@ -939,7 +1049,7 @@ class ImageViewerManager {
    */
   async getImageBlob() {
     if (!this.canvas) return null;
-    
+
     return new Promise((resolve) => {
       this.canvas.toBlob((blob) => {
         resolve(blob);
@@ -952,12 +1062,12 @@ class ImageViewerManager {
    */
   hasTransformations() {
     return this.transformations.rotation !== 0 ||
-           this.transformations.flipHorizontal ||
-           this.transformations.flipVertical ||
-           this.transformations.brightness !== 0 ||
-           this.transformations.contrast !== 0 ||
-           this.transformations.saturation !== 0 ||
-           this.transformations.cropData !== null;
+      this.transformations.flipHorizontal ||
+      this.transformations.flipVertical ||
+      this.transformations.brightness !== 0 ||
+      this.transformations.contrast !== 0 ||
+      this.transformations.saturation !== 0 ||
+      this.transformations.cropData !== null;
   }
 
   /**
@@ -1020,13 +1130,13 @@ class ImageViewerManager {
       if (result.thumbnail) {
         const thumbInfo = `${result.thumbnail.width}x${result.thumbnail.height}, ${this.formatFileSize(result.thumbnail.fileLength)}`;
         this.editor.showToast(`Thumbnail created successfully! Dimensions: ${thumbInfo}`, 'success');
-        
+
         // Reload the image to update thumbnail info
         this.currentImage.hasThumbnail = true;
         this.currentImage.thumbnailUrl = result.thumbnail.url;
         this.currentImage.thumbnailWidth = result.thumbnail.width;
         this.currentImage.thumbnailHeight = result.thumbnail.height;
-        
+
         // Refresh the library to show thumbnail
         if (this.editor.imageLibrary) {
           this.editor.imageLibrary.loadImages();
@@ -1074,5 +1184,76 @@ class ImageViewerManager {
    */
   getCurrentImage() {
     return this.currentImage;
+  }
+
+  /**
+   * Zoom in on the image
+   */
+  zoomIn() {
+    this.zoomLevel = Math.min(this.zoomLevel + 0.1, 3);
+    this.updateCanvasScale();
+  }
+
+  /**
+   * Zoom out from the image
+   */
+  zoomOut() {
+    this.zoomLevel = Math.max(this.zoomLevel - 0.1, 0.1);
+    this.updateCanvasScale();
+  }
+
+  /**
+   * Zoom to fit the image in the container
+   */
+  zoomToFit() {
+    this.zoomLevel = 1;
+    this.updateCanvasScale();
+  }
+
+  /**
+   * Zoom to actual size (1:1 pixels)
+   */
+  zoomActualSize() {
+    this.zoomLevel = 1;
+    // Remove any scaling constraints
+    if (this.canvas) {
+      this.canvas.style.maxWidth = 'none';
+      this.canvas.style.maxHeight = 'none';
+      this.canvas.style.width = this.canvas.width + 'px';
+      this.canvas.style.height = this.canvas.height + 'px';
+    }
+  }
+
+  /**
+   * Update canvas scale based on zoom level
+   */
+  updateCanvasScale() {
+    if (!this.canvas || !this.canvasContainer) return;
+
+    console.log("Updating canvas scale, zoom level:", this.zoomLevel);
+
+    // Ensure container is centered for equal padding on all sides
+    if (this.zoomLevel <= 1) {
+      this.canvasContainer.style.alignItems = 'center';
+    } else {
+      this.canvasContainer.style.alignItems = 'flex-start';
+    }
+    this.canvasContainer.style.justifyContent = 'center';
+
+    const containerWidth = this.canvasContainer.clientWidth - 20; // Account for padding
+    const containerHeight = this.canvasContainer.clientHeight - 20;
+
+    // Calculate scale to fit in container
+    const maxScaleX = containerWidth / this.currentImageElement.width;
+    const maxScaleY = containerHeight / this.currentImageElement.height;
+    const maxScale = Math.min(maxScaleX, maxScaleY, 1); // Don't exceed container
+
+    // Apply zoom level
+    const finalScale = maxScale * this.zoomLevel;
+
+    this.canvas.style.maxWidth = 'none';
+    this.canvas.style.maxHeight = 'none';
+    this.canvas.style.width = (this.currentImageElement.width * finalScale) + 'px';
+    this.canvas.style.height = (this.currentImageElement.height * finalScale) + 'px';
   }
 }

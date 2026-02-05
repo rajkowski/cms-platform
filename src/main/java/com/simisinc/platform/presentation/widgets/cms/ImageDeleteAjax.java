@@ -19,6 +19,7 @@ package com.simisinc.platform.presentation.widgets.cms;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.cms.DeleteImageCommand;
 import com.simisinc.platform.domain.model.cms.Image;
 import com.simisinc.platform.infrastructure.persistence.cms.ImageRepository;
 import com.simisinc.platform.presentation.controller.WidgetContext;
@@ -62,7 +63,8 @@ public class ImageDeleteAjax extends GenericWidget {
     }
 
     try {
-      ImageRepository.remove(image);
+      // Use the command to delete the file from the fileLibrary, versions, and database record
+      DeleteImageCommand.deleteImage(image);
       context.setJson("{\"success\": true, \"message\": \"Image deleted successfully\"}");
     } catch (Exception e) {
       LOG.error("Error deleting image", e);
