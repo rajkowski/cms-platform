@@ -299,17 +299,17 @@ class PropertiesPanel {
     // Size options (small, medium, large)
     const sizeOptions = [
       '', 'small-12', 'small-11', 'small-10', 'small-9', 'small-8', 'small-7', 'small-6', 
-      'small-5', 'small-4', 'small-3', 'small-2', 'small-1'
+      'small-5', 'small-4', 'small-3', 'small-2', 'small-1', 'small-auto', 'small-shrink'
     ];
     
     const mediumOptions = [
       '', 'medium-12', 'medium-11', 'medium-10', 'medium-9', 'medium-8', 'medium-7', 
-      'medium-6', 'medium-5', 'medium-4', 'medium-3', 'medium-2', 'medium-1'
+      'medium-6', 'medium-5', 'medium-4', 'medium-3', 'medium-2', 'medium-1', 'medium-auto', 'medium-shrink'
     ];
     
     const largeOptions = [
       '', 'large-12', 'large-11', 'large-10', 'large-9', 'large-8', 'large-7',
-      'large-6', 'large-5', 'large-4', 'large-3', 'large-2', 'large-1'
+      'large-6', 'large-5', 'large-4', 'large-3', 'large-2', 'large-1', 'large-auto', 'large-shrink'
     ];
     
     const paddingOptions = [
@@ -479,6 +479,7 @@ class PropertiesPanel {
     // Custom CSS
     html += `<div class="property-group">
       <label style="margin-bottom:10px;"><input type="checkbox" id="column-hr" ${column.hr ? 'checked' : ''} /> Horizontal Line</label>
+      <label style="margin-bottom:10px;"><input type="checkbox" id="column-sticky" ${column.sticky ? 'checked' : ''} /> Sticky</label>
     </div>`;
     
     html += `<div class="property-group">
@@ -584,6 +585,39 @@ class PropertiesPanel {
       });
     }
     
+    // Add sticky checkbox listener
+    const stickyCheckbox = document.getElementById('column-sticky');
+    if (stickyCheckbox) {
+      stickyCheckbox.addEventListener('change', function() {
+        const row = self.editor.getLayoutManager().getRow(rowId);
+        if (row) {
+          const column = row.columns.find(c => c.id === columnId);
+          if (column) {
+            column.sticky = this.checked;
+            if (self.editor.getCanvasController) {
+              self.editor.getCanvasController().renderRow(rowId, row);
+              // Re-highlight the column after re-render
+              setTimeout(() => {
+                const rowElement = document.querySelector(`[data-row-id="${rowId}"]`);
+                if (rowElement) {
+                  const columnElement = rowElement.querySelector(`[data-column-id="${columnId}"]`);
+                  if (columnElement) {
+                    columnElement.classList.add('selected');
+                  }
+                }
+              }, 0);
+            }
+            if (self.editor.saveToHistory) {
+              self.editor.saveToHistory();
+            }
+            
+            // Enhancement: Auto-refresh preview when property is edited and preview is active
+            self.refreshPreviewIfActive();
+          }
+        }
+      });
+    }
+    
     // Highlight the column in the canvas
     this.highlightColumn(rowId, columnId);
   }
@@ -652,6 +686,7 @@ class PropertiesPanel {
     html += `<div style="border-top:1px solid #ddd;padding-top:10px;margin-top:10px;">`;
     html += `<div class="property-group">`;
     html += `<label style="margin-bottom:10px;"><input type="checkbox" id="widget-hr" ${widget.hr ? 'checked' : ''} /> Horizontal Line</label>`;
+    html += `<label style="margin-bottom:10px;"><input type="checkbox" id="widget-sticky" ${widget.sticky ? 'checked' : ''} /> Sticky</label>`;
     html += `</div>`;
     html += `<div class="property-group">`;
     html += `<div class="property-label">Additional CSS Classes</div>`;
@@ -719,6 +754,40 @@ class PropertiesPanel {
         const widgetData = self.editor.getLayoutManager().getWidget(rowId, columnId, widgetId);
         if (widgetData) {
           widgetData.hr = this.checked;
+          if (self.editor.getCanvasController) {
+            const row = self.editor.getLayoutManager().getRow(rowId);
+            self.editor.getCanvasController().renderRow(rowId, row);
+            // Re-highlight the widget after re-render
+            setTimeout(() => {
+              const rowElement = document.querySelector(`[data-row-id="${rowId}"]`);
+              if (rowElement) {
+                const columnElement = rowElement.querySelector(`[data-column-id="${columnId}"]`);
+                if (columnElement) {
+                  const widgetElement = columnElement.querySelector(`[data-widget-id="${widgetId}"]`);
+                  if (widgetElement) {
+                    widgetElement.classList.add('selected');
+                  }
+                }
+              }
+            }, 0);
+          }
+          if (self.editor.saveToHistory) {
+            self.editor.saveToHistory();
+          }
+          
+          // Enhancement: Auto-refresh preview when property is edited and preview is active
+          self.refreshPreviewIfActive();
+        }
+      });
+    }
+    
+    // Add sticky checkbox listener
+    const stickyCheckbox = document.getElementById('widget-sticky');
+    if (stickyCheckbox) {
+      stickyCheckbox.addEventListener('change', function() {
+        const widgetData = self.editor.getLayoutManager().getWidget(rowId, columnId, widgetId);
+        if (widgetData) {
+          widgetData.sticky = this.checked;
           if (self.editor.getCanvasController) {
             const row = self.editor.getLayoutManager().getRow(rowId);
             self.editor.getCanvasController().renderRow(rowId, row);
@@ -1985,18 +2054,20 @@ class PropertiesPanel {
     const text = document.getElementById('column-text')?.value || '';
     const custom = document.getElementById('column-css-custom')?.value.trim() || '';
     const hrCheckbox = document.getElementById('column-hr');
+    const stickyCheckbox = document.getElementById('column-sticky');
     
     const classes = [small, medium, large, paddingTop, paddingBottom, callout, alignment, text, custom].filter(c => c);
     const finalCssClass = classes.join(' ');
     
     this.editor.getLayoutManager().updateColumnClass(rowId, columnId, finalCssClass);
     
-    // Update hr attribute
+    // Update hr and sticky attributes
     const row = this.editor.getLayoutManager().getRow(rowId);
     if (row) {
       const column = row.columns.find(c => c.id === columnId);
       if (column) {
         column.hr = hrCheckbox && hrCheckbox.checked;
+        column.sticky = stickyCheckbox && stickyCheckbox.checked;
       }
     }
     
@@ -2047,9 +2118,10 @@ class PropertiesPanel {
     // Update widget properties
     this.editor.getLayoutManager().updateWidgetProperties(rowId, columnId, widgetId, properties);
     
-    // Update widget CSS class and hr attribute
+    // Update widget CSS class, hr, and sticky attributes
     const cssClassInput = document.getElementById('widget-css-class');
     const hrCheckbox = document.getElementById('widget-hr');
+    const stickyCheckbox = document.getElementById('widget-sticky');
     const widgetData = this.editor.getLayoutManager().getWidget(rowId, columnId, widgetId);
     if (widgetData) {
       if (cssClassInput) {
@@ -2057,6 +2129,9 @@ class PropertiesPanel {
       }
       if (hrCheckbox) {
         widgetData.hr = hrCheckbox.checked;
+      }
+      if (stickyCheckbox) {
+        widgetData.sticky = stickyCheckbox.checked;
       }
     }
     

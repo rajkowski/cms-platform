@@ -57,6 +57,9 @@ public class WebPageJsonToXMLCommand {
             if (columnNode.has("hr") && columnNode.get("hr").asBoolean()) {
               xml.append(" hr=\"true\"");
             }
+            if (columnNode.has("sticky") && columnNode.get("sticky").asBoolean()) {
+              xml.append(" sticky=\"true\"");
+            }
             xml.append(">\n");
 
             if (columnNode.has("widgets")) {

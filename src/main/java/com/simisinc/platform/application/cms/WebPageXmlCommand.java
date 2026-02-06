@@ -60,6 +60,11 @@ public class WebPageXmlCommand {
       xml.append(" hr=\"true\"");
     }
 
+    // Add sticky attribute if present
+    if (widgetNode.has("sticky") && widgetNode.get("sticky").asBoolean()) {
+      xml.append(" sticky=\"true\"");
+    }
+
     xml.append(">\n");
 
     if (widgetNode.has("properties")) {

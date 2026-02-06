@@ -421,6 +421,9 @@ class LayoutManager {
         if (column.hr) {
           xml += ' hr="true"';
         }
+        if (column.sticky) {
+          xml += ' sticky="true"';
+        }
         xml += '>\n';
         for (const widget of column.widgets) {
           xml += this.widgetToXml(widget, '      ', forPreview);
@@ -456,6 +459,9 @@ class LayoutManager {
     }
     if (widget.hr) {
       xml += ' hr="true"';
+    }
+    if (widget.sticky) {
+      xml += ' sticky="true"';
     }
     xml += '>\n';
 
@@ -545,6 +551,7 @@ class LayoutManager {
           num: colNum,
           cssClass: cssClass,
           hr: column.getAttribute('hr') === 'true',
+          sticky: column.getAttribute('sticky') === 'true',
           widgets: []
         };
 
@@ -559,6 +566,7 @@ class LayoutManager {
             type: widget.getAttribute('name') || '',
             cssClass: widget.getAttribute('class') || '',
             hr: widget.getAttribute('hr') === 'true',
+            sticky: widget.getAttribute('sticky') === 'true',
             properties: this.parseWidgetProperties(widget)
           };
 
