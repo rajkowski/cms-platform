@@ -216,7 +216,7 @@ class ImageEditor {
         }, 2000);
       } else {
         // For new image uploads, reload library and select the first uploaded image
-        await this.imageLibrary.loadImages();
+        await this.imageLibrary.loadImages(false, true);
         if (result.images && result.images.length > 0 && result.images[0].id) {
           this.imageLibrary.selectImage(result.images[0].id);
         }
@@ -318,7 +318,7 @@ class ImageEditor {
       }
 
       // Reload the image library to show updated thumbnail
-      this.imageLibrary.loadImages();
+      this.imageLibrary.loadImages(false, true);
 
     } catch (error) {
       console.error('Error saving image:', error);
@@ -396,7 +396,7 @@ class ImageEditor {
       successContainer.style.display = 'block';
 
       // Reload library and select the first uploaded image
-      await this.imageLibrary.loadImages();
+      await this.imageLibrary.loadImages(false, true);
       if (result.images && result.images.length > 0 && result.images[0].id) {
         this.imageLibrary.selectImage(result.images[0].id);
       }
@@ -472,7 +472,7 @@ class ImageEditor {
       }
 
       // Reload library and select the new image
-      await this.imageLibrary.loadImages();
+      await this.imageLibrary.loadImages(false, true);
       if (result.imageId) {
         this.imageLibrary.selectImage(result.imageId);
       }

@@ -16,17 +16,12 @@
 
 package com.simisinc.platform.application.cms;
 
-import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.sql.Timestamp;
 
-import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
-import javax.imageio.ImageWriteParam;
-import javax.imageio.ImageWriter;
-import javax.imageio.stream.ImageOutputStream;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -85,11 +80,8 @@ public class GenerateThumbnailCommand {
       // Prepare the thumbnail file
       File thumbnailFile = FileSystemCommand.getFileServerRootPath(thumbnailPathToFile);
 
-      // Choose the file type
-      String fileType = image.getFileType().toLowerCase();
-      if (fileType.contains("/")) {
-        fileType = fileType.substring(fileType.indexOf("/") + 1);
-      }
+      // Extract and normalize file type
+      String fileType = ImageScalingUtility.extractFileType(image.getFileType());
 
       // Read the original image
       BufferedImage originalImage = ImageIO.read(originalFile);
@@ -113,52 +105,15 @@ public class GenerateThumbnailCommand {
 
       LOG.debug("Creating thumbnail: " + thumbnailWidth + "x" + thumbnailHeight + " from " + originalWidth + "x" + originalHeight);
 
-      // Prepare the target thumbnail image
-      BufferedImage thumbnailImage = null;
-      if ("png".equalsIgnoreCase(fileType) && originalImage.getColorModel().hasAlpha()) {
-        // Preserve transparency for PNG images
-        thumbnailImage = new BufferedImage(thumbnailWidth, thumbnailHeight, BufferedImage.TYPE_INT_ARGB);
-      } else {
-        // Use RGB for other image types
-        thumbnailImage = new BufferedImage(thumbnailWidth, thumbnailHeight, BufferedImage.TYPE_INT_RGB);
-      }
-
-      // Use high quality rendering hints and draw the scaled image
-      Graphics2D g2d = thumbnailImage.createGraphics();
-      g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-      g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-      g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      g2d.drawImage(originalImage, 0, 0, thumbnailWidth, thumbnailHeight, null);
-      g2d.dispose();
-
-      // Write the thumbnail image to file with appropriate compression
-      try {
-        if ("jpg".equals(fileType) || "jpeg".equals(fileType)) {
-          // Use JPEG writer with quality control
-          ImageWriter writer = ImageIO.getImageWritersByFormatName("jpg").next();
-          ImageWriteParam writeParam = writer.getDefaultWriteParam();
-          writeParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-          writeParam.setCompressionQuality(THUMBNAIL_QUALITY);
-
-          try (ImageOutputStream ios = ImageIO.createImageOutputStream(thumbnailFile)) {
-            writer.setOutput(ios);
-            writer.write(null, new IIOImage(thumbnailImage, null, null), writeParam);
-          }
-          writer.dispose();
-        } else {
-          // Use default writers for PNG and other formats
-          boolean written = ImageIO.write(thumbnailImage, fileType, thumbnailFile);
-          if (!written) {
-            throw new DataException("No appropriate writer found for image type: " + fileType);
-          }
-        }
-      } catch (Exception e) {
-        // Delete any partially created thumbnail file
-        if (thumbnailFile.exists()) {
-          thumbnailFile.delete();
-        }
-        throw new DataException("Error writing thumbnail file: " + e.getMessage());
-      }
+      // Use shared utility to scale and write the thumbnail image
+      ImageScalingUtility.scaleAndWriteImage(
+          originalImage,
+          thumbnailWidth,
+          thumbnailHeight,
+          fileType,
+          THUMBNAIL_QUALITY,
+          thumbnailFile,
+          RenderingHints.VALUE_INTERPOLATION_BILINEAR);
 
       // Update image record with thumbnail information
       image.setProcessedPath(thumbnailPathToFile);

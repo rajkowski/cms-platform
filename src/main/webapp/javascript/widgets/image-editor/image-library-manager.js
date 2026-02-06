@@ -88,13 +88,18 @@ class ImageLibraryManager {
 
   /**
    * Load images from the server
+   * @param {boolean} append - Whether to append to existing images or replace
+   * @param {boolean} resetPage - Whether to reset to page 1 (used for refreshes)
    */
-  async loadImages(append = false) {
+  async loadImages(append = false, resetPage = false) {
     if (this.loading) return;
 
     this.loading = true;
     if (!append) {
       this.showLoadingState();
+      if (resetPage) {
+        this.currentPage = 1;
+      }
     }
 
     try {
@@ -196,7 +201,7 @@ class ImageLibraryManager {
       // Add retry handler
       const retryBtn = document.getElementById('retry-load-images-btn');
       if (retryBtn) {
-        retryBtn.addEventListener('click', () => this.loadImages());
+        retryBtn.addEventListener('click', () => this.loadImages(false, true));
       }
     }
   }
@@ -213,14 +218,20 @@ class ImageLibraryManager {
       return;
     }
 
+    // Get sentinel element BEFORE clearing (if it exists)
+    let sentinel = document.getElementById('lazy-load-sentinel');
+    
     if (!append) {
+      // If we're not appending, preserve the sentinel before clearing
+      if (sentinel && sentinel.parentNode === container) {
+        sentinel.remove();
+      }
       container.innerHTML = '';
-    }
-
-    // Get sentinel element and temporarily remove it
-    const sentinel = document.getElementById('lazy-load-sentinel');
-    if (sentinel && sentinel.parentNode === container) {
-      sentinel.remove();
+    } else {
+      // If appending, just remove sentinel temporarily to re-add at the end
+      if (sentinel && sentinel.parentNode === container) {
+        sentinel.remove();
+      }
     }
 
     const startIndex = append ? this.images.length - (this.pageSize) : 0;
@@ -231,10 +242,18 @@ class ImageLibraryManager {
       container.appendChild(imageItem);
     });
 
-    // Re-append sentinel for lazy loading
-    if (sentinel) {
-      container.appendChild(sentinel);
+    // Re-append or recreate sentinel for lazy loading
+    if (!sentinel) {
+      // Recreate sentinel if it was lost
+      sentinel = document.createElement('div');
+      sentinel.id = 'lazy-load-sentinel';
+      sentinel.style.height = '1px';
+      // Re-observe the new sentinel
+      if (this.lazyLoadObserver) {
+        this.lazyLoadObserver.observe(sentinel);
+      }
     }
+    container.appendChild(sentinel);
   }
 
   /**
@@ -372,6 +391,7 @@ class ImageLibraryManager {
    * Render pagination controls
    */
   renderPagination() {
+    if (1) return; // Pagination disabled for now
     const paginationContainer = document.getElementById('image-pagination');
     if (!paginationContainer) return;
 
@@ -436,10 +456,10 @@ class ImageLibraryManager {
   }
 
   /**
-   * Reload the current page of images
+   * Reload the image library from the first page
    */
   reload() {
-    this.loadImages();
+    this.loadImages(false, true);
   }
 
   /**

@@ -169,11 +169,12 @@
           <button id="flip-horizontal-btn" class="tool-btn" title="Flip Horizontal" disabled><i class="${font:far()} fa-arrows-h"></i></button>
           <button id="flip-vertical-btn" class="tool-btn" title="Flip Vertical" disabled><i class="${font:far()} fa-arrows-v"></i></button>
           <button id="adjustments-btn" class="tool-btn" title="Adjustments" disabled><i class="${font:far()} fa-sliders-h"></i></button>
+          <button id="scale-down-btn" class="tool-btn" title="Scale Down" disabled><i class="${font:far()} fa-compress"></i></button>
           <div class="tool-divider"></div>
           <button id="zoom-in-btn" class="tool-btn" title="Zoom In" disabled><i class="${font:far()} fa-search-plus"></i></button>
           <button id="zoom-out-btn" class="tool-btn" title="Zoom Out" disabled><i class="${font:far()} fa-search-minus"></i></button>
           <button id="zoom-fit-btn" class="tool-btn" title="Zoom to Fit" disabled><i class="${font:far()} fa-expand"></i></button>
-          <button id="zoom-actual-btn" class="tool-btn" title="Actual Size" disabled><i class="${font:far()} fa-1"></i></button>
+          <button id="zoom-actual-btn" class="tool-btn" title="Actual Size" disabled>1:1</button>
           <div class="tool-divider"></div>
           <button id="save-image-btn" class="tool-btn primary" title="Save" disabled><i class="${font:far()} fa-save"></i> Save</button>
           <button id="reset-btn" class="tool-btn" title="Reset Changes" disabled><i class="${font:far()} fa-times-circle"></i> Reset</button>
@@ -208,6 +209,37 @@
           <input type="range" id="saturation-slider" min="-100" max="100" value="0" />
           <span id="saturation-value">0</span>
         </div>
+        
+        <!-- Levels Section -->
+        <div class="adjustment-section">
+          <h5>Levels</h5>
+          <div class="histogram-container">
+            <canvas id="histogram-canvas" width="260" height="100"></canvas>
+          </div>
+          <div class="levels-controls">
+            <div class="adjustment-control">
+              <label>Input Black <span id="input-black-value">0</span></label>
+              <input type="range" id="input-black-slider" min="0" max="255" value="0" />
+            </div>
+            <div class="adjustment-control">
+              <label>Input White <span id="input-white-value">255</span></label>
+              <input type="range" id="input-white-slider" min="0" max="255" value="255" />
+            </div>
+            <div class="adjustment-control">
+              <label>Gamma <span id="gamma-value">1.00</span></label>
+              <input type="range" id="gamma-slider" min="10" max="300" value="100" step="1" />
+            </div>
+            <div class="adjustment-control">
+              <label>Output Black <span id="output-black-value">0</span></label>
+              <input type="range" id="output-black-slider" min="0" max="255" value="0" />
+            </div>
+            <div class="adjustment-control">
+              <label>Output White <span id="output-white-value">255</span></label>
+              <input type="range" id="output-white-slider" min="0" max="255" value="255" />
+            </div>
+          </div>
+        </div>
+        
         <div class="adjustment-controls">
           <button id="apply-adjustments-btn" class="button tiny success no-gap">Apply</button>
           <button id="cancel-adjustments-btn" class="button tiny secondary no-gap">Cancel</button>
@@ -399,6 +431,27 @@
     </button>
   </div>
   <button class="button hollow expanded" data-close>Cancel</button>
+  <button class="close-button" data-close aria-label="Close modal" type="button">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+
+<div id="scale-down-modal" class="reveal" data-reveal>
+  <h3>Scale Down Image</h3>
+  <p>Proportionally reduce the image dimensions. Only scaling down is allowed.</p>
+  <div class="property-group">
+    <label for="scale-percentage">Scale Percentage <span id="scale-percentage-display">50</span>%</label>
+    <input type="range" id="scale-percentage" min="10" max="99" value="50" step="5" />
+    <small>Enter a percentage less than 100% to scale down</small>
+  </div>
+  <div class="property-group">
+    <label>Resulting Dimensions</label>
+    <div id="scale-result-dimensions" class="property-value">-</div>
+  </div>
+  <div class="button-group expanded">
+    <button id="apply-scale-btn" class="button primary">Apply Scale</button>
+    <button class="button secondary" data-close>Cancel</button>
+  </div>
   <button class="close-button" data-close aria-label="Close modal" type="button">
     <span aria-hidden="true">&times;</span>
   </button>

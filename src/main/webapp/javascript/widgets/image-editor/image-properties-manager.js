@@ -585,7 +585,7 @@ class ImagePropertiesManager {
       await this.loadImage(this.currentImage.id);
       await this.loadVersions();
       this.editor.imageViewer.loadImage(this.currentImage.id);
-      this.editor.imageLibrary.loadImages();
+      this.editor.imageLibrary.loadImages(false, true);
 
     } catch (error) {
       console.error('Error reverting to version:', error);

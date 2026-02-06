@@ -95,13 +95,13 @@ public class ImageLibraryAjax extends GenericWidget {
       sb.append("\"fileLength\":").append(image.getFileLength()).append(",");
       sb.append("\"fileType\":\"").append(JsonCommand.toJson(StringUtils.defaultString(image.getFileType()))).append("\",");
 
-        // Include thumbnail information if available
-        sb.append("\"hasThumbnail\":").append(image.hasThumbnail()).append(",");
-        if (image.hasThumbnail()) {
-          sb.append("\"thumbnailUrl\":\"").append(JsonCommand.toJson("/assets/img/" + image.getThumbnailUrl())).append("\",");
-          sb.append("\"thumbnailWidth\":").append(image.getProcessedWidth()).append(",");
-          sb.append("\"thumbnailHeight\":").append(image.getProcessedHeight()).append(",");
-        }
+      // Include thumbnail information if available
+      sb.append("\"hasThumbnail\":").append(image.hasThumbnail()).append(",");
+      if (image.hasThumbnail()) {
+        sb.append("\"thumbnailUrl\":\"").append(JsonCommand.toJson("/assets/img/" + image.getThumbnailUrl())).append("\",");
+        sb.append("\"thumbnailWidth\":").append(image.getProcessedWidth()).append(",");
+        sb.append("\"thumbnailHeight\":").append(image.getProcessedHeight()).append(",");
+      }
 
       // Format created timestamp
       if (image.getCreated() != null) {
@@ -116,7 +116,7 @@ public class ImageLibraryAjax extends GenericWidget {
     sb.append("],");
     sb.append("\"page\":").append(page).append(",");
     sb.append("\"limit\":").append(limit).append(",");
-    sb.append("\"total\":").append(images.size());
+    sb.append("\"total\":").append(constraints.getTotalRecordCount());
     sb.append("}");
 
     context.setJson(sb.toString());

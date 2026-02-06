@@ -22,6 +22,13 @@ class ImageViewerManager {
       brightness: 0,
       contrast: 0,
       saturation: 0,
+      levels: {
+        inputBlack: 0,
+        inputWhite: 255,
+        gamma: 1.0,
+        outputBlack: 0,
+        outputWhite: 255
+      },
       cropData: null
     };
     this.selectionRect = null;
@@ -75,6 +82,12 @@ class ImageViewerManager {
       flipVerticalBtn.addEventListener('click', () => this.flipImage('vertical'));
     }
 
+    // Scale down button
+    const scaleDownBtn = document.getElementById('scale-down-btn');
+    if (scaleDownBtn) {
+      scaleDownBtn.addEventListener('click', () => this.showScaleDownDialog());
+    }
+
     // Adjustments button
     const adjustmentsBtn = document.getElementById('adjustments-btn');
     if (adjustmentsBtn) {
@@ -118,6 +131,62 @@ class ImageViewerManager {
       }
     });
 
+    // Levels sliders
+    const inputBlackSlider = document.getElementById('input-black-slider');
+    const inputBlackValue = document.getElementById('input-black-value');
+    if (inputBlackSlider && inputBlackValue) {
+      inputBlackSlider.addEventListener('input', (e) => {
+        const value = Number.parseInt(e.target.value, 10);
+        inputBlackValue.textContent = value;
+        this.transformations.levels.inputBlack = value;
+        this.applyTransformations();
+      });
+    }
+
+    const inputWhiteSlider = document.getElementById('input-white-slider');
+    const inputWhiteValue = document.getElementById('input-white-value');
+    if (inputWhiteSlider && inputWhiteValue) {
+      inputWhiteSlider.addEventListener('input', (e) => {
+        const value = Number.parseInt(e.target.value, 10);
+        inputWhiteValue.textContent = value;
+        this.transformations.levels.inputWhite = value;
+        this.applyTransformations();
+      });
+    }
+
+    const gammaSlider = document.getElementById('gamma-slider');
+    const gammaValue = document.getElementById('gamma-value');
+    if (gammaSlider && gammaValue) {
+      gammaSlider.addEventListener('input', (e) => {
+        const value = Number.parseInt(e.target.value, 10) / 100;
+        gammaValue.textContent = value.toFixed(2);
+        this.transformations.levels.gamma = value;
+        this.applyTransformations();
+      });
+    }
+
+    const outputBlackSlider = document.getElementById('output-black-slider');
+    const outputBlackValue = document.getElementById('output-black-value');
+    if (outputBlackSlider && outputBlackValue) {
+      outputBlackSlider.addEventListener('input', (e) => {
+        const value = Number.parseInt(e.target.value, 10);
+        outputBlackValue.textContent = value;
+        this.transformations.levels.outputBlack = value;
+        this.applyTransformations();
+      });
+    }
+
+    const outputWhiteSlider = document.getElementById('output-white-slider');
+    const outputWhiteValue = document.getElementById('output-white-value');
+    if (outputWhiteSlider && outputWhiteValue) {
+      outputWhiteSlider.addEventListener('input', (e) => {
+        const value = Number.parseInt(e.target.value, 10);
+        outputWhiteValue.textContent = value;
+        this.transformations.levels.outputWhite = value;
+        this.applyTransformations();
+      });
+    }
+
     // Create thumbnail button
     const createThumbnailBtn = document.getElementById('create-thumbnail-btn');
     if (createThumbnailBtn) {
@@ -143,6 +212,20 @@ class ImageViewerManager {
     const zoomActualBtn = document.getElementById('zoom-actual-btn');
     if (zoomActualBtn) {
       zoomActualBtn.addEventListener('click', () => this.zoomActualSize());
+    }
+
+    // Scale down modal controls
+    const scalePercentageSlider = document.getElementById('scale-percentage');
+    if (scalePercentageSlider) {
+      scalePercentageSlider.addEventListener('input', (e) => {
+        document.getElementById('scale-percentage-display').textContent = e.target.value;
+        this.updateScaleDownPreview();
+      });
+    }
+
+    const applyScaleBtn = document.getElementById('apply-scale-btn');
+    if (applyScaleBtn) {
+      applyScaleBtn.addEventListener('click', () => this.applyScaleDown());
     }
 
     // Apply adjustments button
@@ -304,6 +387,13 @@ class ImageViewerManager {
       brightness: 0,
       contrast: 0,
       saturation: 0,
+      levels: {
+        inputBlack: 0,
+        inputWhite: 255,
+        gamma: 1.0,
+        outputBlack: 0,
+        outputWhite: 255
+      },
       cropData: null
     };
 
@@ -315,6 +405,40 @@ class ImageViewerManager {
       if (slider) slider.value = 0;
       if (valueSpan) valueSpan.textContent = '0';
     });
+
+    // Reset level sliders
+    const inputBlackSlider = document.getElementById('input-black-slider');
+    const inputBlackValue = document.getElementById('input-black-value');
+    if (inputBlackSlider) inputBlackSlider.value = 0;
+    if (inputBlackValue) inputBlackValue.textContent = '0';
+
+    const inputWhiteSlider = document.getElementById('input-white-slider');
+    const inputWhiteValue = document.getElementById('input-white-value');
+    if (inputWhiteSlider) inputWhiteSlider.value = 255;
+    if (inputWhiteValue) inputWhiteValue.textContent = '255';
+
+    const gammaSlider = document.getElementById('gamma-slider');
+    const gammaValue = document.getElementById('gamma-value');
+    if (gammaSlider) gammaSlider.value = 100;
+    if (gammaValue) gammaValue.textContent = '1.00';
+
+    const outputBlackSlider = document.getElementById('output-black-slider');
+    const outputBlackValue = document.getElementById('output-black-value');
+    if (outputBlackSlider) outputBlackSlider.value = 0;
+    if (outputBlackValue) outputBlackValue.textContent = '0';
+
+    const outputWhiteSlider = document.getElementById('output-white-slider');
+    const outputWhiteValue = document.getElementById('output-white-value');
+    if (outputWhiteSlider) outputWhiteSlider.value = 255;
+    if (outputWhiteValue) outputWhiteValue.textContent = '255';
+
+    // Reset scale down slider
+    const scalePercentageSlider = document.getElementById('scale-percentage');
+    const scalePercentageDisplay = document.getElementById('scale-percentage-display');
+    const scaleResultDimensions = document.getElementById('scale-result-dimensions');
+    if (scalePercentageSlider) scalePercentageSlider.value = 50;
+    if (scalePercentageDisplay) scalePercentageDisplay.textContent = '50';
+    if (scaleResultDimensions) scaleResultDimensions.textContent = '-';
   }
 
   /**
@@ -386,13 +510,32 @@ class ImageViewerManager {
     // Apply color adjustments
     if (this.transformations.brightness !== 0 ||
       this.transformations.contrast !== 0 ||
-      this.transformations.saturation !== 0) {
+      this.transformations.saturation !== 0 ||
+      this.hasLevelsAdjustments()) {
       this.applyColorAdjustments();
+    }
+
+    // Update histogram when adjustments panel is visible
+    const adjustmentsPanel = document.getElementById('adjustments-panel');
+    if (adjustmentsPanel && adjustmentsPanel.style.display === 'block') {
+      this.updateHistogram();
     }
   }
 
   /**
-   * Apply color adjustments (brightness, contrast, saturation)
+   * Check if levels adjustments are active
+   */
+  hasLevelsAdjustments() {
+    const levels = this.transformations.levels;
+    return levels.inputBlack !== 0 || 
+           levels.inputWhite !== 255 || 
+           levels.gamma !== 1.0 || 
+           levels.outputBlack !== 0 || 
+           levels.outputWhite !== 255;
+  }
+
+  /**
+   * Apply color adjustments (brightness, contrast, saturation, levels)
    */
   applyColorAdjustments() {
     const imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
@@ -401,6 +544,11 @@ class ImageViewerManager {
     const brightness = this.transformations.brightness / 100;
     const contrast = (this.transformations.contrast + 100) / 100;
     const saturation = (this.transformations.saturation + 100) / 100;
+
+    // Levels parameters
+    const levels = this.transformations.levels;
+    const inputRange = levels.inputWhite - levels.inputBlack;
+    const outputRange = levels.outputWhite - levels.outputBlack;
 
     for (let i = 0; i < data.length; i += 4) {
       // Apply brightness
@@ -412,6 +560,31 @@ class ImageViewerManager {
       r = ((r / 255 - 0.5) * contrast + 0.5) * 255;
       g = ((g / 255 - 0.5) * contrast + 0.5) * 255;
       b = ((b / 255 - 0.5) * contrast + 0.5) * 255;
+
+      // Apply levels
+      if (inputRange > 0) {
+        // Clamp to input range and normalize
+        r = Math.max(0, Math.min(255, r));
+        g = Math.max(0, Math.min(255, g));
+        b = Math.max(0, Math.min(255, b));
+
+        // Apply input levels
+        r = Math.max(0, (r - levels.inputBlack) / inputRange);
+        g = Math.max(0, (g - levels.inputBlack) / inputRange);
+        b = Math.max(0, (b - levels.inputBlack) / inputRange);
+
+        // Apply gamma
+        if (levels.gamma !== 1.0) {
+          r = Math.pow(r, 1 / levels.gamma);
+          g = Math.pow(g, 1 / levels.gamma);
+          b = Math.pow(b, 1 / levels.gamma);
+        }
+
+        // Apply output levels
+        r = levels.outputBlack + r * outputRange;
+        g = levels.outputBlack + g * outputRange;
+        b = levels.outputBlack + b * outputRange;
+      }
 
       // Apply saturation
       const gray = 0.2989 * r + 0.587 * g + 0.114 * b;
@@ -931,9 +1104,98 @@ class ImageViewerManager {
           adjustmentsBtn.classList.remove('active');
         } else {
           adjustmentsBtn.classList.add('active');
+          // Update histogram when opening panel
+          this.updateHistogram();
         }
       }
     }
+  }
+
+  /**
+   * Update the histogram display
+   */
+  updateHistogram() {
+    const histogramCanvas = document.getElementById('histogram-canvas');
+    if (!histogramCanvas || !this.canvas) return;
+
+    const ctx = histogramCanvas.getContext('2d');
+    const imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+    const data = imageData.data;
+
+    // Calculate histogram
+    const histogram = {
+      r: new Array(256).fill(0),
+      g: new Array(256).fill(0),
+      b: new Array(256).fill(0),
+      luminosity: new Array(256).fill(0)
+    };
+
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      const lum = Math.round(0.2989 * r + 0.587 * g + 0.114 * b);
+
+      histogram.r[r]++;
+      histogram.g[g]++;
+      histogram.b[b]++;
+      histogram.luminosity[lum]++;
+    }
+
+    // Find max value for scaling
+    const maxValue = Math.max(
+      ...histogram.r,
+      ...histogram.g,
+      ...histogram.b,
+      ...histogram.luminosity
+    );
+
+    // Clear canvas
+    const width = histogramCanvas.width;
+    const height = histogramCanvas.height;
+    ctx.clearRect(0, 0, width, height);
+
+    // Draw background
+    const isDark = document.documentElement.dataset.theme === 'dark';
+    ctx.fillStyle = isDark ? '#2a2a2a' : '#f8f8f8';
+    ctx.fillRect(0, 0, width, height);
+
+    // Draw histogram
+    const barWidth = width / 256;
+
+    // Draw luminosity histogram (white/gray)
+    ctx.fillStyle = isDark ? 'rgba(180, 180, 180, 0.7)' : 'rgba(100, 100, 100, 0.6)';
+    for (let i = 0; i < 256; i++) {
+      const barHeight = (histogram.luminosity[i] / maxValue) * height;
+      ctx.fillRect(i * barWidth, height - barHeight, barWidth, barHeight);
+    }
+
+    // Draw RGB histograms (transparent overlay)
+    // Red
+    ctx.fillStyle = 'rgba(255, 60, 60, 0.3)';
+    for (let i = 0; i < 256; i++) {
+      const barHeight = (histogram.r[i] / maxValue) * height;
+      ctx.fillRect(i * barWidth, height - barHeight, barWidth, barHeight);
+    }
+
+    // Green
+    ctx.fillStyle = 'rgba(60, 255, 60, 0.3)';
+    for (let i = 0; i < 256; i++) {
+      const barHeight = (histogram.g[i] / maxValue) * height;
+      ctx.fillRect(i * barWidth, height - barHeight, barWidth, barHeight);
+    }
+
+    // Blue
+    ctx.fillStyle = 'rgba(60, 60, 255, 0.3)';
+    for (let i = 0; i < 256; i++) {
+      const barHeight = (histogram.b[i] / maxValue) * height;
+      ctx.fillRect(i * barWidth, height - barHeight, barWidth, barHeight);
+    }
+
+    // Draw border
+    ctx.strokeStyle = isDark ? '#555' : '#ccc';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(0, 0, width, height);
   }
 
   /**
@@ -952,6 +1214,13 @@ class ImageViewerManager {
     this.transformations.brightness = 0;
     this.transformations.contrast = 0;
     this.transformations.saturation = 0;
+    this.transformations.levels = {
+      inputBlack: 0,
+      inputWhite: 255,
+      gamma: 1.0,
+      outputBlack: 0,
+      outputWhite: 255
+    };
 
     // Reset sliders
     ['brightness', 'contrast', 'saturation'].forEach(adjustment => {
@@ -961,6 +1230,32 @@ class ImageViewerManager {
       if (slider) slider.value = 0;
       if (valueSpan) valueSpan.textContent = '0';
     });
+
+    // Reset level sliders
+    const inputBlackSlider = document.getElementById('input-black-slider');
+    const inputBlackValue = document.getElementById('input-black-value');
+    if (inputBlackSlider) inputBlackSlider.value = 0;
+    if (inputBlackValue) inputBlackValue.textContent = '0';
+
+    const inputWhiteSlider = document.getElementById('input-white-slider');
+    const inputWhiteValue = document.getElementById('input-white-value');
+    if (inputWhiteSlider) inputWhiteSlider.value = 255;
+    if (inputWhiteValue) inputWhiteValue.textContent = '255';
+
+    const gammaSlider = document.getElementById('gamma-slider');
+    const gammaValue = document.getElementById('gamma-value');
+    if (gammaSlider) gammaSlider.value = 100;
+    if (gammaValue) gammaValue.textContent = '1.00';
+
+    const outputBlackSlider = document.getElementById('output-black-slider');
+    const outputBlackValue = document.getElementById('output-black-value');
+    if (outputBlackSlider) outputBlackSlider.value = 0;
+    if (outputBlackValue) outputBlackValue.textContent = '0';
+
+    const outputWhiteSlider = document.getElementById('output-white-slider');
+    const outputWhiteValue = document.getElementById('output-white-value');
+    if (outputWhiteSlider) outputWhiteSlider.value = 255;
+    if (outputWhiteValue) outputWhiteValue.textContent = '255';
 
     this.applyTransformations();
     this.toggleAdjustments();
@@ -1168,7 +1463,7 @@ class ImageViewerManager {
 
         // Refresh the library to show thumbnail
         if (this.editor.imageLibrary) {
-          this.editor.imageLibrary.loadImages();
+          this.editor.imageLibrary.loadImages(false, true);
         }
       } else {
         this.editor.showToast('Thumbnail created successfully!', 'success');
@@ -1251,6 +1546,10 @@ class ImageViewerManager {
       this.canvas.style.width = this.canvas.width + 'px';
       this.canvas.style.height = this.canvas.height + 'px';
     }
+    if (this.canvasContainer) {
+      this.canvasContainer.style.alignItems = 'flex-start';
+      this.canvasContainer.style.justifyContent = 'center';
+    }
   }
 
   /**
@@ -1285,6 +1584,132 @@ class ImageViewerManager {
     this.canvas.style.width = (this.currentImageElement.width * finalScale) + 'px';
     this.canvas.style.height = (this.currentImageElement.height * finalScale) + 'px';
   }
+
+  /**
+   * Show the scale down dialog
+   */
+  showScaleDownDialog() {
+    if (!this.currentImage) {
+      alert('No image loaded');
+      return;
+    }
+
+    // Reset slider
+    const slider = document.getElementById('scale-percentage');
+    if (slider) {
+      slider.value = 50;
+      document.getElementById('scale-percentage-display').textContent = '50';
+    }
+
+    // Update preview
+    this.updateScaleDownPreview();
+
+    // Open modal using Foundation
+    const modal = new Foundation.Reveal($('#scale-down-modal'));
+    modal.open();
+  }
+
+  /**
+   * Update the scale down preview with current dimensions
+   */
+  updateScaleDownPreview() {
+    const percentage = parseInt(document.getElementById('scale-percentage').value, 10);
+    
+    // Get original dimensions
+    const originalWidth = this.currentImageElement.width;
+    const originalHeight = this.currentImageElement.height;
+
+    // Calculate new dimensions
+    const newWidth = Math.round(originalWidth * percentage / 100);
+    const newHeight = Math.round(originalHeight * percentage / 100);
+
+    // Update preview text
+    const previewElement = document.getElementById('scale-result-dimensions');
+    if (previewElement) {
+      previewElement.textContent = `${originalWidth}x${originalHeight} → ${newWidth}x${newHeight}`;
+    }
+  }
+
+  /**
+   * Apply the scale down transformation
+   */
+  async applyScaleDown() {
+    if (!this.currentImage || !this.currentImage.id) {
+      console.error('No image loaded to scale');
+      return;
+    }
+
+    const percentage = parseInt(document.getElementById('scale-percentage').value, 10);
+
+    // Validate percentage
+    if (percentage >= 100) {
+      alert('Scale percentage must be less than 100%');
+      return;
+    }
+
+    if (percentage < 10) {
+      alert('Scale percentage must be at least 10%');
+      return;
+    }
+
+    console.log('Scaling down image to ' + percentage + '%');
+
+    try {
+      // Show loading state
+      const applyBtn = document.getElementById('apply-scale-btn');
+      if (applyBtn) {
+        applyBtn.disabled = true;
+        applyBtn.innerHTML = '<i class="fa-regular fa-spinner fa-spin"></i> Scaling...';
+      }
+
+      const response = await fetch(`${this.editor.config.apiBaseUrl}/imageScaleDown`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({
+          'token': this.editor.config.token,
+          'imageId': this.currentImage.id,
+          'scalePercentage': percentage
+        }),
+        credentials: 'same-origin'
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.status === 'error') {
+        throw new Error(result.message || 'Failed to scale image');
+      }
+
+      // Show success message
+      this.editor.showToast(`Image scaled down successfully to ${percentage}%!`, 'success');
+
+      // Close modal using Foundation event trigger
+      $('#scale-down-modal').trigger('close.zf.trigger');
+
+      // Reload the image to show scaled version
+      await this.loadImage(this.currentImage.id);
+      
+      // Refresh the image versions list
+      await this.editor.imageProperties.loadVersions();
+
+    } catch (error) {
+      console.error('Error scaling image:', error);
+      alert('Failed to scale image: ' + error.message);
+    } finally {
+      // Restore button state
+      const applyBtn = document.getElementById('apply-scale-btn');
+      if (applyBtn) {
+        applyBtn.disabled = false;
+        applyBtn.innerHTML = 'Apply Scale';
+      }
+    }
+  }
+
   /**
    * Handle image drop event
    */
