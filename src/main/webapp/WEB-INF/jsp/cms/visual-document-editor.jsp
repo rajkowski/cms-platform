@@ -48,7 +48,9 @@
   <div id="editor-toolbar">
     <div class="titlebar-left">
       <a href="${ctx}/"><img src="${ctx}/images/favicon.png" alt="Logo" /></a>
-      <h2>Document Editor</h2>
+      <c:set var="editorName" value="Document Editor" />
+      <c:set var="activeApp" value="documents" />
+      <%@include file="editor-app-switcher.jspf" %>
     </div>
 
     <!-- Left Section -->
@@ -77,28 +79,6 @@
           <i class="fas fa-chevron-down" style="font-size: 0.75rem; margin-left: 0.35rem;"></i>
         </button>
         <div class="apps-dropdown">
-          <!-- Quick Access Apps -->
-          <div class="apps-menu-section">
-            <div class="apps-grid">
-              <a href="${ctx}/admin/visual-page-editor" class="apps-item confirm-exit" title="Edit Pages">
-                <i class="${font:far()} fa-file-lines"></i>
-                <span class="apps-item-label">Pages</span>
-              </a>
-              <a href="${ctx}/admin/visual-image-editor" class="apps-item confirm-exit" title="Manage Images">
-                <i class="${font:far()} fa-image"></i>
-                <span class="apps-item-label">Images</span>
-              </a>
-              <a href="${ctx}/admin/visual-document-editor" class="apps-item active confirm-exit" title="Manage Documents">
-                <i class="${font:far()} fa-file"></i>
-                <span class="apps-item-label">Documents</span>
-              </a>
-              <a href="${ctx}/admin/visual-data-editor" class="apps-item confirm-exit" title="Manage Data">
-                <i class="${font:far()} fa-table"></i>
-                <span class="apps-item-label">Data</span>
-              </a>
-            </div>
-          </div>
-
           <!-- Actions Section -->
           <div class="apps-menu-section">
             <a href="#" id="dark-mode-toggle-menu" class="apps-menu-item">
@@ -431,6 +411,7 @@
 
   document.addEventListener('DOMContentLoaded', function() {
     setupAppsMenu();
+    setupEditorAppSwitcher();
 
     const savedTheme = localStorage.getItem('editor-theme');
     if (savedTheme === 'dark') {

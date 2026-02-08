@@ -10,6 +10,7 @@
   --dashboard-nav-bg: #f8f9fa;
   --dashboard-content-bg: #ffffff;
   --dashboard-card-bg: #ffffff;
+  --dashboard-panel-bg: #ffffff;
   --dashboard-border: #dee2e6;
   --dashboard-table-border: #dee2e6;
   --dashboard-text: #212529;
@@ -28,6 +29,7 @@
   --dashboard-nav-bg: #2d2d2d;
   --dashboard-content-bg: #1a1a1a;
   --dashboard-card-bg: #2d2d2d;
+  --dashboard-panel-bg: #2d2d2d;
   --dashboard-border: #404040;
   --dashboard-table-border: #363636;
   --dashboard-text: #ffffff;
@@ -56,12 +58,11 @@
 #dashboard-toolbar {
   background: var(--dashboard-nav-bg);
   border-bottom: 1px solid var(--dashboard-border);
-  padding: 15px 20px;
+  padding: 6px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 15px;
-  flex-wrap: wrap;
   transition: background 0.3s ease, border-color 0.3s ease;
 }
 
@@ -69,7 +70,6 @@
   display: flex;
   align-items: center;
   gap: 15px;
-  flex-shrink: 0;
 }
 
 .titlebar-left img {
@@ -82,6 +82,82 @@
   font-size: 20px;
   color: var(--dashboard-text);
   font-weight: 600;
+}
+
+/* Editor App Switcher Styles */
+.editor-app-switcher {
+  position: relative;
+  display: inline-block;
+}
+
+.editor-app-switcher-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0;
+  background: transparent;
+  color: var(--dashboard-text);
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.editor-app-switcher-btn:hover {
+  color: var(--dashboard-text-muted);
+}
+
+.editor-app-switcher-btn .editor-name {
+  margin: 0;
+}
+
+.editor-app-switcher-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 8px;
+  min-width: 220px;
+  background: var(--dashboard-panel-bg);
+  border: 1px solid var(--dashboard-border);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px var(--dashboard-shadow);
+  padding: 0.5rem 0;
+  z-index: 1001;
+}
+
+.editor-app-switcher.open .editor-app-switcher-dropdown {
+  display: block;
+}
+
+.editor-app-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  color: var(--dashboard-text);
+  text-decoration: none;
+  transition: background 0.2s;
+  gap: 0.75rem;
+}
+
+.editor-app-item:hover {
+  background: var(--dashboard-hover-bg);
+}
+
+.editor-app-item.active {
+  background: var(--dashboard-hover-bg);
+  font-weight: 600;
+}
+
+.editor-app-item i {
+  width: 20px;
+  text-align: center;
+  font-size: 16px;
+}
+
+.editor-app-item span {
+  font-size: 14px;
 }
 
 .toolbar-section {

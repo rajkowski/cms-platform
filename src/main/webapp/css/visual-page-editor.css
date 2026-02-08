@@ -97,6 +97,82 @@
   font-weight: 600;
 }
 
+/* Editor App Switcher Styles */
+.editor-app-switcher {
+  position: relative;
+  display: inline-block;
+}
+
+.editor-app-switcher-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0;
+  background: transparent;
+  color: var(--editor-text);
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.editor-app-switcher-btn:hover {
+  color: var(--editor-text-muted);
+}
+
+.editor-app-switcher-btn .editor-name {
+  margin: 0;
+}
+
+.editor-app-switcher-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 8px;
+  min-width: 220px;
+  background: var(--editor-panel-bg);
+  border: 1px solid var(--editor-border);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px var(--editor-shadow);
+  padding: 0.5rem 0;
+  z-index: 1001;
+}
+
+.editor-app-switcher.open .editor-app-switcher-dropdown {
+  display: block;
+}
+
+.editor-app-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  color: var(--editor-text);
+  text-decoration: none;
+  transition: background 0.2s;
+  gap: 0.75rem;
+}
+
+.editor-app-item:hover {
+  background: var(--editor-hover-bg);
+}
+
+.editor-app-item.active {
+  background: var(--editor-hover-bg);
+  font-weight: 600;
+}
+
+.editor-app-item i {
+  width: 20px;
+  text-align: center;
+  font-size: 16px;
+}
+
+.editor-app-item span {
+  font-size: 14px;
+}
+
 .titlebar-right {
   display: flex;
   gap: 10px;

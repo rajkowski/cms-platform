@@ -39,7 +39,9 @@
   <div id="dashboard-toolbar">
     <div class="titlebar-left">
       <a href="${ctx}/"><img src="${ctx}/images/favicon.png" alt="Logo" /></a>
-      <h2>Analytics Dashboard</h2>
+      <c:set var="editorName" value="Analytics Dashboard" />
+      <c:set var="activeApp" value="analytics" />
+      <%@include file="editor-app-switcher.jspf" %>
     </div>
 
     <!-- Left Section: Time Range Picker -->
@@ -391,11 +393,14 @@
   <script src="/javascript/analytics/analytics-dashboard.js"></script>
   <script src="/javascript/analytics/analytics-api.js"></script>
   <script src="/javascript/analytics/analytics-charts.js"></script>
+  <script src="${ctx}/javascript/apps-menu-controller.js"></script>
 </g:compress>
 
 <script>
   // Initialize the analytics dashboard
   document.addEventListener('DOMContentLoaded', function() {
+    setupEditorAppSwitcher();
+    
     if (typeof AnalyticsDashboard !== 'undefined') {
       AnalyticsDashboard.init({
         containerId: 'visual-analytics-dashboard-wrapper',

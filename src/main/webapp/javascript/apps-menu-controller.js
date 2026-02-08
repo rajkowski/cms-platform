@@ -52,3 +52,55 @@ function setupAppsMenu() {
     }
   });
 }
+
+/**
+ * Setup Editor App Switcher
+ * Manages the click-to-toggle behavior for the editor app switcher in titlebar-left
+ */
+function setupEditorAppSwitcher() {
+  const appSwitcher = document.querySelector('.editor-app-switcher');
+  if (!appSwitcher) {
+    return;
+  }
+
+  const switcherBtn = appSwitcher.querySelector('.editor-app-switcher-btn');
+  const dropdown = appSwitcher.querySelector('.editor-app-switcher-dropdown');
+  if (!switcherBtn || !dropdown) {
+    return;
+  }
+
+  let isOpen = false;
+
+  function closeMenu() {
+    if (!isOpen) {
+      return;
+    }
+    isOpen = false;
+    appSwitcher.classList.remove('open');
+    document.removeEventListener('click', handleOutsideClick);
+  }
+
+  function handleOutsideClick(event) {
+    if (!appSwitcher.contains(event.target)) {
+      closeMenu();
+    }
+  }
+
+  switcherBtn.addEventListener('click', function(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    isOpen = !isOpen;
+    appSwitcher.classList.toggle('open', isOpen);
+    if (isOpen) {
+      document.addEventListener('click', handleOutsideClick);
+    } else {
+      document.removeEventListener('click', handleOutsideClick);
+    }
+  });
+
+  dropdown.addEventListener('click', function(event) {
+    if (event.target.closest('a')) {
+      closeMenu();
+    }
+  });
+}

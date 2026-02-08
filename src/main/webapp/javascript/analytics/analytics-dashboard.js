@@ -1046,7 +1046,7 @@ const AnalyticsDashboard = (function() {
     const newTheme = isDark ? 'light' : 'dark';
 
     wrapper.setAttribute('data-theme', newTheme);
-    localStorage.setItem('analyticsDashboard.theme', newTheme);
+    localStorage.setItem('editor-theme', newTheme);
   }
 
   /**
@@ -1117,7 +1117,7 @@ const AnalyticsDashboard = (function() {
     }
 
     // Load theme preference
-    const theme = localStorage.getItem('analyticsDashboard.theme') || 'light';
+    const theme = localStorage.getItem('editor-theme') || 'light';
     const wrapper = document.getElementById(config.containerId);
     wrapper.setAttribute('data-theme', theme);
   }
