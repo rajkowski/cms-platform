@@ -29,6 +29,7 @@
   <widget name="visualImageEditor" class="com.simisinc.platform.presentation.widgets.editor.VisualImageEditorWidget" />
   <widget name="visualDocumentEditor" class="com.simisinc.platform.presentation.widgets.editor.VisualDocumentEditorWidget" />
   <widget name="visualDataEditor" class="com.simisinc.platform.presentation.widgets.editor.VisualDataEditorWidget" />
+  <widget name="visualContentEditor" class="com.simisinc.platform.presentation.widgets.editor.VisualContentEditorWidget" />
   <widget name="logo" class="com.simisinc.platform.presentation.widgets.cms.LogoWidget" />
   <widget name="copyright" class="com.simisinc.platform.presentation.widgets.cms.CopyrightWidget" />
   <widget name="systemAlert" class="com.simisinc.platform.presentation.widgets.cms.SystemAlertWidget" />
