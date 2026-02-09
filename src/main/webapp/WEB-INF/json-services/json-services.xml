@@ -35,6 +35,27 @@
   <service endpoint="/json/saveWebPage" class="com.simisinc.platform.presentation.widgets.cms.SaveWebPageAjax" />
   <service endpoint="/json/stylesheet" class="com.simisinc.platform.presentation.widgets.cms.StylesheetAjax" />
   <service endpoint="/json/saveStylesheet" class="com.simisinc.platform.presentation.widgets.cms.SaveStylesheetAjax" />
+  <!-- Visual Content Editor - Content Endpoints -->
+  <service endpoint="/json/content/list" class="com.simisinc.platform.presentation.widgets.cms.ContentListJsonService" />
+  <service endpoint="/json/content/get" class="com.simisinc.platform.presentation.widgets.cms.ContentGetJsonService" />
+  <service endpoint="/json/content/preview" class="com.simisinc.platform.presentation.widgets.cms.ContentPreviewJsonService" />
+  <service endpoint="/json/content/save-draft" class="com.simisinc.platform.presentation.widgets.cms.ContentSaveDraftJsonService" />
+  <service endpoint="/json/content/publish" class="com.simisinc.platform.presentation.widgets.cms.ContentPublishJsonService" />
+  <!-- Visual Content Editor - Page Endpoints -->
+  <service endpoint="/json/pages/children" class="com.simisinc.platform.presentation.widgets.cms.PageChildrenJsonService" />
+  <service endpoint="/json/pages/reorder" class="com.simisinc.platform.presentation.widgets.cms.PageReorderJsonService" />
+  <service endpoint="/json/pages/add-to-hierarchy" class="com.simisinc.platform.presentation.widgets.cms.PageAddToHierarchyJsonService" />
+  <service endpoint="/json/pages/remove-from-hierarchy" class="com.simisinc.platform.presentation.widgets.cms.PageRemoveFromHierarchyJsonService" />
+  <!-- Visual Content Editor - Sitemap Endpoints -->
+  <service endpoint="/json/sitemap/structure" class="com.simisinc.platform.presentation.widgets.cms.SitemapStructureJsonService" />
+  <service endpoint="/json/sitemap/reorder-tab" class="com.simisinc.platform.presentation.widgets.cms.SitemapReorderTabJsonService" />
+  <service endpoint="/json/sitemap/reorder-item" class="com.simisinc.platform.presentation.widgets.cms.SitemapReorderItemJsonService" />
+  <!-- Visual Content Editor - Blog Endpoints -->
+  <service endpoint="/json/blogs/list" class="com.simisinc.platform.presentation.widgets.cms.BlogsListJsonService" />
+  <service endpoint="/json/blogs/posts" class="com.simisinc.platform.presentation.widgets.cms.BlogsPostsJsonService" />
+  <!-- Visual Content Editor - Calendar Endpoints -->
+  <service endpoint="/json/calendars/list" class="com.simisinc.platform.presentation.widgets.cms.CalendarsListJsonService" />
+  <service endpoint="/json/calendars/events" class="com.simisinc.platform.presentation.widgets.cms.CalendarsEventsJsonService" />
   <!-- Image Editor -->
   <service endpoint="/json/imageLibrary" class="com.simisinc.platform.presentation.widgets.cms.ImageLibraryAjax" />
   <service endpoint="/json/imageContent" class="com.simisinc.platform.presentation.widgets.cms.ImageContentAjax" />

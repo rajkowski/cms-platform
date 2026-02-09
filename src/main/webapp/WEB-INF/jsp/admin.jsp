@@ -77,6 +77,7 @@
       <ul class="vertical menu">
         <li class="section-title">Content</li>
         <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/content/analytics')}"> class="is-active"</c:if>><a href="javascript:void(0)" onclick="loadAdminContent('${ctx}/admin/content/analytics', this)"><i class="${font:far()} fa-chart-line fa-fw"></i> <span>Analytics</span></a></li>
+        <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/visual')}"> class="is-active"</c:if>><a href="javascript:void(0)" onclick="loadAdminContent('${ctx}/admin/visual-content-editor', this)"><i class="${font:far()} fa-edit fa-fw"></i> <span>Visual Editors</span></a></li>
         <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/sitemap')}"> class="is-active"</c:if>><a href="javascript:void(0)" onclick="loadAdminContent('${ctx}/admin/sitemap', this)"><i class="${font:far()} fa-sitemap fa-fw"></i> <span>Site Map</span></a></li>
         <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/web-page')}"> class="is-active"</c:if>><a href="javascript:void(0)" onclick="loadAdminContent('${ctx}/admin/web-pages', this)"><i class="${font:far()} fa-sticky-note fa-fw"></i> <span>Web Pages</span></a></li>
         <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/image')}"> class="is-active"</c:if>><a href="javascript:void(0)" onclick="loadAdminContent('${ctx}/admin/images', this)"><i class="${font:far()} fa-image fa-fw"></i> <span>Images</span></a></li>

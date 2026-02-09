@@ -225,7 +225,7 @@ public class MenuWidget extends GenericWidget {
           // Add Page Editing Links
           if (!thisPageIsSkipped) {
             addDivider(context, linkList, container, "admin,content-manager");
-            addLink(context, linkList, "Webpage Editor", "/admin/visual-page-editor?webPage=" + pagePath, "fa fa-window-maximize",
+            addLink(context, linkList, "Web Page Editor", "/admin/visual-page-editor?webPage=" + pagePath, "fa fa-window-maximize",
                 container, "admin,content-manager");
             addLink(context, linkList, "Page Info", "/admin/web-page?webPage=" + pagePath, "fa fa-info", container,
                 "admin,content-manager");
