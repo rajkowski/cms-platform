@@ -49,7 +49,7 @@
   <div id="editor-toolbar">
     <div class="titlebar-left">
       <a href="${ctx}/"><img src="${ctx}/images/favicon.png" alt="Logo" /></a>
-      <c:set var="editorName" value="Webpage Editor" />
+      <c:set var="editorName" value="Web Page Editor" />
       <c:set var="activeApp" value="pages" />
       <%@include file="editor-app-switcher.jspf" %>
     </div>

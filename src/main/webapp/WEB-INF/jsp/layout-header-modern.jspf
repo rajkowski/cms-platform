@@ -213,9 +213,14 @@
                         <span class="admin-app-item-label">Analytics</span>
                       </a>
                       
-                      <a href="${ctx}/admin/visual-page-editor?webPage=${pageRenderInfo.pagePath}" class="admin-app-item" title="Edit pages and content">
+                      <a href="${ctx}/admin/visual-content-editor?webPage=${pageRenderInfo.pagePath}" class="admin-app-item" title="Edit web pages and content">
                         <i class="fas fa-edit"></i>
-                        <span class="admin-app-item-label">Pages</span>
+                        <span class="admin-app-item-label">Content</span>
+                      </a>
+
+                      <a href="${ctx}/admin/visual-page-editor?webPage=${pageRenderInfo.pagePath}" class="admin-app-item" title="Edit web pages and content">
+                        <i class="fas fa-file-lines"></i>
+                        <span class="admin-app-item-label">Web Pages</span>
                       </a>
 
                       <a href="${ctx}/admin/visual-image-editor?returnPage=${pageRenderInfo.pagePath}" class="admin-app-item" title="Manage images and media">
@@ -237,49 +242,14 @@
                     <div class="user-menu-section-title">Classic Tools</div>
                     <div class="admin-apps-grid">
                       
-                      <a href="/admin/sitemap" class="admin-app-item" title="Manage site navigation and structure">
-                        <i class="fas fa-sitemap"></i>
-                        <span class="admin-app-item-label">Navigation</span>
-                      </a>
-
-                      <a href="${ctx}/admin/blogs" class="admin-app-item" title="Create and manage blog posts">
-                        <i class="fas fa-blog"></i>
-                        <span class="admin-app-item-label">Blogs</span>
-                      </a>
-
-                      <a href="/admin/calendar" class="admin-app-item" title="Manage calendars and events">
-                        <i class="fas fa-calendar-alt"></i>
-                        <span class="admin-app-item-label">Calendars</span>
-                      </a>
-
-                      <a href="/admin/content" class="admin-app-item" title="Manage content pages">
-                        <i class="fas fa-file-alt"></i>
-                        <span class="admin-app-item-label">Content</span>
-                      </a>
-
                       <a href="/admin/form-data#contact-management" class="admin-app-item" title="Manage contacts, form submissions, and mailing lists">
                         <i class="fas fa-envelope-open-text"></i>
                         <span class="admin-app-item-label">Contacts</span>
                       </a>
-                      
-                      <a href="/admin/folders#document-management" class="admin-app-item" title="Organize documents">
-                        <i class="fas fa-folder-open"></i>
-                        <span class="admin-app-item-label">Documents</span>
-                      </a>
-                      
+                                            
                       <a href="/admin/e-commerce/analytics" class="admin-app-item" title="Products and orders">
                         <i class="fas fa-shopping-bag"></i>
                         <span class="admin-app-item-label">Commerce</span>
-                      </a>
-                      
-                      <a href="/admin/theme-properties#theme" class="admin-app-item" title="Customize appearance">
-                        <i class="fas fa-palette"></i>
-                        <span class="admin-app-item-label">Theme</span>
-                      </a>
-
-                      <a href="/admin/css-editor?returnPage=${pageRenderInfo.pagePath}" class="admin-app-item" title="Manage CSS styles">
-                        <i class="fas fa-code"></i>
-                        <span class="admin-app-item-label">CSS</span>
                       </a>
 
                       <a href="/admin/users" class="admin-app-item" title="Manage user accounts">
@@ -287,16 +257,16 @@
                         <span class="admin-app-item-label">Users</span>
                       </a>
 
-                      <a href="/admin/apis#api-access" class="admin-app-item" title="Manage API keys">
-                        <i class="fas fa-key"></i>
-                        <span class="admin-app-item-label">API Access</span>
+                      <a href="/admin/theme-properties#theme" class="admin-app-item" title="Customize appearance">
+                        <i class="fas fa-palette"></i>
+                        <span class="admin-app-item-label">Theme</span>
                       </a>
 
-                      <a href="/admin/site-properties" class="admin-app-item" title="Manage site settings">
-                        <i class="fas fa-sliders-h"></i>
-                        <span class="admin-app-item-label">Settings</span>
+                      <a href="/admin/css-editor?returnPage=${pageRenderInfo.pagePath}" class="admin-app-item" title="Manage CSS styles">
+                        <i class="fas fa-code"></i>
+                        <span class="admin-app-item-label">Site CSS</span>
                       </a>
-                      
+
                       <a href="/admin" class="admin-app-item" title="System configuration">
                         <i class="fas fa-cog"></i>
                         <span class="admin-app-item-label">Setup</span>

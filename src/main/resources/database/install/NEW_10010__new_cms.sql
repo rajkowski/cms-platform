@@ -131,6 +131,20 @@ CREATE INDEX web_pages_sitemap_idx ON web_pages(show_in_sitemap);
 CREATE INDEX web_pages_redirect_idx ON web_pages(has_redirect);
 CREATE INDEX web_pages_tags_idx ON web_pages USING GIN (tags);
 
+CREATE TABLE web_page_hierarchy (
+  page_hierarchy_id BIGSERIAL PRIMARY KEY,
+  web_page_id BIGINT UNIQUE NOT NULL REFERENCES web_pages(web_page_id) ON DELETE CASCADE,
+  parent_page_id BIGINT REFERENCES web_pages(web_page_id) ON DELETE SET NULL,
+  sort_order INTEGER DEFAULT 100 NOT NULL,
+  depth INTEGER DEFAULT 0 NOT NULL,
+  path TEXT DEFAULT '/' NOT NULL,
+  created TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+  modified TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX web_page_hierarchy_parent_idx ON web_page_hierarchy(parent_page_id, sort_order);
+CREATE INDEX web_page_hierarchy_path_idx ON web_page_hierarchy(path);
+CREATE INDEX web_page_hierarchy_depth_idx ON web_page_hierarchy(depth);
+
 CREATE TABLE content (
   content_id BIGSERIAL PRIMARY KEY,
   content_unique_id VARCHAR(255) UNIQUE,

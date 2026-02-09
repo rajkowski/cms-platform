@@ -17,7 +17,7 @@
   Common editor app switcher dropdown for use in titlebar-left
   
   Required variables:
-    - editorName: Display name of the current editor (e.g., "Webpage Editor")
+    - editorName: Display name of the current editor (e.g., "Web Page Editor")
     - activeApp: ID of the active app (e.g., "pages", "images", "documents", "data", "content", "analytics")
 --%>
 <div class="editor-app-switcher">
@@ -50,9 +50,9 @@
       <i class="${font:far()} fa-image"></i>
       <span>Images</span>
     </a>
-    <a href="${ctx}/admin/visual-page-editor" class="editor-app-item ${activeApp == 'pages' ? 'active' : ''} confirm-exit" title="Edit Pages">
+    <a href="${ctx}/admin/visual-page-editor" class="editor-app-item ${activeApp == 'pages' ? 'active' : ''} confirm-exit" title="Edit Web Pages">
       <i class="${font:far()} fa-file-lines"></i>
-      <span>Pages</span>
+      <span>Web Pages</span>
     </a>
   </div>
 </div>

@@ -41,7 +41,7 @@ class VisualDataEditor {
     document.getElementById('new-dataset-btn')?.addEventListener('click', () => this.showNewDatasetModal());
     document.getElementById('reload-btn')?.addEventListener('click', () => this.reloadData());
     document.getElementById('save-btn')?.addEventListener('click', () => this.saveCurrentItem());
-    
+
     // Empty canvas action buttons
     document.querySelectorAll('.new-collection-action').forEach(btn => {
       btn.addEventListener('click', () => this.showNewCollectionModal());
@@ -88,7 +88,7 @@ class VisualDataEditor {
         document.body.dataset.theme = 'dark';
         localStorage.setItem('editor-theme', 'dark');
       }
-      
+
       const icon = darkModeToggle.querySelector('i');
       if (icon) {
         if (isDark) {
@@ -123,12 +123,12 @@ class VisualDataEditor {
 
     const onMouseMove = (e) => {
       if (!isResizing) return;
-      
+
       const deltaX = startX - e.clientX;
       const newWidth = startWidth + deltaX;
       const minWidth = 250;
       const maxWidth = 600;
-      
+
       if (newWidth >= minWidth && newWidth <= maxWidth) {
         propertiesPanel.style.width = `${newWidth}px`;
       }
@@ -173,18 +173,18 @@ class VisualDataEditor {
         e.preventDefault();
         e.stopPropagation();
         const tabName = tab.dataset.tab;
-        
+
         // Update tab navigation
         document.querySelectorAll('.dataset-tab').forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
-        
+
         // Update tab content
         document.querySelectorAll('.dataset-tab-content, .dataset-properties-content').forEach(c => c.classList.remove('active'));
         const targetContent = document.getElementById(`dataset-${tabName}-content`);
         if (targetContent) {
           targetContent.classList.add('active');
         }
-        
+
         return false;
       });
     });
@@ -196,18 +196,18 @@ class VisualDataEditor {
         e.preventDefault();
         e.stopPropagation();
         const tabName = tab.dataset.tab;
-        
+
         // Update tab navigation
         document.querySelectorAll('.collection-tab').forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
-        
+
         // Update tab content
         document.querySelectorAll('.collection-tab-content').forEach(c => c.classList.remove('active'));
         const targetContent = document.getElementById(`collection-${tabName}-content`);
         if (targetContent) {
           targetContent.classList.add('active');
         }
-        
+
         return false;
       });
     });
@@ -291,7 +291,7 @@ class VisualDataEditor {
     try {
       const response = await fetch('/json/dataCollections');
       const data = await response.json();
-      
+
       if (data.collections) {
         this.collections = data.collections;
         this.renderCollectionsList();
@@ -309,7 +309,7 @@ class VisualDataEditor {
     try {
       const response = await fetch('/json/dataDatasets');
       const data = await response.json();
-      
+
       if (data.datasets) {
         this.datasets = data.datasets;
         this.renderDatasetsList();
@@ -326,7 +326,7 @@ class VisualDataEditor {
     const list = document.getElementById('collections-list');
     const emptyDiv = document.getElementById('collections-empty');
     const countElement = document.getElementById('collections-count');
-    
+
     if (!this.collections || this.collections.length === 0) {
       list.innerHTML = '';
       emptyDiv.style.display = 'block';
@@ -336,7 +336,7 @@ class VisualDataEditor {
 
     emptyDiv.style.display = 'none';
     if (countElement) countElement.textContent = `(${this.collections.length})`;
-    
+
     list.innerHTML = this.collections.map(collection => `
       <li class="data-list-item" data-id="${collection.id}" data-unique-id="${collection.uniqueId}">
         <div class="data-list-item-icon">
@@ -359,7 +359,7 @@ class VisualDataEditor {
     const list = document.getElementById('datasets-list');
     const emptyDiv = document.getElementById('datasets-empty');
     const countElement = document.getElementById('datasets-count');
-    
+
     if (!this.datasets || this.datasets.length === 0) {
       list.innerHTML = '';
       emptyDiv.style.display = 'block';
@@ -369,7 +369,7 @@ class VisualDataEditor {
 
     emptyDiv.style.display = 'none';
     if (countElement) countElement.textContent = `(${this.datasets.length})`;
-    
+
     list.innerHTML = this.datasets.map(dataset => `
       <li class="data-list-item" data-id="${dataset.id}">
         <div class="data-list-item-icon">
@@ -409,7 +409,7 @@ class VisualDataEditor {
   selectCollection(uniqueId) {
     this.loadCollectionDetails(uniqueId);
     this.hideEmptyCanvas();
-    
+
     // Update active state in list
     document.querySelectorAll('#collections-list .data-list-item').forEach(item => {
       item.classList.remove('active');
@@ -422,7 +422,7 @@ class VisualDataEditor {
   selectDataset(id) {
     this.loadDatasetDetails(id);
     this.hideEmptyCanvas();
-    
+
     // Update active state in list
     document.querySelectorAll('#datasets-list .data-list-item').forEach(item => {
       item.classList.remove('active');
@@ -437,7 +437,7 @@ class VisualDataEditor {
     try {
       const response = await fetch(`/json/collectionDetails?uniqueId=${encodeURIComponent(uniqueId)}`);
       const data = await response.json();
-      
+
       if (data.error) {
         alert('Error loading collection: ' + data.error);
         return;
@@ -446,7 +446,7 @@ class VisualDataEditor {
       this.selectedItem = data;
       this.renderCollectionDetails(data);
       document.getElementById('save-btn').disabled = false;
-      
+
     } catch (error) {
       console.error('Error loading collection details:', error);
       alert('Failed to load collection details');
@@ -460,7 +460,7 @@ class VisualDataEditor {
     try {
       const response = await fetch(`/json/datasetDetails?id=${id}`);
       const data = await response.json();
-      
+
       if (data.error) {
         alert('Error loading dataset: ' + data.error);
         return;
@@ -469,7 +469,7 @@ class VisualDataEditor {
       this.selectedItem = data;
       this.renderDatasetDetails(data);
       document.getElementById('save-btn').disabled = false;
-      
+
     } catch (error) {
       console.error('Error loading dataset details:', error);
       alert('Failed to load dataset details');
@@ -480,7 +480,7 @@ class VisualDataEditor {
 
   renderCollectionDetails(collection) {
     const canvas = document.getElementById('data-editor-canvas');
-    
+
     canvas.innerHTML = `
       <div class="collection-editor-container">
         <div class="collection-header">
@@ -550,7 +550,7 @@ class VisualDataEditor {
 
     // Setup collection tab switching
     this.setupCollectionTabs();
-    
+
     // Setup collection action buttons
     document.getElementById('save-collection-btn')?.addEventListener('click', () => this.saveCollectionConfig());
     document.getElementById('refresh-collection-btn')?.addEventListener('click', () => this.loadCollectionDetails(collection.uniqueId));
@@ -558,7 +558,7 @@ class VisualDataEditor {
     // Update info tab
     this.updateInfoTab(collection, 'collection');
     this.updateConfigTab(collection, 'collection');
-    
+
     // Load items for the Records tab
     if (collection.uniqueId) {
       this.loadCollectionItems(collection.uniqueId);
@@ -568,7 +568,7 @@ class VisualDataEditor {
   renderDatasetDetails(dataset) {
     const canvas = document.getElementById('data-editor-canvas');
     const syncStatus = this.getSyncStatusBadge(dataset);
-    
+
     canvas.innerHTML = `
       <div class="dataset-editor-container">
         <div class="dataset-header">
@@ -626,7 +626,7 @@ class VisualDataEditor {
 
     // Setup dataset tab switching
     this.setupDatasetTabs();
-    
+
     // Setup dataset action buttons
     document.getElementById('sync-now-btn')?.addEventListener('click', () => this.syncDatasetNow(dataset.id));
     document.getElementById('delete-dataset-btn')?.addEventListener('click', () => this.deleteDataset(dataset.id));
@@ -635,7 +635,7 @@ class VisualDataEditor {
     // Update info tab
     this.updateInfoTab(dataset, 'dataset');
     this.updateConfigTab(dataset, 'dataset');
-    
+
     // Load records for the Records tab (if we have an ID)
     if (dataset.id) {
       this.loadDatasetRecords(dataset.id);
@@ -1597,17 +1597,17 @@ class VisualDataEditor {
 
   async syncDatasetNow(datasetId) {
     if (!confirm('Sync this dataset now?')) return;
-    
+
     this.showLoading(true);
     try {
       const response = await fetch('/json/datasetSync', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: new URLSearchParams({
-          datasetId: datasetId
-        })
+        body: (() => {
+          const params = new FormData();
+          params.append('datasetId', datasetId);
+          params.append('token', this.token);
+          return params;
+        })()
       });
 
       if (!response.ok) {
@@ -1627,7 +1627,7 @@ class VisualDataEditor {
 
   async deleteDataset(datasetId) {
     if (!confirm('Are you sure you want to delete this dataset? This action cannot be undone.')) return;
-    
+
     this.showLoading(true);
     try {
       const response = await fetch('/json/datasetDelete', {
@@ -1647,7 +1647,7 @@ class VisualDataEditor {
 
       await response.json();
       this.showNotification('Dataset deleted successfully');
-      
+
       // Clear the canvas and reload the datasets list
       this.showEmptyCanvas();
       this.loadDatasets();
@@ -1759,12 +1759,12 @@ class VisualDataEditor {
           </div>
         </div>
       `;
-      
+
       // Add save listener
       document.getElementById('save-collection-config-btn')?.addEventListener('click', () => {
         this.saveCollectionConfig();
       });
-      
+
     } else if (type === 'dataset') {
       configContent.innerHTML = `
         <div style="padding: 15px;">
@@ -1802,7 +1802,7 @@ class VisualDataEditor {
           </div>
         </div>
       `;
-      
+
       // Add save listener
       document.getElementById('save-dataset-config-btn')?.addEventListener('click', () => {
         this.saveDatasetConfig();
@@ -1865,7 +1865,7 @@ class VisualDataEditor {
       formData.append('sourceUrl', document.getElementById('edit-dataset-source-url').value);
       formData.append('syncEnabled', document.getElementById('edit-dataset-sync-enabled').checked);
       formData.append('scheduleEnabled', document.getElementById('edit-dataset-schedule-enabled').checked);
-      
+
       const response = await fetch('/json/saveDataset', {
         method: 'POST',
         body: formData
@@ -2036,7 +2036,7 @@ class VisualDataEditor {
     }
 
     let html = '<div class="items-list" style="padding: 15px;">';
-    
+
     items.forEach(item => {
       const displayName = item.name || item.title || 'Unnamed';
       const uniqueId = item.uniqueId || item.id || '';
@@ -2057,7 +2057,7 @@ class VisualDataEditor {
         </div>
       `;
     });
-    
+
     html += '</div>';
     recordsTab.innerHTML = html;
 

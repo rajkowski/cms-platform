@@ -54,7 +54,7 @@ public class WebPageListAjax extends GenericWidget {
     // Build JSON response
     StringBuilder sb = new StringBuilder();
     for (WebPage page : pageList) {
-      if (sb.length() > 0) {
+      if (!sb.isEmpty()) {
         sb.append(",");
       }
       sb.append("{");

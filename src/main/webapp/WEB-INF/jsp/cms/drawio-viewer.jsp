@@ -32,7 +32,7 @@
 
 <script src="${ctx}/javascript/drawio-29.3.6/viewer.min.js"></script>
 
-<div class="margin-top-50">
+<div style="width: 100%; overflow-x: auto;">
     <div id="drawio-diagram"></div>
 </div>
 
