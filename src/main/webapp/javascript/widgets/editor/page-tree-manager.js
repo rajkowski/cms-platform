@@ -19,6 +19,10 @@ class PageTreeManager {
     this.searchResults = [];
     this.searchIndex = 0;
     this.searchQuery = '';
+    this.pendingMutations = new Set();
+    this.isSyncing = false;
+    this.syncTimer = null;
+    this.syncIntervalMs = 15000;
   }
 
   /**
@@ -29,6 +33,195 @@ class PageTreeManager {
     this.setupSearchListener();
     this.setupLibraryDropZone();
     this.loadPages();
+    this.startAutoSync();
+  }
+
+  normalizeParentId(parentId) {
+    if (parentId === null || parentId === undefined) return null;
+    const parentIdStr = String(parentId);
+    if (parentIdStr === 'root' || parentIdStr === '-1' || parentIdStr === 'null') {
+      return null;
+    }
+    return parentIdStr;
+  }
+
+  getChildrenKey(parentId) {
+    return this.normalizeParentId(parentId);
+  }
+
+  getChildrenList(parentId) {
+    const key = this.getChildrenKey(parentId);
+    if (key === null) {
+      return this.pages;
+    }
+    return this.childrenCache.get(key);
+  }
+
+  setChildrenList(parentId, children) {
+    const key = this.getChildrenKey(parentId);
+    if (key === null) {
+      this.pages = children;
+      this.childrenCache.set(null, children);
+      return;
+    }
+    this.childrenCache.set(key, children);
+  }
+
+  findPageById(pageId) {
+    const pageIdStr = String(pageId);
+    const rootMatch = this.pages.find(page => String(page.id) === pageIdStr);
+    if (rootMatch) return rootMatch;
+
+    for (const children of this.childrenCache.values()) {
+      if (!Array.isArray(children)) continue;
+      const match = children.find(page => String(page.id) === pageIdStr);
+      if (match) return match;
+    }
+
+    return null;
+  }
+
+  findParentId(pageId) {
+    const pageIdStr = String(pageId);
+    if (this.pages.some(page => String(page.id) === pageIdStr)) {
+      return null;
+    }
+
+    for (const [parentId, children] of this.childrenCache.entries()) {
+      if (!Array.isArray(children)) continue;
+      if (children.some(page => String(page.id) === pageIdStr)) {
+        return parentId;
+      }
+    }
+
+    return null;
+  }
+
+  removePageFromCache(pageId) {
+    const pageIdStr = String(pageId);
+    let parentId = null;
+    let removedPage = null;
+
+    const rootIndex = this.pages.findIndex(page => String(page.id) === pageIdStr);
+    if (rootIndex >= 0) {
+      removedPage = this.pages.splice(rootIndex, 1)[0];
+      parentId = null;
+    } else {
+      for (const [parentKey, children] of this.childrenCache.entries()) {
+        if (!Array.isArray(children)) continue;
+        const index = children.findIndex(page => String(page.id) === pageIdStr);
+        if (index >= 0) {
+          removedPage = children.splice(index, 1)[0];
+          parentId = parentKey;
+          break;
+        }
+      }
+    }
+
+    if (removedPage) {
+      const removedKey = String(removedPage.id);
+      this.childrenCache.delete(removedKey);
+      this.loadedParents.delete(removedKey);
+      this.expandedNodes.delete(removedKey);
+    }
+
+    return { parentId, removedPage };
+  }
+
+  insertPageIntoCache(page, parentId, position, referenceId) {
+    const targetParentId = this.normalizeParentId(parentId);
+    let children = this.getChildrenList(targetParentId);
+    if (!Array.isArray(children)) {
+      children = [];
+      this.setChildrenList(targetParentId, children);
+    }
+
+    const referenceIdStr = referenceId ? String(referenceId) : null;
+    let insertIndex = children.length;
+
+    if (referenceIdStr) {
+      const referenceIndex = children.findIndex(child => String(child.id) === referenceIdStr);
+      if (referenceIndex >= 0) {
+        insertIndex = position === 'before' ? referenceIndex : referenceIndex + 1;
+      }
+    }
+
+    children.splice(insertIndex, 0, page);
+    this.setChildrenList(targetParentId, children);
+  }
+
+  updateParentHasChildren(parentId) {
+    const parentKey = this.normalizeParentId(parentId);
+    if (parentKey === null) return;
+
+    const parentPage = this.findPageById(parentKey);
+    if (!parentPage) return;
+
+    const children = this.childrenCache.get(parentKey) || [];
+    parentPage.hasChildren = children.length > 0;
+  }
+
+  startAutoSync() {
+    if (this.syncTimer) return;
+
+    this.syncTimer = setInterval(() => this.syncFromServer(), this.syncIntervalMs);
+    window.addEventListener('focus', () => this.syncFromServer());
+  }
+
+  syncFromServer() {
+    if (this.isLoading || this.isSyncing || this.pendingMutations.size > 0) return;
+
+    const requests = [];
+    const shouldSyncRoot = this.expandedNodes.has('root') || this.pages.length === 0;
+
+    if (shouldSyncRoot) {
+      requests.push(this.refreshChildren(null, { render: false }));
+    }
+
+    this.expandedNodes.forEach(pageId => {
+      if (pageId === 'root') return;
+      if (this.pendingMutations.has(String(pageId))) return;
+      requests.push(this.refreshChildren(pageId, { render: false }));
+    });
+
+    if (requests.length === 0) return;
+
+    this.isSyncing = true;
+    Promise.all(requests)
+      .then(() => {
+        this.renderTree();
+      })
+      .finally(() => {
+        this.isSyncing = false;
+      });
+  }
+
+  refreshChildren(parentId, options = {}) {
+    const parentKey = this.normalizeParentId(parentId);
+    const parentIdParam = parentKey === null ? 'null' : parentKey;
+
+    return fetch(`/json/pages/children?parentId=${parentIdParam}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json'
+      }
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status !== 'ok' || !data.data) return;
+        const children = Array.isArray(data.data) ? data.data : [];
+        this.setChildrenList(parentKey, children);
+        if (parentKey !== null) {
+          this.loadedParents.add(parentKey);
+        }
+        this.updateParentHasChildren(parentKey);
+        if (options.render !== false) {
+          this.renderTree();
+        }
+      })
+      .catch(error => {
+        console.error('[PageTreeManager] Error refreshing children:', error);
+      });
   }
 
   /**
@@ -692,7 +885,7 @@ class PageTreeManager {
       .then(response => response.json())
       .then(data => {
         if (data.status === 'ok') {
-          this.refresh();
+          this.refreshChildren(null);
         } else {
           this.showError(data.error || 'Failed to reorder pages');
         }
@@ -707,6 +900,32 @@ class PageTreeManager {
    * Reorder page with specific position (before/after/inside)
    */
   reorderPageWithPosition(pageId, targetPageId, position) {
+    const targetNode = document.querySelector(`.page-tree-node[data-page-id="${targetPageId}"]`);
+    const targetParentId = targetNode ? targetNode.dataset.parentId : null;
+    const originalParentId = this.findParentId(pageId);
+    const movedPage = this.removePageFromCache(pageId).removedPage;
+
+    if (movedPage) {
+      const newParentId = position === 'inside' ? targetPageId : targetParentId;
+      const referenceId = position === 'inside' ? null : targetPageId;
+      this.insertPageIntoCache(movedPage, newParentId, position, referenceId);
+      this.updateParentHasChildren(originalParentId);
+      this.updateParentHasChildren(newParentId);
+      if (newParentId) {
+        this.expandedNodes.add(String(newParentId));
+      }
+      this.renderTree();
+    }
+
+    const originalParentKey = this.normalizeParentId(originalParentId);
+    const newParentKey = this.normalizeParentId(position === 'inside' ? targetPageId : targetParentId);
+    if (originalParentKey !== null) {
+      this.pendingMutations.add(String(originalParentKey));
+    }
+    if (newParentKey !== null) {
+      this.pendingMutations.add(String(newParentKey));
+    }
+
     const params = new FormData();
     params.append('pageId', pageId);
     params.append('targetPageId', targetPageId);
@@ -723,18 +942,36 @@ class PageTreeManager {
       .then(response => response.json())
       .then(data => {
         if (data.status === 'ok') {
-          this.refresh();
+          const refreshes = [];
+          refreshes.push(this.refreshChildren(originalParentId, { render: false }));
+          refreshes.push(this.refreshChildren(position === 'inside' ? targetPageId : targetParentId, { render: false }));
+          Promise.all(refreshes).finally(() => this.renderTree());
         } else {
           this.showError(data.error || 'Failed to reorder pages');
+          this.refreshChildren(originalParentId);
         }
       })
       .catch(error => {
         console.error('Error reordering pages:', error);
         this.showError('Error reordering pages: ' + error.message);
+        this.refreshChildren(originalParentId);
+      })
+      .finally(() => {
+        if (originalParentKey !== null) {
+          this.pendingMutations.delete(String(originalParentKey));
+        }
+        if (newParentKey !== null) {
+          this.pendingMutations.delete(String(newParentKey));
+        }
       });
   }
 
   addPageToHierarchy(pageId, parentPageId) {
+    const parentKey = this.normalizeParentId(parentPageId);
+    if (parentKey !== null) {
+      this.pendingMutations.add(String(parentKey));
+    }
+
     const params = new FormData();
     params.append('pageId', pageId);
     params.append('parentPageId', parentPageId);
@@ -755,7 +992,7 @@ class PageTreeManager {
             this.showError(message);
             return;
           }
-          this.refresh();
+          this.refreshChildren(parentPageId);
         } else {
           this.showError(data.error || 'Failed to add page to hierarchy');
         }
@@ -763,10 +1000,22 @@ class PageTreeManager {
       .catch(error => {
         console.error('Error adding page to hierarchy:', error);
         this.showError('Error adding page to hierarchy: ' + error.message);
+      })
+      .finally(() => {
+        if (parentKey !== null) {
+          this.pendingMutations.delete(String(parentKey));
+        }
       });
   }
 
   removePageFromHierarchy(pageId) {
+    const { parentId } = this.removePageFromCache(pageId);
+    if (parentId !== null && parentId !== undefined) {
+      this.pendingMutations.add(String(parentId));
+    }
+    this.updateParentHasChildren(parentId);
+    this.renderTree();
+
     const params = new FormData();
     params.append('pageId', pageId);
     params.append('token', globalThis.getFormToken());
@@ -781,14 +1030,21 @@ class PageTreeManager {
       .then(response => response.json())
       .then(data => {
         if (data.status === 'ok') {
-          this.refresh();
+          this.refreshChildren(parentId);
         } else {
           this.showError(data.error || 'Failed to remove page from hierarchy');
+          this.refreshChildren(parentId);
         }
       })
       .catch(error => {
         console.error('Error removing page from hierarchy:', error);
         this.showError('Error removing page from hierarchy: ' + error.message);
+        this.refreshChildren(parentId);
+      })
+      .finally(() => {
+        if (parentId !== null && parentId !== undefined) {
+          this.pendingMutations.delete(String(parentId));
+        }
       });
   }
 

@@ -414,6 +414,40 @@
 
 .page-tree-node {
   margin-bottom: 5px;
+  position: relative;
+}
+
+/* Drop zone indicators for drag and drop */
+.page-tree-node.drop-before::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--editor-selected-border);
+  border-radius: 2px;
+  z-index: 10;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+}
+
+.page-tree-node.drop-after::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--editor-selected-border);
+  border-radius: 2px;
+  z-index: 10;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+}
+
+.page-tree-node.drop-inside > .page-tree-item {
+  border-color: var(--editor-selected-border);
+  background: rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 2px var(--editor-selected-border);
 }
 
 .page-tree-item {
