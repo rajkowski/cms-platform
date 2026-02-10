@@ -606,10 +606,18 @@ public class PageServlet extends HttpServlet {
         // Verify a mandatory request token exists
         String formToken = request.getParameter("token");
         if (StringUtils.isEmpty(formToken)) {
-          LOG.error(
-              "DEVELOPER: A FORM TOKEN IS REQUIRED " + pageRequest.getPagePath() + " " + pageRequest.getRemoteAddr());
+          LOG.error("DEVELOPER: A FORM TOKEN IS REQUIRED " + pageRequest.getPagePath() + " " + pageRequest.getRemoteAddr());
           controllerSession.clearAllWidgetData();
-          response.sendError(HttpServletResponse.SC_NOT_FOUND);
+// If JSON service, reply with JSON
+          if (pageRequest.getPagePath().startsWith("/json/")) {
+            // Write a json response
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            response.getWriter().print("{\"error\":\"A form token is required.\"}");
+            return;
+          }
+          response.sendError(HttpServletResponse.SC_BAD_REQUEST);
           return;
         }
       }
