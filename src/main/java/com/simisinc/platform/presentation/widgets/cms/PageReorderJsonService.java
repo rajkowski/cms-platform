@@ -62,7 +62,7 @@ public class PageReorderJsonService extends GenericWidget {
     try {
       long pageId = context.getParameterAsLong("pageId", -1);
       long targetPageId = context.getParameterAsLong("targetPageId", -1);
-      long newParentIdParam = context.getParameterAsLong("newParentId", -1);
+      String position = context.getParameter("position"); // 'before', 'after', 'inside'
 
       if (pageId == -1) {
         return writeError(context, "Page ID is required");
@@ -75,15 +75,9 @@ public class PageReorderJsonService extends GenericWidget {
       }
 
       Long newParentId = null;
-      if (newParentIdParam > 0) {
-        newParentId = newParentIdParam;
-      } else if (targetPageId > 0) {
-        newParentId = targetPageId;
-      }
-
-      if (newParentId != null && newParentId == pageId) {
-        return writeError(context, "A page cannot be its own parent");
-      }
+      int newSortOrder = 1;
+      int newDepth = 0;
+      String oldPath = null;
 
       try (Connection connection = DB.getConnection();
           AutoStartTransaction transactionStart = new AutoStartTransaction(connection);
@@ -94,25 +88,70 @@ public class PageReorderJsonService extends GenericWidget {
           return writeError(context, "Page hierarchy record not found");
         }
 
-        WebPageHierarchy parentRecord = null;
-        if (newParentId != null) {
-          parentRecord = WebPageHierarchyRepository.findByPageId(connection, newParentId);
-          if (parentRecord == null) {
-            return writeError(context, "Parent page not found in hierarchy");
+        oldPath = currentRecord.getPath();
+
+        // Determine placement based on position parameter
+        if ("inside".equals(position) && targetPageId > 0) {
+          // Make it a child of the target
+          newParentId = targetPageId;
+          WebPageHierarchy targetRecord = WebPageHierarchyRepository.findByPageId(connection, targetPageId);
+          if (targetRecord == null) {
+            return writeError(context, "Target page not found in hierarchy");
           }
-          if (parentRecord.getPath() != null && currentRecord.getPath() != null && parentRecord.getPath().startsWith(currentRecord.getPath())) {
+          if (targetRecord.getPath() != null && currentRecord.getPath() != null && targetRecord.getPath().startsWith(currentRecord.getPath())) {
             return writeError(context, "Cannot move a page beneath its own descendant");
           }
+          newSortOrder = WebPageHierarchyRepository.getNextSortOrder(connection, newParentId);
+          newDepth = targetRecord.getDepth() + 1;
+        } else if (("before".equals(position) || "after".equals(position)) && targetPageId > 0) {
+          // Insert before or after the target as sibling
+          WebPageHierarchy targetRecord = WebPageHierarchyRepository.findByPageId(connection, targetPageId);
+          if (targetRecord == null) {
+            return writeError(context, "Target page not found in hierarchy");
+          }
+          newParentId = targetRecord.getParentPageId();
+          newDepth = targetRecord.getDepth();
+          
+          // Shift sort orders to make space
+          if ("before".equals(position)) {
+            newSortOrder = targetRecord.getSortOrder();
+            WebPageHierarchyRepository.shiftSortOrders(connection, newParentId, newSortOrder);
+          } else {
+            newSortOrder = targetRecord.getSortOrder() + 1;
+            WebPageHierarchyRepository.shiftSortOrders(connection, newParentId, newSortOrder);
+          }
+        } else if (targetPageId > 0) {
+          // Legacy behavior - make it a child of the target (no position specified)
+          newParentId = targetPageId;
+          WebPageHierarchy targetRecord = WebPageHierarchyRepository.findByPageId(connection, targetPageId);
+          if (targetRecord == null) {
+            return writeError(context, "Target page not found in hierarchy");
+          }
+          if (targetRecord.getPath() != null && currentRecord.getPath() != null && targetRecord.getPath().startsWith(currentRecord.getPath())) {
+            return writeError(context, "Cannot move a page beneath its own descendant");
+          }
+          newSortOrder = WebPageHierarchyRepository.getNextSortOrder(connection, newParentId);
+          newDepth = targetRecord.getDepth() + 1;
+        } else if (targetPageId == -1 || "inside".equals(position)) {
+          // Move to root
+          newParentId = null;
+          newSortOrder = WebPageHierarchyRepository.getNextSortOrder(connection, null);
+          newDepth = 0;
+        } else {
+          return writeError(context, "Invalid target page ID");
         }
 
-        int nextSortOrder = WebPageHierarchyRepository.getNextSortOrder(connection, newParentId);
-        int newDepth = parentRecord != null ? parentRecord.getDepth() + 1 : 0;
-        String parentPath = parentRecord != null ? parentRecord.getPath() : "/";
+        String parentPath = "/";
+        if (newParentId != null) {
+          WebPageHierarchy parentRecord = WebPageHierarchyRepository.findByPageId(connection, newParentId);
+          if (parentRecord != null) {
+            parentPath = parentRecord.getPath();
+          }
+        }
         String newPath = WebPageHierarchyRepository.buildPath(parentPath, pageId);
-        String oldPath = currentRecord.getPath();
 
         currentRecord.setParentPageId(newParentId);
-        currentRecord.setSortOrder(nextSortOrder);
+        currentRecord.setSortOrder(newSortOrder);
         currentRecord.setDepth(newDepth);
         currentRecord.setPath(newPath);
         currentRecord.setModified(new Timestamp(System.currentTimeMillis()));

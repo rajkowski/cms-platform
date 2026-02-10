@@ -244,6 +244,37 @@ public class WebPageHierarchyRepository {
   }
 
   /**
+   * Shifts sort orders to make room for inserting at a specific position
+   *
+   * @param connection the database connection
+   * @param parentId the parent page ID (null for root level)
+   * @param startingSortOrder the sort order at which to start shifting
+   */
+  public static void shiftSortOrders(Connection connection, Long parentId, int startingSortOrder) {
+    StringBuilder sql = new StringBuilder();
+    sql.append("UPDATE ").append(TABLE_NAME).append(" ");
+    sql.append("SET sort_order = sort_order + 1, ");
+    sql.append("modified = ? ");
+    sql.append("WHERE sort_order >= ? ");
+    if (parentId == null) {
+      sql.append("AND (parent_page_id IS NULL OR parent_page_id = -1)");
+    } else {
+      sql.append("AND parent_page_id = ?");
+    }
+
+    try (PreparedStatement pst = connection.prepareStatement(sql.toString())) {
+      pst.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
+      pst.setInt(2, startingSortOrder);
+      if (parentId != null) {
+        pst.setLong(3, parentId);
+      }
+      pst.executeUpdate();
+    } catch (SQLException se) {
+      LOG.error("SQLException: " + se.getMessage());
+    }
+  }
+
+  /**
    * Updates descendant paths when a page is moved
    *
    * @param connection the database connection

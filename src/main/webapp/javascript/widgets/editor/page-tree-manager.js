@@ -27,7 +27,6 @@ class PageTreeManager {
   init() {
     this.setupEventListeners();
     this.setupSearchListener();
-    this.setupPageLibrarySearch();
     this.setupLibraryDropZone();
     this.loadPages();
   }
@@ -413,12 +412,59 @@ class PageTreeManager {
       e.dataTransfer.dropEffect = 'none';
     }
 
+    // Clear previous drop zone indicators
+    document.querySelectorAll('.drop-before, .drop-after, .drop-inside').forEach(el => {
+      el.classList.remove('drop-before', 'drop-after', 'drop-inside');
+    });
+
     const node = e.target.closest('.page-tree-node');
-    if (node && node.dataset.pageId !== 'root') {
-      // Don't show drag-over on the dragged element itself
-      if (this.draggedElement !== node) {
-        node.classList.add('drag-over');
-      }
+    if (!node) return;
+
+    // Don't show drag-over on the dragged element itself
+    if (this.draggedElement === node) return;
+
+    // Calculate drop zone based on mouse Y position
+    const dropZone = this.calculateDropZone(e, node);
+    this.currentDropZone = dropZone;
+    
+    if (dropZone.position === 'before') {
+      node.classList.add('drop-before');
+    } else if (dropZone.position === 'after') {
+      node.classList.add('drop-after');
+    } else if (dropZone.position === 'inside') {
+      node.classList.add('drop-inside');
+    }
+  }
+
+  /**
+   * Calculate drop zone based on mouse position relative to target element
+   * Returns { position: 'before'|'after'|'inside', node }
+   */
+  calculateDropZone(e, node) {
+    const item = node.querySelector('.page-tree-item');
+    if (!item) return { position: 'after', node };
+
+    const rect = item.getBoundingClientRect();
+    const mouseY = e.clientY;
+    const itemTop = rect.top;
+    const itemBottom = rect.bottom;
+    const itemHeight = rect.height;
+
+    // Define zones: top 25% = before, bottom 25% = after, middle 50% = inside
+    const topZone = itemTop + (itemHeight * 0.25);
+    const bottomZone = itemBottom - (itemHeight * 0.25);
+
+    // For root node, only allow 'inside' (as child)
+    if (node.dataset.pageId === 'root') {
+      return { position: 'inside', node };
+    }
+
+    if (mouseY < topZone) {
+      return { position: 'before', node };
+    } else if (mouseY > bottomZone) {
+      return { position: 'after', node };
+    } else {
+      return { position: 'inside', node };
     }
   }
 
@@ -445,7 +491,7 @@ class PageTreeManager {
     const isTreeDrag = draggedNode.closest('#page-tree');
 
     if (!isLibraryDrag && !isTreeDrag) {
-      targetNode.classList.remove('drag-over');
+      this.clearDropZones();
       return;
     }
 
@@ -454,21 +500,33 @@ class PageTreeManager {
 
     // Don't allow dropping on self
     if (draggedPageId === targetPageId) {
-      targetNode.classList.remove('drag-over');
+      this.clearDropZones();
       return;
     }
+
+    // Get drop zone information
+    const dropZone = this.currentDropZone || this.calculateDropZone(e, targetNode);
 
     if (isLibraryDrag) {
       // Adding a page from library to hierarchy
       const parentId = targetPageId === 'root' ? -1 : targetPageId;
       this.addPageToHierarchy(draggedPageId, parentId);
     } else if (isTreeDrag) {
-      // Reordering pages within the tree
-      const targetIdValue = targetPageId === 'root' ? -1 : targetPageId;
-      this.reorderPage(draggedPageId, targetIdValue);
+      // Reordering pages within the tree with position
+      this.reorderPageWithPosition(draggedPageId, targetPageId, dropZone.position);
     }
 
-    targetNode.classList.remove('drag-over');
+    this.clearDropZones();
+  }
+
+  /**
+   * Clear all drop zone visual indicators
+   */
+  clearDropZones() {
+    document.querySelectorAll('.drop-before, .drop-after, .drop-inside').forEach(el => {
+      el.classList.remove('drop-before', 'drop-after', 'drop-inside');
+    });
+    this.currentDropZone = null;
   }
 
   /**
@@ -478,6 +536,7 @@ class PageTreeManager {
     document.querySelectorAll('.page-tree-node, .page-hierarchy-box').forEach(node => {
       node.classList.remove('dragging', 'drag-over');
     });
+    this.clearDropZones();
     this.draggedElement = null;
     const libraryExplorer = document.getElementById('page-library-explorer');
     if (libraryExplorer) {
@@ -621,6 +680,37 @@ class PageTreeManager {
     const params = new FormData();
     params.append('pageId', pageId);
     params.append('targetPageId', targetPageId);
+    params.append('token', globalThis.getFormToken());
+
+    fetch('/json/pages/reorder', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json'
+      },
+      body: params
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'ok') {
+          this.refresh();
+        } else {
+          this.showError(data.error || 'Failed to reorder pages');
+        }
+      })
+      .catch(error => {
+        console.error('Error reordering pages:', error);
+        this.showError('Error reordering pages: ' + error.message);
+      });
+  }
+
+  /**
+   * Reorder page with specific position (before/after/inside)
+   */
+  reorderPageWithPosition(pageId, targetPageId, position) {
+    const params = new FormData();
+    params.append('pageId', pageId);
+    params.append('targetPageId', targetPageId);
+    params.append('position', position); // 'before', 'after', or 'inside'
     params.append('token', globalThis.getFormToken());
 
     fetch('/json/pages/reorder', {
@@ -879,53 +969,6 @@ class PageTreeManager {
     if (loadingIndicator) {
       loadingIndicator.style.display = 'none';
     }
-  }
-
-  /**
-   * Set up Page Library search
-   */
-  setupPageLibrarySearch() {
-    const searchInput = document.getElementById('page-library-search');
-    if (searchInput) {
-      let debounceTimer;
-      searchInput.addEventListener('input', (e) => {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-          const query = e.target.value.toLowerCase().trim();
-          this.filterPageLibrary(query);
-        }, 300);
-      });
-    }
-  }
-
-  /**
-   * Filter Page Library
-   */
-  filterPageLibrary(query) {
-    // Filter the page-hierarchy-container items created by sitemap-explorer.js
-    const nodes = document.querySelectorAll('.page-hierarchy-container .page-hierarchy-box');
-
-    if (!query) {
-      nodes.forEach(node => {
-        const wrapper = node.closest('.page-hierarchy-node');
-        if (wrapper) wrapper.style.display = '';
-      });
-      return;
-    }
-
-    nodes.forEach(node => {
-      const title = node.querySelector('.page-box-header span')?.textContent.toLowerCase() || '';
-      const link = node.querySelector('.page-box-link')?.textContent.toLowerCase() || '';
-      const wrapper = node.closest('.page-hierarchy-node');
-
-      if (wrapper) {
-        if (title.includes(query) || link.includes(query)) {
-          wrapper.style.display = '';
-        } else {
-          wrapper.style.display = 'none';
-        }
-      }
-    });
   }
 
 }
