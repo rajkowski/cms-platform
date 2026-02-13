@@ -222,8 +222,8 @@
           
           <!-- Hub Tab Tools -->
           <div id="hub-tools" class="panel-tools" style="display:none;">
-            <label style="display: flex; align-items: center; gap: 8px; margin: 0; font-size: 14px;">
-              <input type="checkbox" id="toggle-us-holidays" />
+            <label style="display: flex; align-items: center; gap: 8px; margin: 0; font-size: 14px; white-space: nowrap;">
+              <input type="checkbox" id="toggle-us-holidays" style="margin: 0" />
               <span>US Holidays</span>
             </label>
           </div>

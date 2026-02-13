@@ -1219,6 +1219,7 @@
 
 .selector-checkbox input[type="checkbox"] {
   cursor: pointer;
+  margin: 0;
 }
 
 #calendar-container {

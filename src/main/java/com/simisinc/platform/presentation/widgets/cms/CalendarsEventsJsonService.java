@@ -51,7 +51,9 @@ public class CalendarsEventsJsonService extends GenericWidget {
 
     // Check permissions - require admin or content-manager role
     if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      return writeError(context, "Permission denied");
+      // Return empty array on permission denied for FullCalendar
+      context.setJson("[]");
+      return context;
     }
 
     try {
@@ -59,7 +61,9 @@ public class CalendarsEventsJsonService extends GenericWidget {
       String calendarIdsParam = context.getParameter("calendarIds");
       
       if (StringUtils.isBlank(calendarIdsParam)) {
-        return writeOk(context, "[]", null);
+        // Return empty array for FullCalendar
+        context.setJson("[]");
+        return context;
       }
 
       // Parse calendar IDs
@@ -117,33 +121,16 @@ public class CalendarsEventsJsonService extends GenericWidget {
 
       json.append("]");
 
-      return writeOk(context, json.toString(), null);
+      // Return raw JSON array for FullCalendar compatibility
+      context.setJson(json.toString());
+      return context;
 
     } catch (Exception e) {
       LOG.error("Error loading calendar events: " + e.getMessage(), e);
-      return writeError(context, e.getMessage());
+      // Return empty array on error for FullCalendar
+      context.setJson("[]");
+      return context;
     }
-  }
-
-  private WidgetContext writeOk(WidgetContext context, String dataJson, String metaJson) {
-    StringBuilder json = new StringBuilder();
-    json.append("{");
-    json.append("\"status\":\"ok\"");
-    if (dataJson != null) {
-      json.append(",\"data\":").append(dataJson);
-    }
-    if (metaJson != null) {
-      json.append(",\"meta\":").append(metaJson);
-    }
-    json.append("}");
-    context.setJson(json.toString());
-    return context;
-  }
-
-  private WidgetContext writeError(WidgetContext context, String message) {
-    context.setJson("{\"status\":\"error\",\"error\":\"" + JsonCommand.toJson(StringUtils.defaultString(message)) + "\"}");
-    context.setSuccess(false);
-    return context;
   }
 
 }
