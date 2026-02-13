@@ -20,31 +20,34 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.cms.SaveMenuTabCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.MenuItem;
+import com.simisinc.platform.domain.model.cms.MenuTab;
 import com.simisinc.platform.infrastructure.cache.CacheManager;
-import com.simisinc.platform.infrastructure.persistence.cms.MenuItemRepository;
+import com.simisinc.platform.infrastructure.persistence.cms.MenuTabRepository;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
 
 /**
- * Handles JSON/AJAX POST requests for /json/sitemap/reorder-item endpoint
- * Moves menu items to different menus or reorders within menu
+ * Handles JSON/AJAX POST requests for /json/sitemap/create-item endpoint
+ * Creates a new menu item in a tab from a dragged page
  *
  * @author matt rajkowski
- * @created 2/7/26 3:00 PM
+ * @created 2/9/26 8:30 PM
  */
-public class SitemapReorderItemJsonService extends GenericWidget {
+public class SitemapCreateItemJsonService extends GenericWidget {
 
-  static final long serialVersionUID = -8484048371911908893L;
-  private static Log LOG = LogFactory.getLog(SitemapReorderItemJsonService.class);
+  static final long serialVersionUID = -8484048371911908894L;
+  private static Log LOG = LogFactory.getLog(SitemapCreateItemJsonService.class);
 
   /**
-   * Handles POST requests to reorder menu items
+   * Handles POST requests to create a new menu item
    *
    * @param context the widget context
    * @return context with JSON response
    */
+  @Override
   public WidgetContext post(WidgetContext context) {
 
     // Check permissions - require admin or content-manager role
@@ -53,46 +56,36 @@ public class SitemapReorderItemJsonService extends GenericWidget {
     }
 
     try {
-      // Get item ID and optional target item ID or new menu ID
-      long itemId = context.getParameterAsLong("itemId", -1);
-      long targetItemId = context.getParameterAsLong("targetItemId", -1);
-      long newMenuTabId = context.getParameterAsLong("newMenuTabId", -1);
-      int newPosition = context.getParameterAsInt("newPosition", 0);
+      // Get required parameters
+      long tabId = context.getParameterAsLong("tabId", -1);
+      String title = context.getParameter("title");
+      String link = context.getParameter("link");
 
-      if (itemId == -1) {
-        return writeError(context, "Item ID is required");
+      if (tabId == -1) {
+        return writeError(context, "Tab ID is required");
       }
 
-      // At least one of targetItemId or newMenuTabId must be provided
-      if (targetItemId == -1 && newMenuTabId == -1) {
-        return writeError(context, "Target item or menu ID is required");
+      if (StringUtils.isBlank(title)) {
+        title = "Menu Item";
       }
 
-      // Load the menu item
-      MenuItem item = MenuItemRepository.findById(itemId);
-      if (item == null) {
-        return writeError(context, "Menu item not found");
+      if (StringUtils.isBlank(link)) {
+        return writeError(context, "Link is required");
       }
 
-      // If newMenuTabId is provided, update the menu ID
-      if (newMenuTabId != -1) {
-        item.setMenuTabId(newMenuTabId);
+      // Load the menu tab
+      MenuTab menuTab = MenuTabRepository.findById(tabId);
+      if (menuTab == null) {
+        return writeError(context, "Menu tab not found");
       }
 
-      // If targetItemId is provided, update the order based on target item
-      if (targetItemId != -1) {
-        MenuItem targetItem = MenuItemRepository.findById(targetItemId);
-        if (targetItem != null) {
-          item.setItemOrder(targetItem.getItemOrder());
-          // Also update menu if different
-          if (newMenuTabId == -1) {
-            item.setMenuTabId(targetItem.getMenuTabId());
-          }
-        }
+      // Check if this is the first tab and has a link of '/', if so, prevent adding items to it
+      if (MenuTabRepository.findAll().get(0).getId() == tabId && "/".equals(menuTab.getLink())) {
+        return writeError(context, "Cannot add menu items to the home tab");
       }
 
-      // Save the updated item
-      MenuItemRepository.save(item);
+      // Create the new menu item
+      MenuItem savedItem = SaveMenuTabCommand.appendNewMenuItem(menuTab, title, link);
 
       // Trigger cache refresh
       CacheManager.invalidateObjectCacheKey(CacheManager.MENU_TAB_LIST);
@@ -100,16 +93,17 @@ public class SitemapReorderItemJsonService extends GenericWidget {
       // Build success response
       StringBuilder json = new StringBuilder();
       json.append("{");
-      json.append("\"id\": ").append(item.getId()).append(",");
-      json.append("\"menuId\": ").append(item.getMenuTabId()).append(",");
-      json.append("\"order\": ").append(item.getItemOrder());
+      json.append("\"id\": ").append(savedItem.getId()).append(",");
+      json.append("\"tabId\": ").append(savedItem.getMenuTabId()).append(",");
+      json.append("\"title\": \"").append(JsonCommand.toJson(savedItem.getName())).append("\",");
+      json.append("\"link\": \"").append(JsonCommand.toJson(savedItem.getLink())).append("\"");
       json.append("}");
 
       return writeOk(context, json.toString(), null);
 
     } catch (Exception e) {
-      LOG.error("Error reordering menu item: " + e.getMessage(), e);
-      return writeError(context, "An unexpected error occurred");
+      LOG.error("Error creating menu item: " + e.getMessage(), e);
+      return writeError(context, e.getMessage());
     }
   }
 
@@ -133,5 +127,4 @@ public class SitemapReorderItemJsonService extends GenericWidget {
     context.setSuccess(false);
     return context;
   }
-
 }

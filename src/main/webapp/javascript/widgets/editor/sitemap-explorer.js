@@ -22,6 +22,19 @@ class SitemapExplorer {
     this.minZoom = 0.5;
     this.maxZoom = 2.0;
     this.zoomStep = 0.1;
+    // View state tracking for preserving scroll position during sync
+    this.isInitialized = false;
+    this.savedScrollLeft = 0;
+    this.savedScrollTop = 0;
+    this.savedTransformOrigin = 'top left';
+    // Sync state tracking
+    this.isSyncing = false;
+    this.isDirty = false;
+    this.syncTimer = null;
+    this.syncIntervalMs = 15000;
+    this.lastChangeTime = null;
+    this.maxInactivityMs = 60000; // Stop syncing after 1 minute of no activity
+    this.tabIsVisible = false;
   }
 
   /**
@@ -31,6 +44,129 @@ class SitemapExplorer {
     this.setupEventListeners();
     this.loadSitemapData();
     this.setupContextMenus();
+    this.setupTabVisibilityObserver();
+    this.startAutoSync();
+  }
+
+  /**
+   * Setup observer to detect when the Pages/Site Navigation tab becomes visible or hidden
+   */
+  setupTabVisibilityObserver() {
+    let previouslyVisible = false;
+
+    // Check if there's an element that indicates this tab is active
+    // This looks for a tab button or panel with aria-selected or active class
+    const checkTabVisibility = () => {
+      const sitemapContainer = document.getElementById('sitemap-explorer');
+      if (!sitemapContainer) {
+        this.tabIsVisible = false;
+        return;
+      }
+
+      // Check if container is visible in the DOM and displayed
+      const currentlyVisible = sitemapContainer.offsetParent !== null &&
+        getComputedStyle(sitemapContainer).display !== 'none';
+
+      // Trigger callbacks when visibility changes
+      if (currentlyVisible !== previouslyVisible) {
+        previouslyVisible = currentlyVisible;
+        if (currentlyVisible) {
+          this.onTabVisible();
+        } else {
+          this.onTabHidden();
+        }
+      }
+
+      this.tabIsVisible = currentlyVisible;
+    };
+
+    // Initial check
+    checkTabVisibility();
+
+    // Set up a MutationObserver to detect changes to the container's visibility
+    const observer = new MutationObserver(() => {
+      checkTabVisibility();
+    });
+
+    const sitemapContainer = document.getElementById('sitemap-explorer');
+    if (sitemapContainer) {
+      observer.observe(sitemapContainer, {
+        attributes: true,
+        attributeFilter: ['style', 'class'],
+        subtree: true
+      });
+    }
+
+    // Also check periodically in case visibility changes via CSS or parent visibility
+    setInterval(() => {
+      checkTabVisibility();
+    }, 1000);
+  }
+
+  /**
+   * Check if the tab has been inactive for too long
+   */
+  isInactivityTimeout() {
+    if (!this.lastChangeTime) {
+      return false;
+    }
+    const timeSinceChange = Date.now() - this.lastChangeTime;
+    return timeSinceChange > this.maxInactivityMs;
+  }
+
+  /**
+   * Mark that a change has been made to the sitemap
+   */
+  markDirty() {
+    this.isDirty = true;
+    this.lastChangeTime = Date.now();
+  }
+
+  /**
+   * Clear the dirty flag and reset for next sync cycle
+   */
+  clearDirty() {
+    this.isDirty = false;
+  }
+
+  /**
+   * Start auto-sync timer to keep sitemap in sync
+   */
+  startAutoSync() {
+    // Sync every 15 seconds, but only if:
+    // 1. The Pages/Site Navigation tab is visible
+    // 2. Changes have been made to the sitemap
+    // 3. Not already syncing
+    // 4. Haven't hit inactivity timeout
+    this.syncTimer = setInterval(() => {
+      // Only sync if tab is visible, there are changes, and we're not already syncing
+      if (this.tabIsVisible && this.isDirty && !this.isSyncing) {
+        // Check inactivity timeout - if inactive too long, stop syncing
+        if (this.isInactivityTimeout()) {
+          this.clearDirty();
+          return;
+        }
+
+        this.loadSitemapData();
+      }
+    }, this.syncIntervalMs);
+  }
+
+  /**
+   * Stop auto-sync timer
+   */
+  stopAutoSync() {
+    if (this.syncTimer) {
+      clearInterval(this.syncTimer);
+      this.syncTimer = null;
+    }
+  }
+
+  /**
+   * Mark sync in progress
+   */
+  setSyncing(isSyncing) {
+    this.isSyncing = isSyncing;
   }
 
   /**
@@ -69,6 +205,7 @@ class SitemapExplorer {
    * Load sitemap data from server
    */
   loadSitemapData() {
+    this.setSyncing(true);
     fetch('/json/sitemap/structure', {
       method: 'GET',
       headers: {
@@ -77,17 +214,215 @@ class SitemapExplorer {
     })
       .then(response => response.json())
       .then(data => {
+        this.setSyncing(false);
         if (data.status === 'ok' && data.data) {
           this.sitemapData = data.data;
-          this.renderSitemap();
+          // Only sync if tab is currently visible
+          if (this.tabIsVisible) {
+            // Use sync for subsequent refreshes to preserve scroll position
+            if (this.isInitialized) {
+              this.syncSitemap();
+            } else {
+              this.renderSitemap();
+              this.isInitialized = true;
+            }
+            // Clear dirty flag only after successful sync when tab is visible
+            this.clearDirty();
+          } else {
+            // Tab is not visible, mark data as received but don't render yet
+            if (!this.isInitialized) {
+              this.isInitialized = true;
+            }
+          }
         } else {
           this.showError(data.error || 'Failed to load sitemap');
         }
       })
       .catch(error => {
+        this.setSyncing(false);
         console.error('Error loading sitemap:', error);
         this.showError('Error loading sitemap: ' + error.message);
       });
+  }
+
+  /**
+   * Save current view state (scroll position, zoom, etc.)
+   */
+  saveViewState() {
+    const container = document.getElementById('sitemap-explorer');
+    if (container) {
+      this.savedScrollLeft = container.scrollLeft;
+      this.savedScrollTop = container.scrollTop;
+    }
+  }
+
+  /**
+   * Restore view state to preserved scroll position and zoom
+   */
+  restoreViewState() {
+    const container = document.getElementById('sitemap-explorer');
+    if (container) {
+      // Restore scroll position immediately after DOM updates
+      // Use requestAnimationFrame to ensure restoration after browser repaint
+      requestAnimationFrame(() => {
+        container.scrollLeft = this.savedScrollLeft;
+        container.scrollTop = this.savedScrollTop;
+      });
+    }
+  }
+
+  /**
+   * Sync sitemap data without redrawing - updates DOM in place to preserve view state
+   */
+  syncSitemap() {
+    // Save current view state before update
+    this.saveViewState();
+
+    const tabsDiv = document.querySelector('.menu-tabs-arc');
+    if (!tabsDiv) {
+      // If no tabs container found, fall back to full render
+      this.renderSitemap();
+      return;
+    }
+
+    // Update menu tabs and items in place
+    this.syncMenuTabs(tabsDiv);
+
+    // Redraw connections to reflect any structural changes
+    setTimeout(() => this.drawConnections(), 50);
+
+    // Restore view state after updates
+    this.restoreViewState();
+  }
+
+  /**
+   * Sync menu tabs - update tabs and items in place without clearing container
+   */
+  syncMenuTabs(tabsDiv) {
+    if (!this.sitemapData || !this.sitemapData.menuTabs) {
+      return;
+    }
+
+    const tabs = Array.isArray(this.sitemapData.menuTabs) ? [...this.sitemapData.menuTabs] : [];
+    const homeIndex = tabs.findIndex((tab) => this.isHomeTab(tab));
+    if (homeIndex > 0) {
+      const [homeTab] = tabs.splice(homeIndex, 1);
+      tabs.unshift(homeTab);
+    }
+
+    // Update existing tabs and add new ones
+    const existingTabs = Array.from(tabsDiv.querySelectorAll('.menu-tab:not(.empty-tab-target)'));
+
+    tabs.forEach((tab, index) => {
+      const isHome = this.isHomeTab(tab);
+      const x = 20 + (index * this.tabSpacing);
+      const y = 0;
+
+      let tabEl = existingTabs[index];
+
+      if (!tabEl || tabEl.dataset.tabId !== tab.id) {
+        // Tab was added or order changed - recreate from this point
+        this.renderSitemap();
+        return;
+      }
+
+      // Update tab content
+      const tabMeta = tab.link ? this.escapeHtml(tab.link) : (tab.items ? tab.items.length : 0);
+      tabEl.innerHTML = `
+        <div class="tab-content">
+          <span class="tab-title">${this.escapeHtml(tab.title)}</span>
+          <span class="tab-count">${tabMeta}</span>
+        </div>
+      `;
+
+      // Update position in case zoom changed
+      tabEl.style.left = `${x}px`;
+      tabEl.style.top = `${this.layoutTop + y}px`;
+      tabEl.dataset.x = x;
+      tabEl.dataset.y = y;
+
+      // Update menu items for this tab
+      if (!isHome) {
+        this.syncMenuItems(tab);
+      }
+    });
+
+    // If tab count changed, rebuild from scratch
+    if (existingTabs.length !== tabs.length) {
+      this.renderSitemap();
+      return;
+    }
+
+    // Update empty tab position if needed
+    const emptyTabEl = tabsDiv.querySelector('.empty-tab-target');
+    if (emptyTabEl) {
+      const emptyTabIndex = tabs.length;
+      const emptyTabX = 20 + (emptyTabIndex * this.tabSpacing);
+      emptyTabEl.style.left = `${emptyTabX}px`;
+      emptyTabEl.dataset.x = emptyTabX;
+    }
+  }
+
+  /**
+   * Sync menu items for a tab - update items in place
+   */
+  syncMenuItems(tab) {
+    if (!tab.items || tab.items.length === 0) {
+      return;
+    }
+
+    const itemsContainer = document.querySelector(`.menu-items-container[data-tab-id="${tab.id}"]`);
+    if (!itemsContainer) {
+      return;
+    }
+
+    const existingItems = Array.from(itemsContainer.querySelectorAll('.menu-item:not(.empty-item-target)'));
+    const tabEl = document.querySelector(`.menu-tab[data-tab-id="${tab.id}"]`);
+    const tabCenterX = parseFloat(tabEl.dataset.x || 0) + (tabEl.offsetWidth / 2);
+
+    // Update existing items and add new ones
+    tab.items.forEach((item, index) => {
+      const itemY = parseFloat(tabEl.dataset.y || 0) + this.itemVerticalOffset + (index * this.itemVerticalSpacing);
+
+      let itemEl = existingItems[index];
+
+      if (!itemEl || itemEl.dataset.itemId !== item.id) {
+        // Item was added or removed - rebuild from scratch
+        this.renderSitemap();
+        return;
+      }
+
+      // Update item content
+      itemEl.innerHTML = `
+        <div class="item-content">
+          <span class="item-title">${this.escapeHtml(item.title)}</span>
+          <span class="item-link">${this.escapeHtml(item.link)}</span>
+        </div>
+      `;
+
+      // Update position
+      itemEl.style.left = `${tabCenterX}px`;
+      itemEl.style.top = `${this.layoutTop + itemY}px`;
+      itemEl.dataset.centerX = tabCenterX;
+      itemEl.dataset.y = itemY;
+    });
+
+    // If item count changed, rebuild from scratch
+    if (existingItems.length !== tab.items.length) {
+      this.renderSitemap();
+      return;
+    }
+
+    // Update empty item position if needed
+    if (tab.items.length > 0) {
+      const emptyItemEl = itemsContainer.querySelector('.empty-item-target');
+      if (emptyItemEl) {
+        const emptyItemIndex = tab.items.length;
+        const emptyItemY = parseFloat(tabEl.dataset.y || 0) + this.itemVerticalOffset + (emptyItemIndex * this.itemVerticalSpacing);
+        emptyItemEl.style.top = `${this.layoutTop + emptyItemY}px`;
+        emptyItemEl.dataset.y = emptyItemY;
+      }
+    }
   }
 
   /**
@@ -139,7 +474,7 @@ class SitemapExplorer {
           const page = JSON.parse(pageData);
           if (page && page.title) {
             // Create a new tab from the dropped page
-            this.createMenuTab({ title: page.title });
+            this.createMenuTab({ title: page.title, link: this.resolvePageLink(page) });
           }
         } catch (error) {
           console.error('Error parsing page data:', error);
@@ -162,16 +497,168 @@ class SitemapExplorer {
 
     // Add event listeners for toolbar buttons
     this.setupToolbarButtons();
+
+    // If this render is part of a sync operation, restore scroll position after DOM is complete
+    if (this.isInitialized && (this.savedScrollLeft > 0 || this.savedScrollTop > 0)) {
+      requestAnimationFrame(() => {
+        container.scrollLeft = this.savedScrollLeft;
+        container.scrollTop = this.savedScrollTop;
+      });
+    }
   }
 
   /**
    * Add new menu tab
    */
   addMenuTab() {
-    const title = prompt('Enter new menu tab title:');
-    if (title) {
-      this.createMenuTab({ title });
+    this.showAddMenuTabModal();
+  }
+
+  /**
+   * Show modal for adding a new menu tab
+   */
+  showAddMenuTabModal() {
+    // Prevent multiple modals from being created
+    if (document.querySelector('.add-menu-tab-modal')) {
+      return;
     }
+
+    // Create modal overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    `;
+
+    // Create modal content
+    const modal = document.createElement('div');
+    modal.className = 'add-menu-tab-modal';
+    modal.style.cssText = `
+      background: var(--editor-panel-bg, #fff);
+      border-radius: 8px;
+      padding: 24px;
+      min-width: 400px;
+      max-width: 500px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      color: var(--editor-text, #333);
+    `;
+
+    modal.innerHTML = `
+      <h3 style="margin: 0 0 20px 0; font-size: 18px; color: var(--editor-text, #333);">
+        <i class="far fa-plus-circle"></i> Add Menu Tab
+      </h3>
+      <form id="add-menu-tab-form">
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px;">Title *</label>
+          <input type="text" id="menu-tab-title" required
+            style="width: 100%; padding: 8px 12px; border: 1px solid var(--editor-border, #ddd); border-radius: 4px; font-size: 14px; background: var(--editor-input-bg, #fff); color: var(--editor-text, #333); box-sizing: border-box;"
+            placeholder="Enter menu tab title">
+        </div>
+        <div style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px;">Link</label>
+          <input type="text" id="menu-tab-link"
+            style="width: 100%; padding: 8px 12px; border: 1px solid var(--editor-border, #ddd); border-radius: 4px; font-size: 14px; background: var(--editor-input-bg, #fff); color: var(--editor-text, #333); box-sizing: border-box;"
+            placeholder="/page-link">
+          <small style="display: block; margin-top: 4px; color: var(--editor-muted-text, #666); font-size: 12px;">
+            Required. Starts with /
+          </small>
+          <div id="link-error" style="display: none; margin-top: 4px; color: #d32f2f; font-size: 12px;"></div>
+        </div>
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+          <button type="button" id="cancel-btn"
+            style="padding: 8px 16px; border: 1px solid var(--editor-border, #ddd); border-radius: 4px; background: var(--editor-panel-bg, #fff); color: var(--editor-text, #333); cursor: pointer; font-size: 14px;">
+            Cancel
+          </button>
+          <button type="submit" id="submit-btn"
+            style="padding: 8px 16px; border: none; border-radius: 4px; background: #2196F3; color: #fff; cursor: pointer; font-size: 14px; font-weight: 600;">
+            Add Menu Tab
+          </button>
+        </div>
+      </form>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    // Focus on title input
+    const titleInput = document.getElementById('menu-tab-title');
+    const linkInput = document.getElementById('menu-tab-link');
+    const linkError = document.getElementById('link-error');
+    const form = document.getElementById('add-menu-tab-form');
+
+    setTimeout(() => titleInput?.focus(), 100);
+
+    // Validate link input on change
+    linkInput?.addEventListener('input', () => {
+      const link = linkInput.value.trim();
+      if (!link || !link.startsWith('/')) {
+        linkError.textContent = 'Link must start with /';
+        linkError.style.display = 'block';
+      } else {
+        linkError.style.display = 'none';
+      }
+    });
+
+    // Handle form submission
+    const handleSubmit = (e) => {
+      e.preventDefault();
+
+      const title = titleInput.value.trim();
+      const link = linkInput.value.trim();
+
+      if (!title) {
+        alert('Title is required');
+        return;
+      }
+
+      if (!link || !link.startsWith('/')) {
+        linkError.textContent = 'Link must start with /';
+        linkError.style.display = 'block';
+        return;
+      }
+
+      // Create the menu tab
+      const data = { title };
+      if (link) {
+        data.link = link;
+      }
+
+      this.createMenuTab(data);
+      document.body.removeChild(overlay);
+    };
+
+    form?.addEventListener('submit', handleSubmit);
+
+    // Handle cancel
+    const cancelBtn = document.getElementById('cancel-btn');
+    cancelBtn?.addEventListener('click', () => {
+      document.body.removeChild(overlay);
+    });
+
+    // Close on overlay click
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        document.body.removeChild(overlay);
+      }
+    });
+
+    // Close on Escape key
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        document.body.removeChild(overlay);
+        document.removeEventListener('keydown', handleEscape);
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
   }
 
   /**
@@ -182,15 +669,21 @@ class SitemapExplorer {
     const refreshSitemapBtn = document.getElementById('refresh-sitemap-btn');
 
     if (addMenuTabBtn) {
-      addMenuTabBtn.addEventListener('click', () => {
-        this.addMenuTab();
-      });
+      // Remove old listener if it exists to prevent duplicates
+      if (this._addMenuTabHandler) {
+        addMenuTabBtn.removeEventListener('click', this._addMenuTabHandler);
+      }
+      this._addMenuTabHandler = () => this.addMenuTab();
+      addMenuTabBtn.addEventListener('click', this._addMenuTabHandler);
     }
 
     if (refreshSitemapBtn) {
-      refreshSitemapBtn.addEventListener('click', () => {
-        this.refresh();
-      });
+      // Remove old listener if it exists to prevent duplicates
+      if (this._refreshSitemapHandler) {
+        refreshSitemapBtn.removeEventListener('click', this._refreshSitemapHandler);
+      }
+      this._refreshSitemapHandler = () => this.refresh();
+      refreshSitemapBtn.addEventListener('click', this._refreshSitemapHandler);
     }
   }
 
@@ -200,6 +693,7 @@ class SitemapExplorer {
   createMenuTab(data) {
     const params = new FormData();
     params.append('title', data.title);
+    params.append('link', data.link);
     params.append('token', globalThis.getFormToken());
 
     fetch('/json/sitemap/create-tab', {
@@ -212,6 +706,7 @@ class SitemapExplorer {
       .then(response => response.json())
       .then(data => {
         if (data.status === 'ok') {
+          this.markDirty();
           this.loadSitemapData();
         } else {
           this.showError(data.error || 'Failed to create menu tab');
@@ -236,11 +731,6 @@ class SitemapExplorer {
     container.appendChild(tabsDiv);
 
     const tabs = Array.isArray(this.sitemapData.menuTabs) ? [...this.sitemapData.menuTabs] : [];
-    const homeIndex = tabs.findIndex((tab) => this.isHomeTab(tab));
-    if (homeIndex > 0) {
-      const [homeTab] = tabs.splice(homeIndex, 1);
-      tabs.unshift(homeTab);
-    }
 
     tabs.forEach((tab, index) => {
       const isHome = this.isHomeTab(tab);
@@ -440,10 +930,7 @@ class SitemapExplorer {
 
   isHomeTab(tab) {
     if (!tab) return false;
-
-    const title = String(tab.title || '').toLowerCase();
-    const link = String(tab.link || '').toLowerCase();
-    return tab.isHome === true || tab.is_home === true || title === 'home' || link === '/';
+    return tab.home === true;
   }
 
   resolvePageLink(page) {
@@ -723,6 +1210,8 @@ class SitemapExplorer {
   handleTabDragStart(e, tab) {
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('tab', JSON.stringify(tab));
+    // Do NOT set page data for menu tabs - only page tree pages should create new tabs
+
     this.draggedElement = e.target.closest('.menu-tab');
     this.draggedElement.classList.add('dragging');
   }
@@ -732,6 +1221,7 @@ class SitemapExplorer {
    */
   handleTabDrop(e, tab) {
     e.preventDefault();
+    e.stopPropagation();
 
     if (this.isHomeTab(tab)) {
       return;
@@ -741,28 +1231,45 @@ class SitemapExplorer {
       this.draggedElement.classList.remove('dragging');
     }
 
-    const pageData = e.dataTransfer.getData('application/x-page-data');
-    if (pageData) {
+    // First check for tab-to-tab drag (reordering)
+    const draggedTabData = e.dataTransfer.getData('tab');
+    if (draggedTabData) {
       try {
-        const page = JSON.parse(pageData);
-        const pageLink = this.resolvePageLink(page);
-        if (page && pageLink) {
-          // Add page to this tab's menu item stack
-          this.createMenuItem(tab.id, { title: page.title || pageLink, link: pageLink, pageId: page.id });
-          return;
+        const draggedTab = JSON.parse(draggedTabData);
+        if (draggedTab.id !== tab.id) {
+          this.reorderTab(draggedTab.id, tab.id);
         }
-
-        this.showError('Page link is required to create a menu item.');
       } catch (error) {
-        console.error('Error parsing page data:', error);
+        console.error('Error parsing tab data:', error);
       }
+      return;
     }
 
-    const draggedData = e.dataTransfer.getData('tab');
-    if (draggedData) {
-      const draggedTab = JSON.parse(draggedData);
-      if (draggedTab.id !== tab.id) {
-        this.reorderTab(draggedTab.id, tab.id);
+    // Then check for item-to-tab drag (should not happen)
+    const draggedItemData = e.dataTransfer.getData('item');
+    if (draggedItemData) {
+      // Items dropped on tabs should be ignored
+      return;
+    }
+
+    // Finally check for page data (from page tree only)
+    const pageData = e.dataTransfer.getData('application/x-page-data');
+    if (pageData) {
+      // Only create menu items if page came from page tree, not from sitemap
+      const draggedElement = this.draggedElement;
+      if (!draggedElement || !draggedElement.classList.contains('menu-tab') && !draggedElement.classList.contains('menu-item')) {
+        try {
+          const page = JSON.parse(pageData);
+          const pageLink = this.resolvePageLink(page);
+          if (page && pageLink) {
+            // Add page to this tab's menu item stack
+            this.createMenuItem(tab.id, { title: page.title || pageLink, link: pageLink, pageId: page.id });
+            return;
+          }
+          this.showError('Page link is required to create a menu item.');
+        } catch (error) {
+          console.error('Error parsing page data:', error);
+        }
       }
     }
   }
@@ -772,9 +1279,17 @@ class SitemapExplorer {
    */
   handleEmptyTabDrop(e) {
     e.preventDefault();
+    e.stopPropagation();
 
     if (this.draggedElement) {
       this.draggedElement.classList.remove('dragging');
+    }
+
+    // Only create tabs from page tree pages, not from sitemap elements
+    const draggedElement = this.draggedElement;
+    if (draggedElement && (draggedElement.classList.contains('menu-tab') || draggedElement.classList.contains('menu-item'))) {
+      // Ignore drops from menu tabs and items
+      return;
     }
 
     const pageData = e.dataTransfer.getData('application/x-page-data');
@@ -784,8 +1299,8 @@ class SitemapExplorer {
         const pageLink = this.resolvePageLink(page);
         const title = page.title || pageLink || 'New Tab';
         if (page && title) {
-          // Create a new tab from the dropped page
-          this.createMenuTab({ title });
+          // Create a new tab from the dropped page, including the link
+          this.createMenuTab({ title, link: pageLink });
           return;
         }
       } catch (error) {
@@ -799,12 +1314,34 @@ class SitemapExplorer {
    */
   handleItemDrop(e, item) {
     e.preventDefault();
+    e.stopPropagation();
 
     if (this.draggedElement) {
       this.draggedElement.classList.remove('dragging');
     }
 
-    // Check if a page is being dropped
+    // First check for item-to-item drag (reordering)
+    const draggedItemData = e.dataTransfer.getData('item');
+    if (draggedItemData) {
+      try {
+        const draggedItem = JSON.parse(draggedItemData);
+        if (draggedItem.id !== item.id) {
+          // Reorder item in the same or different stack
+          this.reorderItem(draggedItem.id, item.id);
+        }
+      } catch (error) {
+        console.error('Error parsing item data:', error);
+      }
+      return;
+    }
+
+    // Then check for page data (from page tree only)
+    const draggedElement = this.draggedElement;
+    if (draggedElement && (draggedElement.classList.contains('menu-tab') || draggedElement.classList.contains('menu-item'))) {
+      // Ignore drops from menu tabs and items
+      return;
+    }
+
     const pageData = e.dataTransfer.getData('application/x-page-data');
     if (pageData) {
       try {
@@ -824,17 +1361,6 @@ class SitemapExplorer {
       } catch (error) {
         console.error('Error parsing page data:', error);
       }
-      return;
-    }
-
-    // Handle menu item reordering
-    const draggedData = e.dataTransfer.getData('item');
-    if (draggedData) {
-      const draggedItem = JSON.parse(draggedData);
-      if (draggedItem.id !== item.id) {
-        // Reorder item in the same or different stack
-        this.reorderItem(draggedItem.id, item.id);
-      }
     }
   }
 
@@ -843,9 +1369,36 @@ class SitemapExplorer {
    */
   handleEmptyItemDrop(e, tabId) {
     e.preventDefault();
+    e.stopPropagation();
+
+    // Prevent adding items to the home tab
+    const targetTab = this.sitemapData?.menuTabs?.find(t => t.id === tabId);
+    if (targetTab && this.isHomeTab(targetTab)) {
+      return;
+    }
 
     if (this.draggedElement) {
       this.draggedElement.classList.remove('dragging');
+    }
+
+    // First check for item-to-item drag (reordering)
+    const draggedItemData = e.dataTransfer.getData('item');
+    if (draggedItemData) {
+      try {
+        const draggedItem = JSON.parse(draggedItemData);
+        // Moving an item to the end of the stack - use the empty item as target
+        this.reorderItem(draggedItem.id, null, tabId);
+      } catch (error) {
+        console.error('Error parsing item data:', error);
+      }
+      return;
+    }
+
+    // Then check for page data (from page tree only)
+    const draggedElement = this.draggedElement;
+    if (draggedElement && (draggedElement.classList.contains('menu-tab') || draggedElement.classList.contains('menu-item'))) {
+      // Ignore drops from menu tabs and items
+      return;
     }
 
     const pageData = e.dataTransfer.getData('application/x-page-data');
@@ -864,13 +1417,6 @@ class SitemapExplorer {
         console.error('Error parsing page data:', error);
       }
     }
-
-    const draggedData = e.dataTransfer.getData('item');
-    if (draggedData) {
-      const draggedItem = JSON.parse(draggedData);
-      // Moving an item to the end of the stack - use the empty item as target
-      this.reorderItem(draggedItem.id, null, tabId);
-    }
   }
 
   /**
@@ -879,6 +1425,8 @@ class SitemapExplorer {
   handleItemDragStart(e, item) {
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('item', JSON.stringify(item));
+    // Do NOT set page data for menu items - only page tree pages should create new items
+
     this.draggedElement = e.target.closest('.menu-item');
     this.draggedElement.classList.add('dragging');
 
@@ -948,6 +1496,7 @@ class SitemapExplorer {
       .then(response => response.json())
       .then(data => {
         if (data.status === 'ok') {
+          this.markDirty();
           this.loadSitemapData();
         } else {
           this.showError(data.error || 'Failed to reorder tab');
@@ -983,6 +1532,7 @@ class SitemapExplorer {
       .then(response => response.json())
       .then(data => {
         if (data.status === 'ok') {
+          this.markDirty();
           this.loadSitemapData();
         } else {
           this.showError(data.error || 'Failed to reorder item');
@@ -1049,6 +1599,11 @@ class SitemapExplorer {
   showTabContextMenu(e, tabElement) {
     const tabId = tabElement.dataset.tabId;
     const tab = this.sitemapData.menuTabs.find(t => t.id == tabId);
+
+    // Don't show context menu for home tab
+    if (this.isHomeTab(tab)) {
+      return;
+    }
 
     this.showContextMenu(e.clientX, e.clientY, [
       {
@@ -1174,6 +1729,10 @@ class SitemapExplorer {
    * Edit tab
    */
   editTab(tab) {
+    if (this.isHomeTab(tab)) {
+      this.showError('Cannot edit the home tab');
+      return;
+    }
     const newTitle = prompt('Enter new tab title:', tab.title);
     if (newTitle && newTitle !== tab.title) {
       this.updateTab(tab.id, { title: newTitle });
@@ -1184,6 +1743,10 @@ class SitemapExplorer {
    * Add menu item
    */
   addMenuItem(tab) {
+    if (this.isHomeTab(tab)) {
+      this.showError('Cannot add menu items to the home tab');
+      return;
+    }
     const title = prompt('Enter menu item title:');
     if (title) {
       const link = prompt('Enter menu item link:');
@@ -1197,6 +1760,10 @@ class SitemapExplorer {
    * Delete tab
    */
   deleteTab(tab) {
+    if (this.isHomeTab(tab)) {
+      this.showError('Cannot delete the home tab');
+      return;
+    }
     if (confirm(`Are you sure you want to delete the tab "${tab.title}"?`)) {
       this.removeTab(tab.id);
     }
@@ -1292,6 +1859,7 @@ class SitemapExplorer {
       .then(response => response.json())
       .then(data => {
         if (data.status === 'ok') {
+          this.markDirty();
           this.loadSitemapData();
         } else {
           this.showError(data.error || 'Failed to update tab');
@@ -1326,6 +1894,7 @@ class SitemapExplorer {
       .then(response => response.json())
       .then(data => {
         if (data.status === 'ok') {
+          this.markDirty();
           this.loadSitemapData();
         } else {
           this.showError(data.error || 'Failed to create menu item');
@@ -1355,6 +1924,7 @@ class SitemapExplorer {
       .then(response => response.json())
       .then(data => {
         if (data.status === 'ok') {
+          this.markDirty();
           this.loadSitemapData();
         } else {
           this.showError(data.error || 'Failed to delete tab');
@@ -1386,6 +1956,7 @@ class SitemapExplorer {
       .then(response => response.json())
       .then(data => {
         if (data.status === 'ok') {
+          this.markDirty();
           this.loadSitemapData();
         } else {
           this.showError(data.error || 'Failed to update item');
@@ -1416,6 +1987,7 @@ class SitemapExplorer {
       .then(response => response.json())
       .then(data => {
         if (data.status === 'ok') {
+          this.markDirty();
           this.loadSitemapData();
         } else {
           this.showError(data.error || 'Failed to move item');
@@ -1445,6 +2017,7 @@ class SitemapExplorer {
       .then(response => response.json())
       .then(data => {
         if (data.status === 'ok') {
+          this.markDirty();
           this.loadSitemapData();
         } else {
           this.showError(data.error || 'Failed to delete item');
@@ -1478,6 +2051,7 @@ class SitemapExplorer {
       .then(response => response.json())
       .then(data => {
         if (data.status === 'ok') {
+          this.markDirty();
           this.loadSitemapData();
         } else {
           this.showError(data.error || 'Failed to create page');
@@ -1500,10 +2074,44 @@ class SitemapExplorer {
   }
 
   /**
-   * Refresh sitemap
+   * Refresh sitemap - manually triggered refresh (always renders if data is loaded)
    */
   refresh() {
-    this.loadSitemapData();
+    // Force render if we have data, even if tab is hidden
+    if (this.sitemapData) {
+      if (this.isInitialized) {
+        this.syncSitemap();
+      } else {
+        this.renderSitemap();
+        this.isInitialized = true;
+      }
+    } else {
+      // If no data yet, load it
+      this.loadSitemapData();
+    }
+    this.clearDirty();
+  }
+
+  /**
+   * Called when the tab becomes visible - renders pending data if available
+   */
+  onTabVisible() {
+    this.tabIsVisible = true;
+    // If we have data that wasn't rendered yet (because tab was hidden), render it now
+    if (this.sitemapData && !this.isInitialized) {
+      this.renderSitemap();
+      this.isInitialized = true;
+    } else if (this.sitemapData && this.isInitialized && this.isDirty) {
+      // If tab just became visible and we have pending changes, sync them
+      this.syncSitemap();
+    }
+  }
+
+  /**
+   * Called when the tab becomes hidden
+   */
+  onTabHidden() {
+    this.tabIsVisible = false;
   }
 
   /**

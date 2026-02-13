@@ -50,6 +50,12 @@
   <service endpoint="/json/sitemap/structure" class="com.simisinc.platform.presentation.widgets.cms.SitemapStructureJsonService" />
   <service endpoint="/json/sitemap/reorder-tab" class="com.simisinc.platform.presentation.widgets.cms.SitemapReorderTabJsonService" />
   <service endpoint="/json/sitemap/reorder-item" class="com.simisinc.platform.presentation.widgets.cms.SitemapReorderItemJsonService" />
+  <service endpoint="/json/sitemap/create-tab" class="com.simisinc.platform.presentation.widgets.cms.SitemapCreateTabJsonService" />
+  <service endpoint="/json/sitemap/create-item" class="com.simisinc.platform.presentation.widgets.cms.SitemapCreateItemJsonService" />
+  <service endpoint="/json/sitemap/update-tab" class="com.simisinc.platform.presentation.widgets.cms.SitemapUpdateTabJsonService" />
+  <service endpoint="/json/sitemap/update-item" class="com.simisinc.platform.presentation.widgets.cms.SitemapUpdateItemJsonService" />
+  <service endpoint="/json/sitemap/delete-tab" class="com.simisinc.platform.presentation.widgets.cms.SitemapDeleteTabJsonService" />
+  <service endpoint="/json/sitemap/delete-item" class="com.simisinc.platform.presentation.widgets.cms.SitemapDeleteItemJsonService" />
   <!-- Visual Content Editor - Blog Endpoints -->
   <service endpoint="/json/blogs/list" class="com.simisinc.platform.presentation.widgets.cms.BlogsListJsonService" />
   <service endpoint="/json/blogs/posts" class="com.simisinc.platform.presentation.widgets.cms.BlogsPostsJsonService" />

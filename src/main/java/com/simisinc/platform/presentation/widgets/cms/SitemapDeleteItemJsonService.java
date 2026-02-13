@@ -28,19 +28,19 @@ import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
 
 /**
- * Handles JSON/AJAX POST requests for /json/sitemap/reorder-item endpoint
- * Moves menu items to different menus or reorders within menu
+ * Handles JSON/AJAX POST requests for /json/sitemap/delete-item endpoint
+ * Deletes a menu item from the site navigation
  *
  * @author matt rajkowski
- * @created 2/7/26 3:00 PM
+ * @created 2/9/26 8:45 PM
  */
-public class SitemapReorderItemJsonService extends GenericWidget {
+public class SitemapDeleteItemJsonService extends GenericWidget {
 
-  static final long serialVersionUID = -8484048371911908893L;
-  private static Log LOG = LogFactory.getLog(SitemapReorderItemJsonService.class);
+  static final long serialVersionUID = -8484048371911908896L;
+  private static Log LOG = LogFactory.getLog(SitemapDeleteItemJsonService.class);
 
   /**
-   * Handles POST requests to reorder menu items
+   * Handles POST requests to delete a menu item
    *
    * @param context the widget context
    * @return context with JSON response
@@ -53,63 +53,31 @@ public class SitemapReorderItemJsonService extends GenericWidget {
     }
 
     try {
-      // Get item ID and optional target item ID or new menu ID
+      // Get item ID
       long itemId = context.getParameterAsLong("itemId", -1);
-      long targetItemId = context.getParameterAsLong("targetItemId", -1);
-      long newMenuTabId = context.getParameterAsLong("newMenuTabId", -1);
-      int newPosition = context.getParameterAsInt("newPosition", 0);
 
       if (itemId == -1) {
         return writeError(context, "Item ID is required");
       }
 
-      // At least one of targetItemId or newMenuTabId must be provided
-      if (targetItemId == -1 && newMenuTabId == -1) {
-        return writeError(context, "Target item or menu ID is required");
-      }
-
       // Load the menu item
-      MenuItem item = MenuItemRepository.findById(itemId);
-      if (item == null) {
+      MenuItem menuItem = MenuItemRepository.findById(itemId);
+      if (menuItem == null) {
         return writeError(context, "Menu item not found");
       }
 
-      // If newMenuTabId is provided, update the menu ID
-      if (newMenuTabId != -1) {
-        item.setMenuTabId(newMenuTabId);
+      // Delete the item
+      if (MenuItemRepository.remove(menuItem)) {
+        // Trigger cache refresh
+        CacheManager.invalidateObjectCacheKey(CacheManager.MENU_TAB_LIST);
+        return writeOk(context, "{\"id\": " + itemId + "}", null);
+      } else {
+        return writeError(context, "Failed to delete menu item");
       }
-
-      // If targetItemId is provided, update the order based on target item
-      if (targetItemId != -1) {
-        MenuItem targetItem = MenuItemRepository.findById(targetItemId);
-        if (targetItem != null) {
-          item.setItemOrder(targetItem.getItemOrder());
-          // Also update menu if different
-          if (newMenuTabId == -1) {
-            item.setMenuTabId(targetItem.getMenuTabId());
-          }
-        }
-      }
-
-      // Save the updated item
-      MenuItemRepository.save(item);
-
-      // Trigger cache refresh
-      CacheManager.invalidateObjectCacheKey(CacheManager.MENU_TAB_LIST);
-
-      // Build success response
-      StringBuilder json = new StringBuilder();
-      json.append("{");
-      json.append("\"id\": ").append(item.getId()).append(",");
-      json.append("\"menuId\": ").append(item.getMenuTabId()).append(",");
-      json.append("\"order\": ").append(item.getItemOrder());
-      json.append("}");
-
-      return writeOk(context, json.toString(), null);
 
     } catch (Exception e) {
-      LOG.error("Error reordering menu item: " + e.getMessage(), e);
-      return writeError(context, "An unexpected error occurred");
+      LOG.error("Error deleting menu item: " + e.getMessage(), e);
+      return writeError(context, e.getMessage());
     }
   }
 
@@ -133,5 +101,4 @@ public class SitemapReorderItemJsonService extends GenericWidget {
     context.setSuccess(false);
     return context;
   }
-
 }

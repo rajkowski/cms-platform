@@ -23,8 +23,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.json.JsonCommand;
-import com.simisinc.platform.domain.model.cms.MenuTab;
 import com.simisinc.platform.domain.model.cms.MenuItem;
+import com.simisinc.platform.domain.model.cms.MenuTab;
 import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.infrastructure.persistence.cms.MenuItemRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.MenuTabRepository;
@@ -69,6 +69,10 @@ public class SitemapStructureJsonService extends GenericWidget {
       if (menus != null && !menus.isEmpty()) {
         boolean firstMenu = true;
         for (MenuTab menu : menus) {
+          boolean isHomeTab = false;
+          if (firstMenu && "/".equals(menu.getLink())) {
+            isHomeTab = true;
+          }
           if (!firstMenu) {
             json.append(",");
           }
@@ -79,6 +83,9 @@ public class SitemapStructureJsonService extends GenericWidget {
           json.append("\"title\": \"").append(JsonCommand.toJson(menu.getName())).append("\",");
           json.append("\"link\": \"").append(JsonCommand.toJson(menu.getLink())).append("\",");
           json.append("\"order\": ").append(menu.getTabOrder()).append(",");
+          if (isHomeTab) {
+            json.append("\"home\": true,");
+          }
 
           // Load menu items for this menu
           List<MenuItem> items = MenuItemRepository.findAllByMenuTab(menu);

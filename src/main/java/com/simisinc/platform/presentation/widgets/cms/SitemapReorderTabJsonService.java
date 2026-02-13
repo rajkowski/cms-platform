@@ -16,18 +16,19 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.MenuTab;
+import com.simisinc.platform.infrastructure.cache.CacheManager;
 import com.simisinc.platform.infrastructure.persistence.cms.MenuTabRepository;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Handles JSON/AJAX POST requests for /json/sitemap/reorder-tab endpoint
@@ -100,6 +101,9 @@ public class SitemapReorderTabJsonService extends GenericWidget {
         MenuTabRepository.save(tab);
       }
 
+      // Trigger cache refresh
+      CacheManager.invalidateObjectCacheKey(CacheManager.MENU_TAB_LIST);
+
       // Build success response
       StringBuilder json = new StringBuilder();
       json.append("{");
@@ -108,7 +112,6 @@ public class SitemapReorderTabJsonService extends GenericWidget {
       json.append("}");
 
       return writeOk(context, json.toString(), null);
-
 
     } catch (Exception e) {
       LOG.error("Error reordering menu tab: " + e.getMessage(), e);

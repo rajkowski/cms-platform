@@ -23,6 +23,9 @@ class PageTreeManager {
     this.isSyncing = false;
     this.syncTimer = null;
     this.syncIntervalMs = 15000;
+    this.isDirty = false;
+    this.lastChangeTime = null;
+    this.maxInactivityMs = 60000;
   }
 
   /**
@@ -168,7 +171,31 @@ class PageTreeManager {
     window.addEventListener('focus', () => this.syncFromServer());
   }
 
+  isInactivityTimeout() {
+    if (!this.lastChangeTime) return false;
+    return Date.now() - this.lastChangeTime > this.maxInactivityMs;
+  }
+
+  markDirty() {
+    this.isDirty = true;
+    this.lastChangeTime = Date.now();
+  }
+
+  clearDirty() {
+    this.isDirty = false;
+  }
+
+  touchActivity() {
+    if (!this.isDirty) return;
+    this.lastChangeTime = Date.now();
+  }
+
   syncFromServer() {
+    if (!this.isDirty) return;
+    if (this.isInactivityTimeout()) {
+      this.clearDirty();
+      return;
+    }
     if (this.isLoading || this.isSyncing || this.pendingMutations.size > 0) return;
 
     const requests = [];
@@ -510,9 +537,11 @@ class PageTreeManager {
       if (this.expandedNodes.has(pageId)) {
         console.log('[PageTreeManager] Collapsing node:', pageId);
         this.expandedNodes.delete(pageId);
+        this.touchActivity();
       } else {
         console.log('[PageTreeManager] Expanding node:', pageId);
         this.expandedNodes.add(pageId);
+        this.touchActivity();
         // Only load children for non-root nodes that have children
         if (pageId !== 'root') {
           this.loadPageChildren(pageId).then(() => {
@@ -595,9 +624,10 @@ class PageTreeManager {
     const draggedNode = this.draggedElement || document.querySelector('[class*="dragging"]');
     const isLibraryDrag = draggedNode && draggedNode.classList.contains('page-hierarchy-box');
     const isTreeDrag = draggedNode && draggedNode.closest('#page-tree');
+    const isSitemapDrag = draggedNode && (draggedNode.classList.contains('menu-item') || draggedNode.classList.contains('menu-tab'));
 
-    // Allow drop from library (copy) or from tree (move/reorder)
-    if (isLibraryDrag) {
+    // Allow drop from library (copy), tree (move/reorder), or sitemap (copy)
+    if (isLibraryDrag || isSitemapDrag) {
       e.dataTransfer.dropEffect = 'copy';
     } else if (isTreeDrag) {
       e.dataTransfer.dropEffect = 'move';
@@ -682,8 +712,9 @@ class PageTreeManager {
 
     const isLibraryDrag = draggedNode.classList.contains('page-hierarchy-box');
     const isTreeDrag = draggedNode.closest('#page-tree');
+    const isSitemapDrag = draggedNode.classList.contains('menu-item') || draggedNode.classList.contains('menu-tab');
 
-    if (!isLibraryDrag && !isTreeDrag) {
+    if (!isLibraryDrag && !isTreeDrag && !isSitemapDrag) {
       this.clearDropZones();
       return;
     }
@@ -700,10 +731,28 @@ class PageTreeManager {
     // Get drop zone information
     const dropZone = this.currentDropZone || this.calculateDropZone(e, targetNode);
 
-    if (isLibraryDrag) {
-      // Adding a page from library to hierarchy
-      const parentId = targetPageId === 'root' ? -1 : targetPageId;
-      this.addPageToHierarchy(draggedPageId, parentId);
+    if (isLibraryDrag || isSitemapDrag) {
+      // Adding a page from library or sitemap to hierarchy
+      // For sitemap items, try to get pageId from the page data
+      let pageIdToAdd = draggedPageId;
+      
+      if (isSitemapDrag) {
+        // Try to get page data from drag transfer
+        try {
+          const pageData = e.dataTransfer.getData('application/x-page-data');
+          if (pageData) {
+            const page = JSON.parse(pageData);
+            pageIdToAdd = page.id;
+          }
+        } catch (err) {
+          console.error('Error parsing page data from sitemap drag:', err);
+        }
+      }
+      
+      if (pageIdToAdd) {
+        const parentId = targetPageId === 'root' ? -1 : targetPageId;
+        this.addPageToHierarchy(pageIdToAdd, parentId);
+      }
     } else if (isTreeDrag) {
       // Reordering pages within the tree with position
       this.reorderPageWithPosition(draggedPageId, targetPageId, dropZone.position);
@@ -870,6 +919,7 @@ class PageTreeManager {
    * Reorder page (drag and drop)
    */
   reorderPage(pageId, targetPageId) {
+    this.markDirty();
     const params = new FormData();
     params.append('pageId', pageId);
     params.append('targetPageId', targetPageId);
@@ -900,6 +950,7 @@ class PageTreeManager {
    * Reorder page with specific position (before/after/inside)
    */
   reorderPageWithPosition(pageId, targetPageId, position) {
+    this.markDirty();
     const targetNode = document.querySelector(`.page-tree-node[data-page-id="${targetPageId}"]`);
     const targetParentId = targetNode ? targetNode.dataset.parentId : null;
     const originalParentId = this.findParentId(pageId);
@@ -967,6 +1018,7 @@ class PageTreeManager {
   }
 
   addPageToHierarchy(pageId, parentPageId) {
+    this.markDirty();
     const parentKey = this.normalizeParentId(parentPageId);
     if (parentKey !== null) {
       this.pendingMutations.add(String(parentKey));
@@ -1009,6 +1061,7 @@ class PageTreeManager {
   }
 
   removePageFromHierarchy(pageId) {
+    this.markDirty();
     const { parentId } = this.removePageFromCache(pageId);
     if (parentId !== null && parentId !== undefined) {
       this.pendingMutations.add(String(parentId));
@@ -1162,6 +1215,7 @@ class PageTreeManager {
 
     node.scrollIntoView({ block: 'center', behavior: 'smooth' });
     this.showPageDetailsFromNode(node);
+    this.touchActivity();
     this.updateSearchIndicator();
   }
 
