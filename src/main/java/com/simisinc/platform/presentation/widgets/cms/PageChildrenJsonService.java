@@ -48,8 +48,10 @@ public class PageChildrenJsonService extends GenericWidget {
    */
   public WidgetContext execute(WidgetContext context) {
 
-    // Check permissions - require admin or content-manager role
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
+    // Check permissions - require admin or content-editor role
+    // Changed from content-manager to content-editor for consistency with WebPageListAjax
+    // and other Visual Page Editor endpoints
+    if (!context.hasRole("admin") && !context.hasRole("content-editor")) {
       return writeError(context, "Permission denied");
     }
 

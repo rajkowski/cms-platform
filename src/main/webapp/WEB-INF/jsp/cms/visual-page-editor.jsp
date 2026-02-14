@@ -237,8 +237,25 @@
         </div>
 
         <div id="pages-tab" class="tab-content active">
-          <div style="margin-bottom: 15px;">
+          <div style="margin-bottom: 10px;">
             <input type="text" id="pages-search" class="property-input" placeholder="Search pages..." style="width: 100%; padding: 10px; font-size: 14px;" />
+          </div>
+          <div style="margin-bottom: 15px; display: flex; gap: 5px; align-items: center;">
+            <label style="font-size: 12px; color: var(--editor-text-muted); white-space: nowrap;">Sort by:</label>
+            <select id="pages-sort-select" class="property-input" style="flex: 1; padding: 6px; font-size: 13px;">
+              <option value="a-z">A-Z</option>
+              <option value="modified">Last Modified</option>
+              <option value="hierarchy">Hierarchy</option>
+            </select>
+          </div>
+          <div id="pages-hierarchy-nav" style="display: none; margin-bottom: 10px; padding: 8px; background: var(--editor-hover-bg); border-radius: 4px; font-size: 12px;">
+            <button id="pages-back-to-root" class="button tiny secondary radius" style="padding: 4px 8px; margin-right: 5px;">
+              <i class="${font:far()} fa-home"></i> Root
+            </button>
+            <button id="pages-back-to-parent" class="button tiny secondary radius" style="padding: 4px 8px; display: none;">
+              <i class="${font:far()} fa-arrow-up"></i> Parent
+            </button>
+            <div id="pages-current-path" style="margin-top: 5px; color: var(--editor-text-muted); font-size: 11px;"></div>
           </div>
           <div id="pages-error" style="display: none;"></div>
           <div id="pages-empty" style="display: none;">

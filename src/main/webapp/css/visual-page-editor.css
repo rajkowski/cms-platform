@@ -1168,7 +1168,39 @@ input[type="range"].property-input:focus::-moz-range-thumb {
   color: var(--editor-text-muted);
 }
 
+.web-page-modified {
+  font-size: 11px;
+  color: var(--editor-text-muted);
+  margin-top: 2px;
+}
 
+.web-page-item.has-children {
+  position: relative;
+}
+
+.web-page-expand-icon {
+  position: absolute;
+  left: -15px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: var(--editor-text-muted);
+  font-size: 12px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.web-page-expand-icon:hover {
+  color: var(--editor-text);
+}
+
+.web-page-item.indented {
+  margin-left: 20px;
+}
 
 #pages-error {
   padding: 15px;
