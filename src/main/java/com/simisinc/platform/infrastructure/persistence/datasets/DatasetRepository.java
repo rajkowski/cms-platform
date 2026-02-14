@@ -134,6 +134,8 @@ public class DatasetRepository {
         .add("modified_by", record.getModifiedBy());
     insertValues.add(
         new SqlValue("column_config", SqlValue.JSONB_TYPE, DatasetColumnJSONCommand.createColumnJSONString(record)));
+    insertValues.add(
+        new SqlValue("request_config", SqlValue.JSONB_TYPE, StringUtils.trimToNull(record.getRequestConfig())));
     record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
@@ -162,6 +164,8 @@ public class DatasetRepository {
         .add("modified_by", record.getModifiedBy());
     updateValues.add(
         new SqlValue("column_config", SqlValue.JSONB_TYPE, DatasetColumnJSONCommand.createColumnJSONString(record)));
+    updateValues.add(
+        new SqlValue("request_config", SqlValue.JSONB_TYPE, StringUtils.trimToNull(record.getRequestConfig())));
     // Where
     if (DB.update(TABLE_NAME, updateValues, DB.WHERE("dataset_id = ?", record.getId()))) {
       return record;
@@ -428,6 +432,7 @@ public class DatasetRepository {
       record.setRecordsPath(rs.getString("records_path"));
       record.setScheduledDate(rs.getTimestamp("scheduled_date"));
       record.setLastDownload(rs.getTimestamp("last_download"));
+      record.setRequestConfig(rs.getString("request_config"));
       record.setProcessStatus(DB.getInt(rs, "process_status", 0));
       record.setProcessMessage(rs.getString("process_message"));
       record.setScheduleEnabled(rs.getBoolean("schedule_enabled"));

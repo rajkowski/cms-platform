@@ -1481,6 +1481,19 @@ class VisualDataEditor {
           </div>
           
           <div class="property-group">
+            <h5>Request Configuration</h5>
+            <p class="help-text" style="font-size: 12px; margin-bottom: 10px;">Configure HTTP request headers and authentication for data source access.</p>
+            
+            <div id="request-headers-container">
+              ${this.renderRequestHeaders(dataset)}
+            </div>
+            
+            <button class="button tiny secondary radius" id="add-request-header-btn" style="margin-top: 5px;">
+              <i class="fa fa-plus"></i> Add Header
+            </button>
+          </div>
+          
+          <div class="property-group">
             <label class="property-label" for="dataset-file-type">File Type</label>
             <select id="dataset-file-type" class="property-input">
               <option value="csv" ${dataset.fileType === 'csv' ? 'selected' : ''}>CSV</option>
@@ -1530,6 +1543,134 @@ class VisualDataEditor {
         </div>
       </div>
     `;
+  }
+
+  renderRequestHeaders(dataset) {
+    let headers = {};
+    
+    // Parse the requestConfig JSON if it exists
+    if (dataset.requestConfig) {
+      try {
+        const config = JSON.parse(dataset.requestConfig);
+        if (config && config.headers) {
+          headers = config.headers;
+        }
+      } catch (e) {
+        console.warn('Failed to parse request config:', e);
+      }
+    }
+    
+    // Render header rows
+    const headerEntries = Object.entries(headers);
+    if (headerEntries.length === 0) {
+      return '<div class="empty-headers" style="padding: 10px; text-align: center; color: #999; font-size: 12px;">No headers configured</div>';
+    }
+    
+    return headerEntries.map(([key, value]) => `
+      <div class="header-row" style="display: flex; gap: 10px; margin-bottom: 8px; align-items: center;">
+        <input type="text" class="header-key property-input" placeholder="Header Name" value="${this.escapeHtml(key)}" style="flex: 1;" />
+        <input type="text" class="header-value property-input" placeholder="Header Value" value="${this.escapeHtml(value)}" style="flex: 2;" />
+        <button class="button tiny alert remove-header-btn" title="Remove">
+          <i class="fa fa-trash"></i>
+        </button>
+      </div>
+    `).join('');
+  }
+
+  renderEditRequestHeaders(dataset) {
+    let headers = {};
+    
+    // Parse the requestConfig JSON if it exists
+    if (dataset.requestConfig) {
+      try {
+        const config = JSON.parse(dataset.requestConfig);
+        if (config && config.headers) {
+          headers = config.headers;
+        }
+      } catch (e) {
+        console.warn('Failed to parse request config:', e);
+      }
+    }
+    
+    // Render header rows
+    const headerEntries = Object.entries(headers);
+    if (headerEntries.length === 0) {
+      return '<div class="empty-headers" style="padding: 10px; text-align: center; color: #999; font-size: 12px;">No headers configured</div>';
+    }
+    
+    return headerEntries.map(([key, value]) => `
+      <div class="header-row" style="display: flex; gap: 10px; margin-bottom: 8px; align-items: center;">
+        <input type="text" class="header-key property-input" placeholder="Header Name" value="${this.escapeHtml(key)}" style="flex: 1;" />
+        <input type="text" class="header-value property-input" placeholder="Header Value" value="${this.escapeHtml(value)}" style="flex: 2;" />
+        <button class="button tiny alert remove-header-btn" title="Remove">
+          <i class="fa fa-trash"></i>
+        </button>
+      </div>
+    `).join('');
+  }
+
+  addRequestHeader(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    // Remove empty message if present
+    const emptyMsg = container.querySelector('.empty-headers');
+    if (emptyMsg) {
+      emptyMsg.remove();
+    }
+    
+    // Add new header row
+    const headerRow = document.createElement('div');
+    headerRow.className = 'header-row';
+    headerRow.style.cssText = 'display: flex; gap: 10px; margin-bottom: 8px; align-items: center;';
+    headerRow.innerHTML = `
+      <input type="text" class="header-key property-input" placeholder="Header Name" style="flex: 1;" />
+      <input type="text" class="header-value property-input" placeholder="Header Value" style="flex: 2;" />
+      <button class="button tiny alert remove-header-btn" title="Remove">
+        <i class="fa fa-trash"></i>
+      </button>
+    `;
+    container.appendChild(headerRow);
+    
+    // Setup remove listener for new row
+    headerRow.querySelector('.remove-header-btn').addEventListener('click', () => {
+      headerRow.remove();
+      // Show empty message if no headers left
+      if (container.querySelectorAll('.header-row').length === 0) {
+        container.innerHTML = '<div class="empty-headers" style="padding: 10px; text-align: center; color: #999; font-size: 12px;">No headers configured</div>';
+      }
+    });
+  }
+
+  setupRemoveHeaderListeners(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    container.querySelectorAll('.remove-header-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        btn.closest('.header-row').remove();
+        // Show empty message if no headers left
+        if (container.querySelectorAll('.header-row').length === 0) {
+          container.innerHTML = '<div class="empty-headers" style="padding: 10px; text-align: center; color: #999; font-size: 12px;">No headers configured</div>';
+        }
+      });
+    });
+  }
+
+  collectRequestHeaders(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return null;
+    
+    const headers = {};
+    container.querySelectorAll('.header-row').forEach(row => {
+      const key = row.querySelector('.header-key').value.trim();
+      const value = row.querySelector('.header-value').value.trim();
+      if (key && value) {
+        headers[key] = value;
+      }
+    });
+    
+    return Object.keys(headers).length > 0 ? { headers } : null;
   }
 
   renderMappingRows(dataset) {
@@ -1777,6 +1918,18 @@ class VisualDataEditor {
             <label class="property-label" for="edit-dataset-source-url">Source URL</label>
             <input type="text" id="edit-dataset-source-url" class="property-input" value="${this.escapeHtml(item.sourceUrl || '')}" />
           </div>
+          
+          <div class="property-group">
+            <label class="property-label">Request Headers</label>
+            <p class="help-text" style="font-size: 12px; margin-bottom: 10px;">Add HTTP headers for authentication or custom request configuration.</p>
+            <div id="edit-request-headers-container">
+              ${this.renderEditRequestHeaders(item)}
+            </div>
+            <button class="button tiny secondary radius" id="add-edit-request-header-btn" style="margin-top: 5px;">
+              <i class="fa fa-plus"></i> Add Header
+            </button>
+          </div>
+          
           <div class="property-group">
             <label class="property-label">
               <input type="checkbox" id="edit-dataset-sync-enabled" ${item.syncEnabled ? 'checked' : ''} />
@@ -1807,6 +1960,14 @@ class VisualDataEditor {
       document.getElementById('save-dataset-config-btn')?.addEventListener('click', () => {
         this.saveDatasetConfig();
       });
+      
+      // Add header button listener
+      document.getElementById('add-edit-request-header-btn')?.addEventListener('click', () => {
+        this.addRequestHeader('edit-request-headers-container');
+      });
+      
+      // Add remove header listeners
+      this.setupRemoveHeaderListeners('edit-request-headers-container');
     }
   }
 
@@ -1865,6 +2026,14 @@ class VisualDataEditor {
       formData.append('sourceUrl', document.getElementById('edit-dataset-source-url').value);
       formData.append('syncEnabled', document.getElementById('edit-dataset-sync-enabled').checked);
       formData.append('scheduleEnabled', document.getElementById('edit-dataset-schedule-enabled').checked);
+      
+      // Collect request headers and create requestConfig JSON
+      const requestConfig = this.collectRequestHeaders('edit-request-headers-container');
+      if (requestConfig) {
+        formData.append('requestConfig', JSON.stringify(requestConfig));
+      } else {
+        formData.append('requestConfig', '');
+      }
 
       const response = await fetch('/json/saveDataset', {
         method: 'POST',

@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -48,6 +50,40 @@ public class DatasetDownloadRemoteFileCommand {
 
   private static Log LOG = LogFactory.getLog(DatasetDownloadRemoteFileCommand.class);
 
+  /**
+   * Parse request configuration JSON and extract headers
+   * 
+   * @param requestConfig JSON string containing request configuration
+   * @return Map of headers, or null if no headers
+   */
+  private static Map<String, String> parseRequestHeaders(String requestConfig) {
+    if (StringUtils.isBlank(requestConfig)) {
+      return null;
+    }
+    try {
+      JsonNode config = JsonCommand.fromString(requestConfig);
+      if (config == null || !config.has("headers")) {
+        return null;
+      }
+      JsonNode headersNode = config.get("headers");
+      if (headersNode == null || !headersNode.isObject()) {
+        return null;
+      }
+      Map<String, String> headers = new HashMap<>();
+      headersNode.fields().forEachRemaining(entry -> {
+        String key = entry.getKey();
+        String value = entry.getValue().asText();
+        if (StringUtils.isNotBlank(key) && StringUtils.isNotBlank(value)) {
+          headers.put(key, value);
+        }
+      });
+      return headers.isEmpty() ? null : headers;
+    } catch (Exception e) {
+      LOG.warn("Error parsing request config: " + e.getMessage());
+      return null;
+    }
+  }
+
   public static boolean handleRemoteFileDownload(Dataset dataset, long userId) throws DataException {
     if (StringUtils.isBlank(dataset.getSourceUrl())) {
       throw new DataException("A source url is required");
@@ -70,6 +106,8 @@ public class DatasetDownloadRemoteFileCommand {
 
     // Download the file
     File tempFile = new File(filesystemPath);
+    // Parse request configuration for headers
+    Map<String, String> requestHeaders = parseRequestHeaders(dataset.getRequestConfig());
     try {
       if ("application/vnd.api+json".equals(fileType)) {
         File result = PERLSCourseListCommand.retrieveCourseListToFile(tempFile);
@@ -80,13 +118,13 @@ public class DatasetDownloadRemoteFileCommand {
       } else {
         // Determine if there could be multiple JSON files
         if (StringUtils.isNotBlank(dataset.getPagingUrlPath())) {
-          if (!downloadPagedFile(dataset.getSourceUrl(), dataset.getPagingUrlPath(), dataset.getRecordsPath(),
+          if (!downloadPagedFile(dataset.getSourceUrl(), requestHeaders, dataset.getPagingUrlPath(), dataset.getRecordsPath(),
               tempFile)) {
             throw new DataException("File with paging download error from: " + dataset.getSourceUrl());
           }
         } else {
           // Download a single JSON file
-          if (!HttpDownloadFileCommand.execute(dataset.getSourceUrl(), tempFile)) {
+          if (!HttpDownloadFileCommand.execute(dataset.getSourceUrl(), requestHeaders, tempFile)) {
             throw new DataException("File download error from: " + dataset.getSourceUrl());
           }
         }
@@ -159,14 +197,16 @@ public class DatasetDownloadRemoteFileCommand {
    * Downloads a series of JSON files into a single merged file
    * 
    * @param url
+   * @param headers
    * @param jsonPagingPath
+   * @param jsonRecordsPath
    * @param tempFile
    * @return
    */
-  public static boolean downloadPagedFile(String url, String jsonPagingPath, String jsonRecordsPath, File tempFile) {
+  public static boolean downloadPagedFile(String url, Map<String, String> headers, String jsonPagingPath, String jsonRecordsPath, File tempFile) {
 
     // Download the first file, as a string
-    String content = HttpGetCommand.execute(url);
+    String content = HttpGetCommand.execute(url, headers);
     if (StringUtils.isBlank(content)) {
       return false;
     }
@@ -194,7 +234,7 @@ public class DatasetDownloadRemoteFileCommand {
       }
 
       // Append any pages
-      appendNextUrls(jsonRecordsNode, json, jsonPagingPath, jsonRecordsPath);
+      appendNextUrls(jsonRecordsNode, json, headers, jsonPagingPath, jsonRecordsPath);
 
       // Write the whole JSON to a file
       SaveTextFileCommand.save(json.toPrettyString(), tempFile);
@@ -206,7 +246,7 @@ public class DatasetDownloadRemoteFileCommand {
     }
   }
 
-  private static void appendNextUrls(JsonNode jsonRecordsNode, JsonNode currentJson, String jsonPagingPath,
+  private static void appendNextUrls(JsonNode jsonRecordsNode, JsonNode currentJson, Map<String, String> headers, String jsonPagingPath,
       String jsonRecordsPath) throws IOException {
 
     if (currentJson == null) {
@@ -232,7 +272,7 @@ public class DatasetDownloadRemoteFileCommand {
     LOG.debug("Next url: " + nextUrl);
 
     // Use the url to get the next page content
-    String content = HttpGetCommand.execute(nextUrl);
+    String content = HttpGetCommand.execute(nextUrl, headers);
     if (StringUtils.isBlank(content)) {
       throw new IOException("Content is blank");
     }
@@ -266,7 +306,7 @@ public class DatasetDownloadRemoteFileCommand {
     }
 
     // Keep going
-    appendNextUrls(jsonRecordsNode, nextJson, jsonPagingPath, jsonRecordsPath);
+    appendNextUrls(jsonRecordsNode, nextJson, headers, jsonPagingPath, jsonRecordsPath);
   }
 
 }
