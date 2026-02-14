@@ -191,6 +191,50 @@
     padding: 2rem;
     color: #666;
   }
+  .file-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    align-items: center;
+  }
+  .file-search {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  .sort-select {
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    min-width: 150px;
+  }
+  .pagination {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding: 1rem 0;
+  }
+  .pagination button {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+  }
+  .pagination button:hover:not(:disabled) {
+    background-color: #e3f2fd;
+    border-color: #2196F3;
+  }
+  .pagination button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .pagination .page-info {
+    padding: 0.5rem 0.75rem;
+    color: #666;
+  }
 </style>
 <div class="tinymce-browser-container">
   <!-- Sidebar with folders -->
@@ -206,9 +250,21 @@
   <!-- Main content with files -->
   <div class="browser-content">
     <div id="breadcrumb-container"></div>
+    <div class="file-controls">
+      <input type="text" id="file-search" class="file-search" placeholder="Search files..." />
+      <select id="sort-select" class="sort-select">
+        <option value="modified-desc">Modified (Newest First)</option>
+        <option value="modified-asc">Modified (Oldest First)</option>
+        <option value="title-asc">Title (A-Z)</option>
+        <option value="title-desc">Title (Z-A)</option>
+        <option value="size-desc">Size (Largest First)</option>
+        <option value="size-asc">Size (Smallest First)</option>
+      </select>
+    </div>
     <div id="file-list-container">
       <div class="empty-state">Select a repository to browse files</div>
     </div>
+    <div id="pagination-container"></div>
   </div>
 </div>
 
@@ -221,15 +277,41 @@ class TinyMCEFileBrowser {
     this.currentFolderId = -1;
     this.parentFolderId = -1;
     this.breadcrumbs = [];
+    this.currentPage = 1;
+    this.pageSize = 25;
+    this.totalFiles = 0;
+    this.sortBy = 'modified-desc';
+    this.fileSearchTerm = '';
     this.folderSearch = document.getElementById('folder-search');
+    this.fileSearch = document.getElementById('file-search');
+    this.sortSelect = document.getElementById('sort-select');
     this.folderListContainer = document.getElementById('folder-list-container');
     this.fileListContainer = document.getElementById('file-list-container');
     this.breadcrumbContainer = document.getElementById('breadcrumb-container');
+    this.paginationContainer = document.getElementById('pagination-container');
   }
 
   init() {
     if (this.folderSearch) {
       this.folderSearch.addEventListener('input', () => this.loadFolders());
+    }
+    if (this.fileSearch) {
+      this.fileSearch.addEventListener('input', () => {
+        this.fileSearchTerm = this.fileSearch.value.trim();
+        this.currentPage = 1;
+        if (this.currentFolderId > 0) {
+          this.loadFiles(this.currentFolderId, this.currentSubFolderId);
+        }
+      });
+    }
+    if (this.sortSelect) {
+      this.sortSelect.addEventListener('change', () => {
+        this.sortBy = this.sortSelect.value;
+        this.currentPage = 1;
+        if (this.currentFolderId > 0) {
+          this.loadFiles(this.currentFolderId, this.currentSubFolderId);
+        }
+      });
     }
     this.loadFolders();
   }
@@ -401,6 +483,7 @@ class TinyMCEFileBrowser {
 
   async loadFiles(folderId, subFolderId) {
     try {
+      this.currentSubFolderId = subFolderId;
       const url = new URL('${ctx}/json/documentFileList', window.location.origin);
       if (subFolderId && subFolderId > 0) {
         url.searchParams.set('folderId', this.parentFolderId);
@@ -408,8 +491,12 @@ class TinyMCEFileBrowser {
       } else {
         url.searchParams.set('folderId', folderId);
       }
-      url.searchParams.set('page', 1);
-      url.searchParams.set('limit', 100);
+      url.searchParams.set('page', this.currentPage);
+      url.searchParams.set('limit', this.pageSize);
+      
+      if (this.fileSearchTerm) {
+        url.searchParams.set('search', this.fileSearchTerm);
+      }
 
       const response = await fetch(url.toString(), { credentials: 'same-origin' });
       if (!response.ok) {
@@ -417,6 +504,10 @@ class TinyMCEFileBrowser {
       }
       const payload = await response.json();
       this.files = payload.files || [];
+      this.totalFiles = payload.total || this.files.length;
+      
+      // Apply client-side sorting if needed
+      this.sortFiles();
       
       // If we're viewing a root folder, load its subfolders too
       if (!subFolderId && this.parentFolderId === -1) {
@@ -424,12 +515,37 @@ class TinyMCEFileBrowser {
       }
       
       this.renderFiles(subFolderId);
+      this.renderPagination();
     } catch (err) {
       console.error('Unable to load files', err);
       if (this.fileListContainer) {
         this.fileListContainer.innerHTML = '<div class="empty-state">Unable to load files</div>';
       }
     }
+  }
+
+  sortFiles() {
+    const [field, direction] = this.sortBy.split('-');
+    this.files.sort((a, b) => {
+      let aVal, bVal;
+      
+      if (field === 'title') {
+        aVal = (a.title || a.filename || '').toLowerCase();
+        bVal = (b.title || b.filename || '').toLowerCase();
+      } else if (field === 'modified') {
+        aVal = new Date(a.modified || 0).getTime();
+        bVal = new Date(b.modified || 0).getTime();
+      } else if (field === 'size') {
+        aVal = a.fileLength || 0;
+        bVal = b.fileLength || 0;
+      }
+      
+      if (direction === 'asc') {
+        return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+      } else {
+        return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+      }
+    });
   }
 
   async loadSubfoldersForDisplay(folderId) {
@@ -551,6 +667,54 @@ class TinyMCEFileBrowser {
       }, '*');
       </c:otherwise>
     </c:choose>
+  }
+
+  renderPagination() {
+    if (!this.paginationContainer) {
+      return;
+    }
+    
+    this.paginationContainer.innerHTML = '';
+    
+    if (this.totalFiles <= this.pageSize) {
+      return; // No pagination needed
+    }
+    
+    const totalPages = Math.ceil(this.totalFiles / this.pageSize);
+    const pagination = document.createElement('div');
+    pagination.className = 'pagination';
+    
+    // Previous button
+    const prevBtn = document.createElement('button');
+    prevBtn.textContent = '« Previous';
+    prevBtn.disabled = this.currentPage === 1;
+    prevBtn.addEventListener('click', () => {
+      if (this.currentPage > 1) {
+        this.currentPage--;
+        this.loadFiles(this.currentFolderId, this.currentSubFolderId);
+      }
+    });
+    pagination.appendChild(prevBtn);
+    
+    // Page info
+    const pageInfo = document.createElement('span');
+    pageInfo.className = 'page-info';
+    pageInfo.textContent = `Page ${this.currentPage} of ${totalPages}`;
+    pagination.appendChild(pageInfo);
+    
+    // Next button
+    const nextBtn = document.createElement('button');
+    nextBtn.textContent = 'Next »';
+    nextBtn.disabled = this.currentPage >= totalPages;
+    nextBtn.addEventListener('click', () => {
+      if (this.currentPage < totalPages) {
+        this.currentPage++;
+        this.loadFiles(this.currentFolderId, this.currentSubFolderId);
+      }
+    });
+    pagination.appendChild(nextBtn);
+    
+    this.paginationContainer.appendChild(pagination);
   }
 
   getMimeIcon(mimeType, filename) {
