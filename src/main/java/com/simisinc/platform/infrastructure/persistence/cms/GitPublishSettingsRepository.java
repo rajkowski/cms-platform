@@ -97,9 +97,7 @@ public class GitPublishSettingsRepository {
         .add("target_directory", record.getTargetDirectory())
         .add("modified", new Timestamp(System.currentTimeMillis()))
         .add("modified_by", record.getModifiedBy(), -1);
-    SqlUtils where = new SqlUtils()
-        .add("settings_id = ?", record.getId());
-    if (DB.update(TABLE_NAME, updateValues, where)) {
+    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("settings_id = ?", record.getId()))) {
       return record;
     }
     LOG.error("The update failed!");
@@ -108,7 +106,8 @@ public class GitPublishSettingsRepository {
 
   public static boolean remove(GitPublishSettings record) {
     try (Connection connection = DB.getConnection()) {
-      return DB.deleteFrom(connection, TABLE_NAME, PRIMARY_KEY, record.getId());
+      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("settings_id = ?", record.getId()));
+      return true;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
