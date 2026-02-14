@@ -41,6 +41,7 @@ public class FileBrowserWidget extends GenericWidget {
   private static Log LOG = LogFactory.getLog(FileBrowserWidget.class);
 
   private static String JSP = "/cms/file-browser.jsp";
+  private static String ENHANCED_JSP = "/cms/enhanced-file-browser.jsp";
 
   public WidgetContext execute(WidgetContext context) {
 
@@ -48,16 +49,21 @@ public class FileBrowserWidget extends GenericWidget {
     context.getRequest().setAttribute("icon", context.getPreferences().get("icon"));
     context.getRequest().setAttribute("title", context.getPreferences().get("title"));
 
-    // Display web pages from the menu that can be linked to
-    List<MenuTab> menuTabList = LoadMenuTabsCommand.findAllIncludeMenuItemList();
-    context.getRequest().setAttribute("menuTabList", menuTabList);
+    // Check if enhanced browser should be used (default to enhanced)
+    boolean useEnhanced = !"false".equals(context.getPreferences().get("useEnhanced"));
 
-    // Display files that can be linked to
-    FileSpecification fileSpecification = new FileSpecification();
-    fileSpecification.setForUserId(context.getUserId());
-    fileSpecification.setFileType("pdf");
-    List<FileItem> fileItemList = FileItemRepository.findAll(fileSpecification, null);
-    context.getRequest().setAttribute("fileItemList", fileItemList);
+    if (!useEnhanced) {
+      // Legacy browser: Display web pages from the menu that can be linked to
+      List<MenuTab> menuTabList = LoadMenuTabsCommand.findAllIncludeMenuItemList();
+      context.getRequest().setAttribute("menuTabList", menuTabList);
+
+      // Display files that can be linked to
+      FileSpecification fileSpecification = new FileSpecification();
+      fileSpecification.setForUserId(context.getUserId());
+      fileSpecification.setFileType("pdf");
+      List<FileItem> fileItemList = FileItemRepository.findAll(fileSpecification, null);
+      context.getRequest().setAttribute("fileItemList", fileItemList);
+    }
 
     if ("reveal".equals(context.getRequest().getParameter("view"))) {
       context.setEmbedded(true);
@@ -68,7 +74,7 @@ public class FileBrowserWidget extends GenericWidget {
 
     // Show the editor
     context.setEmbedded(true);
-    context.setJsp(JSP);
+    context.setJsp(useEnhanced ? ENHANCED_JSP : JSP);
     return context;
   }
 }
