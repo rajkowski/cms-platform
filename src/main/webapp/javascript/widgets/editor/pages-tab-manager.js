@@ -870,9 +870,19 @@ class PagesTabManager {
   formatDate(timestamp) {
     const date = new Date(timestamp);
     const now = new Date();
-    const diffMs = now - date;
+    
+    // Handle invalid or future dates
+    if (!timestamp || date > now) {
+      const options = { year: 'numeric', month: 'short', day: 'numeric' };
+      return date.toLocaleDateString(undefined, options);
+    }
+    
+    // Compare calendar dates, not just time differences
+    const dateStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const nowStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const diffMs = nowStart - dateStart;
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
+    
     if (diffDays === 0) {
       return 'Today';
     } else if (diffDays === 1) {
