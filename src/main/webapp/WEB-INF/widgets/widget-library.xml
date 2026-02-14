@@ -73,6 +73,7 @@
   <widget name="imageBrowser" class="com.simisinc.platform.presentation.widgets.cms.ImageBrowserWidget" />
   <widget name="videoBrowser" class="com.simisinc.platform.presentation.widgets.cms.VideoBrowserWidget" />
   <widget name="fileBrowser" class="com.simisinc.platform.presentation.widgets.cms.FileBrowserWidget" />
+  <widget name="contentBrowser" class="com.simisinc.platform.presentation.widgets.cms.ContentBrowserWidget" />
   <widget name="wiki" class="com.simisinc.platform.presentation.widgets.cms.WikiWidget" />
   <widget name="wikiEditor" class="com.simisinc.platform.presentation.widgets.cms.WikiEditorWidget" />
   <widget name="streamImage" class="com.simisinc.platform.presentation.widgets.cms.StreamImageWidget" />

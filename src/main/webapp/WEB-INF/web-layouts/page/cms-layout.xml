@@ -245,6 +245,9 @@
   <page name="/file-browser" role="admin,content-manager" title="File Browser">
     <widget name="fileBrowser" />
   </page>
+  <page name="/content-browser" role="admin,content-manager" title="Content Browser">
+    <widget name="contentBrowser" />
+  </page>
   <page name="/image-upload" role="admin,content-manager">
     <widget name="imageUpload" />
   </page>
