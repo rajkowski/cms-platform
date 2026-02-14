@@ -871,14 +871,22 @@ class PagesTabManager {
 
   /**
    * Format a timestamp for display
+   * Handles both number and string timestamps from JSON responses
    */
   formatDate(timestamp) {
-    // Validate timestamp
-    if (!timestamp || typeof timestamp !== 'number') {
+    // Validate and convert timestamp
+    if (!timestamp) {
       return 'Unknown';
     }
     
-    const date = new Date(timestamp);
+    // Handle string timestamps from JSON
+    const timestampNum = typeof timestamp === 'string' ? parseInt(timestamp, 10) : timestamp;
+    
+    if (typeof timestampNum !== 'number' || isNaN(timestampNum)) {
+      return 'Unknown';
+    }
+    
+    const date = new Date(timestampNum);
     
     // Check for invalid date
     if (isNaN(date.getTime())) {
@@ -894,6 +902,7 @@ class PagesTabManager {
     }
     
     // Compare calendar dates, not just time differences
+    // This ensures accurate "Today"/"Yesterday" across midnight boundaries
     const dateStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
     const nowStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const diffMs = nowStart - dateStart;
@@ -906,9 +915,12 @@ class PagesTabManager {
     } else if (diffDays < 7) {
       return `${diffDays} days ago`;
     } else if (diffDays < 30) {
+      // Use 30 days as approximation for readability
+      // More precise than actual month length, simpler than date math
       const weeks = Math.floor(diffDays / 7);
       return `${weeks} ${weeks === 1 ? 'week' : 'weeks'} ago`;
     } else {
+      // For dates older than ~1 month, show absolute date
       const options = { year: 'numeric', month: 'short', day: 'numeric' };
       return date.toLocaleDateString(undefined, options);
     }
