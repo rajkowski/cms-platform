@@ -231,7 +231,7 @@ class ImageBrowserManager {
       }
     }
 
-    const startIndex = append ? this.images.length - this.pageSize : 0;
+    const startIndex = append ? (this.currentPage - 1) * this.pageSize : 0;
     const imagesToRender = append ? this.images.slice(startIndex) : this.images;
 
     imagesToRender.forEach(image => {
