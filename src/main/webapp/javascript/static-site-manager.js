@@ -28,6 +28,8 @@
     this.generateUrl = config.generateUrl;
     this.deleteUrl = config.deleteUrl;
     this.downloadUrl = config.downloadUrl;
+    this.gitSettingsUrl = config.gitSettingsUrl;
+    this.saveGitSettingsUrl = config.saveGitSettingsUrl;
     this.token = config.token;
 
     this.pollingInterval = 5000; // 5 seconds
@@ -39,11 +41,27 @@
     this.closeModalBtn.addEventListener('click', this.hideModal.bind(this));
     this.generateBtn.addEventListener('click', this.generateSite.bind(this));
     this.fileList.addEventListener('click', this.handleFileAction.bind(this));
+
+    // Git settings
+    const gitEnabledCheckbox = document.getElementById('git-enabled');
+    const gitSettingsFields = document.getElementById('git-settings-fields');
+    const saveGitSettingsBtn = document.getElementById('save-git-settings-btn');
+
+    if (gitEnabledCheckbox && gitSettingsFields) {
+      gitEnabledCheckbox.addEventListener('change', function () {
+        gitSettingsFields.style.display = this.checked ? 'block' : 'none';
+      });
+    }
+
+    if (saveGitSettingsBtn) {
+      saveGitSettingsBtn.addEventListener('click', this.saveGitSettings.bind(this));
+    }
   };
 
   StaticSiteManager.prototype.showModal = function () {
     this.modal.style.display = 'flex';
     this.loadFileList();
+    this.loadGitSettings();
   };
 
   StaticSiteManager.prototype.hideModal = function () {
@@ -186,6 +204,107 @@
       .catch(error => {
         console.error('Error polling for status:', error);
         this.stopPolling();
+      });
+  };
+
+  StaticSiteManager.prototype.loadGitSettings = function () {
+    if (!this.gitSettingsUrl) {
+      return;
+    }
+
+    fetch(this.gitSettingsUrl + '&token=' + encodeURIComponent(this.token))
+      .then(response => response.json())
+      .then(data => {
+        // Populate the form
+        const gitEnabled = document.getElementById('git-enabled');
+        const gitSettingsFields = document.getElementById('git-settings-fields');
+
+        if (gitEnabled) {
+          gitEnabled.checked = data.enabled || false;
+          if (gitSettingsFields) {
+            gitSettingsFields.style.display = gitEnabled.checked ? 'block' : 'none';
+          }
+        }
+
+        if (data.gitProvider) {
+          document.getElementById('git-provider').value = data.gitProvider;
+        }
+        if (data.repositoryUrl) {
+          document.getElementById('repository-url').value = data.repositoryUrl;
+        }
+        if (data.branchName) {
+          document.getElementById('branch-name').value = data.branchName;
+        }
+        if (data.baseBranch) {
+          document.getElementById('base-branch').value = data.baseBranch;
+        }
+        if (data.username) {
+          document.getElementById('git-username').value = data.username;
+        }
+        if (data.email) {
+          document.getElementById('git-email').value = data.email;
+        }
+        if (data.commitMessageTemplate) {
+          document.getElementById('commit-message-template').value = data.commitMessageTemplate;
+        }
+        if (data.autoCreatePr !== undefined) {
+          document.getElementById('auto-create-pr').checked = data.autoCreatePr;
+        }
+        if (data.prTitleTemplate) {
+          document.getElementById('pr-title-template').value = data.prTitleTemplate;
+        }
+        if (data.prDescriptionTemplate) {
+          document.getElementById('pr-description-template').value = data.prDescriptionTemplate;
+        }
+        if (data.targetDirectory) {
+          document.getElementById('target-directory').value = data.targetDirectory;
+        }
+      })
+      .catch(error => {
+        console.error('Error loading Git settings:', error);
+      });
+  };
+
+  StaticSiteManager.prototype.saveGitSettings = function () {
+    const formData = new FormData();
+    formData.append('token', this.token);
+    formData.append('action', 'saveGitSettings');
+    formData.append('enabled', document.getElementById('git-enabled').checked ? 'true' : 'false');
+    formData.append('gitProvider', document.getElementById('git-provider').value);
+    formData.append('repositoryUrl', document.getElementById('repository-url').value);
+    formData.append('branchName', document.getElementById('branch-name').value);
+    formData.append('baseBranch', document.getElementById('base-branch').value);
+
+    const accessToken = document.getElementById('access-token').value;
+    if (accessToken) {
+      formData.append('accessToken', accessToken);
+    }
+
+    formData.append('username', document.getElementById('git-username').value);
+    formData.append('email', document.getElementById('git-email').value);
+    formData.append('commitMessageTemplate', document.getElementById('commit-message-template').value);
+    formData.append('autoCreatePr', document.getElementById('auto-create-pr').checked ? 'true' : 'false');
+    formData.append('prTitleTemplate', document.getElementById('pr-title-template').value);
+    formData.append('prDescriptionTemplate', document.getElementById('pr-description-template').value);
+    formData.append('targetDirectory', document.getElementById('target-directory').value);
+
+    fetch(this.saveGitSettingsUrl, {
+      method: 'POST',
+      body: formData
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'success') {
+          alert('Git settings saved successfully!');
+          // Clear the password field after successful save
+          document.getElementById('access-token').value = '';
+        } else {
+          alert('Error saving Git settings: ' + (data.message || 'Unknown error'));
+        }
+      })
+      .catch(error => {
+        console.error('Error saving Git settings:', error);
+        alert('An error occurred while saving Git settings.');
       });
   };
 

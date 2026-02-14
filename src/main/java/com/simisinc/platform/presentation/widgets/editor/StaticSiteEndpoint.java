@@ -26,8 +26,12 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.jobrunr.scheduling.BackgroundJobRequest;
 
+import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.application.cms.LoadGitPublishSettingsCommand;
 import com.simisinc.platform.application.cms.MakeStaticSiteCommand;
+import com.simisinc.platform.application.cms.SaveGitPublishSettingsCommand;
 import com.simisinc.platform.application.json.JsonCommand;
+import com.simisinc.platform.domain.model.cms.GitPublishSettings;
 import com.simisinc.platform.infrastructure.scheduler.cms.MakeStaticSiteJob;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
@@ -70,6 +74,9 @@ public class StaticSiteEndpoint extends GenericWidget {
       } else if ("LIST".equalsIgnoreCase(action)) {
         // The user is listing the files
         return list(context);
+      } else if ("GET_GIT_SETTINGS".equalsIgnoreCase(action)) {
+        // The user is getting Git settings
+        return getGitSettings(context);
       }
       // No default action
       LOG.error("Unknown action: " + action);
@@ -100,6 +107,8 @@ public class StaticSiteEndpoint extends GenericWidget {
         return generate(context);
       } else if ("delete".equals(action)) {
         return delete(context);
+      } else if ("saveGitSettings".equals(action)) {
+        return saveGitSettings(context);
       }
     } catch (IOException e) {
       LOG.error("Error in StaticSiteEndpoint", e);
@@ -237,5 +246,140 @@ public class StaticSiteEndpoint extends GenericWidget {
 
   private void sendErrorResponse(HttpServletResponse response, String message) throws IOException {
     sendJsonResponse(response, "{\"status\":\"error\", \"message\":\"" + message + "\"}");
+  }
+
+  /** Get Git publish settings */
+  private WidgetContext getGitSettings(WidgetContext context) throws IOException {
+    LOG.debug("Getting Git publish settings...");
+
+    GitPublishSettings settings = LoadGitPublishSettingsCommand.loadSettings();
+    Map<String, Object> result = new HashMap<>();
+
+    if (settings != null) {
+      result.put("enabled", settings.getEnabled());
+      result.put("gitProvider", settings.getGitProvider());
+      result.put("repositoryUrl", settings.getRepositoryUrl());
+      result.put("branchName", settings.getBranchName());
+      result.put("baseBranch", settings.getBaseBranch());
+      result.put("username", settings.getUsername());
+      result.put("email", settings.getEmail());
+      result.put("commitMessageTemplate", settings.getCommitMessageTemplate());
+      result.put("autoCreatePr", settings.getAutoCreatePr());
+      result.put("prTitleTemplate", settings.getPrTitleTemplate());
+      result.put("prDescriptionTemplate", settings.getPrDescriptionTemplate());
+      result.put("targetDirectory", settings.getTargetDirectory());
+      // Don't send the access token to the client
+    } else {
+      // Return default values
+      result.put("enabled", false);
+      result.put("gitProvider", "github");
+      result.put("branchName", "main");
+      result.put("baseBranch", "main");
+      result.put("commitMessageTemplate", "Static site update: ${timestamp}");
+      result.put("autoCreatePr", true);
+      result.put("prTitleTemplate", "Static site update: ${timestamp}");
+      result.put("prDescriptionTemplate", "Automated static site export");
+      result.put("targetDirectory", "/");
+    }
+
+    String json = JsonCommand.createJsonNode(result).toString();
+    context.setJson(json);
+    context.setSuccess(true);
+    return context;
+  }
+
+  /** Save Git publish settings */
+  private WidgetContext saveGitSettings(WidgetContext context) throws IOException {
+    LOG.debug("Saving Git publish settings...");
+
+    try {
+      // Load existing settings or create new
+      GitPublishSettings settings = LoadGitPublishSettingsCommand.loadSettings();
+      if (settings == null) {
+        settings = new GitPublishSettings();
+        settings.setCreatedBy(context.getUserId());
+      }
+      settings.setModifiedBy(context.getUserId());
+
+      // Update from request parameters
+      String enabledParam = context.getParameter("enabled");
+      settings.setEnabled("true".equals(enabledParam));
+
+      String gitProvider = context.getParameter("gitProvider");
+      if (gitProvider != null) {
+        settings.setGitProvider(gitProvider);
+      }
+
+      String repositoryUrl = context.getParameter("repositoryUrl");
+      if (repositoryUrl != null) {
+        settings.setRepositoryUrl(repositoryUrl.trim());
+      }
+
+      String branchName = context.getParameter("branchName");
+      if (branchName != null) {
+        settings.setBranchName(branchName.trim());
+      }
+
+      String baseBranch = context.getParameter("baseBranch");
+      if (baseBranch != null) {
+        settings.setBaseBranch(baseBranch.trim());
+      }
+
+      String accessToken = context.getParameter("accessToken");
+      if (accessToken != null && !accessToken.trim().isEmpty()) {
+        settings.setAccessToken(accessToken.trim());
+      }
+
+      String username = context.getParameter("username");
+      if (username != null) {
+        settings.setUsername(username.trim());
+      }
+
+      String email = context.getParameter("email");
+      if (email != null) {
+        settings.setEmail(email.trim());
+      }
+
+      String commitMessageTemplate = context.getParameter("commitMessageTemplate");
+      if (commitMessageTemplate != null) {
+        settings.setCommitMessageTemplate(commitMessageTemplate.trim());
+      }
+
+      String autoCreatePr = context.getParameter("autoCreatePr");
+      settings.setAutoCreatePr("true".equals(autoCreatePr));
+
+      String prTitleTemplate = context.getParameter("prTitleTemplate");
+      if (prTitleTemplate != null) {
+        settings.setPrTitleTemplate(prTitleTemplate.trim());
+      }
+
+      String prDescriptionTemplate = context.getParameter("prDescriptionTemplate");
+      if (prDescriptionTemplate != null) {
+        settings.setPrDescriptionTemplate(prDescriptionTemplate.trim());
+      }
+
+      String targetDirectory = context.getParameter("targetDirectory");
+      if (targetDirectory != null) {
+        settings.setTargetDirectory(targetDirectory.trim());
+      }
+
+      // Save the settings
+      SaveGitPublishSettingsCommand.saveSettings(settings);
+
+      sendSuccessResponse(context.getResponse());
+      context.setHandledResponse(true);
+      return context;
+
+    } catch (DataException e) {
+      LOG.error("Data exception saving Git settings", e);
+      sendErrorResponse(context.getResponse(), e.getMessage());
+      context.setHandledResponse(true);
+      return context;
+    } catch (Exception e) {
+      LOG.error("Error saving Git settings", e);
+      sendErrorResponse(context.getResponse(), "Failed to save settings: " + e.getMessage());
+      context.setHandledResponse(true);
+      return context;
+    }
   }
 }
