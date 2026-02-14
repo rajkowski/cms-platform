@@ -45,11 +45,27 @@ public class WebPageListAjax extends GenericWidget {
       return context;
     }
 
+    // Get sort parameter (a-z, modified, hierarchy)
+    String sortBy = context.getParameter("sortBy", "a-z");
+
     // Retrieve all enabled web pages
     WebPageSpecification specification = new WebPageSpecification();
     // specification.setEnabled(true);
 
-    List<WebPage> pageList = WebPageRepository.findAll(specification, null);
+    com.simisinc.platform.infrastructure.database.DataConstraints constraints = new com.simisinc.platform.infrastructure.database.DataConstraints();
+    
+    // Set sorting based on parameter
+    if ("modified".equals(sortBy)) {
+      constraints.setColumnToSortBy("modified", "desc");
+    } else if ("hierarchy".equals(sortBy)) {
+      // For hierarchy, we'll sort by path from the hierarchy table
+      constraints.setColumnToSortBy("link", "asc");
+    } else {
+      // Default: A-Z sorting by title
+      constraints.setColumnToSortBy("title", "asc");
+    }
+
+    List<WebPage> pageList = WebPageRepository.findAll(specification, constraints);
 
     // Build JSON response
     StringBuilder sb = new StringBuilder();
@@ -61,7 +77,8 @@ public class WebPageListAjax extends GenericWidget {
       sb.append("\"id\":").append(page.getId()).append(",");
       sb.append("\"link\":\"").append(JsonCommand.toJson(page.getLink())).append("\",");
       String pageTitle = StringUtils.isNotBlank(page.getTitle()) ? page.getTitle() : page.getLink();
-      sb.append("\"title\":\"").append(JsonCommand.toJson(pageTitle)).append("\"");
+      sb.append("\"title\":\"").append(JsonCommand.toJson(pageTitle)).append("\",");
+      sb.append("\"modified\":").append(page.getModified() != null ? page.getModified().getTime() : "null");
       sb.append("}");
     }
 

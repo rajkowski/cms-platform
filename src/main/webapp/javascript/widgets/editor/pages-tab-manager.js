@@ -12,6 +12,10 @@ class PagesTabManager {
     this.pages = [];
     this.selectedPageId = null;
     this.selectedPageLink = null;
+    this.currentSortBy = 'a-z'; // Default sorting
+    this.hierarchyMode = false;
+    this.currentParentId = null;
+    this.hierarchyStack = []; // Stack for back navigation
   }
 
   /**
@@ -20,6 +24,8 @@ class PagesTabManager {
   init() {
     this.setupEventListeners();
     this.setupSearchListener();
+    this.setupSortListener();
+    this.setupHierarchyNavigation();
     this.loadPages();
   }
 
@@ -30,6 +36,60 @@ class PagesTabManager {
     const pageList = document.getElementById('web-page-list');
     if (pageList) {
       pageList.addEventListener('click', (e) => this.handlePageClick(e));
+    }
+  }
+
+  /**
+   * Set up sort selector listener
+   */
+  setupSortListener() {
+    const sortSelect = document.getElementById('pages-sort-select');
+    if (sortSelect) {
+      sortSelect.addEventListener('change', (e) => {
+        this.currentSortBy = e.target.value;
+        this.hierarchyMode = this.currentSortBy === 'hierarchy';
+        
+        // Show/hide hierarchy navigation
+        const hierarchyNav = document.getElementById('pages-hierarchy-nav');
+        if (hierarchyNav) {
+          hierarchyNav.style.display = this.hierarchyMode ? 'block' : 'none';
+        }
+        
+        // Reset hierarchy state when switching modes
+        if (!this.hierarchyMode) {
+          this.currentParentId = null;
+          this.hierarchyStack = [];
+        }
+        
+        this.loadPages();
+      });
+    }
+  }
+
+  /**
+   * Set up hierarchy navigation buttons
+   */
+  setupHierarchyNavigation() {
+    const backToRootBtn = document.getElementById('pages-back-to-root');
+    if (backToRootBtn) {
+      backToRootBtn.addEventListener('click', () => {
+        this.currentParentId = null;
+        this.hierarchyStack = [];
+        this.loadPages();
+      });
+    }
+
+    const backToParentBtn = document.getElementById('pages-back-to-parent');
+    if (backToParentBtn) {
+      backToParentBtn.addEventListener('click', () => {
+        if (this.hierarchyStack.length > 0) {
+          this.hierarchyStack.pop(); // Remove current level
+          this.currentParentId = this.hierarchyStack.length > 0 
+            ? this.hierarchyStack[this.hierarchyStack.length - 1].id 
+            : null;
+          this.loadPages();
+        }
+      });
     }
   }
 
@@ -81,7 +141,12 @@ class PagesTabManager {
           
           return aMinPos - bMinPos;
         }) : this.pages;
-        this.renderPageListFiltered(filtered);
+        
+        if (this.hierarchyMode) {
+          this.renderHierarchyList(filtered);
+        } else {
+          this.renderPageListFiltered(filtered);
+        }
       });
     }
   }
@@ -105,7 +170,16 @@ class PagesTabManager {
       emptyEl.style.display = 'none';
     }
 
-    fetch('/json/webPageList')
+    // If in hierarchy mode, use the hierarchy endpoint
+    if (this.hierarchyMode) {
+      this.loadHierarchyPages();
+      return;
+    }
+
+    // Otherwise, use the regular page list endpoint with sorting
+    const url = `/json/webPageList?sortBy=${encodeURIComponent(this.currentSortBy)}`;
+    
+    fetch(url)
       .then(response => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -208,6 +282,15 @@ class PagesTabManager {
 
       info.appendChild(title);
       info.appendChild(link);
+      
+      // Add modified date if available and in "modified" sort mode
+      if (page.modified && this.currentSortBy === 'modified') {
+        const modified = document.createElement('div');
+        modified.className = 'web-page-modified';
+        modified.textContent = this.formatDate(page.modified);
+        info.appendChild(modified);
+      }
+      
       item.appendChild(info);
 
       li.appendChild(item);
@@ -634,6 +717,174 @@ class PagesTabManager {
     if (errorEl) {
       errorEl.style.display = 'none';
       errorEl.innerHTML = '';
+    }
+  }
+
+  /**
+   * Load pages in hierarchy mode
+   */
+  loadHierarchyPages() {
+    const loadingEl = document.getElementById('pages-loading');
+    const errorEl = document.getElementById('pages-error');
+    const listEl = document.getElementById('web-page-list');
+
+    if (loadingEl) {
+      loadingEl.style.display = 'block';
+    }
+
+    // Construct URL with parentId parameter
+    const parentIdParam = this.currentParentId !== null ? this.currentParentId : 'null';
+    const url = `/json/pages/children?parentId=${parentIdParam}`;
+
+    fetch(url)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(result => {
+        if (loadingEl) {
+          loadingEl.style.display = 'none';
+        }
+
+        if (result.status === 'ok' && result.data) {
+          this.pages = result.data;
+          this.updateHierarchyNavigation();
+          this.renderHierarchyList(result.data);
+        } else {
+          throw new Error(result.error || 'Failed to load hierarchy');
+        }
+      })
+      .catch(error => {
+        console.error('Error loading hierarchy:', error);
+        if (loadingEl) {
+          loadingEl.style.display = 'none';
+        }
+        if (errorEl) {
+          this.showError(errorEl, 'Error loading page hierarchy: ' + error.message);
+        }
+      });
+  }
+
+  /**
+   * Update hierarchy navigation UI
+   */
+  updateHierarchyNavigation() {
+    const pathEl = document.getElementById('pages-current-path');
+    const backToParentBtn = document.getElementById('pages-back-to-parent');
+
+    if (pathEl) {
+      if (this.hierarchyStack.length === 0) {
+        pathEl.textContent = 'Root Level';
+      } else {
+        const pathParts = this.hierarchyStack.map(item => item.title);
+        pathEl.textContent = pathParts.join(' > ');
+      }
+    }
+
+    if (backToParentBtn) {
+      backToParentBtn.style.display = this.hierarchyStack.length > 0 ? 'inline-block' : 'none';
+    }
+  }
+
+  /**
+   * Render hierarchy list with expand/collapse icons
+   */
+  renderHierarchyList(pages) {
+    const listEl = document.getElementById('web-page-list');
+    if (!listEl) {
+      return;
+    }
+
+    listEl.innerHTML = '';
+
+    if (!pages || pages.length === 0) {
+      listEl.innerHTML = '<li style="text-align: center; padding: 40px; color: #999;">No pages at this level</li>';
+      return;
+    }
+
+    pages.forEach(page => {
+      const li = document.createElement('li');
+      const item = document.createElement('div');
+      item.className = 'web-page-item';
+      if (page.hasChildren) {
+        item.classList.add('has-children');
+      }
+      item.setAttribute('data-page-id', page.id);
+      item.setAttribute('data-page-link', page.link);
+
+      // Check if this is the currently editing page
+      if (this.pageEditor.config.webPageLink === page.link) {
+        item.classList.add('selected');
+        this.selectedPageId = page.id;
+        this.selectedPageLink = page.link;
+      }
+
+      // Add expand icon if page has children
+      if (page.hasChildren) {
+        const expandIcon = document.createElement('div');
+        expandIcon.className = 'web-page-expand-icon';
+        expandIcon.innerHTML = '<i class="far fa-chevron-right"></i>';
+        expandIcon.setAttribute('data-page-id', page.id);
+        expandIcon.setAttribute('data-page-title', page.title);
+        expandIcon.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.expandHierarchyNode(page.id, page.title);
+        });
+        item.appendChild(expandIcon);
+      }
+
+      const info = document.createElement('div');
+      info.className = 'web-page-info';
+
+      const title = document.createElement('div');
+      title.className = 'web-page-title';
+      title.textContent = page.title;
+
+      const link = document.createElement('div');
+      link.className = 'web-page-link';
+      link.textContent = page.link;
+
+      info.appendChild(title);
+      info.appendChild(link);
+      item.appendChild(info);
+
+      li.appendChild(item);
+      listEl.appendChild(li);
+    });
+  }
+
+  /**
+   * Expand a hierarchy node to show its children
+   */
+  expandHierarchyNode(pageId, pageTitle) {
+    this.hierarchyStack.push({ id: pageId, title: pageTitle });
+    this.currentParentId = pageId;
+    this.loadPages();
+  }
+
+  /**
+   * Format a timestamp for display
+   */
+  formatDate(timestamp) {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
+      return 'Today';
+    } else if (diffDays === 1) {
+      return 'Yesterday';
+    } else if (diffDays < 7) {
+      return `${diffDays} days ago`;
+    } else if (diffDays < 30) {
+      const weeks = Math.floor(diffDays / 7);
+      return `${weeks} ${weeks === 1 ? 'week' : 'weeks'} ago`;
+    } else {
+      const options = { year: 'numeric', month: 'short', day: 'numeric' };
+      return date.toLocaleDateString(undefined, options);
     }
   }
 }
