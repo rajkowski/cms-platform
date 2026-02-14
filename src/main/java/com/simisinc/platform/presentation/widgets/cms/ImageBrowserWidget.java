@@ -16,14 +16,10 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
-import com.simisinc.platform.domain.model.cms.Image;
-import com.simisinc.platform.infrastructure.persistence.cms.ImageRepository;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import java.util.List;
 
 /**
  * Description
@@ -45,8 +41,8 @@ public class ImageBrowserWidget extends GenericWidget {
     context.getRequest().setAttribute("icon", context.getPreferences().get("icon"));
     context.getRequest().setAttribute("title", context.getPreferences().get("title"));
 
-    List<Image> imageList = ImageRepository.findAll();
-    context.getRequest().setAttribute("imageList", imageList);
+    // Images are now loaded via AJAX through ImageLibraryAjax
+    // No need to load all images upfront
 
     if ("reveal".equals(context.getRequest().getParameter("view"))) {
       context.setEmbedded(true);
