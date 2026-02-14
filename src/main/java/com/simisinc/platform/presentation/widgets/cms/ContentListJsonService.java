@@ -58,9 +58,10 @@ public class ContentListJsonService extends GenericWidget {
       int offset = context.getParameterAsInt("offset", 0);
       int limit = context.getParameterAsInt("limit", 50);
       String searchTerm = context.getParameter("search");
+      String sortBy = context.getParameter("sortBy");
 
       // Load content list
-      List<Content> contentList = LoadContentListCommand.loadContentList(searchTerm, offset, limit);
+      List<Content> contentList = LoadContentListCommand.loadContentList(searchTerm, offset, limit, sortBy);
 
       // Build JSON response
       StringBuilder json = new StringBuilder();
