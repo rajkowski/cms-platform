@@ -16,9 +16,9 @@
 
 package com.simisinc.platform.domain.model.cms;
 
-import com.simisinc.platform.domain.model.Entity;
-
 import java.sql.Timestamp;
+
+import com.simisinc.platform.domain.model.Entity;
 
 /**
  * A website content block
@@ -32,6 +32,7 @@ public class Content extends Entity {
 
   private String uniqueId = null;
   private String content = null;
+  private String contentAsText = null;
   private String draftContent = null;
   private long createdBy = -1;
   private long modifiedBy = -1;
@@ -64,6 +65,14 @@ public class Content extends Entity {
 
   public void setContent(String content) {
     this.content = content;
+  }
+
+  public String getContentAsText() {
+    return contentAsText;
+  }
+
+  public void setContentAsText(String contentAsText) {
+    this.contentAsText = contentAsText;
   }
 
   public String getDraftContent() {
