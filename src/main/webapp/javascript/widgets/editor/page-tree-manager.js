@@ -284,6 +284,7 @@ class PageTreeManager {
         debounceTimer = setTimeout(() => {
           const query = e.target.value.toLowerCase().trim();
           this.updateSearch(query);
+          this.toggleResetButton(searchInput);
         }, 300);
       });
 
@@ -293,6 +294,27 @@ class PageTreeManager {
           this.focusNextSearchResult();
         }
       });
+
+      // Set up reset button
+      const resetBtn = searchInput.parentElement.querySelector('.search-reset-btn');
+      if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+          searchInput.value = '';
+          this.updateSearch('');
+          this.toggleResetButton(searchInput);
+          searchInput.focus();
+        });
+      }
+    }
+  }
+
+  /**
+   * Toggle the visibility of search reset button based on input value
+   */
+  toggleResetButton(input) {
+    const resetBtn = input.parentElement.querySelector('.search-reset-btn');
+    if (resetBtn) {
+      resetBtn.style.display = input.value.trim() ? 'flex' : 'none';
     }
   }
 

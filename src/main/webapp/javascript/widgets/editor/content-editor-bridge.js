@@ -17,6 +17,14 @@ class ContentEditorBridge {
     this.isSaving = false;
     this.previewMode = 'content';
     this.lastPreviewLink = null;
+    this.pageContentBlocksManager = null;
+  }
+
+  /**
+   * Set the page content blocks manager
+   */
+  setPageContentBlocksManager(manager) {
+    this.pageContentBlocksManager = manager;
   }
 
   /**
@@ -248,11 +256,20 @@ class ContentEditorBridge {
     if (!pageLink) {
       this.lastPreviewLink = null;
       this.showPreviewMessage('Select a page with a valid link to preview.');
+      // Clear content blocks
+      if (this.pageContentBlocksManager) {
+        this.pageContentBlocksManager.clear();
+      }
       return;
     }
 
     this.lastPreviewLink = pageLink;
     iframe.src = pageLink;
+
+    // Load content blocks for this page
+    if (this.pageContentBlocksManager) {
+      this.pageContentBlocksManager.loadContentBlocks(pageLink);
+    }
   }
 
   /**

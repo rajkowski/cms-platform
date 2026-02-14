@@ -45,6 +45,35 @@ class PageLibraryManager {
       // Show selected page in right pane preview/properties
       this.showSelectedPagePreview(pageBox);
     });
+
+    // Set up search listener on the page library search input
+    this.setupSearchListener();
+  }
+
+  /**
+   * Set up the search input listener for filtering pages in the library
+   */
+  setupSearchListener() {
+    const searchInput = document.getElementById('page-library-search');
+    if (!searchInput) return;
+
+    let debounceTimer;
+    searchInput.addEventListener('input', (e) => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        this.applyActiveSearch();
+      }, 200);
+    });
+
+    // Set up reset button
+    const resetBtn = searchInput.parentElement.querySelector('.search-reset-btn');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        this.applyActiveSearch();
+        searchInput.focus();
+      });
+    }
   }
 
   /**
@@ -236,7 +265,19 @@ class PageLibraryManager {
     if (!searchInput) return;
 
     const query = searchInput.value.toLowerCase().trim();
-    if (!query) return;
+
+    // Toggle reset button visibility
+    const resetBtn = searchInput.parentElement.querySelector('.search-reset-btn');
+    if (resetBtn) {
+      resetBtn.style.display = query ? 'flex' : 'none';
+    }
+
+    if (!query) {
+      // Show all nodes when search is cleared
+      const nodes = document.querySelectorAll('.page-hierarchy-container .page-hierarchy-node');
+      nodes.forEach(node => { node.style.display = ''; });
+      return;
+    }
 
     const nodes = document.querySelectorAll('.page-hierarchy-container .page-hierarchy-box');
     nodes.forEach(node => {

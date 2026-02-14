@@ -1351,7 +1351,12 @@ label {
 /* Preview Tab Styles */
 #preview-content {
   overflow: auto;
+  height: 50%;
+}
+
+#preview-iframe-container {
   height: 100%;
+  overflow-y: hidden;
 }
 
 #preview-iframe {
@@ -1364,6 +1369,7 @@ label {
   transform-origin: top left;
   /* Scale is set dynamically via JavaScript based on panel width */
   max-width: 100%;
+  min-height: 2000px;
   box-sizing: border-box;
 }
 
@@ -2312,4 +2318,178 @@ textarea.property-input {
   border-radius: 4px;
   color: #721c24;
   margin-bottom: 15px;
+}
+
+/* Search Input Wrapper with Reset Button */
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-input-wrapper .property-input {
+  padding-right: 32px;
+}
+
+.search-reset-btn {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--editor-text-muted);
+  padding: 4px 6px;
+  margin: 0;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: color 0.2s, background 0.2s;
+}
+
+.search-reset-btn:hover {
+  color: var(--editor-text);
+  background: var(--editor-hover-bg);
+}
+
+/* Page Content Blocks in Preview Tab */
+#page-content-blocks {
+  height: 50%;
+  border-top: 1px solid var(--editor-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#page-content-blocks h6 {
+  color: var(--editor-text);
+  margin: 0;
+  padding: 10px 15px;
+  font-size: 13px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--editor-border);
+  background: var(--editor-panel-bg);
+  flex-shrink: 0;
+}
+
+#page-content-blocks-list {
+  overflow-y: auto;
+  flex: 1;
+  padding: 8px;
+}
+
+.content-blocks-status {
+  text-align: center;
+  padding: 20px 15px;
+  color: var(--editor-text-muted);
+  font-size: 13px;
+}
+
+.content-blocks-error {
+  color: #dc3545;
+}
+
+.content-block-item {
+  padding: 10px 12px;
+  border: 1px solid var(--editor-border);
+  border-radius: 4px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  background: var(--editor-panel-bg);
+}
+
+.content-block-item:hover {
+  background: var(--editor-hover-bg);
+  border-color: var(--editor-accent);
+}
+
+.content-block-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.content-block-unique-id {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--editor-text);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+.content-block-draft-badge {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: #ffc107;
+  color: #212529;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.content-block-snippet {
+  font-size: 12px;
+  color: var(--editor-text-muted);
+  line-height: 1.4;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.content-block-meta {
+  font-size: 11px;
+  color: var(--editor-text-muted);
+  opacity: 0.8;
+}
+
+/* Content Block Editor Modal */
+#content-block-editor-modal {
+  z-index: 100000;
+}
+
+.content-block-editor-modal-content {
+  max-width: 900px;
+  width: 90vw;
+  height: 80vh;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+.content-block-editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--editor-border);
+  background: var(--editor-panel-bg);
+  flex-shrink: 0;
+}
+
+.content-block-editor-header h4 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--editor-text);
+}
+
+.content-block-editor-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.content-block-editor-body {
+  flex: 1;
+  overflow: hidden;
+  padding: 0;
+}
+
+.content-block-editor-body textarea {
+  width: 100%;
+  height: 100%;
 }

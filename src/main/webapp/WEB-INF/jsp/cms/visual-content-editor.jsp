@@ -113,7 +113,10 @@
 
         <div id="pages-tab" class="tab-content active">
           <div style="margin-bottom: 15px;">
-            <input type="text" id="pages-search" class="property-input" placeholder="Search pages..." style="width: 100%; padding: 10px; font-size: 14px;" />
+            <div class="search-input-wrapper">
+              <input type="text" id="pages-search" class="property-input no-gap" placeholder="Search pages..." style="width: 100%; padding: 10px; font-size: 14px;" />
+              <button type="button" class="search-reset-btn" title="Clear search" style="display:none;"><i class="${font:far()} fa-times-circle"></i></button>
+            </div>
             <div id="pages-search-indicator" style="margin-top: 6px; font-size: 12px; color: var(--editor-text-muted); display: none;"></div>
           </div>
           <div id="pages-error" style="display: none;"></div>
@@ -127,7 +130,10 @@
 
         <div id="content-tab" class="tab-content">
           <div style="margin-bottom: 15px;">
-            <input type="text" id="content-search" class="property-input" placeholder="Search content..." style="width: 100%; padding: 10px; font-size: 14px;" />
+            <div class="search-input-wrapper">
+              <input type="text" id="content-search" class="property-input" placeholder="Search content..." style="width: 100%; padding: 10px; font-size: 14px;" />
+              <button type="button" class="search-reset-btn" title="Clear search" style="display:none;"><i class="${font:far()} fa-times-circle"></i></button>
+            </div>
           </div>
           <div style="margin-bottom: 15px; display: flex; gap: 8px; align-items: center;">
             <label style="font-size: 12px; color: var(--editor-text-muted); margin: 0; white-space: nowrap;">Sort by:</label>
@@ -244,7 +250,10 @@
       
       <div id="page-library-explorer" style="display:none; flex-direction: column;">
         <div style="padding: 15px 20px; background: var(--editor-panel-bg); border-bottom: 1px solid var(--editor-border); flex: 0 0 auto;">
-          <input type="text" id="page-library-search" class="property-input" placeholder="Search pages to add to navigation..." style="width: 100%; padding: 10px; font-size: 14px;" />
+          <div class="search-input-wrapper">
+            <input type="text" id="page-library-search" class="property-input no-gap" placeholder="Search pages to add to navigation..." style="width: 100%; padding: 10px; font-size: 14px;" />
+            <button type="button" class="search-reset-btn" title="Clear search" style="display:none;"><i class="${font:far()} fa-times-circle"></i></button>
+          </div>
         </div>
         <div id="page-library-content" style="padding: 20px; flex: 1 1 auto; overflow-y: auto;">
           <!-- Page Library will be rendered here -->
@@ -278,7 +287,15 @@
         <!-- Preview Tab Content -->
         <div id="preview-tab" class="tab-content right-panel-tab-content active" data-tab="preview">
           <div id="preview-content">
-            <iframe id="preview-iframe" title="Content preview"></iframe>
+            <div id="preview-iframe-container">
+              <iframe id="preview-iframe" title="Content preview"></iframe>
+            </div>
+          </div>
+          <div id="page-content-blocks">
+            <h6>Content Blocks</h6>
+            <div id="page-content-blocks-list">
+              <div class="content-blocks-status">Select a page to view its content blocks</div>
+            </div>
           </div>
         </div>
         
@@ -382,11 +399,29 @@
   <input type="hidden" name="returnPage" value="${returnPage}" />
 </form>
 
+<!-- Content Block Editor Modal -->
+<div id="content-block-editor-modal" class="modal-overlay" style="display:none;">
+  <div class="modal-content content-block-editor-modal-content">
+    <div class="content-block-editor-header">
+      <h4 id="content-block-editor-title">Edit Content Block</h4>
+      <div class="content-block-editor-actions">
+        <button type="button" id="content-block-save-draft" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-save"></i> Save Draft</button>
+        <button type="button" id="content-block-publish" class="button tiny success no-gap radius"><i class="${font:far()} fa-check"></i> Publish</button>
+        <button type="button" id="content-block-editor-close" class="button tiny secondary no-gap radius"><i class="${font:far()} fa-times"></i> Close</button>
+      </div>
+    </div>
+    <div class="content-block-editor-body">
+      <textarea id="content-block-html-editor"></textarea>
+    </div>
+  </div>
+</div>
+
 <!-- JavaScript Modules -->
 <g:compress>
   <script src="/javascript/widgets/editor/content-list-manager.js"></script>
   <script src="/javascript/widgets/editor/page-tree-manager.js"></script>
   <script src="/javascript/widgets/editor/page-library.js"></script>
+  <script src="/javascript/widgets/editor/page-content-blocks.js"></script>
   <script src="/javascript/widgets/editor/sitemap-explorer.js"></script>
   <script src="/javascript/widgets/editor/hub-content-manager.js"></script>
   <script src="/javascript/widgets/editor/content-editor-bridge.js"></script>

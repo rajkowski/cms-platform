@@ -46,6 +46,7 @@
   <service endpoint="/json/pages/reorder" class="com.simisinc.platform.presentation.widgets.cms.PageReorderJsonService" />
   <service endpoint="/json/pages/add-to-hierarchy" class="com.simisinc.platform.presentation.widgets.cms.PageAddToHierarchyJsonService" />
   <service endpoint="/json/pages/remove-from-hierarchy" class="com.simisinc.platform.presentation.widgets.cms.PageRemoveFromHierarchyJsonService" />
+  <service endpoint="/json/pages/content-blocks" class="com.simisinc.platform.presentation.widgets.cms.PageContentBlocksJsonService" />
   <!-- Visual Content Editor - Sitemap Endpoints -->
   <service endpoint="/json/sitemap/structure" class="com.simisinc.platform.presentation.widgets.cms.SitemapStructureJsonService" />
   <service endpoint="/json/sitemap/reorder-tab" class="com.simisinc.platform.presentation.widgets.cms.SitemapReorderTabJsonService" />

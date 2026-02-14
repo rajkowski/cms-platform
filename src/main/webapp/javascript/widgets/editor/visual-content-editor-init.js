@@ -23,6 +23,7 @@
   let hubContentManager;
   let contentEditorBridge;
   let previewManager;
+  let pageContentBlocksManager;
   let pagesReady = false;
   let contentReady = false;
   let hubReady = false;
@@ -42,10 +43,15 @@
     sitemapExplorer = new SitemapExplorer(contentEditorBridge);
     hubContentManager = new HubContentManager(contentEditorBridge);
     previewManager = new PreviewManager(contentEditorBridge);
+    pageContentBlocksManager = new PageContentBlocksManager(contentEditorBridge);
+
+    // Wire pageContentBlocksManager to the bridge
+    contentEditorBridge.setPageContentBlocksManager(pageContentBlocksManager);
 
     // Initialize core managers
     contentEditorBridge.init();
     previewManager.init();
+    pageContentBlocksManager.init();
 
     // Setup event listeners for tab switching
     setupTabListeners();
@@ -167,12 +173,8 @@
     // Apply the scale transform
     previewIframe.style.transform = `scale(${scale})`;
     
-    // Adjust the container height to account for scaled content
-    const previewContent = document.getElementById('preview-content');
-    if (previewContent && scale < 1) {
-      // Height needs to be adjusted since scaled content takes less visual space
-      previewContent.style.minHeight = `${100 / scale}%`;
-    }
+    // Don't adjust container height - let CSS handle the 50/50 split
+    // The preview-content and page-content-blocks are set to 50% height each
   }
 
   /**
@@ -693,6 +695,7 @@
     sitemapExplorer,
     hubContentManager,
     contentEditorBridge,
-    previewManager
+    previewManager,
+    pageContentBlocksManager
   };
 })();
