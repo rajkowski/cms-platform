@@ -69,7 +69,7 @@ public class DocumentSubfoldersAjax extends GenericWidget {
     }
 
     DataConstraints constraints = new DataConstraints();
-    constraints.setDefaultColumnToSortBy("name");
+    constraints.setColumnToSortBy("name", "ASC");
     constraints.setPageSize(500);
 
     List<SubFolder> subfolders = SubFolderRepository.findAll(specification, constraints);

@@ -60,7 +60,7 @@ public class ImageLibraryAjax extends GenericWidget {
 
     // Build constraints
     DataConstraints constraints = new DataConstraints();
-    constraints.setDefaultColumnToSortBy("created DESC");
+    constraints.setColumnToSortBy("created", "DESC");
     constraints.setPageSize(limit);
     constraints.setPageNumber(page);
 

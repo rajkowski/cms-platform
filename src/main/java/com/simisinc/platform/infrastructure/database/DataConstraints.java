@@ -132,7 +132,7 @@ public class DataConstraints implements Serializable {
    */
   public void setColumnToSortBy(String name, String ascOrDesc) {
     columnsToSortBy = new String[]{name};
-    if ("desc".equals(ascOrDesc)) {
+    if ("desc".equalsIgnoreCase(ascOrDesc)) {
       sortOrder = new String[]{"desc"};
     }
   }

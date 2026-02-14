@@ -45,6 +45,19 @@ public class LoadContentListCommand {
    * @return List of Content objects with search highlighting, or null if no results
    */
   public static List<Content> loadContentList(String searchTerm, int offset, int limit) {
+    return loadContentList(searchTerm, offset, limit, null);
+  }
+
+  /**
+   * Retrieves a paginated list of content blocks with optional search filtering and custom sort order
+   *
+   * @param searchTerm Optional search term to filter content by title or text
+   * @param offset     The starting position for pagination (0-based)
+   * @param limit      The maximum number of records to return
+   * @param sortBy     Optional sort order: "alphabetical" or "recent" (default)
+   * @return List of Content objects with search highlighting, or null if no results
+   */
+  public static List<Content> loadContentList(String searchTerm, int offset, int limit, String sortBy) {
     // Create ContentSpecification with search term if provided
     ContentSpecification specification = new ContentSpecification();
     if (StringUtils.isNotBlank(searchTerm)) {
@@ -62,8 +75,13 @@ public class LoadContentListCommand {
       constraints.setPageNumber(1);
     }
 
-    // Set default sort order (most recently modified first)
-    constraints.setDefaultColumnToSortBy("modified DESC");
+    // Set sort order based on sortBy parameter
+    if ("alphabetical".equalsIgnoreCase(sortBy)) {
+      constraints.setColumnToSortBy("content_unique_id", "ASC");
+    } else {
+      // Default: most recently modified first
+      constraints.setColumnToSortBy("modified", "DESC");
+    }
 
     // Query repository
     List<Content> contentList = ContentRepository.findAll(specification, constraints);

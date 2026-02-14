@@ -59,7 +59,7 @@ public class DocumentLibraryAjax extends GenericWidget {
     int page = context.getParameterAsInt("page", 1);
 
     DataConstraints constraints = new DataConstraints();
-    constraints.setDefaultColumnToSortBy("name");
+    constraints.setColumnToSortBy("name", "ASC");
     constraints.setPageNumber(page);
     constraints.setPageSize(limit);
 

@@ -76,7 +76,7 @@ public class DocumentFileListAjax extends GenericWidget {
     }
 
     DataConstraints constraints = new DataConstraints();
-    constraints.setDefaultColumnToSortBy("modified DESC");
+    constraints.setColumnToSortBy("modified", "DESC");
     constraints.setPageNumber(page);
     constraints.setPageSize(limit);
 
