@@ -651,9 +651,14 @@ class TinyMCEFileBrowser {
     const fileUrl = '${ctx}/assets/view/' + file.url;
     <c:choose>
       <c:when test="${!empty inputId}">
-      // Legacy mode - set input field
-      if (top.document.getElementById("<c:out value="${inputId}" />")) {
-        top.document.getElementById("<c:out value="${inputId}" />").href = fileUrl;
+      // Legacy mode - set input field (handle both anchor tags and input elements)
+      var element = top.document.getElementById("<c:out value="${inputId}" />");
+      if (element) {
+        if (element.tagName === 'A') {
+          element.href = fileUrl;
+        } else if (element.tagName === 'INPUT') {
+          element.value = fileUrl;
+        }
         if (typeof top.$ !== 'undefined' && top.$('#imageBrowserReveal').length) {
           top.$('#imageBrowserReveal').foundation('close');
         }
@@ -686,7 +691,7 @@ class TinyMCEFileBrowser {
     
     // Previous button
     const prevBtn = document.createElement('button');
-    prevBtn.textContent = '« Previous';
+    prevBtn.innerHTML = '&laquo; Previous';
     prevBtn.disabled = this.currentPage === 1;
     prevBtn.addEventListener('click', () => {
       if (this.currentPage > 1) {
@@ -704,7 +709,7 @@ class TinyMCEFileBrowser {
     
     // Next button
     const nextBtn = document.createElement('button');
-    nextBtn.textContent = 'Next »';
+    nextBtn.innerHTML = 'Next &raquo;';
     nextBtn.disabled = this.currentPage >= totalPages;
     nextBtn.addEventListener('click', () => {
       if (this.currentPage < totalPages) {
