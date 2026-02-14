@@ -176,6 +176,7 @@ public class ContentRepository {
       record.setModifiedBy(rs.getLong("modified_by"));
       record.setContent(rs.getString("content"));
       record.setDraftContent(rs.getString("draft_content"));
+      record.setContentAsText(rs.getString("content_text"));
       record.setCreated(rs.getTimestamp("created"));
       record.setModified(rs.getTimestamp("modified"));
       if (DB.hasColumn(rs, "highlight")) {
