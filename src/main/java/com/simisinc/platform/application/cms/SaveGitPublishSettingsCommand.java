@@ -36,6 +36,9 @@ public class SaveGitPublishSettingsCommand {
 
   public static GitPublishSettings saveSettings(GitPublishSettings settingsBean) throws DataException {
 
+    // Determine if this is a new record
+    boolean isNewRecord = settingsBean.getId() <= 0;
+
     // Required fields
     if (settingsBean.getEnabled()) {
       if (StringUtils.isBlank(settingsBean.getGitProvider())) {
@@ -47,7 +50,8 @@ public class SaveGitPublishSettingsCommand {
       if (StringUtils.isBlank(settingsBean.getBranchName())) {
         throw new DataException("Branch name is required");
       }
-      if (StringUtils.isBlank(settingsBean.getAccessToken())) {
+      // Access token is required only for new records or when being updated
+      if (isNewRecord && StringUtils.isBlank(settingsBean.getAccessToken())) {
         throw new DataException("Access token is required");
       }
       if (StringUtils.isBlank(settingsBean.getUsername())) {

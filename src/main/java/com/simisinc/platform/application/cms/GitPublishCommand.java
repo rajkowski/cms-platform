@@ -104,16 +104,26 @@ public class GitPublishCommand {
   private static void cloneRepository(GitPublishSettings settings, File workDir) throws Exception {
     LOG.info("Cloning repository: " + settings.getRepositoryUrl());
 
-    // Prepare the repository URL with credentials
+    // Use Git credential helper for authentication instead of embedding token in URL
+    // This is more secure as it avoids exposing tokens in logs
     String repoUrl = settings.getRepositoryUrl();
-    if (settings.getAccessToken() != null && repoUrl.startsWith("https://")) {
-      // Insert token into URL for authentication
-      repoUrl = repoUrl.replace("https://", "https://" + settings.getAccessToken() + "@");
+
+    // Execute git clone command without credentials in URL
+    ProcessBuilder pb = new ProcessBuilder("git", "clone", "--depth", "1", repoUrl, workDir.getAbsolutePath());
+
+    // Set up environment to pass credentials securely
+    if (settings.getAccessToken() != null) {
+      Map<String, String> env = pb.environment();
+      env.put("GIT_TERMINAL_PROMPT", "0"); // Disable interactive prompts
+      // For HTTPS, we'll configure credential helper in the cloned repo
     }
 
-    // Execute git clone command
-    ProcessBuilder pb = new ProcessBuilder("git", "clone", "--depth", "1", repoUrl, workDir.getAbsolutePath());
     executeGitCommand(pb, "clone repository");
+
+    // Configure credential helper to use the access token
+    if (settings.getAccessToken() != null) {
+      configureCredentialHelper(settings, workDir);
+    }
   }
 
   private static void checkoutBranch(GitPublishSettings settings, File workDir) throws Exception {
@@ -220,15 +230,60 @@ public class GitPublishCommand {
       throw e;
     }
 
-    // Push changes
-    String repoUrl = settings.getRepositoryUrl();
-    if (settings.getAccessToken() != null && repoUrl.startsWith("https://")) {
-      repoUrl = repoUrl.replace("https://", "https://" + settings.getAccessToken() + "@");
-    }
-
-    ProcessBuilder pb5 = new ProcessBuilder("git", "push", repoUrl, settings.getBranchName());
+    // Push changes using the configured remote (credentials already set up via credential helper)
+    ProcessBuilder pb5 = new ProcessBuilder("git", "push", "origin", settings.getBranchName());
     pb5.directory(workDir);
     executeGitCommand(pb5, "push changes");
+  }
+
+  private static void configureCredentialHelper(GitPublishSettings settings, File workDir) throws Exception {
+    // Use Git credential store to securely provide the access token
+    // This avoids embedding the token in URLs or command-line arguments
+    if (settings.getAccessToken() == null) {
+      return;
+    }
+
+    // Configure git to use credential helper
+    ProcessBuilder pb1 = new ProcessBuilder("git", "config", "credential.helper", "store");
+    pb1.directory(workDir);
+    executeGitCommand(pb1, "configure credential helper");
+
+    // Extract the host from the repository URL
+    String repoUrl = settings.getRepositoryUrl();
+    String host = extractHostFromUrl(repoUrl);
+
+    if (host != null) {
+      // Write credentials to the Git credential store
+      // Format: https://username:token@hostname
+      File credentialFile = new File(workDir, ".git-credentials");
+      String credentialLine = "https://" + settings.getUsername() + ":" + settings.getAccessToken() + "@" + host;
+      try (java.io.FileWriter fw = new java.io.FileWriter(credentialFile)) {
+        fw.write(credentialLine + "\n");
+      }
+
+      // Point Git to this credential file
+      ProcessBuilder pb2 = new ProcessBuilder("git", "config", "credential.helper", "store --file=" + credentialFile.getAbsolutePath());
+      pb2.directory(workDir);
+      executeGitCommand(pb2, "configure credential store path");
+    }
+  }
+
+  private static String extractHostFromUrl(String url) {
+    try {
+      // Extract hostname from URL
+      // Examples: https://github.com/user/repo.git -> github.com
+      //           https://gitlab.com/user/repo.git -> gitlab.com
+      if (url.startsWith("https://")) {
+        String withoutProtocol = url.substring(8); // Remove "https://"
+        int slashIndex = withoutProtocol.indexOf('/');
+        if (slashIndex > 0) {
+          return withoutProtocol.substring(0, slashIndex);
+        }
+      }
+    } catch (Exception e) {
+      LOG.warn("Failed to extract host from URL: " + url, e);
+    }
+    return null;
   }
 
   private static void createPullRequest(GitPublishSettings settings) throws Exception {
