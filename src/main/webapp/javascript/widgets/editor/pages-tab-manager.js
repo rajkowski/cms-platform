@@ -825,7 +825,12 @@ class PagesTabManager {
       if (page.hasChildren) {
         const expandIcon = document.createElement('div');
         expandIcon.className = 'web-page-expand-icon';
-        expandIcon.innerHTML = '<i class="far fa-chevron-right"></i>';
+        
+        // Create icon element programmatically
+        const icon = document.createElement('i');
+        icon.className = 'far fa-chevron-right';
+        expandIcon.appendChild(icon);
+        
         expandIcon.setAttribute('data-page-id', page.id);
         expandIcon.setAttribute('data-page-title', page.title);
         expandIcon.addEventListener('click', (e) => {
@@ -868,11 +873,22 @@ class PagesTabManager {
    * Format a timestamp for display
    */
   formatDate(timestamp) {
+    // Validate timestamp
+    if (!timestamp || typeof timestamp !== 'number') {
+      return 'Unknown';
+    }
+    
     const date = new Date(timestamp);
+    
+    // Check for invalid date
+    if (isNaN(date.getTime())) {
+      return 'Unknown';
+    }
+    
     const now = new Date();
     
-    // Handle invalid or future dates
-    if (!timestamp || date > now) {
+    // Handle future dates
+    if (date > now) {
       const options = { year: 'numeric', month: 'short', day: 'numeric' };
       return date.toLocaleDateString(undefined, options);
     }
