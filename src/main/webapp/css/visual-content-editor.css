@@ -1196,8 +1196,8 @@ label {
   flex-shrink: 0;
 }
 
-.selector-container {
-  margin-bottom: 15px;
+#calendar-selector p {
+  margin: 0;
 }
 
 .selector-container h4 {
@@ -1355,11 +1355,16 @@ label {
 }
 
 #preview-iframe {
-  min-width: 40em;
+  min-width: 64em;
   width: 100%;
-  height: 98%;
+  height: 100%;
   border: none;
   border-radius: 4px;
+  display: block;
+  transform-origin: top left;
+  /* Scale is set dynamically via JavaScript based on panel width */
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 #preview-loading {

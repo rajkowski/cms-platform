@@ -122,6 +122,11 @@
       if (addMenuTabBtn) addMenuTabBtn.style.display = 'inline-flex';
       if (refreshSitemapBtn) refreshSitemapBtn.style.display = 'inline-flex';
       if (addRootPageBtn) addRootPageBtn.style.display = 'none';
+      // Ensure sitemap is initialized and query/refresh the data
+      ensurePagesReady();
+      if (sitemapExplorer) {
+        sitemapExplorer.refresh();
+      }
     } else if (view === 'library') {
       if (sitemap) sitemap.style.display = 'none';
       if (library) library.style.display = 'flex';
@@ -132,6 +137,41 @@
       if (refreshSitemapBtn) refreshSitemapBtn.style.display = 'none';
       if (addRootPageBtn) addRootPageBtn.style.display = 'inline-flex';
       ensurePageLibraryReady();
+    }
+  }
+
+  /**
+   * Update preview iframe scale based on right panel width
+   */
+  function updatePreviewScale() {
+    const rightPanel = document.getElementById('right-panel');
+    const previewIframe = document.getElementById('preview-iframe');
+    
+    if (!rightPanel || !previewIframe) return;
+    
+    const rightPanelWidth = rightPanel.offsetWidth;
+    
+    // If panel is minimized, don't update scale
+    if (rightPanelWidth <= 50) return;
+    
+    // Calculate available width (subtract padding)
+    const padding = 40; // 15px on each side
+    const availableWidth = rightPanelWidth - padding;
+    
+    // Preview iframe min-width is 64em, which is approximately 1024px
+    const iframeBaseWidth = 1024;
+    
+    // Calculate scale to fit the iframe within available width
+    const scale = Math.min(1, availableWidth / iframeBaseWidth);
+    
+    // Apply the scale transform
+    previewIframe.style.transform = `scale(${scale})`;
+    
+    // Adjust the container height to account for scaled content
+    const previewContent = document.getElementById('preview-content');
+    if (previewContent && scale < 1) {
+      // Height needs to be adjusted since scaled content takes less visual space
+      previewContent.style.minHeight = `${100 / scale}%`;
     }
   }
 
@@ -172,6 +212,9 @@
       if (newWidth <= 50) {
         rightPanel.style.width = '0px';
       }
+
+      // Update preview scale dynamically during resize
+      updatePreviewScale();
     });
 
     document.addEventListener('mouseup', () => {
@@ -182,6 +225,12 @@
         document.body.style.userSelect = '';
       }
     });
+
+    // Set initial scale
+    updatePreviewScale();
+
+    // Update scale on window resize
+    window.addEventListener('resize', updatePreviewScale);
   }
 
   /**
@@ -520,12 +569,12 @@
       if (middlePanelTitleText) middlePanelTitleText.textContent = 'Site Navigation';
       if (pagesTools) pagesTools.style.display = 'flex';
       ensurePagesReady();
-      // Reset button group to Site Navigation
+      // Reset button group to Pages Library
       const navBtn = document.getElementById('view-site-navigation-btn');
       const libBtn = document.getElementById('view-page-library-btn');
-      if (navBtn) navBtn.classList.add('active');
-      if (libBtn) libBtn.classList.remove('active');
-      showPagesView('navigation'); // Default to Site Navigation
+      if (navBtn) libBtn.classList.add('active');
+      if (libBtn) navBtn.classList.remove('active');
+      showPagesView('library');
     } else if (tabId === 'content-tab') {
       if (middlePanelIcon) middlePanelIcon.className = 'far fa-edit';
       if (middlePanelTitleText) middlePanelTitleText.textContent = 'Edit Content';

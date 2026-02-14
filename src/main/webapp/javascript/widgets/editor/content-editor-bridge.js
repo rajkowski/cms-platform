@@ -314,6 +314,7 @@ class ContentEditorBridge {
         if (data.status === 'ok') {
           this.isDirty = false;
           this.showSuccess('Draft saved successfully');
+          this.updateContentDraftBadge(true);
         } else {
           this.showError(data.error || 'Failed to save draft');
         }
@@ -362,6 +363,7 @@ class ContentEditorBridge {
         if (data.status === 'ok') {
           this.isDirty = false;
           this.showSuccess('Content published successfully');
+          this.updateContentDraftBadge(false);
         } else {
           this.showError(data.error || 'Failed to publish content');
         }
@@ -397,6 +399,13 @@ class ContentEditorBridge {
       return this.tinyMceEditor.getContent();
     } else {
       return document.getElementById('content-html-editor').value;
+    }
+  }
+
+  updateContentDraftBadge(hasDraft) {
+    const listManager = window.visualContentEditor?.contentListManager;
+    if (listManager && typeof listManager.setDraftStatus === 'function') {
+      listManager.setDraftStatus(this.currentContentId, hasDraft);
     }
   }
 

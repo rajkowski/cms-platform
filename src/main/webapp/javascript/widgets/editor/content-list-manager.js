@@ -16,6 +16,7 @@ class ContentListManager {
     this.isLoading = false;
     this.hasMore = true;
     this.searchQuery = '';
+    this.sortOrder = 'recent';
     this.pageCache = new Map();
     this.itemHeight = 88;
     this.bufferRows = 6;
@@ -28,6 +29,7 @@ class ContentListManager {
   init() {
     this.setupEventListeners();
     this.setupSearchListener();
+    this.setupSortListeners();
     this.setupScrollListener();
     this.loadContent();
   }
@@ -65,6 +67,32 @@ class ContentListManager {
   }
 
   /**
+   * Set up sort button listeners
+   */
+  setupSortListeners() {
+    const sortButtons = document.querySelectorAll('#content-sort-recent, #content-sort-alphabetical');
+    sortButtons.forEach(button => {
+      button.addEventListener('click', (e) => {
+        const sortType = e.target.dataset.sort;
+        if (sortType && sortType !== this.sortOrder) {
+          // Update active state
+          sortButtons.forEach(btn => btn.classList.remove('active'));
+          e.target.classList.add('active');
+          
+          // Update sort order and reload
+          this.sortOrder = sortType;
+          this.offset = 0;
+          this.contentItems = [];
+          this.hasMore = true;
+          this.pageCache.clear();
+          this.virtualContainer = null;
+          this.loadContent();
+        }
+      });
+    });
+  }
+
+  /**
    * Set up scroll listener for infinite scroll pagination
    */
   setupScrollListener() {
@@ -96,6 +124,9 @@ class ContentListManager {
     params.append('limit', this.limit);
     if (this.searchQuery) {
       params.append('search', this.searchQuery);
+    }
+    if (this.sortOrder) {
+      params.append('sortBy', this.sortOrder);
     }
 
     const currentOffset = this.offset;
@@ -240,6 +271,33 @@ class ContentListManager {
         contentList.scrollTop = targetIndex * this.itemHeight;
         this.updateVirtualList();
       }
+    }
+  }
+
+  /**
+   * Update draft status for a content item and refresh the list
+   */
+  setDraftStatus(contentId, hasDraft) {
+    const contentIdStr = String(contentId);
+    let didUpdate = false;
+
+    this.contentItems.forEach(item => {
+      if (String(item.id) === contentIdStr) {
+        item.draft_content = hasDraft ? (item.draft_content || true) : null;
+        didUpdate = true;
+      }
+    });
+
+    this.pageCache.forEach(items => {
+      items.forEach(item => {
+        if (String(item.id) === contentIdStr) {
+          item.draft_content = hasDraft ? (item.draft_content || true) : null;
+        }
+      });
+    });
+
+    if (didUpdate) {
+      this.updateVirtualList();
     }
   }
 

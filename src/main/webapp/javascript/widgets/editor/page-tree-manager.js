@@ -567,6 +567,7 @@ class PageTreeManager {
     node.classList.add('selected');
 
     this.selectedPageId = pageId;
+    this.hideError();
     this.showPageDetailsFromNode(node);
   }
 
@@ -1236,13 +1237,37 @@ class PageTreeManager {
   }
 
   /**
-   * Show error message
+   * Show error message with dismiss button
    */
   showError(message) {
     const errorDiv = document.getElementById('pages-error');
     if (errorDiv) {
-      errorDiv.textContent = message;
+      errorDiv.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+          <span>${this.escapeHtml(message)}</span>
+          <button type="button" class="close-error-btn" aria-label="Close error" style="background: none; border: none; padding: 0; cursor: pointer; color: #721c24; font-size: 20px; line-height: 1; flex-shrink: 0;">
+            ×
+          </button>
+        </div>
+      `;
       errorDiv.style.display = 'block';
+      
+      // Add click handler for close button
+      const closeBtn = errorDiv.querySelector('.close-error-btn');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => this.hideError());
+      }
+    }
+  }
+
+  /**
+   * Hide error message
+   */
+  hideError() {
+    const errorDiv = document.getElementById('pages-error');
+    if (errorDiv) {
+      errorDiv.style.display = 'none';
+      errorDiv.innerHTML = '';
     }
   }
 
@@ -1251,9 +1276,12 @@ class PageTreeManager {
    */
   escapeHtml(text) {
     if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+    return String(text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
   }
 
   /**

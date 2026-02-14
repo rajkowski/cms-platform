@@ -58,7 +58,7 @@
 
     <div class="titlebar-right">
       <!-- Right Panel Toggle Button -->
-      <button id="toggle-right-panel-btn" class="toggle-panel-btn" title="Toggle Preview Panel">
+      <button id="toggle-right-panel-btn" class="toggle-panel-btn active" title="Toggle Preview Panel">
         <i class="${font:far()} fa-square-caret-right"></i>
       </button>
       
@@ -128,6 +128,13 @@
         <div id="content-tab" class="tab-content">
           <div style="margin-bottom: 15px;">
             <input type="text" id="content-search" class="property-input" placeholder="Search content..." style="width: 100%; padding: 10px; font-size: 14px;" />
+          </div>
+          <div style="margin-bottom: 15px; display: flex; gap: 8px; align-items: center;">
+            <label style="font-size: 12px; color: var(--editor-text-muted); margin: 0; white-space: nowrap;">Sort by:</label>
+            <div class="button-group" style="flex: 1;">
+              <button id="content-sort-recent" class="button tiny secondary no-gap active" data-sort="recent" style="flex: 1;">Most Recent</button>
+              <button id="content-sort-alphabetical" class="button tiny secondary no-gap" data-sort="alphabetical" style="flex: 1;">A-Z</button>
+            </div>
           </div>
           <div id="content-error" style="display: none;"></div>
           <div id="content-empty" style="display: none;">
@@ -209,8 +216,8 @@
             <button id="refresh-sitemap-btn" class="button tiny secondary no-gap radius" style="display:none;"><i class="${font:far()} fa-refresh"></i> Refresh</button>
             <button id="add-root-page-btn" class="button tiny primary no-gap radius" style="display:none;"><i class="${font:far()} fa-plus"></i> Add Page</button>
             <div class="button-group">
-              <button id="view-site-navigation-btn" class="button tiny secondary no-gap active" data-view="navigation">Site Navigation</button>
-              <button id="view-page-library-btn" class="button tiny secondary no-gap" data-view="library">Page Library</button>
+              <button id="view-page-library-btn" class="button tiny secondary no-gap active" data-view="library">Page Library</button>
+              <button id="view-site-navigation-btn" class="button tiny secondary no-gap" data-view="navigation">Site Navigation</button>
             </div>
           </div>
           
@@ -259,7 +266,7 @@
     </div>
     
     <!-- Right Panel: Preview and Properties -->
-    <div id="right-panel" style="display: none;">
+    <div id="right-panel" style="display: flex;">
       <div id="right-panel-resize-handle"></div>
       
       <div class="right-panel-tabs-container">

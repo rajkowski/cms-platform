@@ -145,8 +145,7 @@ class PagesTabManager {
           loadingEl.style.display = 'none';
         }
         if (errorEl) {
-          errorEl.style.display = 'block';
-          errorEl.textContent = 'Error loading pages: ' + error.message;
+          this.showError(errorEl, 'Error loading pages: ' + error.message);
         }
         
         // Even if there's an error loading pages, show the current page if it exists
@@ -331,6 +330,9 @@ class PagesTabManager {
 
     const pageId = item.getAttribute('data-page-id');
     const pageLink = item.getAttribute('data-page-link');
+
+    // Hide error message when page is selected
+    this.hideError();
 
     // Check if user has unsaved changes
     const isDirty = this.pageEditor.isDirty && this.pageEditor.isDirty();
@@ -593,8 +595,47 @@ class PagesTabManager {
    */
   escapeHtml(str) {
     if (!str) return '';
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  /**
+   * Show error message with dismiss button
+   */
+  showError(errorEl, message) {
+    if (errorEl) {
+      errorEl.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+          <span>${this.escapeHtml(message)}</span>
+          <button type="button" class="close-error-btn" aria-label="Close error" style="background: none; border: none; padding: 0; cursor: pointer; color: #721c24; font-size: 20px; line-height: 1; flex-shrink: 0;">
+            ×
+          </button>
+        </div>
+      `;
+      errorEl.style.display = 'block';
+      
+      // Add click handler for close button
+      const closeBtn = errorEl.querySelector('.close-error-btn');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => this.hideError());
+      }
+    }
+  }
+
+  /**
+   * Hide error message
+   */
+  hideError() {
+    const errorEl = document.getElementById('pages-error');
+    if (errorEl) {
+      errorEl.style.display = 'none';
+      errorEl.innerHTML = '';
+    }
   }
 }
+
+

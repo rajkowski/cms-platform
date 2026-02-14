@@ -55,6 +55,9 @@ class PageLibraryManager {
     const title = pageBox.querySelector('.page-box-header span')?.textContent || 'Page';
     const link = pageBox.querySelector('.page-box-link')?.textContent || '';
 
+    // Hide any error messages when page is selected
+    this.hideError();
+
     // Show properties and preview
     if (this.editorBridge && typeof this.editorBridge.showProperties === 'function') {
       this.editorBridge.showProperties({
@@ -144,6 +147,17 @@ class PageLibraryManager {
         ${this.escapeHtml(message)}
       </div>
     `;
+  }
+
+  /**
+   * Hide error message
+   */
+  hideError() {
+    const errorDiv = document.getElementById('pages-error');
+    if (errorDiv) {
+      errorDiv.style.display = 'none';
+      errorDiv.innerHTML = '';
+    }
   }
 
   renderLibrary(container) {
