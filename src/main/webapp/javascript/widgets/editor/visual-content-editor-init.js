@@ -311,7 +311,7 @@
     // New Page Modal
     if (newPageBtn && newPageModal) {
       newPageBtn.addEventListener('click', () => {
-        newPageModal.style.display = 'block';
+        newPageModal.style.display = 'flex';
         document.getElementById('page-title').focus();
       });
 
@@ -337,7 +337,7 @@
     // New Content Modal
     if (newContentBtn && newContentModal) {
       newContentBtn.addEventListener('click', () => {
-        newContentModal.style.display = 'block';
+        newContentModal.style.display = 'flex';
         document.getElementById('content-unique-id').focus();
       });
 
@@ -396,7 +396,7 @@
           });
         }
 
-        newBlogPostModal.style.display = 'block';
+        newBlogPostModal.style.display = 'flex';
         blogSelect.focus();
       });
 

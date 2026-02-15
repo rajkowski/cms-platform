@@ -17,6 +17,7 @@
 package com.simisinc.platform.presentation.widgets.cms;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -83,34 +84,38 @@ public class PageContentBlocksJsonService extends GenericWidget {
         return writeError(context, "Page not found");
       }
 
-      // Collect unique content IDs from the page layout
-      Set<String> uniqueIds = new LinkedHashSet<>();
-      extractContentUniqueIds(webPage, link, uniqueIds);
+      // Collect unique content IDs from the page layout with fallback HTML
+      Map<String, String> uniqueIdToFallbackHtml = new LinkedHashMap<>();
+      extractContentUniqueIds(webPage, link, uniqueIdToFallbackHtml);
 
       // Load content records and build response
       List<Content> contentBlocks = new ArrayList<>();
-      for (String uniqueId : uniqueIds) {
+      for (String uniqueId : uniqueIdToFallbackHtml.keySet()) {
         Content content = LoadContentCommand.loadContentByUniqueId(uniqueId);
         if (content != null) {
           contentBlocks.add(content);
           // Also check for embedded ${uniqueId:...} directives (1 level deep)
-          extractEmbeddedDirectives(content.getContent(), uniqueIds);
+          extractEmbeddedDirectives(content.getContent(), uniqueIdToFallbackHtml);
         }
       }
 
-      // Re-load any newly discovered content from embedded directives
+      // Re-load any newly discovered content from embedded directives and track which uniqueIds have records
       List<Content> allContentBlocks = new ArrayList<>();
-      for (String uniqueId : uniqueIds) {
+      Set<String> existingUniqueIds = new LinkedHashSet<>();
+      for (String uniqueId : uniqueIdToFallbackHtml.keySet()) {
         Content content = LoadContentCommand.loadContentByUniqueId(uniqueId);
         if (content != null) {
           allContentBlocks.add(content);
+          existingUniqueIds.add(uniqueId);
         }
       }
 
-      // Build JSON response
+      // Build JSON response including both existing content and "new" referenced blocks
       StringBuilder dataJson = new StringBuilder();
       dataJson.append("[");
       boolean first = true;
+      
+      // Add existing content blocks
       for (Content content : allContentBlocks) {
         if (!first) {
           dataJson.append(",");
@@ -118,6 +123,20 @@ public class PageContentBlocksJsonService extends GenericWidget {
         first = false;
         appendContentJson(dataJson, content);
       }
+      
+      // Add referenced blocks that don't have records yet (marked as "new")
+      for (Map.Entry<String, String> entry : uniqueIdToFallbackHtml.entrySet()) {
+        String uniqueId = entry.getKey();
+        if (!existingUniqueIds.contains(uniqueId)) {
+          if (!first) {
+            dataJson.append(",");
+          }
+          first = false;
+          String fallbackHtml = entry.getValue();
+          appendNewContentJson(dataJson, uniqueId, fallbackHtml);
+        }
+      }
+      
       dataJson.append("]");
 
       return writeOk(context, dataJson.toString(), null);
@@ -131,7 +150,7 @@ public class PageContentBlocksJsonService extends GenericWidget {
   /**
    * Extract content uniqueIds from the page's XML layout by traversing the widget hierarchy
    */
-  private void extractContentUniqueIds(WebPage webPage, String link, Set<String> uniqueIds) {
+  private void extractContentUniqueIds(WebPage webPage, String link, Map<String, String> uniqueIdToFallbackHtml) {
     try {
       // Use the page layout command to get the parsed Page object
       Page page = WebPageXmlLayoutCommand.retrievePageForRequest(webPage, link);
@@ -152,13 +171,14 @@ public class PageContentBlocksJsonService extends GenericWidget {
               if (StringUtils.isBlank(uniqueId)) {
                 uniqueId = prefs.get("contentUniqueId");
               }
+              // Get fallback HTML from the html preference
+              String fallbackHtml = prefs.get("html");
               if (StringUtils.isNotBlank(uniqueId)) {
-                uniqueIds.add(uniqueId);
+                uniqueIdToFallbackHtml.put(uniqueId, StringUtils.defaultString(fallbackHtml));
               }
               // Check for embedded directives in html preference
-              String html = prefs.get("html");
-              if (StringUtils.isNotBlank(html)) {
-                extractEmbeddedDirectives(html, uniqueIds);
+              if (StringUtils.isNotBlank(fallbackHtml)) {
+                extractEmbeddedDirectives(fallbackHtml, uniqueIdToFallbackHtml);
               }
             }
           }
@@ -172,7 +192,7 @@ public class PageContentBlocksJsonService extends GenericWidget {
   /**
    * Extract uniqueId references from ${uniqueId:...} directives in content HTML
    */
-  private void extractEmbeddedDirectives(String html, Set<String> uniqueIds) {
+  private void extractEmbeddedDirectives(String html, Map<String, String> uniqueIdToFallbackHtml) {
     if (StringUtils.isBlank(html)) {
       return;
     }
@@ -180,7 +200,8 @@ public class PageContentBlocksJsonService extends GenericWidget {
     while (matcher.find()) {
       String embeddedId = matcher.group(1).trim();
       if (StringUtils.isNotBlank(embeddedId)) {
-        uniqueIds.add(embeddedId);
+        // Use putIfAbsent so embedded directives don't overwrite existing fallback HTML
+        uniqueIdToFallbackHtml.putIfAbsent(embeddedId, "");
       }
     }
   }
@@ -192,6 +213,7 @@ public class PageContentBlocksJsonService extends GenericWidget {
     json.append("{");
     json.append("\"id\":").append(content.getId()).append(",");
     json.append("\"uniqueId\":\"").append(JsonCommand.toJson(content.getUniqueId())).append("\",");
+    json.append("\"isNew\":false,");
 
     String snippet = StringUtils.truncate(content.getContentAsText(), 120);
     json.append("\"snippet\":\"").append(JsonCommand.toJson(snippet)).append("\",");
@@ -219,6 +241,28 @@ public class PageContentBlocksJsonService extends GenericWidget {
     }
     json.append("\"modifiedBy\":\"").append(JsonCommand.toJson(modifiedByName)).append("\"");
 
+    json.append("}");
+  }
+
+  /**
+   * Append a "new" content block (referenced but no record exists yet) as JSON
+   */
+  private void appendNewContentJson(StringBuilder json, String uniqueId, String fallbackHtml) {
+    json.append("{");
+    json.append("\"id\":-1,");
+    json.append("\"uniqueId\":\"").append(JsonCommand.toJson(uniqueId)).append("\",");
+    json.append("\"isNew\":true,");
+    
+    // Use fallback HTML for snippet if available
+    String snippet = StringUtils.isNotBlank(fallbackHtml) ? StringUtils.truncate(fallbackHtml, 120) : "No content yet";
+    json.append("\"snippet\":\"").append(JsonCommand.toJson(snippet)).append("\",");
+    
+    // Include the full fallback HTML
+    json.append("\"fallbackHtml\":\"").append(JsonCommand.toJson(StringUtils.defaultString(fallbackHtml))).append("\",");
+    
+    json.append("\"hasDraft\":false,");
+    json.append("\"modified\":\"\",");
+    json.append("\"modifiedBy\":\"\"");
     json.append("}");
   }
 

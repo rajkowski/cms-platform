@@ -2431,6 +2431,16 @@ textarea.property-input {
   text-transform: uppercase;
 }
 
+.content-block-new-badge {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: #28a745;
+  color: white;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
 .content-block-snippet {
   font-size: 12px;
   color: var(--editor-text-muted);
@@ -2449,11 +2459,11 @@ textarea.property-input {
 
 /* Content Block Editor Modal */
 #content-block-editor-modal {
-  z-index: 100000;
+  z-index: 11;
 }
 
 .content-block-editor-modal-content {
-  max-width: 900px;
+  max-width: 64em;
   width: 90vw;
   height: 80vh;
   display: flex;

@@ -512,7 +512,7 @@ class PageTreeManager {
       </span>`;
     }
 
-    return `<span class="tree-toggle empty" data-page-id=""><i class="fa fa-circle" style="font-size: 6px;"></i></span>`;
+    return `<span class="tree-toggle empty" data-page-id=""><i class="fa fa-circle" style="font-size: 6px; opacity:0;"></i></span>`;
   }
 
   renderTreeChildren(page) {

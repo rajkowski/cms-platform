@@ -114,21 +114,39 @@ class PageContentBlocksManager {
       item.dataset.contentId = block.id;
       item.dataset.uniqueId = block.uniqueId;
 
-      const hasDraftBadge = block.hasDraft ? '<span class="content-block-draft-badge">Draft</span>' : '';
+      // Determine badge based on block status
+      let badge = '';
+      if (block.isNew) {
+        badge = '<span class="content-block-new-badge">New</span>';
+      } else if (block.hasDraft) {
+        badge = '<span class="content-block-draft-badge">Draft</span>';
+      }
+
+      // Use appropriate snippet text
+      let snippet;
+      if (block.isNew) {
+        snippet = block.fallbackHtml ? block.snippet : 'Click to create content';
+      } else {
+        snippet = block.snippet || 'Empty content';
+      }
 
       item.innerHTML = `
         <div class="content-block-header">
           <span class="content-block-unique-id">${this.escapeHtml(block.uniqueId)}</span>
-          ${hasDraftBadge}
+          ${badge}
         </div>
-        <div class="content-block-snippet">${this.escapeHtml(block.snippet || 'Empty content')}</div>
+        <div class="content-block-snippet">${this.escapeHtml(snippet)}</div>
         <div class="content-block-meta">
           ${block.modified ? this.formatDate(block.modified) : ''}${block.modifiedBy ? ' by ' + this.escapeHtml(block.modifiedBy) : ''}
         </div>
       `;
 
       item.addEventListener('click', () => {
-        this.openContentEditor(block.id, block.uniqueId);
+        if (block.isNew) {
+          this.createNewContent(block.uniqueId, block.fallbackHtml || '');
+        } else {
+          this.openContentEditor(block.id, block.uniqueId);
+        }
       });
 
       container.appendChild(item);
@@ -138,12 +156,12 @@ class PageContentBlocksManager {
   /**
    * Open the floating content editor modal for a content block
    */
-  openContentEditor(contentId, uniqueId) {
+  openContentEditor(contentId, uniqueId, isNew = false, fallbackHtml = '') {
     const modal = document.getElementById('content-block-editor-modal');
     if (!modal) return;
 
     // Show modal
-    modal.style.display = 'block';
+    modal.style.display = 'flex';
 
     const titleEl = document.getElementById('content-block-editor-title');
     if (titleEl) {
@@ -153,9 +171,16 @@ class PageContentBlocksManager {
     // Store current content info
     modal.dataset.contentId = contentId;
     modal.dataset.uniqueId = uniqueId;
+    modal.dataset.isNew = isNew.toString();
+    modal.dataset.originalContent = fallbackHtml;
 
-    // Load content into the modal editor
-    this.loadContentIntoModal(contentId);
+    if (isNew) {
+      // For new content, initialize editor directly with fallback HTML
+      this.initOrSetModalContent(fallbackHtml);
+    } else {
+      // For existing content, load from server
+      this.loadContentIntoModal(contentId);
+    }
   }
 
   /**
@@ -173,14 +198,7 @@ class PageContentBlocksManager {
         if (data.status === 'ok' && data.data) {
           const content = data.data;
           const contentText = content.draft_content || content.content || '';
-
-          // Initialize or set content in modal editor
-          const editor = tinymce.get('content-block-html-editor');
-          if (editor) {
-            editor.setContent(contentText);
-          } else {
-            this.initModalTinyMCE(contentText);
-          }
+          this.initOrSetModalContent(contentText);
         } else {
           console.error('Failed to load content for modal editor');
         }
@@ -188,6 +206,18 @@ class PageContentBlocksManager {
       .catch(error => {
         console.error('Error loading content for modal editor:', error);
       });
+  }
+
+  /**
+   * Initialize or set content in the modal editor
+   */
+  initOrSetModalContent(contentText) {
+    const editor = tinymce.get('content-block-html-editor');
+    if (editor) {
+      editor.setContent(contentText);
+    } else {
+      this.initModalTinyMCE(contentText);
+    }
   }
 
   /**
@@ -288,14 +318,14 @@ class PageContentBlocksManager {
     }
 
     // Close on Escape key
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        const modal = document.getElementById('content-block-editor-modal');
-        if (modal && modal.style.display === 'block') {
-          this.closeModal();
-        }
-      }
-    });
+    // document.addEventListener('keydown', (e) => {
+    //   if (e.key === 'Escape') {
+    //     const modal = document.getElementById('content-block-editor-modal');
+    //     if (modal && modal.style.display === 'flex') {
+    //       this.closeModal();
+    //     }
+    //   }
+    // });
   }
 
   /**
@@ -336,11 +366,29 @@ class PageContentBlocksManager {
     const modal = document.getElementById('content-block-editor-modal');
     if (!modal) return;
 
-    const contentId = modal.dataset.contentId;
+    const isNew = modal.dataset.isNew === 'true';
+    const originalContent = modal.dataset.originalContent || '';
     const content = this.getModalContent();
 
+    // For new content blocks, don't save if unchanged or empty
+    if (isNew) {
+      if (this.isContentEmptyOrUnchanged(content, originalContent)) {
+        this.showModalNotification('No changes to save', 'info');
+        return;
+      }
+    }
+
+    const contentId = modal.dataset.contentId;
+    const uniqueId = modal.dataset.uniqueId;
+
     const params = new FormData();
-    params.append('contentId', contentId);
+    if (isNew) {
+      // For new content, use uniqueId
+      params.append('uniqueId', uniqueId);
+    } else {
+      // For existing content, use contentId
+      params.append('contentId', contentId);
+    }
     params.append('content', content);
     params.append('isDraft', 'true');
     params.append('token', window.getFormToken());
@@ -352,7 +400,17 @@ class PageContentBlocksManager {
     })
       .then(response => response.json())
       .then(data => {
-        if (data.status === 'ok') {
+        if (data.status === 'ok') {          // If this was a new content block, update the modal to reflect it's now saved
+          if (isNew && data.data && data.data.id) {
+            modal.dataset.contentId = data.data.id;
+            modal.dataset.isNew = 'false';
+            modal.dataset.originalContent = content;
+          }          // If this was a new content block, update the modal to reflect it's now saved
+          if (isNew && data.data && data.data.id) {
+            modal.dataset.contentId = data.data.id;
+            modal.dataset.isNew = 'false';
+            modal.dataset.originalContent = content;
+          }
           this.showModalNotification('Draft saved', 'success');
         } else {
           this.showModalNotification(data.error || 'Failed to save draft', 'error');
@@ -374,11 +432,19 @@ class PageContentBlocksManager {
     const modal = document.getElementById('content-block-editor-modal');
     if (!modal) return;
 
+    const isNew = modal.dataset.isNew === 'true';
     const contentId = modal.dataset.contentId;
+    const uniqueId = modal.dataset.uniqueId;
     const content = this.getModalContent();
 
     const params = new FormData();
-    params.append('contentId', contentId);
+    if (isNew) {
+      // For new content, use uniqueId
+      params.append('uniqueId', uniqueId);
+    } else {
+      // For existing content, use contentId
+      params.append('contentId', contentId);
+    }
     params.append('content', content);
     params.append('token', window.getFormToken());
 
@@ -391,6 +457,10 @@ class PageContentBlocksManager {
       .then(data => {
         if (data.status === 'ok') {
           this.showModalNotification('Content published', 'success');
+          // Auto-dismiss modal after showing success toast
+          setTimeout(() => {
+            this.closeModal();
+          }, 1500);
         } else {
           this.showModalNotification(data.error || 'Failed to publish', 'error');
         }
@@ -443,6 +513,43 @@ class PageContentBlocksManager {
     } catch (e) {
       return dateStr;
     }
+  }
+
+  /**
+   * Create a new content block for a referenced uniqueId
+   */
+  createNewContent(uniqueId, fallbackHtml) {
+    // Open the editor directly without creating a database record
+    // The record will be created when the user saves or publishes
+    this.openContentEditor(-1, uniqueId, true, fallbackHtml || '');
+  }
+
+  /**
+   * Check if content is empty or unchanged from original
+   */
+  isContentEmptyOrUnchanged(content, originalContent) {
+    // Normalize whitespace for comparison
+    const normalizedContent = this.normalizeHtml(content);
+    const normalizedOriginal = this.normalizeHtml(originalContent);
+
+    // Check if empty (only whitespace/empty tags)
+    if (!normalizedContent || normalizedContent === '<p></p>' || normalizedContent === '<p><br></p>') {
+      return true;
+    }
+
+    // Check if unchanged from original
+    return normalizedContent === normalizedOriginal;
+  }
+
+  /**
+   * Normalize HTML for comparison (trim whitespace, normalize line endings)
+   */
+  normalizeHtml(html) {
+    if (!html) return '';
+    return html.trim()
+      .replace(/\r\n/g, '\n')
+      .replace(/\s+/g, ' ')
+      .replace(/> </g, '><');
   }
 
   /**
