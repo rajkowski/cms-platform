@@ -16,15 +16,17 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.WebPage;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageSpecification;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
-import org.apache.commons.lang3.StringUtils;
-
-import java.util.List;
 
 /**
  * Returns a list of web pages for the visual page editor
@@ -52,7 +54,7 @@ public class WebPageListAjax extends GenericWidget {
     WebPageSpecification specification = new WebPageSpecification();
     // specification.setEnabled(true);
 
-    com.simisinc.platform.infrastructure.database.DataConstraints constraints = new com.simisinc.platform.infrastructure.database.DataConstraints();
+    DataConstraints constraints = new DataConstraints();
     
     // Set sorting based on parameter
     if ("modified".equals(sortBy)) {
@@ -62,7 +64,7 @@ public class WebPageListAjax extends GenericWidget {
       constraints.setColumnToSortBy("link", "asc");
     } else {
       // Default: A-Z sorting by title
-      constraints.setColumnToSortBy("title", "asc");
+      constraints.setColumnToSortBy("page_title", "asc");
     }
 
     List<WebPage> pageList = WebPageRepository.findAll(specification, constraints);
