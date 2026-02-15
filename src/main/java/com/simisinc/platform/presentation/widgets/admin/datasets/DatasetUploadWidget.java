@@ -61,6 +61,7 @@ public class DatasetUploadWidget extends GenericWidget {
     String sourceUrl = context.getParameter("sourceUrl");
     String fileType = context.getParameter("fileType");
     String sourceInfo = context.getParameter("sourceInfo");
+    String requestConfig = context.getParameter("requestConfig");
 
     // Populate the fields
     Dataset datasetBean = new Dataset();
@@ -72,6 +73,9 @@ public class DatasetUploadWidget extends GenericWidget {
     }
     if (StringUtils.isNotBlank(sourceInfo)) {
       datasetBean.setSourceInfo(StringUtils.trimToNull(sourceInfo));
+    }
+    if (StringUtils.isNotBlank(requestConfig)) {
+      datasetBean.setRequestConfig(StringUtils.trimToNull(requestConfig));
     }
     datasetBean.setFileType(fileType);
     LOG.info("fileType: " + fileType);
@@ -93,6 +97,12 @@ public class DatasetUploadWidget extends GenericWidget {
         context.setRequestObject(datasetBean);
         return context;
       }
+    }
+
+    if (datasetBean.getId() == -1) {
+      context.setWarningMessage("The dataset record was not saved");
+      context.setRequestObject(datasetBean);
+      return context;
     }
 
     LOG.info("New dataset id... " + datasetBean.getId());

@@ -272,6 +272,17 @@
         <label class="property-label" for="dataset-url">Data Source URL <span class="required">*</span></label>
         <input type="url" id="dataset-url" class="property-input" placeholder="https://example.com/data.csv" />
         <small class="help-text">URL to a publicly accessible data file</small>
+        
+        <div style="margin-top: 15px;">
+          <label class="property-label">Request Headers</label>
+          <p class="help-text" style="font-size: 12px; margin-bottom: 10px;">Add HTTP headers for authentication or custom request configuration.</p>
+          <div id="import-request-headers-container">
+            <div class="empty-headers" style="padding: 10px; text-align: center; color: #999; font-size: 12px;">No headers configured</div>
+          </div>
+          <button type="button" class="button tiny secondary radius" id="add-import-request-header-btn" style="margin-top: 5px;">
+            <i class="fa fa-plus"></i> Add Header
+          </button>
+        </div>
       </div>
       <div id="stock-data-section" class="property-group" style="display:none;">
         <label class="property-label" for="stock-data-source">Select Data Source</label>

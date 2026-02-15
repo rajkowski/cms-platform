@@ -36,7 +36,7 @@ public class SaveDatasetAjax extends GenericWidget {
   static final long serialVersionUID = -8484048371911908898L;
   private static Log LOG = LogFactory.getLog(SaveDatasetAjax.class);
 
-  public WidgetContext execute(WidgetContext context) {
+  public WidgetContext post(WidgetContext context) {
 
     LOG.debug("SaveDatasetAjax...");
 

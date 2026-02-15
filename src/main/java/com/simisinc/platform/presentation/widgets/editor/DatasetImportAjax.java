@@ -16,8 +16,13 @@
 
 package com.simisinc.platform.presentation.widgets.editor;
 
+import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.application.datasets.DatasetDownloadRemoteFileCommand;
+import com.simisinc.platform.application.datasets.DatasetUploadFileCommand;
+import com.simisinc.platform.domain.model.datasets.Dataset;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -32,7 +37,7 @@ public class DatasetImportAjax extends GenericWidget {
   static final long serialVersionUID = -8484048371911908899L;
   private static Log LOG = LogFactory.getLog(DatasetImportAjax.class);
 
-  public WidgetContext execute(WidgetContext context) {
+  public WidgetContext post(WidgetContext context) {
 
     LOG.debug("DatasetImportAjax...");
 
@@ -44,8 +49,74 @@ public class DatasetImportAjax extends GenericWidget {
       return context;
     }
 
-    // Stub implementation - to be completed
-    context.setJson("{\"success\":true,\"message\":\"Dataset import not yet implemented\"}");
+    // Check the form values
+    String name = context.getParameter("name");
+    String sourceUrl = context.getParameter("sourceUrl");
+    String fileType = context.getParameter("fileType");
+    String requestConfig = context.getParameter("requestConfig");
+
+    if (StringUtils.isBlank(name)) {
+      context.setJson("{\"success\":false,\"message\":\"Dataset name is required\"}");
+      context.setSuccess(false);
+      return context;
+    }
+
+    // Populate the fields
+    Dataset datasetBean = new Dataset();
+    datasetBean.setName(name);
+    datasetBean.setCreatedBy(context.getUserId());
+    datasetBean.setModifiedBy(context.getUserId());
+
+    if (StringUtils.isNotBlank(sourceUrl)) {
+      // Remote URL import
+      datasetBean.setSourceUrl(sourceUrl.trim());
+      if (StringUtils.isNotBlank(requestConfig)) {
+        datasetBean.setRequestConfig(StringUtils.trimToNull(requestConfig));
+      }
+      if (StringUtils.isNotBlank(fileType)) {
+        datasetBean.setFileType(fileType);
+      } else {
+        // Default to JSON if not specified
+        datasetBean.setFileType("application/json");
+      }
+
+      // Download the remote file
+      try {
+        DatasetDownloadRemoteFileCommand.handleRemoteFileDownload(datasetBean, context.getUserId());
+      } catch (DataException e) {
+        LOG.error("Error downloading remote file: " + e.getMessage());
+        context.setJson("{\"success\":false,\"message\":\"" + escapeJson(e.getMessage()) + "\"}");
+        context.setSuccess(false);
+        return context;
+      }
+    } else {
+      // File upload import
+      if (StringUtils.isNotBlank(fileType)) {
+        datasetBean.setFileType(fileType);
+      }
+
+      // Check for an uploaded file and validate
+      if (!DatasetUploadFileCommand.handleUpload(context, datasetBean)) {
+        LOG.error("File upload failed");
+        context.setJson("{\"success\":false,\"message\":\"File upload failed\"}");
+        context.setSuccess(false);
+        return context;
+      }
+    }
+
+    LOG.info("New dataset imported with id... " + datasetBean.getId());
+    context.setJson("{\"success\":true,\"datasetId\":" + datasetBean.getId() + "}");
     return context;
+  }
+
+  private String escapeJson(String text) {
+    if (text == null) {
+      return "";
+    }
+    return text.replace("\\", "\\\\")
+        .replace("\"", "\\\"")
+        .replace("\n", "\\n")
+        .replace("\r", "\\r")
+        .replace("\t", "\\t");
   }
 }

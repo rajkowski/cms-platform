@@ -263,6 +263,11 @@ class VisualDataEditor {
       radio.addEventListener('change', (e) => this.handleImportSourceChange(e.target.value));
     });
 
+    // Import request headers button
+    document.getElementById('add-import-request-header-btn')?.addEventListener('click', () => {
+      this.addRequestHeader('import-request-headers-container');
+    });
+
     // Forms
     document.getElementById('new-collection-form')?.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -2153,9 +2158,88 @@ class VisualDataEditor {
   }
 
   async handleImportDataset() {
-    // TODO: Implement dataset import
-    console.log('Importing dataset...');
-    this.closeAllModals();
+    const name = document.getElementById('dataset-name').value.trim();
+    const importSource = document.querySelector('input[name="import-source"]:checked')?.value;
+
+    if (!name) {
+      alert('Please enter a dataset name');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('token', this.token);
+    formData.append('name', name);
+
+    if (importSource === 'file') {
+      const fileInput = document.getElementById('dataset-file');
+      if (!fileInput.files || !fileInput.files[0]) {
+        alert('Please select a file to upload');
+        return;
+      }
+      formData.append('file', fileInput.files[0]);
+      // File type will be auto-detected from the file extension
+    } else if (importSource === 'url') {
+      const url = document.getElementById('dataset-url').value.trim();
+      if (!url) {
+        alert('Please enter a data source URL');
+        return;
+      }
+      formData.append('sourceUrl', url);
+      
+      // Collect request headers and create requestConfig JSON
+      const requestConfig = this.collectRequestHeaders('import-request-headers-container');
+      if (requestConfig) {
+        formData.append('requestConfig', JSON.stringify(requestConfig));
+      }
+      
+      // Infer file type from URL extension
+      const fileType = this.inferFileTypeFromUrl(url);
+      if (fileType) {
+        formData.append('fileType', fileType);
+      }
+    } else if (importSource === 'stock') {
+      const stockSource = document.getElementById('stock-data-source').value;
+      if (!stockSource) {
+        alert('Please select a stock data source');
+        return;
+      }
+      // Stock data would need additional implementation
+      alert('Stock data import is not yet implemented');
+      return;
+    }
+
+    try {
+      const response = await fetch('/json/datasetImport', {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        this.closeAllModals();
+        this.loadDatasets();
+        this.showNotification('Dataset imported successfully');
+        // Clear the form
+        document.getElementById('import-dataset-form').reset();
+        document.getElementById('import-request-headers-container').innerHTML = '<div class="empty-headers" style="padding: 10px; text-align: center; color: #999; font-size: 12px;">No headers configured</div>';
+      } else {
+        alert('Error importing dataset: ' + (result.message || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Error importing dataset:', error);
+      alert('Failed to import dataset');
+    }
+  }
+
+  inferFileTypeFromUrl(url) {
+    const lowerUrl = url.toLowerCase();
+    if (lowerUrl.endsWith('.csv')) return 'text/csv';
+    if (lowerUrl.endsWith('.tsv')) return 'text/tab-separated-values';
+    if (lowerUrl.endsWith('.json')) return 'application/json';
+    if (lowerUrl.endsWith('.geojson')) return 'application/vnd.geo+json';
+    if (lowerUrl.endsWith('.xml')) return 'application/rss+xml';
+    // Default to JSON if uncertain
+    return 'application/json';
   }
 
   async saveCurrentItem() {
