@@ -23,7 +23,9 @@
       if (ctx) {
         ctx = '/' + ctx;
       }
-      var cmsURL = ctx + '/content-browser';
+      // 
+      // var cmsURL = ctx + '/content-browser';
+      var cmsURL = '/content-browser';
       
       // Open URL dialog
       var instanceApi = editor.windowManager.openUrl({
