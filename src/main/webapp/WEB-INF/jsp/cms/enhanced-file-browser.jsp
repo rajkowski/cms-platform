@@ -303,17 +303,25 @@
       <div class="search-box">
         <input type="text" id="page-search" placeholder="Search web pages..." />
       </div>
+      <div style="margin-bottom: 1rem;">
+        <select id="page-sort-select" class="sort-select" style="width: 100%;">
+          <option value="name-asc">Name (A-Z)</option>
+          <option value="name-desc">Name (Z-A)</option>
+          <option value="link-asc">Link (A-Z)</option>
+          <option value="link-desc">Link (Z-A)</option>
+        </select>
+      </div>
       <div id="page-list-container">
         <c:if test="${empty menuTabList}">
           <div class="empty-state">No web pages found</div>
         </c:if>
         <c:forEach items="${menuTabList}" var="menuTab" varStatus="tabStatus">
-          <div class="page-item" data-link="${ctx}${menuTab.link}">
+          <div class="page-item" data-link="${ctx}${menuTab.link}" data-name="<c:out value="${menuTab.name}" />">
             <div class="page-link">${ctx}<c:out value="${menuTab.link}" /></div>
             <div class="page-name"><c:out value="${menuTab.name}" /></div>
           </div>
           <c:forEach items="${menuTab.menuItemList}" var="menuItem" varStatus="itemStatus">
-            <div class="page-item" data-link="${ctx}${menuItem.link}" style="margin-left: 1rem;">
+            <div class="page-item" data-link="${ctx}${menuItem.link}" data-name="<c:out value="${menuItem.name}" />" style="margin-left: 1rem;">
               <div class="page-link">${ctx}<c:out value="${menuItem.link}" /></div>
               <div class="page-name"><c:out value="${menuItem.name}" /></div>
             </div>
@@ -880,6 +888,38 @@ document.addEventListener('DOMContentLoaded', function() {
           item.style.display = 'none';
         }
       });
+    });
+  }
+
+  // Web page sorting
+  const pageSortSelect = document.getElementById('page-sort-select');
+  if (pageSortSelect) {
+    pageSortSelect.addEventListener('change', function() {
+      const sortBy = this.value;
+      const container = document.getElementById('page-list-container');
+      const pageItems = Array.from(container.querySelectorAll('.page-item'));
+      
+      pageItems.sort((a, b) => {
+        const [field, direction] = sortBy.split('-');
+        let aVal, bVal;
+        
+        if (field === 'name') {
+          aVal = (a.dataset.name || '').toLowerCase();
+          bVal = (b.dataset.name || '').toLowerCase();
+        } else if (field === 'link') {
+          aVal = (a.dataset.link || '').toLowerCase();
+          bVal = (b.dataset.link || '').toLowerCase();
+        }
+        
+        if (direction === 'asc') {
+          return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+        } else {
+          return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+        }
+      });
+      
+      // Clear and re-append sorted items
+      pageItems.forEach(item => container.appendChild(item));
     });
   }
 
