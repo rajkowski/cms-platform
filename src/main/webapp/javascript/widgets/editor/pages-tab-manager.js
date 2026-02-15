@@ -317,13 +317,20 @@ class PagesTabManager {
 
     // Check if the current page being edited exists in the filtered pages list
     const currentPageLink = this.pageEditor.config.webPageLink;
-    const currentPageExists = pages.some(page => page.link === currentPageLink);
-
-    // If the current page doesn't exist in filtered results, still show it at the top
-    if (!currentPageExists && currentPageLink) {
-      const pageTitle = this.pageEditor.newPageTitle || null;
-      const newPageItem = this.createNewPageItem(currentPageLink, pageTitle);
-      listEl.appendChild(newPageItem);
+    const currentPageExistsInFiltered = pages.some(page => page.link === currentPageLink);
+    
+    // Only show the current page if it doesn't exist in the FULL list (truly new page)
+    // Don't show it if it exists in the full list but is just filtered out by search
+    if (!currentPageExistsInFiltered && currentPageLink) {
+      const currentPageExistsInFullList = this.pages.some(page => page.link === currentPageLink);
+      
+      // Only show as "new" if the page doesn't exist in the full list at all
+      if (!currentPageExistsInFullList) {
+        const pageTitle = this.pageEditor.newPageTitle || null;
+        const newPageItem = this.createNewPageItem(currentPageLink, pageTitle);
+        listEl.appendChild(newPageItem);
+      }
+      // If it exists in full list but not in filtered results, don't show it (it's filtered out)
     }
 
     pages.forEach(page => {
