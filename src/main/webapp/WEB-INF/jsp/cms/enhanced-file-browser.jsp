@@ -285,7 +285,15 @@
     display: none;
   }
   .web-pages-view.active, .documents-view.active {
-    display: block;
+    display: flex;
+    height: calc(100vh - 120px);
+    max-height: 550px;
+  }
+  .sort-select-full-width {
+    width: 100%;
+  }
+  .page-item-nested {
+    margin-left: 1rem;
   }
 </style>
 <div class="tinymce-browser-container">
@@ -298,13 +306,13 @@
   </div>
 
   <!-- Web Pages View -->
-  <div class="web-pages-view active" style="display: flex; height: calc(100vh - 120px); max-height: 550px;">
+  <div class="web-pages-view active">
     <div class="browser-sidebar">
       <div class="search-box">
         <input type="text" id="page-search" placeholder="Search web pages..." />
       </div>
       <div style="margin-bottom: 1rem;">
-        <select id="page-sort-select" class="sort-select" style="width: 100%;">
+        <select id="page-sort-select" class="sort-select sort-select-full-width">
           <option value="name-asc">Name (A-Z)</option>
           <option value="name-desc">Name (Z-A)</option>
           <option value="link-asc">Link (A-Z)</option>
@@ -321,7 +329,7 @@
             <div class="page-name"><c:out value="${menuTab.name}" /></div>
           </div>
           <c:forEach items="${menuTab.menuItemList}" var="menuItem" varStatus="itemStatus">
-            <div class="page-item" data-link="${ctx}${menuItem.link}" data-name="<c:out value="${menuItem.name}" />" style="margin-left: 1rem;">
+            <div class="page-item page-item-nested" data-link="${ctx}${menuItem.link}" data-name="<c:out value="${menuItem.name}" />">
               <div class="page-link">${ctx}<c:out value="${menuItem.link}" /></div>
               <div class="page-name"><c:out value="${menuItem.name}" /></div>
             </div>
@@ -335,7 +343,7 @@
   </div>
 
   <!-- Documents View -->
-  <div class="documents-view" style="display: flex; height: calc(100vh - 120px); max-height: 550px;">
+  <div class="documents-view">
     <!-- Sidebar with folders -->
     <div class="browser-sidebar">
       <div class="search-box">
@@ -904,18 +912,14 @@ document.addEventListener('DOMContentLoaded', function() {
         let aVal, bVal;
         
         if (field === 'name') {
-          aVal = (a.dataset.name || '').toLowerCase();
-          bVal = (b.dataset.name || '').toLowerCase();
+          aVal = a.dataset.name || '';
+          bVal = b.dataset.name || '';
         } else if (field === 'link') {
-          aVal = (a.dataset.link || '').toLowerCase();
-          bVal = (b.dataset.link || '').toLowerCase();
+          aVal = a.dataset.link || '';
+          bVal = b.dataset.link || '';
         }
         
-        if (direction === 'asc') {
-          return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
-        } else {
-          return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
-        }
+        return direction === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
       });
       
       // Clear and re-append sorted items
