@@ -183,7 +183,7 @@ public class ContentHtmlCommand {
               embeddedHtml;
         }
         // Turn off the general editor because the embedded ones will be used
-        context.getRequest().setAttribute("showEditor", "false");
+        // context.getRequest().setAttribute("showEditor", "false");
       }
 
       sb.append(embeddedHtml);
