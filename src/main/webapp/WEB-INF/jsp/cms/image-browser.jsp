@@ -275,7 +275,7 @@
   }
 
   #image-grid-container {
-    display: contents;
+    display: flex;
   }
 </style>
 <link rel="stylesheet" type="text/css" href="${ctx}/css/platform.css" />
