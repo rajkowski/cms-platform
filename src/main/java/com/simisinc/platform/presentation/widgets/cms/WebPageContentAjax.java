@@ -42,7 +42,7 @@ public class WebPageContentAjax extends GenericWidget {
     LOG.debug("WebPageContentAjax...");
 
     // Check permissions: only allow content editors and admins
-    if (!context.hasRole("admin") && !context.hasRole("content-editor")) {
+    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
       LOG.debug("No permission to access web page content");
       context.setJson("{}");
       return context;

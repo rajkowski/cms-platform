@@ -42,7 +42,7 @@ public class WebPageListAjax extends GenericWidget {
   public WidgetContext execute(WidgetContext context) {
 
     // Check permissions: only allow content editors and admins
-    if (!context.hasRole("admin") && !context.hasRole("content-editor")) {
+    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
       context.setJson("[]");
       return context;
     }

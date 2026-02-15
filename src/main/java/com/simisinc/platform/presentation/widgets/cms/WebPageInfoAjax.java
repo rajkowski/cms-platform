@@ -45,7 +45,7 @@ public class WebPageInfoAjax extends GenericWidget {
     LOG.debug("WebPageInfoAjax...");
 
     // Check permissions: only allow content editors and admins
-    if (!context.hasRole("admin") && !context.hasRole("content-editor")) {
+    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
       LOG.debug("No permission to access web page info");
       context.setJson("{\"error\":\"Permission denied\"}");
       return context;

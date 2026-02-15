@@ -54,7 +54,7 @@ public class StaticSiteEndpoint extends GenericWidget {
     LOG.debug("StaticSiteEndpoint Action...");
 
     // Check permissions: only allow content editors and admins
-    if (!context.hasRole("admin") && !context.hasRole("content-editor")) {
+    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
       LOG.debug("No permission to: " + StaticSiteEndpoint.class.getSimpleName());
       context.setJson("{\"success\":false,\"message\":\"Permission denied\"}");
       context.setSuccess(false);
@@ -86,7 +86,7 @@ public class StaticSiteEndpoint extends GenericWidget {
     LOG.debug("StaticSiteEndpoint POST...");
 
     // Check permissions: only allow content editors and admins
-    if (!context.hasRole("admin") && !context.hasRole("content-editor")) {
+    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
       LOG.debug("No permission to: " + StaticSiteEndpoint.class.getSimpleName());
       context.setJson("{\"success\":false,\"message\":\"Permission denied\"}");
       context.setSuccess(false);
