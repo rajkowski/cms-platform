@@ -204,6 +204,7 @@
     border-radius: 4px;
   }
   .sort-select {
+    flex: 1;
     padding: 0.5rem;
     border: 1px solid #ccc;
     border-radius: 4px;
@@ -704,7 +705,7 @@ class TinyMCEFileBrowser {
     // Page info
     const pageInfo = document.createElement('span');
     pageInfo.className = 'page-info';
-    pageInfo.textContent = `Page ${this.currentPage} of ${totalPages}`;
+    pageInfo.textContent = 'Page ' + this.currentPage + ' of ' + totalPages;
     pagination.appendChild(pageInfo);
     
     // Next button
