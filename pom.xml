@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.github.rajkowski</groupId>
   <artifactId>cms-platform</artifactId>
-  <version>20260201.10000-SNAPSHOT</version>
+  <version>20260215.10000-SNAPSHOT</version>
   <name>CMS Platform</name>
   <url>https://github.com/rajkowski/cms-platform</url>
   <description>Agile, Enterprise, Open Source Content Management System (CMS) and Web Portal</description>
@@ -46,7 +46,7 @@
     <dependency>
       <groupId>com.bucket4j</groupId>
       <artifactId>bucket4j_jdk17-core</artifactId>
-      <version>8.16.0</version>
+      <version>8.16.1</version>
     </dependency>
     <dependency>
       <groupId>com.github.ben-manes.caffeine</groupId>
@@ -56,7 +56,7 @@
     <dependency>
       <groupId>org.apache.httpcomponents.core5</groupId>
       <artifactId>httpcore5</artifactId>
-      <version>5.3.6</version>
+      <version>5.4.1</version>
     </dependency>
     <dependency>
       <groupId>commons-beanutils</groupId>
@@ -66,7 +66,7 @@
     <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
-      <version>1.20.0</version>
+      <version>1.21.0</version>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
@@ -96,7 +96,7 @@
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-jexl3</artifactId>
-      <version>3.6.1</version>
+      <version>3.6.2</version>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
@@ -126,12 +126,12 @@
     <dependency>
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-core</artifactId>
-      <version>11.20.2</version>
+      <version>11.20.3</version>
     </dependency>
     <dependency>
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-database-postgresql</artifactId>
-      <version>11.20.2</version>
+      <version>11.20.3</version>
     </dependency>
     <dependency>
       <groupId>com.maxmind.geoip2</groupId>
@@ -156,27 +156,27 @@
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty-codec-http</artifactId>
-      <version>4.2.8.Final</version>
+      <version>4.2.10.Final</version>
     </dependency>
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty-codec-http2</artifactId>
-      <version>4.2.8.Final</version>
+      <version>4.2.10.Final</version>
     </dependency>
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty-handler</artifactId>
-      <version>4.2.8.Final</version>
+      <version>4.2.10.Final</version>
     </dependency>
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty-handler-proxy</artifactId>
-      <version>4.2.8.Final</version>
+      <version>4.2.10.Final</version>
     </dependency>
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty-resolver-dns</artifactId>
-      <version>4.2.8.Final</version>
+      <version>4.2.10.Final</version>
     </dependency>
     <dependency>
       <groupId>io.netty</groupId>
@@ -283,7 +283,7 @@
     <dependency>
       <groupId>com.googlecode.libphonenumber</groupId>
       <artifactId>libphonenumber</artifactId>
-      <version>9.0.22</version>
+      <version>9.0.24</version>
     </dependency>
     <dependency>
       <groupId>org.projectlombok</groupId>
@@ -294,7 +294,7 @@
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
-      <version>42.7.9</version>
+      <version>42.7.10</version>
     </dependency>
     <dependency>
       <groupId>io.github.classgraph</groupId>
@@ -398,19 +398,19 @@
     <dependency>
       <groupId>org.apache.tomcat</groupId>
       <artifactId>tomcat-jsp-api</artifactId>
-      <version>9.0.113</version>
+      <version>9.0.115</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.tomcat</groupId>
       <artifactId>tomcat-servlet-api</artifactId>
-      <version>9.0.113</version>
+      <version>9.0.115</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
-      <version>5.14.2</version>
+      <version>5.14.3</version>
       <scope>test</scope>
     </dependency>
     <dependency>
