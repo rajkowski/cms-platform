@@ -36,6 +36,7 @@
 <style>
   .tinymce-browser-container {
     display: flex;
+    flex-wrap: wrap;
     height: 100vh;
     max-height: 600px;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -237,6 +238,10 @@
     padding: 0.5rem 0.75rem;
     color: #666;
   }
+  .browser-tabs-container {
+    display: flex;
+    flex-basis: 100%;
+  }
   .browser-tabs {
     display: flex;
     gap: 0.5rem;
@@ -298,7 +303,7 @@
 </style>
 <div class="tinymce-browser-container">
   <!-- Tab Navigation -->
-  <div style="padding: 1rem; border-bottom: 1px solid #e0e0e0;">
+  <div class="browser-tabs-container" style="padding: 1rem; border-bottom: 1px solid #e0e0e0;">
     <div class="browser-tabs">
       <button class="browser-tab active" data-tab="web-pages">Web Pages</button>
       <button class="browser-tab" data-tab="documents">Documents</button>
@@ -320,21 +325,7 @@
         </select>
       </div>
       <div id="page-list-container">
-        <c:if test="${empty menuTabList}">
-          <div class="empty-state">No web pages found</div>
-        </c:if>
-        <c:forEach items="${menuTabList}" var="menuTab" varStatus="tabStatus">
-          <div class="page-item" data-link="${ctx}${menuTab.link}" data-name="<c:out value="${menuTab.name}" />">
-            <div class="page-link">${ctx}<c:out value="${menuTab.link}" /></div>
-            <div class="page-name"><c:out value="${menuTab.name}" /></div>
-          </div>
-          <c:forEach items="${menuTab.menuItemList}" var="menuItem" varStatus="itemStatus">
-            <div class="page-item page-item-nested" data-link="${ctx}${menuItem.link}" data-name="<c:out value="${menuItem.name}" />">
-              <div class="page-link">${ctx}<c:out value="${menuItem.link}" /></div>
-              <div class="page-name"><c:out value="${menuItem.name}" /></div>
-            </div>
-          </c:forEach>
-        </c:forEach>
+        <div class="loading">Loading web pages...</div>
       </div>
     </div>
     <div class="browser-content">
@@ -397,6 +388,10 @@ class TinyMCEFileBrowser {
     this.fileListContainer = document.getElementById('file-list-container');
     this.breadcrumbContainer = document.getElementById('breadcrumb-container');
     this.paginationContainer = document.getElementById('pagination-container');
+    this.webPages = [];
+    this.pageSearch = document.getElementById('page-search');
+    this.pageSortSelect = document.getElementById('page-sort-select');
+    this.pageListContainer = document.getElementById('page-list-container');
   }
 
   init() {
@@ -421,7 +416,14 @@ class TinyMCEFileBrowser {
         }
       });
     }
+    if (this.pageSearch) {
+      this.pageSearch.addEventListener('input', () => this.renderWebPages());
+    }
+    if (this.pageSortSelect) {
+      this.pageSortSelect.addEventListener('change', () => this.renderWebPages());
+    }
     this.loadFolders();
+    this.loadWebPages();
   }
 
   async loadFolders() {
@@ -850,6 +852,105 @@ class TinyMCEFileBrowser {
     const size = bytes / Math.pow(1024, power);
     return size.toFixed(1) + ' ' + units[power];
   }
+
+  async loadWebPages() {
+    try {
+      const url = new URL('${ctx}/json/webPageList', window.location.origin);
+      const response = await fetch(url.toString(), { credentials: 'same-origin' });
+      if (!response.ok) {
+        throw new Error('HTTP ' + response.status);
+      }
+      this.webPages = await response.json();
+      this.renderWebPages();
+    } catch (err) {
+      console.error('Unable to load web pages', err);
+      if (this.pageListContainer) {
+        this.pageListContainer.innerHTML = '<div class="empty-state">Unable to load web pages</div>';
+      }
+    }
+  }
+
+  renderWebPages() {
+    if (!this.pageListContainer) {
+      return;
+    }
+
+    const searchTerm = this.pageSearch ? this.pageSearch.value.toLowerCase() : '';
+    const sortBy = this.pageSortSelect ? this.pageSortSelect.value : 'name-asc';
+
+    // Filter pages
+    let filteredPages = this.webPages.filter(page => {
+      if (!searchTerm) return true;
+      const link = (page.link || '').toLowerCase();
+      const title = (page.title || '').toLowerCase();
+      return link.includes(searchTerm) || title.includes(searchTerm);
+    });
+
+    // Sort pages
+    const [field, direction] = sortBy.split('-');
+    filteredPages.sort((a, b) => {
+      let aVal = field === 'name' ? (a.title || a.link || '') : (a.link || '');
+      let bVal = field === 'name' ? (b.title || b.link || '') : (b.link || '');
+      return direction === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+    });
+
+    // Render
+    this.pageListContainer.innerHTML = '';
+
+    if (!filteredPages.length) {
+      this.pageListContainer.innerHTML = '<div class="empty-state">No web pages found</div>';
+      return;
+    }
+
+    filteredPages.forEach(page => {
+      const item = document.createElement('div');
+      item.className = 'page-item';
+      item.dataset.link = '${ctx}' + page.link;
+      item.dataset.name = page.title || page.link;
+      
+      const linkDiv = document.createElement('div');
+      linkDiv.className = 'page-link';
+      linkDiv.textContent = '${ctx}' + page.link;
+      
+      const nameDiv = document.createElement('div');
+      nameDiv.className = 'page-name';
+      nameDiv.textContent = page.title || page.link;
+      
+      item.appendChild(linkDiv);
+      item.appendChild(nameDiv);
+      
+      item.addEventListener('click', () => this.selectWebPage(page));
+      
+      this.pageListContainer.appendChild(item);
+    });
+  }
+
+  selectWebPage(page) {
+    const pageUrl = '${ctx}' + page.link;
+    <c:choose>
+      <c:when test="${!empty inputId}">
+      // Legacy mode - set input field (handle both anchor tags and input elements)
+      var element = top.document.getElementById("<c:out value="${inputId}" />");
+      if (element) {
+        if (element.tagName === 'A') {
+          element.href = pageUrl;
+        } else if (element.tagName === 'INPUT') {
+          element.value = pageUrl;
+        }
+        if (typeof top.$ !== 'undefined' && top.$('#imageBrowserReveal').length) {
+          top.$('#imageBrowserReveal').foundation('close');
+        }
+      }
+      </c:when>
+      <c:otherwise>
+      // Modern mode - post message to TinyMCE
+      window.parent.postMessage({
+          mceAction: 'FileSelected',
+          content: pageUrl
+      }, '*');
+      </c:otherwise>
+    </c:choose>
+  }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -876,85 +977,6 @@ document.addEventListener('DOMContentLoaded', function() {
         webPagesView.classList.remove('active');
         documentsView.classList.add('active');
       }
-    });
-  });
-
-  // Web page search
-  const pageSearch = document.getElementById('page-search');
-  if (pageSearch) {
-    pageSearch.addEventListener('input', function() {
-      const searchTerm = this.value.toLowerCase();
-      const pageItems = document.querySelectorAll('.page-item');
-      
-      pageItems.forEach(item => {
-        const link = item.querySelector('.page-link').textContent.toLowerCase();
-        const name = item.querySelector('.page-name').textContent.toLowerCase();
-        
-        if (link.includes(searchTerm) || name.includes(searchTerm)) {
-          item.style.display = '';
-        } else {
-          item.style.display = 'none';
-        }
-      });
-    });
-  }
-
-  // Web page sorting
-  const pageSortSelect = document.getElementById('page-sort-select');
-  if (pageSortSelect) {
-    pageSortSelect.addEventListener('change', function() {
-      const sortBy = this.value;
-      const container = document.getElementById('page-list-container');
-      const pageItems = Array.from(container.querySelectorAll('.page-item'));
-      
-      pageItems.sort((a, b) => {
-        const [field, direction] = sortBy.split('-');
-        let aVal, bVal;
-        
-        if (field === 'name') {
-          aVal = a.dataset.name || '';
-          bVal = b.dataset.name || '';
-        } else if (field === 'link') {
-          aVal = a.dataset.link || '';
-          bVal = b.dataset.link || '';
-        }
-        
-        return direction === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
-      });
-      
-      // Clear and re-append sorted items
-      pageItems.forEach(item => container.appendChild(item));
-    });
-  }
-
-  // Web page selection
-  const pageItems = document.querySelectorAll('.page-item');
-  pageItems.forEach(item => {
-    item.addEventListener('click', function() {
-      const pageUrl = this.dataset.link;
-      <c:choose>
-        <c:when test="${!empty inputId}">
-        // Legacy mode - set input field (handle both anchor tags and input elements)
-        var element = top.document.getElementById("<c:out value="${inputId}" />");
-        if (element) {
-          if (element.tagName === 'A') {
-            element.href = pageUrl;
-          } else if (element.tagName === 'INPUT') {
-            element.value = pageUrl;
-          }
-          if (typeof top.$ !== 'undefined' && top.$('#imageBrowserReveal').length) {
-            top.$('#imageBrowserReveal').foundation('close');
-          }
-        }
-        </c:when>
-        <c:otherwise>
-        // Modern mode - post message to TinyMCE
-        window.parent.postMessage({
-            mceAction: 'FileSelected',
-            content: pageUrl
-        }, '*');
-        </c:otherwise>
-      </c:choose>
     });
   });
 });
