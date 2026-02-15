@@ -16,17 +16,8 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
-import com.simisinc.platform.application.cms.LoadMenuTabsCommand;
-import com.simisinc.platform.domain.model.cms.FileItem;
-import com.simisinc.platform.domain.model.cms.MenuTab;
-import com.simisinc.platform.infrastructure.persistence.cms.FileItemRepository;
-import com.simisinc.platform.infrastructure.persistence.cms.FileSpecification;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import java.util.List;
 
 /**
  * Description
@@ -38,26 +29,13 @@ public class FileBrowserWidget extends GenericWidget {
 
   static final long serialVersionUID = -8484048371911908893L;
 
-  private static Log LOG = LogFactory.getLog(FileBrowserWidget.class);
-
-  private static String JSP = "/cms/file-browser.jsp";
+  private static String ENHANCED_JSP = "/cms/enhanced-file-browser.jsp";
 
   public WidgetContext execute(WidgetContext context) {
 
     // Standard request items
     context.getRequest().setAttribute("icon", context.getPreferences().get("icon"));
     context.getRequest().setAttribute("title", context.getPreferences().get("title"));
-
-    // Display web pages from the menu that can be linked to
-    List<MenuTab> menuTabList = LoadMenuTabsCommand.findAllIncludeMenuItemList();
-    context.getRequest().setAttribute("menuTabList", menuTabList);
-
-    // Display files that can be linked to
-    FileSpecification fileSpecification = new FileSpecification();
-    fileSpecification.setForUserId(context.getUserId());
-    fileSpecification.setFileType("pdf");
-    List<FileItem> fileItemList = FileItemRepository.findAll(fileSpecification, null);
-    context.getRequest().setAttribute("fileItemList", fileItemList);
 
     if ("reveal".equals(context.getRequest().getParameter("view"))) {
       context.setEmbedded(true);
@@ -68,7 +46,7 @@ public class FileBrowserWidget extends GenericWidget {
 
     // Show the editor
     context.setEmbedded(true);
-    context.setJsp(JSP);
+    context.setJsp(ENHANCED_JSP);
     return context;
   }
 }
