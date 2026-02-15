@@ -12,6 +12,10 @@ class PagesTabManager {
     this.pages = [];
     this.selectedPageId = null;
     this.selectedPageLink = null;
+    this.currentSortBy = 'a-z'; // Default sorting
+    this.hierarchyMode = false;
+    this.currentParentId = null;
+    this.hierarchyStack = []; // Stack for back navigation
   }
 
   /**
@@ -20,6 +24,8 @@ class PagesTabManager {
   init() {
     this.setupEventListeners();
     this.setupSearchListener();
+    this.setupSortListener();
+    this.setupHierarchyNavigation();
     this.loadPages();
   }
 
@@ -30,6 +36,60 @@ class PagesTabManager {
     const pageList = document.getElementById('web-page-list');
     if (pageList) {
       pageList.addEventListener('click', (e) => this.handlePageClick(e));
+    }
+  }
+
+  /**
+   * Set up sort selector listener
+   */
+  setupSortListener() {
+    const sortSelect = document.getElementById('pages-sort-select');
+    if (sortSelect) {
+      sortSelect.addEventListener('change', (e) => {
+        this.currentSortBy = e.target.value;
+        this.hierarchyMode = this.currentSortBy === 'hierarchy';
+        
+        // Show/hide hierarchy navigation
+        const hierarchyNav = document.getElementById('pages-hierarchy-nav');
+        if (hierarchyNav) {
+          hierarchyNav.style.display = this.hierarchyMode ? 'block' : 'none';
+        }
+        
+        // Reset hierarchy state when switching modes
+        if (!this.hierarchyMode) {
+          this.currentParentId = null;
+          this.hierarchyStack = [];
+        }
+        
+        this.loadPages();
+      });
+    }
+  }
+
+  /**
+   * Set up hierarchy navigation buttons
+   */
+  setupHierarchyNavigation() {
+    const backToRootBtn = document.getElementById('pages-back-to-root');
+    if (backToRootBtn) {
+      backToRootBtn.addEventListener('click', () => {
+        this.currentParentId = null;
+        this.hierarchyStack = [];
+        this.loadPages();
+      });
+    }
+
+    const backToParentBtn = document.getElementById('pages-back-to-parent');
+    if (backToParentBtn) {
+      backToParentBtn.addEventListener('click', () => {
+        if (this.hierarchyStack.length > 0) {
+          this.hierarchyStack.pop(); // Remove current level
+          this.currentParentId = this.hierarchyStack.length > 0 
+            ? this.hierarchyStack[this.hierarchyStack.length - 1].id 
+            : null;
+          this.loadPages();
+        }
+      });
     }
   }
 
@@ -81,7 +141,12 @@ class PagesTabManager {
           
           return aMinPos - bMinPos;
         }) : this.pages;
-        this.renderPageListFiltered(filtered);
+        
+        if (this.hierarchyMode) {
+          this.renderHierarchyList(filtered);
+        } else {
+          this.renderPageListFiltered(filtered);
+        }
       });
     }
   }
@@ -105,7 +170,16 @@ class PagesTabManager {
       emptyEl.style.display = 'none';
     }
 
-    fetch('/json/webPageList')
+    // If in hierarchy mode, use the hierarchy endpoint
+    if (this.hierarchyMode) {
+      this.loadHierarchyPages();
+      return;
+    }
+
+    // Otherwise, use the regular page list endpoint with sorting
+    const url = `/json/webPageList?sortBy=${encodeURIComponent(this.currentSortBy)}`;
+    
+    fetch(url)
       .then(response => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -208,6 +282,15 @@ class PagesTabManager {
 
       info.appendChild(title);
       info.appendChild(link);
+      
+      // Add modified date if available and in "modified" sort mode
+      if (page.modified && this.currentSortBy === 'modified') {
+        const modified = document.createElement('div');
+        modified.className = 'web-page-modified';
+        modified.textContent = this.formatDate(page.modified);
+        info.appendChild(modified);
+      }
+      
       item.appendChild(info);
 
       li.appendChild(item);
@@ -234,13 +317,20 @@ class PagesTabManager {
 
     // Check if the current page being edited exists in the filtered pages list
     const currentPageLink = this.pageEditor.config.webPageLink;
-    const currentPageExists = pages.some(page => page.link === currentPageLink);
-
-    // If the current page doesn't exist in filtered results, still show it at the top
-    if (!currentPageExists && currentPageLink) {
-      const pageTitle = this.pageEditor.newPageTitle || null;
-      const newPageItem = this.createNewPageItem(currentPageLink, pageTitle);
-      listEl.appendChild(newPageItem);
+    const currentPageExistsInFiltered = pages.some(page => page.link === currentPageLink);
+    
+    // Only show the current page if it doesn't exist in the FULL list (truly new page)
+    // Don't show it if it exists in the full list but is just filtered out by search
+    if (!currentPageExistsInFiltered && currentPageLink) {
+      const currentPageExistsInFullList = this.pages.some(page => page.link === currentPageLink);
+      
+      // Only show as "new" if the page doesn't exist in the full list at all
+      if (!currentPageExistsInFullList) {
+        const pageTitle = this.pageEditor.newPageTitle || null;
+        const newPageItem = this.createNewPageItem(currentPageLink, pageTitle);
+        listEl.appendChild(newPageItem);
+      }
+      // If it exists in full list but not in filtered results, don't show it (it's filtered out)
     }
 
     pages.forEach(page => {
@@ -634,6 +724,212 @@ class PagesTabManager {
     if (errorEl) {
       errorEl.style.display = 'none';
       errorEl.innerHTML = '';
+    }
+  }
+
+  /**
+   * Load pages in hierarchy mode
+   */
+  loadHierarchyPages() {
+    const loadingEl = document.getElementById('pages-loading');
+    const errorEl = document.getElementById('pages-error');
+    const listEl = document.getElementById('web-page-list');
+
+    if (loadingEl) {
+      loadingEl.style.display = 'block';
+    }
+
+    // Construct URL with parentId parameter
+    const parentIdParam = this.currentParentId !== null ? this.currentParentId : 'null';
+    const url = `/json/pages/children?parentId=${parentIdParam}`;
+
+    fetch(url)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(result => {
+        if (loadingEl) {
+          loadingEl.style.display = 'none';
+        }
+
+        if (result.status === 'ok' && result.data) {
+          this.pages = result.data;
+          this.updateHierarchyNavigation();
+          this.renderHierarchyList(result.data);
+        } else {
+          throw new Error(result.error || 'Failed to load hierarchy');
+        }
+      })
+      .catch(error => {
+        console.error('Error loading hierarchy:', error);
+        if (loadingEl) {
+          loadingEl.style.display = 'none';
+        }
+        if (errorEl) {
+          this.showError(errorEl, 'Error loading page hierarchy: ' + error.message);
+        }
+      });
+  }
+
+  /**
+   * Update hierarchy navigation UI
+   */
+  updateHierarchyNavigation() {
+    const pathEl = document.getElementById('pages-current-path');
+    const backToParentBtn = document.getElementById('pages-back-to-parent');
+
+    if (pathEl) {
+      if (this.hierarchyStack.length === 0) {
+        pathEl.textContent = 'Root Level';
+      } else {
+        const pathParts = this.hierarchyStack.map(item => item.title);
+        pathEl.textContent = pathParts.join(' > ');
+      }
+    }
+
+    if (backToParentBtn) {
+      backToParentBtn.style.display = this.hierarchyStack.length > 0 ? 'inline-block' : 'none';
+    }
+  }
+
+  /**
+   * Render hierarchy list with expand/collapse icons
+   */
+  renderHierarchyList(pages) {
+    const listEl = document.getElementById('web-page-list');
+    if (!listEl) {
+      return;
+    }
+
+    listEl.innerHTML = '';
+
+    if (!pages || pages.length === 0) {
+      listEl.innerHTML = '<li style="text-align: center; padding: 40px; color: #999;">No pages at this level</li>';
+      return;
+    }
+
+    pages.forEach(page => {
+      const li = document.createElement('li');
+      const item = document.createElement('div');
+      item.className = 'web-page-item';
+      if (page.hasChildren) {
+        item.classList.add('has-children');
+      }
+      item.setAttribute('data-page-id', page.id);
+      item.setAttribute('data-page-link', page.link);
+
+      // Check if this is the currently editing page
+      if (this.pageEditor.config.webPageLink === page.link) {
+        item.classList.add('selected');
+        this.selectedPageId = page.id;
+        this.selectedPageLink = page.link;
+      }
+
+      // Add expand icon if page has children
+      if (page.hasChildren) {
+        const expandIcon = document.createElement('div');
+        expandIcon.className = 'web-page-expand-icon';
+        
+        // Create icon element programmatically
+        const icon = document.createElement('i');
+        icon.className = 'far fa-chevron-right';
+        expandIcon.appendChild(icon);
+        
+        expandIcon.setAttribute('data-page-id', page.id);
+        expandIcon.setAttribute('data-page-title', page.title);
+        expandIcon.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.expandHierarchyNode(page.id, page.title);
+        });
+        item.appendChild(expandIcon);
+      }
+
+      const info = document.createElement('div');
+      info.className = 'web-page-info';
+
+      const title = document.createElement('div');
+      title.className = 'web-page-title';
+      title.textContent = page.title;
+
+      const link = document.createElement('div');
+      link.className = 'web-page-link';
+      link.textContent = page.link;
+
+      info.appendChild(title);
+      info.appendChild(link);
+      item.appendChild(info);
+
+      li.appendChild(item);
+      listEl.appendChild(li);
+    });
+  }
+
+  /**
+   * Expand a hierarchy node to show its children
+   */
+  expandHierarchyNode(pageId, pageTitle) {
+    this.hierarchyStack.push({ id: pageId, title: pageTitle });
+    this.currentParentId = pageId;
+    this.loadPages();
+  }
+
+  /**
+   * Format a timestamp for display
+   * Handles both number and string timestamps from JSON responses
+   */
+  formatDate(timestamp) {
+    // Validate and convert timestamp
+    if (!timestamp) {
+      return 'Unknown';
+    }
+    
+    // Handle string timestamps from JSON
+    const timestampNum = typeof timestamp === 'string' ? parseInt(timestamp, 10) : timestamp;
+    
+    if (typeof timestampNum !== 'number' || isNaN(timestampNum)) {
+      return 'Unknown';
+    }
+    
+    const date = new Date(timestampNum);
+    
+    // Check for invalid date
+    if (isNaN(date.getTime())) {
+      return 'Unknown';
+    }
+    
+    const now = new Date();
+    
+    // Handle future dates
+    if (date > now) {
+      const options = { year: 'numeric', month: 'short', day: 'numeric' };
+      return date.toLocaleDateString(undefined, options);
+    }
+    
+    // Compare calendar dates, not just time differences
+    // This ensures accurate "Today"/"Yesterday" across midnight boundaries
+    const dateStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const nowStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const diffMs = nowStart - dateStart;
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) {
+      return 'Today';
+    } else if (diffDays === 1) {
+      return 'Yesterday';
+    } else if (diffDays < 7) {
+      return `${diffDays} days ago`;
+    } else if (diffDays < 30) {
+      // Use 30 days as approximation for readability
+      // More precise than actual month length, simpler than date math
+      const weeks = Math.floor(diffDays / 7);
+      return `${weeks} ${weeks === 1 ? 'week' : 'weeks'} ago`;
+    } else {
+      // For dates older than ~1 month, show absolute date
+      const options = { year: 'numeric', month: 'short', day: 'numeric' };
+      return date.toLocaleDateString(undefined, options);
     }
   }
 }

@@ -45,7 +45,7 @@ public class SaveStylesheetAjax extends GenericWidget {
     LOG.debug("SaveStylesheetAjax...");
 
     // Check permissions: only allow content editors and admins
-    if (!context.hasRole("admin") && !context.hasRole("content-editor")) {
+    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
       LOG.debug("No permission to save stylesheet");
       context.setJson("{\"success\":false,\"message\":\"Permission denied\"}");
       context.setSuccess(false);

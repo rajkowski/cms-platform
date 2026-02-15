@@ -44,7 +44,7 @@ public class StylesheetAjax extends GenericWidget {
     LOG.debug("StylesheetAjax...");
 
     // Check permissions: only allow content editors and admins
-    if (!context.hasRole("admin") && !context.hasRole("content-editor")) {
+    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
       LOG.debug("No permission to access stylesheet");
       context.setJson("{\"error\":\"Permission denied\"}");
       return context;

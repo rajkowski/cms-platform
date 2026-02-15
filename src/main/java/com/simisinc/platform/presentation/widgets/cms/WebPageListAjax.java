@@ -16,15 +16,17 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.WebPage;
+import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageSpecification;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
-import org.apache.commons.lang3.StringUtils;
-
-import java.util.List;
 
 /**
  * Returns a list of web pages for the visual page editor
@@ -40,16 +42,32 @@ public class WebPageListAjax extends GenericWidget {
   public WidgetContext execute(WidgetContext context) {
 
     // Check permissions: only allow content editors and admins
-    if (!context.hasRole("admin") && !context.hasRole("content-editor")) {
+    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
       context.setJson("[]");
       return context;
     }
+
+    // Get sort parameter (a-z, modified, hierarchy)
+    String sortBy = context.getParameter("sortBy", "a-z");
 
     // Retrieve all enabled web pages
     WebPageSpecification specification = new WebPageSpecification();
     // specification.setEnabled(true);
 
-    List<WebPage> pageList = WebPageRepository.findAll(specification, null);
+    DataConstraints constraints = new DataConstraints();
+    
+    // Set sorting based on parameter
+    if ("modified".equals(sortBy)) {
+      constraints.setColumnToSortBy("modified", "desc");
+    } else if ("hierarchy".equals(sortBy)) {
+      // For hierarchy, we'll sort by path from the hierarchy table
+      constraints.setColumnToSortBy("link", "asc");
+    } else {
+      // Default: A-Z sorting by title
+      constraints.setColumnToSortBy("page_title", "asc");
+    }
+
+    List<WebPage> pageList = WebPageRepository.findAll(specification, constraints);
 
     // Build JSON response
     StringBuilder sb = new StringBuilder();
@@ -61,7 +79,8 @@ public class WebPageListAjax extends GenericWidget {
       sb.append("\"id\":").append(page.getId()).append(",");
       sb.append("\"link\":\"").append(JsonCommand.toJson(page.getLink())).append("\",");
       String pageTitle = StringUtils.isNotBlank(page.getTitle()) ? page.getTitle() : page.getLink();
-      sb.append("\"title\":\"").append(JsonCommand.toJson(pageTitle)).append("\"");
+      sb.append("\"title\":\"").append(JsonCommand.toJson(pageTitle)).append("\",");
+      sb.append("\"modified\":").append(page.getModified() != null ? page.getModified().getTime() : "null");
       sb.append("}");
     }
 

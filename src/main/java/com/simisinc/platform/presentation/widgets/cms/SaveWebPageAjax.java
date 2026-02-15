@@ -46,7 +46,7 @@ public class SaveWebPageAjax extends GenericWidget {
     LOG.debug("SaveWebPageAjax...");
 
     // Check permissions: only allow content editors and admins
-    if (!context.hasRole("admin") && !context.hasRole("content-editor")) {
+    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
       LOG.debug("No permission to save web page");
       context.setJson("{\"success\":false,\"message\":\"Permission denied\"}");
       context.setSuccess(false);
