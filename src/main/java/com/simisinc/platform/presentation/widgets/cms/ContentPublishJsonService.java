@@ -25,6 +25,7 @@ import org.apache.commons.logging.LogFactory;
 import com.simisinc.platform.application.DataException;
 import com.simisinc.platform.application.cms.PublishContentCommand;
 import com.simisinc.platform.application.cms.SaveContentCommand;
+import com.simisinc.platform.application.cms.TinyMceCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.Content;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
@@ -67,6 +68,8 @@ public class ContentPublishJsonService extends GenericWidget {
       // If content is provided, save it first then publish
       // Otherwise, publish existing draft
       if (StringUtils.isNotBlank(contentHtml)) {
+        // Update content from editor (convert content block spans to text)
+        contentHtml = TinyMceCommand.updateContentFromEditor(contentHtml);
         // Create or load content bean
         Content contentBean = loadContentByIdOrUniqueId(contentId, uniqueId);
         if (contentBean == null) {

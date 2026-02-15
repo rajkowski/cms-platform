@@ -24,6 +24,7 @@ import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.DataException;
 import com.simisinc.platform.application.cms.SaveContentCommand;
+import com.simisinc.platform.application.cms.TinyMceCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.Content;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
@@ -66,6 +67,9 @@ public class ContentSaveDraftJsonService extends GenericWidget {
       if (StringUtils.isBlank(contentHtml)) {
         contentHtml = "<p></p>";
       }
+
+      // Update content from editor (convert content block spans to text)
+      contentHtml = TinyMceCommand.updateContentFromEditor(contentHtml);
 
       // Create or load content bean
       Content contentBean = loadContentByIdOrUniqueId(contentId, uniqueId);

@@ -22,6 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.cms.TinyMceCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.Content;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
@@ -72,16 +73,18 @@ public class ContentGetJsonService extends GenericWidget {
       json.append("\"id\": ").append(content.getId()).append(",");
       json.append("\"unique_id\": \"").append(JsonCommand.toJson(content.getUniqueId())).append("\",");
       
-      // Include published content
+      // Include published content, prepared for editor
       if (StringUtils.isNotBlank(content.getContent())) {
-        json.append("\"content\": \"").append(JsonCommand.toJson(content.getContent())).append("\",");
+        String preparedContent = TinyMceCommand.prepareContentForEditor(content.getContent());
+        json.append("\"content\": \"").append(JsonCommand.toJson(preparedContent)).append("\",");
       } else {
         json.append("\"content\": \"\",");
       }
       
-      // Include draft content if exists
+      // Include draft content if exists, prepared for editor
       if (StringUtils.isNotBlank(content.getDraftContent())) {
-        json.append("\"draft_content\": \"").append(JsonCommand.toJson(content.getDraftContent())).append("\",");
+        String preparedDraft = TinyMceCommand.prepareContentForEditor(content.getDraftContent());
+        json.append("\"draft_content\": \"").append(JsonCommand.toJson(preparedDraft)).append("\",");
       } else {
         json.append("\"draft_content\": \"\",");
       }
