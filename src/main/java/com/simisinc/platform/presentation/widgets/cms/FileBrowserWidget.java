@@ -52,12 +52,12 @@ public class FileBrowserWidget extends GenericWidget {
     // Check if enhanced browser should be used (default to enhanced)
     boolean useEnhanced = !"false".equals(context.getPreferences().get("useEnhanced"));
 
-    if (!useEnhanced) {
-      // Legacy browser: Display web pages from the menu that can be linked to
-      List<MenuTab> menuTabList = LoadMenuTabsCommand.findAllIncludeMenuItemList();
-      context.getRequest().setAttribute("menuTabList", menuTabList);
+    // Load web pages from the menu that can be linked to (needed for both browsers)
+    List<MenuTab> menuTabList = LoadMenuTabsCommand.findAllIncludeMenuItemList();
+    context.getRequest().setAttribute("menuTabList", menuTabList);
 
-      // Display files that can be linked to
+    if (!useEnhanced) {
+      // Legacy browser: Display files that can be linked to
       FileSpecification fileSpecification = new FileSpecification();
       fileSpecification.setForUserId(context.getUserId());
       fileSpecification.setFileType("pdf");

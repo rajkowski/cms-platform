@@ -25,6 +25,7 @@
 <%@ taglib prefix="web" uri="/WEB-INF/tlds/web.tld" %>
 <jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
+<jsp:useBean id="menuTabList" class="java.util.ArrayList" scope="request"/>
 <%-- Include the formatting for when TinyMCE uses an iFrame to open the browser --%>
 <%-- All of Foundation.css would override colors and stuff when using the browser directly --%>
 <g:compress>
@@ -236,36 +237,126 @@
     padding: 0.5rem 0.75rem;
     color: #666;
   }
+  .browser-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid #e0e0e0;
+  }
+  .browser-tab {
+    padding: 0.75rem 1rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    color: #666;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+  }
+  .browser-tab:hover {
+    color: #2196F3;
+  }
+  .browser-tab.active {
+    color: #2196F3;
+    border-bottom-color: #2196F3;
+  }
+  .page-item {
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  .page-item:hover {
+    background-color: #f5f5f5;
+  }
+  .page-item .page-link {
+    color: #2196F3;
+    text-decoration: underline;
+    font-weight: 500;
+  }
+  .page-item .page-name {
+    color: #666;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+  }
+  .web-pages-view, .documents-view {
+    display: none;
+  }
+  .web-pages-view.active, .documents-view.active {
+    display: block;
+  }
 </style>
 <div class="tinymce-browser-container">
-  <!-- Sidebar with folders -->
-  <div class="browser-sidebar">
-    <div class="search-box">
-      <input type="text" id="folder-search" placeholder="Search repositories..." />
-    </div>
-    <div id="folder-list-container">
-      <div class="loading">Loading...</div>
+  <!-- Tab Navigation -->
+  <div style="padding: 1rem; border-bottom: 1px solid #e0e0e0;">
+    <div class="browser-tabs">
+      <button class="browser-tab active" data-tab="web-pages">Web Pages</button>
+      <button class="browser-tab" data-tab="documents">Documents</button>
     </div>
   </div>
 
-  <!-- Main content with files -->
-  <div class="browser-content">
-    <div id="breadcrumb-container"></div>
-    <div class="file-controls">
-      <input type="text" id="file-search" class="file-search" placeholder="Search files..." />
-      <select id="sort-select" class="sort-select">
-        <option value="modified-desc">Modified (Newest First)</option>
-        <option value="modified-asc">Modified (Oldest First)</option>
-        <option value="title-asc">Title (A-Z)</option>
-        <option value="title-desc">Title (Z-A)</option>
-        <option value="size-desc">Size (Largest First)</option>
-        <option value="size-asc">Size (Smallest First)</option>
-      </select>
+  <!-- Web Pages View -->
+  <div class="web-pages-view active" style="display: flex; height: calc(100vh - 120px); max-height: 550px;">
+    <div class="browser-sidebar">
+      <div class="search-box">
+        <input type="text" id="page-search" placeholder="Search web pages..." />
+      </div>
+      <div id="page-list-container">
+        <c:if test="${empty menuTabList}">
+          <div class="empty-state">No web pages found</div>
+        </c:if>
+        <c:forEach items="${menuTabList}" var="menuTab" varStatus="tabStatus">
+          <div class="page-item" data-link="${ctx}${menuTab.link}">
+            <div class="page-link">${ctx}<c:out value="${menuTab.link}" /></div>
+            <div class="page-name"><c:out value="${menuTab.name}" /></div>
+          </div>
+          <c:forEach items="${menuTab.menuItemList}" var="menuItem" varStatus="itemStatus">
+            <div class="page-item" data-link="${ctx}${menuItem.link}" style="margin-left: 1rem;">
+              <div class="page-link">${ctx}<c:out value="${menuItem.link}" /></div>
+              <div class="page-name"><c:out value="${menuItem.name}" /></div>
+            </div>
+          </c:forEach>
+        </c:forEach>
+      </div>
     </div>
-    <div id="file-list-container">
-      <div class="empty-state">Select a repository to browse files</div>
+    <div class="browser-content">
+      <div class="empty-state">Select a web page to link to</div>
     </div>
-    <div id="pagination-container"></div>
+  </div>
+
+  <!-- Documents View -->
+  <div class="documents-view" style="display: flex; height: calc(100vh - 120px); max-height: 550px;">
+    <!-- Sidebar with folders -->
+    <div class="browser-sidebar">
+      <div class="search-box">
+        <input type="text" id="folder-search" placeholder="Search repositories..." />
+      </div>
+      <div id="folder-list-container">
+        <div class="loading">Loading...</div>
+      </div>
+    </div>
+
+    <!-- Main content with files -->
+    <div class="browser-content">
+      <div id="breadcrumb-container"></div>
+      <div class="file-controls">
+        <input type="text" id="file-search" class="file-search" placeholder="Search files..." />
+        <select id="sort-select" class="sort-select">
+          <option value="modified-desc">Modified (Newest First)</option>
+          <option value="modified-asc">Modified (Oldest First)</option>
+          <option value="title-asc">Title (A-Z)</option>
+          <option value="title-desc">Title (Z-A)</option>
+          <option value="size-desc">Size (Largest First)</option>
+          <option value="size-asc">Size (Smallest First)</option>
+        </select>
+      </div>
+      <div id="file-list-container">
+        <div class="empty-state">Select a repository to browse files</div>
+      </div>
+      <div id="pagination-container"></div>
+    </div>
   </div>
 </div>
 
@@ -748,5 +839,79 @@ class TinyMCEFileBrowser {
 document.addEventListener('DOMContentLoaded', function() {
   const browser = new TinyMCEFileBrowser();
   browser.init();
+
+  // Tab switching
+  const tabs = document.querySelectorAll('.browser-tab');
+  const webPagesView = document.querySelector('.web-pages-view');
+  const documentsView = document.querySelector('.documents-view');
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      // Update active tab
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+
+      // Switch views
+      const targetTab = tab.dataset.tab;
+      if (targetTab === 'web-pages') {
+        webPagesView.classList.add('active');
+        documentsView.classList.remove('active');
+      } else {
+        webPagesView.classList.remove('active');
+        documentsView.classList.add('active');
+      }
+    });
+  });
+
+  // Web page search
+  const pageSearch = document.getElementById('page-search');
+  if (pageSearch) {
+    pageSearch.addEventListener('input', function() {
+      const searchTerm = this.value.toLowerCase();
+      const pageItems = document.querySelectorAll('.page-item');
+      
+      pageItems.forEach(item => {
+        const link = item.querySelector('.page-link').textContent.toLowerCase();
+        const name = item.querySelector('.page-name').textContent.toLowerCase();
+        
+        if (link.includes(searchTerm) || name.includes(searchTerm)) {
+          item.style.display = '';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    });
+  }
+
+  // Web page selection
+  const pageItems = document.querySelectorAll('.page-item');
+  pageItems.forEach(item => {
+    item.addEventListener('click', function() {
+      const pageUrl = this.dataset.link;
+      <c:choose>
+        <c:when test="${!empty inputId}">
+        // Legacy mode - set input field (handle both anchor tags and input elements)
+        var element = top.document.getElementById("<c:out value="${inputId}" />");
+        if (element) {
+          if (element.tagName === 'A') {
+            element.href = pageUrl;
+          } else if (element.tagName === 'INPUT') {
+            element.value = pageUrl;
+          }
+          if (typeof top.$ !== 'undefined' && top.$('#imageBrowserReveal').length) {
+            top.$('#imageBrowserReveal').foundation('close');
+          }
+        }
+        </c:when>
+        <c:otherwise>
+        // Modern mode - post message to TinyMCE
+        window.parent.postMessage({
+            mceAction: 'FileSelected',
+            content: pageUrl
+        }, '*');
+        </c:otherwise>
+      </c:choose>
+    });
+  });
 });
 </script>
