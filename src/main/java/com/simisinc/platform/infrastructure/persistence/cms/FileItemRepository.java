@@ -78,7 +78,7 @@ public class FileItemRepository {
             .replace("%", "!%")
             .replace("_", "!_")
             .replace("[", "![");
-        where.AND("LOWER(files.title) LIKE LOWER(?) ESCAPE '!'", likeValue + "%");
+        where.AND("LOWER(files.title) LIKE LOWER(?) ESCAPE '!'", "%" + likeValue + "%");
       }
       if (specification.getWithinLastDays() > 0) {
         where.AND("files.created > NOW() - INTERVAL '" + specification.getWithinLastDays() + " days'");
