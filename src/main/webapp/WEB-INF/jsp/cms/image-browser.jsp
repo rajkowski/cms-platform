@@ -234,30 +234,64 @@
   .card-section > :last-child {
     margin-bottom: 0;
   }
+
+  .browser-header {
+    padding: 1rem;
+    border-bottom: 1px solid #e6e6e6;
+    background: #fefefe;
+  }
+
+  .search-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .search-container input[type="text"] {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid #cacaca;
+    border-radius: 4px;
+    font-size: 0.9rem;
+  }
+
+  .search-container button {
+    padding: 0.5rem 1rem;
+    background: #e6e6e6;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+
+  .search-container button:hover {
+    background: #cacaca;
+  }
+
+  .image-count {
+    font-size: 0.875rem;
+    color: #999999;
+  }
+
+  #image-grid-container {
+    display: flex;
+  }
 </style>
 <link rel="stylesheet" type="text/css" href="${ctx}/css/platform.css" />
 <div class="grid-container">
-  <c:if test="${empty imageList}">
-    <p>No images were found.</p>
-  </c:if>
-  <div class="grid-x grid-margin-x small-up-2 medium-up-4 large-up-4">
-    <c:forEach items="${imageList}" var="image" varStatus="status">
-      <div class="cell card">
-        <div class="image-browser">
-          <img onclick="mySubmit(this.dataset.src)" data-src="${ctx}/assets/img/${image.url}"
-               src="${ctx}/assets/img/${image.url}" alt="<c:out value="${image.filename}"/>">
-        </div>
-        <div class="card-section">
-          <div>
-            <small><c:out value="${image.filename}"/></small><br />
-            <small style="color: #999999">${image.width}x${image.height}</small>
-            <small style="color: #999999"><c:out value="${number:suffix(image.fileLength)}"/></small>
-          </div>
-        </div>
-      </div>
-    </c:forEach>
+  <div class="browser-header">
+    <div class="search-container">
+      <input type="text" id="image-search" placeholder="Search images by filename..." />
+      <button type="button" id="clear-search-btn">Clear</button>
+    </div>
+    <div id="image-count" class="image-count">Loading...</div>
+  </div>
+  <div class="grid-x grid-margin-x small-up-2 medium-up-4 large-up-4" id="image-grid-container">
+    <!-- Images will be dynamically loaded here -->
   </div>
 </div>
+<script src="${ctx}/javascript/image-browser-manager.js"></script>
 <script>
   <c:choose>
     <c:when test="${!empty inputId}">
@@ -281,4 +315,15 @@
       }
     </c:otherwise>
   </c:choose>
+
+  // Initialize the image browser manager
+  document.addEventListener('DOMContentLoaded', function() {
+    const imageBrowserConfig = {
+      apiBaseUrl: '${ctx}/json',
+      contextPath: '${ctx}'
+    };
+    
+    const imageBrowserManager = new ImageBrowserManager(imageBrowserConfig);
+    imageBrowserManager.init();
+  });
 </script>
