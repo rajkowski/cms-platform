@@ -249,10 +249,10 @@
             </select>
           </div>
           <div id="pages-hierarchy-nav" style="display: none; margin-bottom: 10px; padding: 8px; background: var(--editor-hover-bg); border-radius: 4px; font-size: 12px;">
-            <button id="pages-back-to-root" class="button tiny secondary radius" style="padding: 4px 8px; margin-right: 5px;">
+            <button id="pages-back-to-root" class="button tiny secondary radius no-gap" style="padding: 4px 8px; margin-right: 5px;">
               <i class="${font:far()} fa-home"></i> Root
             </button>
-            <button id="pages-back-to-parent" class="button tiny secondary radius" style="padding: 4px 8px; display: none;">
+            <button id="pages-back-to-parent" class="button tiny secondary radius no-gap" style="padding: 4px 8px; display: none;">
               <i class="${font:far()} fa-arrow-up"></i> Parent
             </button>
             <div id="pages-current-path" style="margin-top: 5px; color: var(--editor-text-muted); font-size: 11px;"></div>
