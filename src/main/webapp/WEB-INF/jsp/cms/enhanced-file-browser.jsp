@@ -1,5 +1,5 @@
 <%--
-  ~ Copyright 2022 SimIS Inc.
+  ~ Copyright 2026 Matt Rajkowski
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -598,13 +598,11 @@ class TinyMCEFileBrowser {
       this.currentSubfolders.forEach((subfolder) => {
         const item = document.createElement('li');
         item.className = 'subfolder-list-item';
-        item.innerHTML = `
-          <span class="file-icon"><i class="fa-regular fa-folder"></i></span>
-          <div class="file-info">
-            <div class="file-title">${subfolder.name || 'Untitled'}</div>
-            <div class="file-meta">${subfolder.fileCount || 0} files</div>
-          </div>
-        `;
+        item.innerHTML = '<span class="file-icon"><i class="fa-regular fa-folder"></i></span>' +
+          '<div class="file-info">' +
+            '<div class="file-title">' + (subfolder.name || 'Untitled') + '</div>' +
+            '<div class="file-meta">' + (subfolder.fileCount || 0) + ' files</div>' +
+          '</div>';
         item.addEventListener('click', () => {
           this.loadFiles(this.currentFolderId, subfolder.id);
         });
@@ -630,13 +628,11 @@ class TinyMCEFileBrowser {
       const icon = this.getMimeIcon(file.mimeType, file.filename);
       const size = file.fileLength ? this.formatSize(file.fileLength) : '';
       
-      item.innerHTML = `
-        <span class="file-icon">${icon}</span>
-        <div class="file-info">
-          <div class="file-title">${file.title || file.filename || 'Untitled'}</div>
-          <div class="file-meta">${file.mimeType || ''} ${size ? '• ' + size : ''}</div>
-        </div>
-      `;
+      item.innerHTML = '<span class="file-icon">' + icon + '</span>' +
+        '<div class="file-info">' +
+          '<div class="file-title">' + (file.title || file.filename || 'Untitled') + '</div>' +
+          '<div class="file-meta">' + (file.mimeType || '') + (size ? ' &bull; ' + size : '') + '</div>' +
+        '</div>';
       
       item.addEventListener('click', () => {
         this.selectFile(file);
