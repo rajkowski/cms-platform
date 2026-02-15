@@ -72,14 +72,32 @@ class ContentEditorBridge {
       convert_unsafe_embeds: true,
       sandbox_iframes: true,
       browser_spellcheck: true,
-      plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code insertdatetime media table wordcount',
-      toolbar: 'link image media table | undo redo | blocks | bold italic backcolor | bullist numlist outdent indent hr | removeformat | visualblocks code',
+      plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code insertdatetime media table wordcount contentblock',
+      toolbar: 'link image media table contentblock | undo redo | blocks | bold italic backcolor | bullist numlist outdent indent hr | removeformat | visualblocks code',
+      external_plugins: {
+        "contentblock": "/javascript/tinymce-plugins/contentblock/plugin.js"
+      },
       image_class_list: [
         { title: 'None', value: '' },
         { title: 'Image Left/Wrap Text Right', value: 'image-left' },
         { title: 'Image Right/Wrap Text left', value: 'image-right' },
         { title: 'Image Center On Line', value: 'image-center' }
       ],
+      link_class_list: [
+        {title: 'None', value: ''},
+        {title: 'Button', value: 'button'},
+        {title: 'Button Primary', value: 'button primary'},
+        {title: 'Button Primary Radius', value: 'button primary radius'},
+        {title: 'Button Primary Round', value: 'button primary round'},
+        {title: 'Button Secondary', value: 'button secondary'},
+        {title: 'Button Secondary Radius', value: 'button secondary radius'},
+        {title: 'Button Secondary Round', value: 'button secondary round'},
+        {title: 'Button Box', value: 'button box'},
+        {title: 'Button Box Radius', value: 'button box radius'},
+        {title: 'Button Box Round', value: 'button box round'},
+        {title: 'Call to Action', value: 'button call-to-action'}
+      ],
+      extended_valid_elements: 'span[*]',
       file_picker_types: 'file image media',
       // link_default_target: '_blank',
       file_picker_callback: function (callback, value, meta) {
@@ -87,7 +105,7 @@ class ContentEditorBridge {
           callback(fileUrl);
         });
       },
-      images_upload_url: '${ctx}/image-upload?widget=imageUpload1&token=${userSession.formToken}', // return { "location": "folder/sub-folder/new-location.png" }
+      images_upload_url: '/image-upload?widget=imageUpload1&token=${userSession.formToken}', // return { "location": "folder/sub-folder/new-location.png" }
       paste_data_images: true,
       automatic_uploads: true,
       setup: (editor) => {
@@ -116,7 +134,7 @@ class ContentEditorBridge {
       } else if (type === 'file') {
         cmsType = 'file';
       }
-      var cmsURL = '${ctx}/' + cmsType + '-browser';
+      var cmsURL = '/' + cmsType + '-browser';
       const instanceApi = tinyMCE.activeEditor.windowManager.openUrl({
         title: 'Browser',
         url: cmsURL,

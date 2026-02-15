@@ -52,9 +52,10 @@
     content_css: ['${ctx}/css/${font:fontawesome()}/css/all.min.css'],
     noneditable_class: 'tinymce-noedit',
     browser_spellcheck: true,
-    plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code media table wordcount fontawesome',
-    toolbar: 'link image media table | undo redo | blocks | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent hr anchor | fontawesome removeformat visualblocks code',
+    plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code media table wordcount fontawesome contentblock',
+    toolbar: 'link image media table contentblock | undo redo | blocks | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent hr anchor | fontawesome removeformat visualblocks code',
     external_plugins: {
+        "contentblock": "${ctx}/javascript/tinymce-plugins/contentblock/plugin.js",
         "fontawesome": "${ctx}/javascript/tinymce-plugins/fontawesome/plugin.min.js"
     },
     image_class_list: [
@@ -63,7 +64,6 @@
       {title: 'Image Right/Wrap Text left', value: 'image-right'},
       {title: 'Image Center On Line', value: 'image-center'}
     ],
-
     link_class_list: [
       {title: 'None', value: ''},
       {title: 'Button', value: 'button'},
