@@ -52,6 +52,7 @@ public class Dataset extends Entity {
   private String fileHash = null;
   private String webPath = null;
   private Timestamp lastDownload = null;
+  private String requestConfig = null;
   // File Details
   private String recordsPath = null;
   private String pagingUrlPath = null;
@@ -322,6 +323,14 @@ public class Dataset extends Entity {
 
   public void setLastDownload(Timestamp lastDownload) {
     this.lastDownload = lastDownload;
+  }
+
+  public String getRequestConfig() {
+    return requestConfig;
+  }
+
+  public void setRequestConfig(String requestConfig) {
+    this.requestConfig = requestConfig;
   }
 
   public String getUniqueColumnName() {

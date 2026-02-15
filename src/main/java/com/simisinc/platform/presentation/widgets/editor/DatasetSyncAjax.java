@@ -32,7 +32,7 @@ public class DatasetSyncAjax extends GenericWidget {
   static final long serialVersionUID = -8484048371911908901L;
   private static Log LOG = LogFactory.getLog(DatasetSyncAjax.class);
 
-  public WidgetContext execute(WidgetContext context) {
+  public WidgetContext post(WidgetContext context) {
 
     LOG.debug("DatasetSyncAjax...");
 

@@ -85,6 +85,7 @@ public class SaveDatasetCommand {
     dataset.setSourceInfo(datasetBean.getSourceInfo());
     dataset.setLastDownload(datasetBean.getLastDownload());
     dataset.setRecordsPath(datasetBean.getRecordsPath());
+    dataset.setRequestConfig(datasetBean.getRequestConfig());
     return DatasetRepository.save(dataset);
   }
 }

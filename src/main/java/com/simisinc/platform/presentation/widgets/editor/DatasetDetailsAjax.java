@@ -95,7 +95,14 @@ public class DatasetDetailsAjax extends GenericWidget {
     sb.append("\"syncRecordCount\":").append(dataset.getSyncRecordCount()).append(",");
     sb.append("\"syncAddCount\":").append(dataset.getSyncAddCount()).append(",");
     sb.append("\"syncUpdateCount\":").append(dataset.getSyncUpdateCount()).append(",");
-    sb.append("\"syncDeleteCount\":").append(dataset.getSyncDeleteCount());
+    sb.append("\"syncDeleteCount\":").append(dataset.getSyncDeleteCount()).append(",");
+    
+    // Request configuration
+    if (StringUtils.isNotBlank(dataset.getRequestConfig())) {
+      sb.append("\"requestConfig\":").append(dataset.getRequestConfig());
+    } else {
+      sb.append("\"requestConfig\":null");
+    }
     
     sb.append("}");
 

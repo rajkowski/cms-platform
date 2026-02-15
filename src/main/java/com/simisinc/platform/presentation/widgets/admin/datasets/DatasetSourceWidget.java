@@ -107,6 +107,7 @@ public class DatasetSourceWidget extends GenericWidget {
     // Check form values
     dataset.setSourceUrl(context.getParameter("sourceUrl"));
     dataset.setFileType(context.getParameter("fileType"));
+    dataset.setRequestConfig(context.getParameter("requestConfig"));
 
     // Verify there is a data source url
     if (StringUtils.isBlank(dataset.getSourceUrl()) || !UrlCommand.isUrlValid(dataset.getSourceUrl())) {
@@ -141,6 +142,7 @@ public class DatasetSourceWidget extends GenericWidget {
     // Check form values
     dataset.setSourceUrl(context.getParameter("sourceUrl"));
     dataset.setFileType(context.getParameter("fileType"));
+    dataset.setRequestConfig(context.getParameter("requestConfig"));
 
     // Verify there is a data source url
     if (StringUtils.isBlank(dataset.getSourceUrl()) || !UrlCommand.isUrlValid(dataset.getSourceUrl())) {

@@ -16,8 +16,12 @@
 
 package com.simisinc.platform.presentation.widgets.editor;
 
+import com.simisinc.platform.application.datasets.SaveDatasetCommand;
+import com.simisinc.platform.domain.model.datasets.Dataset;
+import com.simisinc.platform.infrastructure.persistence.datasets.DatasetRepository;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -32,7 +36,7 @@ public class SaveDatasetAjax extends GenericWidget {
   static final long serialVersionUID = -8484048371911908898L;
   private static Log LOG = LogFactory.getLog(SaveDatasetAjax.class);
 
-  public WidgetContext execute(WidgetContext context) {
+  public WidgetContext post(WidgetContext context) {
 
     LOG.debug("SaveDatasetAjax...");
 
@@ -44,8 +48,71 @@ public class SaveDatasetAjax extends GenericWidget {
       return context;
     }
 
-    // Stub implementation - to be completed
-    context.setJson("{\"success\":true,\"message\":\"Dataset save not yet implemented\"}");
-    return context;
+    // Get the dataset ID
+    long datasetId = context.getParameterAsLong("id", -1);
+    if (datasetId == -1) {
+      context.setJson("{\"success\":false,\"message\":\"Dataset id is required\"}");
+      context.setSuccess(false);
+      return context;
+    }
+
+    // Retrieve the dataset
+    Dataset dataset = DatasetRepository.findById(datasetId);
+    if (dataset == null) {
+      context.setJson("{\"success\":false,\"message\":\"Dataset not found\"}");
+      context.setSuccess(false);
+      return context;
+    }
+
+    // Update fields from parameters
+    String name = context.getParameter("name");
+    if (StringUtils.isNotBlank(name)) {
+      dataset.setName(name);
+    }
+
+    String sourceUrl = context.getParameter("sourceUrl");
+    if (sourceUrl != null) {
+      dataset.setSourceUrl(StringUtils.trimToNull(sourceUrl));
+    }
+
+    String sourceInfo = context.getParameter("sourceInfo");
+    if (sourceInfo != null) {
+      dataset.setSourceInfo(StringUtils.trimToNull(sourceInfo));
+    }
+
+    String requestConfig = context.getParameter("requestConfig");
+    if (requestConfig != null) {
+      dataset.setRequestConfig(StringUtils.trimToNull(requestConfig));
+    }
+
+    String syncEnabled = context.getParameter("syncEnabled");
+    if (syncEnabled != null) {
+      dataset.setSyncEnabled("true".equalsIgnoreCase(syncEnabled));
+    }
+
+    String scheduleEnabled = context.getParameter("scheduleEnabled");
+    if (scheduleEnabled != null) {
+      dataset.setScheduleEnabled("true".equalsIgnoreCase(scheduleEnabled));
+    }
+
+    // Set the user who is modifying the dataset
+    dataset.setModifiedBy(context.getUserId());
+
+    // Save the dataset
+    try {
+      Dataset savedDataset = SaveDatasetCommand.saveDataset(dataset);
+      if (savedDataset == null) {
+        context.setJson("{\"success\":false,\"message\":\"Failed to save dataset\"}");
+        context.setSuccess(false);
+        return context;
+      }
+      context.setJson("{\"success\":true,\"message\":\"Dataset saved successfully\",\"id\":" + savedDataset.getId() + "}");
+      return context;
+    } catch (Exception e) {
+      LOG.error("Error saving dataset", e);
+      context.setJson("{\"success\":false,\"message\":\"Error: " + e.getMessage() + "\"}");
+      context.setSuccess(false);
+      return context;
+    }
   }
 }
