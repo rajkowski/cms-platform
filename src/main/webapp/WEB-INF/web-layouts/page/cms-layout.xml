@@ -264,17 +264,21 @@
     </widget>
   </page>
   <page name="/assets/drawio" title="Diagram Viewer" class="full-page">
-    <widget name="drawIOViewer">
-      <toolbar>zoom layers pages</toolbar>
-      <toolbar-position>top</toolbar-position>
-      <toolbar-nohide>true</toolbar-nohide>
-      <zoom>1</zoom>
-      <nav>true</nav>
-      <resize>true</resize>
-      <editable>false</editable>
-      <edit>false</edit>
-      <lightbox>false</lightbox>
-    </widget>
+    <section class="grid-x grid-margin-x platform-no-margin">
+      <column class="small-12 cell">
+        <widget name="drawIOViewer">
+          <toolbar>zoom layers pages</toolbar>
+          <toolbar-position>top</toolbar-position>
+          <toolbar-nohide>true</toolbar-nohide>
+          <zoom>1</zoom>
+          <nav>true</nav>
+          <resize>true</resize>
+          <editable>false</editable>
+          <edit>false</edit>
+          <lightbox>false</lightbox>
+        </widget>
+      </column>
+    </section>
   </page>
   <page name="/assets/captcha">
     <widget name="captchaImage" />
