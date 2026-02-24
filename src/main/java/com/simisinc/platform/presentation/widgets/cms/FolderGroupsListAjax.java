@@ -90,7 +90,8 @@ public class FolderGroupsListAjax extends GenericWidget {
   private void appendFolderJson(StringBuilder json, Folder folder) {
     json.append("\"folder\":{");
     json.append(JSON_ID).append(folder.getId()).append(",");
-    json.append("\"name\":\"").append(escapeJson(folder.getName())).append("\"");
+    json.append("\"name\":\"").append(escapeJson(folder.getName())).append("\",");
+    json.append("\"guestPrivacyType\":").append(folder.getGuestPrivacyType());
     json.append("}");
   }
 

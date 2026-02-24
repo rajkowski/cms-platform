@@ -73,23 +73,6 @@ public class FolderGroupRepository {
     return null;
   }
 
-  public static FolderGroup add(FolderGroup record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("folder_id", record.getFolderId())
-        .add("group_id", record.getGroupId())
-        .add("privacy_type", record.getPrivacyType())
-        .add("view_all", (record.getPrivacyType() == PrivacyType.PUBLIC || record.getPrivacyType() == PrivacyType.PUBLIC_READ_ONLY))
-        .add("add_permission", record.getAddPermission())
-        .add("edit_permission", record.getEditPermission())
-        .add("delete_permission", record.getDeletePermission());
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
-    if (record.getId() == -1) {
-      LOG.error("An id was not set!");
-      return null;
-    }
-    return record;
-  }
-
   public static void insertFolderGroupList(Connection connection, Folder folder) throws SQLException {
     if (folder.getFolderGroupList() == null) {
       return;
@@ -107,6 +90,54 @@ public class FolderGroupRepository {
           .add("delete_permission", allowedGroup.getDeletePermission());
       DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY);
     }
+  }
+
+  public static FolderGroup add(FolderGroup record) {
+    SqlUtils insertValues = new SqlUtils()
+        .add("folder_id", record.getFolderId())
+        .add("group_id", record.getGroupId())
+        .add("privacy_type", record.getPrivacyType())
+        .add("view_all", (record.getPrivacyType() == PrivacyType.PUBLIC || record.getPrivacyType() == PrivacyType.PUBLIC_READ_ONLY))
+        .add("add_permission", record.getAddPermission())
+        .add("edit_permission", record.getEditPermission())
+        .add("delete_permission", record.getDeletePermission());
+    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    if (record.getId() == -1) {
+      LOG.error("An id was not set!");
+      return null;
+    }
+    // Update the folder's pointer fields (has_allowed_groups and privacy_types)
+    FolderRepository.updateGroupPointers(record.getFolderId());
+    return record;
+  }
+
+  public static boolean update(FolderGroup record) {
+    SqlUtils updateValues = new SqlUtils()
+        .add("privacy_type", record.getPrivacyType())
+        .add("view_all", (record.getPrivacyType() == PrivacyType.PUBLIC || record.getPrivacyType() == PrivacyType.PUBLIC_READ_ONLY))
+        .add("add_permission", record.getAddPermission())
+        .add("edit_permission", record.getEditPermission())
+        .add("delete_permission", record.getDeletePermission());
+    boolean result = DB.update(TABLE_NAME, updateValues, DB.WHERE("allowed_id = ?", record.getId()));
+    if (result) {
+      // Keep the folder's pointer fields in sync after updating a group's privacy type
+      FolderRepository.updateGroupPointers(record.getFolderId());
+    }
+    return result;
+  }
+
+  public static boolean remove(long id) {
+    // Determine folder before deleting to update has_allowed_groups pointer
+    FolderGroup existing = (FolderGroup) DB.selectRecordFrom(
+        TABLE_NAME,
+        DB.WHERE("allowed_id = ?", id),
+        FolderGroupRepository::buildRecord);
+    boolean deleted = DB.deleteFrom(TABLE_NAME, DB.WHERE("allowed_id = ?", id)) > 0;
+    if (deleted && existing != null) {
+      // Keep the folder's pointer fields in sync after removing a group
+      FolderRepository.updateGroupPointers(existing.getFolderId());
+    }
+    return deleted;
   }
 
   public static void removeAll(Connection connection, Folder folder) throws SQLException {

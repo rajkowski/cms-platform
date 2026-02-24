@@ -10,6 +10,8 @@ class DocumentPropertiesManager {
     this.infoSection = null;
     this.currentFile = null;
     this.isEditing = false;
+    this.activeTab = 'preview';
+    this.analyticsDays = 30;
   }
 
   init() {
@@ -56,6 +58,7 @@ class DocumentPropertiesManager {
       }
       this.currentFile = await response.json();
       this.isEditing = false;
+      this.activeTab = 'preview';
       this.render(this.currentFile);
       this.editor.setUnsavedChanges(false);
     } catch (err) {
@@ -97,24 +100,31 @@ class DocumentPropertiesManager {
     }
 
     const editModeClass = this.isEditing ? 'editable' : '';
+    const isPreviewActive = this.activeTab === 'preview';
+    const isInfoActive = this.activeTab === 'info';
+    const isVersionsActive = this.activeTab === 'versions';
+    const isAnalyticsActive = this.activeTab === 'analytics';
     const titleInput = this.isEditing
       ? `<input type="text" class="property-input" id="prop-title" value="${file.title || file.filename || ''}" />`
       : `<div class="property-value">${file.title || file.filename || 'Untitled'}</div>`;
     const filenameInput = this.isEditing
       ? `<input type="text" class="property-input" id="prop-filename" value="${file.filename || ''}" />`
       : `<div class="property-value">${file.filename || ''}</div>`;
+    const versionInput = this.isEditing
+      ? `<input type="text" class="property-input" id="prop-version" value="${file.version || ''}" />`
+      : `<div class="property-value">${file.version || ''}</div>`;
     const summaryInput = this.isEditing
       ? `<textarea class="property-input" id="prop-summary" rows="3">${file.summary || ''}</textarea>`
       : `<div class="property-value">${file.summary || ''}</div>`;
 
     this.contentEl.innerHTML = `
       <div class="property-tabs">
-        <button class="property-tab active" data-tab="preview">Preview</button>
-        <button class="property-tab" data-tab="info">Properties</button>
-        <button class="property-tab" data-tab="versions">Versions</button>
-        <button class="property-tab" data-tab="downloads">Downloads</button>
+        <button class="property-tab ${isPreviewActive ? 'active' : ''}" data-tab="preview">Preview</button>
+        <button class="property-tab ${isInfoActive ? 'active' : ''}" data-tab="info">Properties</button>
+        <button class="property-tab ${isVersionsActive ? 'active' : ''}" data-tab="versions">Versions</button>
+        <button class="property-tab ${isAnalyticsActive ? 'active' : ''}" data-tab="analytics">Analytics</button>
       </div>
-      <div class="property-section no-gap active" data-tab="preview">
+      <div class="property-section no-gap ${isPreviewActive ? 'active' : ''}" data-tab="preview">
         <div class="preview-toolbar" style="padding: 0.5rem; display: flex; gap: 0.5rem;">
           <button id="preview-download-btn" class="button tiny success no-gap radius" title="Download this file"><i class="fas fa-download"></i> Download</button>
           <button id="preview-add-version-btn" class="button tiny primary no-gap radius" title="Add a new version of this file"><i class="fas fa-plus"></i> Add Version</button>
@@ -125,7 +135,7 @@ class DocumentPropertiesManager {
           ${this.renderPreviewContent(file)}
         </div>
       </div>
-      <div class="property-section ${editModeClass}" data-tab="info">
+      <div class="property-section ${editModeClass} ${isInfoActive ? 'active' : ''}" data-tab="info">
         <div class="property-group ${editModeClass}">
           <label>Title</label>
           ${titleInput}
@@ -134,9 +144,9 @@ class DocumentPropertiesManager {
           <label>Filename</label>
           ${filenameInput}
         </div>
-        <div class="property-group">
+        <div class="property-group ${editModeClass}">
           <label>Version</label>
-          <div class="property-value">${file.version || ''}</div>
+          ${versionInput}
         </div>
         <div class="property-group">
           <label>MIME Type</label>
@@ -165,11 +175,11 @@ class DocumentPropertiesManager {
           </div>
         `}
       </div>
-      <div class="property-section" data-tab="versions">
-        <div class="empty-state">Version history coming soon.</div>
+      <div class="property-section ${isVersionsActive ? 'active' : ''}" data-tab="versions">
+        <div id="versions-loading" class="empty-state">Loading versions...</div>
       </div>
-      <div class="property-section" data-tab="downloads">
-        <div class="empty-state">Download analytics coming soon.</div>
+      <div class="property-section ${isAnalyticsActive ? 'active' : ''}" data-tab="analytics">
+        <div id="analytics-content" class="empty-state">Loading analytics...</div>
       </div>
     `;
 
@@ -189,6 +199,7 @@ class DocumentPropertiesManager {
     if (editBtn) {
       editBtn.addEventListener('click', () => {
         this.isEditing = true;
+        this.activeTab = 'info';
         this.render(this.currentFile);
       });
     }
@@ -207,7 +218,9 @@ class DocumentPropertiesManager {
 
   async saveProperties() {
     const titleInput = document.getElementById('prop-title');
+    const filenameInput = document.getElementById('prop-filename');
     const summaryInput = document.getElementById('prop-summary');
+    const versionInput = document.getElementById('prop-version');
 
     if (!titleInput || !this.currentFile) {
       return;
@@ -217,6 +230,8 @@ class DocumentPropertiesManager {
       token: this.token,
       id: this.currentFile.id,
       title: titleInput.value.trim(),
+      filename: filenameInput ? filenameInput.value.trim() : this.currentFile.filename,
+      version: versionInput ? versionInput.value.trim() : this.currentFile.version,
       summary: summaryInput ? summaryInput.value.trim() : ''
     };
 
@@ -226,6 +241,8 @@ class DocumentPropertiesManager {
       formData.append('token', updates.token);
       formData.append('id', updates.id);
       formData.append('title', updates.title);
+      formData.append('filename', updates.filename);
+      formData.append('version', updates.version);
       formData.append('summary', updates.summary);
 
       const response = await fetch('/json/documentUpdate', {
@@ -245,6 +262,8 @@ class DocumentPropertiesManager {
 
       // Update current file with saved values
       this.currentFile.title = updates.title;
+      this.currentFile.filename = updates.filename;
+      this.currentFile.version = updates.version;
       this.currentFile.summary = updates.summary;
       this.isEditing = false;
       this.render(this.currentFile);
@@ -252,8 +271,6 @@ class DocumentPropertiesManager {
 
       // Reload file list to show updated title
       this.editor.files.reload();
-
-      alert('Properties saved successfully');
     } catch (err) {
       console.error('Save failed', err);
       alert(`Failed to save properties: ${err.message}`);
@@ -268,10 +285,23 @@ class DocumentPropertiesManager {
     tabs.forEach((tab) => {
       tab.addEventListener('click', () => {
         const tabName = tab.dataset.tab;
+        this.activeTab = tabName;
         tabs.forEach((t) => t.classList.toggle('active', t.dataset.tab === tabName));
         sections.forEach((section) => section.classList.toggle('active', section.dataset.tab === tabName));
+        // Lazy load content for versions/downloads tabs
+        if (tabName === 'versions') {
+          this.loadVersions();
+        } else if (tabName === 'analytics') {
+          this.loadFileAnalytics();
+        }
       });
     });
+    // If initial tab is versions or downloads, load content
+    if (this.activeTab === 'versions') {
+      this.loadVersions();
+    } else if (this.activeTab === 'analytics') {
+      this.loadFileAnalytics();
+    }
   }
 
   formatSize(bytes) {
@@ -386,6 +416,163 @@ class DocumentPropertiesManager {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+  }
+
+  async loadVersions() {
+    const container = document.getElementById('versions-loading');
+    if (!container || !this.currentFile) {
+      return;
+    }
+    try {
+      const url = new URL(`${this.editor.config.apiBaseUrl}/documentFileVersions`, globalThis.location.origin);
+      url.searchParams.set('fileId', this.currentFile.id);
+      const response = await fetch(url.toString(), { credentials: 'same-origin' });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const data = await response.json();
+      const versions = data.versions || [];
+      if (versions.length === 0) {
+        container.outerHTML = '<div class="empty-state">No version history available.</div>';
+        return;
+      }
+
+      let html = '<div class="versions-header" style="display:flex; justify-content:space-between; align-items:center; padding: 0.5rem;">';
+      html += '<strong>Version History</strong>';
+      html += '<button id="upload-new-version-btn" class="button tiny primary no-gap radius"><i class="fas fa-upload"></i> Upload New Version</button>';
+      html += '</div>';
+      html += '<table class="file-table" style="font-size:0.8rem;">';
+      html += '<thead><tr><th>Version</th><th>Filename</th><th>Size</th><th>Downloads</th><th>Date</th></tr></thead>';
+      html += '<tbody>';
+      for (const v of versions) {
+        const date = v.created ? new Date(v.created).toLocaleDateString() : '-';
+        const size = this.formatSize(v.fileLength);
+        html += `<tr>`;
+        html += `<td>${this.escapeHtml(v.version || '1.0')}</td>`;
+        html += `<td title="${this.escapeHtml(v.filename)}">${this.escapeHtml(v.filename || '-')}</td>`;
+        html += `<td>${size}</td>`;
+        html += `<td>${v.downloadCount || 0}</td>`;
+        html += `<td>${date}</td>`;
+        html += `</tr>`;
+      }
+      html += '</tbody></table>';
+
+      const section = container.closest('.property-section[data-tab="versions"]');
+      if (section) {
+        section.innerHTML = html;
+        const uploadBtn = section.querySelector('#upload-new-version-btn');
+        if (uploadBtn) {
+          uploadBtn.addEventListener('click', () => this.editor.fileManager.addVersion());
+        }
+      }
+    } catch (err) {
+      console.error('Error loading versions', err);
+      if (container) {
+        container.textContent = 'Failed to load versions.';
+      }
+    }
+  }
+
+  async loadFileAnalytics() {
+    const section = this.contentEl ? this.contentEl.querySelector('.property-section[data-tab="analytics"]') : null;
+    if (!section || !this.currentFile) return;
+
+    section.innerHTML = '<div class="empty-state" style="padding:0.5rem;">Loading analytics...</div>';
+
+    try {
+      const url = new URL(`${this.editor.config.apiBaseUrl}/documentFileAnalytics`, globalThis.location.origin);
+      url.searchParams.set('fileId', this.currentFile.id);
+      url.searchParams.set('days', this.analyticsDays);
+      const response = await fetch(url.toString(), { credentials: 'same-origin' });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+
+      const totalHits = data.totalHits || 0;
+      const recentHits = data.recentHits || [];
+      const monthlyData = data.monthlyData || [];
+
+      let html = '<div class="file-analytics-content">';
+
+      // Day selector
+      html += '<div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem;">';
+      html += `<strong>Downloads: ${totalHits} total</strong>`;
+      html += '<div class="analytics-days-selector" style="display:flex; gap:0.25rem;">';
+      html += `<button class="button tiny ${this.analyticsDays == 1 ? 'primary' : 'secondary'}" data-days="1">1d</button>`;
+      html += `<button class="button tiny ${this.analyticsDays == 7 ? 'primary' : 'secondary'}" data-days="7">7d</button>`;
+      html += `<button class="button tiny ${this.analyticsDays == 30 ? 'primary' : 'secondary'}" data-days="30">30d</button>`;
+      html += `<button class="button tiny ${this.analyticsDays == 90 ? 'primary' : 'secondary'}" data-days="90">90d</button>`;
+      html += '</div>';
+      html += '</div>';
+
+      // Monthly chart (last year)
+      if (monthlyData.length > 0) {
+        html += this.renderMonthlyChart(monthlyData);
+      }
+
+      // Recent hits table
+      if (recentHits.length > 0) {
+        html += '<table class="file-table" style="font-size:0.8rem; margin-top:0.5rem;">';
+        html += '<thead><tr><th>Date</th><th>Hits</th></tr></thead>';
+        html += '<tbody>';
+        for (const hit of recentHits) {
+          html += `<tr><td>${this.escapeHtml(hit.date)}</td><td>${hit.count}</td></tr>`;
+        }
+        html += '</tbody></table>';
+      } else {
+        html += '<div class="empty-state" style="padding:0.5rem;">No download data available for this period.</div>';
+      }
+
+      html += '</div>';
+      section.innerHTML = html;
+
+      // Wire day selector
+      section.querySelectorAll('.analytics-days-selector .button').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          this.analyticsDays = parseInt(btn.dataset.days);
+          this.loadFileAnalytics();
+        });
+      });
+
+    } catch (err) {
+      console.error('Error loading file analytics', err);
+      section.innerHTML = '<div class="empty-state">Failed to load analytics.</div>';
+    }
+  }
+
+  renderMonthlyChart(monthlyData) {
+    const maxVal = Math.max(...monthlyData.map(d => d.count), 1);
+    const barWidth = 16;
+    const barGap = 4;
+    const chartH = 60;
+    const paddingLeft = 30;
+    const totalW = monthlyData.length * (barWidth + barGap) + paddingLeft;
+
+    let svg = `<svg width="${totalW}" height="${chartH + 24}" style="max-width:100%; overflow:visible; margin:0.25rem 0.5rem;">`;
+
+    // Y axis label
+    svg += `<text x="0" y="${chartH / 2}" font-size="9" fill="var(--text-muted)" text-anchor="middle" transform="rotate(-90, 10, ${chartH / 2})">#</text>`;
+
+    monthlyData.forEach((d, i) => {
+      const x = paddingLeft + i * (barWidth + barGap);
+      const barH = maxVal > 0 ? Math.max(2, Math.round((d.count / maxVal) * chartH)) : 2;
+      const y = chartH - barH;
+      const color = d.count > 0 ? 'var(--primary-color, #2563eb)' : 'var(--editor-border, #ccc)';
+
+      svg += `<rect x="${x}" y="${y}" width="${barWidth}" height="${barH}" fill="${color}" rx="2">`;
+      svg += `<title>${d.label}: ${d.count}</title></rect>`;
+
+      // Month label (short)
+      const shortLabel = d.label ? d.label.substring(5) : '';
+      svg += `<text x="${x + barWidth / 2}" y="${chartH + 14}" font-size="8" fill="var(--text-muted)" text-anchor="middle">${shortLabel}</text>`;
+    });
+
+    svg += '</svg>';
+    return `<div style="overflow-x:auto; padding:0 0.5rem;">${svg}</div>`;
+  }
+
+  async loadDownloads() {
+    // Alias kept for backward compatibility - delegates to loadFileAnalytics
+    this.loadFileAnalytics();
   }
 
   wirePreviewButtons() {

@@ -182,6 +182,7 @@
   flex-direction: column;
   background: var(--editor-bg);
   overflow: hidden;
+  position: relative;
 }
 
 #document-browser-panel .panel-header {
@@ -192,6 +193,34 @@
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+/* Drop zone overlay: appears over the file list, not pushing it down */
+.file-drop-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  background: rgba(0, 60, 120, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: inherit;
+}
+
+.file-drop-overlay .drop-message {
+  color: #fff;
+  text-align: center;
+  font-size: 1.25rem;
+  pointer-events: none;
+}
+
+.file-drop-overlay .drop-message i {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 0.5rem;
 }
 
 #document-browser-panel .panel-header #breadcrumb-navigation .breadcrumbs {
@@ -887,6 +916,11 @@
 .form-group textarea {
   resize: vertical;
   min-height: 80px;
+}
+
+.form-group input[type="checkbox"] {
+  width: auto;
+  margin-right: 0;
 }
 
 fieldset {

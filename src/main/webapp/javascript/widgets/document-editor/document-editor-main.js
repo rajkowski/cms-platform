@@ -175,7 +175,64 @@ class DocumentEditor {
   }
 
   handleNewUrl() {
-    alert('New URL placeholder — hook into FileItem link creation.');
+    const folderId = this.fileManager.currentFolderId;
+    if (!folderId || folderId < 0) {
+      alert('Please select a repository first.');
+      return;
+    }
+    const modal = document.getElementById('add-url-modal');
+    if (!modal) {
+      return;
+    }
+    const urlInput = modal.querySelector('#url-link');
+    const titleInput = modal.querySelector('#url-title');
+    if (urlInput) urlInput.value = '';
+    if (titleInput) titleInput.value = '';
+    const saveBtn = modal.querySelector('#save-url-btn');
+    if (saveBtn) {
+      saveBtn.onclick = () => this.saveUrl();
+    }
+    if (typeof $ !== 'undefined' && typeof Foundation !== 'undefined') {
+      new Foundation.Reveal($(modal)).open();
+    } else {
+      modal.style.display = 'block';
+      modal.classList.add('is-open');
+    }
+  }
+
+  async saveUrl() {
+    const modal = document.getElementById('add-url-modal');
+    const url = modal ? modal.querySelector('#url-link')?.value?.trim() : '';
+    const title = modal ? modal.querySelector('#url-title')?.value?.trim() : '';
+    if (!url) {
+      alert('URL is required.');
+      return;
+    }
+    const folderId = this.fileManager.currentFolderId;
+    const subFolderId = this.fileManager.currentSubFolderId || -1;
+    try {
+      const formData = new FormData();
+      formData.append('token', this.config.token);
+      formData.append('folderId', folderId);
+      if (subFolderId > 0) formData.append('subFolderId', subFolderId);
+      formData.append('url', url);
+      if (title) formData.append('title', title);
+      const response = await fetch(`${this.config.apiBaseUrl}/documentAddUrl`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+      });
+      const result = await response.json();
+      if (result.success) {
+        this.closeModal(modal);
+        this.fileManager.reload();
+      } else {
+        alert(result.message || 'Failed to add URL.');
+      }
+    } catch (err) {
+      console.error('Error adding URL', err);
+      alert('Error adding URL: ' + err.message);
+    }
   }
 
   handleImport() {
@@ -204,20 +261,21 @@ class DocumentEditor {
     // Update content visibility
     const detailsTab = document.getElementById('folder-details-tab');
     const permissionsTab = document.getElementById('folder-permissions-tab');
-    const versionsTab = document.getElementById('file-versions-tab');
+    const analyticsTab = document.getElementById('folder-analytics-tab');
     
     // Hide all tabs
     if (detailsTab) detailsTab.style.display = 'none';
     if (permissionsTab) permissionsTab.style.display = 'none';
-    if (versionsTab) versionsTab.style.display = 'none';
+    if (analyticsTab) analyticsTab.style.display = 'none';
 
     // Show selected tab
     if (tabName === 'details' && detailsTab) {
       detailsTab.style.display = 'block';
     } else if (tabName === 'permissions' && permissionsTab) {
       permissionsTab.style.display = 'block';
-    } else if (tabName === 'versions' && versionsTab) {
-      versionsTab.style.display = 'block';
+    } else if (tabName === 'analytics' && analyticsTab) {
+      analyticsTab.style.display = 'block';
+      this.folderDetails.loadAnalytics();
     }
   }
 
@@ -249,6 +307,12 @@ class DocumentEditor {
     const folderPermissionsTab = document.getElementById('folder-permissions-tab');
     if (folderPermissionsTab) {
       folderPermissionsTab.style.display = 'none';
+    }
+
+    // Hide analytics tab initially
+    const folderAnalyticsTab = document.getElementById('folder-analytics-tab');
+    if (folderAnalyticsTab) {
+      folderAnalyticsTab.style.display = 'none';
     }
 
     document.getElementById('properties-panel-title').textContent = 'Repository: ' + (folder.name || 'Untitled');
@@ -302,7 +366,11 @@ class DocumentEditor {
     //   tabsNav.style.display = 'flex';
     // }
 
-    // Hide folder-specific tabs
+    // Hide folder tabs and analytics
+    const tabsNav = document.getElementById('properties-tabs');
+    if (tabsNav) {
+      tabsNav.style.display = 'none';
+    }
     const folderDetailsTab = document.getElementById('folder-details-tab');
     if (folderDetailsTab) {
       folderDetailsTab.style.display = 'none';
@@ -310,6 +378,10 @@ class DocumentEditor {
     const folderPermissionsTab = document.getElementById('folder-permissions-tab');
     if (folderPermissionsTab) {
       folderPermissionsTab.style.display = 'none';
+    }
+    const folderAnalyticsTab = document.getElementById('folder-analytics-tab');
+    if (folderAnalyticsTab) {
+      folderAnalyticsTab.style.display = 'none';
     }
 
     // Show the old document-properties-content for file display
@@ -319,6 +391,23 @@ class DocumentEditor {
     }
 
     document.getElementById('properties-panel-title').textContent = 'File: ' + (file.title || file.filename || 'Untitled');
+  }
+
+  // Helper to properly close a Foundation Reveal modal including its overlay
+  closeModal(modal) {
+    if (!modal) return;
+    try {
+      if (window.$ && window.Foundation) {
+        const instance = $(modal).data('zfPlugin');
+        if (instance) {
+          instance.close();
+          return;
+        }
+      }
+    } catch (e) { /* fall through */ }
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+    modal.style.display = 'none';
   }
 
   get files() {

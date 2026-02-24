@@ -11,6 +11,7 @@ class FolderPermissionsManager {
     this.currentFolder = null;
     this.folderGroups = [];
     this.allGroups = [];
+    this.guestPrivacyType = -1;
     this.containerEl = document.getElementById('folder-permissions-tab');
     this.isEditing = false;
   }
@@ -43,6 +44,7 @@ class FolderPermissionsManager {
       this.folderGroups = payload.folderGroups || [];
       this.allGroups = payload.allGroups || [];
       this.currentFolder = payload.folder;
+      this.guestPrivacyType = this.currentFolder ? this.currentFolder.guestPrivacyType : -1;
     } catch (err) {
       console.error('Unable to load folder groups', err);
       this.folderGroups = [];
@@ -68,6 +70,26 @@ class FolderPermissionsManager {
     html += '<p class="info-text">Configure which user groups can access and modify files in this repository.</p>';
     html += '</div>';
 
+    // Guest Access
+    const selectedNone = (!this.guestPrivacyType || this.guestPrivacyType === -1) ? ' selected' : '';
+    const selectedAllFiles = this.guestPrivacyType === 2000 ? ' selected' : '';
+    const selectedToken = this.guestPrivacyType === 3000 ? ' selected' : '';
+    html += '<div class="property-section">';
+    html += '<div class="section-header">';
+    html += '<h5>Guest Access</h5>';
+    html += '</div>';
+    html += '<div class="input-group" style="margin-bottom: 0;">';
+    html += '<select id="guest-privacy-type-select" class="input-group-field">';
+    html += `<option value="-1"${selectedNone}>No Access</option>`;
+    html += `<option value="2000"${selectedAllFiles}>All Files</option>`;
+    html += `<option value="3000"${selectedToken}>Files By Token Only</option>`;
+    html += '</select>';
+    html += '<div class="input-group-button">';
+    html += '<button id="save-guest-access-btn" class="button primary no-gap">Save</button>';
+    html += '</div>';
+    html += '</div>';
+    html += '</div>';
+
     // Groups list
     html += '<div class="property-section">';
     html += '<div class="section-header">';
@@ -80,7 +102,7 @@ class FolderPermissionsManager {
       html += '<thead>';
       html += '<tr>';
       html += '<th>Group Name</th>';
-      html += '<th>Privacy Type</th>';
+      html += '<th>Access Type</th>';
       html += '<th>Permissions</th>';
       html += '<th style="width: 100px;">Actions</th>';
       html += '</tr>';
@@ -144,6 +166,49 @@ class FolderPermissionsManager {
         this.deleteGroup(folderGroupId);
       });
     });
+
+    const saveGuestBtn = document.getElementById('save-guest-access-btn');
+    if (saveGuestBtn) {
+      saveGuestBtn.addEventListener('click', () => this.saveGuestAccess());
+    }
+  }
+
+  async saveGuestAccess() {
+    const select = document.getElementById('guest-privacy-type-select');
+    if (!select) return;
+
+    const guestPrivacyType = Number(select.value);
+
+    try {
+      const formData = new FormData();
+      formData.append('token', this.token);
+      formData.append('folderId', this.currentFolder.id);
+      formData.append('guestPrivacyType', guestPrivacyType);
+
+      const response = await fetch(`${this.editor.config.apiBaseUrl}/folderGuestAccessSave`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const result = await response.json();
+      if (result.success === false || result.error) {
+        alert(result.message || 'Failed to save guest access');
+        return;
+      }
+
+      this.guestPrivacyType = guestPrivacyType;
+      this.currentFolder.guestPrivacyType = guestPrivacyType;
+      this.folderDetailsManager.setUnsavedChanges(true);
+
+    } catch (err) {
+      console.error('Error saving guest access', err);
+      alert('Error saving guest access: ' + err.message);
+    }
   }
 
   openAddGroupModal() {
@@ -342,7 +407,7 @@ class FolderPermissionsManager {
 
   getPrivacyTypeLabel(type) {
     const types = {
-      0: 'Undefined',
+      0: 'No Access',
       1: 'Public',
       2: 'Public Read Only',
       3: 'Protected',

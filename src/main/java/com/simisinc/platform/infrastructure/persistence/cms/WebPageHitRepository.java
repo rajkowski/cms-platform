@@ -400,6 +400,80 @@ public class WebPageHitRepository {
   }
 
   /**
+   * Find daily hit counts for a specific file asset by its base URL prefix,
+   * returning one entry per day within the given number of days.
+   * Searches both /assets/file/ and /assets/view/ paths.
+   */
+  public static List<StatisticsData> findFileHitsByPathPrefix(String baseUrl, int daysToLimit) {
+    // Generate a series of dates and left-join hit counts
+    String sqlQuery = "SELECT d.date_value, COALESCE(SUM(h.hit_count), 0) AS day_count " +
+        "FROM ( " +
+        "  SELECT TO_CHAR(day::date, 'YYYY-MM-DD') AS date_value " +
+        "  FROM generate_series( " +
+        "    NOW() - INTERVAL '" + daysToLimit + " days', " +
+        "    NOW(), " +
+        "    INTERVAL '1 day' " +
+        "  ) AS day " +
+        ") d " +
+        "LEFT JOIN ( " +
+        "  SELECT TO_CHAR(hit_date::date, 'YYYY-MM-DD') AS day, COUNT(*) AS hit_count " +
+        "  FROM web_page_hits " +
+        "  WHERE (page_path LIKE ? OR page_path LIKE ?) " +
+        "  AND NOT EXISTS (SELECT 1 FROM sessions WHERE session_id = web_page_hits.session_id AND is_bot = TRUE) " +
+        "  GROUP BY TO_CHAR(hit_date::date, 'YYYY-MM-DD') " +
+        ") h ON d.date_value = h.day " +
+        "GROUP BY d.date_value " +
+        "ORDER BY d.date_value";
+    String filePrefix = "/assets/file/" + baseUrl + "%";
+    String viewPrefix = "/assets/view/" + baseUrl + "%";
+    List<StatisticsData> records = null;
+    try (Connection connection = DB.getConnection();
+        PreparedStatement pst = connection.prepareStatement(sqlQuery)) {
+      pst.setString(1, filePrefix);
+      pst.setString(2, viewPrefix);
+      try (ResultSet rs = pst.executeQuery()) {
+        records = new ArrayList<>();
+        while (rs.next()) {
+          StatisticsData data = new StatisticsData();
+          data.setLabel(rs.getString("date_value"));
+          data.setValue(String.valueOf(rs.getLong("day_count")));
+          records.add(data);
+        }
+      }
+    } catch (SQLException se) {
+      LOG.error("SQLException: " + se.getMessage());
+    }
+    return records;
+  }
+
+  /**
+   * Count total hits for a specific file asset by its base URL prefix.
+   * Searches both /assets/file/ and /assets/view/ paths.
+   */
+  public static long countFileHitsByPathPrefix(String baseUrl, int daysToLimit) {
+    String sqlQuery = "SELECT COUNT(*) AS hit_count " +
+        "FROM web_page_hits " +
+        "WHERE (page_path LIKE ? OR page_path LIKE ?) " +
+        "AND hit_date > NOW() - INTERVAL '" + daysToLimit + " days' " +
+        "AND NOT EXISTS (SELECT 1 FROM sessions WHERE session_id = web_page_hits.session_id AND is_bot = TRUE)";
+    String filePrefix = "/assets/file/" + baseUrl + "%";
+    String viewPrefix = "/assets/view/" + baseUrl + "%";
+    try (Connection connection = DB.getConnection();
+        PreparedStatement pst = connection.prepareStatement(sqlQuery)) {
+      pst.setString(1, filePrefix);
+      pst.setString(2, viewPrefix);
+      try (ResultSet rs = pst.executeQuery()) {
+        if (rs.next()) {
+          return rs.getLong("hit_count");
+        }
+      }
+    } catch (SQLException se) {
+      LOG.error("SQLException: " + se.getMessage());
+    }
+    return 0;
+  }
+
+  /**
    * Determine asset type from file extension
    */
   private static String getAssetType(String filePath) {

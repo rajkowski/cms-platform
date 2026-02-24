@@ -125,6 +125,12 @@
 
     <!-- Middle Panel -->
     <div id="document-browser-panel">
+      <div id="file-drop-overlay" class="file-drop-overlay" style="display: none;">
+        <div class="drop-message">
+          <i class="${font:far()} fa-cloud-upload-alt"></i>
+          <p>Drop files here to upload</p>
+        </div>
+      </div>
       <div class="panel-header">
         <h3 id="document-browser-title">Files</h3>
         <div id="breadcrumb-navigation" style="display: none">
@@ -169,7 +175,7 @@
       <div id="properties-tabs" class="tab-navigation" style="display: none;">
         <button class="tab-btn active" data-tab="details" title="Details">Details</button>
         <button class="tab-btn" data-tab="permissions" title="Permissions">Permissions</button>
-        <button class="tab-btn" data-tab="versions" title="Versions">Versions</button>
+        <button class="tab-btn" data-tab="analytics" title="Analytics">Analytics</button>
       </div>
 
       <!-- Repository (Parent Folder) Properties -->
@@ -211,6 +217,7 @@
 
       <div id="folder-details-tab" style="display: none;"></div>
       <div id="folder-permissions-tab" style="display: none;"></div>
+      <div id="folder-analytics-tab" style="display: none;"></div>
 
       <!-- Subfolder Properties -->
       <div id="subfolder-properties-section" style="display: none;">
@@ -284,6 +291,25 @@
       </select>
     </div>
 
+    <fieldset id="folder-group-permissions-fieldset">
+      <legend>User Group Access</legend>
+      <p class="help-text">Configure access for specific user groups. Leave unchecked to use the default user access above.</p>
+      <table id="folder-group-permissions-table" class="folder-group-table">
+        <thead>
+          <tr>
+            <th>Group</th>
+            <th>Access Level</th>
+            <th>Add</th>
+            <th>Edit</th>
+            <th>Delete</th>
+          </tr>
+        </thead>
+        <tbody id="folder-group-permissions-body">
+          <tr><td colspan="5" class="empty-state">Loading groups...</td></tr>
+        </tbody>
+      </table>
+    </fieldset>
+
     <div class="button-group">
       <button type="button" id="save-folder-btn" class="button primary">Create Repository</button>
       <button type="button" class="button secondary" data-close>Cancel</button>
@@ -304,8 +330,8 @@
     </div>
 
     <div class="form-group">
-      <label for="subfolder-summary">Summary <span class="required">*</span></label>
-      <textarea id="subfolder-summary" required placeholder="Enter folder summary" rows="3"></textarea>
+      <label for="subfolder-summary">Summary</label>
+      <textarea id="subfolder-summary" placeholder="Enter folder summary (optional)" rows="3"></textarea>
     </div>
 
     <div class="form-group">
@@ -335,13 +361,13 @@
     </div>
     
     <div class="form-group">
-      <label for="folder-group-privacy-type">Privacy Type</label>
+      <label for="folder-group-privacy-type">Access Type</label>
       <select id="folder-group-privacy-type">
-        <option value="0">Undefined</option>
-        <option value="1">Public</option>
-        <option value="2">Public Read Only</option>
-        <option value="3">Protected</option>
-        <option value="4">Private</option>
+        <option value="0">No Access</option>
+        <option value="1">Public (All Files)</option>
+        <option value="2">Protected (Require File Token)</option>
+        <option value="3">Protected (Write Only)</option>
+        <option value="4">Private (Own Files)</option>
       </select>
     </div>
 
@@ -389,10 +415,80 @@
   <h3>Unsaved Changes</h3>
   <p>You have unsaved changes. Do you want to save them before continuing?</p>
   <div class="button-group">
-    <button id="save-and-continue-btn" class="button primary">Save & Continue</button>
+    <button id="save-and-continue-btn" class="button primary">Save &amp; Continue</button>
     <button id="discard-changes-btn" class="button alert">Discard</button>
     <button class="button secondary" data-close>Cancel</button>
   </div>
+  <button class="close-button" data-close aria-label="Close modal" type="button">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+
+<!-- Add URL Modal -->
+<div id="add-url-modal" class="reveal" data-reveal>
+  <h3>Add URL Link</h3>
+  <form id="add-url-form">
+    <div class="form-group">
+      <label for="url-link">URL <span class="required">*</span></label>
+      <input type="url" id="url-link" required placeholder="https://" />
+    </div>
+    <div class="form-group">
+      <label for="url-title">Title</label>
+      <input type="text" id="url-title" placeholder="Link title (optional)" />
+    </div>
+    <div class="button-group">
+      <button type="button" id="save-url-btn" class="button primary">Add Link</button>
+      <button type="button" class="button secondary" data-close>Cancel</button>
+    </div>
+  </form>
+  <button class="close-button" data-close aria-label="Close modal" type="button">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+
+<!-- Update URL Version Modal -->
+<div id="update-url-version-modal" class="reveal" data-reveal>
+  <h3>Update URL Version</h3>
+  <form id="update-url-version-form">
+    <div class="form-group">
+      <label for="update-url-link">URL <span class="required">*</span></label>
+      <input type="url" id="update-url-link" required placeholder="https://" />
+    </div>
+    <div class="form-group">
+      <label for="update-url-version">Version</label>
+      <input type="text" id="update-url-version" placeholder="e.g. 2.0 (optional)" />
+    </div>
+    <div class="button-group">
+      <button type="button" id="save-url-version-btn" class="button primary">Update URL</button>
+      <button type="button" class="button secondary" data-close>Cancel</button>
+    </div>
+  </form>
+  <button class="close-button" data-close aria-label="Close modal" type="button">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+
+<!-- Move File Modal -->
+<div id="move-file-modal" class="reveal" data-reveal>
+  <h3>Move File</h3>
+  <form id="move-file-form">
+    <div class="form-group">
+      <label for="move-target-folder">Destination Repository <span class="required">*</span></label>
+      <select id="move-target-folder" required>
+        <option value="">-- Select Repository --</option>
+      </select>
+    </div>
+    <div class="form-group" id="move-target-subfolder-group" style="display:none;">
+      <label for="move-target-subfolder">Destination Folder (Optional)</label>
+      <select id="move-target-subfolder">
+        <option value="">-- Root of Repository --</option>
+      </select>
+    </div>
+    <div class="button-group">
+      <button type="button" id="confirm-move-btn" class="button primary">Move</button>
+      <button type="button" class="button secondary" data-close>Cancel</button>
+    </div>
+  </form>
   <button class="close-button" data-close aria-label="Close modal" type="button">
     <span aria-hidden="true">&times;</span>
   </button>

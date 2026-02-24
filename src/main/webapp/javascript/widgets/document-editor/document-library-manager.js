@@ -341,6 +341,10 @@ class DocumentLibraryManager {
     }
   }
 
+  reload() {
+    this.loadFolders();
+  }
+
   createFolder() {
     const modal = document.getElementById('new-folder-modal');
     if (!modal) {
@@ -359,6 +363,9 @@ class DocumentLibraryManager {
     if (errorContainer) {
       errorContainer.remove();
     }
+
+    // Load user groups into permissions table
+    this.loadGroupsForModal();
 
     // Show modal using Foundation
     const modalInstance = new Foundation.Reveal($(modal));
@@ -393,16 +400,20 @@ class DocumentLibraryManager {
       formData.append('guestPrivacyType', guestPublic ? 'public' : 'private');
       formData.append('userPrivacyType', userPrivacy);
 
-      fetch('/json/documentCreateFolder', {
+      fetch(`${this.editor.config.apiBaseUrl}/documentCreateFolder`, {
         method: 'POST',
         credentials: 'same-origin',
         body: formData
       })
         .then((res) => res.json())
-        .then((data) => {
+        .then(async (data) => {
           if (data.success === false || data.error) {
             alert('Error creating repository: ' + (data.message || 'Unknown error'));
             return;
+          }
+          // Save group permissions for the new folder
+          if (data.folderId) {
+            await this.saveGroupPermissionsForFolder(data.folderId);
           }
           modalInstance.close();
           this.loadFolders();
@@ -422,6 +433,89 @@ class DocumentLibraryManager {
         saveBtn.removeEventListener('click', handler);
       });
     }
+  }
+
+  async loadGroupsForModal() {
+    const tbody = document.getElementById('folder-group-permissions-body');
+    if (!tbody) {
+      return;
+    }
+    tbody.innerHTML = '<tr><td colspan="5">Loading groups...</td></tr>';
+    try {
+      const url = new URL(`${this.editor.config.apiBaseUrl}/documentUserGroups`, globalThis.location.origin);
+      const response = await fetch(url.toString(), { credentials: 'same-origin' });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const data = await response.json();
+      const groups = data.groups || [];
+      if (groups.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No user groups found</td></tr>';
+        return;
+      }
+      tbody.innerHTML = '';
+      groups.forEach((group) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${this.escapeHtml(group.name)}</td>
+          <td>
+            <select class="group-access-level" data-group-id="${group.id}">
+              <option value="">-- None --</option>
+              <option value="1">Public</option>
+              <option value="2">Public Read Only</option>
+              <option value="3">Protected</option>
+              <option value="4">Private</option>
+            </select>
+          </td>
+          <td><input type="checkbox" class="group-add-perm" data-group-id="${group.id}" /></td>
+          <td><input type="checkbox" class="group-edit-perm" data-group-id="${group.id}" /></td>
+          <td><input type="checkbox" class="group-delete-perm" data-group-id="${group.id}" /></td>
+        `;
+        tbody.appendChild(row);
+      });
+    } catch (err) {
+      console.error('Error loading user groups', err);
+      tbody.innerHTML = '<tr><td colspan="5">Failed to load groups</td></tr>';
+    }
+  }
+
+  async saveGroupPermissionsForFolder(folderId) {
+    const tbody = document.getElementById('folder-group-permissions-body');
+    if (!tbody) return;
+    const rows = tbody.querySelectorAll('tr');
+    const promises = [];
+    rows.forEach((row) => {
+      const accessSelect = row.querySelector('.group-access-level');
+      if (!accessSelect || !accessSelect.value) return;
+      const groupId = accessSelect.dataset.groupId;
+      const privacyType = accessSelect.value;
+      const addPerm = row.querySelector('.group-add-perm')?.checked || false;
+      const editPerm = row.querySelector('.group-edit-perm')?.checked || false;
+      const deletePerm = row.querySelector('.group-delete-perm')?.checked || false;
+      const formData = new FormData();
+      formData.append('token', this.token);
+      formData.append('folderId', folderId);
+      formData.append('groupId', groupId);
+      formData.append('privacyType', privacyType);
+      formData.append('addPermission', addPerm);
+      formData.append('editPermission', editPerm);
+      formData.append('deletePermission', deletePerm);
+      promises.push(
+        fetch(`${this.editor.config.apiBaseUrl}/folderGroupSave`, {
+          method: 'POST',
+          credentials: 'same-origin',
+          body: formData
+        }).catch((err) => console.error('Error saving group permission:', err))
+      );
+    });
+    await Promise.all(promises);
+  }
+
+  escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
   }
 
   createSubfolder() {
@@ -455,16 +549,13 @@ class DocumentLibraryManager {
         return;
       }
 
-      if (!summary) {
-        alert('Summary is required');
-        return;
-      }
-
       const formData = new FormData();
       formData.append('token', this.token);
       formData.append('folderId', this.parentFolderId);
       formData.append('name', name);
-      formData.append('summary', summary);
+      if (summary) {
+        formData.append('summary', summary);
+      }
       if (startDate) {
         formData.append('startDate', startDate);
       }

@@ -21,7 +21,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -251,6 +254,51 @@ public class FolderRepository {
     if (folder.doCategoriesCheck()) {
       List<FolderCategory> folderCategoryList = FolderCategoryRepository.findAllByFolderId(folder.getId());
       folder.setFolderCategoryList(folderCategoryList);
+    }
+  }
+
+  /**
+   * Re-computes and saves the privacy_types and has_allowed_groups pointer fields
+   * on the folder from the current set of folder_groups records.
+   * Call this whenever a FolderGroup is added, updated, or removed individually.
+   */
+  public static void updateGroupPointers(long folderId) {
+    if (folderId == -1) {
+      return;
+    }
+    List<FolderGroup> groups = FolderGroupRepository.findAllByFolderId(folderId);
+    boolean hasGroups = (groups != null && !groups.isEmpty());
+    String privacyTypesValue = null;
+    if (hasGroups && groups != null) {
+      Set<Integer> typeSet = new LinkedHashSet<>();
+      for (FolderGroup fg : groups) {
+        typeSet.add(fg.getPrivacyType());
+      }
+      List<String> typeNames = new ArrayList<>();
+      for (int pt : typeSet) {
+        typeNames.add(String.valueOf(pt));
+      }
+      privacyTypesValue = String.join(", ", typeNames);
+    }
+    SqlUtils updateValues = new SqlUtils()
+        .add("has_allowed_groups", hasGroups)
+        .add("privacy_types", privacyTypesValue);
+    DB.update(TABLE_NAME, updateValues, DB.WHERE("folder_id = ?", folderId));
+  }
+
+  public static boolean updateGuestAccess(long folderId, int guestPrivacyType) {
+    if (folderId == -1) {
+      return false;
+    }
+    SqlUtils updateValues = new SqlUtils()
+        .add("allows_guests", guestPrivacyType != PrivacyType.UNDEFINED)
+        .add("guest_privacy_type", guestPrivacyType);
+    try {
+      DB.update(TABLE_NAME, updateValues, DB.WHERE("folder_id = ?", folderId));
+      return true;
+    } catch (Exception e) {
+      LOG.error("updateGuestAccess: " + e.getMessage());
+      return false;
     }
   }
 

@@ -85,8 +85,20 @@
   <service endpoint="/json/folderSave" class="com.simisinc.platform.presentation.widgets.cms.FolderSaveAjax" />
   <service endpoint="/json/folderDetails" class="com.simisinc.platform.presentation.widgets.cms.FolderDetailsAjax" />
   <service endpoint="/json/folderGroupsList" class="com.simisinc.platform.presentation.widgets.cms.FolderGroupsListAjax" />
-  <service endpoint="/json/folderGroupSave" class="com.simisinc.platform.presentation.widgets.cms.FolderGroupSaveAjax" />
-  <service endpoint="/json/folderGroupDelete" class="com.simisinc.platform.presentation.widgets.cms.FolderGroupDeleteAjax" />
+  <service endpoint="/json/folderGroupSave" class="com.simisinc.platform.presentation.widgets.cms.FolderGroupSaveJsonService" />
+  <service endpoint="/json/folderGroupDelete" class="com.simisinc.platform.presentation.widgets.cms.FolderGroupDeleteJsonService" />
+  <service endpoint="/json/folderGuestAccessSave" class="com.simisinc.platform.presentation.widgets.cms.FolderGuestAccessSaveJsonService" />
+  <service endpoint="/json/documentDeleteFolder" class="com.simisinc.platform.presentation.widgets.cms.DocumentDeleteFolderAjax" />
+  <service endpoint="/json/documentUpdate" class="com.simisinc.platform.presentation.widgets.cms.DocumentUpdateAjax" />
+  <service endpoint="/json/documentAddUrl" class="com.simisinc.platform.presentation.widgets.cms.DocumentAddUrlAjax" />
+  <service endpoint="/json/documentFileVersions" class="com.simisinc.platform.presentation.widgets.cms.DocumentFileVersionsAjax" />
+  <service endpoint="/json/documentAddVersion" class="com.simisinc.platform.presentation.widgets.cms.DocumentAddVersionAjax" />
+  <service endpoint="/json/documentAddUrlVersion" class="com.simisinc.platform.presentation.widgets.cms.DocumentAddUrlVersionAjax" />
+  <service endpoint="/json/documentMoveFile" class="com.simisinc.platform.presentation.widgets.cms.DocumentMoveFileAjax" />
+  <service endpoint="/json/documentDeleteFile" class="com.simisinc.platform.presentation.widgets.cms.DocumentDeleteFileAjax" />
+  <service endpoint="/json/documentAnalytics" class="com.simisinc.platform.presentation.widgets.cms.DocumentAnalyticsAjax" />
+  <service endpoint="/json/documentFileAnalytics" class="com.simisinc.platform.presentation.widgets.cms.DocumentFileAnalyticsAjax" />
+  <service endpoint="/json/documentUserGroups" class="com.simisinc.platform.presentation.widgets.cms.DocumentUserGroupsAjax" />
   <!-- Data Editor -->
   <service endpoint="/json/dataCollections" class="com.simisinc.platform.presentation.widgets.editor.DataCollectionsAjax" />
   <service endpoint="/json/dataDatasets" class="com.simisinc.platform.presentation.widgets.editor.DataDatasetsAjax" />

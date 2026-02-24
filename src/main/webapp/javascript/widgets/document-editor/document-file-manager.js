@@ -31,6 +31,67 @@ class DocumentFileManager {
     if (uploadInput) {
       uploadInput.addEventListener('change', (e) => this.handleFileUpload(e));
     }
+
+    // Drag-and-drop upload on file browser panel
+    this.initDragDrop();
+  }
+
+  get currentFolderId() {
+    return this.folderId;
+  }
+
+  get currentSubFolderId() {
+    return this.subFolderId;
+  }
+
+  initDragDrop() {
+    const panel = document.getElementById('document-browser-panel');
+    const overlay = document.getElementById('file-drop-overlay');
+    if (!panel) {
+      return;
+    }
+
+    let dragCounter = 0;
+
+    panel.addEventListener('dragenter', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragCounter++;
+      if (this.folderId > -1 && overlay) {
+        overlay.style.display = 'flex';
+      }
+    });
+
+    panel.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragCounter--;
+      if (dragCounter <= 0) {
+        dragCounter = 0;
+        if (overlay) overlay.style.display = 'none';
+      }
+    });
+
+    panel.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      e.dataTransfer.dropEffect = 'copy';
+    });
+
+    panel.addEventListener('drop', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragCounter = 0;
+      if (overlay) overlay.style.display = 'none';
+      if (this.folderId === -1) {
+        alert('Please select a repository before uploading.');
+        return;
+      }
+      const files = e.dataTransfer.files;
+      if (files && files.length > 0) {
+        this.uploadFiles(files);
+      }
+    });
   }
 
   triggerFileUpload() {
@@ -42,6 +103,15 @@ class DocumentFileManager {
 
   async handleFileUpload(event) {
     const files = event.target.files;
+    if (!files || files.length === 0 || this.folderId === -1) {
+      return;
+    }
+    await this.uploadFiles(files);
+    // Clear input
+    event.target.value = '';
+  }
+
+  async uploadFiles(files) {
     if (!files || files.length === 0 || this.folderId === -1) {
       return;
     }
@@ -100,9 +170,6 @@ class DocumentFileManager {
       errorContainer.style.display = 'block';
       document.getElementById('upload-error-message').textContent = err.message || 'Upload failed';
     }
-
-    // Clear input
-    event.target.value = '';
   }
 
   setFolder(folderId, parentFolderId) {
@@ -365,8 +432,122 @@ class DocumentFileManager {
       alert('No file selected');
       return;
     }
-    // TODO: Wire up add version functionality
-    alert(`Add new version for file: ${this.currentFile.title || this.currentFile.filename}`);
+    // URL files need a different version update flow
+    if (this.currentFile.mimeType === 'text/uri-list' || this.currentFile.fileType === 'URL') {
+      this.addUrlVersion();
+      return;
+    }
+    // Open hidden file input for version upload
+    const versionInput = document.createElement('input');
+    versionInput.type = 'file';
+    versionInput.style.display = 'none';
+    versionInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      await this.uploadNewVersion(file);
+      versionInput.remove();
+    });
+    document.body.appendChild(versionInput);
+    versionInput.click();
+  }
+
+  addUrlVersion() {
+    if (!this.currentFile) return;
+    const modal = document.getElementById('update-url-version-modal');
+    if (!modal) {
+      // Fallback to browser prompt
+      const newUrl = prompt('Enter the updated URL:', this.currentFile.filename || '');
+      if (newUrl === null) return;
+      if (!newUrl.trim()) { alert('URL cannot be empty'); return; }
+      this.saveUrlVersion(null, newUrl);
+      return;
+    }
+    const urlInput = modal.querySelector('#update-url-link');
+    const versionInput = modal.querySelector('#update-url-version');
+    if (urlInput) urlInput.value = this.currentFile.filename || '';
+    if (versionInput) versionInput.value = '';
+    const saveBtn = modal.querySelector('#save-url-version-btn');
+    if (saveBtn) {
+      saveBtn.onclick = () => this.saveUrlVersion(modal);
+    }
+    if (typeof $ !== 'undefined' && typeof Foundation !== 'undefined') {
+      new Foundation.Reveal($(modal)).open();
+    } else {
+      modal.style.display = 'block';
+      modal.classList.add('is-open');
+    }
+  }
+
+  async saveUrlVersion(modal, fallbackUrl) {
+    const urlInput = modal ? modal.querySelector('#update-url-link') : null;
+    const versionInput = modal ? modal.querySelector('#update-url-version') : null;
+    const url = urlInput ? urlInput.value.trim() : (fallbackUrl || '');
+    if (!url) {
+      alert('URL is required.');
+      return;
+    }
+    const version = versionInput ? versionInput.value.trim() : '';
+    try {
+      this.editor.showLoading();
+      const formData = new FormData();
+      formData.append('token', this.token);
+      formData.append('fileId', this.currentFile.id);
+      formData.append('url', url);
+      if (version) formData.append('version', version);
+      const response = await fetch(`${this.editor.config.apiBaseUrl}/documentAddUrlVersion`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const result = await response.json();
+      if (result.success) {
+        this.editor.closeModal(modal);
+        this.reload();
+        if (this.editor.properties && this.currentFile) {
+          this.editor.properties.loadFile(this.currentFile.id);
+        }
+      } else {
+        alert(result.message || 'Failed to update URL version.');
+      }
+    } catch (err) {
+      console.error('Error updating URL version', err);
+      alert('Error updating URL version: ' + err.message);
+    } finally {
+      this.editor.hideLoading();
+    }
+  }
+
+  async uploadNewVersion(file) {
+    try {
+      this.editor.showLoading();
+      const formData = new FormData();
+      formData.append('token', this.token);
+      formData.append('fileId', this.currentFile.id);
+      formData.append('file', file);
+      const response = await fetch(`${this.editor.config.apiBaseUrl}/documentAddVersion`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const result = await response.json();
+      if (result.success) {
+        this.reload();
+        if (this.editor.properties && this.currentFile) {
+          this.editor.properties.loadFile(this.currentFile.id);
+        }
+      } else {
+        alert(result.message || 'Failed to add version.');
+      }
+    } catch (err) {
+      console.error('Error uploading version', err);
+      alert('Error uploading version: ' + err.message);
+    } finally {
+      this.editor.hideLoading();
+    }
   }
 
   moveFile() {
@@ -374,8 +555,101 @@ class DocumentFileManager {
       alert('No file selected');
       return;
     }
-    // TODO: Wire up move file functionality
-    alert(`Move file: ${this.currentFile.title || this.currentFile.filename}`);
+    const modal = document.getElementById('move-file-modal');
+    if (!modal) {
+      return;
+    }
+    // Populate folder dropdown
+    const folderSelect = modal.querySelector('#move-target-folder');
+    if (folderSelect) {
+      folderSelect.innerHTML = '<option value="">-- Select Repository --</option>';
+      const folders = this.editor.library.folders || [];
+      folders.forEach((f) => {
+        const opt = document.createElement('option');
+        opt.value = f.id;
+        opt.textContent = f.name || 'Untitled';
+        folderSelect.appendChild(opt);
+      });
+    }
+    // Reset subfolder
+    const subGroup = modal.querySelector('#move-target-subfolder-group');
+    const subSelect = modal.querySelector('#move-target-subfolder');
+    if (subGroup) subGroup.style.display = 'none';
+    if (subSelect) subSelect.innerHTML = '<option value="">-- Root of Repository --</option>';
+    // Wire folder change to load subfolders
+    if (folderSelect) {
+      folderSelect.onchange = async () => {
+        const targetId = parseInt(folderSelect.value);
+        if (!targetId) {
+          if (subGroup) subGroup.style.display = 'none';
+          return;
+        }
+        try {
+          const url = new URL(`${this.editor.config.apiBaseUrl}/documentSubfolders`, globalThis.location.origin);
+          url.searchParams.set('folderId', targetId);
+          const resp = await fetch(url.toString(), { credentials: 'same-origin' });
+          const data = await resp.json();
+          const subs = data.subfolders || [];
+          if (subs.length > 0 && subSelect) {
+            subSelect.innerHTML = '<option value="">-- Root of Repository --</option>';
+            subs.forEach((s) => {
+              const opt = document.createElement('option');
+              opt.value = s.id;
+              opt.textContent = s.name;
+              subSelect.appendChild(opt);
+            });
+            if (subGroup) subGroup.style.display = 'block';
+          } else {
+            if (subGroup) subGroup.style.display = 'none';
+          }
+        } catch (err) {
+          console.error('Error loading subfolders for move', err);
+        }
+      };
+    }
+    const confirmBtn = modal.querySelector('#confirm-move-btn');
+    if (confirmBtn) {
+      confirmBtn.onclick = () => this.confirmMoveFile(modal);
+    }
+    if (typeof $ !== 'undefined' && typeof Foundation !== 'undefined') {
+      new Foundation.Reveal($(modal)).open();
+    } else {
+      modal.style.display = 'block';
+      modal.classList.add('is-open');
+    }
+  }
+
+  async confirmMoveFile(modal) {
+    const folderSelect = modal.querySelector('#move-target-folder');
+    const subSelect = modal.querySelector('#move-target-subfolder');
+    const targetFolderId = parseInt(folderSelect ? folderSelect.value : 0);
+    const targetSubFolderId = subSelect ? parseInt(subSelect.value) || -1 : -1;
+    if (!targetFolderId) {
+      alert('Please select a target repository.');
+      return;
+    }
+    try {
+      const formData = new FormData();
+      formData.append('token', this.token);
+      formData.append('fileId', this.currentFile.id);
+      formData.append('targetFolderId', targetFolderId);
+      if (targetSubFolderId > 0) formData.append('targetSubFolderId', targetSubFolderId);
+      const response = await fetch(`${this.editor.config.apiBaseUrl}/documentMoveFile`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+      });
+      const result = await response.json();
+      if (result.success) {
+        this.editor.closeModal(modal);
+        this.reload();
+      } else {
+        alert(result.message || 'Failed to move file.');
+      }
+    } catch (err) {
+      console.error('Error moving file', err);
+      alert('Error moving file: ' + err.message);
+    }
   }
 
   async deleteFile() {
@@ -386,8 +660,34 @@ class DocumentFileManager {
     if (!confirm(`Are you sure you want to delete "${this.currentFile.title || this.currentFile.filename}"?`)) {
       return;
     }
-    // TODO: Wire up delete file functionality
-    alert(`Delete file: ${this.currentFile.title || this.currentFile.filename}`);
+    try {
+      this.editor.showLoading();
+      const formData = new FormData();
+      formData.append('token', this.token);
+      formData.append('fileId', this.currentFile.id);
+      const response = await fetch(`${this.editor.config.apiBaseUrl}/documentDeleteFile`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+      });
+      const result = await response.json();
+      if (result.success) {
+        this.currentFile = null;
+        // Clear the properties panel
+        const contentArea = document.getElementById('document-properties-content');
+        if (contentArea) contentArea.innerHTML = '<div class="empty-state">Select a file to view details</div>';
+        const fileSection = document.getElementById('file-properties-section');
+        if (fileSection) fileSection.style.display = 'none';
+        this.reload();
+      } else {
+        alert(result.message || 'Failed to delete file.');
+      }
+    } catch (err) {
+      console.error('Error deleting file', err);
+      alert('Error deleting file: ' + err.message);
+    } finally {
+      this.editor.hideLoading();
+    }
   }
 
   formatSize(bytes) {

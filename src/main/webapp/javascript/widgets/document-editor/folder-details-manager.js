@@ -134,7 +134,10 @@ class FolderDetailsManager {
 
   renderViewMode() {
     let html = '<div class="property-section">';
+    html += '<div style="display:flex; gap:0.5rem; flex-wrap:wrap;">';
     html += '<button id="edit-folder-details-btn" class="button tiny primary"><i class="fas fa-edit"></i> Edit Details</button>';
+    html += '<button id="delete-folder-btn" class="button tiny alert"><i class="fas fa-trash"></i> Delete Repository</button>';
+    html += '</div>';
     html += '</div>';
 
     html += '<div class="property-section">';
@@ -185,6 +188,12 @@ class FolderDetailsManager {
     if (editBtn) {
       editBtn.removeEventListener('click', () => this.toggleEditMode());
       editBtn.addEventListener('click', () => this.toggleEditMode());
+    }
+
+    const deleteBtn = document.getElementById('delete-folder-btn');
+    if (deleteBtn) {
+      deleteBtn.removeEventListener('click', () => this.deleteFolder());
+      deleteBtn.addEventListener('click', () => this.deleteFolder());
     }
 
     const saveBtn = document.getElementById('save-folder-details-btn');
@@ -280,6 +289,12 @@ class FolderDetailsManager {
       tabs.style.display = 'none';
     }
 
+    const analyticsTab = document.getElementById('folder-analytics-tab');
+    if (analyticsTab) {
+      analyticsTab.innerHTML = '';
+      analyticsTab.style.display = 'none';
+    }
+
     const contentArea = document.getElementById('document-properties-content');
     if (contentArea) {
       contentArea.style.display = 'block';
@@ -302,6 +317,109 @@ class FolderDetailsManager {
 
   setFolderAndLoad(folder) {
     this.loadFolder(folder.id);
+  }
+
+  async deleteFolder() {
+    if (!this.currentFolder) {
+      return;
+    }
+    const name = this.currentFolder.name || 'this repository';
+    if (!confirm(`Delete "${name}"? This will permanently delete all files and cannot be undone.`)) {
+      return;
+    }
+    try {
+      const formData = new FormData();
+      formData.append('token', this.token);
+      formData.append('folderId', this.currentFolder.id);
+      const response = await fetch(`${this.editor.config.apiBaseUrl}/documentDeleteFolder`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+      });
+      const result = await response.json();
+      if (result.success) {
+        this.clearDisplay();
+        this.editor.library.reload();
+      } else {
+        alert(result.message || 'Failed to delete repository.');
+      }
+    } catch (err) {
+      console.error('Error deleting folder', err);
+      alert('Error deleting repository: ' + err.message);
+    }
+  }
+
+  async loadAnalytics() {
+    const analyticsTab = document.getElementById('folder-analytics-tab');
+    if (!analyticsTab || !this.currentFolder) {
+      return;
+    }
+
+    analyticsTab.innerHTML = '<div style="padding:0.5rem;"><em>Loading analytics...</em></div>';
+
+    const days = analyticsTab.dataset.days || 30;
+
+    try {
+      const url = new URL(`${this.editor.config.apiBaseUrl}/documentAnalytics`, globalThis.location.origin);
+      url.searchParams.set('folderId', this.currentFolder.id);
+      url.searchParams.set('days', days);
+      const response = await fetch(url.toString(), { credentials: 'same-origin' });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const data = await response.json();
+      const assets = data.assets || [];
+
+      let html = '<div class="folder-analytics-content">';
+      html += '<div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem;">';
+      html += '<strong>Top Assets by Downloads</strong>';
+      html += '<div class="analytics-days-selector">';
+      html += `<button class="button tiny ${days == 1 ? 'primary' : 'secondary'}" data-days="1">1d</button>`;
+      html += `<button class="button tiny ${days == 7 ? 'primary' : 'secondary'}" data-days="7">7d</button>`;
+      html += `<button class="button tiny ${days == 30 ? 'primary' : 'secondary'}" data-days="30">30d</button>`;
+      html += `<button class="button tiny ${days == 90 ? 'primary' : 'secondary'}" data-days="90">90d</button>`;
+      html += '</div>';
+      html += '</div>';
+
+      if (assets.length === 0) {
+        html += '<div class="empty-state">No download data available.</div>';
+      } else {
+        html += '<table class="file-table" style="font-size:0.8rem;">';
+        html += '<thead><tr><th>File</th><th>Type</th><th>Downloads</th></tr></thead>';
+        html += '<tbody>';
+        for (const asset of assets) {
+          html += `<tr>`;
+          html += `<td title="${this.escapeHtml(asset.filename)}">${this.escapeHtml(asset.title || asset.filename)}</td>`;
+          html += `<td>${this.escapeHtml(asset.mimeType || '')}</td>`;
+          html += `<td>${asset.downloadCount || 0}</td>`;
+          html += `</tr>`;
+        }
+        html += '</tbody></table>';
+      }
+      html += '</div>';
+
+      analyticsTab.innerHTML = html;
+      analyticsTab.dataset.days = days;
+
+      // Wire day selector buttons
+      analyticsTab.querySelectorAll('.analytics-days-selector .button').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          analyticsTab.dataset.days = btn.dataset.days;
+          this.loadAnalytics();
+        });
+      });
+
+    } catch (err) {
+      console.error('Error loading analytics', err);
+      analyticsTab.innerHTML = '<div class="empty-state">Failed to load analytics.</div>';
+    }
+  }
+
+  escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
   }
 
   setUnsavedChanges(unsaved) {
