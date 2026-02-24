@@ -221,7 +221,9 @@ class FolderPermissionsManager {
   }
 
   openGroupModal(folderGroup) {
-    const modal = new Foundation.Reveal($('#folder-group-modal'));
+    if (!this.groupModal) {
+      this.groupModal = new Foundation.Reveal($('#folder-group-modal'));
+    }
     const form = document.getElementById('folder-group-form');
 
     if (!form) return;
@@ -234,7 +236,7 @@ class FolderPermissionsManager {
       saveBtn.onclick = () => this.saveGroup(folderGroup);
     }
 
-    modal.open();
+    this.groupModal.open();
   }
 
   populateGroupForm(folderGroup) {
@@ -342,8 +344,9 @@ class FolderPermissionsManager {
       }
 
       // Close modal and reload
-      const modal = new Foundation.Reveal($('#folder-group-modal'));
-      modal.close();
+      if (this.groupModal) {
+        this.groupModal.close();
+      }
 
       // Reload folder groups
       await this.loadFolderGroups(this.currentFolder.id);
