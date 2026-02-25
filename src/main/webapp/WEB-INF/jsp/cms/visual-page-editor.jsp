@@ -1598,7 +1598,9 @@
       listUrl: '${ctx}/json/static-sites/list?action=list',
       generateUrl: '${ctx}/json/static-sites/generate',
       deleteUrl: '${ctx}/json/static-sites/delete',
-      downloadUrl: '${ctx}/json/static-sites/download?action=download'
+      downloadUrl: '${ctx}/json/static-sites/download?action=download',
+      gitSettingsUrl: '${ctx}/json/static-sites/git-settings?action=GET_GIT_SETTINGS',
+      saveGitSettingsUrl: '${ctx}/json/static-sites/save-git-settings'
     });
     staticSiteManager.init();
   });

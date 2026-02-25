@@ -31,8 +31,11 @@ import org.jobrunr.jobs.lambdas.JobRequestHandler;
 import org.thymeleaf.templateresolver.WebApplicationTemplateResolver;
 import org.thymeleaf.web.servlet.JavaxServletWebApplication;
 
+import com.simisinc.platform.application.cms.GitPublishCommand;
+import com.simisinc.platform.application.cms.LoadGitPublishSettingsCommand;
 import com.simisinc.platform.application.cms.MakeStaticSiteCommand;
 import com.simisinc.platform.application.cms.WebPageXmlLayoutCommand;
+import com.simisinc.platform.domain.model.cms.GitPublishSettings;
 import com.simisinc.platform.infrastructure.distributedlock.LockManager;
 import com.simisinc.platform.infrastructure.scheduler.SchedulerManager;
 import com.simisinc.platform.presentation.controller.PageTemplateEngine;
@@ -87,6 +90,24 @@ public class MakeStaticSiteJob implements JobRequest {
       String filePath = MakeStaticSiteCommand.execute(templateEngineProperties);
       if (filePath != null) {
         LOG.info("Static site generated at: " + filePath);
+
+        // Check if Git publishing is enabled
+        GitPublishSettings gitSettings = LoadGitPublishSettingsCommand.loadSettings();
+        if (gitSettings != null && gitSettings.getEnabled()) {
+          LOG.info("Git publishing is enabled, attempting to publish to repository...");
+          try {
+            boolean published = GitPublishCommand.publish(gitSettings, filePath);
+            if (published) {
+              LOG.info("Successfully published static site to Git repository");
+            } else {
+              LOG.warn("Git publishing skipped or failed");
+            }
+          } catch (Exception e) {
+            LOG.error("Error publishing to Git repository", e);
+          }
+        } else {
+          LOG.debug("Git publishing is not enabled");
+        }
       } else {
         LOG.error("Static site generation failed.");
       }
