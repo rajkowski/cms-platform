@@ -17,8 +17,8 @@
 package com.simisinc.platform.presentation.widgets.userProfile;
 
 import com.simisinc.platform.domain.model.User;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
 import com.simisinc.platform.presentation.controller.WidgetContext;
+import com.simisinc.platform.presentation.widgets.GenericWidget;
 
 /**
  * Description
@@ -40,6 +40,9 @@ public class MySiteInfoWidget extends GenericWidget {
 
     // Check if there is any data
     User user = context.getUserSession().getUser();
+    if (user == null) {
+      return null;
+    }
     if ((user.getRoleList() == null || user.getRoleList().isEmpty()) &&
         (user.getGroupList() == null || user.getGroupList().isEmpty())) {
       return null;
