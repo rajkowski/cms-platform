@@ -16,6 +16,17 @@
 
 package com.simisinc.platform.presentation.controller;
 
+import static com.simisinc.platform.presentation.controller.RequestConstants.CONTEXT_PATH;
+import static com.simisinc.platform.presentation.controller.RequestConstants.FOOTER_RENDER_INFO;
+import static com.simisinc.platform.presentation.controller.RequestConstants.FOOTER_STICKY_LINKS;
+import static com.simisinc.platform.presentation.controller.RequestConstants.HEADER_RENDER_INFO;
+import static com.simisinc.platform.presentation.controller.RequestConstants.LOG_USER;
+import static com.simisinc.platform.presentation.controller.RequestConstants.MASTER_MENU_TAB_LIST;
+import static com.simisinc.platform.presentation.controller.RequestConstants.PAGE_COLLECTION;
+import static com.simisinc.platform.presentation.controller.RequestConstants.PAGE_COLLECTION_CATEGORY;
+import static com.simisinc.platform.presentation.controller.RequestConstants.PAGE_RENDER_INFO;
+import static com.simisinc.platform.presentation.controller.RequestConstants.SHOW_MAIN_MENU;
+
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.net.URL;
@@ -59,16 +70,6 @@ import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.domain.model.items.Category;
 import com.simisinc.platform.domain.model.items.Collection;
 import com.simisinc.platform.domain.model.items.Item;
-import static com.simisinc.platform.presentation.controller.RequestConstants.CONTEXT_PATH;
-import static com.simisinc.platform.presentation.controller.RequestConstants.FOOTER_RENDER_INFO;
-import static com.simisinc.platform.presentation.controller.RequestConstants.FOOTER_STICKY_LINKS;
-import static com.simisinc.platform.presentation.controller.RequestConstants.HEADER_RENDER_INFO;
-import static com.simisinc.platform.presentation.controller.RequestConstants.LOG_USER;
-import static com.simisinc.platform.presentation.controller.RequestConstants.MASTER_MENU_TAB_LIST;
-import static com.simisinc.platform.presentation.controller.RequestConstants.PAGE_COLLECTION;
-import static com.simisinc.platform.presentation.controller.RequestConstants.PAGE_COLLECTION_CATEGORY;
-import static com.simisinc.platform.presentation.controller.RequestConstants.PAGE_RENDER_INFO;
-import static com.simisinc.platform.presentation.controller.RequestConstants.SHOW_MAIN_MENU;
 import com.simisinc.platform.presentation.widgets.cms.WebContainerContext;
 
 /**
@@ -93,6 +94,11 @@ public class PageTemplateEngine {
   /** Initialize the Thymeleaf renderer engine and widgets */
   public static boolean startup(AbstractConfigurableTemplateResolver templateResolver, String htmlTemplateLocation,
       Map<String, String> widgetLibrary, URL webPackageFile) {
+
+    if (templateEngine.isInitialized()) {
+      LOG.info("PageTemplateEngine is already initialized");
+      return true;
+    }
 
     LOG.info("PageTemplateEngine starting up...");
 
@@ -261,9 +267,8 @@ public class PageTemplateEngine {
           } else {
             collectionUniqueId = pageRequest.getParameter("collectionUniqueId");
           }
-        } else if (pageRef.getCollectionUniqueId().startsWith("/")) {
-          // collectionUniqueId = pageRequest.getUri().substring(pageRef.getCollectionUniqueId().indexOf("*"));
-          collectionUniqueId = webPage.getLink().substring(pageRef.getCollectionUniqueId().indexOf("*"));
+        } else if (webPage.getLink().startsWith("/") && webPage.getLink().contains("*")) {
+          collectionUniqueId = webPage.getLink().substring(webPage.getLink().indexOf("*"));
         }
         if (!StringUtils.isBlank(collectionUniqueId)) {
           if (thisCollection == null) {
