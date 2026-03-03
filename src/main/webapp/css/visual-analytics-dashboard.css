@@ -507,6 +507,48 @@
   border: none;
 }
 
+[data-theme="dark"] .data-table {
+  background: var(--dashboard-card-bg);
+}
+
+[data-theme="dark"] .data-table table {
+  border-color: var(--dashboard-table-border);
+}
+
+[data-theme="dark"] .data-table thead,
+[data-theme="dark"] .data-table tbody,
+[data-theme="dark"] .data-table tfoot {
+  border-color: var(--dashboard-table-border);
+  background: transparent;
+}
+
+[data-theme="dark"] .data-table thead {
+  background: var(--dashboard-nav-bg);
+}
+
+[data-theme="dark"] .data-table th {
+  color: var(--dashboard-text);
+  background: var(--dashboard-nav-bg);
+  border-color: var(--dashboard-table-border);
+}
+
+[data-theme="dark"] .data-table td {
+  color: var(--dashboard-text);
+  border-color: var(--dashboard-table-border);
+}
+
+[data-theme="dark"] .data-table tbody tr {
+  background: var(--dashboard-card-bg);
+}
+
+[data-theme="dark"] .data-table tbody tr:nth-child(even) {
+  background: var(--dashboard-hover-bg);
+}
+
+[data-theme="dark"] .data-table tbody tr:hover {
+  background: var(--dashboard-active-bg);
+}
+
 /* Events List */
 .events-list {
   background: var(--dashboard-card-bg);

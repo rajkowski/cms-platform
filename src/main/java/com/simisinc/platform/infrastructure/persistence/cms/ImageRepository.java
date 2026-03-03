@@ -172,6 +172,10 @@ public class ImageRepository {
     return false;
   }
 
+  public static long findTotalFileSize() {
+    return DB.selectFunction("SUM(file_length)", TABLE_NAME, null);
+  }
+
   private static Image buildRecord(ResultSet rs) {
     try {
       Image record = new Image();

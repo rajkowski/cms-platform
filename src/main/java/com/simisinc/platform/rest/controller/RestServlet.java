@@ -40,6 +40,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
+import com.simisinc.platform.application.analytics.SavePerformanceMetricCommand;
 import com.simisinc.platform.application.cms.SaveWebPageHitCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.App;
@@ -266,9 +267,10 @@ public class RestServlet extends HttpServlet {
         sb.append("}");
         String json = sb.toString();
 
-        long endRequestTime = System.currentTimeMillis();
-        long totalTime = endRequestTime - startRequestTime;
-        LOG.debug("REST total time: " + totalTime + "ms");
+      long endRequestTime = System.currentTimeMillis();
+      long totalTime = endRequestTime - startRequestTime;
+      LOG.debug("REST total time: " + totalTime + "ms");
+      SavePerformanceMetricCommand.queueMetric("api", response.getStatus(), totalTime);
 
         response.setContentLength(json.length());
         PrintWriter out = response.getWriter();

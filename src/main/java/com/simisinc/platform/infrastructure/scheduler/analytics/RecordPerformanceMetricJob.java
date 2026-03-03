@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,38 +14,36 @@
  * limitations under the License.
  */
 
-package com.simisinc.platform.infrastructure.scheduler.cms;
-
-import java.time.Duration;
+package com.simisinc.platform.infrastructure.scheduler.analytics;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jobrunr.jobs.annotations.Job;
 
-import com.simisinc.platform.infrastructure.distributedlock.LockManager;
+import com.simisinc.platform.application.analytics.SavePerformanceMetricCommand;
+import com.simisinc.platform.domain.model.analytics.PerformanceMetric;
 import com.simisinc.platform.infrastructure.persistence.analytics.PerformanceMetricRepository;
-import com.simisinc.platform.infrastructure.persistence.cms.WebPageHitRepository;
-import com.simisinc.platform.infrastructure.scheduler.SchedulerManager;
 
 /**
- * Deletes old web hits data
+ * Drains the performance metric queue and persists records to the database
  *
  * @author matt rajkowski
- * @created 5/21/18 2:45 PM
+ * @created 02/27/26 09:00 AM
  */
-public class WebPageHitsCleanupJob {
+public class RecordPerformanceMetricJob {
 
-  private static Log LOG = LogFactory.getLog(WebPageHitsCleanupJob.class);
+  private static Log LOG = LogFactory.getLog(RecordPerformanceMetricJob.class);
 
-  @Job(name = "Delete old web hits data")
+  @Job(name = "Record performance metrics")
   public static void execute() {
-    // Distributed lock
-    String lock = LockManager.lock(SchedulerManager.WEB_PAGE_HITS_CLEANUP_JOB, Duration.ofHours(4));
-    if (lock == null) {
-      return;
+    PerformanceMetric metric = null;
+    int count = 0;
+    while ((metric = SavePerformanceMetricCommand.getMetricFromQueue()) != null) {
+      PerformanceMetricRepository.save(metric);
+      ++count;
     }
-
-    WebPageHitRepository.deleteOldWebHits();
-    PerformanceMetricRepository.deleteOlderThan(365);
+    if (count > 0) {
+      LOG.debug("Performance metrics processed: " + count);
+    }
   }
 }

@@ -22,13 +22,14 @@ const AnalyticsCharts = (function() {
     }
 
     const ctx = canvas.getContext('2d');
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const themeEl = canvas.closest('[data-theme]') || document.documentElement;
+    const isDark = themeEl.getAttribute('data-theme') === 'dark';
 
     const labels = data.dates || [];
     const values = data.values || [];
 
-    const textColor = isDark ? '#ffffff' : '#212529';
-    const gridColor = isDark ? '#404040' : '#dee2e6';
+    const textColor = isDark ? '#adb5bd' : '#212529';
+    const gridColor = isDark ? '#3a3a3a' : '#dee2e6';
     const backgroundColor = isDark ? 'rgba(74, 158, 255, 0.1)' : 'rgba(0, 123, 255, 0.1)';
 
     chartInstances[canvasId] = new Chart(ctx, {
@@ -94,12 +95,13 @@ const AnalyticsCharts = (function() {
     }
 
     const ctx = canvas.getContext('2d');
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const themeEl = canvas.closest('[data-theme]') || document.documentElement;
+    const isDark = themeEl.getAttribute('data-theme') === 'dark';
 
     const labels = data.labels || [];
     const values = data.values || [];
     const colors = generateColors(values.length);
-    const textColor = isDark ? '#ffffff' : '#212529';
+    const textColor = isDark ? '#adb5bd' : '#212529';
 
     chartInstances[canvasId] = new Chart(ctx, {
       type: 'doughnut',
@@ -143,10 +145,11 @@ const AnalyticsCharts = (function() {
     }
 
     const ctx = canvas.getContext('2d');
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const themeEl = canvas.closest('[data-theme]') || document.documentElement;
+    const isDark = themeEl.getAttribute('data-theme') === 'dark';
 
-    const textColor = isDark ? '#ffffff' : '#212529';
-    const gridColor = isDark ? '#404040' : '#dee2e6';
+    const textColor = isDark ? '#adb5bd' : '#212529';
+    const gridColor = isDark ? '#3a3a3a' : '#dee2e6';
 
     chartInstances[canvasId] = new Chart(ctx, {
       type: 'bar',

@@ -17,6 +17,7 @@ const AnalyticsDashboard = (function() {
   let state = {
     currentTab: 'overview',
     timeRange: '7d',
+    performanceType: 'page',
     filters: {
       page: '',
       pageId: '',
@@ -98,6 +99,11 @@ const AnalyticsDashboard = (function() {
     if (filterDevice) filterDevice.addEventListener('change', handleFilterChange);
     if (filterAssetType) filterAssetType.addEventListener('change', handleFilterChange);
     if (clearFiltersBtn) clearFiltersBtn.addEventListener('click', clearFilters);
+
+    // Performance metrics picker
+    document.querySelectorAll('[data-perf-type]').forEach(btn => {
+      btn.addEventListener('click', handlePerformanceTypeChange);
+    });
 
     // Refresh button
     const refreshBtn = document.getElementById('refresh-btn');
@@ -236,6 +242,11 @@ const AnalyticsDashboard = (function() {
     if (filterDevice) filterDevice.value = state.filters.device || '';
     if (filterAssetType) filterAssetType.value = state.filters.assetType || '';
 
+    // Sync performance picker buttons
+    document.querySelectorAll('[data-perf-type]').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-perf-type') === state.performanceType);
+    });
+
     // Update clear button state
     updateClearButtonState();
   }
@@ -262,6 +273,9 @@ const AnalyticsDashboard = (function() {
         break;
       case 'live':
         endpoint = '/json/analyticsLiveLoad';
+        break;
+      case 'activity':
+        endpoint = '/json/analyticsActivityLoad';
         break;
       case 'content':
         endpoint = '/json/analyticsContentLoad';
@@ -318,6 +332,9 @@ const AnalyticsDashboard = (function() {
         break;
       case 'live':
         renderLiveTab(data);
+        break;
+      case 'activity':
+        renderActivityTab(data);
         break;
       case 'content':
         renderContentTab(data);
@@ -594,6 +611,38 @@ const AnalyticsDashboard = (function() {
   }
 
   /**
+   * Render Activity Tab
+   */
+  function renderActivityTab(data) {
+    const activityTable = document.getElementById('activity-stream');
+    if (activityTable) {
+      activityTable.classList.remove('skeleton');
+    }
+    const activityContainer = document.getElementById('activity-tbody');
+    if (!activityContainer) return;
+
+    if (data.activities && data.activities.length > 0) {
+      activityContainer.innerHTML = '';
+      data.activities.forEach(entry => {
+        const row = document.createElement('tr');
+        const when = entry.timestamp ? new Date(entry.timestamp).toLocaleString() : '-';
+        const relative = entry.timestamp ? formatRelativeTime(entry.timestamp) : '-';
+        const type = entry.activityType || '';
+        const icon = getActivityIcon(type);
+        row.innerHTML = `
+          <td><i class="fas ${icon}"></i> ${escapeHtml(type)}</td>
+          <td>${entry.messageHtml || ''}</td>
+          <td>${escapeHtml(when)}</td>
+          <td class="text-muted">${escapeHtml(relative)}</td>
+        `;
+        activityContainer.appendChild(row);
+      });
+    } else {
+      activityContainer.innerHTML = '<tr><td colspan="4" class="text-muted text-center">No activity available for the selected time range.</td></tr>';
+    }
+  }
+
+  /**
    * Render Live Tab
    */
   function renderLiveTab(data) {
@@ -765,42 +814,61 @@ const AnalyticsDashboard = (function() {
    * Render Technical Tab
    */
   function renderTechnicalTab(data) {
-    const metricsContainer = document.getElementById('performance-metrics');
-    if (metricsContainer) {
-      metricsContainer.classList.remove('skeleton');
-      if (data.performance) {
-        metricsContainer.innerHTML = '';
-        const metrics = [
-          { key: 'p50', label: 'p50 Response Time' },
-          { key: 'p95', label: 'p95 Response Time' },
-          { key: 'p99', label: 'p99 Response Time' }
-        ];
+    // System Monitor
+    const systemMonitorContainer = document.getElementById('system-monitor');
+    if (systemMonitorContainer) {
+      systemMonitorContainer.classList.remove('skeleton');
+      systemMonitorContainer.innerHTML = '';
+      const sysInfo = data.systemInfo || {};
 
-        metrics.forEach(metric => {
-          const value = data.performance[metric.key];
-          const card = createMetricCard(metric.label, value + 'ms');
-          metricsContainer.appendChild(card);
-        });
-      }
+      // Uptime
+      const uptime = sysInfo.uptime || {};
+      systemMonitorContainer.appendChild(createMetricCard('Uptime', uptime.display || 'N/A'));
+
+      // CPU Load
+      const cpu = sysInfo.cpu || {};
+      const cpuLoad = cpu.load >= 0 ? cpu.load + '%' : 'N/A';
+      systemMonitorContainer.appendChild(createMetricCard('Load', cpuLoad));
+
+      // Free Memory
+      const mem = sysInfo.memory || {};
+      const freeMemory = mem.freeMb !== undefined ? mem.freeMb + ' MB' : 'N/A';
+      systemMonitorContainer.appendChild(createMetricCard('Free Memory', freeMemory));
+
+      // Free Storage
+      const stor = sysInfo.storage || {};
+      const freeStorage = stor.freeGb !== undefined ? stor.freeGb + ' GB' : 'N/A';
+      systemMonitorContainer.appendChild(createMetricCard('Free Storage', freeStorage));
+
+      // File Repository Usage
+      const fileRepo = sysInfo.fileRepository || {};
+      const fileRepoUsage = fileRepo.usedGb !== undefined ? fileRepo.usedGb + ' GB' : (fileRepo.usedMb !== undefined ? fileRepo.usedMb + ' MB' : 'N/A');
+      systemMonitorContainer.appendChild(createMetricCard('File Repository Usage', fileRepoUsage));
     }
 
+    // Performance Metrics (picker-based)
+    renderPerformanceMetrics(data);
+
+    // Response time chart - use page metrics as primary
     const responseChartContainer = document.querySelector('#response-time-chart');
     if (responseChartContainer) {
       responseChartContainer.closest('.chart-container')?.classList.remove('skeleton');
     }
-    if (data.performance) {
-      AnalyticsCharts.renderResponseTimeChart('response-time-chart', data.performance);
-    }
+    const byType = (data.performance && data.performance.byType) ? data.performance.byType : {};
+    const pageMetrics = byType.page || { p50: 0, p95: 0, p99: 0 };
+    AnalyticsCharts.renderResponseTimeChart('response-time-chart', pageMetrics);
 
+    // Error metrics table
     const errorsContainer = document.getElementById('errors-tbody');
     const errorsTable = document.getElementById('error-metrics');
     if (errorsTable) {
       errorsTable.classList.remove('skeleton');
     }
+    const errors = (data.performance && data.performance.errors) ? data.performance.errors : (data.errors || []);
     if (errorsContainer) {
-      if (data.errors && data.errors.length > 0) {
+      if (errors && errors.length > 0) {
         errorsContainer.innerHTML = '';
-        data.errors.forEach(error => {
+        errors.forEach(error => {
           const row = document.createElement('tr');
           row.innerHTML = `
             <td>${error.statusCode}</td>
@@ -812,6 +880,51 @@ const AnalyticsDashboard = (function() {
       } else {
         errorsContainer.innerHTML = '<tr><td colspan="3" class="text-muted text-center">No error metrics available</td></tr>';
       }
+    }
+  }
+
+  /**
+   * Handle performance type picker change
+   */
+  function handlePerformanceTypeChange(event) {
+    const type = event.currentTarget.getAttribute('data-perf-type');
+    state.performanceType = type;
+
+    // Update picker button states
+    document.querySelectorAll('[data-perf-type]').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-perf-type') === type);
+    });
+
+    // Re-render with cached data
+    const data = state.cachedData['technical'];
+    if (data) {
+      renderPerformanceMetrics(data);
+    }
+  }
+
+  /**
+   * Render Performance Metrics for the currently selected type
+   */
+  function renderPerformanceMetrics(data) {
+    const metricsContainer = document.getElementById('performance-metrics');
+    if (!metricsContainer) return;
+
+    metricsContainer.classList.remove('skeleton');
+    metricsContainer.innerHTML = '';
+
+    const byType = (data.performance && data.performance.byType) ? data.performance.byType : {};
+    const type = state.performanceType || 'page';
+    const agg = byType[type] || {};
+    const count = agg.count || 0;
+    const avg = agg.avg !== undefined ? agg.avg : 0;
+    const p95 = agg.p95 !== undefined ? agg.p95 : 0;
+
+    if (count > 0) {
+      metricsContainer.appendChild(createMetricCard('Avg Response', avg + 'ms'));
+      metricsContainer.appendChild(createMetricCard('p95 Response', p95 + 'ms'));
+      metricsContainer.appendChild(createMetricCard('Requests', formatNumber(count)));
+    } else {
+      metricsContainer.innerHTML = '<p class="text-muted">No data yet for this category. Metrics are collected in real time.</p>';
     }
   }
 
@@ -1047,6 +1160,12 @@ const AnalyticsDashboard = (function() {
 
     wrapper.setAttribute('data-theme', newTheme);
     localStorage.setItem('editor-theme', newTheme);
+
+    // Re-render charts immediately with new theme colors using cached data
+    const cachedData = state.cachedData[state.currentTab];
+    if (cachedData) {
+      renderTabData(state.currentTab, cachedData);
+    }
   }
 
   /**
@@ -1100,6 +1219,7 @@ const AnalyticsDashboard = (function() {
     localStorage.setItem('analyticsDashboard.state', JSON.stringify({
       currentTab: state.currentTab,
       timeRange: state.timeRange,
+      performanceType: state.performanceType,
       filters: state.filters
     }));
   }
@@ -1113,6 +1233,7 @@ const AnalyticsDashboard = (function() {
       const data = JSON.parse(saved);
       state.currentTab = data.currentTab || 'overview';
       state.timeRange = data.timeRange || config.defaultTimeRange;
+      state.performanceType = data.performanceType || 'page';
       state.filters = data.filters || { page: '', pageId: '', device: '' };
     }
 
@@ -1131,6 +1252,53 @@ const AnalyticsDashboard = (function() {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => func.apply(this, args), delay);
     };
+  }
+
+  /**
+   * Utility: Format relative time (e.g. "3 days ago")
+   */
+  function formatRelativeTime(timestamp) {
+    if (!timestamp) return '';
+    const diff = Date.now() - timestamp;
+    const seconds = Math.floor(diff / 1000);
+    if (seconds < 60) return 'just now';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return minutes === 1 ? '1 minute ago' : `${minutes} minutes ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return hours === 1 ? '1 hour ago' : `${hours} hours ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 30) return days === 1 ? '1 day ago' : `${days} days ago`;
+    const months = Math.floor(days / 30);
+    if (months < 12) return months === 1 ? '1 month ago' : `${months} months ago`;
+    const years = Math.floor(months / 12);
+    return years === 1 ? '1 year ago' : `${years} years ago`;
+  }
+
+  /**
+   * Utility: Get Font Awesome icon for an xAPI activity verb
+   */
+  function getActivityIcon(type) {
+    const iconMap = {
+      'viewed': 'fa-eye',
+      'completed': 'fa-circle-check',
+      'answered': 'fa-comment',
+      'attempted': 'fa-play',
+      'passed': 'fa-check',
+      'failed': 'fa-xmark',
+      'launched': 'fa-rocket',
+      'submitted': 'fa-paper-plane',
+      'registered': 'fa-user-plus',
+      'logged-in': 'fa-right-to-bracket',
+      'logged-out': 'fa-right-from-bracket',
+      'purchased': 'fa-bag-shopping',
+      'downloaded': 'fa-download',
+      'shared': 'fa-share-nodes',
+      'created': 'fa-plus',
+      'updated': 'fa-pen',
+      'deleted': 'fa-trash',
+      'commented': 'fa-message'
+    };
+    return iconMap[type ? type.toLowerCase() : ''] || 'fa-bolt';
   }
 
   /**

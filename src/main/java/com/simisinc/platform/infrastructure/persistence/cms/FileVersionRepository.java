@@ -166,6 +166,10 @@ public class FileVersionRepository {
     DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("file_id = ?", record.getId()));
   }
 
+  public static long findTotalFileSize() {
+    return DB.selectFunction("SUM(file_length)", TABLE_NAME, null);
+  }
+
   private static FileVersion buildRecord(ResultSet rs) {
     try {
       FileVersion record = new FileVersion();

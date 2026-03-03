@@ -94,6 +94,7 @@
       <ul class="dashboard-nav-list">
         <li><a href="javascript:void(0)" class="nav-item active" data-tab="overview"><i class="${font:far()} fa-chart-line"></i> Overview</a></li>
         <li><a href="javascript:void(0)" class="nav-item" data-tab="live"><i class="${font:far()} fa-wave-square"></i> Live</a></li>
+        <li><a href="javascript:void(0)" class="nav-item" data-tab="activity"><i class="${font:far()} fa-list"></i> Activity</a></li>
         <li><a href="javascript:void(0)" class="nav-item" data-tab="content"><i class="${font:far()} fa-file-lines"></i> Content</a></li>
         <li><a href="javascript:void(0)" class="nav-item" data-tab="audience"><i class="${font:far()} fa-users"></i> Audience</a></li>
         <c:if test="${technicalMetricsEnabled}">
@@ -183,6 +184,34 @@
           <div id="live-empty-state" class="empty-state" style="display: none;">
             <i class="${font:far()} fa-inbox"></i>
             <p>No active sessions or recent events.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Activity Tab -->
+      <section id="activity-tab" class="dashboard-tab">
+        <div class="tab-content">
+          <div class="section-header">
+            <h3><i class="${font:far()} fa-list"></i> Activity Stream</h3>
+          </div>
+          <div id="activity-stream" class="data-table skeleton">
+            <table>
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Activity</th>
+                  <th>When</th>
+                  <th>Age</th>
+                </tr>
+              </thead>
+              <tbody id="activity-tbody">
+              </tbody>
+            </table>
+          </div>
+          <!-- Empty State -->
+          <div id="activity-empty-state" class="empty-state" style="display: none;">
+            <i class="${font:far()} fa-inbox"></i>
+            <p>No activity found for the selected time range.</p>
           </div>
         </div>
       </section>
@@ -308,9 +337,42 @@
       <c:if test="${technicalMetricsEnabled}">
         <section id="technical-tab" class="dashboard-tab">
           <div class="tab-content">
-            <!-- Performance Metrics -->
+
+            <!-- System Monitor -->
             <div class="section-header">
+              <h3><i class="${font:far()} fa-server"></i> System Monitor</h3>
+            </div>
+            <div id="system-monitor" class="metrics-grid skeleton">
+              <div class="metric-card">
+                <div class="metric-value"></div>
+                <div class="metric-label"></div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-value"></div>
+                <div class="metric-label"></div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-value"></div>
+                <div class="metric-label"></div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-value"></div>
+                <div class="metric-label"></div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-value"></div>
+                <div class="metric-label"></div>
+              </div>
+            </div>
+
+            <!-- Performance Metrics -->
+            <div class="section-header" style="margin-top: 30px;">
               <h3><i class="${font:far()} fa-gauge"></i> Performance Metrics</h3>
+              <div id="performance-picker" class="button-group">
+                <button type="button" class="button tiny secondary no-gap active" data-perf-type="page">Web Pages</button>
+                <button type="button" class="button tiny secondary no-gap" data-perf-type="json">Front End Requests</button>
+                <button type="button" class="button tiny secondary no-gap radius" data-perf-type="api">API Requests</button>
+              </div>
             </div>
             <div id="performance-metrics" class="metrics-grid skeleton">
               <div class="metric-card">

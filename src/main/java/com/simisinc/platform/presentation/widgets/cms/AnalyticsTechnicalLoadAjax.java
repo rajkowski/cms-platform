@@ -16,16 +16,20 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.simisinc.platform.application.analytics.AnalyticsDataService;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
 
 /**
- * AJAX endpoint for analytics technical data
+ * AJAX endpoint for analytics technical data: system info and performance metrics
  *
  * @author matt rajkowski
  * @created 01/31/26 02:00 PM
@@ -38,36 +42,39 @@ public class AnalyticsTechnicalLoadAjax extends GenericWidget {
   @Override
   public WidgetContext execute(WidgetContext context) {
     try {
-      // Build response
+      // Determine days window from range parameter
+      int days = 7;
+      String range = context.getParameter("range");
+      if (range != null && range.contains(",")) {
+        // Custom date range
+        String[] parts = range.split(",");
+        if (parts.length == 2) {
+          try {
+            LocalDate start = LocalDate.parse(parts[0].trim());
+            LocalDate end = LocalDate.parse(parts[1].trim());
+            days = (int) ChronoUnit.DAYS.between(start, end) + 1;
+          } catch (Exception ignored) {
+            // Use default
+          }
+        }
+      } else if ("1d".equals(range)) {
+        days = 1;
+      } else if ("30d".equals(range)) {
+        days = 30;
+      } else if ("12m".equals(range)) {
+        days = 365;
+      }
+
+      // Build response combining system info and performance metrics
+      ObjectNode systemInfo = AnalyticsDataService.loadSystemInfo();
+      ObjectNode perfMetrics = AnalyticsDataService.loadTechnicalMetrics(days);
+
       ObjectNode response = MAPPER.createObjectNode();
       response.put("success", true);
       response.put("generatedAt", System.currentTimeMillis());
-      
-      // Performance metrics - Response times (simulated from typical values)
-      ObjectNode performance = response.putObject("performance");
-      performance.put("p50", 0);  // 50th percentile: 145ms
-      performance.put("p95", 0);  // 95th percentile: 850ms
-      performance.put("p99", 0); // 99th percentile: 2500ms
-      performance.put("avg", 0);  // Average: 320ms
-      
-      // Reliability metrics
-      ObjectNode reliability = response.putObject("reliability");
-      reliability.put("uptime", 0);     // 99.98% uptime
-      reliability.put("errorRate", 0);   // 0.02% error rate
-      reliability.put("errorCount", 0);    // Total errors in period
-      
-      // Cache metrics
-      ObjectNode cache = response.putObject("cache");
-      cache.put("hitRate", 0);       // 87.5% cache hit rate
-      cache.put("missRate", 0);      // 12.5% cache miss rate
-      cache.put("bytesServed", 0); // 1GB bytes served
-      
-      // Traffic metrics
-      ObjectNode traffic = response.putObject("traffic");
-      traffic.put("avgBandwidth", 0);      // 2.5 Mbps average
-      traffic.put("peakBandwidth", 0);     // 8.7 Mbps peak
-      traffic.put("totalBytesTransferred", 0); // 125MB in period
-      
+      response.set("systemInfo", systemInfo);
+      response.set("performance", perfMetrics);
+
       context.setJson(response.toString());
     } catch (Exception e) {
       LOG.error("Error loading technical analytics", e);
@@ -76,3 +83,4 @@ public class AnalyticsTechnicalLoadAjax extends GenericWidget {
     return context;
   }
 }
+

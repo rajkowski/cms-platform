@@ -1054,7 +1054,7 @@ body.dark-mode {
 .columns-table td {
   padding: 10px;
   text-align: left;
-  border: none;
+  border: 1px solid var(--editor-border);
 }
 
 .permissions-table th,
@@ -1065,13 +1065,32 @@ body.dark-mode {
   color: var(--editor-text);
 }
 
-.permissions-table tbody tr {
+.permissions-table tbody tr,
+.columns-table tbody tr {
   background: var(--editor-panel-bg);
 }
 
 .permissions-table tbody tr:nth-child(even),
 .columns-table tbody tr:nth-child(even) {
   background: var(--editor-hover-bg);
+}
+
+[data-theme="dark"] .permissions-table thead,
+[data-theme="dark"] .permissions-table tbody,
+[data-theme="dark"] .columns-table thead,
+[data-theme="dark"] .columns-table tbody {
+  border-color: var(--editor-border);
+  background: transparent;
+}
+
+[data-theme="dark"] .permissions-table tbody tr,
+[data-theme="dark"] .columns-table tbody tr {
+  background: var(--editor-bg);
+}
+
+[data-theme="dark"] .permissions-table tbody tr:nth-child(even),
+[data-theme="dark"] .columns-table tbody tr:nth-child(even) {
+  background: var(--editor-panel-bg);
 }
 
 .permissions-table td,

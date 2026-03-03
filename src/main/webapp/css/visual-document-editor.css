@@ -325,6 +325,54 @@
   border-left: 3px solid var(--editor-selected-border);
 }
 
+[data-theme="dark"] #file-list-container {
+  background: var(--editor-bg);
+}
+
+[data-theme="dark"] .file-table {
+  background: var(--editor-bg);
+  color: var(--editor-text);
+}
+
+[data-theme="dark"] .file-table thead,
+[data-theme="dark"] .file-table tbody,
+[data-theme="dark"] .file-table tfoot {
+  border-color: var(--editor-border);
+  background: transparent;
+}
+
+[data-theme="dark"] .file-table thead {
+  background: var(--editor-panel-bg);
+}
+
+[data-theme="dark"] .file-table th {
+  color: var(--editor-text);
+  background: var(--editor-panel-bg);
+  border-color: var(--editor-border);
+}
+
+[data-theme="dark"] .file-table td {
+  color: var(--editor-text);
+  border-color: var(--editor-border);
+}
+
+[data-theme="dark"] .file-table tbody tr {
+  background: var(--editor-bg);
+}
+
+[data-theme="dark"] .file-table tbody tr:nth-child(even) {
+  background: var(--editor-panel-bg);
+}
+
+[data-theme="dark"] .file-table tbody tr:hover {
+  background: var(--editor-selected-bg);
+}
+
+[data-theme="dark"] .file-table tbody tr.active {
+  background: var(--editor-selected-bg);
+  border-left-color: var(--editor-selected-border);
+}
+
 .file-status-pill {
   display: inline-flex;
   align-items: center;
@@ -755,7 +803,7 @@
 .property-table td {
   padding: 8px;
   text-align: left;
-  border-bottom: 1px solid var(--editor-border);
+  border: 1px solid var(--editor-border);
   color: var(--editor-text);
 }
 
@@ -781,10 +829,17 @@
   background: var(--editor-bg);
 }
 
+[data-theme="dark"] .property-table thead,
+[data-theme="dark"] .property-table tbody,
+[data-theme="dark"] .property-table tfoot {
+  border-color: var(--editor-border);
+  background: transparent;
+}
+
 [data-theme="dark"] .property-table th {
   background: var(--editor-panel-bg);
   color: var(--editor-text);
-  border-bottom-color: var(--editor-border);
+  border-color: var(--editor-border);
 }
 
 [data-theme="dark"] .property-table tbody tr {
@@ -801,7 +856,7 @@
 
 [data-theme="dark"] .property-table td {
   color: var(--editor-text);
-  border-bottom-color: var(--editor-border);
+  border-color: var(--editor-border);
 }
 
 .folder-groups-table {
@@ -815,7 +870,7 @@
 .folder-groups-table td {
   padding: 10px;
   text-align: left;
-  border-bottom: 1px solid var(--editor-border);
+  border: 1px solid var(--editor-border);
   color: var(--editor-text);
 }
 
@@ -841,10 +896,17 @@
   background: var(--editor-bg);
 }
 
+[data-theme="dark"] .folder-groups-table thead,
+[data-theme="dark"] .folder-groups-table tbody,
+[data-theme="dark"] .folder-groups-table tfoot {
+  border-color: var(--editor-border);
+  background: transparent;
+}
+
 [data-theme="dark"] .folder-groups-table th {
   background: var(--editor-panel-bg);
   color: var(--editor-text);
-  border-bottom-color: var(--editor-border);
+  border-color: var(--editor-border);
 }
 
 [data-theme="dark"] .folder-groups-table tbody tr {
@@ -861,7 +923,7 @@
 
 [data-theme="dark"] .folder-groups-table td {
   color: var(--editor-text);
-  border-bottom-color: var(--editor-border);
+  border-color: var(--editor-border);
 }
 
 .folder-groups-table .edit-group-btn,

@@ -125,4 +125,5 @@
   <service endpoint="/json/analyticsContentLoad" class="com.simisinc.platform.presentation.widgets.cms.AnalyticsContentLoadAjax" />
   <service endpoint="/json/analyticsAudienceLoad" class="com.simisinc.platform.presentation.widgets.cms.AnalyticsAudienceLoadAjax" />
   <service endpoint="/json/analyticsTechnicalLoad" class="com.simisinc.platform.presentation.widgets.cms.AnalyticsTechnicalLoadAjax" />
+  <service endpoint="/json/analyticsActivityLoad" class="com.simisinc.platform.presentation.widgets.cms.AnalyticsActivityLoadAjax" />
 </services>

@@ -407,6 +407,10 @@ public class DatasetRepository {
     return (DB.deleteFrom(TABLE_NAME, DB.WHERE("dataset_id = ?", record.getId())) > 0);
   }
 
+  public static long findTotalFileSize() {
+    return DB.selectFunction("SUM(file_length)", TABLE_NAME, null);
+  }
+
   private static Dataset buildRecord(ResultSet rs) {
     try {
       Dataset record = new Dataset();

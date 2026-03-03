@@ -38,6 +38,7 @@ import org.jobrunr.storage.sql.common.SqlStorageProviderFactory;
 import com.simisinc.platform.infrastructure.database.ConnectionPool;
 import com.simisinc.platform.infrastructure.instance.InstanceManager;
 import com.simisinc.platform.infrastructure.scheduler.admin.DatasetsDownloadAndSyncJob;
+import com.simisinc.platform.infrastructure.scheduler.analytics.RecordPerformanceMetricJob;
 import com.simisinc.platform.infrastructure.scheduler.cms.LoadSystemFilesJob;
 import com.simisinc.platform.infrastructure.scheduler.cms.RecordWebPageHitJob;
 import com.simisinc.platform.infrastructure.scheduler.cms.WebPageHitSnapshotJob;
@@ -64,6 +65,7 @@ public class SchedulerManager {
   public static final String SYSTEM_HEALTH_JOB = "SystemHealth";
   public static final String LOAD_SYSTEM_FILES_JOB = "LoadSystemFiles";
   public static final String RECORD_WEB_PAGE_HITS_JOB = "RecordWebPageHits";
+  public static final String RECORD_PERFORMANCE_METRICS_JOB = "RecordPerformanceMetrics";
 
   // Jobs to be run once across many replicas
   public static final String WEB_PAGE_HIT_SNAPSHOT_JOB = "WebPageHitSnapshot";
@@ -144,6 +146,7 @@ public class SchedulerManager {
       // BackgroundJob.scheduleRecurrently(SYSTEM_HEALTH_JOB, Cron.every15seconds(), SystemHealthJob::execute);
       BackgroundJob.scheduleRecurrently(LOAD_SYSTEM_FILES_JOB, Cron.every5minutes(), LoadSystemFilesJob::execute);
       BackgroundJob.scheduleRecurrently(RECORD_WEB_PAGE_HITS_JOB, Cron.every15seconds(), RecordWebPageHitJob::execute);
+      BackgroundJob.scheduleRecurrently(RECORD_PERFORMANCE_METRICS_JOB, Cron.every15seconds(), RecordPerformanceMetricJob::execute);
 
       // These jobs need to be run by at least 1 node, preferably not the web-only nodes
       if (canRunClusterJobs) {

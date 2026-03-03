@@ -347,6 +347,10 @@ public class FileItemRepository {
     return false;
   }
 
+  public static long findTotalFileSize() {
+    return DB.selectFunction("SUM(file_length)", TABLE_NAME, null);
+  }
+
   private static FileItem buildRecord(ResultSet rs) {
     try {
       FileItem record = new FileItem();

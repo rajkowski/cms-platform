@@ -60,6 +60,7 @@ import com.simisinc.platform.application.cms.LoadStylesheetCommand;
 import com.simisinc.platform.application.cms.LoadTableOfContentsCommand;
 import com.simisinc.platform.application.cms.LoadWebPageCommand;
 import com.simisinc.platform.application.cms.SaveWebPageHitCommand;
+import com.simisinc.platform.application.analytics.SavePerformanceMetricCommand;
 import com.simisinc.platform.application.cms.WebContainerLayoutCommand;
 import com.simisinc.platform.application.cms.WebPackageCommand;
 import com.simisinc.platform.application.cms.WebPageXmlLayoutCommand;
@@ -706,6 +707,7 @@ public class PageServlet extends HttpServlet {
       long endRequestTime = System.currentTimeMillis();
       long totalTime = endRequestTime - startRequestTime;
       request.setAttribute(RENDER_TIME, totalTime);
+      SavePerformanceMetricCommand.queueMetric("page", response.getStatus(), totalTime);
 
       // Start rendering the page
       LOG.debug("Page title: " + pageRenderInfo.getTitle());
