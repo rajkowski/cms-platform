@@ -129,7 +129,7 @@ CREATE INDEX web_pages_draft_idx ON web_pages(draft);
 CREATE INDEX web_pages_enabled_idx ON web_pages(enabled);
 CREATE INDEX web_pages_sitemap_idx ON web_pages(show_in_sitemap);
 CREATE INDEX web_pages_redirect_idx ON web_pages(has_redirect);
-CREATE INDEX web_pages_tags_idx ON web_pages USING GIN (tags);
+CREATE INDEX web_pages_tags_idx ON web_pages USING gin(tags);
 
 CREATE TABLE web_page_hierarchy (
   page_hierarchy_id BIGSERIAL PRIMARY KEY,
@@ -155,10 +155,12 @@ CREATE TABLE content (
   modified TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
   draft_content TEXT,
   content_text TEXT,
-  tsv TSVECTOR
+  tsv TSVECTOR,
+  tags JSONB
 );
 CREATE INDEX content_uni_idx ON content(content_unique_id);
 CREATE INDEX content_tsv_idx ON content USING gin(tsv);
+CREATE INDEX content_tags_idx ON content USING gin(tags);
 
 CREATE TEXT SEARCH DICTIONARY content_stem (
     TEMPLATE = snowball,
@@ -183,6 +185,17 @@ ON content FOR EACH ROW EXECUTE PROCEDURE content_tsv_trigger();
 -- INSERT INTO content (content_unique_id, content) VALUES ('setup-hello', 'Hello from the setup content database!');
 -- INSERT INTO content (content_unique_id, content) VALUES ('login-hello', 'Hello from the Login Page''s Content Widget database!');
 -- INSERT INTO content (content_unique_id, content) VALUES ('register-hello', 'Hello from the Register Page''s Content Widget database!');
+
+CREATE TABLE content_versions (
+  version_id BIGSERIAL PRIMARY KEY,
+  content_id BIGINT REFERENCES content(content_id) NOT NULL,
+  content TEXT,
+  created_by BIGINT REFERENCES users(user_id) NOT NULL,
+  created TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+  notes TEXT
+);
+CREATE INDEX content_ver_cont_idx ON content_versions(content_id);
+CREATE INDEX content_ver_creat_idx ON content_versions(created);
 
 CREATE TABLE images (
   image_id BIGSERIAL PRIMARY KEY,
