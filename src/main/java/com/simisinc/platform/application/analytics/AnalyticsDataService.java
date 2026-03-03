@@ -424,8 +424,10 @@ public class AnalyticsDataService {
     ObjectNode fileRepository = response.putObject("fileRepository");
     fileRepository.put("usedBytes", totalFileSizeBytes);
     fileRepository.put("usedMb", Math.round(totalFileSizeBytes / (1024.0 * 1024) * 10.0) / 10.0);
-    fileRepository.put("usedGb", Math.round(totalFileSizeBytes / (1024.0 * 1024 * 1024) * 10.0) / 10.0);
-
+    // only return usedGB when usedMB is above 1000 to avoid confusion with small numbers
+    if (totalFileSizeBytes / (1024.0 * 1024) > 1000) {
+      fileRepository.put("usedGb", Math.round(totalFileSizeBytes / (1024.0 * 1024 * 1024) * 10.0) / 10.0);
+    }
     return response;
   }
 
