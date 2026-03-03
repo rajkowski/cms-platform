@@ -1,7 +1,7 @@
 -- Copyright 2026 Matt Rajkowski, Licensed under the Apache License, Version 2.0
 -- Git publish settings for static site export
 
-CREATE TABLE git_publish_settings (
+CREATE TABLE IF NOT EXISTS git_publish_settings (
   settings_id BIGSERIAL PRIMARY KEY,
   enabled BOOLEAN DEFAULT false,
   git_provider VARCHAR(50) NOT NULL,
@@ -21,3 +21,4 @@ CREATE TABLE git_publish_settings (
   created_by BIGINT REFERENCES users(user_id),
   modified_by BIGINT REFERENCES users(user_id)
 );
+CREATE INDEX IF NOT EXISTS git_pub_sett_en_idx ON git_publish_settings(enabled);

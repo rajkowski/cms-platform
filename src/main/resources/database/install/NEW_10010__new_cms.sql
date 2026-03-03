@@ -264,6 +264,18 @@ CREATE INDEX form_data_claimed_by_idx ON form_data(claimed_by);
 CREATE INDEX form_data_dismissed_idx ON form_data(dismissed);
 CREATE INDEX form_data_processed_idx ON form_data(processed);
 
+CREATE TABLE performance_metrics (
+    metric_id BIGSERIAL NOT NULL,
+    request_type VARCHAR(10) NOT NULL,
+    status_code INT NOT NULL DEFAULT 200,
+    duration_ms BIGINT NOT NULL,
+    metric_date TIMESTAMP NOT NULL DEFAULT now(),
+    CONSTRAINT performance_metrics_pkey PRIMARY KEY (metric_id)
+);
+
+CREATE INDEX performance_metrics_type_date_idx ON performance_metrics(request_type, metric_date);
+CREATE INDEX performance_metrics_date_idx ON performance_metrics(metric_date);
+
 -- We want to know popular page_path
 -- We want to know popular web_page_id
 -- We want to know geolocation of ip_address
@@ -692,3 +704,37 @@ CREATE TABLE stylesheets (
   modified TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX stylesheets_web_idx ON stylesheets(web_page_id);
+
+-- Web Site Exports
+
+CREATE TABLE site_exports (
+  export_id BIGSERIAL PRIMARY KEY,
+  export_date TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+  export_by BIGINT REFERENCES users(user_id),
+  export_path VARCHAR(255) NOT NULL,
+  notes TEXT
+);
+CREATE INDEX site_exports_dt_idx ON site_exports(export_date);
+
+CREATE TABLE git_publish_settings (
+  settings_id BIGSERIAL PRIMARY KEY,
+  enabled BOOLEAN DEFAULT false,
+  git_provider VARCHAR(50) NOT NULL,
+  repository_url VARCHAR(500) NOT NULL,
+  branch_name VARCHAR(255) DEFAULT 'main',
+  base_branch VARCHAR(255) DEFAULT 'main',
+  access_token TEXT,
+  username VARCHAR(255),
+  email VARCHAR(255),
+  commit_message_template VARCHAR(500) DEFAULT 'Static site update: ${timestamp}',
+  auto_create_pr BOOLEAN DEFAULT true,
+  pr_title_template VARCHAR(255) DEFAULT 'Static site update: ${timestamp}',
+  pr_description_template TEXT DEFAULT 'Automated static site export',
+  target_directory VARCHAR(500) DEFAULT '/',
+  created TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+  modified TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+  created_by BIGINT REFERENCES users(user_id),
+  modified_by BIGINT REFERENCES users(user_id)
+);
+CREATE INDEX git_pub_sett_en_idx ON git_publish_settings(enabled);
+
