@@ -73,40 +73,21 @@
     </div>
 
     <div class="titlebar-right">
-      <!-- Apps Dropdown -->
-      <div class="apps-menu">
-        <button id="apps-btn" class="apps-btn" title="Apps">
-          <i class="${font:far()} fa-th"></i>
-          <i class="fas fa-chevron-down" style="font-size: 0.75rem; margin-left: 0.35rem;"></i>
-        </button>
-        <div class="apps-dropdown">
-          <!-- Actions Section -->
-          <div class="apps-menu-section">
-            <a href="#" id="dark-mode-toggle-menu" class="apps-menu-item">
-              <i class="${font:far()} fa-moon"></i>
-              <span>Dark Mode</span>
-            </a>
-          </div>
-
-          <!-- Exit Section -->
-          <div class="apps-menu-section">
-            <c:choose>
-              <c:when test="${!empty returnPage}">
-                <a href="${returnPage}" class="apps-menu-item confirm-exit">
-                  <i class="${font:far()} fa-arrow-right-from-bracket"></i>
-                  <span>Exit back to site</span>
-                </a>
-              </c:when>
-              <c:otherwise>
-                <a href="${ctx}/" class="apps-menu-item confirm-exit">
-                  <i class="${font:far()} fa-arrow-right-from-bracket"></i>
-                  <span>Exit back to site</span>
-                </a>
-              </c:otherwise>
-            </c:choose>
-          </div>
-        </div>
-      </div>
+      <a href="#" id="dark-mode-toggle-menu" class="titlebar-btn apps-btn" title="Toggle Dark Mode">
+        <i class="${font:far()} fa-moon"></i>
+      </a>
+      <c:choose>
+        <c:when test="${!empty returnPage}">
+          <a href="${returnPage}" class="titlebar-btn apps-btn confirm-exit" title="Exit back to site">
+            <i class="${font:far()} fa-arrow-right-from-bracket"></i>
+          </a>
+        </c:when>
+        <c:otherwise>
+          <a href="${ctx}/" class="titlebar-btn apps-btn confirm-exit" title="Exit back to site">
+            <i class="${font:far()} fa-arrow-right-from-bracket"></i>
+          </a>
+        </c:otherwise>
+      </c:choose>
     </div>
   </div>
   
@@ -515,7 +496,7 @@
         darkModeIcon.classList.replace('fa-moon', 'fa-sun');
       }
     }
-    
+
     // Create and initialize the editor
     imageEditor = new ImageEditor(imageEditorConfig);
     imageEditor.init();

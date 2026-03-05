@@ -462,6 +462,39 @@
   // Initialize the analytics dashboard
   document.addEventListener('DOMContentLoaded', function() {
     setupEditorAppSwitcher();
+
+    // Dark mode toggle
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    const savedTheme = localStorage.getItem('editor-theme');
+    if (savedTheme === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      if (darkModeToggle) {
+        const iconElement = darkModeToggle.querySelector('i');
+        if (iconElement) {
+          iconElement.classList.replace('fa-moon', 'fa-sun');
+        }
+      }
+    }
+    if (darkModeToggle) {
+      darkModeToggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const iconElement = darkModeToggle.querySelector('i');
+        if (isDark) {
+          document.documentElement.removeAttribute('data-theme');
+          if (iconElement) {
+            iconElement.classList.replace('fa-sun', 'fa-moon');
+          }
+          localStorage.setItem('editor-theme', 'light');
+        } else {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          if (iconElement) {
+            iconElement.classList.replace('fa-moon', 'fa-sun');
+          }
+          localStorage.setItem('editor-theme', 'dark');
+        }
+      });
+    }
     
     if (typeof AnalyticsDashboard !== 'undefined') {
       AnalyticsDashboard.init({

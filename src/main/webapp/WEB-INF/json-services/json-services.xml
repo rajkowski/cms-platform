@@ -111,6 +111,31 @@
   <service endpoint="/json/datasetImport" class="com.simisinc.platform.presentation.widgets.editor.DatasetImportAjax" />
   <service endpoint="/json/datasetSchedule" class="com.simisinc.platform.presentation.widgets.editor.DatasetScheduleAjax" />
   <service endpoint="/json/datasetSync" class="com.simisinc.platform.presentation.widgets.editor.DatasetSyncAjax" />
+  <!-- Workflow Editor -->
+  <service endpoint="/json/workflowTasks" class="com.simisinc.platform.presentation.widgets.editor.WorkflowTasksAjax" />
+  <service endpoint="/json/workflowEvents" class="com.simisinc.platform.presentation.widgets.editor.WorkflowEventsAjax" />
+  <service endpoint="/json/workflowTaskHistory" class="com.simisinc.platform.presentation.widgets.editor.WorkflowTaskHistoryAjax" />
+  <!-- CRM Editor -->
+  <service endpoint="/json/crm/forms/list" class="com.simisinc.platform.presentation.widgets.editor.CRMFormsListJsonService" />
+  <service endpoint="/json/crm/forms/submissions" class="com.simisinc.platform.presentation.widgets.editor.CRMFormSubmissionsJsonService" />
+  <service endpoint="/json/crm/forms/submission" class="com.simisinc.platform.presentation.widgets.editor.CRMFormSubmissionDetailJsonService" />
+  <service endpoint="/json/crm/forms/submission/update" class="com.simisinc.platform.presentation.widgets.editor.CRMFormSubmissionUpdateJsonService" />
+  <service endpoint="/json/crm/mailinglists" class="com.simisinc.platform.presentation.widgets.editor.CRMMailingListsJsonService" />
+  <service endpoint="/json/crm/mailinglists/members" class="com.simisinc.platform.presentation.widgets.editor.CRMMailingListMembersJsonService" />
+  <service endpoint="/json/crm/customers" class="com.simisinc.platform.presentation.widgets.editor.CRMCustomersJsonService" />
+  <service endpoint="/json/crm/orders" class="com.simisinc.platform.presentation.widgets.editor.CRMOrdersJsonService" />
+  <service endpoint="/json/crm/mailinglists/save" class="com.simisinc.platform.presentation.widgets.editor.CRMSaveMailingListAjax" />
+  <service endpoint="/json/crm/customers/save" class="com.simisinc.platform.presentation.widgets.editor.CRMSaveCustomerAjax" />
+  <service endpoint="/json/crm/product-categories/save" class="com.simisinc.platform.presentation.widgets.editor.CRMSaveProductCategoryAjax" />
+  <service endpoint="/json/crm/products/save" class="com.simisinc.platform.presentation.widgets.editor.CRMSaveProductAjax" />
+  <service endpoint="/json/crm/pricing-rules/save" class="com.simisinc.platform.presentation.widgets.editor.CRMSavePricingRuleAjax" />
+  <service endpoint="/json/crm/sales-tax/save" class="com.simisinc.platform.presentation.widgets.editor.CRMSaveSalesTaxNexusAjax" />
+  <service endpoint="/json/crm/shipping-rates/save" class="com.simisinc.platform.presentation.widgets.editor.CRMSaveShippingRateAjax" />
+  <!-- CRM Editor - Users, Groups, Roles -->
+  <service endpoint="/json/crm/users" class="com.simisinc.platform.presentation.widgets.editor.CRMUsersJsonService" />
+  <service endpoint="/json/crm/user-groups" class="com.simisinc.platform.presentation.widgets.editor.CRMUserGroupsJsonService" />
+  <service endpoint="/json/crm/user-groups/save" class="com.simisinc.platform.presentation.widgets.editor.CRMSaveUserGroupAjax" />
+  <service endpoint="/json/crm/user-roles" class="com.simisinc.platform.presentation.widgets.editor.CRMUserRolesJsonService" />
   <!-- Static Sites -->
   <service endpoint="/json/static-sites/list" class="com.simisinc.platform.presentation.widgets.editor.StaticSiteEndpoint" />
   <service endpoint="/json/static-sites/download" class="com.simisinc.platform.presentation.widgets.editor.StaticSiteEndpoint" />

@@ -43,7 +43,7 @@ class ImageEditor {
     // Dark mode toggle
     const darkModeToggle = document.getElementById('dark-mode-toggle-menu');
     if (darkModeToggle) {
-      darkModeToggle.addEventListener('click', () => this.toggleDarkMode());
+      darkModeToggle.addEventListener('click', (e) => { e.preventDefault(); this.toggleDarkMode(); });
     }
 
     // Toolbar buttons
@@ -103,7 +103,7 @@ class ImageEditor {
    */
   toggleDarkMode() {
     const html = document.documentElement;
-    const icon = document.querySelector('#dark-mode-toggle i');
+    const icon = document.querySelector('#dark-mode-toggle-menu i');
     const isDark = html.dataset.theme === 'dark';
     
     if (isDark) {

@@ -90,52 +90,26 @@
     </div>
 
     <div class="titlebar-right">
-      <!-- Apps Dropdown -->
-      <div class="apps-menu">
-        <button id="apps-btn" class="apps-btn" title="Apps">
-          <i class="${font:far()} fa-th"></i>
-          <i class="fas fa-chevron-down" style="font-size: 0.75rem; margin-left: 0.35rem;"></i>
-        </button>
-        <div class="apps-dropdown">
-          <!-- Actions Section -->
-          <div class="apps-menu-section">
-            <a href="#" id="dark-mode-toggle-menu" class="apps-menu-item">
-              <i class="${font:far()} fa-moon"></i>
-              <span>Dark Mode</span>
-            </a>
-            <c:if test="${userSession.hasRole('admin')}">
-              <a href="#" id="static-site-generator-btn" class="apps-menu-item">
-                <i class="${font:far()} fa-globe"></i>
-                <span>Static Site Generator...</span>
-              </a>
-            </c:if>
-          </div>
-
-          <!-- Exit Section -->
-          <div class="apps-menu-section">
-            <c:choose>
-              <c:when test="${!empty returnPage}">
-                <a href="${returnPage}" class="apps-menu-item confirm-exit">
-                  <i class="${font:far()} fa-arrow-right-from-bracket"></i>
-                  <span>Exit back to site</span>
-                </a>
-              </c:when>
-              <c:when test="${!empty webPage.link}">
-                <a href="${ctx}${webPage.link}" class="apps-menu-item confirm-exit">
-                  <i class="${font:far()} fa-arrow-right-from-bracket"></i>
-                  <span>Exit back to site</span>
-                </a>
-              </c:when>
-              <c:otherwise>
-                <a href="${ctx}/" class="apps-menu-item confirm-exit">
-                  <i class="${font:far()} fa-arrow-right-from-bracket"></i>
-                  <span>Exit back to site</span>
-                </a>
-              </c:otherwise>
-            </c:choose>
-          </div>
-        </div>
-      </div>
+      <a href="#" id="dark-mode-toggle-menu" class="titlebar-btn apps-btn" title="Toggle Dark Mode">
+        <i class="${font:far()} fa-moon"></i>
+      </a>
+      <c:choose>
+        <c:when test="${!empty returnPage}">
+          <a href="${returnPage}" class="titlebar-btn apps-btn confirm-exit" title="Exit back to site">
+            <i class="${font:far()} fa-arrow-right-from-bracket"></i>
+          </a>
+        </c:when>
+        <c:when test="${!empty webPage.link}">
+          <a href="${ctx}${webPage.link}" class="titlebar-btn apps-btn confirm-exit" title="Exit back to site">
+            <i class="${font:far()} fa-arrow-right-from-bracket"></i>
+          </a>
+        </c:when>
+        <c:otherwise>
+          <a href="${ctx}/" class="titlebar-btn apps-btn confirm-exit" title="Exit back to site">
+            <i class="${font:far()} fa-arrow-right-from-bracket"></i>
+          </a>
+        </c:otherwise>
+      </c:choose>
     </div>
   </div>
   
@@ -365,8 +339,6 @@
     </form>
   </div>
 </div>
-
-<%@include file="static-site-modal.jsp" %>
 
 <!-- Pre-Designed Page Modal -->
 <div id="pre-designed-page-modal" class="modal-overlay" style="display:none;">
@@ -655,7 +627,6 @@
   <script src="${ctx}/javascript/widgets/editor/info-tab-manager.js"></script>
   <script src="${ctx}/javascript/widgets/editor/css-tab-manager.js"></script>
   <script src="${ctx}/javascript/widgets/editor/xml-tab-manager.js"></script>
-  <script src="${ctx}/javascript/static-site-manager.js"></script>
 </g:compress>
 
 <script>
@@ -1586,22 +1557,5 @@
       propertiesPanelElement.style.width = savedWidth;
     }
     
-    // Static Site Modal
-    const staticSiteManager = new StaticSiteManager({
-      token: '<c:out value="${userSession.formToken}" />',
-      modalId: 'static-site-modal',
-      openModalBtnId: 'static-site-generator-btn',
-      closeModalBtnId: 'close-static-site-modal',
-      generateBtnId: 'generate-static-site-btn',
-      fileListId: 'static-site-list',
-      pollingIndicatorId: 'static-site-polling-indicator',
-      listUrl: '${ctx}/json/static-sites/list?action=list',
-      generateUrl: '${ctx}/json/static-sites/generate',
-      deleteUrl: '${ctx}/json/static-sites/delete',
-      downloadUrl: '${ctx}/json/static-sites/download?action=download',
-      gitSettingsUrl: '${ctx}/json/static-sites/git-settings?action=GET_GIT_SETTINGS',
-      saveGitSettingsUrl: '${ctx}/json/static-sites/save-git-settings'
-    });
-    staticSiteManager.init();
   });
 </script>

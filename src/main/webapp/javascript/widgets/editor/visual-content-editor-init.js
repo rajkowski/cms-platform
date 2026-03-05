@@ -518,6 +518,13 @@
     const isDarkMode = localStorage.getItem('editor-theme') === 'dark';
     if (isDarkMode) {
       document.documentElement.setAttribute('data-theme', 'dark');
+      const darkModeToggle = document.getElementById('dark-mode-toggle-menu');
+      if (darkModeToggle) {
+        const iconElement = darkModeToggle.querySelector('i');
+        if (iconElement) {
+          iconElement.classList.replace('fa-moon', 'fa-sun');
+        }
+      }
     }
   }
 
@@ -527,12 +534,20 @@
   function toggleDarkMode() {
     const html = document.documentElement;
     const isDark = html.getAttribute('data-theme') === 'dark';
+    const darkModeToggle = document.getElementById('dark-mode-toggle-menu');
+    const iconElement = darkModeToggle ? darkModeToggle.querySelector('i') : null;
 
     if (isDark) {
       html.removeAttribute('data-theme');
+      if (iconElement) {
+        iconElement.classList.replace('fa-sun', 'fa-moon');
+      }
       localStorage.setItem('editor-theme', 'light');
     } else {
       html.setAttribute('data-theme', 'dark');
+      if (iconElement) {
+        iconElement.classList.replace('fa-moon', 'fa-sun');
+      }
       localStorage.setItem('editor-theme', 'dark');
     }
   }

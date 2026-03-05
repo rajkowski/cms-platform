@@ -38,6 +38,12 @@
         <span>Content</span>
       </a>
     </c:if>
+    <c:if test="${activeApp == 'crm' || userSession.hasRole('admin') || userSession.hasRole('content-manager') || userSession.hasRole('ecommerce-manager')}">
+      <a href="${ctx}/admin/visual-crm-editor" class="editor-app-item ${activeApp == 'crm' ? 'active' : ''} confirm-exit" title="CRM">
+        <i class="${font:far()} fa-address-book"></i>
+        <span>CRM</span>
+      </a>
+    </c:if>
     <a href="${ctx}/admin/visual-data-editor" class="editor-app-item ${activeApp == 'data' ? 'active' : ''} confirm-exit" title="Manage Data">
       <i class="${font:far()} fa-table"></i>
       <span>Data</span>
@@ -50,9 +56,21 @@
       <i class="${font:far()} fa-image"></i>
       <span>Images</span>
     </a>
-    <a href="${ctx}/admin/visual-page-editor" class="editor-app-item ${activeApp == 'pages' ? 'active' : ''} confirm-exit" title="Edit Web Pages">
+    <a href="${ctx}/admin/visual-page-editor" class="editor-app-item ${activeApp == 'pages' ? 'active' : ''} confirm-exit" title="Edit Pages">
       <i class="${font:far()} fa-file-lines"></i>
-      <span>Web Pages</span>
+      <span>Pages</span>
     </a>
+    <c:if test="${activeApp == 'sync' || userSession.hasRole('admin')}">
+      <a href="${ctx}/admin/visual-web-sync" class="editor-app-item ${activeApp == 'sync' ? 'active' : ''} confirm-exit" title="Web Sync">
+        <i class="${font:far()} fa-rotate"></i>
+        <span>Web Sync</span>
+      </a>
+    </c:if>
+    <c:if test="${activeApp == 'workflow' || userSession.hasRole('admin')}">
+      <a href="${ctx}/admin/visual-workflow-editor" class="editor-app-item ${activeApp == 'workflow' ? 'active' : ''} confirm-exit" title="Workflow Editor">
+        <i class="${font:far()} fa-diagram-project"></i>
+        <span>Workflow</span>
+      </a>
+    </c:if>
   </div>
 </div>

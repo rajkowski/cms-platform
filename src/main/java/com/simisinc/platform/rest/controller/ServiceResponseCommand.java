@@ -16,13 +16,17 @@
 
 package com.simisinc.platform.rest.controller;
 
+import java.io.Serializable;
+import java.util.List;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
 
-import java.io.Serializable;
-import java.util.List;
+import jakarta.json.bind.Jsonb;
+import jakarta.json.bind.JsonbBuilder;
 
 /**
  * Common methods for service response
@@ -48,6 +52,54 @@ public class ServiceResponseCommand implements Serializable {
       response.getMeta().put("totalItems", constraints.getTotalRecordCount());
     } else {
       response.getMeta().put("totalItems", recordList.size());
+    }
+  }
+
+  public static String toJson(ServiceResponse result) {
+    // Aspire to, but not quite there:
+    // https://google.github.io/styleguide/jsoncstyleguide.xml
+    try (Jsonb jsonb = JsonbBuilder.create()) {
+      StringBuilder sb = new StringBuilder();
+      sb.append("{");
+      boolean hasValues = false;
+      if (!result.getMeta().isEmpty()) {
+        hasValues = true;
+        String meta = jsonb.toJson(result.getMeta());
+        sb.append("\"meta\": ").append(meta);
+      }
+      if (!result.getError().isEmpty()) {
+        if (hasValues) {
+          sb.append(",");
+        } else {
+          hasValues = true;
+        }
+        sb.append("\"error\": ")
+            .append("{")
+            .append("\"code\": ").append(result.getStatus()).append(",")
+            .append("\"message\": \"").append(JsonCommand.toJson(result.getError().get("title"))).append("\"")
+            .append("}");
+      }
+      if (result.getData() != null) {
+        if (hasValues) {
+          sb.append(",");
+        } else {
+          hasValues = true;
+        }
+        String data = jsonb.toJson(result.getData());
+        sb.append("\"data\": ").append(data);
+      }
+      if (!result.getLinks().isEmpty()) {
+        if (hasValues) {
+          sb.append(",");
+        }
+        String links = jsonb.toJson(result.getLinks());
+        sb.append("\"links\": ").append(links);
+      }
+      sb.append("}");
+      return sb.toString();
+    } catch (Exception e) {
+      LOG.error("Could not serialize ServiceResponse to JSON: " + e.getMessage());
+      return "{\"error\":{\"code\":500,\"message\":\"Serialization error\"}}";
     }
   }
 }
