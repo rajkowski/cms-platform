@@ -16,10 +16,10 @@
 
 package com.simisinc.platform.domain.model.cms;
 
-import com.simisinc.platform.domain.model.Entity;
-
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+
+import com.simisinc.platform.domain.model.Entity;
 
 /**
  * The information about a webpage, including links, redirects, SEO, and configuration
@@ -55,6 +55,7 @@ public class WebPage extends Entity {
   private String draftPageXml = null;
   private String template = null;
   private String comments = null;
+  private String[] tags = null;
 
   public WebPage() {
   }
@@ -251,4 +252,13 @@ public class WebPage extends Entity {
   public void setSitemapChangeFrequency(String sitemapChangeFrequency) {
     this.sitemapChangeFrequency = sitemapChangeFrequency;
   }
+
+  public String[] getTags() {
+    return tags;
+  }
+
+  public void setTags(String[] tags) {
+    this.tags = tags;
+  }
+
 }

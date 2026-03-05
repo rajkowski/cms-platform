@@ -16,11 +16,11 @@
 
 package com.simisinc.platform.infrastructure.database;
 
-import org.apache.commons.lang3.StringUtils;
-
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.sql.Types;
+
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Represents a database value used in insert/update statements and where clause

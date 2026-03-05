@@ -378,12 +378,12 @@ public class AnalyticsDataService {
     cpu.put("availableProcessors", osMX.getAvailableProcessors());
     cpu.put("systemLoadAverage", osMX.getSystemLoadAverage());
 
-    // JVM Memory
+    // JVM Memory (heap metrics from Runtime, not OS/system memory)
     Runtime runtime = Runtime.getRuntime();
-    long maxMemory = runtime.maxMemory();
-    long totalMemory = runtime.totalMemory();
-    long freeMemory = runtime.freeMemory();
-    long usedMemory = totalMemory - freeMemory;
+    long maxMemory = runtime.maxMemory(); // maximum memory JVM will attempt to use (heap size limit)
+    long totalMemory = runtime.totalMemory(); // total allocated to JVM
+    long usedMemory = totalMemory - runtime.freeMemory(); // free within JVM allocated memory
+    long freeMemory = maxMemory - usedMemory;
     ObjectNode memory = response.putObject("memory");
     memory.put("usedBytes", usedMemory);
     memory.put("freeBytes", freeMemory);

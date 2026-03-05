@@ -271,6 +271,20 @@ class JsonCommandTest {
   }
 
   @Test
+  void toJsonArraySerializesTags() {
+    String[] tags = {"Tag \"1\"", "Tag 2", "Tag 3"};
+    String result = JsonCommand.toJsonArray(tags);
+    assertEquals("[\"Tag \\\"1\\\"\",\"Tag 2\",\"Tag 3\"]", result);
+  }
+
+  @Test
+  void fromJsonArrayDeserializesTags() {
+    String json = "[\"Tag \\\"1\\\"\",\"Tag 2\",\"Tag 3\"]";
+    String[] result = JsonCommand.fromJsonArray(json);
+    assertArrayEquals(new String[]{"Tag \"1\"", "Tag 2", "Tag 3"}, result);
+  }
+
+  @Test
   void createJsonNodeReturnsStringBuilder() {
     Map<String, Object> data = new HashMap<>();
     data.put("test", "value");

@@ -156,4 +156,30 @@ public class JsonCommand {
     sb.append("}");
     return sb;
   }
+
+  public static String toJsonArray(String[] values) {
+    if (values == null || values.length == 0) {
+      return null;
+    }
+    try {
+      ObjectMapper mapper = new ObjectMapper();
+      return mapper.writeValueAsString(values);
+    } catch (Exception e) {
+      LOG.error("toJson", e);
+    }
+    return null;
+  }
+
+  public static String[] fromJsonArray(String json) {
+    if (StringUtils.isBlank(json)) {
+      return new String[0];
+    }
+    try {
+      ObjectMapper mapper = new ObjectMapper();
+      return mapper.readValue(json, String[].class);
+    } catch (Exception e) {
+      LOG.error("fromJson", e);
+    }
+    return new String[0];
+  }
 }

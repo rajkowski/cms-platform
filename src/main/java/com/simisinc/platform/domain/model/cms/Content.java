@@ -39,6 +39,7 @@ public class Content extends Entity {
   private Timestamp created = null;
   private Timestamp modified = null;
   private String highlight = null;
+  private String[] tags = null;
 
   public Content() {
   }
@@ -121,5 +122,13 @@ public class Content extends Entity {
 
   public void setHighlight(String highlight) {
     this.highlight = highlight;
+  }
+
+  public String[] getTags() {
+    return tags;
+  }
+
+  public void setTags(String[] tags) {
+    this.tags = tags;
   }
 }

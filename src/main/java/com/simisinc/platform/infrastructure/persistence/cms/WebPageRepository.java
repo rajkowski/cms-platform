@@ -26,11 +26,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.cms.WebPageXmlLayoutCommand;
+import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.infrastructure.database.DB;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.database.DataResult;
 import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlValue;
 import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
@@ -129,6 +131,9 @@ public class WebPageRepository {
         .add("has_redirect", StringUtils.trimToNull(record.getRedirectUrl()) != null)
         .add("sitemap_priority", record.getSitemapPriority())
         .add("sitemap_changefreq", StringUtils.trimToNull(record.getSitemapChangeFrequency()));
+    if (record.getTags() != null && record.getTags().length > 0) {
+      insertValues.add(new SqlValue("tags", SqlValue.JSONB_TYPE, JsonCommand.toJsonArray(record.getTags())));
+    }
     record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
@@ -241,6 +246,7 @@ public class WebPageRepository {
       record.setShowInSitemap(rs.getBoolean("show_in_sitemap"));
       record.setSitemapPriority(rs.getBigDecimal("sitemap_priority"));
       record.setSitemapChangeFrequency(rs.getString("sitemap_changefreq"));
+      record.setTags(JsonCommand.fromJsonArray(rs.getString("tags")));
       return record;
     } catch (SQLException se) {
       LOG.error("buildRecord", se);

@@ -1259,4 +1259,34 @@
     </section>
   </page>
 
+  <page name="/admin/visual-crm-editor" role="admin,content-manager,ecommerce-manager" title="Visual CRM Editor" class="full-page">
+    <section class="grid-x">
+      <column class="small-12 cell">
+        <widget name="visualCRMEditor">
+          <title>Visual CRM Editor</title>
+        </widget>
+      </column>
+    </section>
+  </page>
+
+  <page name="/admin/visual-web-sync" role="admin,data-manager" title="Visual Data Editor" class="full-page">
+    <section class="grid-x">
+      <column class="small-12 cell">
+        <widget name="visualWebSyncEditor">
+          <title>Visual Web Sync</title>
+        </widget>
+      </column>
+    </section>
+  </page>
+
+  <page name="/admin/visual-workflow-editor" role="admin" title="Visual Workflow Editor" class="full-page">
+    <section class="grid-x">
+      <column class="small-12 cell">
+        <widget name="visualWorkflowEditor">
+          <title>Visual Workflow Editor</title>
+        </widget>
+      </column>
+    </section>
+  </page>
+
 </pages>
