@@ -16,6 +16,7 @@
 
 package com.simisinc.platform.rest.services.register;
 
+import com.simisinc.platform.rest.controller.GenericRestService;
 import com.simisinc.platform.rest.controller.ServiceContext;
 import com.simisinc.platform.rest.controller.ServiceResponse;
 
@@ -25,9 +26,10 @@ import com.simisinc.platform.rest.controller.ServiceResponse;
  * @author matt rajkowski
  * @created 4/17/18 9:00 AM
  */
-public class RegisterService {
+public class RegisterService extends GenericRestService {
 
   // POST /register
+  @Override
   public ServiceResponse post(ServiceContext context) {
     ServiceResponse response = new ServiceResponse(400);
     response.getError().put("title", "Not implemented");

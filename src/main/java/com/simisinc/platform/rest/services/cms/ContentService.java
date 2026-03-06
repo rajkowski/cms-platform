@@ -21,6 +21,7 @@ import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.cms.LoadContentCommand;
 import com.simisinc.platform.domain.model.cms.Content;
+import com.simisinc.platform.rest.controller.GenericRestService;
 import com.simisinc.platform.rest.controller.ServiceContext;
 import com.simisinc.platform.rest.controller.ServiceResponse;
 import com.simisinc.platform.rest.controller.ServiceResponseCommand;
@@ -31,11 +32,12 @@ import com.simisinc.platform.rest.controller.ServiceResponseCommand;
  * @author matt rajkowski
  * @created 4/17/18 9:00 AM
  */
-public class ContentService {
+public class ContentService extends GenericRestService {
 
   private static Log LOG = LogFactory.getLog(ContentService.class);
 
   // GET /content/{contentUniqueId}
+  @Override
   public ServiceResponse get(ServiceContext context) {
 
     String contentUniqueId = context.getPathParam();

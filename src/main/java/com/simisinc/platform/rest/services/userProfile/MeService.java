@@ -20,6 +20,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.domain.model.User;
+import com.simisinc.platform.rest.controller.GenericRestService;
 import com.simisinc.platform.rest.controller.ServiceContext;
 import com.simisinc.platform.rest.controller.ServiceResponse;
 import com.simisinc.platform.rest.controller.ServiceResponseCommand;
@@ -30,11 +31,12 @@ import com.simisinc.platform.rest.controller.ServiceResponseCommand;
  * @author matt rajkowski
  * @created 8/28/18 9:38 AM
  */
-public class MeService {
+public class MeService extends GenericRestService {
 
   private static Log LOG = LogFactory.getLog(MeService.class);
 
   // GET /me
+  @Override
   public ServiceResponse get(ServiceContext context) {
 
     User user = context.getUser();

@@ -20,6 +20,7 @@ import com.simisinc.platform.application.DataException;
 import com.simisinc.platform.application.medicine.ResumeMedicineCommand;
 import com.simisinc.platform.domain.model.medicine.Medicine;
 import com.simisinc.platform.infrastructure.persistence.medicine.MedicineRepository;
+import com.simisinc.platform.rest.controller.GenericRestService;
 import com.simisinc.platform.rest.controller.ServiceContext;
 import com.simisinc.platform.rest.controller.ServiceResponse;
 import org.apache.commons.lang3.StringUtils;
@@ -32,11 +33,12 @@ import org.apache.commons.logging.LogFactory;
  * @author matt rajkowski
  * @created 9/25/18 10:36 AM
  */
-public class ResumeMedicineService {
+public class ResumeMedicineService extends GenericRestService {
 
   private static Log LOG = LogFactory.getLog(ResumeMedicineService.class);
 
   // POST: resume/medicine/{medicineId}
+  @Override
   public ServiceResponse post(ServiceContext context) {
     String medicineId = context.getPathParam();
     if (!StringUtils.isNumeric(medicineId)) {

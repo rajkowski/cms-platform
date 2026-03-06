@@ -18,6 +18,7 @@ package com.simisinc.platform.rest.services.items;
 
 import com.simisinc.platform.application.items.LoadCollectionCommand;
 import com.simisinc.platform.domain.model.items.Collection;
+import com.simisinc.platform.rest.controller.GenericRestService;
 import com.simisinc.platform.rest.controller.ServiceContext;
 import com.simisinc.platform.rest.controller.ServiceResponse;
 import com.simisinc.platform.rest.controller.ServiceResponseCommand;
@@ -34,11 +35,12 @@ import java.util.List;
  * @author matt rajkowski
  * @created 4/20/18 10:33 AM
  */
-public class CollectionListService {
+public class CollectionListService extends GenericRestService {
 
   private static Log LOG = LogFactory.getLog(CollectionListService.class);
 
   // GET /collections
+  @Override
   public ServiceResponse get(ServiceContext context) {
 
     // Load the collections

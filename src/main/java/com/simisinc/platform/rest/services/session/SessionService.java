@@ -16,6 +16,7 @@
 
 package com.simisinc.platform.rest.services.session;
 
+import com.simisinc.platform.rest.controller.GenericRestService;
 import com.simisinc.platform.rest.controller.ServiceContext;
 import com.simisinc.platform.rest.controller.ServiceResponse;
 import org.apache.commons.logging.Log;
@@ -27,11 +28,12 @@ import org.apache.commons.logging.LogFactory;
  * @author matt rajkowski
  * @created 10/29/18 9:00 AM
  */
-public class SessionService {
+public class SessionService extends GenericRestService {
 
   private static Log LOG = LogFactory.getLog(SessionService.class);
 
   // POST /session
+  @Override
   public ServiceResponse post(ServiceContext context) {
     // @note likely won't get here because session is handled in RestRequestFilter
     return new ServiceResponse(200);

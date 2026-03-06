@@ -20,12 +20,11 @@ import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.lang.reflect.Method;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -61,7 +60,7 @@ public class RestServlet extends HttpServlet {
   private static Log LOG = LogFactory.getLog(RestServlet.class);
 
   // Services Cache
-  private Map<String, Object> serviceInstances = new HashMap<String, Object>();
+  private Map<String, Object> serviceInstances = new ConcurrentHashMap<String, Object>();
 
   @Override
   public void init(ServletConfig config) throws ServletException {
@@ -171,16 +170,6 @@ public class RestServlet extends HttpServlet {
         }
       }
 
-      // Determine the method
-      String methodName = "get";
-      if ("post".equals(requestMethod)) {
-        methodName = "post";
-      } else if ("put".equals(requestMethod)) {
-        methodName = "put";
-      } else if ("delete".equals(requestMethod)) {
-        methodName = "delete";
-      }
-
       // REST endpoint hits
       SaveWebPageHitCommand.saveHit(request.getRemoteAddr(), request.getMethod(),
           "/api/" + (pathEndpoint != null ? pathEndpoint : endpoint),
@@ -203,12 +192,16 @@ public class RestServlet extends HttpServlet {
         } else {
           LOG.debug("Executing service: " + endpoint);
         }
-        Method method = classRef.getClass().getMethod(methodName, new Class[] { serviceContext.getClass() });
-        result = (ServiceResponse) method.invoke(classRef, new Object[] { serviceContext });
-      } catch (NoSuchMethodException nm) {
-        LOG.error("No Such Method Exception for method execute. MESSAGE = " + nm.getMessage(), nm);
-      } catch (IllegalAccessException ia) {
-        LOG.error("Illegal Access Exception. MESSAGE = " + ia.getMessage(), ia);
+        RestService service = (RestService) classRef;
+        if ("post".equals(requestMethod)) {
+          result = service.post(serviceContext);
+        } else if ("put".equals(requestMethod)) {
+          result = service.put(serviceContext);
+        } else if ("delete".equals(requestMethod)) {
+          result = service.delete(serviceContext);
+        } else {
+          result = service.get(serviceContext);
+        }
       } catch (Exception e) {
         LOG.error("Exception. MESSAGE = " + e.getMessage(), e);
       }

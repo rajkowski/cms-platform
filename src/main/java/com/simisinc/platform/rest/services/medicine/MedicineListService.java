@@ -27,6 +27,7 @@ import com.simisinc.platform.domain.model.medicine.Prescription;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.medicine.*;
 import com.simisinc.platform.presentation.controller.DataConstants;
+import com.simisinc.platform.rest.controller.GenericRestService;
 import com.simisinc.platform.rest.controller.ServiceContext;
 import com.simisinc.platform.rest.controller.ServiceResponse;
 import com.simisinc.platform.rest.controller.ServiceResponseCommand;
@@ -46,11 +47,12 @@ import static com.simisinc.platform.application.medicine.MedicineConstants.*;
  * @author matt rajkowski
  * @created 8/28/18 10:12 AM
  */
-public class MedicineListService {
+public class MedicineListService extends GenericRestService {
 
   private static Log LOG = LogFactory.getLog(MedicineListService.class);
 
   // GET: med/medicines/{individualUniqueId}
+  @Override
   public ServiceResponse get(ServiceContext context) {
 
     // Determine the individual (must exist and be part of the individuals collection)

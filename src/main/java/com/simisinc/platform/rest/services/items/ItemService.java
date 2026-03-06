@@ -22,6 +22,7 @@ import org.apache.commons.logging.LogFactory;
 import com.simisinc.platform.application.items.LoadCollectionCommand;
 import com.simisinc.platform.application.items.LoadItemCommand;
 import com.simisinc.platform.domain.model.items.Item;
+import com.simisinc.platform.rest.controller.GenericRestService;
 import com.simisinc.platform.rest.controller.ServiceContext;
 import com.simisinc.platform.rest.controller.ServiceResponse;
 import com.simisinc.platform.rest.controller.ServiceResponseCommand;
@@ -32,11 +33,12 @@ import com.simisinc.platform.rest.controller.ServiceResponseCommand;
  * @author matt rajkowski
  * @created 4/27/18 10:20 AM
  */
-public class ItemService {
+public class ItemService extends GenericRestService {
 
   private static Log LOG = LogFactory.getLog(ItemService.class);
 
   // GET /item/{uniqueId}
+  @Override
   public ServiceResponse get(ServiceContext context) {
 
     // Determine the item

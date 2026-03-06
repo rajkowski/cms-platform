@@ -28,6 +28,7 @@ import com.simisinc.platform.infrastructure.persistence.items.ItemRepository;
 import com.simisinc.platform.infrastructure.persistence.items.ItemSpecification;
 import com.simisinc.platform.infrastructure.persistence.medicine.MedicineLogRepository;
 import com.simisinc.platform.infrastructure.persistence.medicine.MedicineLogSpecification;
+import com.simisinc.platform.rest.controller.GenericRestService;
 import com.simisinc.platform.rest.controller.ServiceContext;
 import com.simisinc.platform.rest.controller.ServiceResponse;
 import com.simisinc.platform.rest.controller.ServiceResponseCommand;
@@ -51,11 +52,12 @@ import static com.simisinc.platform.application.medicine.MedicineConstants.COLLE
  * @author matt rajkowski
  * @created 11/5/18 8:36 AM
  */
-public class MedicineLogListService {
+public class MedicineLogListService extends GenericRestService {
 
   private static Log LOG = LogFactory.getLog(MedicineLogListService.class);
 
   // endpoint: med/medicineLogList/{uniqueId}
+  @Override
   public ServiceResponse get(ServiceContext context) {
 
     // Check the client's timezone

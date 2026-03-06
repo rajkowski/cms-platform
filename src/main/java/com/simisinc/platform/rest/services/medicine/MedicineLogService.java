@@ -24,6 +24,7 @@ import com.simisinc.platform.domain.model.medicine.MedicineLog;
 import com.simisinc.platform.domain.model.medicine.MedicineReminder;
 import com.simisinc.platform.infrastructure.persistence.medicine.MedicineReminderRepository;
 import com.simisinc.platform.infrastructure.persistence.medicine.MedicineRepository;
+import com.simisinc.platform.rest.controller.GenericRestService;
 import com.simisinc.platform.rest.controller.ServiceContext;
 import com.simisinc.platform.rest.controller.ServiceResponse;
 import org.apache.commons.lang3.StringUtils;
@@ -43,12 +44,13 @@ import java.util.GregorianCalendar;
  * @author matt rajkowski
  * @created 9/17/18 1:33 PM
  */
-public class MedicineLogService {
+public class MedicineLogService extends GenericRestService {
 
   private static Log LOG = LogFactory.getLog(MedicineLogService.class);
 
   // POST: med/medicineLog/?reminderId={reminderId}
   // POST: med/medicineLog/?medicineId={medicineId}
+  @Override
   public ServiceResponse post(ServiceContext context) {
 
     // Check required values

@@ -28,6 +28,7 @@ import com.simisinc.platform.domain.model.medicine.MedicineSchedule;
 import com.simisinc.platform.domain.model.medicine.MedicineTime;
 import com.simisinc.platform.domain.model.medicine.Prescription;
 import com.simisinc.platform.infrastructure.persistence.medicine.MedicineRepository;
+import com.simisinc.platform.rest.controller.GenericRestService;
 import com.simisinc.platform.rest.controller.ServiceContext;
 import com.simisinc.platform.rest.controller.ServiceResponse;
 import org.apache.commons.beanutils.BeanUtils;
@@ -49,16 +50,18 @@ import static com.simisinc.platform.application.medicine.MedicineConstants.COLLE
  * @author matt rajkowski
  * @created 8/28/18 10:12 AM
  */
-public class MedicineService {
+public class MedicineService extends GenericRestService {
 
   private static Log LOG = LogFactory.getLog(MedicineService.class);
 
   // PUT: med/medicine[/medicineId]
+  @Override
   public ServiceResponse put(ServiceContext context) {
     return post(context);
   }
 
   // POST: med/medicine
+  @Override
   public ServiceResponse post(ServiceContext context) {
     String medicineId = context.getPathParam();
     if (StringUtils.isNumeric(medicineId)) {
@@ -228,6 +231,7 @@ public class MedicineService {
   }
 
   // DELETE: med/medicine/{id}
+  @Override
   public ServiceResponse delete(ServiceContext context) {
 
     String medicineId = context.getPathParam();

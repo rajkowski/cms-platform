@@ -31,6 +31,7 @@ import com.simisinc.platform.domain.model.items.Item;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.items.ItemRepository;
 import com.simisinc.platform.infrastructure.persistence.items.ItemSpecification;
+import com.simisinc.platform.rest.controller.GenericRestService;
 import com.simisinc.platform.rest.controller.ServiceContext;
 import com.simisinc.platform.rest.controller.ServiceResponse;
 import com.simisinc.platform.rest.controller.ServiceResponseCommand;
@@ -41,11 +42,12 @@ import com.simisinc.platform.rest.controller.ServiceResponseCommand;
  * @author matt rajkowski
  * @created 4/27/18 10:15 AM
  */
-public class ItemListService {
+public class ItemListService extends GenericRestService {
 
   private static Log LOG = LogFactory.getLog(ItemListService.class);
 
-  // GET /items/{collectionUniqueId}?category={categoryUniqueId}&query=value
+  // GET /items/{collectionUniqueId}?category=${categoryUniqueId}&query=value
+  @Override
   public ServiceResponse get(ServiceContext context) {
 
     // Determine the collection

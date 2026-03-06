@@ -24,6 +24,7 @@ import com.simisinc.platform.domain.model.items.ItemRelationship;
 import com.simisinc.platform.infrastructure.persistence.items.ItemRelationshipRepository;
 import com.simisinc.platform.infrastructure.persistence.items.ItemRepository;
 import com.simisinc.platform.infrastructure.persistence.items.ItemSpecification;
+import com.simisinc.platform.rest.controller.GenericRestService;
 import com.simisinc.platform.rest.controller.ServiceContext;
 import com.simisinc.platform.rest.controller.ServiceResponse;
 import com.simisinc.platform.rest.controller.ServiceResponseCommand;
@@ -43,11 +44,12 @@ import static com.simisinc.platform.application.medicine.MedicineConstants.COLLE
  * @author matt rajkowski
  * @created 8/27/18 4:54 PM
  */
-public class IndividualListService {
+public class IndividualListService extends GenericRestService {
 
   private static Log LOG = LogFactory.getLog(IndividualListService.class);
 
   // endpoint: med/individuals
+  @Override
   public ServiceResponse get(ServiceContext context) {
 
     // Check the caregivers collection for access

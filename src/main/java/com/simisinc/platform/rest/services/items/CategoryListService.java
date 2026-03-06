@@ -21,6 +21,7 @@ import com.simisinc.platform.domain.model.items.Category;
 import com.simisinc.platform.domain.model.items.Collection;
 import com.simisinc.platform.infrastructure.persistence.items.CategoryRepository;
 import com.simisinc.platform.infrastructure.persistence.items.CollectionRepository;
+import com.simisinc.platform.rest.controller.GenericRestService;
 import com.simisinc.platform.rest.controller.ServiceContext;
 import com.simisinc.platform.rest.controller.ServiceResponse;
 import com.simisinc.platform.rest.controller.ServiceResponseCommand;
@@ -36,11 +37,12 @@ import java.util.List;
  * @author matt rajkowski
  * @created 4/17/18 9:00 AM
  */
-public class CategoryListService {
+public class CategoryListService extends GenericRestService {
 
   private static Log LOG = LogFactory.getLog(CategoryListService.class);
 
   // GET /categories/{collectionUniqueId}
+  @Override
   public ServiceResponse get(ServiceContext context) {
 
     // Determine the collection

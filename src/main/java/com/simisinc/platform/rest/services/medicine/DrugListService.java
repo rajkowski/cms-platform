@@ -22,6 +22,7 @@ import com.simisinc.platform.domain.model.items.Item;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.items.ItemRepository;
 import com.simisinc.platform.infrastructure.persistence.items.ItemSpecification;
+import com.simisinc.platform.rest.controller.GenericRestService;
 import com.simisinc.platform.rest.controller.ServiceContext;
 import com.simisinc.platform.rest.controller.ServiceResponse;
 import com.simisinc.platform.rest.controller.ServiceResponseCommand;
@@ -41,11 +42,12 @@ import static com.simisinc.platform.application.medicine.MedicineConstants.COLLE
  * @author matt rajkowski
  * @created 8/28/18 11:36 AM
  */
-public class DrugListService {
+public class DrugListService extends GenericRestService {
 
   private static Log LOG = LogFactory.getLog(DrugListService.class);
 
   // endpoint: med/drugList?q={query}
+  @Override
   public ServiceResponse get(ServiceContext context) {
 
     // Check the drug list collection for access
