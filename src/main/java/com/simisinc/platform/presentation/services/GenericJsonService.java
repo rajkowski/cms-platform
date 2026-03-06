@@ -42,7 +42,7 @@ import com.simisinc.platform.presentation.controller.JsonServiceContext;
  * @author matt rajkowski
  * @created 3/5/26 12:00 PM
  */
-public class GenericJsonService implements Serializable {
+public class GenericJsonService implements Serializable, JsonService {
 
   static final long serialVersionUID = -8484048371922100002L;
   protected static Log LOG = LogFactory.getLog(GenericJsonService.class);

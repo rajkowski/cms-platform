@@ -25,8 +25,8 @@ import org.jobrunr.storage.RecurringJobsResult;
 import org.jobrunr.storage.StorageProvider;
 
 import com.simisinc.platform.application.json.JsonCommand;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Returns scheduled task information for the visual workflow editor
@@ -34,13 +34,13 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 02/27/26 9:00 AM
  */
-public class WorkflowTasksAjax extends GenericWidget {
+public class WorkflowTasksAjax extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908900L;
   private static Log LOG = LogFactory.getLog(WorkflowTasksAjax.class);
 
   @Override
-  public WidgetContext execute(WidgetContext context) {
+  public JsonServiceContext get(JsonServiceContext context) {
 
     LOG.debug("WorkflowTasksAjax...");
 

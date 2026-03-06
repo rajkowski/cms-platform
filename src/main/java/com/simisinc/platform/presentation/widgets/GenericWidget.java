@@ -16,12 +16,13 @@
 
 package com.simisinc.platform.presentation.widgets;
 
-import com.simisinc.platform.presentation.controller.WidgetContext;
+import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.io.Serializable;
-import java.lang.reflect.InvocationTargetException;
+import com.simisinc.platform.presentation.controller.WidgetContext;
 
 /**
  * Widgets are typically instantiated once, and can be simultaneously executed by multiple threads.
@@ -35,7 +36,7 @@ import java.lang.reflect.InvocationTargetException;
  * @author matt rajkowski
  * @created 4/6/18 2:20 PM
  */
-public class GenericWidget implements Serializable {
+public class GenericWidget implements Serializable, Widget {
 
   static final long serialVersionUID = -8484048371911908893L;
   protected static Log LOG = LogFactory.getLog(GenericWidget.class);
