@@ -55,6 +55,11 @@
     <load-on-startup>1</load-on-startup>
   </servlet>
   <servlet>
+    <servlet-name>JsonServlet</servlet-name>
+    <servlet-class>com.simisinc.platform.presentation.controller.JsonServlet</servlet-class>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+  <servlet>
     <servlet-name>RestServlet</servlet-name>
     <servlet-class>com.simisinc.platform.rest.controller.RestServlet</servlet-class>
     <load-on-startup>1</load-on-startup>
@@ -95,6 +100,10 @@
   <servlet-mapping>
     <servlet-name>PageServlet</servlet-name>
     <url-pattern>/</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>JsonServlet</servlet-name>
+    <url-pattern>/json/*</url-pattern>
   </servlet-mapping>
   <servlet-mapping>
     <servlet-name>RestServlet</servlet-name>

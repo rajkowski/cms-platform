@@ -92,9 +92,6 @@ public class PageServlet extends HttpServlet {
   // Widget Cache
   private Map<String, Object> widgetInstances = new HashMap<>();
 
-  // JSON Services
-  private Map<String, Object> serviceInstances = new HashMap<>();
-
   // Web Packages
   private Map<String, WebPackage> webPackageList = null;
 
@@ -151,21 +148,6 @@ public class PageServlet extends HttpServlet {
       }
     }
     LOG.info("Widgets loaded: " + widgetInstances.size());
-
-    // Instantiate the services
-    LOG.info("Instantiating the JSON services...");
-    XMLJSONServiceLoader xmlJsonServiceLoader = new XMLJSONServiceLoader();
-    xmlJsonServiceLoader.addDirectory(config.getServletContext(), "json-services");
-    for (String endpoint : xmlJsonServiceLoader.getServiceLibrary().keySet()) {
-      try {
-        String serviceClass = xmlJsonServiceLoader.getServiceLibrary().get(endpoint);
-        Object classRef = Class.forName(serviceClass).getDeclaredConstructor().newInstance();
-        serviceInstances.put(endpoint, classRef);
-        LOG.info("Added json endpoint class: " + endpoint + " = " + serviceClass);
-      } catch (Exception e) {
-        LOG.error("Class not found for '" + endpoint + "': " + e.getMessage());
-      }
-    }
 
     // Configure BeanUtils
     ConvertUtils.register(new BigDecimalConverter(null), BigDecimal.class);
@@ -589,10 +571,6 @@ public class PageServlet extends HttpServlet {
 
         // Verify a target widget exists
         String targetWidget = request.getParameter("widget");
-        // Json requests use the only widget id
-        if (StringUtils.isEmpty(targetWidget) && pageRequest.getPagePath().startsWith("/json/")) {
-          targetWidget = pageRequest.getPagePath() + "1";
-        }
         // Require targetWidget
         if (StringUtils.isEmpty(targetWidget)) {
           LOG.error(
@@ -609,15 +587,6 @@ public class PageServlet extends HttpServlet {
         if (StringUtils.isEmpty(formToken)) {
           LOG.error("DEVELOPER: A FORM TOKEN IS REQUIRED " + pageRequest.getPagePath() + " " + pageRequest.getRemoteAddr());
           controllerSession.clearAllWidgetData();
-// If JSON service, reply with JSON
-          if (pageRequest.getPagePath().startsWith("/json/")) {
-            // Write a json response
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            response.setContentType("application/json");
-            response.setCharacterEncoding("UTF-8");
-            response.getWriter().print("{\"error\":\"A form token is required.\"}");
-            return;
-          }
           response.sendError(HttpServletResponse.SC_BAD_REQUEST);
           return;
         }

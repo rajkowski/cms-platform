@@ -27,8 +27,8 @@ import com.simisinc.platform.domain.model.User;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.UserRepository;
 import com.simisinc.platform.infrastructure.persistence.UserSpecification;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * JSON service to list and search users for the CRM editor
@@ -36,12 +36,12 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 2026-03-04
  */
-public class CRMUsersJsonService extends GenericWidget {
+public class CRMUsersJsonService extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908910L;
   private static Log LOG = LogFactory.getLog(CRMUsersJsonService.class);
 
-  public WidgetContext execute(WidgetContext context) {
+  public JsonServiceContext get(JsonServiceContext context) {
 
     if (!context.hasRole("admin")) {
       context.setJson("{\"error\":\"Permission denied\"}");

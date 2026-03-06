@@ -22,12 +22,11 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import jakarta.json.bind.Jsonb;
-import jakarta.json.bind.JsonbBuilder;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.MultipartConfig;
@@ -224,61 +223,20 @@ public class RestServlet extends HttpServlet {
         result.getError().put("status", String.valueOf(result.getStatus()));
       }
 
-      // Aspire to, but not quite there:
-      // https://google.github.io/styleguide/jsoncstyleguide.xml
       LOG.debug("Returning JSON...");
-      try (Jsonb jsonb = JsonbBuilder.create()) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("{");
-        boolean hasValues = false;
-        if (!result.getMeta().isEmpty()) {
-          hasValues = true;
-          String meta = jsonb.toJson(result.getMeta());
-          sb.append("\"meta\": ").append(meta);
-        }
-        if (!result.getError().isEmpty()) {
-          if (hasValues) {
-            sb.append(",");
-          } else {
-            hasValues = true;
-          }
-          sb.append("\"error\": ")
-              .append("{")
-              .append("\"code\": ").append(result.getStatus()).append(",")
-              .append("\"message\": \"").append(JsonCommand.toJson(result.getError().get("title"))).append("\"")
-              .append("}");
-        }
-        if (result.getData() != null) {
-          if (hasValues) {
-            sb.append(",");
-          } else {
-            hasValues = true;
-          }
-          String data = jsonb.toJson(result.getData());
-          sb.append("\"data\": ").append(data);
-        }
-        if (!result.getLinks().isEmpty()) {
-          if (hasValues) {
-            sb.append(",");
-          }
-          String links = jsonb.toJson(result.getLinks());
-          sb.append("\"links\": ").append(links);
-        }
-        sb.append("}");
-        String json = sb.toString();
+      String json = ServiceResponseCommand.toJson(result);
 
       long endRequestTime = System.currentTimeMillis();
       long totalTime = endRequestTime - startRequestTime;
       LOG.debug("REST total time: " + totalTime + "ms");
       SavePerformanceMetricCommand.queueMetric("api", response.getStatus(), totalTime);
 
-        response.setContentLength(json.length());
-        PrintWriter out = response.getWriter();
-        out.print(json);
-        out.flush();
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Response sent: " + json);
-        }
+      response.setContentLength(json.getBytes(StandardCharsets.UTF_8).length);
+      PrintWriter out = response.getWriter();
+      out.print(json);
+      out.flush();
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Response sent: " + json);
       }
     } catch (Exception e) {
       LOG.error("Could not render: " + e.getMessage());

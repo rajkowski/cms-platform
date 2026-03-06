@@ -30,6 +30,7 @@ import java.time.LocalDate;
 import java.util.Base64;
 import java.util.StringTokenizer;
 import java.util.UUID;
+import java.nio.charset.StandardCharsets;
 
 import javax.security.auth.login.LoginException;
 import javax.servlet.Filter;
@@ -316,7 +317,7 @@ public class RestRequestFilter implements Filter {
         "}";
     response.setContentType("application/json");
     response.setCharacterEncoding("UTF-8");
-    response.setContentLength(json.length());
+    response.setContentLength(json.getBytes(StandardCharsets.UTF_8).length);
     PrintWriter out = response.getWriter();
     out.print(json);
     out.flush();

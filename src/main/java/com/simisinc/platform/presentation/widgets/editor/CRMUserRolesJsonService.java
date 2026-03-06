@@ -25,8 +25,8 @@ import org.apache.commons.logging.LogFactory;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.Role;
 import com.simisinc.platform.infrastructure.persistence.RoleRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * JSON service to list user roles (read-only) for the CRM editor
@@ -34,12 +34,12 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 2026-03-04
  */
-public class CRMUserRolesJsonService extends GenericWidget {
+public class CRMUserRolesJsonService extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908913L;
   private static Log LOG = LogFactory.getLog(CRMUserRolesJsonService.class);
 
-  public WidgetContext execute(WidgetContext context) {
+  public JsonServiceContext get(JsonServiceContext context) {
 
     if (!context.hasRole("admin")) {
       context.setJson("{\"error\":\"Permission denied\"}");

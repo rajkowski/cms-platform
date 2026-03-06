@@ -25,8 +25,8 @@ import org.apache.commons.logging.LogFactory;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.Group;
 import com.simisinc.platform.infrastructure.persistence.GroupRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * JSON service to list user groups for the CRM editor
@@ -34,12 +34,12 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 2026-03-04
  */
-public class CRMUserGroupsJsonService extends GenericWidget {
+public class CRMUserGroupsJsonService extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908911L;
   private static Log LOG = LogFactory.getLog(CRMUserGroupsJsonService.class);
 
-  public WidgetContext execute(WidgetContext context) {
+  public JsonServiceContext get(JsonServiceContext context) {
 
     if (!context.hasRole("admin")) {
       context.setJson("{\"error\":\"Permission denied\"}");

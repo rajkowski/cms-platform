@@ -25,8 +25,8 @@ import com.simisinc.platform.application.SaveGroupCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.Group;
 import com.simisinc.platform.infrastructure.persistence.GroupRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * JSON service to save (create/update) a user group from the CRM editor
@@ -34,12 +34,12 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 2026-03-04
  */
-public class CRMSaveUserGroupAjax extends GenericWidget {
+public class CRMSaveUserGroupAjax extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908912L;
   private static Log LOG = LogFactory.getLog(CRMSaveUserGroupAjax.class);
 
-  public WidgetContext post(WidgetContext context) {
+  public JsonServiceContext post(JsonServiceContext context) {
 
     if (!context.hasRole("admin")) {
       context.setJson("{\"status\":\"error\",\"error\":\"Permission denied\"}");
