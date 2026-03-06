@@ -50,7 +50,8 @@ CREATE TABLE items (
   url_text VARCHAR(50),
   sync_date TIMESTAMP(3),
   dataset_key_value VARCHAR(255),
-  geojson JSONB
+  geojson JSONB,
+  tags JSONB
 );
 CREATE INDEX items_col_id_idx ON items(collection_id);
 CREATE INDEX items_uni_id_idx ON items(unique_id);
@@ -62,6 +63,7 @@ CREATE INDEX items_cat_id_idx ON items(category_id);
 CREATE INDEX items_approved_idx ON items(approved);
 CREATE INDEX items_sync_dat_idx ON items(sync_date);
 CREATE INDEX items_dat_key_idx ON items(dataset_key_value);
+CREATE INDEX items_tags_idx ON items USING gin(tags);
 
 -- UPDATE items SET geom = ST_SetSRID(ST_MakePoint(latitude, longitude), 4326) WHERE latitude <> 0 OR longitude <> 0 AND geom IS NULL;
 -- UPDATE items SET tsv = SETWEIGHT(TO_TSVECTOR(name), 'A') || SETWEIGHT(TO_TSVECTOR(coalesce(keywords,'')), 'B') || SETWEIGHT(TO_TSVECTOR(coalesce(summary,'')), 'D');
