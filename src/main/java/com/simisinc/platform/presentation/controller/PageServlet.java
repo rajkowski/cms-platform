@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -89,8 +90,8 @@ public class PageServlet extends HttpServlet {
 
   private static Log LOG = LogFactory.getLog(PageServlet.class);
 
-  // Widget Cache
-  private Map<String, Object> widgetInstances = new HashMap<>();
+  // Widget Cache (read-only after init; ConcurrentHashMap for safe concurrent access)
+  private Map<String, Object> widgetInstances = new ConcurrentHashMap<>();
 
   // Web Packages
   private Map<String, WebPackage> webPackageList = null;
@@ -182,6 +183,12 @@ public class PageServlet extends HttpServlet {
       response.sendError(HttpServletResponse.SC_BAD_REQUEST);
       return;
     }
+
+    // LOG.debug("Adding relaxed COOP/COEP headers for preview iframe access");
+    // Allow same-site iframe/parent DOM access (relaxed COOP/COEP)
+    // response.setHeader("Cross-Origin-Opener-Policy", "unsafe-none");
+    // response.setHeader("Cross-Origin-Embedder-Policy", "unsafe-none");
+    // response.setHeader("Cross-Origin-Resource-Policy", "same-site");
 
     // This is a preview request with unsaved designer data
     PageRequest pageRequest = new PageRequest("GET",
@@ -318,7 +325,9 @@ public class PageServlet extends HttpServlet {
     try {
       // The PageRequest encapsulates and reduces the HttpServletRequest
       PageRequest pageRequest = new PageRequest(request);
-      LOG.debug("Using resource: " + pageRequest.getPagePath());
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Using resource: " + pageRequest.getPagePath());
+      }
 
       // Use the session data (created in WebRequestFilter)
       ControllerSession controllerSession = (ControllerSession) request.getSession()
@@ -379,13 +388,8 @@ public class PageServlet extends HttpServlet {
       // Determine the Page XML Layout for this request
       Page pageRef = WebPageXmlLayoutCommand.retrievePageForRequest(webPage, pageRequest.getPagePath());
 
-      // Load the common properties
-      Map<String, String> systemPropertyMap = LoadSitePropertyCommand.loadAsMap("system");
+      // Load site properties early (needed for online/draft checks and hit tracking)
       Map<String, String> sitePropertyMap = LoadSitePropertyCommand.loadAsMap("site");
-      Map<String, String> themePropertyMap = LoadSitePropertyCommand.loadAsMap("theme");
-      Map<String, String> socialPropertyMap = LoadSitePropertyCommand.loadAsMap("social");
-      Map<String, String> analyticsPropertyMap = LoadSitePropertyCommand.loadAsMap("analytics");
-      Map<String, String> ecommercePropertyMap = LoadSitePropertyCommand.loadAsMap("ecommerce");
 
       // Web Page Hits
       if (pageRef != null) {
@@ -476,7 +480,9 @@ public class PageServlet extends HttpServlet {
             return;
           }
           coreData.put("collectionUniqueId", thisCollection.getUniqueId());
-          LOG.debug("Added collection to coreData: " + thisCollection.getUniqueId());
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Added collection to coreData: " + thisCollection.getUniqueId());
+          }
         }
       }
 
@@ -499,19 +505,25 @@ public class PageServlet extends HttpServlet {
           response.sendError(HttpServletResponse.SC_NOT_FOUND);
           return;
         }
-        LOG.debug("Added item to coreData: " + itemUniqueId);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Added item to coreData: " + itemUniqueId);
+        }
         coreData.put("itemUniqueId", itemUniqueId);
         // Look for the collection page
         if (!coreData.containsKey("collectionUniqueId")) {
           thisCollection = LoadCollectionCommand.loadCollectionById(thisItem.getCollectionId());
           coreData.put("collectionUniqueId", thisCollection.getUniqueId());
-          LOG.debug("Added item's collection to coreData: " + thisCollection.getUniqueId());
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Added item's collection to coreData: " + thisCollection.getUniqueId());
+          }
           // Check for a collection customized page
           // @note plan for sub-tabs too
           int slashIndex = pageRequest.getPagePath().indexOf("/", 1);
           String itemMethod = pageRequest.getPagePath().substring(1, slashIndex);
           String itemCollectionKey = "_" + itemMethod + "_" + thisCollection.getUniqueId() + "_" + subTab;
-          LOG.debug("itemCollectionKey=" + itemCollectionKey);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("itemCollectionKey=" + itemCollectionKey);
+          }
           if (WebPageXmlLayoutCommand.containsPage(itemCollectionKey)) {
             pageRef = WebPageXmlLayoutCommand.retrievePage(itemCollectionKey);
           }
@@ -592,6 +604,9 @@ public class PageServlet extends HttpServlet {
         }
       }
 
+      // Load theme properties needed for widget rendering (deferred past early exits)
+      Map<String, String> themePropertyMap = LoadSitePropertyCommand.loadAsMap("theme");
+
       // Render the page first
       PageResponse pageResponse = WebContainerCommand.processWidgets(webContainerContext, pageRef.getSections(),
           pageRenderInfo, coreData, userSession, themePropertyMap, request);
@@ -650,6 +665,12 @@ public class PageServlet extends HttpServlet {
         return;
       }
 
+      // Load remaining properties (deferred to avoid unnecessary I/O on early-exit paths)
+      Map<String, String> systemPropertyMap = LoadSitePropertyCommand.loadAsMap("system");
+      Map<String, String> socialPropertyMap = LoadSitePropertyCommand.loadAsMap("social");
+      Map<String, String> analyticsPropertyMap = LoadSitePropertyCommand.loadAsMap("analytics");
+      Map<String, String> ecommercePropertyMap = LoadSitePropertyCommand.loadAsMap("ecommerce");
+
       // Allow the layout to use the properties
       request.setAttribute("systemPropertyMap", systemPropertyMap);
       request.setAttribute("sitePropertyMap", sitePropertyMap);
@@ -679,7 +700,9 @@ public class PageServlet extends HttpServlet {
       SavePerformanceMetricCommand.queueMetric("page", response.getStatus(), totalTime);
 
       // Start rendering the page
-      LOG.debug("Page title: " + pageRenderInfo.getTitle());
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Page title: " + pageRenderInfo.getTitle());
+      }
       request.setAttribute(CONTEXT_PATH, pageRequest.getContextPath());
       request.setAttribute(PAGE_RENDER_INFO, pageRenderInfo);
       if (thisCollection != null) {
@@ -690,7 +713,7 @@ public class PageServlet extends HttpServlet {
       }
 
       // Determine if there is a global custom stylesheet
-      Stylesheet globalStylesheet = LoadStylesheetCommand.loadStylesheetByWebPageId(-1);
+      Stylesheet globalStylesheet = LoadStylesheetCommand.loadStylesheetByWebPageId(-1L);
       if (globalStylesheet != null) {
         request.setAttribute("includeGlobalStylesheet", "true");
         request.setAttribute("includeGlobalStylesheetLastModified", globalStylesheet.getModified().getTime());
@@ -712,13 +735,14 @@ public class PageServlet extends HttpServlet {
         request.getServletContext().getRequestDispatcher("/WEB-INF/jsp/embedded.jsp").forward(request, response);
       } else {
         // Check if this is an admin page accessed directly and prepare for iframe rendering
-        boolean isAdminPath = pageRequest.getPagePath().startsWith("/admin") &&
-            !pageRequest.getPagePath().startsWith("/admin/system") &&
-            !pageRequest.getPagePath().startsWith("/admin/visual-") &&
-            !pageRequest.getPagePath().startsWith("/admin/web-page-designer") &&
-            !pageRequest.getPagePath().startsWith("/admin/web-page") &&
-            !pageRequest.getPagePath().startsWith("/admin/css-editor") &&
-            !pageRequest.getPagePath().startsWith("/admin/web-container-designer");
+        String resolvedPath = pageRequest.getPagePath();
+        boolean isAdminPath = resolvedPath.startsWith("/admin") &&
+            !resolvedPath.startsWith("/admin/system") &&
+            !resolvedPath.startsWith("/admin/visual-") &&
+            !resolvedPath.startsWith("/admin/web-page-designer") &&
+            !resolvedPath.startsWith("/admin/web-page") &&
+            !resolvedPath.startsWith("/admin/css-editor") &&
+            !resolvedPath.startsWith("/admin/web-container-designer");
         boolean isIframeRequest = "iframe".equals(request.getHeader("Sec-Fetch-Dest"));
         if (isAdminPath && !isIframeRequest) {
           request.setAttribute("adminIframeUrl", pageRequest.getPagePath());
@@ -728,7 +752,9 @@ public class PageServlet extends HttpServlet {
           request.setAttribute(PAGE_BODY, "/WEB-INF/jsp/container-layout.jsp");
         } else {
           // For web content with a header and 
-          LOG.debug("Setting header and footer render info... " + (headerRenderInfo != null) + " " + (footerRenderInfo != null));
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Setting header and footer render info... " + (headerRenderInfo != null) + " " + (footerRenderInfo != null));
+          }
           if (!prepareHeaderFooter) {
             request.setAttribute(SHOW_MAIN_MENU, "false");
           } else {

@@ -17,8 +17,8 @@
 package com.simisinc.platform.presentation.controller;
 
 import java.net.URL;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -55,7 +55,7 @@ public class JsonServlet extends HttpServlet {
   private static Log LOG = LogFactory.getLog(JsonServlet.class);
 
   // JSON Service instance cache: endpoint path → service instance
-  private Map<String, Object> serviceInstances = new HashMap<>();
+  private Map<String, Object> serviceInstances = new ConcurrentHashMap<>();
 
   @Override
   public void init(ServletConfig config) throws ServletException {
