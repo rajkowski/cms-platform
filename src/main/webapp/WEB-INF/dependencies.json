@@ -9,13 +9,13 @@
     },
     "ace": {
       "package": "ace-builds",
-      "version": "1.43.5",
+      "version": "1.43.6",
       "paths": [
         "node_modules/ace-builds/src-min-noconflict/*"
       ]
     },
     "add-to-calendar-button": {
-      "version": "2.12.13",
+      "version": "2.13.8",
       "paths": [
         "node_modules/add-to-calendar-button/dist/atcb.js"
       ]
@@ -136,7 +136,7 @@
       "version": "4.2.2"
     },
     "mermaid": {
-      "version": "11.12.2",
+      "version": "11.13.0",
       "paths": [
         "node_modules/mermaid/dist/mermaid.js",
         "node_modules/mermaid/dist/mermaid.min.js"
@@ -189,7 +189,7 @@
       ]
     },
     "swiper": {
-      "version": "11.2.10",
+      "version": "12.1.2",
       "paths": [
         "node_modules/swiper/swiper-bundle.css",
         "node_modules/swiper/swiper-bundle.js",
