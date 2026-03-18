@@ -366,9 +366,10 @@ public class WebContainerCommand implements Serializable {
             if (!widgetContext.isSuccess()) {
               response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             }
-            PrintWriter out = response.getWriter();
-            out.print(widgetContext.getJson());
-            out.flush();
+            try (PrintWriter out = response.getWriter()) {
+              out.print(widgetContext.getJson());
+              out.flush();
+            }
             pageResponse.setHandled(true);
             return pageResponse;
           }

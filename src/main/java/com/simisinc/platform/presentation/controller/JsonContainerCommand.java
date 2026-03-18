@@ -181,9 +181,10 @@ public class JsonContainerCommand implements Serializable {
         response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
       }
       response.setContentLength(jsonOutput.getBytes(StandardCharsets.UTF_8).length);
-      PrintWriter out = response.getWriter();
-      out.print(jsonOutput);
-      out.flush();
+      try (PrintWriter out = response.getWriter()) {
+        out.print(jsonOutput);
+        out.flush();
+      }
       return true;
     }
 

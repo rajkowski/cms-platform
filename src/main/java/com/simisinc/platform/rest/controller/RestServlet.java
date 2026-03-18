@@ -225,9 +225,10 @@ public class RestServlet extends HttpServlet {
       SavePerformanceMetricCommand.queueMetric("api", response.getStatus(), totalTime);
 
       response.setContentLength(json.getBytes(StandardCharsets.UTF_8).length);
-      PrintWriter out = response.getWriter();
-      out.print(json);
-      out.flush();
+      try (PrintWriter out = response.getWriter()) {
+        out.print(json);
+        out.flush();
+      }
       if (LOG.isDebugEnabled()) {
         LOG.debug("Response sent: " + json);
       }
@@ -244,13 +245,14 @@ public class RestServlet extends HttpServlet {
 
   public static void sendError(HttpServletResponse response, int code, String errorMessage) throws IOException {
     response.setStatus(code);
-    PrintWriter out = response.getWriter();
-    out.print("{\n" +
-        "      \"error\": {\n" +
-        "        \"code\": " + code + ",\n" +
-        "        \"message\": \"" + JsonCommand.toJson(errorMessage) + "\"\n" +
-        "      }\n" +
-        "    }");
-    out.flush();
+    try (PrintWriter out = response.getWriter()) {
+      out.print("{\n" +
+          "      \"error\": {\n" +
+          "        \"code\": " + code + ",\n" +
+          "        \"message\": \"" + JsonCommand.toJson(errorMessage) + "\"\n" +
+          "      }\n" +
+          "    }");
+      out.flush();
+    }
   }
 }

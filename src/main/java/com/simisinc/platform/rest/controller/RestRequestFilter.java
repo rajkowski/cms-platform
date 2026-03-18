@@ -318,9 +318,10 @@ public class RestRequestFilter implements Filter {
     response.setContentType("application/json");
     response.setCharacterEncoding("UTF-8");
     response.setContentLength(json.getBytes(StandardCharsets.UTF_8).length);
-    PrintWriter out = response.getWriter();
-    out.print(json);
-    out.flush();
+    try (PrintWriter out = response.getWriter()) {
+      out.print(json);
+      out.flush();
+    }
   }
 
   private void doReturnNewToken(App app, User user, HttpServletRequest httpServletRequest, ServletResponse response)
@@ -368,9 +369,10 @@ public class RestRequestFilter implements Filter {
     response.setContentType("application/json");
     response.setCharacterEncoding("UTF-8");
     response.setContentLength(json.length());
-    PrintWriter out = response.getWriter();
-    out.print(json);
-    out.flush();
+    try (PrintWriter out = response.getWriter()) {
+      out.print(json);
+      out.flush();
+    }
   }
 
   private User checkBasicAuthorization(ServletRequest servletRequest) {
