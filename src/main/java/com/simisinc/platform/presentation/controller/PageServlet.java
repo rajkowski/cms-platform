@@ -506,9 +506,9 @@ public class PageServlet extends HttpServlet {
           return;
         }
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Added item to coreData: " + itemUniqueId);
+          LOG.debug("Added item to coreData: " + thisItem.getUniqueId());
         }
-        coreData.put("itemUniqueId", itemUniqueId);
+        coreData.put("itemUniqueId", thisItem.getUniqueId());
         // Look for the collection page
         if (!coreData.containsKey("collectionUniqueId")) {
           thisCollection = LoadCollectionCommand.loadCollectionById(thisItem.getCollectionId());
