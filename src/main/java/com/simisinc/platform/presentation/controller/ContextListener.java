@@ -39,15 +39,19 @@ import org.apache.commons.logging.LogFactory;
 import com.simisinc.platform.ApplicationInfo;
 import com.simisinc.platform.application.admin.DatabaseCommand;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
+import com.simisinc.platform.application.admin.PermissionEngine;
+import com.simisinc.platform.application.admin.PermissionLoader;
 import com.simisinc.platform.application.cms.LoadStylesheetCommand;
 import com.simisinc.platform.application.filesystem.FileSystemCommand;
 import com.simisinc.platform.application.maps.GeoIPCommand;
+import com.simisinc.platform.domain.model.admin.PermissionGroup;
 import com.simisinc.platform.domain.model.cms.Content;
 import com.simisinc.platform.infrastructure.cache.CacheManager;
 import com.simisinc.platform.infrastructure.database.ConnectionPool;
 import com.simisinc.platform.infrastructure.database.DatabaseProperties;
 import com.simisinc.platform.infrastructure.distributedmessaging.MessagingManager;
 import com.simisinc.platform.infrastructure.instance.InstanceManager;
+import com.simisinc.platform.infrastructure.persistence.admin.PermissionGroupRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.ContentRepository;
 import com.simisinc.platform.infrastructure.scheduler.SchedulerManager;
 import com.simisinc.platform.infrastructure.scheduler.cms.LoadSystemFilesJob;
@@ -178,6 +182,14 @@ public class ContextListener implements ServletContextListener {
     // Initialize the workflow engine
     LOG.info("Add the workflows...");
     WorkflowManager.startup(servletContextEvent.getServletContext(), "/WEB-INF/workflows");
+
+    // Initialize the permission engine (XML config + DB overrides merged)
+    LOG.info("Initialize the permission engine...");
+    List<PermissionGroup> permissionGroups = PermissionLoader.load(servletContextEvent.getServletContext());
+    PermissionLoader.mergeDbOverrides(permissionGroups,
+        PermissionGroupRepository.findAllPolicies(),
+        PermissionGroupRepository.findAllMembers());
+    PermissionEngine.load(permissionGroups);
 
     // Startup the distributed job scheduler
     LOG.info("Startup the distributed job scheduler...");

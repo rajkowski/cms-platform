@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. The format 
 ## 2026-03-17
 
 - Minimum of Java 21 is required
+- Policy engine added to externalize permission configurations and checks
 
 ## 2026-01-19
 

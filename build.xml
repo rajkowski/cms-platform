@@ -144,6 +144,8 @@
         <include name="**/*.json"/>
         <include name="**/*.mmdb"/>
         <include name="**/*.properties"/>
+        <include name="**/*.cedar"/>
+        <include name="**/*.cedarschema"/>
       </fileset>
     </copy>
     <copy todir="${target.dir}/${project}/WEB-INF/classes">
@@ -276,6 +278,8 @@
         <include name="**/*.tld"/>
         <include name="**/*.mmdb"/>
         <include name="**/*.properties"/>
+        <include name="**/*.cedar"/>
+        <include name="**/*.cedarschema"/>
       </fileset>
     </copy>
     <copy todir="${exploded.work.dir}/WEB-INF/classes" preservelastmodified="true">

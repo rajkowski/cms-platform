@@ -347,6 +347,32 @@ CREATE TABLE user_groups (
 CREATE INDEX user_group_grp_idx ON user_groups(group_id);
 CREATE INDEX user_group_usr_idx ON user_groups(user_id);
 
+-- Permission Engine tables
+-- Stores runtime overrides for Cedar permission policies.
+-- Rows with matching group_code OVERRIDE the .cedar file;
+-- rows with new group_codes ADD new policies to the engine.
+
+CREATE TABLE permission_policies (
+  policy_id BIGSERIAL PRIMARY KEY,
+  group_code VARCHAR(100) UNIQUE NOT NULL,
+  group_name VARCHAR(200),
+  policy_text TEXT NOT NULL,
+  enabled BOOLEAN NOT NULL DEFAULT TRUE,
+  created TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+  modified TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE permission_group_members (
+  member_id BIGSERIAL PRIMARY KEY,
+  group_code VARCHAR(100) NOT NULL REFERENCES permission_policies(group_code) ON DELETE CASCADE,
+  class_name VARCHAR(500) NOT NULL,
+  member_type VARCHAR(20) NOT NULL DEFAULT 'WIDGET'
+);
+
+CREATE INDEX idx_permission_group_members_group_code ON permission_group_members(group_code);
+
+-- Apps which use API keys for tracking and analytics, or for third party integrations.
+
 CREATE TABLE apps (
   app_id BIGSERIAL PRIMARY KEY,
   name VARCHAR(255) NOT NULL,

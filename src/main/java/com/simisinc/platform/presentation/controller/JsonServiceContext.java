@@ -80,7 +80,7 @@ public class JsonServiceContext extends WidgetContext {
   /**
    * Writes a {@code {"status":"ok","data":...}} JSON response.
    *
-   * @param dataJson the serialised data object, or {@code null} for no data field
+   * @param dataJson the serialized data object, or {@code null} for no data field
    * @return this context (fluent)
    */
   public JsonServiceContext writeOk(String dataJson) {

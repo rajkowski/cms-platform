@@ -1,0 +1,23 @@
+// Cedar Schema for CMS Platform Permission Engine
+// Entity types and actions used by the evaluator
+
+namespace CMS {
+
+  // A user with assigned roles and group memberships
+  entity User {
+    roles: Set<String>,
+    groups: Set<String>
+  };
+
+  // A permission group that collects related widgets and services
+  entity PermissionGroup {};
+
+  // A widget or JSON service class, member of one PermissionGroup
+  entity Component in [PermissionGroup] {};
+
+  // The single action checked by the engine
+  action "access" appliesTo {
+    principal: [User],
+    resource: [Component]
+  };
+}
