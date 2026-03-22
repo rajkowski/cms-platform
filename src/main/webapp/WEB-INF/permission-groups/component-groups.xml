@@ -15,7 +15,7 @@
   <component class="com.simisinc.platform.presentation.widgets.editor.VisualWebSyncWidget"
              group="visual-web-sync-editor"
              type="WIDGET" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.StaticSiteEndpoint"
+  <component class="com.simisinc.platform.presentation.widgets.editor.StaticSiteJsonService"
              group="visual-web-sync-editor"
              type="SERVICE" />
 
