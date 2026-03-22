@@ -16,18 +16,20 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
-import com.simisinc.platform.application.DataException;
-import com.simisinc.platform.application.cms.SaveWebPageCommand;
-import com.simisinc.platform.application.json.JsonCommand;
-import com.simisinc.platform.domain.model.cms.WebPage;
-import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import java.math.BigDecimal;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.math.BigDecimal;
+import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.application.admin.PermissionEngine;
+import com.simisinc.platform.application.cms.SaveWebPageCommand;
+import com.simisinc.platform.application.json.JsonCommand;
+import com.simisinc.platform.domain.model.cms.WebPage;
+import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Saves a web page's metadata/info from the visual page editor Info tab
@@ -36,21 +38,19 @@ import java.math.BigDecimal;
  * @author matt rajkowski
  * @created 1/10/26 10:00 AM
  */
-public class SaveWebPageInfoAjax extends GenericWidget {
+public class SaveWebPageInfoAjax extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908895L;
   private static Log LOG = LogFactory.getLog(SaveWebPageInfoAjax.class);
 
-  public WidgetContext post(WidgetContext context) {
+  public JsonServiceContext post(JsonServiceContext context) {
 
     LOG.debug("SaveWebPageInfoAjax...");
 
-    // Check permissions: only allow content editors and admins
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      LOG.debug("No permission to save web page info");
-      context.setJson("{\"success\":false,\"message\":\"Permission denied\"}");
-      context.setSuccess(false);
-      return context;
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + SaveWebPageInfoAjax.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     // Determine the page link
@@ -58,54 +58,50 @@ public class SaveWebPageInfoAjax extends GenericWidget {
     LOG.debug("Saving page info for: " + webPageLink);
     if (StringUtils.isBlank(webPageLink)) {
       LOG.debug("Page link is empty");
-      context.setJson("{\"success\":false,\"message\":\"Page link is required\"}");
-      context.setSuccess(false);
-      return context;
+      return context.writeError("Link is required");
     }
 
     // Retrieve the existing web page
     WebPage page = WebPageRepository.findByLink(webPageLink);
     if (page == null) {
       LOG.debug("Web page not found for link: " + webPageLink);
-      context.setJson("{\"success\":false,\"message\":\"Page not found\"}");
-      context.setSuccess(false);
-      return context;
+      return context.writeError("Page not found");
     }
 
     // Update the page info fields from the request
     page.setModifiedBy(context.getUserId());
-    
+
     // Title
     String title = context.getParameter("title");
     page.setTitle(StringUtils.trimToNull(title));
-    
+
     // Keywords
     String keywords = context.getParameter("keywords");
     page.setKeywords(StringUtils.trimToNull(keywords));
-    
+
     // Description
     String description = context.getParameter("description");
     page.setDescription(StringUtils.trimToNull(description));
-    
+
     // Image URL (Open Graph)
     String imageUrl = context.getParameter("imageUrl");
     page.setImageUrl(StringUtils.trimToNull(imageUrl));
-    
+
     // Draft (inverse of publish)
     String publishParam = context.getParameter("publish");
     boolean publish = "true".equals(publishParam) || "1".equals(publishParam);
     page.setDraft(!publish);
-    
+
     // Searchable
     String searchableParam = context.getParameter("searchable");
     boolean searchable = "true".equals(searchableParam) || "1".equals(searchableParam);
     page.setSearchable(searchable);
-    
+
     // Show in Sitemap
     String showInSitemapParam = context.getParameter("showInSitemap");
     boolean showInSitemap = "true".equals(showInSitemapParam) || "1".equals(showInSitemapParam);
     page.setShowInSitemap(showInSitemap);
-    
+
     // Sitemap Priority
     String sitemapPriorityParam = context.getParameter("sitemapPriority");
     if (StringUtils.isNotBlank(sitemapPriorityParam)) {
@@ -117,7 +113,7 @@ public class SaveWebPageInfoAjax extends GenericWidget {
         // Keep existing value
       }
     }
-    
+
     // Sitemap Change Frequency
     String sitemapChangeFrequency = context.getParameter("sitemapChangeFrequency");
     page.setSitemapChangeFrequency(StringUtils.trimToNull(sitemapChangeFrequency));
@@ -144,24 +140,11 @@ public class SaveWebPageInfoAjax extends GenericWidget {
       }
     } catch (DataException e) {
       LOG.error("Data validation error saving page info: " + e.getMessage());
-      StringBuilder sb = new StringBuilder();
-      sb.append("{");
-      sb.append("\"success\":false,");
-      sb.append("\"message\":\"").append(JsonCommand.toJson(e.getMessage())).append("\"");
-      sb.append("}");
-      context.setJson(sb.toString());
-      context.setSuccess(false);
+      return context.writeError("Data validation error: " + e.getMessage());
     } catch (Exception e) {
       LOG.error("Error saving page info: " + e.getMessage(), e);
-      StringBuilder sb = new StringBuilder();
-      sb.append("{");
-      sb.append("\"success\":false,");
-      sb.append("\"message\":\"").append(JsonCommand.toJson("Error saving page info: " + e.getMessage())).append("\"");
-      sb.append("}");
-      context.setJson(sb.toString());
-      context.setSuccess(false);
+      return context.writeError("Error saving page info: " + e.getMessage());
     }
-
     return context;
   }
 }

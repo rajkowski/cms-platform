@@ -19,12 +19,13 @@ package com.simisinc.platform.presentation.widgets.cms;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.domain.model.cms.Folder;
 import com.simisinc.platform.domain.model.cms.FolderGroup;
 import com.simisinc.platform.infrastructure.persistence.cms.FolderGroupRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.FolderRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Saves folder group permissions in the visual document editor
@@ -32,21 +33,21 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 1/22/26 11:15 AM
  */
-public class FolderGroupSaveJsonService extends GenericWidget {
+public class FolderGroupSaveJsonService extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908896L;
   private static Log LOG = LogFactory.getLog(FolderGroupSaveJsonService.class);
 
   @Override
-  public WidgetContext post(WidgetContext context) {
+  public JsonServiceContext post(JsonServiceContext context) {
 
     LOG.debug("FolderGroupSaveAjax...");
 
     // Restrict access to editors
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      context.setJson("{\"success\": false, \"error\": \"Access denied\"}");
-      context.setSuccess(false);
-      return context;
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + FolderGroupSaveJsonService.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     long folderId = context.getParameterAsLong("folderId", -1);

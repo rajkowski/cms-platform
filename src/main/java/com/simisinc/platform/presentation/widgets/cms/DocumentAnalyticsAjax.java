@@ -22,13 +22,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.FileItem;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.cms.FileItemRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.FileSpecification;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Returns top assets analytics for a document repository in the visual document editor
@@ -36,19 +37,20 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 2/19/26
  */
-public class DocumentAnalyticsAjax extends GenericWidget {
+public class DocumentAnalyticsAjax extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908907L;
   private static Log LOG = LogFactory.getLog(DocumentAnalyticsAjax.class);
 
   @Override
-  public WidgetContext execute(WidgetContext context) {
+  public JsonServiceContext get(JsonServiceContext context) {
 
     LOG.debug("DocumentAnalyticsAjax...");
 
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      context.setJson("{\"assets\":[]}");
-      return context;
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + DocumentAnalyticsAjax.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     long folderId = context.getParameterAsLong("folderId", -1);
@@ -85,7 +87,8 @@ public class DocumentAnalyticsAjax extends GenericWidget {
         first = false;
         sb.append("{");
         sb.append("\"id\":").append(file.getId()).append(",");
-        sb.append("\"title\":\"").append(JsonCommand.toJson(StringUtils.defaultString(file.getTitle(), file.getFilename()))).append("\",");
+        sb.append("\"title\":\"").append(JsonCommand.toJson(StringUtils.defaultString(file.getTitle(), file.getFilename())))
+            .append("\",");
         sb.append("\"filename\":\"").append(JsonCommand.toJson(StringUtils.defaultString(file.getFilename()))).append("\",");
         sb.append("\"mimeType\":\"").append(JsonCommand.toJson(StringUtils.defaultString(file.getMimeType()))).append("\",");
         sb.append("\"downloadCount\":").append(file.getDownloadCount());

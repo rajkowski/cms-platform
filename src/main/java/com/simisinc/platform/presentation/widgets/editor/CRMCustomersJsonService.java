@@ -27,7 +27,7 @@ import com.simisinc.platform.domain.model.ecommerce.Customer;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.ecommerce.CustomerRepository;
 import com.simisinc.platform.infrastructure.persistence.ecommerce.CustomerSpecification;
-import com.simisinc.platform.presentation.controller.WidgetContext;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
 
 /**
@@ -41,12 +41,10 @@ public class CRMCustomersJsonService extends GenericWidget {
   static final long serialVersionUID = -8484048371911908902L;
   private static Log LOG = LogFactory.getLog(CRMCustomersJsonService.class);
 
-  public WidgetContext execute(WidgetContext context) {
+  public JsonServiceContext get(JsonServiceContext context) {
 
     if (!context.hasRole("admin") && !context.hasRole("ecommerce-manager")) {
-      context.setJson("{\"error\":\"Permission denied\"}");
-      context.setSuccess(false);
-      return context;
+      return context.writeError("Permission Denied");
     }
 
     int page = context.getParameterAsInt("page", 1);
@@ -77,7 +75,8 @@ public class CRMCustomersJsonService extends GenericWidget {
       sb.append("\"lastName\":\"").append(JsonCommand.toJson(StringUtils.defaultString(customer.getLastName()))).append("\",");
       sb.append("\"organization\":\"").append(JsonCommand.toJson(StringUtils.defaultString(customer.getOrganization()))).append("\",");
       sb.append("\"orderCount\":").append(customer.getOrderCount()).append(",");
-      sb.append("\"totalSpend\":").append(customer.getTotalSpend() != null ? customer.getTotalSpend().toPlainString() : "0").append(",");
+      sb.append("\"totalSpend\":").append(customer.getTotalSpend() != null ? customer.getTotalSpend().toPlainString() : "0")
+          .append(",");
       sb.append("\"created\":\"").append(customer.getCreated() != null ? customer.getCreated().toString() : "").append("\"");
       sb.append("}");
     }

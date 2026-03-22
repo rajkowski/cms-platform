@@ -20,11 +20,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.Image;
 import com.simisinc.platform.infrastructure.persistence.cms.ImageRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Returns a single image's data for the visual image editor
@@ -33,36 +34,33 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 1/21/26 9:15 PM
  */
-public class ImageContentAjax extends GenericWidget {
+public class ImageContentAjax extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908893L;
   private static Log LOG = LogFactory.getLog(ImageContentAjax.class);
 
-  public WidgetContext execute(WidgetContext context) {
+  public JsonServiceContext get(JsonServiceContext context) {
 
     LOG.debug("ImageContentAjax...");
 
-    // Check permissions: only allow content editors and admins
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      LOG.debug("No permission to access image content");
-      context.setJson("{}");
-      return context;
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + ImageContentAjax.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     // Get the image ID
     long imageId = context.getParameterAsLong("imageId", -1);
     if (imageId == -1) {
       LOG.debug("Image ID not provided");
-      context.setJson("{\"error\":\"Image ID required\"}");
-      return context;
+      return context.writeError("Image ID required");
     }
 
     // Retrieve the image
     Image image = ImageRepository.findById(imageId);
     if (image == null) {
       LOG.debug("Image not found for ID: " + imageId);
-      context.setJson("{\"error\":\"Image not found\"}");
-      return context;
+      return context.writeError("Image not found");
     }
 
     // Build JSON response with image details

@@ -21,13 +21,14 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.text.WordUtils;
 
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.cms.SaveWebPageCommand;
 import com.simisinc.platform.application.cms.WebPageJsonToXMLCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Saves a web page's layout from the visual page editor
@@ -36,21 +37,19 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 12/21/25 10:00 AM
  */
-public class SaveWebPageAjax extends GenericWidget {
+public class SaveWebPageAjax extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908894L;
   private static Log LOG = LogFactory.getLog(SaveWebPageAjax.class);
 
-  public WidgetContext post(WidgetContext context) {
+  public JsonServiceContext post(JsonServiceContext context) {
 
     LOG.debug("SaveWebPageAjax...");
 
-    // Check permissions: only allow content editors and admins
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      LOG.debug("No permission to save web page");
-      context.setJson("{\"success\":false,\"message\":\"Permission denied\"}");
-      context.setSuccess(false);
-      return context;
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + SaveWebPageAjax.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     // Determine the page link
@@ -58,9 +57,7 @@ public class SaveWebPageAjax extends GenericWidget {
     LOG.debug("Saving page: " + webPageLink);
     if (StringUtils.isBlank(webPageLink)) {
       LOG.debug("Page link is empty");
-      context.setJson("{\"success\":false,\"message\":\"Page link is required\"}");
-      context.setSuccess(false);
-      return context;
+      return context.writeError("Link is required");
     }
 
     // Retrieve the web page
@@ -83,9 +80,7 @@ public class SaveWebPageAjax extends GenericWidget {
     String designerData = context.getParameter("designerData");
     if (StringUtils.isBlank(designerData)) {
       LOG.debug("No designer data provided");
-      context.setJson("{\"success\":false,\"message\":\"Layout data is required\"}");
-      context.setSuccess(false);
-      return context;
+      return context.writeError("Layout data is required");
     }
 
     // Convert the JSON layout data to XML format
@@ -94,14 +89,7 @@ public class SaveWebPageAjax extends GenericWidget {
       pageXml = WebPageJsonToXMLCommand.convertDesignerJsonToXml(designerData);
     } catch (Exception e) {
       LOG.error("Error converting JSON layout to XML: " + e.getMessage(), e);
-      StringBuilder sb = new StringBuilder();
-      sb.append("{");
-      sb.append("\"success\":false,");
-      sb.append("\"message\":\"").append(JsonCommand.toJson("Error processing layout: " + e.getMessage())).append("\"");
-      sb.append("}");
-      context.setJson(sb.toString());
-      context.setSuccess(false);
-      return context;
+      return context.writeError("Error processing layout: " + e.getMessage());
     }
     page.setPageXml(pageXml);
 
@@ -120,23 +108,14 @@ public class SaveWebPageAjax extends GenericWidget {
         sb.append("}");
         context.setJson(sb.toString());
         LOG.debug("Page saved successfully: " + webPageLink);
+        return context;
       } else {
-        context.setJson("{\"success\":false,\"message\":\"Failed to save page\"}");
-        context.setSuccess(false);
-        LOG.debug("Save returned null for page: " + webPageLink);
+        return context.writeError("Failed to save page");
       }
     } catch (Exception e) {
       LOG.error("Error saving page: " + e.getMessage(), e);
-      StringBuilder sb = new StringBuilder();
-      sb.append("{");
-      sb.append("\"success\":false,");
-      sb.append("\"message\":\"").append(JsonCommand.toJson(e.getMessage())).append("\"");
-      sb.append("}");
-      context.setJson(sb.toString());
-      context.setSuccess(false);
+      return context.writeError("Error saving page: " + e.getMessage());
     }
-
-    return context;
   }
 
 }

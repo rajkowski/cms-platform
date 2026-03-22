@@ -20,6 +20,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.cms.UrlCommand;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
@@ -38,6 +39,11 @@ public class VisualCRMEditorWidget extends GenericWidget {
   static String EDITOR_JSP = "/cms/visual-crm-editor.jsp";
 
   public WidgetContext execute(WidgetContext context) {
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + VisualCRMEditorWidget.class.getSimpleName());
+      return context;
+    }
 
     // Set the JSP
     context.setJsp(EDITOR_JSP);

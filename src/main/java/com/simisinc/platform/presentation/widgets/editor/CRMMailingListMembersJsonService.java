@@ -22,6 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.mailinglists.Email;
 import com.simisinc.platform.domain.model.mailinglists.MailingList;
@@ -29,8 +30,8 @@ import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.mailinglists.EmailRepository;
 import com.simisinc.platform.infrastructure.persistence.mailinglists.EmailSpecification;
 import com.simisinc.platform.infrastructure.persistence.mailinglists.MailingListRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * JSON service to list members of a mailing list
@@ -38,31 +39,27 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 2026-02-27
  */
-public class CRMMailingListMembersJsonService extends GenericWidget {
+public class CRMMailingListMembersJsonService extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908901L;
   private static Log LOG = LogFactory.getLog(CRMMailingListMembersJsonService.class);
 
-  public WidgetContext execute(WidgetContext context) {
+  public JsonServiceContext get(JsonServiceContext context) {
 
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      context.setJson("{\"error\":\"Permission denied\"}");
-      context.setSuccess(false);
-      return context;
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + CRMMailingListMembersJsonService.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     long mailingListId = context.getParameterAsLong("listId");
     if (mailingListId == -1) {
-      context.setJson("{\"error\":\"listId is required\"}");
-      context.setSuccess(false);
-      return context;
+      return context.writeError("listId is required");
     }
 
     MailingList mailingList = MailingListRepository.findById(mailingListId);
     if (mailingList == null) {
-      context.setJson("{\"error\":\"Mailing list not found\"}");
-      context.setSuccess(false);
-      return context;
+      return context.writeError("Mailing list not found");
     }
 
     int page = context.getParameterAsInt("page", 1);

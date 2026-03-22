@@ -16,41 +16,41 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
-import com.simisinc.platform.application.cms.SaveSubFolderCommand;
-import com.simisinc.platform.application.json.JsonCommand;
-import com.simisinc.platform.domain.model.cms.SubFolder;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.admin.PermissionEngine;
+import com.simisinc.platform.application.cms.SaveSubFolderCommand;
+import com.simisinc.platform.application.json.JsonCommand;
+import com.simisinc.platform.domain.model.cms.SubFolder;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
+
 /**
  * Creates a new subfolder for the visual document editor
  */
-public class DocumentCreateSubfolderAjax extends GenericWidget {
+public class DocumentCreateSubfolderAjax extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908896L;
   private static Log LOG = LogFactory.getLog(DocumentCreateSubfolderAjax.class);
 
   @Override
-  public WidgetContext post(WidgetContext context) {
+  public JsonServiceContext post(JsonServiceContext context) {
 
     LOG.debug("DocumentCreateSubfolderAjax...");
 
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      context.setJson("{\"status\":0,\"message\":\"Permission denied\"}");
-      context.setSuccess(false);
-      return context;
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + DocumentCreateSubfolderAjax.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     long folderId = context.getParameterAsLong("folderId", -1);
     String name = context.getParameter("name");
 
     if (folderId <= 0 || StringUtils.isBlank(name)) {
-      context.setJson("{\"status\":0,\"message\":\"Folder and name are required\"}");
-      context.setSuccess(false);
-      return context;
+      return context.writeError("Folder and name are required");
     }
 
     SubFolder subFolderBean = new SubFolder();

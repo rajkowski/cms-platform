@@ -30,6 +30,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.LoadUserCommand;
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.cms.LoadContentCommand;
 import com.simisinc.platform.application.cms.WebPageXmlLayoutCommand;
 import com.simisinc.platform.application.json.JsonCommand;
@@ -38,11 +39,11 @@ import com.simisinc.platform.domain.model.cms.Content;
 import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
 import com.simisinc.platform.presentation.controller.Column;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.controller.Page;
 import com.simisinc.platform.presentation.controller.Section;
 import com.simisinc.platform.presentation.controller.Widget;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Returns the content blocks referenced by a page's XML layout
@@ -51,7 +52,7 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 2/14/26 10:00 AM
  */
-public class PageContentBlocksJsonService extends GenericWidget {
+public class PageContentBlocksJsonService extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908894L;
   private static Log LOG = LogFactory.getLog(PageContentBlocksJsonService.class);
@@ -65,23 +66,24 @@ public class PageContentBlocksJsonService extends GenericWidget {
   // Pattern to match ${uniqueId:example-include}
   private static final Pattern DIRECTIVE_PATTERN = Pattern.compile("\\$\\{uniqueId:([^}]+)\\}");
 
-  public WidgetContext execute(WidgetContext context) {
+  public JsonServiceContext get(JsonServiceContext context) {
 
     // Check permissions
-    if (!context.hasRole("admin") && !context.hasRole("content-manager") && !context.hasRole("content-editor")) {
-      return writeError(context, "Permission denied");
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + PageContentBlocksJsonService.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     try {
       String link = context.getParameter("link");
       if (StringUtils.isBlank(link)) {
-        return writeError(context, "Page link is required");
+        return context.writeError("Page link is required");
       }
 
       // Load the web page
       WebPage webPage = WebPageRepository.findByLink(link);
       if (webPage == null) {
-        return writeError(context, "Page not found");
+        return context.writeError("Page not found");
       }
 
       // Collect unique content IDs from the page layout with fallback HTML
@@ -114,7 +116,7 @@ public class PageContentBlocksJsonService extends GenericWidget {
       StringBuilder dataJson = new StringBuilder();
       dataJson.append("[");
       boolean first = true;
-      
+
       // Add existing content blocks
       for (Content content : allContentBlocks) {
         if (!first) {
@@ -123,7 +125,7 @@ public class PageContentBlocksJsonService extends GenericWidget {
         first = false;
         appendContentJson(dataJson, content);
       }
-      
+
       // Add referenced blocks that don't have records yet (marked as "new")
       for (Map.Entry<String, String> entry : uniqueIdToFallbackHtml.entrySet()) {
         String uniqueId = entry.getKey();
@@ -136,14 +138,14 @@ public class PageContentBlocksJsonService extends GenericWidget {
           appendNewContentJson(dataJson, uniqueId, fallbackHtml);
         }
       }
-      
+
       dataJson.append("]");
 
-      return writeOk(context, dataJson.toString(), null);
+      return context.writeOk(dataJson.toString(), null);
 
     } catch (Exception e) {
       LOG.error("Error loading page content blocks: " + e.getMessage(), e);
-      return writeError(context, "Error loading content blocks");
+      return context.writeError("Error loading content blocks");
     }
   }
 
@@ -252,38 +254,17 @@ public class PageContentBlocksJsonService extends GenericWidget {
     json.append("\"id\":-1,");
     json.append("\"uniqueId\":\"").append(JsonCommand.toJson(uniqueId)).append("\",");
     json.append("\"isNew\":true,");
-    
+
     // Use fallback HTML for snippet if available
     String snippet = StringUtils.isNotBlank(fallbackHtml) ? StringUtils.truncate(fallbackHtml, 120) : "No content yet";
     json.append("\"snippet\":\"").append(JsonCommand.toJson(snippet)).append("\",");
-    
+
     // Include the full fallback HTML
     json.append("\"fallbackHtml\":\"").append(JsonCommand.toJson(StringUtils.defaultString(fallbackHtml))).append("\",");
-    
+
     json.append("\"hasDraft\":false,");
     json.append("\"modified\":\"\",");
     json.append("\"modifiedBy\":\"\"");
     json.append("}");
-  }
-
-  private WidgetContext writeOk(WidgetContext context, String dataJson, String metaJson) {
-    StringBuilder json = new StringBuilder();
-    json.append("{");
-    json.append("\"status\":\"ok\"");
-    if (dataJson != null) {
-      json.append(",\"data\":").append(dataJson);
-    }
-    if (metaJson != null) {
-      json.append(",\"meta\":").append(metaJson);
-    }
-    json.append("}");
-    context.setJson(json.toString());
-    return context;
-  }
-
-  private WidgetContext writeError(WidgetContext context, String message) {
-    context.setJson("{\"status\":\"error\",\"error\":\"" + JsonCommand.toJson(StringUtils.defaultString(message)) + "\"}");
-    context.setSuccess(false);
-    return context;
   }
 }

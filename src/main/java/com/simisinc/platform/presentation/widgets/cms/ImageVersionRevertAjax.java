@@ -20,10 +20,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.cms.SetCurrentImageVersionCommand;
 import com.simisinc.platform.domain.model.cms.Image;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Reverts an image to a previous version in the visual image editor
@@ -31,21 +32,21 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 1/31/26 9:45 AM
  */
-public class ImageVersionRevertAjax extends GenericWidget {
+public class ImageVersionRevertAjax extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908897L;
   private static Log LOG = LogFactory.getLog(ImageVersionRevertAjax.class);
 
   @Override
-  public WidgetContext post(WidgetContext context) {
+  public JsonServiceContext post(JsonServiceContext context) {
 
     LOG.debug("ImageVersionRevertAjax...");
 
     // Restrict access to editors
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      context.setJson("{\"success\": false, \"error\": \"Access denied\"}");
-      context.setSuccess(false);
-      return context;
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + ImageVersionRevertAjax.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     long imageId = context.getParameterAsLong("imageId", -1);
@@ -61,20 +62,17 @@ public class ImageVersionRevertAjax extends GenericWidget {
       Image image = SetCurrentImageVersionCommand.setCurrentVersion(imageId, versionId, context.getUserId());
       if (image != null) {
         context.setJson("{\"success\": true, \"message\": \"Reverted to version " + image.getVersionNumber() + "\"}");
+        return context;
       } else {
-        context.setJson("{\"success\": false, \"error\": \"Failed to update image\"}");
-        context.setSuccess(false);
+        return context.writeError("Failed to update image");
       }
     } catch (DataException e) {
       LOG.error("Error reverting version", e);
-      context.setJson("{\"success\": false, \"error\": \"" + e.getMessage() + "\"}");
-      context.setSuccess(false);
+      return context.writeError(e.getMessage());
     } catch (Exception e) {
       LOG.error("Error reverting version", e);
-      context.setJson("{\"success\": false, \"error\": \"Failed to revert: " + e.getMessage() + "\"}");
-      context.setSuccess(false);
+      return context.writeError("Failed to revert: " + e.getMessage());
     }
 
-    return context;
   }
 }

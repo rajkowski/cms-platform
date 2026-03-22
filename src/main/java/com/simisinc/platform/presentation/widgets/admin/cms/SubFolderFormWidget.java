@@ -16,15 +16,21 @@
 
 package com.simisinc.platform.presentation.widgets.admin.cms;
 
-import com.simisinc.platform.application.DataException;
-import com.simisinc.platform.application.cms.*;
-import com.simisinc.platform.domain.model.cms.SubFolder;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
-import com.simisinc.platform.presentation.controller.WidgetContext;
+import java.lang.reflect.InvocationTargetException;
+
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.lang.reflect.InvocationTargetException;
+import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.application.admin.PermissionEngine;
+import com.simisinc.platform.application.cms.CheckFolderPermissionCommand;
+import com.simisinc.platform.application.cms.FolderException;
+import com.simisinc.platform.application.cms.LoadSubFolderCommand;
+import com.simisinc.platform.application.cms.SaveSubFolderCommand;
+import com.simisinc.platform.application.cms.UrlCommand;
+import com.simisinc.platform.domain.model.cms.SubFolder;
+import com.simisinc.platform.presentation.controller.WidgetContext;
+import com.simisinc.platform.presentation.widgets.GenericWidget;
 
 /**
  * Widget for displaying a system administration form to add/update sub-folders
@@ -65,7 +71,7 @@ public class SubFolderFormWidget extends GenericWidget {
     }
 
     // Check permissions
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
       if (!CheckFolderPermissionCommand.userHasAddPermission(subFolder.getFolderId(), context.getUserId())) {
         return null;
       }
@@ -87,7 +93,7 @@ public class SubFolderFormWidget extends GenericWidget {
     String returnPage = UrlCommand.getValidReturnPage(context.getParameter("returnPage"));
 
     // Check permissions
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
       if (!CheckFolderPermissionCommand.userHasAddPermission(subFolderBean.getFolderId(), context.getUserId())) {
         return null;
       }
@@ -112,7 +118,7 @@ public class SubFolderFormWidget extends GenericWidget {
     if (StringUtils.isNotBlank(returnPage)) {
       context.setRedirect(returnPage);
     } else {
-//      context.setRedirect("/admin/folder-details?folderId=" + subFolder.getFolderId());
+      // context.setRedirect("/admin/folder-details?folderId=" + subFolder.getFolderId());
       context.setRedirect("/admin/sub-folder-details?subFolderId=" + subFolder.getId() + "&folderId=" + subFolder.getFolderId());
     }
     return context;

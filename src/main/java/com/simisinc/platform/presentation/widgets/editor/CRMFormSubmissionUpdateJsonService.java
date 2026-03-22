@@ -20,10 +20,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.domain.model.cms.FormData;
 import com.simisinc.platform.infrastructure.persistence.cms.FormDataRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * JSON service to update the status of a form submission: claim, dismiss, or process
@@ -31,33 +32,29 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 2026-02-27
  */
-public class CRMFormSubmissionUpdateJsonService extends GenericWidget {
+public class CRMFormSubmissionUpdateJsonService extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908899L;
   private static Log LOG = LogFactory.getLog(CRMFormSubmissionUpdateJsonService.class);
 
-  public WidgetContext execute(WidgetContext context) {
+  public JsonServiceContext post(JsonServiceContext context) {
 
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      context.setJson("{\"error\":\"Permission denied\"}");
-      context.setSuccess(false);
-      return context;
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + CRMFormSubmissionUpdateJsonService.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     long submissionId = context.getParameterAsLong("id");
     String action = context.getParameter("action");
 
     if (submissionId == -1 || StringUtils.isBlank(action)) {
-      context.setJson("{\"error\":\"id and action are required\"}");
-      context.setSuccess(false);
-      return context;
+      return context.writeError("id and action are required");
     }
 
     FormData formData = FormDataRepository.findById(submissionId);
     if (formData == null) {
-      context.setJson("{\"error\":\"Submission not found\"}");
-      context.setSuccess(false);
-      return context;
+      return context.writeError("Submission not found");
     }
 
     long userId = context.getUserId();
@@ -80,9 +77,7 @@ public class CRMFormSubmissionUpdateJsonService extends GenericWidget {
     }
 
     if (!success) {
-      context.setJson("{\"error\":\"Action could not be completed\"}");
-      context.setSuccess(false);
-      return context;
+      return context.writeError("Failed to update submission status. It may have already been updated by another user.");
     }
 
     context.setJson("{\"status\":\"ok\",\"id\":" + submissionId + ",\"action\":\"" + action + "\"}");

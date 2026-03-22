@@ -20,11 +20,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.FileItem;
 import com.simisinc.platform.infrastructure.persistence.cms.FileItemRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Returns a single file's metadata for the visual document editor
@@ -32,31 +33,30 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 1/22/26 10:20 AM
  */
-public class DocumentContentAjax extends GenericWidget {
+public class DocumentContentAjax extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908893L;
   private static Log LOG = LogFactory.getLog(DocumentContentAjax.class);
 
   @Override
-  public WidgetContext execute(WidgetContext context) {
+  public JsonServiceContext get(JsonServiceContext context) {
 
     LOG.debug("DocumentContentAjax...");
 
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      context.setJson("{}");
-      return context;
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + DocumentContentAjax.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     long fileId = context.getParameterAsLong("fileId", -1);
     if (fileId == -1) {
-      context.setJson("{\"error\":\"fileId required\"}");
-      return context;
+      return context.writeError("File ID required");
     }
 
     FileItem fileItem = FileItemRepository.findById(fileId);
     if (fileItem == null) {
-      context.setJson("{\"error\":\"File not found\"}");
-      return context;
+      return context.writeError("File not found");
     }
 
     StringBuilder sb = new StringBuilder();
@@ -74,8 +74,10 @@ public class DocumentContentAjax extends GenericWidget {
     sb.append("\"versionCount\":").append(fileItem.getVersionCount()).append(",");
     sb.append("\"downloadCount\":").append(fileItem.getDownloadCount()).append(",");
     sb.append("\"summary\":\"").append(JsonCommand.toJson(StringUtils.defaultString(fileItem.getSummary()))).append("\",");
-    sb.append("\"created\":\"").append(fileItem.getCreated() != null ? JsonCommand.toJson(fileItem.getCreated().toString()) : "").append("\",");
-    sb.append("\"modified\":\"").append(fileItem.getModified() != null ? JsonCommand.toJson(fileItem.getModified().toString()) : "").append("\"");
+    sb.append("\"created\":\"").append(fileItem.getCreated() != null ? JsonCommand.toJson(fileItem.getCreated().toString()) : "")
+        .append("\",");
+    sb.append("\"modified\":\"").append(fileItem.getModified() != null ? JsonCommand.toJson(fileItem.getModified().toString()) : "")
+        .append("\"");
     sb.append("}");
 
     context.setJson(sb.toString());

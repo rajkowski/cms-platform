@@ -22,11 +22,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.cms.LoadContentListCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.Content;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Handles JSON/AJAX GET requests for /json/content/list endpoint
@@ -35,7 +36,7 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 2/7/26 3:00 PM
  */
-public class ContentListJsonService extends GenericWidget {
+public class ContentListJsonService extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908893L;
   private static Log LOG = LogFactory.getLog(ContentListJsonService.class);
@@ -46,11 +47,12 @@ public class ContentListJsonService extends GenericWidget {
    * @param context the widget context
    * @return context with JSON response
    */
-  public WidgetContext execute(WidgetContext context) {
+  public JsonServiceContext get(JsonServiceContext context) {
 
-    // Check permissions - require admin or content-manager role
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      return writeError(context, "Permission denied");
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + ContentListJsonService.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     try {
@@ -78,34 +80,34 @@ public class ContentListJsonService extends GenericWidget {
           json.append("{");
           json.append("\"id\": ").append(content.getId()).append(",");
           json.append("\"unique_id\": \"").append(JsonCommand.toJson(content.getUniqueId())).append("\",");
-          
+
           // Include modified date if available
           if (content.getModified() != null) {
             json.append("\"modified\": \"").append(JsonCommand.toJson(content.getModified().toString())).append("\",");
           }
-          
+
           // Indicate if draft exists
           boolean hasDraft = StringUtils.isNotBlank(content.getDraftContent());
           json.append("\"draft_content\": ").append(hasDraft).append(",");
-          
+
           // Include highlight if available (from search)
           if (StringUtils.isNotBlank(content.getHighlight())) {
             json.append("\"highlight\": \"").append(JsonCommand.toJson(content.getHighlight())).append("\",");
           }
-          
+
           // Include preview of content (first 160 chars)
           String preview = "";
           if (StringUtils.isNotBlank(content.getContent())) {
-            preview = content.getContent().length() > 160 
-                ? content.getContent().substring(0, 160) + "..." 
+            preview = content.getContent().length() > 160
+                ? content.getContent().substring(0, 160) + "..."
                 : content.getContent();
             preview = preview.replaceAll("<[^>]*>", "");
           }
           json.append("\"content\": \"").append(JsonCommand.toJson(preview)).append("\"");
-          
+
           json.append("}");
         }
-        
+
         // Check if there are more results
         boolean hasMore = contentList.size() >= limit;
         json.append("]");
@@ -115,7 +117,7 @@ public class ContentListJsonService extends GenericWidget {
         meta.append("\"limit\": ").append(limit).append(",");
         meta.append("\"hasMore\": ").append(hasMore);
         meta.append("}");
-        return writeOk(context, json.toString(), meta.toString());
+        return context.writeOk(json.toString(), meta.toString());
       } else {
         json.append("]");
         StringBuilder meta = new StringBuilder();
@@ -124,34 +126,13 @@ public class ContentListJsonService extends GenericWidget {
         meta.append("\"limit\": ").append(limit).append(",");
         meta.append("\"hasMore\": false");
         meta.append("}");
-        return writeOk(context, json.toString(), meta.toString());
+        return context.writeOk(json.toString(), meta.toString());
       }
 
     } catch (Exception e) {
       LOG.error("Error loading content list: " + e.getMessage(), e);
-      return writeError(context, e.getMessage());
+      return context.writeError(e.getMessage());
     }
-  }
-
-  private WidgetContext writeOk(WidgetContext context, String dataJson, String metaJson) {
-    StringBuilder json = new StringBuilder();
-    json.append("{");
-    json.append("\"status\":\"ok\"");
-    if (dataJson != null) {
-      json.append(",\"data\":").append(dataJson);
-    }
-    if (metaJson != null) {
-      json.append(",\"meta\":").append(metaJson);
-    }
-    json.append("}");
-    context.setJson(json.toString());
-    return context;
-  }
-
-  private WidgetContext writeError(WidgetContext context, String message) {
-    context.setJson("{\"status\":\"error\",\"error\":\"" + JsonCommand.toJson(StringUtils.defaultString(message)) + "\"}");
-    context.setSuccess(false);
-    return context;
   }
 
 }

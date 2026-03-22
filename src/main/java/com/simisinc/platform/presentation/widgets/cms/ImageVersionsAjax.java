@@ -22,11 +22,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.ImageVersion;
 import com.simisinc.platform.infrastructure.persistence.cms.ImageVersionRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Returns image version history for the visual image editor
@@ -34,27 +35,26 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 1/31/26 9:40 AM
  */
-public class ImageVersionsAjax extends GenericWidget {
+public class ImageVersionsAjax extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908896L;
   private static Log LOG = LogFactory.getLog(ImageVersionsAjax.class);
 
   @Override
-  public WidgetContext execute(WidgetContext context) {
+  public JsonServiceContext get(JsonServiceContext context) {
 
     LOG.debug("ImageVersionsAjax...");
 
     // Restrict access to editors
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      context.setJson("{\"versions\":[]}");
-      return context;
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + ImageVersionsAjax.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     long imageId = context.getParameterAsLong("imageId", -1);
     if (imageId == -1) {
-      context.setJson("{\"success\": false, \"error\": \"Image 'ID' required\"}");
-      context.setSuccess(false);
-      return context;
+      return context.writeError("Image ID required");
     }
 
     // Query versions

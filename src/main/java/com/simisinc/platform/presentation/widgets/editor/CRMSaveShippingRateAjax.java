@@ -24,14 +24,15 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.ecommerce.SaveShippingRateCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.ecommerce.ShippingMethod;
 import com.simisinc.platform.domain.model.ecommerce.ShippingRate;
 import com.simisinc.platform.infrastructure.persistence.ecommerce.ShippingMethodRepository;
 import com.simisinc.platform.infrastructure.persistence.ecommerce.ShippingRateRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * JSON service to save (create/update) a shipping rate from the CRM editor
@@ -39,18 +40,18 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 2026-02-27
  */
-public class CRMSaveShippingRateAjax extends GenericWidget {
+public class CRMSaveShippingRateAjax extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908886L;
   private static Log LOG = LogFactory.getLog(CRMSaveShippingRateAjax.class);
 
   // GET: return available shipping methods for the modal
-  public WidgetContext execute(WidgetContext context) {
+  public JsonServiceContext get(JsonServiceContext context) {
 
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      context.setJson("{\"error\":\"Permission denied\"}");
-      context.setSuccess(false);
-      return context;
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + CRMSaveShippingRateAjax.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     List<ShippingMethod> methods = ShippingMethodRepository.findAll();
@@ -60,7 +61,8 @@ public class CRMSaveShippingRateAjax extends GenericWidget {
     boolean first = true;
     if (methods != null) {
       for (ShippingMethod m : methods) {
-        if (!first) sb.append(",");
+        if (!first)
+          sb.append(",");
         first = false;
         sb.append("{\"id\":").append(m.getId()).append(",");
         sb.append("\"title\":\"").append(JsonCommand.toJson(m.getTitle())).append("\",");
@@ -73,12 +75,12 @@ public class CRMSaveShippingRateAjax extends GenericWidget {
     return context;
   }
 
-  public WidgetContext post(WidgetContext context) {
+  public JsonServiceContext post(JsonServiceContext context) {
 
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      context.setJson("{\"success\":false,\"message\":\"Permission denied\"}");
-      context.setSuccess(false);
-      return context;
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + CRMSaveShippingRateAjax.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     long id = context.getParameterAsLong("id", -1L);
@@ -96,9 +98,7 @@ public class CRMSaveShippingRateAjax extends GenericWidget {
       if (id > -1) {
         rateBean = ShippingRateRepository.findById(id);
         if (rateBean == null) {
-          context.setJson("{\"success\":false,\"message\":\"Shipping rate not found\"}");
-          context.setSuccess(false);
-          return context;
+          return context.writeError("Shipping rate not found");
         }
       } else {
         rateBean = new ShippingRate();
@@ -148,7 +148,8 @@ public class CRMSaveShippingRateAjax extends GenericWidget {
       sb.append("\"message\":\"Shipping rate saved\",");
       sb.append("\"rate\":{");
       sb.append("\"id\":").append(saved.getId()).append(",");
-      sb.append("\"countryCode\":\"").append(JsonCommand.toJson(saved.getCountryCode() != null ? saved.getCountryCode() : "")).append("\",");
+      sb.append("\"countryCode\":\"").append(JsonCommand.toJson(saved.getCountryCode() != null ? saved.getCountryCode() : ""))
+          .append("\",");
       sb.append("\"region\":\"").append(JsonCommand.toJson(saved.getRegion() != null ? saved.getRegion() : "")).append("\"");
       sb.append("}}");
 
@@ -157,14 +158,10 @@ public class CRMSaveShippingRateAjax extends GenericWidget {
 
     } catch (DataException de) {
       LOG.error("DataException", de);
-      context.setJson("{\"success\":false,\"message\":\"" + JsonCommand.toJson(de.getMessage()) + "\"}");
-      context.setSuccess(false);
-      return context;
+      return context.writeError("" + de.getMessage());
     } catch (Exception e) {
       LOG.error("Exception", e);
-      context.setJson("{\"success\":false,\"message\":\"An error occurred\"}");
-      context.setSuccess(false);
-      return context;
+      return context.writeError("An error occurred");
     }
   }
 }

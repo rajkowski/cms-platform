@@ -20,6 +20,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.cms.UrlCommand;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
@@ -41,8 +42,8 @@ public class VisualWorkflowEditorWidget extends GenericWidget {
   public WidgetContext execute(WidgetContext context) {
 
     // Check permissions
-    if (!context.hasRole("admin")) {
-      LOG.debug("No permission to access workflow editor");
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + VisualWorkflowEditorWidget.class.getSimpleName());
       return context;
     }
 

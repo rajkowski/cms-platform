@@ -20,13 +20,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.Stylesheet;
 import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.infrastructure.persistence.cms.StylesheetRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Saves a web page's stylesheet/CSS from the visual page editor CSS tab
@@ -35,21 +36,19 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 1/10/26 10:00 AM
  */
-public class SaveStylesheetAjax extends GenericWidget {
+public class SaveStylesheetAjax extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908897L;
   private static Log LOG = LogFactory.getLog(SaveStylesheetAjax.class);
 
-  public WidgetContext post(WidgetContext context) {
+  public JsonServiceContext post(JsonServiceContext context) {
 
     LOG.debug("SaveStylesheetAjax...");
 
-    // Check permissions: only allow content editors and admins
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      LOG.debug("No permission to save stylesheet");
-      context.setJson("{\"success\":false,\"message\":\"Permission denied\"}");
-      context.setSuccess(false);
-      return context;
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + SaveStylesheetAjax.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     // Determine the page link
@@ -57,18 +56,14 @@ public class SaveStylesheetAjax extends GenericWidget {
     LOG.debug("Saving stylesheet for: " + webPageLink);
     if (StringUtils.isBlank(webPageLink)) {
       LOG.debug("Page link is empty");
-      context.setJson("{\"success\":false,\"message\":\"Page link is required\"}");
-      context.setSuccess(false);
-      return context;
+      return context.writeError("Link is required");
     }
 
     // Retrieve the existing web page
     WebPage page = WebPageRepository.findByLink(webPageLink);
     if (page == null) {
       LOG.debug("Web page not found for link: " + webPageLink);
-      context.setJson("{\"success\":false,\"message\":\"Page not found\"}");
-      context.setSuccess(false);
-      return context;
+      return context.writeError("Page not found");
     }
 
     // Get the CSS content from the request
@@ -103,6 +98,7 @@ public class SaveStylesheetAjax extends GenericWidget {
         sb.append("}");
         context.setJson(sb.toString());
         LOG.debug("Stylesheet saved successfully for page: " + webPageLink);
+        return context;
       } else {
         // If CSS was blank and stylesheet was removed, that's still a success
         if (StringUtils.isBlank(css)) {
@@ -116,23 +112,14 @@ public class SaveStylesheetAjax extends GenericWidget {
           sb.append("}");
           context.setJson(sb.toString());
           LOG.debug("Stylesheet removed for page: " + webPageLink);
+          return context;
         } else {
-          context.setJson("{\"success\":false,\"message\":\"Failed to save stylesheet\"}");
-          context.setSuccess(false);
-          LOG.debug("Save returned null for page: " + webPageLink);
+          return context.writeError("Failed to save stylesheet");
         }
       }
     } catch (Exception e) {
       LOG.error("Error saving stylesheet: " + e.getMessage(), e);
-      StringBuilder sb = new StringBuilder();
-      sb.append("{");
-      sb.append("\"success\":false,");
-      sb.append("\"message\":\"").append(JsonCommand.toJson("Error saving stylesheet: " + e.getMessage())).append("\"");
-      sb.append("}");
-      context.setJson(sb.toString());
-      context.setSuccess(false);
+      return context.writeError("Error saving stylesheet: " + e.getMessage());
     }
-
-    return context;
   }
 }

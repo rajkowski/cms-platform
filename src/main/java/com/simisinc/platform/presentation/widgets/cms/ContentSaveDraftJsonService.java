@@ -23,6 +23,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.cms.SaveContentCommand;
 import com.simisinc.platform.application.cms.TinyMceCommand;
 import com.simisinc.platform.application.json.JsonCommand;
@@ -30,8 +31,8 @@ import com.simisinc.platform.domain.model.cms.Content;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.cms.ContentRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.ContentSpecification;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Handles JSON/AJAX POST requests for /json/content/save-draft endpoint
@@ -40,7 +41,7 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 2/7/26 3:00 PM
  */
-public class ContentSaveDraftJsonService extends GenericWidget {
+public class ContentSaveDraftJsonService extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908893L;
   private static Log LOG = LogFactory.getLog(ContentSaveDraftJsonService.class);
@@ -48,14 +49,15 @@ public class ContentSaveDraftJsonService extends GenericWidget {
   /**
    * Handles POST requests to save content as draft
    *
-   * @param context the widget context
+   * @param context the JSON service context
    * @return context with JSON response
    */
-  public WidgetContext post(WidgetContext context) {
+  public JsonServiceContext post(JsonServiceContext context) {
 
-    // Check permissions - require admin or content-manager role
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      return writeError(context, "Permission denied");
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + ContentSaveDraftJsonService.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     try {
@@ -75,13 +77,13 @@ public class ContentSaveDraftJsonService extends GenericWidget {
       Content contentBean = loadContentByIdOrUniqueId(contentId, uniqueId);
       if (contentBean == null) {
         if (StringUtils.isBlank(uniqueId)) {
-          return writeError(context, "Content uniqueId is required");
+          return context.writeError("Content uniqueId is required");
         }
         contentBean = new Content();
         contentBean.setUniqueId(uniqueId);
         contentBean.setCreatedBy(context.getUserId());
       }
-      
+
       contentBean.setDraftContent(contentHtml);
       contentBean.setModifiedBy(context.getUserId());
 
@@ -89,7 +91,7 @@ public class ContentSaveDraftJsonService extends GenericWidget {
       Content savedContent = SaveContentCommand.saveContent(contentBean, true);
 
       if (savedContent == null) {
-        return writeError(context, "Failed to save draft");
+        return context.writeError("Failed to save draft");
       }
 
       // Build success response
@@ -103,14 +105,14 @@ public class ContentSaveDraftJsonService extends GenericWidget {
       }
       json.append("}");
 
-      return writeOk(context, json.toString(), null);
+      return context.writeOk(json.toString(), null);
 
     } catch (DataException e) {
       LOG.warn("Validation error saving draft: " + e.getMessage());
-      return writeError(context, e.getMessage());
+      return context.writeError(e.getMessage());
     } catch (Exception e) {
       LOG.error("Error saving draft: " + e.getMessage(), e);
-      return writeError(context, "An unexpected error occurred while saving draft");
+      return context.writeError("An unexpected error occurred while saving draft");
     }
   }
 
@@ -128,27 +130,6 @@ public class ContentSaveDraftJsonService extends GenericWidget {
       return ContentRepository.findByUniqueId(uniqueId);
     }
     return null;
-  }
-
-  private WidgetContext writeOk(WidgetContext context, String dataJson, String metaJson) {
-    StringBuilder json = new StringBuilder();
-    json.append("{");
-    json.append("\"status\":\"ok\"");
-    if (dataJson != null) {
-      json.append(",\"data\":").append(dataJson);
-    }
-    if (metaJson != null) {
-      json.append(",\"meta\":").append(metaJson);
-    }
-    json.append("}");
-    context.setJson(json.toString());
-    return context;
-  }
-
-  private WidgetContext writeError(WidgetContext context, String message) {
-    context.setJson("{\"status\":\"error\",\"error\":\"" + JsonCommand.toJson(StringUtils.defaultString(message)) + "\"}");
-    context.setSuccess(false);
-    return context;
   }
 
 }

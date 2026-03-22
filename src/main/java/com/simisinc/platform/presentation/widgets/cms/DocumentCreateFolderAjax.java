@@ -20,37 +20,36 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.cms.SaveFolderCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.Folder;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Creates a new folder for the visual document editor
  */
-public class DocumentCreateFolderAjax extends GenericWidget {
+public class DocumentCreateFolderAjax extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908897L;
   private static Log LOG = LogFactory.getLog(DocumentCreateFolderAjax.class);
 
   @Override
-  public WidgetContext post(WidgetContext context) {
+  public JsonServiceContext post(JsonServiceContext context) {
 
     LOG.debug("DocumentCreateFolderAjax...");
 
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      context.setJson("{\"success\":false,\"message\":\"Permission denied\"}");
-      context.setSuccess(false);
-      return context;
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + DocumentCreateFolderAjax.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     String name = context.getParameter("name");
 
     if (StringUtils.isBlank(name)) {
-      context.setJson("{\"success\":false,\"message\":\"Folder name is required\"}");
-      context.setSuccess(false);
-      return context;
+      return context.writeError("Folder name is required");
     }
 
     Folder folderBean = new Folder();

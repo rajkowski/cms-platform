@@ -22,12 +22,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.CalendarEvent;
 import com.simisinc.platform.infrastructure.persistence.cms.CalendarEventRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.CalendarEventSpecification;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Handles JSON/AJAX GET requests for /json/calendars/events endpoint
@@ -36,7 +37,7 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 2/7/26 3:00 PM
  */
-public class CalendarsEventsJsonService extends GenericWidget {
+public class CalendarsEventsJsonService extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908893L;
   private static Log LOG = LogFactory.getLog(CalendarsEventsJsonService.class);
@@ -47,11 +48,11 @@ public class CalendarsEventsJsonService extends GenericWidget {
    * @param context the widget context
    * @return context with JSON response
    */
-  public WidgetContext execute(WidgetContext context) {
+  public JsonServiceContext get(JsonServiceContext context) {
 
-    // Check permissions - require admin or content-manager role
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      // Return empty array on permission denied for FullCalendar
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + CalendarsEventsJsonService.class.getSimpleName());
       context.setJson("[]");
       return context;
     }
@@ -59,7 +60,7 @@ public class CalendarsEventsJsonService extends GenericWidget {
     try {
       // Get comma-separated calendar IDs
       String calendarIdsParam = context.getParameter("calendarIds");
-      
+
       if (StringUtils.isBlank(calendarIdsParam)) {
         // Return empty array for FullCalendar
         context.setJson("[]");
@@ -83,13 +84,14 @@ public class CalendarsEventsJsonService extends GenericWidget {
 
       boolean first = true;
       for (long calendarId : calendarIds) {
-        if (calendarId <= 0) continue;
-        
+        if (calendarId <= 0)
+          continue;
+
         // Load events for this calendar using CalendarEventSpecification
         CalendarEventSpecification spec = new CalendarEventSpecification();
         spec.setCalendarId(calendarId);
         List<CalendarEvent> events = CalendarEventRepository.findAll(spec, null);
-        
+
         if (events != null && !events.isEmpty()) {
           for (CalendarEvent event : events) {
             if (!first) {
@@ -101,7 +103,7 @@ public class CalendarsEventsJsonService extends GenericWidget {
             json.append("\"id\": ").append(event.getId()).append(",");
             json.append("\"title\": \"").append(JsonCommand.toJson(event.getTitle())).append("\",");
             json.append("\"calendarId\": ").append(calendarId).append(",");
-            
+
             if (event.getStartDate() != null) {
               json.append("\"startDate\": \"").append(JsonCommand.toJson(event.getStartDate().toString())).append("\",");
             } else {
@@ -113,7 +115,7 @@ public class CalendarsEventsJsonService extends GenericWidget {
               json.append("\"endDate\": \"\",");
             }
             json.append("\"description\": \"").append(JsonCommand.toJson(StringUtils.defaultString(event.getSummary()))).append("\"");
-            
+
             json.append("}");
           }
         }

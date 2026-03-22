@@ -20,13 +20,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.cms.SaveMenuTabCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.MenuTab;
 import com.simisinc.platform.infrastructure.cache.CacheManager;
 import com.simisinc.platform.infrastructure.persistence.cms.MenuTabRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Handles JSON/AJAX POST requests for /json/sitemap/update-tab endpoint
@@ -35,7 +36,7 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 2/12/26 9:00 PM
  */
-public class SitemapUpdateTabJsonService extends GenericWidget {
+public class SitemapUpdateTabJsonService extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908897L;
   private static Log LOG = LogFactory.getLog(SitemapUpdateTabJsonService.class);
@@ -47,11 +48,12 @@ public class SitemapUpdateTabJsonService extends GenericWidget {
    * @return context with JSON response
    */
   @Override
-  public WidgetContext post(WidgetContext context) {
+  public JsonServiceContext post(JsonServiceContext context) {
 
-    // Check permissions - require admin or content-manager role
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      return writeError(context, "Permission denied");
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + SitemapUpdateTabJsonService.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     try {
@@ -59,18 +61,18 @@ public class SitemapUpdateTabJsonService extends GenericWidget {
       long tabId = context.getParameterAsLong("tabId", -1);
 
       if (tabId == -1) {
-        return writeError(context, "Tab ID is required");
+        return context.writeError("Tab ID is required");
       }
 
       // Load the menu tab
       MenuTab menuTab = MenuTabRepository.findById(tabId);
       if (menuTab == null) {
-        return writeError(context, "Menu tab not found");
+        return context.writeError("Menu tab not found");
       }
 
       // Prevent updating the home tab
       if (MenuTabRepository.findAll().get(0).getId() == tabId && "/".equals(menuTab.getLink())) {
-        return writeError(context, "Cannot update the home tab");
+        return context.writeError("Cannot update the home tab");
       }
 
       // Get and validate update parameters
@@ -111,32 +113,11 @@ public class SitemapUpdateTabJsonService extends GenericWidget {
       }
       json.append("}");
 
-      return writeOk(context, json.toString(), null);
+      return context.writeOk(json.toString(), null);
 
     } catch (Exception e) {
       LOG.error("Error updating menu tab: " + e.getMessage(), e);
-      return writeError(context, e.getMessage());
+      return context.writeError(e.getMessage());
     }
-  }
-
-  private WidgetContext writeOk(WidgetContext context, String dataJson, String metaJson) {
-    StringBuilder json = new StringBuilder();
-    json.append("{");
-    json.append("\"status\":\"ok\"");
-    if (dataJson != null) {
-      json.append(",\"data\":").append(dataJson);
-    }
-    if (metaJson != null) {
-      json.append(",\"meta\":").append(metaJson);
-    }
-    json.append("}");
-    context.setJson(json.toString());
-    return context;
-  }
-
-  private WidgetContext writeError(WidgetContext context, String message) {
-    context.setJson("{\"status\":\"error\",\"error\":\"" + JsonCommand.toJson(StringUtils.defaultString(message)) + "\"}");
-    context.setSuccess(false);
-    return context;
   }
 }
