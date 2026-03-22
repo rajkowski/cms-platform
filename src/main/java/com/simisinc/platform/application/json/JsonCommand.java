@@ -32,7 +32,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * Functinos for working with JSON data
+ * Functions for working with JSON data
  *
  * @author matt rajkowski
  * @created 9/9/19 10:47 AM

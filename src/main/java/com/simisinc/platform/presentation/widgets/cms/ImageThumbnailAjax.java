@@ -20,12 +20,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.cms.GenerateThumbnailCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.Image;
 import com.simisinc.platform.infrastructure.persistence.cms.ImageRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Generates a thumbnail for an image
@@ -33,36 +34,33 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 1/31/26 4:45 PM
  */
-public class ImageThumbnailAjax extends GenericWidget {
+public class ImageThumbnailAjax extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908894L;
   private static Log LOG = LogFactory.getLog(ImageThumbnailAjax.class);
 
-  public WidgetContext post(WidgetContext context) {
+  public JsonServiceContext post(JsonServiceContext context) {
 
     LOG.debug("ImageThumbnailAjax...");
 
     // Check permissions
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      LOG.warn("User does not have permission to generate thumbnails");
-      context.setJson("{\"status\":\"error\",\"message\":\"Permission denied\"}");
-      return context;
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + ImageThumbnailAjax.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     // Get the image ID
     long imageId = context.getParameterAsLong("imageId", -1);
     if (imageId == -1) {
       LOG.warn("Image ID not provided");
-      context.setJson("{\"status\":\"error\",\"message\":\"Image ID is required\"}");
-      return context;
+      return context.writeError("Image ID required");
     }
 
     // Load the image
     Image image = ImageRepository.findById(imageId);
     if (image == null) {
       LOG.warn("Image not found: " + imageId);
-      context.setJson("{\"status\":\"error\",\"message\":\"Image not found\"}");
-      return context;
+      return context.writeError("Image not found");
     }
 
     try {
@@ -92,7 +90,7 @@ public class ImageThumbnailAjax extends GenericWidget {
 
     } catch (DataException e) {
       LOG.error("Error generating thumbnail for image " + imageId, e);
-      context.setJson("{\"status\":\"error\",\"message\":\"" + JsonCommand.toJson(e.getMessage()) + "\"}");
+      return context.writeError("Failed to generate thumbnail: " + e.getMessage());
     }
 
     return context;

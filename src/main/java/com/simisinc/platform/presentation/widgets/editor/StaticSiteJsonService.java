@@ -27,13 +27,14 @@ import javax.servlet.http.HttpServletResponse;
 import org.jobrunr.scheduling.BackgroundJobRequest;
 
 import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.cms.LoadGitPublishSettingsCommand;
 import com.simisinc.platform.application.cms.MakeStaticSiteCommand;
 import com.simisinc.platform.application.cms.SaveGitPublishSettingsCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.GitPublishSettings;
 import com.simisinc.platform.infrastructure.scheduler.cms.MakeStaticSiteJob;
-import com.simisinc.platform.presentation.controller.WidgetContext;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
 
 /**
@@ -42,27 +43,19 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 1/19/26 10:00 AM
  */
-public class StaticSiteEndpoint extends GenericWidget {
+public class StaticSiteJsonService extends GenericWidget {
 
   private static final String STATIC_SITE_PATH = "/web/static-sites"; // Path within the container
 
-  /** The default GET, not used */
-  public WidgetContext execute(WidgetContext context) {
-    LOG.debug("StaticSiteEndpoint Execute...");
-    return context;
-  }
-
   /** The action handler which takes an 'action' parameter */
-  public WidgetContext action(WidgetContext context) {
+  public JsonServiceContext action(JsonServiceContext context) {
 
-    LOG.debug("StaticSiteEndpoint Action...");
+    LOG.debug("StaticSiteJsonService Action...");
 
-    // Check permissions: only allow content editors and admins
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      LOG.debug("No permission to: " + StaticSiteEndpoint.class.getSimpleName());
-      context.setJson("{\"success\":false,\"message\":\"Permission denied\"}");
-      context.setSuccess(false);
-      return context;
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + StaticSiteJsonService.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     // Determine the action
@@ -82,22 +75,20 @@ public class StaticSiteEndpoint extends GenericWidget {
       LOG.error("Unknown action: " + action);
       return null;
     } catch (Exception e) {
-      LOG.error("Error in StaticSiteEndpoint", e);
+      LOG.error("Error in StaticSiteJsonService", e);
       return null;
     }
   }
 
   /** Handles POST requests for static site generation and deletion */
-  public WidgetContext post(WidgetContext context) throws InvocationTargetException, IllegalAccessException {
+  public JsonServiceContext post(JsonServiceContext context) throws InvocationTargetException, IllegalAccessException {
 
-    LOG.debug("StaticSiteEndpoint POST...");
+    LOG.debug("StaticSiteJsonService POST...");
 
-    // Check permissions: only allow content editors and admins
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      LOG.debug("No permission to: " + StaticSiteEndpoint.class.getSimpleName());
-      context.setJson("{\"success\":false,\"message\":\"Permission denied\"}");
-      context.setSuccess(false);
-      return context;
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + StaticSiteJsonService.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     // Determine the action
@@ -111,13 +102,13 @@ public class StaticSiteEndpoint extends GenericWidget {
         return saveGitSettings(context);
       }
     } catch (IOException e) {
-      LOG.error("Error in StaticSiteEndpoint", e);
+      LOG.error("Error in StaticSiteJsonService", e);
     }
     return null;
   }
 
   /** List the previous static site files */
-  private WidgetContext list(WidgetContext context) throws IOException {
+  private JsonServiceContext list(JsonServiceContext context) throws IOException {
 
     // @todo the generator stores files in the fileLibrary, and records those in a database table
     // Read from there instead of the static site directory
@@ -153,7 +144,7 @@ public class StaticSiteEndpoint extends GenericWidget {
   }
 
   /** Generate the static site */
-  private WidgetContext generate(WidgetContext context) throws IOException {
+  private JsonServiceContext generate(JsonServiceContext context) throws IOException {
     if (MakeStaticSiteCommand.isJobRunning()) {
       LOG.debug("A static site generation is already in progress.");
       sendErrorResponse(context.getResponse(), "A static site generation is already in progress.");
@@ -167,7 +158,7 @@ public class StaticSiteEndpoint extends GenericWidget {
     return context;
   }
 
-  public WidgetContext delete(WidgetContext context) {
+  public JsonServiceContext delete(JsonServiceContext context) {
     LOG.debug("Deleting static site file...");
 
     // @todo the generator stores files in the fileLibrary, and records those in a database table
@@ -205,7 +196,7 @@ public class StaticSiteEndpoint extends GenericWidget {
   }
 
   /** Download a static site file */
-  private WidgetContext download(WidgetContext context) throws IOException {
+  private JsonServiceContext download(JsonServiceContext context) throws IOException {
 
     HttpServletResponse response = context.getResponse();
     response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, "Not implemented.");
@@ -249,7 +240,7 @@ public class StaticSiteEndpoint extends GenericWidget {
   }
 
   /** Get Git publish settings */
-  private WidgetContext getGitSettings(WidgetContext context) throws IOException {
+  private JsonServiceContext getGitSettings(JsonServiceContext context) throws IOException {
     LOG.debug("Getting Git publish settings...");
 
     GitPublishSettings settings = LoadGitPublishSettingsCommand.loadSettings();
@@ -289,7 +280,7 @@ public class StaticSiteEndpoint extends GenericWidget {
   }
 
   /** Save Git publish settings */
-  private WidgetContext saveGitSettings(WidgetContext context) throws IOException {
+  private JsonServiceContext saveGitSettings(JsonServiceContext context) throws IOException {
     LOG.debug("Saving Git publish settings...");
 
     try {

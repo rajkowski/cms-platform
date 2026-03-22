@@ -19,11 +19,10 @@ package com.simisinc.platform.presentation.widgets.cms;
 import java.sql.Connection;
 import java.sql.Timestamp;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.application.json.JsonCommand;
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.domain.model.cms.WebPageHierarchy;
 import com.simisinc.platform.infrastructure.database.AutoRollback;
@@ -31,8 +30,8 @@ import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
 import com.simisinc.platform.infrastructure.database.DB;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageHierarchyRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Handles JSON/AJAX POST requests for /json/pages/reorder endpoint
@@ -41,7 +40,7 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 2/7/26 3:00 PM
  */
-public class PageReorderJsonService extends GenericWidget {
+public class PageReorderJsonService extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908893L;
   private static Log LOG = LogFactory.getLog(PageReorderJsonService.class);
@@ -52,11 +51,12 @@ public class PageReorderJsonService extends GenericWidget {
    * @param context the widget context
    * @return context with JSON response
    */
-  public WidgetContext post(WidgetContext context) {
+  public JsonServiceContext post(JsonServiceContext context) {
 
-    // Check permissions - require admin or content-manager role
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      return writeError(context, "Permission denied");
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + PageReorderJsonService.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     try {
@@ -65,13 +65,13 @@ public class PageReorderJsonService extends GenericWidget {
       String position = context.getParameter("position"); // 'before', 'after', 'inside'
 
       if (pageId == -1) {
-        return writeError(context, "Page ID is required");
+        return context.writeError("Page ID is required");
       }
 
       // Load the page
       WebPage page = WebPageRepository.findById(pageId);
       if (page == null) {
-        return writeError(context, "Page not found");
+        return context.writeError("Page not found");
       }
 
       Long newParentId = null;
@@ -85,7 +85,7 @@ public class PageReorderJsonService extends GenericWidget {
 
         WebPageHierarchy currentRecord = WebPageHierarchyRepository.findByPageId(connection, pageId);
         if (currentRecord == null) {
-          return writeError(context, "Page hierarchy record not found");
+          return context.writeError("Page hierarchy record not found");
         }
 
         oldPath = currentRecord.getPath();
@@ -96,10 +96,11 @@ public class PageReorderJsonService extends GenericWidget {
           newParentId = targetPageId;
           WebPageHierarchy targetRecord = WebPageHierarchyRepository.findByPageId(connection, targetPageId);
           if (targetRecord == null) {
-            return writeError(context, "Target page not found in hierarchy");
+            return context.writeError("Target page not found in hierarchy");
           }
-          if (targetRecord.getPath() != null && currentRecord.getPath() != null && targetRecord.getPath().startsWith(currentRecord.getPath())) {
-            return writeError(context, "Cannot move a page beneath its own descendant");
+          if (targetRecord.getPath() != null && currentRecord.getPath() != null
+              && targetRecord.getPath().startsWith(currentRecord.getPath())) {
+            return context.writeError("Cannot move a page beneath its own descendant");
           }
           newSortOrder = WebPageHierarchyRepository.getNextSortOrder(connection, newParentId);
           newDepth = targetRecord.getDepth() + 1;
@@ -107,11 +108,11 @@ public class PageReorderJsonService extends GenericWidget {
           // Insert before or after the target as sibling
           WebPageHierarchy targetRecord = WebPageHierarchyRepository.findByPageId(connection, targetPageId);
           if (targetRecord == null) {
-            return writeError(context, "Target page not found in hierarchy");
+            return context.writeError("Target page not found in hierarchy");
           }
           newParentId = targetRecord.getParentPageId();
           newDepth = targetRecord.getDepth();
-          
+
           // Shift sort orders to make space
           if ("before".equals(position)) {
             newSortOrder = targetRecord.getSortOrder();
@@ -125,10 +126,11 @@ public class PageReorderJsonService extends GenericWidget {
           newParentId = targetPageId;
           WebPageHierarchy targetRecord = WebPageHierarchyRepository.findByPageId(connection, targetPageId);
           if (targetRecord == null) {
-            return writeError(context, "Target page not found in hierarchy");
+            return context.writeError("Target page not found in hierarchy");
           }
-          if (targetRecord.getPath() != null && currentRecord.getPath() != null && targetRecord.getPath().startsWith(currentRecord.getPath())) {
-            return writeError(context, "Cannot move a page beneath its own descendant");
+          if (targetRecord.getPath() != null && currentRecord.getPath() != null
+              && targetRecord.getPath().startsWith(currentRecord.getPath())) {
+            return context.writeError("Cannot move a page beneath its own descendant");
           }
           newSortOrder = WebPageHierarchyRepository.getNextSortOrder(connection, newParentId);
           newDepth = targetRecord.getDepth() + 1;
@@ -138,7 +140,7 @@ public class PageReorderJsonService extends GenericWidget {
           newSortOrder = WebPageHierarchyRepository.getNextSortOrder(connection, null);
           newDepth = 0;
         } else {
-          return writeError(context, "Invalid target page ID");
+          return context.writeError("Invalid target page ID");
         }
 
         String parentPath = "/";
@@ -158,7 +160,7 @@ public class PageReorderJsonService extends GenericWidget {
 
         WebPageHierarchy updatedRecord = WebPageHierarchyRepository.save(connection, currentRecord);
         if (updatedRecord == null) {
-          return writeError(context, "Failed to update page hierarchy");
+          return context.writeError("Failed to update page hierarchy");
         }
 
         if (oldPath != null && !oldPath.equals(newPath)) {
@@ -179,33 +181,12 @@ public class PageReorderJsonService extends GenericWidget {
       json.append("\"message\": \"Page reordered successfully\"");
       json.append("}");
 
-      return writeOk(context, json.toString(), null);
+      return context.writeOk(json.toString(), null);
 
     } catch (Exception e) {
       LOG.error("Error reordering page: " + e.getMessage(), e);
-      return writeError(context, "An unexpected error occurred");
+      return context.writeError("An unexpected error occurred");
     }
-  }
-
-  private WidgetContext writeOk(WidgetContext context, String dataJson, String metaJson) {
-    StringBuilder json = new StringBuilder();
-    json.append("{");
-    json.append("\"status\":\"ok\"");
-    if (dataJson != null) {
-      json.append(",\"data\":").append(dataJson);
-    }
-    if (metaJson != null) {
-      json.append(",\"meta\":").append(metaJson);
-    }
-    json.append("}");
-    context.setJson(json.toString());
-    return context;
-  }
-
-  private WidgetContext writeError(WidgetContext context, String message) {
-    context.setJson("{\"status\":\"error\",\"error\":\"" + JsonCommand.toJson(StringUtils.defaultString(message)) + "\"}");
-    context.setSuccess(false);
-    return context;
   }
 
 }

@@ -21,11 +21,12 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.mailinglists.MailingList;
 import com.simisinc.platform.infrastructure.persistence.mailinglists.MailingListRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * JSON service to list all mailing lists with member counts
@@ -33,17 +34,17 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 2026-02-27
  */
-public class CRMMailingListsJsonService extends GenericWidget {
+public class CRMMailingListsJsonService extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908900L;
   private static Log LOG = LogFactory.getLog(CRMMailingListsJsonService.class);
 
-  public WidgetContext execute(WidgetContext context) {
+  public JsonServiceContext get(JsonServiceContext context) {
 
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      context.setJson("{\"error\":\"Permission denied\"}");
-      context.setSuccess(false);
-      return context;
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + CRMMailingListsJsonService.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     List<MailingList> mailingLists = MailingListRepository.findAll();
@@ -60,7 +61,8 @@ public class CRMMailingListsJsonService extends GenericWidget {
       sb.append("\"id\":").append(list.getId()).append(",");
       sb.append("\"name\":\"").append(JsonCommand.toJson(list.getName())).append("\",");
       sb.append("\"title\":\"").append(JsonCommand.toJson(list.getTitle() != null ? list.getTitle() : "")).append("\",");
-      sb.append("\"description\":\"").append(JsonCommand.toJson(list.getDescription() != null ? list.getDescription() : "")).append("\",");
+      sb.append("\"description\":\"").append(JsonCommand.toJson(list.getDescription() != null ? list.getDescription() : ""))
+          .append("\",");
       sb.append("\"memberCount\":").append(list.getMemberCount()).append(",");
       sb.append("\"enabled\":").append(list.getEnabled()).append(",");
       sb.append("\"showOnline\":").append(list.getShowOnline());

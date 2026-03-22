@@ -22,14 +22,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.application.json.JsonCommand;
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.domain.model.cms.WebPageHierarchy;
 import com.simisinc.platform.infrastructure.database.AutoRollback;
 import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
 import com.simisinc.platform.infrastructure.database.DB;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageHierarchyRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Handles JSON/AJAX POST requests for /json/pages/remove-from-hierarchy endpoint
@@ -38,7 +38,7 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 2/7/26 5:00 PM
  */
-public class PageRemoveFromHierarchyJsonService extends GenericWidget {
+public class PageRemoveFromHierarchyJsonService extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908893L;
   private static Log LOG = LogFactory.getLog(PageRemoveFromHierarchyJsonService.class);
@@ -49,17 +49,18 @@ public class PageRemoveFromHierarchyJsonService extends GenericWidget {
    * @param context the widget context
    * @return context with JSON response
    */
-  public WidgetContext post(WidgetContext context) {
+  public JsonServiceContext post(JsonServiceContext context) {
 
-    // Check permissions - require admin or content-manager role
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      return writeError(context, "Permission denied");
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + PageRemoveFromHierarchyJsonService.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     try {
       long pageId = context.getParameterAsLong("pageId", -1);
       if (pageId == -1) {
-        return writeError(context, "Page ID is required");
+        return context.writeError("Page ID is required");
       }
 
       try (Connection connection = DB.getConnection();
@@ -68,40 +69,19 @@ public class PageRemoveFromHierarchyJsonService extends GenericWidget {
 
         WebPageHierarchy record = WebPageHierarchyRepository.findByPageId(connection, pageId);
         if (record == null || StringUtils.isBlank(record.getPath())) {
-          return writeError(context, "Page hierarchy record not found");
+          return context.writeError("Page hierarchy record not found");
         }
 
         WebPageHierarchyRepository.removeByPath(connection, record.getPath());
         transaction.commit();
       }
 
-      return writeOk(context, "{\"message\":\"Page removed from hierarchy\"}", null);
+      return context.writeOk("{\"message\":\"Page removed from hierarchy\"}", null);
 
     } catch (Exception e) {
       LOG.error("Error removing page from hierarchy: " + e.getMessage(), e);
-      return writeError(context, "An unexpected error occurred");
+      return context.writeError("An unexpected error occurred");
     }
-  }
-
-  private WidgetContext writeOk(WidgetContext context, String dataJson, String metaJson) {
-    StringBuilder json = new StringBuilder();
-    json.append("{");
-    json.append("\"status\":\"ok\"");
-    if (dataJson != null) {
-      json.append(",\"data\":").append(dataJson);
-    }
-    if (metaJson != null) {
-      json.append(",\"meta\":").append(metaJson);
-    }
-    json.append("}");
-    context.setJson(json.toString());
-    return context;
-  }
-
-  private WidgetContext writeError(WidgetContext context, String message) {
-    context.setJson("{\"status\":\"error\",\"error\":\"" + JsonCommand.toJson(StringUtils.defaultString(message)) + "\"}");
-    context.setSuccess(false);
-    return context;
   }
 
 }

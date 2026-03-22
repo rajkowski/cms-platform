@@ -23,14 +23,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.Folder;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.cms.FolderRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.FolderSpecification;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.controller.UserSession;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Returns folder metadata for the visual document editor
@@ -38,20 +39,21 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 1/22/26 10:10 AM
  */
-public class DocumentLibraryAjax extends GenericWidget {
+public class DocumentLibraryAjax extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908893L;
   private static Log LOG = LogFactory.getLog(DocumentLibraryAjax.class);
 
   @Override
-  public WidgetContext execute(WidgetContext context) {
+  public JsonServiceContext get(JsonServiceContext context) {
 
     LOG.debug("DocumentLibraryAjax...");
 
     // Restrict access to editors
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      context.setJson("{\"folders\":[],\"total\":0}");
-      return context;
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + DocumentLibraryAjax.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     String searchTerm = context.getParameter("search");

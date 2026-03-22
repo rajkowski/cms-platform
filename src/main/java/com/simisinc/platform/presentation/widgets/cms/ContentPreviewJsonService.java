@@ -22,14 +22,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.cms.ResolveContentDirectivesCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.Content;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.cms.ContentRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.ContentSpecification;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Handles JSON/AJAX GET requests for /json/content/preview endpoint
@@ -38,7 +39,7 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 2/7/26 3:00 PM
  */
-public class ContentPreviewJsonService extends GenericWidget {
+public class ContentPreviewJsonService extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908893L;
   private static Log LOG = LogFactory.getLog(ContentPreviewJsonService.class);
@@ -49,11 +50,12 @@ public class ContentPreviewJsonService extends GenericWidget {
    * @param context the widget context
    * @return context with JSON response
    */
-  public WidgetContext execute(WidgetContext context) {
+  public JsonServiceContext get(JsonServiceContext context) {
 
-    // Check permissions - require admin or content-manager role
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      return writeError(context, "Permission denied");
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + ContentPreviewJsonService.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     try {
@@ -64,12 +66,12 @@ public class ContentPreviewJsonService extends GenericWidget {
       Content content = loadContentByIdOrUniqueId(contentId, uniqueId);
 
       if (content == null) {
-        return writeError(context, "Content not found");
+        return context.writeError("Content not found");
       }
 
       // Get the content to preview (prefer draft if exists)
-      String contentToPreview = StringUtils.isNotBlank(content.getDraftContent()) 
-          ? content.getDraftContent() 
+      String contentToPreview = StringUtils.isNotBlank(content.getDraftContent())
+          ? content.getDraftContent()
           : content.getContent();
 
       if (StringUtils.isBlank(contentToPreview)) {
@@ -83,11 +85,11 @@ public class ContentPreviewJsonService extends GenericWidget {
       StringBuilder json = new StringBuilder();
       json.append("\"").append(JsonCommand.toJson(resolvedContent)).append("\"");
 
-      return writeOk(context, json.toString(), null);
+      return context.writeOk(json.toString(), null);
 
     } catch (Exception e) {
       LOG.error("Error generating preview: " + e.getMessage(), e);
-      return writeError(context, e.getMessage());
+      return context.writeError(e.getMessage());
     }
   }
 
@@ -105,27 +107,6 @@ public class ContentPreviewJsonService extends GenericWidget {
       return ContentRepository.findByUniqueId(uniqueId);
     }
     return null;
-  }
-
-  private WidgetContext writeOk(WidgetContext context, String dataJson, String metaJson) {
-    StringBuilder json = new StringBuilder();
-    json.append("{");
-    json.append("\"status\":\"ok\"");
-    if (dataJson != null) {
-      json.append(",\"data\":").append(dataJson);
-    }
-    if (metaJson != null) {
-      json.append(",\"meta\":").append(metaJson);
-    }
-    json.append("}");
-    context.setJson(json.toString());
-    return context;
-  }
-
-  private WidgetContext writeError(WidgetContext context, String message) {
-    context.setJson("{\"status\":\"error\",\"error\":\"" + JsonCommand.toJson(StringUtils.defaultString(message)) + "\"}");
-    context.setSuccess(false);
-    return context;
   }
 
 }

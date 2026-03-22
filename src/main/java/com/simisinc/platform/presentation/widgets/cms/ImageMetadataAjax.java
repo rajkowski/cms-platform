@@ -20,10 +20,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.domain.model.cms.Image;
 import com.simisinc.platform.infrastructure.persistence.cms.ImageRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Saves image metadata (title, alt text, description) in the visual image editor
@@ -31,35 +32,31 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 1/31/26 9:30 AM
  */
-public class ImageMetadataAjax extends GenericWidget {
+public class ImageMetadataAjax extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908894L;
   private static Log LOG = LogFactory.getLog(ImageMetadataAjax.class);
 
   @Override
-  public WidgetContext post(WidgetContext context) {
+  public JsonServiceContext post(JsonServiceContext context) {
 
     LOG.debug("ImageMetadataAjax...");
 
     // Restrict access to editors
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      context.setJson("{\"success\": false, \"error\": \"Access denied\"}");
-      context.setSuccess(false);
-      return context;
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + ImageMetadataAjax.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     long imageId = context.getParameterAsLong("id", -1);
     if (imageId == -1) {
-      context.setJson("{\"success\": false, \"error\": \"Image 'ID' required\"}");
-      context.setSuccess(false);
-      return context;
+      return context.writeError("Image ID required");
     }
 
     Image image = ImageRepository.findById(imageId);
     if (image == null) {
-      context.setJson("{\"success\": false, \"error\": \"Image not found\"}");
-      context.setSuccess(false);
-      return context;
+      return context.writeError("Image not found");
     }
 
     image.setTitle(StringUtils.trimToNull(context.getParameter("title")));
@@ -72,8 +69,7 @@ public class ImageMetadataAjax extends GenericWidget {
     if (saved != null) {
       context.setJson("{\"success\": true, \"message\": \"Image metadata saved successfully\"}");
     } else {
-      context.setJson("{\"success\": false, \"message\": \"Failed to save image metadata\"}");
-      context.setSuccess(false);
+      return context.writeError("Failed to save image metadata");
     }
 
     return context;

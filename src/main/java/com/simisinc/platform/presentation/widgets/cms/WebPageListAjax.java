@@ -20,13 +20,14 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageSpecification;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Returns a list of web pages for the visual page editor
@@ -35,16 +36,16 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 12/14/25 10:00 AM
  */
-public class WebPageListAjax extends GenericWidget {
+public class WebPageListAjax extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908893L;
 
-  public WidgetContext execute(WidgetContext context) {
+  public JsonServiceContext get(JsonServiceContext context) {
 
-    // Check permissions: only allow content editors and admins
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      context.setJson("[]");
-      return context;
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + WebPageListAjax.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     // Get sort parameter (a-z, modified, hierarchy)
@@ -55,7 +56,7 @@ public class WebPageListAjax extends GenericWidget {
     // specification.setEnabled(true);
 
     DataConstraints constraints = new DataConstraints();
-    
+
     // Set sorting based on parameter
     if ("modified".equals(sortBy)) {
       constraints.setColumnToSortBy("modified", "desc");

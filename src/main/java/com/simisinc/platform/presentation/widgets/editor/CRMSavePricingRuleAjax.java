@@ -23,12 +23,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.ecommerce.SavePricingRuleCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.ecommerce.PricingRule;
 import com.simisinc.platform.infrastructure.persistence.ecommerce.PricingRuleRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * JSON service to save (create/update) a pricing rule from the CRM editor
@@ -36,17 +37,17 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 2026-02-27
  */
-public class CRMSavePricingRuleAjax extends GenericWidget {
+public class CRMSavePricingRuleAjax extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908884L;
   private static Log LOG = LogFactory.getLog(CRMSavePricingRuleAjax.class);
 
-  public WidgetContext post(WidgetContext context) {
+  public JsonServiceContext post(JsonServiceContext context) {
 
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      context.setJson("{\"success\":false,\"message\":\"Permission denied\"}");
-      context.setSuccess(false);
-      return context;
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + CRMSavePricingRuleAjax.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     long id = context.getParameterAsLong("id", -1L);
@@ -59,9 +60,7 @@ public class CRMSavePricingRuleAjax extends GenericWidget {
     boolean freeShipping = "true".equalsIgnoreCase(context.getParameter("freeShipping"));
 
     if (StringUtils.isBlank(name)) {
-      context.setJson("{\"success\":false,\"message\":\"A name is required\"}");
-      context.setSuccess(false);
-      return context;
+      return context.writeError("A name is required");
     }
 
     try {
@@ -69,9 +68,7 @@ public class CRMSavePricingRuleAjax extends GenericWidget {
       if (id > -1) {
         ruleBean = PricingRuleRepository.findById(id);
         if (ruleBean == null) {
-          context.setJson("{\"success\":false,\"message\":\"Pricing rule not found\"}");
-          context.setSuccess(false);
-          return context;
+          return context.writeError("Pricing rule not found");
         }
       } else {
         ruleBean = new PricingRule();
@@ -118,14 +115,10 @@ public class CRMSavePricingRuleAjax extends GenericWidget {
 
     } catch (DataException de) {
       LOG.error("DataException", de);
-      context.setJson("{\"success\":false,\"message\":\"" + JsonCommand.toJson(de.getMessage()) + "\"}");
-      context.setSuccess(false);
-      return context;
+      return context.writeError("" + de.getMessage());
     } catch (Exception e) {
       LOG.error("Exception", e);
-      context.setJson("{\"success\":false,\"message\":\"An error occurred\"}");
-      context.setSuccess(false);
-      return context;
+      return context.writeError("An error occurred");
     }
   }
 }

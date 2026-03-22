@@ -16,14 +16,16 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
-import com.simisinc.platform.application.json.JsonCommand;
-import com.simisinc.platform.domain.model.cms.WebPage;
-import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.application.admin.PermissionEngine;
+import com.simisinc.platform.application.json.JsonCommand;
+import com.simisinc.platform.domain.model.cms.WebPage;
+import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Returns a web page's content for the visual page editor
@@ -32,20 +34,19 @@ import org.apache.commons.logging.LogFactory;
  * @author matt rajkowski
  * @created 12/14/25 10:00 AM
  */
-public class WebPageContentAjax extends GenericWidget {
+public class WebPageContentAjax extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908893L;
   private static Log LOG = LogFactory.getLog(WebPageContentAjax.class);
 
-  public WidgetContext execute(WidgetContext context) {
+  public JsonServiceContext get(JsonServiceContext context) {
 
     LOG.debug("WebPageContentAjax...");
 
-    // Check permissions: only allow content editors and admins
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      LOG.debug("No permission to access web page content");
-      context.setJson("{}");
-      return context;
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + WebPageContentAjax.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     // Determine the page link
@@ -72,7 +73,7 @@ public class WebPageContentAjax extends GenericWidget {
     sb.append("\"link\":\"").append(JsonCommand.toJson(page.getLink())).append("\",");
     String pageTitle = StringUtils.isNotBlank(page.getTitle()) ? page.getTitle() : page.getLink();
     sb.append("\"title\":\"").append(JsonCommand.toJson(pageTitle)).append("\",");
-    
+
     // Include the page XML
     String pageXml = page.getPageXml();
     if (StringUtils.isNotBlank(pageXml)) {
@@ -80,7 +81,7 @@ public class WebPageContentAjax extends GenericWidget {
     } else {
       sb.append("\"pageXml\":\"\"");
     }
-    
+
     sb.append("}");
 
     context.setJson(sb.toString());

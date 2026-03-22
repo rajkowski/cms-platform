@@ -22,31 +22,33 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.SubFolder;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.cms.SubFolderRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.SubFolderSpecification;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.controller.UserSession;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Returns subfolder metadata for the visual document editor
  */
-public class DocumentSubfoldersAjax extends GenericWidget {
+public class DocumentSubfoldersAjax extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908895L;
   private static Log LOG = LogFactory.getLog(DocumentSubfoldersAjax.class);
 
   @Override
-  public WidgetContext execute(WidgetContext context) {
+  public JsonServiceContext get(JsonServiceContext context) {
 
     LOG.debug("DocumentSubfoldersAjax...");
 
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      context.setJson("{\"subfolders\":[],\"total\":0}");
-      return context;
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + DocumentSubfoldersAjax.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     long folderId = context.getParameterAsLong("folderId", -1);

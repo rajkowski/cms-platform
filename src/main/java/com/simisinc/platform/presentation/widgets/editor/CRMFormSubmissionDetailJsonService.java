@@ -20,12 +20,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.FormData;
 import com.simisinc.platform.domain.model.cms.FormField;
 import com.simisinc.platform.infrastructure.persistence.cms.FormDataRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * JSON service to return the full detail of a single form submission
@@ -33,17 +34,17 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 2026-02-27
  */
-public class CRMFormSubmissionDetailJsonService extends GenericWidget {
+public class CRMFormSubmissionDetailJsonService extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908898L;
   private static Log LOG = LogFactory.getLog(CRMFormSubmissionDetailJsonService.class);
 
-  public WidgetContext execute(WidgetContext context) {
+  public JsonServiceContext get(JsonServiceContext context) {
 
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      context.setJson("{\"error\":\"Permission denied\"}");
-      context.setSuccess(false);
-      return context;
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + CRMFormSubmissionDetailJsonService.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     long submissionId = context.getParameterAsLong("id");
@@ -68,11 +69,14 @@ public class CRMFormSubmissionDetailJsonService extends GenericWidget {
     sb.append("\"url\":\"").append(JsonCommand.toJson(StringUtils.defaultString(formData.getUrl()))).append("\",");
     sb.append("\"created\":\"").append(formData.getCreated() != null ? formData.getCreated().toString() : "").append("\",");
     sb.append("\"claimed\":").append(formData.getClaimed() != null).append(",");
-    sb.append("\"claimedDate\":").append(formData.getClaimed() != null ? "\"" + formData.getClaimed().toString() + "\"" : "null").append(",");
+    sb.append("\"claimedDate\":").append(formData.getClaimed() != null ? "\"" + formData.getClaimed().toString() + "\"" : "null")
+        .append(",");
     sb.append("\"dismissed\":").append(formData.getDismissed() != null).append(",");
-    sb.append("\"dismissedDate\":").append(formData.getDismissed() != null ? "\"" + formData.getDismissed().toString() + "\"" : "null").append(",");
+    sb.append("\"dismissedDate\":").append(formData.getDismissed() != null ? "\"" + formData.getDismissed().toString() + "\"" : "null")
+        .append(",");
     sb.append("\"processed\":").append(formData.getProcessed() != null).append(",");
-    sb.append("\"processedDate\":").append(formData.getProcessed() != null ? "\"" + formData.getProcessed().toString() + "\"" : "null").append(",");
+    sb.append("\"processedDate\":").append(formData.getProcessed() != null ? "\"" + formData.getProcessed().toString() + "\"" : "null")
+        .append(",");
     sb.append("\"flaggedAsSpam\":").append(formData.getFlaggedAsSpam()).append(",");
 
     // Build field array
