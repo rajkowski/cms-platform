@@ -20,11 +20,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.cms.DeleteFolderCommand;
 import com.simisinc.platform.domain.model.cms.Folder;
 import com.simisinc.platform.infrastructure.persistence.cms.FolderRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Deletes a folder (repository) in the visual document editor
@@ -32,34 +33,30 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 2/19/26
  */
-public class DocumentDeleteFolderAjax extends GenericWidget {
+public class DocumentDeleteFolderAjax extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908899L;
   private static Log LOG = LogFactory.getLog(DocumentDeleteFolderAjax.class);
 
   @Override
-  public WidgetContext post(WidgetContext context) {
+  public JsonServiceContext post(JsonServiceContext context) {
 
     LOG.debug("DocumentDeleteFolderAjax...");
 
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      context.setJson("{\"success\":false,\"message\":\"Permission denied\"}");
-      context.setSuccess(false);
-      return context;
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + DocumentDeleteFolderAjax.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     long folderId = context.getParameterAsLong("folderId", -1);
     if (folderId == -1) {
-      context.setJson("{\"success\":false,\"message\":\"Folder ID required\"}");
-      context.setSuccess(false);
-      return context;
+      return context.writeError("Folder ID required");
     }
 
     Folder folder = FolderRepository.findById(folderId);
     if (folder == null) {
-      context.setJson("{\"success\":false,\"message\":\"Folder not found\"}");
-      context.setSuccess(false);
-      return context;
+      return context.writeError("Folder not found");
     }
 
     try {
@@ -72,8 +69,7 @@ public class DocumentDeleteFolderAjax extends GenericWidget {
       }
     } catch (DataException e) {
       LOG.warn("Error deleting folder: " + e.getMessage());
-      context.setJson("{\"success\":false,\"message\":\"" + e.getMessage() + "\"}");
-      context.setSuccess(false);
+      return context.writeError(e.getMessage());
     }
 
     return context;

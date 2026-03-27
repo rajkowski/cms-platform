@@ -664,6 +664,17 @@
     </section>
   </page>
 
+  <page name="/admin/security/permission-groups" role="admin" title="Permission Groups">
+    <section>
+      <column class="small-12 cell">
+        <widget name="permissionGroups">
+          <icon>fa-lock</icon>
+          <title>Permission Groups</title>
+        </widget>
+      </column>
+    </section>
+  </page>
+
   <page name="/admin/content/analytics" role="admin,content-manager" title="Content Analytics">
     <!--<section>-->
     <!--<column class="small-12 cell">-->

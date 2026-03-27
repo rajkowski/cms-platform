@@ -21,14 +21,15 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.domain.model.Group;
 import com.simisinc.platform.domain.model.cms.Folder;
 import com.simisinc.platform.domain.model.cms.FolderGroup;
 import com.simisinc.platform.infrastructure.persistence.GroupRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.FolderGroupRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.FolderRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Returns folder groups and available groups for the visual document editor
@@ -36,38 +37,34 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 1/22/26 11:10 AM
  */
-public class FolderGroupsListAjax extends GenericWidget {
+public class FolderGroupsListAjax extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908895L;
   private static Log LOG = LogFactory.getLog(FolderGroupsListAjax.class);
   private static final String JSON_ID = "\"id\":";
 
   @Override
-  public WidgetContext execute(WidgetContext context) {
+  public JsonServiceContext get(JsonServiceContext context) {
 
     LOG.debug("FolderGroupsListAjax...");
 
     // Restrict access to editors
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      context.setJson("{\"success\": false, \"error\": \"Access denied\"}");
-      context.setSuccess(false);
-      return context;
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + FolderGroupsListAjax.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     long folderId = context.getParameterAsLong("folderId", -1);
     if (folderId == -1) {
-      context.setJson("{\"success\": false, \"error\": \"Folder ID required\"}");
-      context.setSuccess(false);
-      return context;
+      return context.writeError("Folder ID required");
     }
 
     // @todo check access
 
     Folder folder = FolderRepository.findById(folderId);
     if (folder == null) {
-      context.setJson("{\"success\": false, \"error\": \"Folder not found\"}");
-      context.setSuccess(false);
-      return context;
+      return context.writeError("Folder not found");
     }
 
     // Get folder groups and all groups

@@ -18,6 +18,7 @@ package com.simisinc.platform.presentation.widgets.cms;
 
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.application.admin.PermissionEngine;
 
 /**
  * Shows up for CMS managers
@@ -34,7 +35,8 @@ public class PrototypeWidget extends GenericWidget {
   public WidgetContext execute(WidgetContext context) {
 
     // This widget is only for admins and content managers
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
       return null;
     }
 

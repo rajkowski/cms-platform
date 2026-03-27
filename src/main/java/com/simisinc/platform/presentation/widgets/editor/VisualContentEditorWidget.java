@@ -20,10 +20,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.application.DataException;
-import com.simisinc.platform.application.cms.SaveContentCommand;
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.cms.UrlCommand;
-import com.simisinc.platform.domain.model.cms.Content;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
 
@@ -41,6 +39,11 @@ public class VisualContentEditorWidget extends GenericWidget {
   static String EDITOR_JSP = "/cms/visual-content-editor.jsp";
 
   public WidgetContext execute(WidgetContext context) {
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + VisualContentEditorWidget.class.getSimpleName());
+      return context;
+    }
 
     // Set the JSP
     context.setJsp(EDITOR_JSP);
@@ -65,60 +68,60 @@ public class VisualContentEditorWidget extends GenericWidget {
     return context;
   }
 
-/*
+  /*
     public WidgetContext post(WidgetContext context) {
-
+  
       // Parse form parameters
       String contentUniqueId = context.getParameter("contentUniqueId");
       String contentHtml = context.getParameter("content");
       String isDraftParam = context.getParameter("isDraft");
       String returnPage = context.getParameter("returnPage");
-
+  
       // Validate required parameters
       if (StringUtils.isBlank(contentUniqueId)) {
         context.setErrorMessage("Content unique ID is required");
         context.setRequestObject(null);
         return context;
       }
-
+  
       if (StringUtils.isBlank(contentHtml)) {
         context.setErrorMessage("Content is required");
         context.setRequestObject(null);
         return context;
       }
-
+  
       // Determine if this is a draft save or publish
       boolean isDraft = "true".equalsIgnoreCase(isDraftParam);
-
+  
       LOG.debug("Saving content: " + contentUniqueId + ", isDraft: " + isDraft);
-
+  
       try {
         // Create content object for saving
         Content content = new Content();
         content.setUniqueId(contentUniqueId);
         content.setCreatedBy(context.getUserId());
         content.setModifiedBy(context.getUserId());
-
+  
         // Set the content based on whether it's a draft or publish
         if (isDraft) {
           content.setDraftContent(contentHtml);
         } else {
           content.setContent(contentHtml);
         }
-
+  
         // Save the content using SaveContentCommand
         Content savedContent = SaveContentCommand.saveContent(content, isDraft);
         if (savedContent == null) {
           throw new DataException("The content could not be saved");
         }
-
+  
         // Set success message
         if (isDraft) {
           context.setSuccessMessage("Content saved as draft");
         } else {
           context.setSuccessMessage("Content published successfully");
         }
-
+  
         // Determine the next page
         if (StringUtils.isNotBlank(returnPage)) {
           context.setRedirect(returnPage);
@@ -126,9 +129,9 @@ public class VisualContentEditorWidget extends GenericWidget {
           // Stay on the editor page
           context.setRedirect("/admin/visual-content-editor");
         }
-
+  
         return context;
-
+  
       } catch (DataException de) {
         LOG.error("DataException saving content", de);
         context.setErrorMessage(de.getMessage());
@@ -141,5 +144,5 @@ public class VisualContentEditorWidget extends GenericWidget {
         return context;
       }
     }
- */
+   */
 }

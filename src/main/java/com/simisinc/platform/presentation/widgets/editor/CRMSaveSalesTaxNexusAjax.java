@@ -21,12 +21,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.ecommerce.SaveSalesTaxNexusAddressCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.ecommerce.SalesTaxNexusAddress;
 import com.simisinc.platform.infrastructure.persistence.ecommerce.SalesTaxNexusAddressRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * JSON service to save (create/update) a sales tax nexus address from the CRM editor
@@ -34,17 +35,17 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 2026-02-27
  */
-public class CRMSaveSalesTaxNexusAjax extends GenericWidget {
+public class CRMSaveSalesTaxNexusAjax extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908885L;
   private static Log LOG = LogFactory.getLog(CRMSaveSalesTaxNexusAjax.class);
 
-  public WidgetContext post(WidgetContext context) {
+  public JsonServiceContext post(JsonServiceContext context) {
 
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      context.setJson("{\"success\":false,\"message\":\"Permission denied\"}");
-      context.setSuccess(false);
-      return context;
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + CRMSaveSalesTaxNexusAjax.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     long id = context.getParameterAsLong("id", -1L);
@@ -100,14 +101,10 @@ public class CRMSaveSalesTaxNexusAjax extends GenericWidget {
 
     } catch (DataException de) {
       LOG.error("DataException", de);
-      context.setJson("{\"success\":false,\"message\":\"" + JsonCommand.toJson(de.getMessage()) + "\"}");
-      context.setSuccess(false);
-      return context;
+      return context.writeError("" + de.getMessage());
     } catch (Exception e) {
       LOG.error("Exception", e);
-      context.setJson("{\"success\":false,\"message\":\"An error occurred\"}");
-      context.setSuccess(false);
-      return context;
+      return context.writeError("An error occurred");
     }
   }
 }

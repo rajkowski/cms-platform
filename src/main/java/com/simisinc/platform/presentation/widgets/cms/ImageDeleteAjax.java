@@ -19,11 +19,12 @@ package com.simisinc.platform.presentation.widgets.cms;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.cms.DeleteImageCommand;
 import com.simisinc.platform.domain.model.cms.Image;
 import com.simisinc.platform.infrastructure.persistence.cms.ImageRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Deletes an image in the visual image editor
@@ -31,35 +32,31 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 1/31/26 9:35 AM
  */
-public class ImageDeleteAjax extends GenericWidget {
+public class ImageDeleteAjax extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908895L;
   private static Log LOG = LogFactory.getLog(ImageDeleteAjax.class);
 
   @Override
-  public WidgetContext post(WidgetContext context) {
+  public JsonServiceContext post(JsonServiceContext context) {
 
     LOG.debug("ImageDeleteAjax...");
 
     // Restrict access to editors
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      context.setJson("{\"success\": false, \"error\": \"Access denied\"}");
-      context.setSuccess(false);
-      return context;
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + ImageDeleteAjax.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     long imageId = context.getParameterAsLong("id", -1);
     if (imageId == -1) {
-      context.setJson("{\"success\": false, \"error\": \"Image 'ID' required\"}");
-      context.setSuccess(false);
-      return context;
+      return context.writeError("Image ID required");
     }
 
     Image image = ImageRepository.findById(imageId);
     if (image == null) {
-      context.setJson("{\"success\": false, \"error\": \"Image not found\"}");
-      context.setSuccess(false);
-      return context;
+      return context.writeError("Image not found");
     }
 
     try {
@@ -68,8 +65,7 @@ public class ImageDeleteAjax extends GenericWidget {
       context.setJson("{\"success\": true, \"message\": \"Image deleted successfully\"}");
     } catch (Exception e) {
       LOG.error("Error deleting image", e);
-      context.setJson("{\"success\": false, \"error\": \"Failed to delete image: " + e.getMessage() + "\"}");
-      context.setSuccess(false);
+      return context.writeError("Failed to delete image: " + e.getMessage());
     }
 
     return context;

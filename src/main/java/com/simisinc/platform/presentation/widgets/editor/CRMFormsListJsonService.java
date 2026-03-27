@@ -24,10 +24,11 @@ import java.sql.SQLException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * JSON service to list all form categories (distinct form_unique_id values) with submission counts
@@ -35,26 +36,26 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 2026-02-27
  */
-public class CRMFormsListJsonService extends GenericWidget {
+public class CRMFormsListJsonService extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908896L;
   private static Log LOG = LogFactory.getLog(CRMFormsListJsonService.class);
 
-  private static final String SQL_QUERY =
-      "SELECT form_unique_id, " +
-          "COUNT(*) AS total, " +
-          "SUM(CASE WHEN claimed IS NULL AND dismissed IS NULL AND processed IS NULL AND flagged_as_spam = false THEN 1 ELSE 0 END) AS new_count, " +
-          "MAX(created) AS last_submission " +
-          "FROM form_data " +
-          "GROUP BY form_unique_id " +
-          "ORDER BY form_unique_id";
+  private static final String SQL_QUERY = "SELECT form_unique_id, " +
+      "COUNT(*) AS total, " +
+      "SUM(CASE WHEN claimed IS NULL AND dismissed IS NULL AND processed IS NULL AND flagged_as_spam = false THEN 1 ELSE 0 END) AS new_count, "
+      +
+      "MAX(created) AS last_submission " +
+      "FROM form_data " +
+      "GROUP BY form_unique_id " +
+      "ORDER BY form_unique_id";
 
-  public WidgetContext execute(WidgetContext context) {
+  public JsonServiceContext get(JsonServiceContext context) {
 
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      context.setJson("{\"error\":\"Permission denied\"}");
-      context.setSuccess(false);
-      return context;
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + CRMFormsListJsonService.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     StringBuilder json = new StringBuilder();
@@ -82,9 +83,7 @@ public class CRMFormsListJsonService extends GenericWidget {
       }
     } catch (SQLException se) {
       LOG.error("CRMFormsListJsonService SQL error: " + se.getMessage());
-      context.setJson("{\"error\":\"Database error\"}");
-      context.setSuccess(false);
-      return context;
+      return context.writeError("Database error");
     }
 
     json.append("]");

@@ -16,16 +16,15 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.application.json.JsonCommand;
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.domain.model.cms.MenuItem;
 import com.simisinc.platform.infrastructure.cache.CacheManager;
 import com.simisinc.platform.infrastructure.persistence.cms.MenuItemRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Handles JSON/AJAX POST requests for /json/sitemap/delete-item endpoint
@@ -34,7 +33,7 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 2/9/26 8:45 PM
  */
-public class SitemapDeleteItemJsonService extends GenericWidget {
+public class SitemapDeleteItemJsonService extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908896L;
   private static Log LOG = LogFactory.getLog(SitemapDeleteItemJsonService.class);
@@ -45,11 +44,12 @@ public class SitemapDeleteItemJsonService extends GenericWidget {
    * @param context the widget context
    * @return context with JSON response
    */
-  public WidgetContext post(WidgetContext context) {
+  public JsonServiceContext post(JsonServiceContext context) {
 
-    // Check permissions - require admin or content-manager role
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      return writeError(context, "Permission denied");
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + SitemapDeleteItemJsonService.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     try {
@@ -57,48 +57,28 @@ public class SitemapDeleteItemJsonService extends GenericWidget {
       long itemId = context.getParameterAsLong("itemId", -1);
 
       if (itemId == -1) {
-        return writeError(context, "Item ID is required");
+        return context.writeError("Item ID is required");
       }
 
       // Load the menu item
       MenuItem menuItem = MenuItemRepository.findById(itemId);
       if (menuItem == null) {
-        return writeError(context, "Menu item not found");
+        return context.writeError("Menu item not found");
       }
 
       // Delete the item
       if (MenuItemRepository.remove(menuItem)) {
         // Trigger cache refresh
         CacheManager.invalidateObjectCacheKey(CacheManager.MENU_TAB_LIST);
-        return writeOk(context, "{\"id\": " + itemId + "}", null);
+        return context.writeOk("{\"id\": " + itemId + "}", null);
       } else {
-        return writeError(context, "Failed to delete menu item");
+        return context.writeError("Failed to delete menu item");
       }
 
     } catch (Exception e) {
       LOG.error("Error deleting menu item: " + e.getMessage(), e);
-      return writeError(context, e.getMessage());
+      return context.writeError(e.getMessage());
     }
   }
 
-  private WidgetContext writeOk(WidgetContext context, String dataJson, String metaJson) {
-    StringBuilder json = new StringBuilder();
-    json.append("{");
-    json.append("\"status\":\"ok\"");
-    if (dataJson != null) {
-      json.append(",\"data\":").append(dataJson);
-    }
-    if (metaJson != null) {
-      json.append(",\"meta\":").append(metaJson);
-    }
-    json.append("}");
-    context.setJson(json.toString());
-    return context;
-  }
-
-  private WidgetContext writeError(WidgetContext context, String message) {
-    context.setJson("{\"status\":\"error\",\"error\":\"" + JsonCommand.toJson(StringUtils.defaultString(message)) + "\"}");
-    context.setSuccess(false);
-    return context;
-  }
 }

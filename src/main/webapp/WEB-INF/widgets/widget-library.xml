@@ -170,6 +170,7 @@
   <widget name="userForm" class="com.simisinc.platform.presentation.widgets.admin.login.UserFormWidget" />
   <widget name="groupsList" class="com.simisinc.platform.presentation.widgets.admin.GroupsListWidget" />
   <widget name="groupForm" class="com.simisinc.platform.presentation.widgets.admin.GroupFormWidget" />
+  <widget name="permissionGroups" class="com.simisinc.platform.presentation.widgets.admin.PermissionGroupsWidget" />
   <widget name="siteMap" class="com.simisinc.platform.presentation.widgets.cms.SiteMapWidget" />
   <widget name="webPageList" class="com.simisinc.platform.presentation.widgets.admin.cms.WebPageListWidget" />
   <widget name="webPageForm" class="com.simisinc.platform.presentation.widgets.admin.cms.WebPageFormWidget" />

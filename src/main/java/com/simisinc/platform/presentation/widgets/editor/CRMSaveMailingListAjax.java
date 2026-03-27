@@ -21,12 +21,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.application.mailinglists.SaveMailingListCommand;
 import com.simisinc.platform.domain.model.mailinglists.MailingList;
 import com.simisinc.platform.infrastructure.persistence.mailinglists.MailingListRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * JSON service to save (create/update) a mailing list from the CRM editor
@@ -34,17 +35,17 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 2026-02-27
  */
-public class CRMSaveMailingListAjax extends GenericWidget {
+public class CRMSaveMailingListAjax extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908880L;
   private static Log LOG = LogFactory.getLog(CRMSaveMailingListAjax.class);
 
-  public WidgetContext post(WidgetContext context) {
+  public JsonServiceContext post(JsonServiceContext context) {
 
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      context.setJson("{\"success\":false,\"message\":\"Permission denied\"}");
-      context.setSuccess(false);
-      return context;
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + CRMSaveMailingListAjax.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     long id = context.getParameterAsLong("id", -1L);
@@ -54,9 +55,7 @@ public class CRMSaveMailingListAjax extends GenericWidget {
     boolean showOnline = "true".equalsIgnoreCase(context.getParameter("showOnline"));
 
     if (StringUtils.isBlank(name)) {
-      context.setJson("{\"success\":false,\"message\":\"A name is required\"}");
-      context.setSuccess(false);
-      return context;
+      return context.writeError("A name is required");
     }
 
     try {
@@ -64,9 +63,7 @@ public class CRMSaveMailingListAjax extends GenericWidget {
       if (id > -1) {
         mailingListBean = MailingListRepository.findById(id);
         if (mailingListBean == null) {
-          context.setJson("{\"success\":false,\"message\":\"Mailing list not found\"}");
-          context.setSuccess(false);
-          return context;
+          return context.writeError("Mailing list not found");
         }
       } else {
         mailingListBean = new MailingList();
@@ -97,14 +94,10 @@ public class CRMSaveMailingListAjax extends GenericWidget {
 
     } catch (DataException de) {
       LOG.error("DataException", de);
-      context.setJson("{\"success\":false,\"message\":\"" + JsonCommand.toJson(de.getMessage()) + "\"}");
-      context.setSuccess(false);
-      return context;
+      return context.writeError("" + de.getMessage());
     } catch (Exception e) {
       LOG.error("Exception", e);
-      context.setJson("{\"success\":false,\"message\":\"An error occurred\"}");
-      context.setSuccess(false);
-      return context;
+      return context.writeError("An error occurred");
     }
   }
 }

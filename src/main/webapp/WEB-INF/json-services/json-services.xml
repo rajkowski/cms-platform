@@ -137,10 +137,13 @@
   <service endpoint="/json/crm/user-groups/save" class="com.simisinc.platform.presentation.widgets.editor.CRMSaveUserGroupAjax" />
   <service endpoint="/json/crm/user-roles" class="com.simisinc.platform.presentation.widgets.editor.CRMUserRolesJsonService" />
   <!-- Static Sites -->
-  <service endpoint="/json/static-sites/list" class="com.simisinc.platform.presentation.widgets.editor.StaticSiteEndpoint" />
-  <service endpoint="/json/static-sites/download" class="com.simisinc.platform.presentation.widgets.editor.StaticSiteEndpoint" />
-  <service endpoint="/json/static-sites/generate" class="com.simisinc.platform.presentation.widgets.editor.StaticSiteEndpoint" />
-  <service endpoint="/json/static-sites/delete" class="com.simisinc.platform.presentation.widgets.editor.StaticSiteEndpoint" />
+  <service endpoint="/json/static-sites/list" class="com.simisinc.platform.presentation.widgets.editor.StaticSiteJsonService" />
+  <service endpoint="/json/static-sites/download" class="com.simisinc.platform.presentation.widgets.editor.StaticSiteJsonService" />
+  <service endpoint="/json/static-sites/generate" class="com.simisinc.platform.presentation.widgets.editor.StaticSiteJsonService" />
+  <service endpoint="/json/static-sites/delete" class="com.simisinc.platform.presentation.widgets.editor.StaticSiteJsonService" />
+  <service endpoint="/json/static-sites/git-settings" class="com.simisinc.platform.presentation.widgets.editor.StaticSiteJsonService" />
+  <service endpoint="/json/static-sites/save-git-settings" class="com.simisinc.platform.presentation.widgets.editor.StaticSiteJsonService" />
+  <service endpoint="/json/static-sites/publish-git" class="com.simisinc.platform.presentation.widgets.editor.StaticSiteJsonService" />
   <!-- Dashboards -->
   <service endpoint="/json/supersetGuestToken" class="com.simisinc.platform.presentation.widgets.dashboard.SupersetGuestTokenAjax" />
   <!-- Analytics Dashboard -->

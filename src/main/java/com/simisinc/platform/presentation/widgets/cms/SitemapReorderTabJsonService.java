@@ -19,16 +19,15 @@ package com.simisinc.platform.presentation.widgets.cms;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.application.json.JsonCommand;
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.domain.model.cms.MenuTab;
 import com.simisinc.platform.infrastructure.cache.CacheManager;
 import com.simisinc.platform.infrastructure.persistence.cms.MenuTabRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Handles JSON/AJAX POST requests for /json/sitemap/reorder-tab endpoint
@@ -37,7 +36,7 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 2/7/26 3:00 PM
  */
-public class SitemapReorderTabJsonService extends GenericWidget {
+public class SitemapReorderTabJsonService extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908893L;
   private static Log LOG = LogFactory.getLog(SitemapReorderTabJsonService.class);
@@ -48,11 +47,12 @@ public class SitemapReorderTabJsonService extends GenericWidget {
    * @param context the widget context
    * @return context with JSON response
    */
-  public WidgetContext post(WidgetContext context) {
+  public JsonServiceContext post(JsonServiceContext context) {
 
-    // Check permissions - require admin or content-manager role
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      return writeError(context, "Permission denied");
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + SitemapReorderTabJsonService.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     try {
@@ -61,7 +61,7 @@ public class SitemapReorderTabJsonService extends GenericWidget {
       long targetTabId = context.getParameterAsLong("targetTabId", -1);
 
       if (tabId == -1 || targetTabId == -1) {
-        return writeError(context, "Tab ID and target tab ID are required");
+        return context.writeError("Tab ID and target tab ID are required");
       }
 
       // Load the dragged tab and target tab
@@ -69,7 +69,7 @@ public class SitemapReorderTabJsonService extends GenericWidget {
       MenuTab targetTab = MenuTabRepository.findById(targetTabId);
 
       if (draggedTab == null || targetTab == null) {
-        return writeError(context, "One or both tabs not found");
+        return context.writeError("One or both tabs not found");
       }
 
       // Get all tabs sorted by current order
@@ -88,7 +88,7 @@ public class SitemapReorderTabJsonService extends GenericWidget {
       }
 
       if (insertPosition == -1) {
-        return writeError(context, "Target tab not found in list");
+        return context.writeError("Target tab not found in list");
       }
 
       // Insert dragged tab at the target position
@@ -111,33 +111,12 @@ public class SitemapReorderTabJsonService extends GenericWidget {
       json.append("\"order\": ").append(draggedTab.getTabOrder());
       json.append("}");
 
-      return writeOk(context, json.toString(), null);
+      return context.writeOk(json.toString(), null);
 
     } catch (Exception e) {
       LOG.error("Error reordering menu tab: " + e.getMessage(), e);
-      return writeError(context, "An unexpected error occurred");
+      return context.writeError("An unexpected error occurred");
     }
-  }
-
-  private WidgetContext writeOk(WidgetContext context, String dataJson, String metaJson) {
-    StringBuilder json = new StringBuilder();
-    json.append("{");
-    json.append("\"status\":\"ok\"");
-    if (dataJson != null) {
-      json.append(",\"data\":").append(dataJson);
-    }
-    if (metaJson != null) {
-      json.append(",\"meta\":").append(metaJson);
-    }
-    json.append("}");
-    context.setJson(json.toString());
-    return context;
-  }
-
-  private WidgetContext writeError(WidgetContext context, String message) {
-    context.setJson("{\"status\":\"error\",\"error\":\"" + JsonCommand.toJson(StringUtils.defaultString(message)) + "\"}");
-    context.setSuccess(false);
-    return context;
   }
 
 }

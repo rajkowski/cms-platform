@@ -20,12 +20,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.cms.ScaleDownImageCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.Image;
 import com.simisinc.platform.infrastructure.persistence.cms.ImageRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Scales down an image proportionally and saves it as a new version
@@ -33,44 +34,40 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 2/4/26 11:30 PM
  */
-public class ImageScaleDownAjax extends GenericWidget {
+public class ImageScaleDownAjax extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908895L;
   private static Log LOG = LogFactory.getLog(ImageScaleDownAjax.class);
 
-  public WidgetContext post(WidgetContext context) {
+  public JsonServiceContext post(JsonServiceContext context) {
 
     LOG.debug("ImageScaleDownAjax...");
 
     // Check permissions
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      LOG.warn("User does not have permission to scale images");
-      context.setJson("{\"status\":\"error\",\"message\":\"Permission denied\"}");
-      return context;
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + ImageScaleDownAjax.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     // Get the image ID
     long imageId = context.getParameterAsLong("imageId", -1);
     if (imageId == -1) {
       LOG.warn("Image ID not provided");
-      context.setJson("{\"status\":\"error\",\"message\":\"Image ID is required\"}");
-      return context;
+      return context.writeError("Image ID required");
     }
 
     // Get the scale percentage
     int scalePercentage = context.getParameterAsInt("scalePercentage", -1);
     if (scalePercentage == -1 || scalePercentage >= 100 || scalePercentage < 10) {
       LOG.warn("Invalid scale percentage: " + scalePercentage);
-      context.setJson("{\"status\":\"error\",\"message\":\"Scale percentage must be between 10 and 99\"}");
-      return context;
+      return context.writeError("Scale percentage must be between 10 and 99");
     }
 
     // Load the image
     Image image = ImageRepository.findById(imageId);
     if (image == null) {
       LOG.warn("Image not found: " + imageId);
-      context.setJson("{\"status\":\"error\",\"message\":\"Image not found\"}");
-      return context;
+      return context.writeError("Image not found");
     }
 
     try {
@@ -96,7 +93,7 @@ public class ImageScaleDownAjax extends GenericWidget {
 
     } catch (DataException e) {
       LOG.error("Error scaling image " + imageId, e);
-      context.setJson("{\"status\":\"error\",\"message\":\"" + JsonCommand.toJson(e.getMessage()) + "\"}");
+      return context.writeError("Failed to scale image: " + e.getMessage());
     }
 
     return context;

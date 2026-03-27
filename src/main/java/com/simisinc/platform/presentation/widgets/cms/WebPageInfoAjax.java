@@ -16,17 +16,19 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
-import com.simisinc.platform.application.json.JsonCommand;
-import com.simisinc.platform.domain.model.cms.SitemapChangeFrequencyOptions;
-import com.simisinc.platform.domain.model.cms.WebPage;
-import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import java.util.Map;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.util.Map;
+import com.simisinc.platform.application.admin.PermissionEngine;
+import com.simisinc.platform.application.json.JsonCommand;
+import com.simisinc.platform.domain.model.cms.SitemapChangeFrequencyOptions;
+import com.simisinc.platform.domain.model.cms.WebPage;
+import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Returns a web page's metadata/info for the visual page editor Info tab
@@ -35,20 +37,19 @@ import java.util.Map;
  * @author matt rajkowski
  * @created 1/10/26 10:00 AM
  */
-public class WebPageInfoAjax extends GenericWidget {
+public class WebPageInfoAjax extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908894L;
   private static Log LOG = LogFactory.getLog(WebPageInfoAjax.class);
 
-  public WidgetContext execute(WidgetContext context) {
+  public JsonServiceContext get(JsonServiceContext context) {
 
     LOG.debug("WebPageInfoAjax...");
 
-    // Check permissions: only allow content editors and admins
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      LOG.debug("No permission to access web page info");
-      context.setJson("{\"error\":\"Permission denied\"}");
-      return context;
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + WebPageInfoAjax.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     // Determine the page link
@@ -80,9 +81,11 @@ public class WebPageInfoAjax extends GenericWidget {
     sb.append("\"draft\":").append(page.getDraft()).append(",");
     sb.append("\"searchable\":").append(page.isSearchable()).append(",");
     sb.append("\"showInSitemap\":").append(page.isShowInSitemap()).append(",");
-    sb.append("\"sitemapPriority\":").append(page.getSitemapPriority() != null ? page.getSitemapPriority().toString() : "0.5").append(",");
-    sb.append("\"sitemapChangeFrequency\":\"").append(JsonCommand.toJson(StringUtils.defaultString(page.getSitemapChangeFrequency()))).append("\",");
-    
+    sb.append("\"sitemapPriority\":").append(page.getSitemapPriority() != null ? page.getSitemapPriority().toString() : "0.5")
+        .append(",");
+    sb.append("\"sitemapChangeFrequency\":\"").append(JsonCommand.toJson(StringUtils.defaultString(page.getSitemapChangeFrequency())))
+        .append("\",");
+
     // Include sitemap change frequency options for the dropdown
     sb.append("\"sitemapChangeFrequencyOptions\":{");
     boolean first = true;
@@ -94,7 +97,7 @@ public class WebPageInfoAjax extends GenericWidget {
       first = false;
     }
     sb.append("}");
-    
+
     sb.append("}");
 
     context.setJson(sb.toString());

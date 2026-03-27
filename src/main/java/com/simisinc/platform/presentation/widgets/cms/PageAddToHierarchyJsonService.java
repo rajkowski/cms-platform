@@ -22,7 +22,7 @@ import java.sql.Timestamp;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.application.json.JsonCommand;
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.domain.model.cms.WebPageHierarchy;
 import com.simisinc.platform.infrastructure.database.AutoRollback;
@@ -30,8 +30,8 @@ import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
 import com.simisinc.platform.infrastructure.database.DB;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageHierarchyRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Handles JSON/AJAX POST requests for /json/pages/add-to-hierarchy endpoint
@@ -40,7 +40,7 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 2/7/26 5:00 PM
  */
-public class PageAddToHierarchyJsonService extends GenericWidget {
+public class PageAddToHierarchyJsonService extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908893L;
   private static Log LOG = LogFactory.getLog(PageAddToHierarchyJsonService.class);
@@ -51,11 +51,12 @@ public class PageAddToHierarchyJsonService extends GenericWidget {
    * @param context the widget context
    * @return context with JSON response
    */
-  public WidgetContext post(WidgetContext context) {
+  public JsonServiceContext post(JsonServiceContext context) {
 
-    // Check permissions - require admin or content-manager role
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      return writeError(context, "Permission denied");
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + PageAddToHierarchyJsonService.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     try {
@@ -63,12 +64,12 @@ public class PageAddToHierarchyJsonService extends GenericWidget {
       long parentPageId = context.getParameterAsLong("parentPageId", -1);
 
       if (pageId == -1) {
-        return writeError(context, "Page ID is required");
+        return context.writeError("Page ID is required");
       }
 
       WebPage page = WebPageRepository.findById(pageId);
       if (page == null) {
-        return writeError(context, "Page not found");
+        return context.writeError("Page not found");
       }
 
       Long parentId = parentPageId > 0 ? parentPageId : null;
@@ -79,14 +80,14 @@ public class PageAddToHierarchyJsonService extends GenericWidget {
 
         WebPageHierarchy existingRecord = WebPageHierarchyRepository.findByPageId(connection, pageId);
         if (existingRecord != null) {
-          return writeOk(context, "{\"message\":\"Page is already in hierarchy\"}", null);
+          return context.writeOk("{\"message\":\"Page is already in hierarchy\"}", null);
         }
 
         WebPageHierarchy parentRecord = null;
         if (parentId != null) {
           parentRecord = WebPageHierarchyRepository.findByPageId(connection, parentId);
           if (parentRecord == null) {
-            return writeError(context, "Parent page not found in hierarchy");
+            return context.writeError("Parent page not found in hierarchy");
           }
         }
 
@@ -108,33 +109,11 @@ public class PageAddToHierarchyJsonService extends GenericWidget {
         transaction.commit();
       }
 
-      return writeOk(context, "{\"message\":\"Page added to hierarchy\"}", null);
+      return context.writeOk("{\"message\":\"Page added to hierarchy\"}", null);
 
     } catch (Exception e) {
       LOG.error("Error adding page to hierarchy: " + e.getMessage(), e);
-      return writeError(context, "An unexpected error occurred");
+      return context.writeError("An unexpected error occurred");
     }
   }
-
-  private WidgetContext writeOk(WidgetContext context, String dataJson, String metaJson) {
-    StringBuilder json = new StringBuilder();
-    json.append("{");
-    json.append("\"status\":\"ok\"");
-    if (dataJson != null) {
-      json.append(",\"data\":").append(dataJson);
-    }
-    if (metaJson != null) {
-      json.append(",\"meta\":").append(metaJson);
-    }
-    json.append("}");
-    context.setJson(json.toString());
-    return context;
-  }
-
-  private WidgetContext writeError(WidgetContext context, String message) {
-    context.setJson("{\"status\":\"error\",\"error\":\"" + JsonCommand.toJson(message) + "\"}");
-    context.setSuccess(false);
-    return context;
-  }
-
 }

@@ -16,16 +16,18 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.Stylesheet;
 import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.infrastructure.persistence.cms.StylesheetRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Returns a web page's stylesheet/CSS for the visual page editor CSS tab
@@ -34,20 +36,19 @@ import org.apache.commons.logging.LogFactory;
  * @author matt rajkowski
  * @created 1/10/26 10:00 AM
  */
-public class StylesheetAjax extends GenericWidget {
+public class StylesheetAjax extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908896L;
   private static Log LOG = LogFactory.getLog(StylesheetAjax.class);
 
-  public WidgetContext execute(WidgetContext context) {
+  public JsonServiceContext get(JsonServiceContext context) {
 
     LOG.debug("StylesheetAjax...");
 
-    // Check permissions: only allow content editors and admins
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      LOG.debug("No permission to access stylesheet");
-      context.setJson("{\"error\":\"Permission denied\"}");
-      return context;
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + StylesheetAjax.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     // Determine the page link
@@ -55,16 +56,14 @@ public class StylesheetAjax extends GenericWidget {
     LOG.debug("Requested link: " + link);
     if (StringUtils.isBlank(link)) {
       LOG.debug("Link is empty");
-      context.setJson("{\"error\":\"Link is required\"}");
-      return context;
+      return context.writeError("Link is required");
     }
 
     // Retrieve the web page to get its ID
     WebPage page = WebPageRepository.findByLink(link);
     if (page == null) {
       LOG.debug("Web page not found for link: " + link);
-      context.setJson("{\"error\":\"Page not found\"}");
-      return context;
+      return context.writeError("Page not found");
     }
 
     // Retrieve the stylesheet for this web page
@@ -75,7 +74,7 @@ public class StylesheetAjax extends GenericWidget {
     sb.append("{");
     sb.append("\"webPageId\":").append(page.getId()).append(",");
     sb.append("\"link\":\"").append(JsonCommand.toJson(page.getLink())).append("\",");
-    
+
     if (stylesheet != null) {
       sb.append("\"id\":").append(stylesheet.getId()).append(",");
       sb.append("\"css\":\"").append(JsonCommand.toJson(StringUtils.defaultString(stylesheet.getCss()))).append("\",");
@@ -85,7 +84,7 @@ public class StylesheetAjax extends GenericWidget {
       sb.append("\"css\":\"\",");
       sb.append("\"hasStylesheet\":false");
     }
-    
+
     sb.append("}");
 
     context.setJson(sb.toString());

@@ -22,14 +22,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.FormData;
 import com.simisinc.platform.domain.model.cms.FormField;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.cms.FormDataRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.FormDataSpecification;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * JSON service to list form submissions for a given form category
@@ -37,24 +38,22 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 2026-02-27
  */
-public class CRMFormSubmissionsJsonService extends GenericWidget {
+public class CRMFormSubmissionsJsonService extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908897L;
   private static Log LOG = LogFactory.getLog(CRMFormSubmissionsJsonService.class);
 
-  public WidgetContext execute(WidgetContext context) {
+  public JsonServiceContext get(JsonServiceContext context) {
 
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      context.setJson("{\"error\":\"Permission denied\"}");
-      context.setSuccess(false);
-      return context;
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + CRMFormSubmissionsJsonService.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     String formUniqueId = context.getParameter("formUniqueId");
     if (StringUtils.isBlank(formUniqueId)) {
-      context.setJson("{\"error\":\"formUniqueId is required\"}");
-      context.setSuccess(false);
-      return context;
+      return context.writeError("Permission Denied");
     }
 
     int page = context.getParameterAsInt("page", 1);

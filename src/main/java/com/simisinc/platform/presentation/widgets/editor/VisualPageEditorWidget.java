@@ -22,6 +22,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.commons.text.WordUtils;
 
 import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.cms.SaveWebPageCommand;
 import com.simisinc.platform.application.cms.UrlCommand;
 import com.simisinc.platform.application.cms.WebPageJsonToXMLCommand;
@@ -44,6 +45,11 @@ public class VisualPageEditorWidget extends GenericWidget {
   static String EDITOR_JSP = "/cms/visual-page-editor.jsp";
 
   public WidgetContext execute(WidgetContext context) {
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + VisualPageEditorWidget.class.getSimpleName());
+      return context;
+    }
 
     // Set the JSP
     context.setJsp(EDITOR_JSP);

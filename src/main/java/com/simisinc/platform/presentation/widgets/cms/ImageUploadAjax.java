@@ -30,6 +30,7 @@ import org.apache.commons.logging.LogFactory;
 import org.thymeleaf.util.StringUtils;
 
 import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.cms.SaveImageCommand;
 import com.simisinc.platform.application.cms.SaveImageVersionCommand;
 import com.simisinc.platform.application.cms.ValidateImageCommand;
@@ -38,8 +39,8 @@ import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.Image;
 import com.simisinc.platform.domain.model.cms.ImageVersion;
 import com.simisinc.platform.infrastructure.persistence.cms.ImageRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Handles multiple image uploads for the image editor
@@ -47,7 +48,7 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 2/3/26 8:00 PM
  */
-public class ImageUploadAjax extends GenericWidget {
+public class ImageUploadAjax extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908893L;
   private static Log LOG = LogFactory.getLog(ImageUploadAjax.class);
@@ -58,15 +59,15 @@ public class ImageUploadAjax extends GenericWidget {
    * @param context the widget context
    * @return context with JSON response
    */
-  public WidgetContext post(WidgetContext context) {
+  public JsonServiceContext post(JsonServiceContext context) {
 
     // /json/imageUpload
     LOG.debug("ImageUploadAjax...");
 
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      context.setJson("{\"success\": false, \"error\": \"You do not have permission to upload images.\"}");
-      context.setSuccess(false);
-      return context;
+    // Check permissions
+    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      LOG.debug("No permission to: " + ImageUploadAjax.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     StringBuilder jsonResponse = new StringBuilder();
@@ -78,7 +79,7 @@ public class ImageUploadAjax extends GenericWidget {
       // Check if this is a version upload (imageId parameter present)
       long imageId = context.getParameterAsLong("imageId", -1);
       boolean isVersionUpload = (imageId > -1);
-      
+
       // Get all file parts from the request
       Collection<Part> fileParts = context.getParts();
       List<Image> uploadedImages = new ArrayList<>();
@@ -143,7 +144,7 @@ public class ImageUploadAjax extends GenericWidget {
             if (existingImage == null) {
               throw new DataException("Image not found with ID: " + imageId);
             }
-            
+
             ImageVersion versionBean = new ImageVersion();
             versionBean.setFilename(imageBean.getFilename());
             versionBean.setFileServerPath(imageBean.getFileServerPath());
@@ -152,7 +153,7 @@ public class ImageUploadAjax extends GenericWidget {
             versionBean.setWidth(imageBean.getWidth());
             versionBean.setHeight(imageBean.getHeight());
             versionBean.setCreatedBy(context.getUserId());
-            
+
             ImageVersion version = SaveImageVersionCommand.addNewVersion(imageId, versionBean);
             if (version == null) {
               LOG.warn("Failed to save image version: " + submittedFilename);
@@ -161,11 +162,11 @@ public class ImageUploadAjax extends GenericWidget {
               }
               continue;
             }
-            
+
             // Add the updated image to the response
             uploadedImages.add(existingImage);
             LOG.debug("Uploaded image version: " + version.getFilename() + " for image ID: " + imageId);
-            
+
           } else {
             // Save as a new image
             Image image = SaveImageCommand.saveImage(imageBean);
@@ -220,30 +221,16 @@ public class ImageUploadAjax extends GenericWidget {
 
       jsonResponse.append("]");
       jsonResponse.append("}");
+      context.setJson(jsonResponse.toString());
+      return context;
 
     } catch (DataException e) {
       LOG.warn("Error during image upload: " + e.getMessage());
-      jsonResponse = new StringBuilder();
-      jsonResponse.append("{");
-      jsonResponse.append("\"success\": false,");
-      jsonResponse.append("\"error\": \"").append(JsonCommand.toJson(e.getMessage())).append("\"");
-      jsonResponse.append("}");
-      context.setJson(jsonResponse.toString());
-      context.setSuccess(false);
-      return context;
+      return context.writeError("Failed to upload image: " + e.getMessage());
     } catch (Exception e) {
       LOG.error("Unexpected error during image upload: " + e.getMessage(), e);
-      jsonResponse = new StringBuilder();
-      jsonResponse.append("{");
-      jsonResponse.append("\"success\": false,");
-      jsonResponse.append("\"error\": \"An unexpected error occurred during image upload\"");
-      jsonResponse.append("}");
-      context.setJson(jsonResponse.toString());
-      context.setSuccess(false);
-      return context;
+      return context.writeError("An unexpected error occurred during image upload");
     }
 
-    context.setJson(jsonResponse.toString());
-    return context;
   }
 }
