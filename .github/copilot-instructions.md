@@ -16,7 +16,7 @@
 
 ## Architecture & Key Components
 
-- **Backend:** Java (JDK 17+), custom MVC framework, servlets, JSP, scheduled tasks, workflows, caching, permissions.
+- **Backend:** Java (JDK 21+), custom MVC framework, servlets, JSP, scheduled tasks, workflows, caching, permissions.
 - **Application Layer:** Commands are static, action-based classes at `src/main/java/com/simisinc/platform/application/{module}/commands/`. Each command encapsulates a use case, validates input, returns domain objects or throws `DataException`.
 - **Data Access:** Custom lightweight ORM using `DB` utility class (fluent API) with `Specification` query objects. Repositories in `infrastructure/` layer; use `@Repository` pattern with `-1L` as "not set" sentinel.
 - **Frontend:** JSP templates in `src/main/webapp/WEB-INF/jsp/`. Widgets are reusable components with permission checks, preference-driven rendering, and JSP execution. Widget base class: `com.simisinc.platform.presentation.widgets.AbstractWidget`.

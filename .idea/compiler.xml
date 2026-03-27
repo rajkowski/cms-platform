@@ -5,7 +5,7 @@
       <profile default="true" name="Default" enabled="true" />
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="simis-cms" target="17" />
+      <module name="simis-cms" target="21" />
     </bytecodeTargetLevel>
   </component>
 </project>
