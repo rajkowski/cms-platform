@@ -25,6 +25,7 @@ import static com.simisinc.platform.presentation.controller.RequestConstants.WEB
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -362,7 +363,8 @@ public class WebContainerCommand implements Serializable {
             LOG.debug("Returning JSON...");
             controllerSession.clearAllWidgetData();
             response.setContentType("application/json");
-            response.setContentLength(widgetContext.getJson().length());
+            response.setCharacterEncoding("UTF-8");
+            response.setContentLength(widgetContext.getJson().getBytes(StandardCharsets.UTF_8).length);
             if (!widgetContext.isSuccess()) {
               response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             }

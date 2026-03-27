@@ -368,7 +368,7 @@ public class RestRequestFilter implements Filter {
         "}";
     response.setContentType("application/json");
     response.setCharacterEncoding("UTF-8");
-    response.setContentLength(json.length());
+    response.setContentLength(json.getBytes(StandardCharsets.UTF_8).length);
     try (PrintWriter out = response.getWriter()) {
       out.print(json);
       out.flush();
