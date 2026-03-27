@@ -21,6 +21,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -78,7 +80,9 @@ public class WebPageHierarchyRepository {
     if (pageId == -1) {
       return null;
     }
-    String sql = "SELECT web_page_id, parent_page_id, sort_order, depth, path, created, modified FROM " + TABLE_NAME + " WHERE web_page_id = ?";
+    String sql = "SELECT web_page_id, parent_page_id, sort_order, depth, path, created, modified " +
+        "FROM " + TABLE_NAME + " " +
+        "WHERE web_page_id = ?";
     try (PreparedStatement pst = connection.prepareStatement(sql)) {
       pst.setLong(1, pageId);
       try (ResultSet rs = pst.executeQuery()) {
@@ -90,6 +94,29 @@ public class WebPageHierarchyRepository {
       LOG.error(SQL_EXCEPTION + se.getMessage());
     }
     return null;
+  }
+
+  public static List<WebPageHierarchy> findByParentId(long parentId) {
+    String sql = "SELECT web_page_id, parent_page_id, sort_order, depth, path, created, modified " +
+        "FROM " + TABLE_NAME + " " +
+        "WHERE parent_page_id = ? " +
+        "ORDER BY sort_order, web_page_id";
+    List<WebPageHierarchy> records = new ArrayList<>();
+    try (Connection connection = DB.getConnection();
+        PreparedStatement pst = connection.prepareStatement(sql)) {
+      pst.setLong(1, parentId);
+      try (ResultSet rs = pst.executeQuery()) {
+        while (rs.next()) {
+          WebPageHierarchy record = buildRecord(rs);
+          if (record != null) {
+            records.add(record);
+          }
+        }
+      }
+    } catch (SQLException se) {
+      LOG.error(SQL_EXCEPTION + se.getMessage());
+    }
+    return records;
   }
 
   /**
