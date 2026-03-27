@@ -131,6 +131,7 @@ public class ValidateCSVDatasetCommand {
     // Determine the CSV configuration
     CsvParserSettings parserSettings = new CsvParserSettings();
     parserSettings.setLineSeparatorDetectionEnabled(true);
+    parserSettings.setMaxCharsPerColumn(-1);
     if ("text/csv;single".equals(dataset.getFileType()) || "text/plain".equals(dataset.getFileType())) {
       parserSettings.setHeaderExtractionEnabled(false);
     } else {
