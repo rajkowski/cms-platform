@@ -58,14 +58,14 @@ public class LoadRedirectsCommand {
     // Read the file
     CsvParser parser = new CsvParser(parserSettings);
     try (InputStream inputStream = new FileInputStream(file)) {
-      parser.beginParsing(inputStream, "ISO-8859-1");
+      parser.beginParsing(inputStream);
       String[] row;
       while ((row = parser.parseNext()) != null) {
         if (row.length == 2) {
           String url = row[0].trim();
-//          if (url.endsWith("/")) {
-//            url = url.substring(0, url.length() - 1);
-//          }
+          //          if (url.endsWith("/")) {
+          //            url = url.substring(0, url.length() - 1);
+          //          }
           String redirect = row[1].trim();
           if (!redirect.startsWith("http://") && !redirect.startsWith("https://") && !redirect.startsWith("/")) {
             redirect = "/" + redirect;

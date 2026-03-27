@@ -58,13 +58,12 @@ public class LoadShippingRatesCommand {
     // Read the file
     CsvParser parser = new CsvParser(parserSettings);
     try (InputStream inputStream = new FileInputStream(file)) {
-      parser.beginParsing(inputStream, "ISO-8859-1");
+      parser.beginParsing(inputStream);
       String[] row;
       while ((row = parser.parseNext()) != null) {
 
-//          String url = row[0].trim();
-//          String redirect = row[1].trim();
-
+        //          String url = row[0].trim();
+        //          String redirect = row[1].trim();
 
       }
     } catch (Exception e) {

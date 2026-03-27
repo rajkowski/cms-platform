@@ -16,19 +16,20 @@
 
 package com.simisinc.platform.application.datasets;
 
-import com.simisinc.platform.application.DataException;
-import com.simisinc.platform.domain.model.datasets.Dataset;
-import com.univocity.parsers.csv.CsvParser;
-import com.univocity.parsers.csv.CsvParserSettings;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.List;
+
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.domain.model.datasets.Dataset;
+import com.univocity.parsers.csv.CsvParser;
+import com.univocity.parsers.csv.CsvParserSettings;
 
 /**
  * Checks and processes CSV files
@@ -74,12 +75,13 @@ public class ValidateCSVDatasetCommand {
     // Read the CSV file for columns and row counts
     CsvParserSettings parserSettings = new CsvParserSettings();
     parserSettings.setLineSeparatorDetectionEnabled(true);
+    parserSettings.setMaxCharsPerColumn(-1);
     boolean isSingleColumn = false;
     String[] headerRow = null;
     int rowCount = 0;
     CsvParser parser = new CsvParser(parserSettings);
     try (InputStream inputStream = new FileInputStream(datasetFile)) {
-      parser.beginParsing(inputStream, "ISO-8859-1");
+      parser.beginParsing(inputStream);
       String[] row;
       boolean firstLineFound = false;
       while ((row = parser.parseNext()) != null) {
@@ -107,7 +109,7 @@ public class ValidateCSVDatasetCommand {
     if (isSingleColumn || headerRow == null) {
       datasetBean.setFileType("text/csv;single");
       datasetBean.setColumnCount(1);
-      datasetBean.setColumnNames(new String[]{"Item Name"});
+      datasetBean.setColumnNames(new String[] { "Item Name" });
     } else {
       datasetBean.setColumnCount(headerRow.length);
       datasetBean.setColumnNames(headerRow);
@@ -139,7 +141,7 @@ public class ValidateCSVDatasetCommand {
     int rowCount = 0;
     CsvParser parser = new CsvParser(parserSettings);
     try (InputStream inputStream = new FileInputStream(dataFile)) {
-      parser.beginParsing(inputStream, "ISO-8859-1");
+      parser.beginParsing(inputStream);
       String[] row;
       while ((row = parser.parseNext()) != null) {
         ++rowCount;

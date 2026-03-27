@@ -83,7 +83,7 @@ public class LoadTSVRowsCommand {
     int count = 0;
     TsvParser parser = new TsvParser(parserSettings);
     try (InputStream inputStream = new FileInputStream(file)) {
-      parser.beginParsing(inputStream, "ISO-8859-1");
+      parser.beginParsing(inputStream);
       String[] row;
       while ((row = parser.parseNext()) != null) {
         // Offset

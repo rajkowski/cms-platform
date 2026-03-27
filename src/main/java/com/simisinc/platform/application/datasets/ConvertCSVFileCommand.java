@@ -51,6 +51,7 @@ public class ConvertCSVFileCommand {
     // Determine the CSV configuration
     CsvParserSettings parserSettings = new CsvParserSettings();
     parserSettings.setLineSeparatorDetectionEnabled(true);
+    parserSettings.setMaxCharsPerColumn(-1);
     if ("text/csv;single".equals(dataset.getFileType()) || "text/plain".equals(dataset.getFileType())) {
       parserSettings.setHeaderExtractionEnabled(false);
     } else {
@@ -61,7 +62,7 @@ public class ConvertCSVFileCommand {
     // Read the file and save the records
     int rowsProcessed = 0;
     try (InputStream inputStream = new FileInputStream(dataFile)) {
-      parser.beginParsing(inputStream, "ISO-8859-1");
+      parser.beginParsing(inputStream);
       String[] row;
       while ((row = parser.parseNext()) != null) {
         // Transform the row to item, then save

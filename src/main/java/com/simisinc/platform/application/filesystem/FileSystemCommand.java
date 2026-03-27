@@ -299,7 +299,7 @@ public class FileSystemCommand {
     // Read the file
     CsvParser parser = new CsvParser(parserSettings);
     try (InputStream inputStream = new FileInputStream(file)) {
-      parser.beginParsing(inputStream, "ISO-8859-1");
+      parser.beginParsing(inputStream);
       String[] row;
       while ((row = parser.parseNext()) != null) {
         if (row.length == 1) {

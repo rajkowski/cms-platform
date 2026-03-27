@@ -62,7 +62,7 @@ public class ConvertTSVFileCommand {
     // Read the file and save the records
     int rowsProcessed = 0;
     try (InputStream inputStream = new FileInputStream(dataFile)) {
-      parser.beginParsing(inputStream, "ISO-8859-1");
+      parser.beginParsing(inputStream);
       String[] row;
       while ((row = parser.parseNext()) != null) {
         // Transform the row to item, then save

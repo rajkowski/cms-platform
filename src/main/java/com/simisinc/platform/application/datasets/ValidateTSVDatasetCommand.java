@@ -78,7 +78,7 @@ public class ValidateTSVDatasetCommand {
     int rowCount = 0;
     TsvParser parser = new TsvParser(parserSettings);
     try (InputStream inputStream = new FileInputStream(datasetFile)) {
-      parser.beginParsing(inputStream, "ISO-8859-1");
+      parser.beginParsing(inputStream);
       String[] row;
       boolean firstLineFound = false;
       while ((row = parser.parseNext()) != null) {
@@ -139,7 +139,7 @@ public class ValidateTSVDatasetCommand {
     int rowCount = 0;
     TsvParser parser = new TsvParser(parserSettings);
     try (InputStream inputStream = new FileInputStream(dataFile)) {
-      parser.beginParsing(inputStream, "ISO-8859-1");
+      parser.beginParsing(inputStream);
       String[] row;
       while ((row = parser.parseNext()) != null) {
         ++rowCount;
