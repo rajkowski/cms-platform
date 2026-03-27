@@ -46,6 +46,7 @@ public class DrawIOViewerWidget extends GenericWidget {
     LOG.debug("Using resource value: " + resourceValue);
     int dashIdx = resourceValue.lastIndexOf("-");
     if (dashIdx == -1) {
+      LOG.warn("Resource value invalid: " + resourceValue);
       return null;
     }
 
