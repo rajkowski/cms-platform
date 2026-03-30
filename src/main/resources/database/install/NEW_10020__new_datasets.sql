@@ -49,7 +49,7 @@ CREATE TABLE datasets (
   sync_delete_count INTEGER DEFAULT 0,
   file_hash VARCHAR(1024),
   web_path VARCHAR(50) NOT NULL,
-  request_config JSONB;
+  request_config JSONB
 );
 
 CREATE INDEX datasets_sched_idx ON datasets(schedule_enabled);
