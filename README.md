@@ -122,6 +122,7 @@ This project uses and licenses several technologies:
 
    Apache Commons              Apache   Utilities                                         https://commons.apache.org
    Argon2                      LGPL     Password hashing                                  https://github.com/phxql/argon2-jvm
+   Azure SDK for Java          MIT      Azure integration                                 https://github.com/Azure/azure-sdk-for-java
    Bucket4J                    Apache   Rate limiting                                     https://github.com/bucket4j/bucket4j
    Caffeine                    Apache   High performance cache                            https://github.com/ben-manes/caffeine
    ClassGraph                  MIT      Module scanner                                    https://github.com/classgraph/classgraph
