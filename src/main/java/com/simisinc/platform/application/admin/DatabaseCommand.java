@@ -16,17 +16,18 @@
 
 package com.simisinc.platform.application.admin;
 
-import com.simisinc.platform.ApplicationInfo;
-import com.simisinc.platform.domain.model.DatabaseVersion;
-import com.simisinc.platform.infrastructure.persistence.DatabaseVersionRepository;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.output.MigrateResult;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
+import com.simisinc.platform.ApplicationInfo;
+import com.simisinc.platform.domain.model.DatabaseVersion;
+import com.simisinc.platform.infrastructure.database.ConnectionPool;
+import com.simisinc.platform.infrastructure.persistence.DatabaseVersionRepository;
 
 /**
  * Installs and upgrades the database
@@ -38,21 +39,15 @@ public class DatabaseCommand {
 
   private static Log LOG = LogFactory.getLog(DatabaseCommand.class);
 
-  public static boolean initialize(Properties databaseProperties) {
+  public static boolean initialize() {
 
     // V (One-Time Version files)
     // R (Repeatable every upgrade)
     // Java-based: public class V1_2__Another_user implements JdbcMigration
 
-    String jdbcUrl =
-        "jdbc:postgresql://" +
-            databaseProperties.getProperty("dataSource.serverName") + ":" +
-            databaseProperties.getProperty("dataSource.portNumber") + "/" +
-            databaseProperties.getProperty("dataSource.databaseName");
-
     if (!isInstalled()) {
       LOG.info("New system detected, installing the database... " + ApplicationInfo.VERSION);
-      boolean installResult = installDatabase(jdbcUrl, databaseProperties);
+      boolean installResult = installDatabase();
       if (!installResult) {
         return false;
       }
@@ -60,22 +55,22 @@ public class DatabaseCommand {
       DatabaseVersion databaseVersion = new DatabaseVersion("Initial Setup", ApplicationInfo.VERSION);
       DatabaseVersionRepository.save(databaseVersion);
     } else {
-      LOG.info("Checking for database upgrades... " + jdbcUrl);
-      if (!upgrade(jdbcUrl, databaseProperties)) {
+      LOG.info("Checking for database upgrades... " + ConnectionPool.getApplicationDataSource().toString());
+      if (!upgrade()) {
         return false;
       }
     }
     return true;
   }
 
-  private static boolean installDatabase(String jdbcUrl, Properties databaseProperties) {
+  private static boolean installDatabase() {
     {
       // Install the new database
       Flyway flyway = Flyway.configure()
           .table("flyway_install")
           .sqlMigrationPrefix("NEW_")
           .repeatableSqlMigrationPrefix("DO_")
-          .dataSource(jdbcUrl, databaseProperties.getProperty("dataSource.user"), databaseProperties.getProperty("dataSource.password"))
+          .dataSource(ConnectionPool.getApplicationDataSource())
           .locations("classpath:database/install", "com/simisinc/platform/infrastructure/database/install")
           .placeholderReplacement(false)
           .cleanDisabled(true)
@@ -89,7 +84,7 @@ public class DatabaseCommand {
           .table("flyway_history")
           .sqlMigrationPrefix("UPGRADE_")
           .repeatableSqlMigrationPrefix("REPEAT_")
-          .dataSource(jdbcUrl, databaseProperties.getProperty("dataSource.user"), databaseProperties.getProperty("dataSource.password"))
+          .dataSource(ConnectionPool.getApplicationDataSource())
           .locations(databaseUpgradeLocations())
           .placeholderReplacement(false)
           .cleanDisabled(true)
@@ -101,14 +96,14 @@ public class DatabaseCommand {
     return true;
   }
 
-  private static boolean upgrade(String jdbcUrl, Properties databaseProperties) {
+  private static boolean upgrade() {
     // Process the versions
     Flyway flyway = Flyway.configure()
         .table("flyway_history")
         .validateOnMigrate(false)
         .sqlMigrationPrefix("UPGRADE_")
         .repeatableSqlMigrationPrefix("REPEAT_")
-        .dataSource(jdbcUrl, databaseProperties.getProperty("dataSource.user"), databaseProperties.getProperty("dataSource.password"))
+        .dataSource(ConnectionPool.getApplicationDataSource())
         .locations(databaseUpgradeLocations())
         .placeholderReplacement(false)
         .outOfOrder(true)

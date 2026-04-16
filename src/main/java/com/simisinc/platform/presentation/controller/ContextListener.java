@@ -103,7 +103,7 @@ public class ContextListener implements ServletContextListener {
       ConnectionPool.init(databaseProperties);
 
       // See if this is a new install or an upgrade
-      if (!DatabaseCommand.initialize(databaseProperties)) {
+      if (!DatabaseCommand.initialize()) {
         isSuccessful = false;
         LOG.error("Could not initialize the database");
         servletContextEvent.getServletContext().setAttribute(ContextConstants.STARTUP_FAILED, "database");
