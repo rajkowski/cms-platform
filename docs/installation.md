@@ -49,6 +49,15 @@ DB_USER=
 DB_PASSWORD=
 ```
 
+### Azure SPN for PostgreSQL
+
+```dotenv
+DB_AUTH_METHOD=azure-sql-spn
+DB_TENANT_ID=
+DB_CLIENT_ID=
+DB_SECRET=
+```
+
 ## Upgrading
 
-Upgrading is as simple as replacing the application ROOT.war with a newer version. Check the release notes for any unusual upgrade steps. Always have a database backup for rollbacks. An application rollaback without a database rollback *may* work depending on any database changes.
+Upgrading is as simple as replacing the application ROOT.war with a newer version. Check the release notes for any unusual upgrade steps. Always have a database backup for rolling back in case of errors. An application rollback without a database backup *may* work but depends on any database changes.

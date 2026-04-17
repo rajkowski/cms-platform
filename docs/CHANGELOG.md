@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the [Common Changelog](https://common-changelog.org/).
 
+## 2026-04-16
+
+- Added Azure SPN authentication for PostgreSQL, use:
+  - DB_AUTH_METHOD=azure-sql-spn
+  - DB_TENANT_ID=
+  - DB_CLIENT_ID=
+  - DB_SECRET=
+
 ## 2026-03-17
 
 - Minimum of Java 21 is required

@@ -80,7 +80,7 @@ public class ConnectionPool {
   private static Properties mergePropertiesFromPrefix(Properties properties, String prefix) {
     Properties filteredProperties = new Properties();
     for (String name : properties.stringPropertyNames()) {
-      if (name.startsWith("dataSource")) {
+      if (name.startsWith("dataSource") || "driverClassName".equals(name) || "jdbcUrl".equals(name)) {
         filteredProperties.setProperty(name, properties.getProperty(name));
         continue;
       }

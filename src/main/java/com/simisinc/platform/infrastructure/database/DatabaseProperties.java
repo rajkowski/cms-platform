@@ -29,10 +29,12 @@ public class DatabaseProperties {
 
   public static Properties configureDatabaseProperties(InputStream is) throws Exception {
     LOG.info("Configuring the database properties...");
+
     // Start with the default properties...
     Properties databaseProperties = new Properties();
     databaseProperties.load(is);
-    // Check for environment variables
+
+    // Check for environment variables to override the default properties...
     if (System.getenv().containsKey("DB_SERVER_NAME")) {
       LOG.info("Found variable DB_SERVER_NAME=" + System.getenv("DB_SERVER_NAME"));
       databaseProperties.setProperty("dataSource.serverName", System.getenv("DB_SERVER_NAME"));
@@ -53,6 +55,26 @@ public class DatabaseProperties {
       LOG.info("Found variable DB_SSL=" + System.getenv("DB_SSL"));
       databaseProperties.setProperty("dataSource.ssl", "true");
     }
+
+    // Check for Azure SPN authentication
+    if (System.getenv().containsKey("DB_AUTH_METHOD") && "azure-sql-spn".equals(System.getenv("DB_AUTH_METHOD"))) {
+      // https://github.com/Azure/azure-sdk-for-java/blob/main/sdk/identity/azure-identity-extensions/Azure-Database-for-PostgreSQL-README.md
+      LOG.info("Found variable DB_AUTH_METHOD=azure-sql-spn, configuring Azure SPN authentication");
+
+      // Switch from dataSourceClassName to JdbcUrl and authentication plugin
+      databaseProperties.remove("dataSourceClassName");
+      databaseProperties.setProperty("driverClassName", "org.postgresql.Driver");
+      databaseProperties.setProperty("jdbcUrl",
+          "jdbc:postgresql://" + System.getenv("DB_SERVER_NAME") + ":5432/" +
+              System.getenv("DB_NAME") +
+              "?sslmode=require" +
+              "&authenticationPluginClassName=com.azure.identity.extensions.jdbc.postgresql.AzurePostgresqlAuthenticationPlugin");
+
+      databaseProperties.setProperty("dataSource.azure.tenantId", System.getenv("DB_TENANT_ID"));
+      databaseProperties.setProperty("dataSource.azure.clientId", System.getenv("DB_CLIENT_ID"));
+      databaseProperties.setProperty("dataSource.azure.clientSecret", System.getenv("DB_SECRET"));
+    }
+
     return databaseProperties;
   }
 }
