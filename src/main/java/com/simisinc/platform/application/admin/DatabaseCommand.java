@@ -74,6 +74,8 @@ public class DatabaseCommand {
           .locations("classpath:database/install", "com/simisinc/platform/infrastructure/database/install")
           .placeholderReplacement(false)
           .cleanDisabled(true)
+          .baselineOnMigrate(true)
+          .baselineVersion("0")
           .load();
       flyway.migrate();
       LOG.info("Database installation completed");
