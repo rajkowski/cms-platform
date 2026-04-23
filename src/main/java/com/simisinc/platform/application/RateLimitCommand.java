@@ -123,7 +123,7 @@ public class RateLimitCommand {
       bucket = (Bucket) cache.getIfPresent(thisApp.getId() + "-" + userId);
       if (bucket == null) {
         bucket = Bucket.builder()
-            .addLimit(limit -> limit.capacity(200).refillGreedy(200, Duration.ofMinutes(15)))
+            .addLimit(limit -> limit.capacity(900).refillGreedy(900, Duration.ofMinutes(15)))
             .build();
         cache.put(thisApp.getId() + "-" + userId, bucket);
       }
