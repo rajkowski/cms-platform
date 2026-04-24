@@ -25,7 +25,7 @@
 <web:script package="tinymce" file="tinymce.min.js" />
 <script>
   tinymce.init({
-    selector: 'textarea',
+    selector: '.html-field',
     branding: false,
     width: '100%',
     height: 300,
@@ -139,7 +139,7 @@
   </label>
   <p>
     <small>Write the post...</small>
-    <textarea name="body"><c:out value="${blogPost.body}"/></textarea>
+    <textarea name="body" class="html-field"><c:out value="${blogPost.body}"/></textarea>
   </p>
   <div class="full-container">
     <div class="grid-x grid-margin-x callout box">

@@ -26,7 +26,7 @@
 <web:script package="tinymce" file="tinymce.min.js" />
 <script>
   tinymce.init({
-    selector: 'textarea',
+    selector: '.html-field',
     branding: false,
     width: '100%',
     height: 300,
@@ -362,7 +362,7 @@
   </table>
   <p>
     <small>Describe it...</small>
-    <textarea name="description"><c:out value="${product.description}"/></textarea>
+    <textarea name="description" class="html-field"><c:out value="${product.description}"/></textarea>
   </p>
   <fieldset class="fieldset">
     <legend>Tax Information</legend>

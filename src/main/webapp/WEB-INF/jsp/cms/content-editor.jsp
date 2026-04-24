@@ -34,7 +34,7 @@
   });
 
   tinymce.init({
-    selector: 'textarea',
+    selector: '.html-field',
     branding: false,
     width: '100%',
     height: '100%',
@@ -132,7 +132,7 @@
   <input type="hidden" name="uniqueId" value="${content.uniqueId}" />
   <input type="hidden" name="returnPage" value="${returnPage}" />
   <p>
-    <textarea name="content"><c:out value="${contentHtml}"/></textarea>
+    <textarea name="content" class="html-field"><c:out value="${contentHtml}"/></textarea>
   </p>
   <div class="button-container">
     <c:choose>

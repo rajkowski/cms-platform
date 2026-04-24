@@ -21,7 +21,7 @@
 <web:script package="tinymce" file="tinymce.min.js" />
 <script>
 tinymce.init({
-  selector: 'textarea',
+  selector: '.html-field',
   branding: false,
   width: '100%',
   height: 500,
@@ -41,7 +41,7 @@ tinymce.init({
   <%-- Form Content --%>
   <input type="hidden" name="returnPage" value="${returnPage}" />
   <p>
-    <textarea name="content"><c:out value="${codeContent}" /></textarea>
+    <textarea name="content" class="html-field"><c:out value="${codeContent}" /></textarea>
   </p>
   <div class="button-container">
     <%--<input type="submit" class="button radius success" value="Save" />--%>
