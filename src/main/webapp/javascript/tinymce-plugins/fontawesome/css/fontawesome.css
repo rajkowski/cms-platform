@@ -3,21 +3,21 @@
 }
 
 .fa-important{
-	font-family: "Font Awesome 6 Free", "Font Awesome 6 Pro", "Font Awesome 6 Brands", "Font Awesome 6 Duotone",
+	font-family: "Font Awesome 7 Free", "Font Awesome 6 Free", "Font Awesome 6 Pro", "Font Awesome 6 Brands", "Font Awesome 6 Duotone",
 	"Font Awesome 5 Pro", "Font Awesome 5 Brands", "Font Awesome 5 Duotone" !important; !important;
 }
 .fa {
-	font-family: "Font Awesome 6 Pro", "Font Awesome 6 Free" !important;
+	font-family: "Font Awesome 7 Free", "Font Awesome 6 Pro", "Font Awesome 6 Free" !important;
 }
 .far{
-	font-family: "Font Awesome 6 Pro", "Font Awesome 6 Free" !important;
+	font-family: "Font Awesome 7 Free", "Font Awesome 6 Pro", "Font Awesome 6 Free" !important;
 }
 .fas{
-	font-family: "Font Awesome 6 Pro", "Font Awesome 6 Free" !important;
+	font-family: "Font Awesome 7 Free", "Font Awesome 6 Pro", "Font Awesome 6 Free" !important;
 	font-weight: 900 !important;
 }
 .fal{
-	font-family: "Font Awesome 6 Pro", "Font Awesome 6 Free" !important;
+	font-family: "Font Awesome 7 Free", "Font Awesome 6 Pro", "Font Awesome 6 Free" !important;
 }
 .fab{
 	font-family: "Font Awesome 6 Brands" !important;
@@ -53,7 +53,7 @@
 .mce-fontawesome-panel-accordion-indicator {
 	margin-left: auto;
 	font-family:
-			"Font Awesome 6 Free", "Font Awesome 6 Pro", "Font Awesome 6 Brands", "Font Awesome 6 Duotone",
+			"Font Awesome 7 Free", "Font Awesome 6 Free", "Font Awesome 6 Pro", "Font Awesome 6 Brands", "Font Awesome 6 Duotone",
 			"Font Awesome 5 Pro", "Font Awesome 5 Brands", "Font Awesome 5 Duotone" !important;
 }
 
@@ -97,7 +97,7 @@
 
 .mce-fontawesome-search-container::before {
 	font-family:
-			"Font Awesome 6 Free", "Font Awesome 6 Pro", "Font Awesome 6 Brands", "Font Awesome 6 Duotone",
+			"Font Awesome 7 Free", "Font Awesome 6 Free", "Font Awesome 6 Pro", "Font Awesome 6 Brands", "Font Awesome 6 Duotone",
 			"Font Awesome 5 Pro", "Font Awesome 5 Brands", "Font Awesome 5 Duotone";
 	content: "\f002";
 	position: absolute;
