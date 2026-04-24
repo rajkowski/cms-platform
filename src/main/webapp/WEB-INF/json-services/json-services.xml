@@ -115,6 +115,7 @@
   <service endpoint="/json/workflowTasks" class="com.simisinc.platform.presentation.widgets.editor.WorkflowTasksAjax" />
   <service endpoint="/json/workflowEvents" class="com.simisinc.platform.presentation.widgets.editor.WorkflowEventsAjax" />
   <service endpoint="/json/workflowTaskHistory" class="com.simisinc.platform.presentation.widgets.editor.WorkflowTaskHistoryAjax" />
+  <service endpoint="/json/workflowTaskTrigger" class="com.simisinc.platform.presentation.widgets.editor.WorkflowTaskTriggerAjax" />
   <!-- CRM Editor -->
   <service endpoint="/json/crm/forms/list" class="com.simisinc.platform.presentation.widgets.editor.CRMFormsListJsonService" />
   <service endpoint="/json/crm/forms/submissions" class="com.simisinc.platform.presentation.widgets.editor.CRMFormSubmissionsJsonService" />

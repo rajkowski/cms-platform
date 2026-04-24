@@ -16,20 +16,24 @@
 
 package com.simisinc.platform.presentation.widgets.editor;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jobrunr.configuration.JobRunr;
 import org.jobrunr.jobs.Job;
+import org.jobrunr.jobs.RecurringJob;
 import org.jobrunr.jobs.states.StateName;
+import org.jobrunr.storage.RecurringJobsResult;
 import org.jobrunr.storage.StorageProvider;
 import org.jobrunr.storage.navigation.AmountRequest;
 
 import com.simisinc.platform.application.json.JsonCommand;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.controller.JsonServiceContext;
+import com.simisinc.platform.presentation.services.GenericJsonService;
 
 /**
  * Returns recent job history for a specific scheduled task in the visual workflow editor
@@ -37,7 +41,7 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
  * @author matt rajkowski
  * @created 02/27/26 9:00 AM
  */
-public class WorkflowTaskHistoryAjax extends GenericWidget {
+public class WorkflowTaskHistoryAjax extends GenericJsonService {
 
   static final long serialVersionUID = -8484048371911908902L;
   private static Log LOG = LogFactory.getLog(WorkflowTaskHistoryAjax.class);
@@ -45,7 +49,7 @@ public class WorkflowTaskHistoryAjax extends GenericWidget {
   private static final int HISTORY_LIMIT = 25;
 
   @Override
-  public WidgetContext execute(WidgetContext context) {
+  public JsonServiceContext get(JsonServiceContext context) {
 
     LOG.debug("WorkflowTaskHistoryAjax...");
 
@@ -57,64 +61,82 @@ public class WorkflowTaskHistoryAjax extends GenericWidget {
       return context;
     }
 
-    // Require a job ID
+    // Optional filter by recurring job ID (used by the right panel History tab)
     String jobId = context.getParameter("jobId");
-    if (StringUtils.isBlank(jobId)) {
-      context.setJson("{\"error\":\"jobId parameter is required\"}");
-      context.setSuccess(false);
-      return context;
-    }
 
-    // Retrieve recent succeeded and failed job history
+    // Retrieve recent job history. When jobId is blank, return global history for live activity.
     StringBuilder sb = new StringBuilder();
     sb.append("{");
-    sb.append("\"jobId\":\"").append(JsonCommand.toJson(jobId)).append("\",");
+    sb.append("\"jobId\":\"").append(JsonCommand.toJson(jobId != null ? jobId : "")).append("\",");
     sb.append("\"history\":[");
 
     try {
       StorageProvider storageProvider = JobRunr.getBackgroundJobServer().getStorageProvider();
+      RecurringJobsResult recurringJobs = storageProvider.getRecurringJobs();
+      Map<String, String> recurringJobNames = new HashMap<>();
+
+      if (recurringJobs != null && !recurringJobs.isEmpty()) {
+        for (RecurringJob recurringJob : recurringJobs) {
+          String recurringJobName = recurringJob.getJobName() != null ? recurringJob.getJobName() : recurringJob.getId();
+          recurringJobNames.put(recurringJob.getId(), recurringJobName);
+        }
+      }
 
       boolean firstEntry = true;
-
-      // Get recent succeeded jobs
-      List<Job> succeededJobs = storageProvider.getJobList(StateName.SUCCEEDED, new AmountRequest("updatedAt:DESC", HISTORY_LIMIT));
-      for (Job job : succeededJobs) {
-        if (job.getRecurringJobId().filter(id -> id.equals(jobId)).isPresent()) {
-          if (!firstEntry) {
-            sb.append(",");
-          }
-          sb.append("{");
-          sb.append("\"state\":\"SUCCEEDED\",");
-          sb.append("\"updatedAt\":\"").append(JsonCommand.toJson(job.getUpdatedAt() != null ? job.getUpdatedAt().toString() : ""))
-              .append("\"");
-          sb.append("}");
-          firstEntry = false;
-        }
-      }
-
-      // Get recent failed jobs
-      List<Job> failedJobs = storageProvider.getJobList(StateName.FAILED, new AmountRequest("updatedAt:DESC", HISTORY_LIMIT));
-      for (Job job : failedJobs) {
-        if (job.getRecurringJobId().filter(id -> id.equals(jobId)).isPresent()) {
-          if (!firstEntry) {
-            sb.append(",");
-          }
-          sb.append("{");
-          sb.append("\"state\":\"FAILED\",");
-          sb.append("\"updatedAt\":\"").append(JsonCommand.toJson(job.getUpdatedAt() != null ? job.getUpdatedAt().toString() : ""))
-              .append("\"");
-          sb.append("}");
-          firstEntry = false;
-        }
-      }
+      firstEntry = appendHistoryEntries(sb,
+          storageProvider.getJobList(StateName.PROCESSING, new AmountRequest("updatedAt:DESC", HISTORY_LIMIT)),
+          "PROCESSING", jobId, recurringJobNames, firstEntry);
+      firstEntry = appendHistoryEntries(sb,
+          storageProvider.getJobList(StateName.ENQUEUED, new AmountRequest("updatedAt:DESC", HISTORY_LIMIT)),
+          "ENQUEUED", jobId, recurringJobNames, firstEntry);
+      firstEntry = appendHistoryEntries(sb,
+          storageProvider.getJobList(StateName.SUCCEEDED, new AmountRequest("updatedAt:DESC", HISTORY_LIMIT)),
+          "SUCCEEDED", jobId, recurringJobNames, firstEntry);
+      appendHistoryEntries(sb, storageProvider.getJobList(StateName.FAILED, new AmountRequest("updatedAt:DESC", HISTORY_LIMIT)),
+          "FAILED", jobId, recurringJobNames, firstEntry);
 
     } catch (Exception e) {
-      LOG.warn("Could not retrieve job history for " + jobId + ": " + e.getMessage());
+      LOG.warn("Could not retrieve workflow task history: " + e.getMessage());
     }
 
     sb.append("]}");
 
     context.setJson(sb.toString());
     return context;
+  }
+
+  private boolean appendHistoryEntries(StringBuilder sb, List<Job> jobs, String state, String jobIdFilter,
+      Map<String, String> recurringJobNames, boolean firstEntry) {
+
+    if (jobs == null || jobs.isEmpty()) {
+      return firstEntry;
+    }
+
+    for (Job job : jobs) {
+      if (!job.getRecurringJobId().isPresent()) {
+        continue;
+      }
+
+      String recurringJobId = job.getRecurringJobId().get();
+      if (StringUtils.isNotBlank(jobIdFilter) && !jobIdFilter.equals(recurringJobId)) {
+        continue;
+      }
+
+      if (!firstEntry) {
+        sb.append(",");
+      }
+
+      sb.append("{");
+      sb.append("\"state\":\"").append(state).append("\",");
+      sb.append("\"jobId\":\"").append(JsonCommand.toJson(recurringJobId)).append("\",");
+      sb.append("\"jobName\":\"").append(JsonCommand.toJson(recurringJobNames.getOrDefault(recurringJobId, recurringJobId)))
+          .append("\",");
+      sb.append("\"updatedAt\":\"").append(JsonCommand.toJson(job.getUpdatedAt() != null ? job.getUpdatedAt().toString() : ""))
+          .append("\"");
+      sb.append("}");
+      firstEntry = false;
+    }
+
+    return firstEntry;
   }
 }

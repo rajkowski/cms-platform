@@ -24,6 +24,8 @@ class VisualWorkflowEditor {
     this.selectedTask = null;
     this.selectedEvent = null;
     this.tasksRefreshInterval = null;
+    this.activityRefreshInterval = null;
+    this.activeRightTab = 'wf-info-tab';
   }
 
   init() {
@@ -121,6 +123,7 @@ class VisualWorkflowEditor {
           this.selectedTask = null;
           this.selectedEvent = null;
           this.stopTasksAutoRefresh();
+          this.stopActivityRefresh();
           this.showEventsOverview();
         }
       });
@@ -133,6 +136,9 @@ class VisualWorkflowEditor {
       link.addEventListener('click', (e) => {
         e.preventDefault();
         const tabId = link.getAttribute('href').replace('#', '');
+
+        // Remember which tab the user selected so switching jobs keeps it active
+        this.activeRightTab = tabId;
 
         tabLinks.forEach(l => l.classList.remove('active'));
         link.classList.add('active');
@@ -368,6 +374,7 @@ class VisualWorkflowEditor {
     if (titleEl) titleEl.textContent = 'Scheduled Tasks';
 
     this.startTasksAutoRefresh();
+    this.startActivityRefresh();
   }
 
   startTasksAutoRefresh() {
@@ -386,6 +393,7 @@ class VisualWorkflowEditor {
       clearInterval(this.tasksRefreshInterval);
       this.tasksRefreshInterval = null;
     }
+    this.stopActivityRefresh();
   }
 
   showEventsOverview() {
@@ -424,17 +432,10 @@ class VisualWorkflowEditor {
     // Update right panel Info tab
     this.updateTaskInfoPanel(job);
 
-    // Activate the Info tab on the right panel
-    const infoTabLink = document.querySelector('.right-panel-tabs-nav a[href="#wf-info-tab"]');
-    if (infoTabLink) {
-      document.querySelectorAll('.right-panel-tabs-nav a').forEach(l => l.classList.remove('active'));
-      infoTabLink.classList.add('active');
-      document.querySelectorAll('.right-panel-tab-content').forEach(t => t.classList.remove('active'));
-      const infoTab = document.getElementById('wf-info-tab');
-      if (infoTab) infoTab.classList.add('active');
-    }
+    // Activate whichever right panel tab was last selected (so clicking through jobs keeps the tab)
+    this.activateRightPanelTab(this.activeRightTab);
 
-    // Load history for the History tab
+    // Load history so the History tab is ready when the user switches to it
     this.loadTaskHistory(job.id);
   }
 
@@ -451,6 +452,9 @@ class VisualWorkflowEditor {
     document.querySelectorAll('#events-table-body tr').forEach(tr => tr.classList.remove('active'));
     const activeTr = document.querySelector(`#events-table-body tr[data-wf-id="${CSS.escape(wf.id)}"]`);
     if (activeTr) activeTr.classList.add('active');
+
+    // Stop activity feed when leaving tasks view
+    this.stopActivityRefresh();
 
     // Show flowchart in center
     document.getElementById('workflow-empty-canvas').style.display = 'none';
@@ -659,7 +663,120 @@ class VisualWorkflowEditor {
         <div class="info-item-label">Next Run</div>
         <div class="info-item-value">${nextRunDisplay}</div>
       </div>
+      <div class="info-item trigger-now-item">
+        <button class="button small secondary trigger-now-btn" data-job-id="${this.escapeHtml(job.id)}">
+          <i class="far fa-play"></i> Trigger Now
+        </button>
+      </div>
     `;
+    const triggerBtn = infoContent.querySelector('.trigger-now-btn');
+    if (triggerBtn) {
+      triggerBtn.addEventListener('click', () => this.triggerJob(job.id, triggerBtn));
+    }
+  }
+
+  activateRightPanelTab(tabId) {
+    document.querySelectorAll('.right-panel-tabs-nav a').forEach(l => l.classList.remove('active'));
+    const targetLink = document.querySelector(`.right-panel-tabs-nav a[href="#${tabId}"]`);
+    if (targetLink) targetLink.classList.add('active');
+    document.querySelectorAll('.right-panel-tab-content').forEach(t => t.classList.remove('active'));
+    const targetTab = document.getElementById(tabId);
+    if (targetTab) targetTab.classList.add('active');
+  }
+
+  triggerJob(jobId, btn) {
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="far fa-spinner fa-spin"></i> Triggering...';
+    }
+    fetch('/json/workflowTaskTrigger', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `token=${encodeURIComponent(this.token)}&jobId=${encodeURIComponent(jobId)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (btn) {
+        if (data.error) {
+          btn.innerHTML = '<i class="far fa-times"></i> Failed';
+          btn.classList.add('alert');
+        } else {
+          btn.innerHTML = '<i class="far fa-check"></i> Triggered!';
+          btn.classList.add('success');
+        }
+        setTimeout(() => {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="far fa-play"></i> Trigger Now';
+          btn.classList.remove('alert', 'success');
+        }, 3000);
+      }
+      if (!data.error) {
+        setTimeout(() => this.loadTasks(), 1500);
+      }
+    })
+    .catch(err => {
+      console.error('Error triggering job:', err);
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="far fa-play"></i> Trigger Now';
+      }
+    });
+  }
+
+  startActivityRefresh() {
+    this.stopActivityRefresh();
+    this.loadActivity();
+    this.activityRefreshInterval = setInterval(() => this.loadActivity(), 5000);
+  }
+
+  stopActivityRefresh() {
+    if (this.activityRefreshInterval) {
+      clearInterval(this.activityRefreshInterval);
+      this.activityRefreshInterval = null;
+    }
+  }
+
+  loadActivity() {
+    fetch('/json/workflowTaskHistory', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) return;
+      this.renderActivity(data.history || []);
+    })
+    .catch(() => {});
+  }
+
+  renderActivity(history) {
+    const feed = document.getElementById('activity-feed');
+    if (!feed) return;
+    const lastUpdated = document.getElementById('activity-last-updated');
+    if (lastUpdated) lastUpdated.textContent = 'Updated ' + new Date().toLocaleTimeString();
+    if (history.length === 0) {
+      feed.innerHTML = '<p style="color:var(--editor-text-muted); font-size:13px; padding:12px;">No recent activity</p>';
+      return;
+    }
+    const sorted = [...history]
+      .sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''))
+      .slice(0, 20);
+    let html = '';
+    sorted.forEach(item => {
+      const state = (item.state || 'UNKNOWN').toUpperCase();
+      const isRunning = state === 'RUNNING' || state === 'PROCESSING';
+      const stateClass = state === 'SUCCEEDED' ? 'succeeded' : isRunning ? 'running' : 'failed';
+      const timeFormatted = this.formatDateTime(item.updatedAt);
+      const jobName = item.jobName || item.jobId || '';
+      html += `
+        <div class="activity-item${isRunning ? ' activity-item-running' : ''}">
+          <span class="history-badge ${stateClass}">${this.escapeHtml(state)}</span>
+          <span class="activity-job-name">${this.escapeHtml(jobName)}</span>
+          <span class="history-time">${this.escapeHtml(timeFormatted)}</span>
+        </div>
+      `;
+    });
+    feed.innerHTML = html;
   }
 
   updateEventInfoPanel(wf) {

@@ -48,6 +48,29 @@
   overflow: hidden;
 }
 
+/* Library panel tab container must fill the panel and allow the list to scroll */
+.library-tabs-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Left panel tab content fills remaining space and scrolls */
+#workflow-library-panel .tab-content {
+  display: none;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+#workflow-library-panel .tab-content.active {
+  display: flex;
+  flex-direction: column;
+}
+
 /* Center Panel */
 #workflow-editor-canvas {
   flex: 1;
@@ -627,4 +650,91 @@
   background: #1a2744;
   color: #93c5fd;
   border-color: #2d4b7a;
+}
+
+/* Trigger Now button in Info panel */
+.trigger-now-item {
+  padding-top: 12px;
+}
+
+.trigger-now-btn {
+  width: 100%;
+  margin: 0;
+}
+
+/* Live Activity Feed */
+.workflow-activity-section {
+  margin-bottom: 20px;
+}
+
+.workflow-activity-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--editor-panel-bg);
+  border: 1px solid var(--editor-border);
+  border-radius: 4px 4px 0 0;
+  border-bottom: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--editor-text-muted);
+}
+
+.activity-timestamp {
+  font-size: 11px;
+  font-weight: 400;
+}
+
+#activity-feed {
+  border: 1px solid var(--editor-border);
+  border-radius: 0 0 4px 4px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.activity-item {
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--editor-border);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.activity-item:last-child {
+  border-bottom: none;
+}
+
+.activity-item-running {
+  background: rgba(0, 102, 204, 0.04);
+}
+
+[data-theme="dark"] .activity-item-running {
+  background: rgba(147, 197, 253, 0.06);
+}
+
+.activity-job-name {
+  flex: 1;
+  color: var(--editor-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Running badge with pulse animation */
+.history-badge.running {
+  background: #dbeafe;
+  color: #1d4ed8;
+  animation: activity-pulse 1.4s ease-in-out infinite;
+}
+
+[data-theme="dark"] .history-badge.running {
+  background: #1e3a5f;
+  color: #93c5fd;
+}
+
+@keyframes activity-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
 }

@@ -138,6 +138,17 @@
           </div>
         </div>
 
+        <!-- Live Activity Feed -->
+        <div class="workflow-activity-section">
+          <div class="workflow-activity-header">
+            <span><i class="${font:far()} fa-circle-dot"></i> Live Activity</span>
+            <span id="activity-last-updated" class="activity-timestamp"></span>
+          </div>
+          <div id="activity-feed">
+            <p style="color: var(--editor-text-muted); font-size: 13px; padding: 12px;">Loading activity...</p>
+          </div>
+        </div>
+
         <!-- Jobs Table -->
         <div class="workflow-table-container">
           <table class="workflow-table" id="jobs-table">
