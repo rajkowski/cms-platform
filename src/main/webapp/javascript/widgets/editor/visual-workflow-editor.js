@@ -765,13 +765,19 @@ class VisualWorkflowEditor {
     sorted.forEach(item => {
       const state = (item.state || 'UNKNOWN').toUpperCase();
       const isRunning = state === 'RUNNING' || state === 'PROCESSING';
+      const isCompleted = state === 'SUCCEEDED' || state === 'FAILED';
       const stateClass = state === 'SUCCEEDED' ? 'succeeded' : isRunning ? 'running' : 'failed';
       const timeFormatted = this.formatDateTime(item.updatedAt);
       const jobName = item.jobName || item.jobId || '';
+      const durationLabel = isCompleted ? this.formatDuration(item.processDurationMs) : '';
+      const durationHtml = durationLabel
+        ? `<span class="history-time">(${this.escapeHtml(durationLabel)})</span>`
+        : '';
       html += `
         <div class="activity-item${isRunning ? ' activity-item-running' : ''}">
           <span class="history-badge ${stateClass}">${this.escapeHtml(state)}</span>
           <span class="activity-job-name">${this.escapeHtml(jobName)}</span>
+          ${durationHtml}
           <span class="history-time">${this.escapeHtml(timeFormatted)}</span>
         </div>
       `;
@@ -822,12 +828,12 @@ class VisualWorkflowEditor {
     .then(response => response.json())
     .then(data => {
       if (data.error) {
-        historyContent.innerHTML = `<p style="color: var(--editor-text-muted); font-size: 13px; padding: 12px;">${this.escapeHtml(data.error)}</p>`;
+        historyContent.innerHTML = `<p style="color: var(--editor-text-muted); font-size: 13px; padding: 10px;">${this.escapeHtml(data.error)}</p>`;
         return;
       }
       const history = data.history || [];
       if (history.length === 0) {
-        historyContent.innerHTML = '<p style="color: var(--editor-text-muted); font-size: 13px; padding: 12px;">No recent history found</p>';
+        historyContent.innerHTML = '<p style="color: var(--editor-text-muted); font-size: 13px; padding: 10px;">No recent history found</p>';
         return;
       }
 
@@ -838,12 +844,16 @@ class VisualWorkflowEditor {
       history.forEach(item => {
         const stateClass = item.state === 'SUCCEEDED' ? 'succeeded' : 'failed';
         const timeFormatted = this.formatDateTime(item.updatedAt);
-        html += `
-          <div class="history-item">
-            <span class="history-badge ${stateClass}">${item.state}</span>
-            <span class="history-time">${this.escapeHtml(timeFormatted)}</span>
-          </div>
-        `;
+          const durationLabel = this.formatDuration(item.processDurationMs);
+          const durationHtml = durationLabel
+            ? `(${this.escapeHtml(durationLabel)})`
+            : '';
+          html += `
+            <div class="history-item">
+              <span class="history-badge ${stateClass}">${item.state}</span>
+              <span class="history-time">${this.escapeHtml(durationHtml)} ${this.escapeHtml(timeFormatted)}</span>
+            </div>
+          `;
       });
       historyContent.innerHTML = html;
     })
@@ -879,6 +889,23 @@ class VisualWorkflowEditor {
     } catch (e) {
       return '';
     }
+  }
+
+  formatDuration(durationMs) {
+    if (durationMs == null || Number.isNaN(Number(durationMs))) return '';
+    const ms = Math.max(0, Number(durationMs));
+    if (ms < 1000) {
+      return `${Math.round(ms)} ms`;
+    }
+    if (ms < 60000) {
+      return `${(ms / 1000).toFixed(1)} s`;
+    }
+    const minutes = Math.floor(ms / 60000);
+    const seconds = Math.round((ms % 60000) / 1000);
+    if (seconds === 60) {
+      return `${minutes + 1}m 0s`;
+    }
+    return `${minutes}m ${seconds}s`;
   }
 
   formatDateTime(isoString) {

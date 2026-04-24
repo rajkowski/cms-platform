@@ -16,9 +16,12 @@
 
 package com.simisinc.platform.presentation.widgets.editor;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -26,7 +29,10 @@ import org.apache.commons.logging.LogFactory;
 import org.jobrunr.configuration.JobRunr;
 import org.jobrunr.jobs.Job;
 import org.jobrunr.jobs.RecurringJob;
+import org.jobrunr.jobs.states.FailedState;
+import org.jobrunr.jobs.states.ProcessingState;
 import org.jobrunr.jobs.states.StateName;
+import org.jobrunr.jobs.states.SucceededState;
 import org.jobrunr.storage.RecurringJobsResult;
 import org.jobrunr.storage.StorageProvider;
 import org.jobrunr.storage.navigation.AmountRequest;
@@ -47,6 +53,7 @@ public class WorkflowTaskHistoryAjax extends GenericJsonService {
   private static Log LOG = LogFactory.getLog(WorkflowTaskHistoryAjax.class);
 
   private static final int HISTORY_LIMIT = 25;
+  private static final String SORT_BY_UPDATED_AT_DESC = "updatedAt:DESC";
 
   @Override
   public JsonServiceContext get(JsonServiceContext context) {
@@ -84,15 +91,15 @@ public class WorkflowTaskHistoryAjax extends GenericJsonService {
 
       boolean firstEntry = true;
       firstEntry = appendHistoryEntries(sb,
-          storageProvider.getJobList(StateName.PROCESSING, new AmountRequest("updatedAt:DESC", HISTORY_LIMIT)),
+          storageProvider.getJobList(StateName.PROCESSING, new AmountRequest(SORT_BY_UPDATED_AT_DESC, HISTORY_LIMIT)),
           "PROCESSING", jobId, recurringJobNames, firstEntry);
       firstEntry = appendHistoryEntries(sb,
-          storageProvider.getJobList(StateName.ENQUEUED, new AmountRequest("updatedAt:DESC", HISTORY_LIMIT)),
+          storageProvider.getJobList(StateName.ENQUEUED, new AmountRequest(SORT_BY_UPDATED_AT_DESC, HISTORY_LIMIT)),
           "ENQUEUED", jobId, recurringJobNames, firstEntry);
       firstEntry = appendHistoryEntries(sb,
-          storageProvider.getJobList(StateName.SUCCEEDED, new AmountRequest("updatedAt:DESC", HISTORY_LIMIT)),
+          storageProvider.getJobList(StateName.SUCCEEDED, new AmountRequest(SORT_BY_UPDATED_AT_DESC, HISTORY_LIMIT)),
           "SUCCEEDED", jobId, recurringJobNames, firstEntry);
-      appendHistoryEntries(sb, storageProvider.getJobList(StateName.FAILED, new AmountRequest("updatedAt:DESC", HISTORY_LIMIT)),
+      appendHistoryEntries(sb, storageProvider.getJobList(StateName.FAILED, new AmountRequest(SORT_BY_UPDATED_AT_DESC, HISTORY_LIMIT)),
           "FAILED", jobId, recurringJobNames, firstEntry);
 
     } catch (Exception e) {
@@ -113,30 +120,71 @@ public class WorkflowTaskHistoryAjax extends GenericJsonService {
     }
 
     for (Job job : jobs) {
-      if (!job.getRecurringJobId().isPresent()) {
+      Optional<String> recurringJobId = job.getRecurringJobId();
+      if (recurringJobId.isEmpty()) {
         continue;
       }
 
-      String recurringJobId = job.getRecurringJobId().get();
-      if (StringUtils.isNotBlank(jobIdFilter) && !jobIdFilter.equals(recurringJobId)) {
-        continue;
+      if (shouldIncludeJob(jobIdFilter, recurringJobId.get())) {
+        firstEntry = appendHistoryEntry(sb, state, recurringJobId.get(), recurringJobNames, job, firstEntry);
       }
-
-      if (!firstEntry) {
-        sb.append(",");
-      }
-
-      sb.append("{");
-      sb.append("\"state\":\"").append(state).append("\",");
-      sb.append("\"jobId\":\"").append(JsonCommand.toJson(recurringJobId)).append("\",");
-      sb.append("\"jobName\":\"").append(JsonCommand.toJson(recurringJobNames.getOrDefault(recurringJobId, recurringJobId)))
-          .append("\",");
-      sb.append("\"updatedAt\":\"").append(JsonCommand.toJson(job.getUpdatedAt() != null ? job.getUpdatedAt().toString() : ""))
-          .append("\"");
-      sb.append("}");
-      firstEntry = false;
     }
 
     return firstEntry;
+  }
+
+  private boolean shouldIncludeJob(String jobIdFilter, String recurringJobId) {
+    return StringUtils.isBlank(jobIdFilter) || jobIdFilter.equals(recurringJobId);
+  }
+
+  private boolean appendHistoryEntry(StringBuilder sb, String state, String recurringJobId,
+      Map<String, String> recurringJobNames, Job job, boolean firstEntry) {
+
+    if (!firstEntry) {
+      sb.append(",");
+    }
+
+    sb.append("{");
+    sb.append("\"state\":\"").append(state).append("\",");
+    sb.append("\"jobId\":\"").append(JsonCommand.toJson(recurringJobId)).append("\",");
+    sb.append("\"jobName\":\"").append(JsonCommand.toJson(recurringJobNames.getOrDefault(recurringJobId, recurringJobId)))
+        .append("\",");
+    sb.append("\"updatedAt\":\"").append(JsonCommand.toJson(job.getUpdatedAt() != null ? job.getUpdatedAt().toString() : ""))
+        .append("\"");
+
+    Optional<Long> processDurationMs = getProcessDurationMs(job, state);
+    if (processDurationMs.isPresent()) {
+      sb.append(",\"processDurationMs\":").append(processDurationMs.get());
+    }
+
+    sb.append("}");
+    return false;
+  }
+
+  private Optional<Long> getProcessDurationMs(Job job, String state) {
+    if ("SUCCEEDED".equals(state)) {
+      return job.getLastJobStateOfType(SucceededState.class)
+          .map(SucceededState::getProcessDuration)
+          .map(Duration::toMillis)
+          .filter(ms -> ms >= 0);
+    }
+
+    if (!"FAILED".equals(state)) {
+      return Optional.empty();
+    }
+
+    Optional<ProcessingState> processingState = job.getLastJobStateOfType(ProcessingState.class);
+    Optional<FailedState> failedState = job.getLastJobStateOfType(FailedState.class);
+    if (processingState.isEmpty() || failedState.isEmpty()) {
+      return Optional.empty();
+    }
+
+    Instant processingStart = processingState.get().getCreatedAt();
+    Instant failedAt = failedState.get().getUpdatedAt();
+    if (processingStart == null || failedAt == null || failedAt.isBefore(processingStart)) {
+      return Optional.empty();
+    }
+
+    return Optional.of(Duration.between(processingStart, failedAt).toMillis());
   }
 }

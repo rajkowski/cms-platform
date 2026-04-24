@@ -540,7 +540,7 @@
 
 /* Right panel history items */
 .history-item {
-  padding: 8px 12px;
+  padding: 8px 2px;
   border-bottom: 1px solid var(--editor-border);
   font-size: 12px;
   display: flex;
