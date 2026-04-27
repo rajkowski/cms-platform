@@ -83,7 +83,8 @@ public class WebPageSearchResultsWidget extends GenericWidget {
     // Determine the web pages that can be searched
     UserSession userSession = context.getUserSession();
     WebPageSpecification webPageSpecification = new WebPageSpecification();
-    if (!context.hasRole("admin") || context.hasRole("content-manager")) {
+    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
+      // Limit the search to published pages that are searchable, and not drafts
       webPageSpecification.setSearchable(true);
       webPageSpecification.setDraft(false);
     }
