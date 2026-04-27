@@ -136,7 +136,7 @@ public class XMLPageLoader implements Serializable {
           file.setLastModified(lastModified);
         }
       } catch (Exception e) {
-        LOG.error("Error loading file: " + file, e);
+        LOG.error("Error loading file: " + (file.getUrl() != null ? file.getUrl().getPath() : file), e);
       }
     }
   }
