@@ -202,6 +202,8 @@ public class SaveItemCommand {
     item.setKeywords(itemBean.getKeywords());
     item.setCustomFieldList(itemBean.getCustomFieldList());
     item.setIpAddress(itemBean.getIpAddress());
+    // Enable once the field is available in the form
+    // item.setTags();
     return ItemRepository.save(item);
   }
 

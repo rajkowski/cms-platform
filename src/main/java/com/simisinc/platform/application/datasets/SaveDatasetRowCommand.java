@@ -34,7 +34,9 @@ import org.apache.commons.logging.LogFactory;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import static com.simisinc.platform.application.datasets.DatasetFieldOptionCommand.*;
@@ -218,6 +220,8 @@ public class SaveDatasetRowCommand {
         }
       } else if ("keywords".equals(mapping)) {
         item.setKeywords(value);
+      } else if ("tags".equals(mapping)) {
+        item.setTags(toTagArray(value, hasSplitOption, splitValue));
       } else if ("latitude".equals(mapping)) {
         item.setLatitude(Double.valueOf(value));
       } else if ("longitude".equals(mapping)) {
@@ -296,5 +300,34 @@ public class SaveDatasetRowCommand {
     if (!item.hasGeoPoint()) {
       CheckGeoPointCommand.updateGeoPointByRelativeLocation(item);
     }
+  }
+
+  private static String[] toTagArray(String value, boolean hasSplitOption, String splitValue) {
+    String[] tags = new String[] { value };
+    if (hasSplitOption) {
+      if (splitValue != null) {
+        tags = value.split(Pattern.quote(splitValue));
+      } else if (value.contains(";")) {
+        tags = value.split(Pattern.quote(";"));
+      } else if (value.contains(",")) {
+        tags = value.split(Pattern.quote(","));
+      }
+    } else if (value.contains(";")) {
+      tags = value.split(Pattern.quote(";"));
+    } else if (value.contains(",")) {
+      tags = value.split(Pattern.quote(","));
+    }
+
+    Set<String> cleanTags = new LinkedHashSet<>();
+    for (String tag : tags) {
+      if (StringUtils.isBlank(tag)) {
+        continue;
+      }
+      cleanTags.add(tag.trim());
+    }
+    if (cleanTags.isEmpty()) {
+      return null;
+    }
+    return cleanTags.toArray(new String[0]);
   }
 }

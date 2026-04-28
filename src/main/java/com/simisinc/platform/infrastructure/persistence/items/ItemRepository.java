@@ -32,6 +32,7 @@ import org.apache.commons.logging.LogFactory;
 import com.simisinc.platform.application.CustomFieldListJSONCommand;
 import com.simisinc.platform.application.cms.HtmlCommand;
 import com.simisinc.platform.application.filesystem.FileSystemCommand;
+import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.application.maps.ValidateGeoRegion;
 import com.simisinc.platform.domain.model.User;
 import com.simisinc.platform.domain.model.items.Collection;
@@ -114,6 +115,10 @@ public class ItemRepository {
         .add("sync_date", record.getDatasetSyncDate())
         .add("dataset_key_value", record.getDatasetKeyValue())
         .add(new SqlValue("geojson", SqlValue.JSONB_TYPE, StringUtils.trimToNull(record.getGeoJSON())));
+    if (record.getTags() != null && record.getTags().length > 0) {
+      insertValues.add(new SqlValue("tags", SqlValue.JSONB_TYPE, JsonCommand.toJsonArray(record.getTags())));
+    }
+
     if (record.hasGeoPoint()) {
       insertValues.add("latitude", record.getLatitude());
       insertValues.add("longitude", record.getLongitude());
@@ -185,6 +190,11 @@ public class ItemRepository {
         .add("approved_by", record.getApprovedBy(), -1)
         .add("approved", record.getApproved())
         .addIfExists("sync_date", record.getDatasetSyncDate());
+    if (record.getTags() != null && record.getTags().length > 0) {
+      updateValues.add(new SqlValue("tags", SqlValue.JSONB_TYPE, JsonCommand.toJsonArray(record.getTags())));
+    } else {
+      updateValues.add(new SqlValue("tags", SqlValue.JSONB_TYPE, null));
+    }
     if (record.hasGeoPoint()) {
       updateValues.add("latitude", record.getLatitude());
       updateValues.add("longitude", record.getLongitude());
@@ -657,6 +667,8 @@ public class ItemRepository {
       record.setDatasetSyncDate(rs.getTimestamp("sync_date"));
       record.setDatasetKeyValue(rs.getString("dataset_key_value"));
       record.setGeoJSON(rs.getString("geojson"));
+      record.setTags(JsonCommand.fromJsonArray(rs.getString("tags")));
+
       // Other
       if (DB.hasColumn(rs, "highlight")) {
         record.setHighlight(rs.getString("highlight"));

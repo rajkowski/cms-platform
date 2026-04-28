@@ -86,6 +86,7 @@ public class Item extends Entity {
   private String ipAddress = null;
   private Timestamp datasetSyncDate = null;
   private String datasetKeyValue = null;
+  private String[] tags = null;
   // populated by search
   private String highlight = null;
 
@@ -505,6 +506,14 @@ public class Item extends Entity {
 
   public void setDatasetKeyValue(String datasetKeyValue) {
     this.datasetKeyValue = datasetKeyValue;
+  }
+
+  public String[] getTags() {
+    return tags;
+  }
+
+  public void setTags(String[] tags) {
+    this.tags = tags;
   }
 
 }
