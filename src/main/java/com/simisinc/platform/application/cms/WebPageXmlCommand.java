@@ -135,7 +135,7 @@ public class WebPageXmlCommand {
               .append(">\n");
         } else if (valueNode.isNumber()) {
           LOG.debug("Processing numeric content for key: " + key);
-          xml.append(indent).append("  <").append(key).append(">").append(valueNode.asDouble()).append("</").append(key).append(">\n");
+          xml.append(indent).append("  <").append(key).append(">").append(valueNode.asText()).append("</").append(key).append(">\n");
         }
 
       }
