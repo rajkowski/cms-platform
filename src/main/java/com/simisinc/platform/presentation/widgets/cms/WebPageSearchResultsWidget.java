@@ -16,20 +16,39 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
+
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.application.cms.HtmlCommand;
 import com.simisinc.platform.application.cms.LoadMenuTabsCommand;
 import com.simisinc.platform.application.cms.WebPageXmlLayoutCommand;
-import com.simisinc.platform.domain.model.cms.*;
+import com.simisinc.platform.domain.model.cms.Content;
+import com.simisinc.platform.domain.model.cms.MenuItem;
+import com.simisinc.platform.domain.model.cms.MenuTab;
+import com.simisinc.platform.domain.model.cms.SearchResult;
+import com.simisinc.platform.domain.model.cms.TableOfContents;
+import com.simisinc.platform.domain.model.cms.TableOfContentsLink;
+import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.persistence.cms.*;
-import com.simisinc.platform.presentation.controller.*;
+import com.simisinc.platform.infrastructure.persistence.cms.ContentRepository;
+import com.simisinc.platform.infrastructure.persistence.cms.ContentSpecification;
+import com.simisinc.platform.infrastructure.persistence.cms.TableOfContentsRepository;
+import com.simisinc.platform.infrastructure.persistence.cms.WebPageHierarchyRepository;
+import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
+import com.simisinc.platform.infrastructure.persistence.cms.WebPageSpecification;
+import com.simisinc.platform.presentation.controller.Column;
+import com.simisinc.platform.presentation.controller.Page;
+import com.simisinc.platform.presentation.controller.RequestConstants;
+import com.simisinc.platform.presentation.controller.Section;
+import com.simisinc.platform.presentation.controller.UserSession;
+import com.simisinc.platform.presentation.controller.WebComponentCommand;
+import com.simisinc.platform.presentation.controller.Widget;
+import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
-import org.apache.commons.lang3.StringUtils;
-
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Description
@@ -62,11 +81,13 @@ public class WebPageSearchResultsWidget extends GenericWidget {
       return null;
     }
 
+    boolean requirePageInNavigation = "true".equals(context.getPreferences().getOrDefault("requirePageInNavigation", "false"));
+
     // Load the menu tabs, these are the directly linkable web pages
-    List<MenuTab> menuTabList = LoadMenuTabsCommand.findAllActiveIncludeMenuItemList();
+    List<MenuTab> menuTabList = requirePageInNavigation ? LoadMenuTabsCommand.findAllActiveIncludeMenuItemList() : null;
 
     // Load the table of contents
-    List<TableOfContents> tableOfContentsList = TableOfContentsRepository.findAll(null, null);
+    List<TableOfContents> tableOfContentsList = requirePageInNavigation ? TableOfContentsRepository.findAll(null, null) : null;
 
     // Search the content and figure out the matching web pages
     ContentSpecification contentSpecification = new ContentSpecification();
@@ -83,6 +104,7 @@ public class WebPageSearchResultsWidget extends GenericWidget {
     // Determine the web pages that can be searched
     UserSession userSession = context.getUserSession();
     WebPageSpecification webPageSpecification = new WebPageSpecification();
+    // Admins or content managers can see all pages, but regular users only see published pages that are searchable, and not drafts
     if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
       // Limit the search to published pages that are searchable, and not drafts
       webPageSpecification.setSearchable(true);
@@ -92,8 +114,7 @@ public class WebPageSearchResultsWidget extends GenericWidget {
     List<WebPage> webPageList = WebPageRepository.findAll(webPageSpecification, null);
 
     // Now search the web pages for a matching unique id
-    contentLoop:
-    for (Content content : contentList) {
+    contentLoop: for (Content content : contentList) {
       String contentUniqueId = content.getUniqueId();
 
       // Find active web pages with the matching content object
@@ -147,13 +168,12 @@ public class WebPageSearchResultsWidget extends GenericWidget {
               for (String key : widget.getPreferences().keySet()) {
                 String value = widget.getPreferences().get(key);
                 LOG.debug("Pref: " + key + "=" + value);
-                if (("uniqueId".equals(key) && value.contains(contentUniqueId)) || (value.contains("${uniqueId:" + contentUniqueId + "}"))) {
+                if ((("uniqueId".equals(key) && value.contains(contentUniqueId)) || (value.contains("${uniqueId:" + contentUniqueId + "}"))) &&
+                    (!requirePageInNavigation || isPageInTheNavigation(context, link, menuTabList, tableOfContentsList, webPageList))) {
                   // Page was found, but we only want to show results for linked pages, to avoid hidden pages
-                  if (isPageInTheNavigation(context, link, menuTabList, tableOfContentsList)) {
-                    addTheSearchResult(webPage, link, content, resultsMap);
-                    // No need to show more web pages which have the same repeated contentId
-                    continue contentLoop;
-                  }
+                  addTheSearchResult(webPage, link, content, resultsMap);
+                  // No need to show more web pages which have the same repeated contentId
+                  continue contentLoop;
                 }
               }
             }
@@ -165,27 +185,43 @@ public class WebPageSearchResultsWidget extends GenericWidget {
     return finishRequest(context, resultsMap);
   }
 
-  private boolean isPageInTheNavigation(WidgetContext context, String link, List<MenuTab> menuTabList, List<TableOfContents> tableOfContentsList) {
+  private boolean isPageInTheNavigation(WidgetContext context, String link, List<MenuTab> menuTabList,
+      List<TableOfContents> tableOfContentsList, List<WebPage> webPageList) {
     // Allow the admin to see results for any page
     if (context.hasRole("admin") || context.hasRole("content-manager")) {
       return true;
     }
     // Determine if the link is in the navigation... like menu tabs, menu items, table of contents
-    for (MenuTab menuTab : menuTabList) {
-      if (menuTab.getLink().equals(link)) {
-        return true;
-      }
-      for (MenuItem menuItem : menuTab.getMenuItemList()) {
-        if (menuItem.getLink().equals(link)) {
+    if (menuTabList != null) {
+      for (MenuTab menuTab : menuTabList) {
+        if (menuTab.getLink().equals(link)) {
           return true;
+        }
+        for (MenuItem menuItem : menuTab.getMenuItemList()) {
+          if (menuItem.getLink().equals(link)) {
+            return true;
+          }
         }
       }
     }
     // Determine if the link is in the table of contents
-    for (TableOfContents tableOfContents : tableOfContentsList) {
-      for (TableOfContentsLink tableOfContentsLink : tableOfContents.getEntries()) {
-        if (link.equals(tableOfContentsLink.getLink())) {
-          return true;
+    if (tableOfContentsList != null) {
+      for (TableOfContents tableOfContents : tableOfContentsList) {
+        for (TableOfContentsLink tableOfContentsLink : tableOfContents.getEntries()) {
+          if (link.equals(tableOfContentsLink.getLink())) {
+            return true;
+          }
+        }
+      }
+    }
+    // Determine if the link is in the web page hierarchy
+    if (webPageList != null) {
+      for (WebPage webPage : webPageList) {
+        if (link.equals(webPage.getLink())) {
+          if (WebPageHierarchyRepository.findByPageId(webPage.getId()) != null) {
+            return true;
+          }
+          break;
         }
       }
     }

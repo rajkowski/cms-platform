@@ -993,6 +993,7 @@ class WidgetRegistry {
         icon: { type: 'icon', label: 'Widget Icon', required: false },
         title: { type: 'text', label: 'Widget Title', required: false },
         limit: { type: 'number', label: 'Max results to show', default: 15 },
+        requirePageInNavigation: { type: 'checkbox', label: 'Require Page in Navigation', default: false },
         showWhenEmpty: { type: 'checkbox', label: 'Show When Empty', default: true }
       }
     });
