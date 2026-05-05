@@ -28,6 +28,7 @@ import java.io.UnsupportedEncodingException;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.Base64;
+import java.util.List;
 import java.util.StringTokenizer;
 import java.util.UUID;
 import java.nio.charset.StandardCharsets;
@@ -192,6 +193,10 @@ public class RestRequestFilter implements Filter {
     }
     request.setAttribute(RequestConstants.REST_APP, thisApp);
 
+    // Allow selected app clients to use a higher request limit.
+    List<String> lenientApps = LoadSitePropertyCommand.loadByNameAsList("api.rate.limit.lenient.apps");
+    boolean useLenientRateLimit = RateLimitCommand.isLenientRateLimitApp(thisApp, lenientApps);
+
     if (LOG.isDebugEnabled()) {
       LOG.debug(requestMethod + " " + resource);
     }
@@ -225,7 +230,7 @@ public class RestRequestFilter implements Filter {
       }
 
       // Limit the number of hits per minute based on the successful use of the api key
-      if (!isLocal && !RateLimitCommand.isAppAllowedRightNow(thisApp)) {
+      if (!isLocal && !RateLimitCommand.isAppAllowedRightNow(thisApp, useLenientRateLimit)) {
         do429(servletResponse);
         return;
       }
@@ -254,7 +259,7 @@ public class RestRequestFilter implements Filter {
       LOG.debug("Got a token user: " + user.getId());
 
       // Limit the number of hits per minute based on the user and api key
-      if (!RateLimitCommand.isAppUserAllowedRightNow(thisApp, user.getId())) {
+      if (!RateLimitCommand.isAppUserAllowedRightNow(thisApp, user.getId(), useLenientRateLimit)) {
         do429(servletResponse);
         return;
       }

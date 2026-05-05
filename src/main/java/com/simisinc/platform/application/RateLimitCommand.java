@@ -17,7 +17,10 @@
 package com.simisinc.platform.application;
 
 import java.time.Duration;
+import java.util.List;
+import java.util.Objects;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -36,6 +39,10 @@ import io.github.bucket4j.Bucket;
 public class RateLimitCommand {
 
   public static final String INVALID_ATTEMPTS = "Too many attempts. Please try again later.";
+  private static final int APP_CAPACITY = 1500;
+  private static final int APP_USER_CAPACITY = 900;
+  private static final int LENIENT_APP_CAPACITY = 4500;
+  private static final int LENIENT_APP_USER_CAPACITY = 2700;
   private static Log LOG = LogFactory.getLog(RateLimitCommand.class);
 
   /**
@@ -95,13 +102,18 @@ public class RateLimitCommand {
    * @return
    */
   public static boolean isAppAllowedRightNow(App thisApp) {
+    return isAppAllowedRightNow(thisApp, false);
+  }
+
+  public static boolean isAppAllowedRightNow(App thisApp, boolean useLenientRateLimit) {
     Cache cache = CacheManager.getCache(CacheManager.RATE_LIMIT_BY_APP_CACHE);
     Bucket bucket;
+    int requestCapacity = useLenientRateLimit ? LENIENT_APP_CAPACITY : APP_CAPACITY;
     synchronized (RateLimitCommand.class) {
       bucket = (Bucket) cache.getIfPresent(thisApp.getId());
       if (bucket == null) {
         bucket = Bucket.builder()
-            .addLimit(limit -> limit.capacity(1500).refillGreedy(1500, Duration.ofMinutes(15)))
+            .addLimit(limit -> limit.capacity(requestCapacity).refillGreedy(requestCapacity, Duration.ofMinutes(15)))
             .build();
         cache.put(thisApp.getId(), bucket);
       }
@@ -117,18 +129,40 @@ public class RateLimitCommand {
    * @return
    */
   public static boolean isAppUserAllowedRightNow(App thisApp, long userId) {
+    return isAppUserAllowedRightNow(thisApp, userId, false);
+  }
+
+  public static boolean isAppUserAllowedRightNow(App thisApp, long userId, boolean useLenientRateLimit) {
     Cache cache = CacheManager.getCache(CacheManager.RATE_LIMIT_BY_APP_USER_CACHE);
     Bucket bucket;
+    int requestCapacity = useLenientRateLimit ? LENIENT_APP_USER_CAPACITY : APP_USER_CAPACITY;
     synchronized (RateLimitCommand.class) {
       bucket = (Bucket) cache.getIfPresent(thisApp.getId() + "-" + userId);
       if (bucket == null) {
         bucket = Bucket.builder()
-            .addLimit(limit -> limit.capacity(900).refillGreedy(900, Duration.ofMinutes(15)))
+            .addLimit(limit -> limit.capacity(requestCapacity).refillGreedy(requestCapacity, Duration.ofMinutes(15)))
             .build();
         cache.put(thisApp.getId() + "-" + userId, bucket);
       }
     }
     return bucket.tryConsume(1);
+  }
+
+  public static boolean isLenientRateLimitApp(App thisApp, List<String> lenientAppValues) {
+    if (thisApp == null || lenientAppValues == null || lenientAppValues.isEmpty()) {
+      return false;
+    }
+    String appIdValue = String.valueOf(thisApp.getId());
+    for (String configuredValue : lenientAppValues) {
+      if (StringUtils.isBlank(configuredValue)) {
+        continue;
+      }
+      String value = configuredValue.trim();
+      if (appIdValue.equals(value) || Objects.equals(thisApp.getPublicKey(), value)) {
+        return true;
+      }
+    }
+    return false;
   }
 
 }

@@ -53,3 +53,15 @@ Calls without a user:
 ```bash
 http GET http://localhost:8080/api/me?key=<secret_key>
 ```
+
+## API Rate Limiting
+
+- Standard limits are enforced per app and per app-user token.
+- To allow selected API clients to use a higher limit, set the site property `api.rate.limit.lenient.apps`.
+- Provide a comma-separated list of app ids or public keys.
+
+Example:
+
+```text
+api.rate.limit.lenient.apps=101,public-key-abc123
+```
