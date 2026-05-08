@@ -287,7 +287,7 @@ class ImageBrowserManager {
     browserDiv.className = 'image-browser';
 
     const img = document.createElement('img');
-    const imageSrc = `${this.config.contextPath}/assets/img/${image.url}`;
+    const imageSrc = `${this.config.contextPath}${image.url}`;
     img.src = imageSrc;
     img.dataset.src = imageSrc;
     img.alt = image.filename;
