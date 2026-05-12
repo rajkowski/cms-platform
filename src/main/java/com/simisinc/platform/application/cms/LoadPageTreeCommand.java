@@ -16,17 +16,18 @@
 
 package com.simisinc.platform.application.cms;
 
-import com.simisinc.platform.domain.model.cms.PageTreeNode;
-import com.simisinc.platform.infrastructure.database.DB;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.cms.PageTreeNode;
+import com.simisinc.platform.infrastructure.database.DB;
 
 /**
  * Loads hierarchical page structure for tree display in the Visual Content Editor
@@ -41,10 +42,10 @@ public class LoadPageTreeCommand {
   /**
    * Loads child pages for a given parent page ID, supporting lazy loading
    *
-   * @param parentId the parent page ID (null for root level pages)
+   * @param parentId the parent page ID (-1 for root level pages)
    * @return list of PageTreeNode objects sorted by sort_order, then title
    */
-  public static List<PageTreeNode> loadPageTree(Long parentId) {
+  public static List<PageTreeNode> loadPageTree(long parentId) {
     List<PageTreeNode> nodes = new ArrayList<>();
 
     // Build the SQL query to join web_page_hierarchy with web_pages
@@ -53,20 +54,20 @@ public class LoadPageTreeCommand {
     sql.append("(SELECT COUNT(*) FROM web_page_hierarchy h2 WHERE h2.parent_page_id = p.web_page_id) AS child_count ");
     sql.append("FROM web_pages p ");
     sql.append("INNER JOIN web_page_hierarchy h ON p.web_page_id = h.web_page_id ");
-    
-    if (parentId == null) {
+
+    if (parentId == -1) {
       sql.append("WHERE h.parent_page_id IS NULL ");
     } else {
       sql.append("WHERE h.parent_page_id = ? ");
     }
-    
+
     sql.append("ORDER BY h.sort_order, p.page_title");
 
     try (Connection connection = DB.getConnection();
-         PreparedStatement pst = connection.prepareStatement(sql.toString())) {
-      
-      // Set the parent ID parameter if not null
-      if (parentId != null) {
+        PreparedStatement pst = connection.prepareStatement(sql.toString())) {
+
+      // Set the parent ID parameter if not root level
+      if (parentId != -1) {
         pst.setLong(1, parentId);
       }
 
@@ -96,12 +97,12 @@ public class LoadPageTreeCommand {
    */
   public static boolean hasChildren(long pageId) {
     String sql = "SELECT COUNT(*) FROM web_page_hierarchy WHERE parent_page_id = ?";
-    
+
     try (Connection connection = DB.getConnection();
-         PreparedStatement pst = connection.prepareStatement(sql)) {
-      
+        PreparedStatement pst = connection.prepareStatement(sql)) {
+
       pst.setLong(1, pageId);
-      
+
       try (ResultSet rs = pst.executeQuery()) {
         if (rs.next()) {
           return rs.getInt(1) > 0;
@@ -110,7 +111,7 @@ public class LoadPageTreeCommand {
     } catch (SQLException se) {
       LOG.error("hasChildren error", se);
     }
-    
+
     return false;
   }
 }

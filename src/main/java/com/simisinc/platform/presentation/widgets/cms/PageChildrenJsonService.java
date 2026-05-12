@@ -58,7 +58,7 @@ public class PageChildrenJsonService extends GenericJsonService {
     try {
       // Get parent ID parameter (null means root level pages)
       String parentIdParam = context.getParameter("parentId");
-      Long parentId = null;
+      long parentId = -1;
 
       // Handle various "no parent" values: null, "null", "0", "undefined", empty string
       if (StringUtils.isNotBlank(parentIdParam) && !"null".equals(parentIdParam) && !"0".equals(parentIdParam)
