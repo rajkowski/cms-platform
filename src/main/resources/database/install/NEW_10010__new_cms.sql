@@ -619,7 +619,8 @@ CREATE TABLE files (
   tsv TSVECTOR,
   sub_folder_id BIGINT REFERENCES sub_folders(sub_folder_id),
   category_id BIGINT REFERENCES folder_categories(category_id),
-  web_path VARCHAR(50) NOT NULL
+  web_path VARCHAR(50) NOT NULL,
+  tags JSONB
 );
 CREATE INDEX files_tsv_idx ON files USING gin(tsv);
 CREATE INDEX files_folder_id_idx ON files(folder_id);
@@ -628,6 +629,7 @@ CREATE INDEX files_title_idx ON files(title);
 CREATE INDEX files_sub_folder_idx ON files(sub_folder_id);
 CREATE INDEX files_category_idx ON files(category_id);
 CREATE INDEX files_web_path_idx ON files(web_path);
+CREATE INDEX files_tags_idx ON files USING gin(tags);
 
 CREATE TEXT SEARCH DICTIONARY file_stem (
     TEMPLATE = snowball,

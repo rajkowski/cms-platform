@@ -27,6 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.items.Item;
 import com.simisinc.platform.domain.model.items.ItemFileItem;
 import com.simisinc.platform.domain.model.items.ItemFolder;
@@ -38,6 +39,7 @@ import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.database.DataResult;
 import com.simisinc.platform.infrastructure.database.SqlJoins;
 import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.simisinc.platform.infrastructure.database.SqlValue;
 import com.simisinc.platform.infrastructure.database.SqlWhere;
 import com.simisinc.platform.presentation.controller.DataConstants;
 import com.simisinc.platform.presentation.controller.UserSession;
@@ -182,6 +184,9 @@ public class ItemFileItemRepository {
         .add("expiration_date", record.getExpirationDate())
         .add("privacy_type", record.getPrivacyType())
         .add("default_token", StringUtils.trimToNull(record.getDefaultToken()));
+    if (record.getTags() != null && record.getTags().length > 0) {
+      insertValues.add(new SqlValue("tags", SqlValue.JSONB_TYPE, JsonCommand.toJsonArray(record.getTags())));
+    }
 
     // Use a transaction
     try (Connection connection = DB.getConnection();
@@ -227,6 +232,11 @@ public class ItemFileItemRepository {
           .add("processed", record.getProcessed())
           .add("expiration_date", record.getExpirationDate())
           .add("privacy_type", record.getPrivacyType());
+      if (record.getTags() != null && record.getTags().length > 0) {
+        updateValues.add(new SqlValue("tags", SqlValue.JSONB_TYPE, JsonCommand.toJsonArray(record.getTags())));
+      } else if (record.getTags() != null) {
+        updateValues.add(new SqlValue("tags", SqlValue.JSONB_TYPE, null));
+      }
       //        .add("default_token", StringUtils.trimToNull(record.getDefaultToken()));
       if (DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("file_id = ?", record.getId()))) {
         // Update related records
@@ -278,6 +288,11 @@ public class ItemFileItemRepository {
           .add("expiration_date", record.getExpirationDate())
           .add("privacy_type", record.getPrivacyType())
           .add("default_token", StringUtils.trimToNull(record.getDefaultToken()));
+      if (record.getTags() != null && record.getTags().length > 0) {
+        updateValues.add(new SqlValue("tags", SqlValue.JSONB_TYPE, JsonCommand.toJsonArray(record.getTags())));
+      } else if (record.getTags() != null) {
+        updateValues.add(new SqlValue("tags", SqlValue.JSONB_TYPE, null));
+      }
       if (DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("file_id = ?", record.getId()))) {
         // Update related records
         ItemFileVersionRepository.update(connection, record);
@@ -388,6 +403,7 @@ public class ItemFileItemRepository {
       record.setSubFolderId(DB.getLong(rs, "sub_folder_id", -1L));
       record.setCategoryId(DB.getLong(rs, "category_id", -1L));
       record.setWebPath(rs.getString("web_path"));
+      record.setTags(JsonCommand.fromJsonArray(rs.getString("tags")));
       return record;
     } catch (SQLException se) {
       LOG.error("buildRecord", se);

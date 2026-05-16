@@ -116,6 +116,9 @@ class DocumentPropertiesManager {
     const summaryInput = this.isEditing
       ? `<textarea class="property-input" id="prop-summary" rows="3">${file.summary || ''}</textarea>`
       : `<div class="property-value">${file.summary || ''}</div>`;
+    const tagsInput = this.isEditing
+      ? `<input type="text" class="property-input" id="prop-tags" value="${file.tags || ''}" />`
+      : `<div class="property-value">${file.tags || ''}</div>`;
 
     this.contentEl.innerHTML = `
       <div class="property-tabs">
@@ -163,6 +166,10 @@ class DocumentPropertiesManager {
         <div class="property-group ${editModeClass}">
           <label>Summary</label>
           ${summaryInput}
+        </div>
+        <div class="property-group ${editModeClass}">
+          <label>Tags</label>
+          ${tagsInput}
         </div>
         ${this.isEditing ? `
           <div class="property-actions">
@@ -220,6 +227,7 @@ class DocumentPropertiesManager {
     const titleInput = document.getElementById('prop-title');
     const filenameInput = document.getElementById('prop-filename');
     const summaryInput = document.getElementById('prop-summary');
+    const tagsInput = document.getElementById('prop-tags');
     const versionInput = document.getElementById('prop-version');
 
     if (!titleInput || !this.currentFile) {
@@ -232,7 +240,8 @@ class DocumentPropertiesManager {
       title: titleInput.value.trim(),
       filename: filenameInput ? filenameInput.value.trim() : this.currentFile.filename,
       version: versionInput ? versionInput.value.trim() : this.currentFile.version,
-      summary: summaryInput ? summaryInput.value.trim() : ''
+      summary: summaryInput ? summaryInput.value.trim() : '',
+      tags: tagsInput ? tagsInput.value.trim() : ''
     };
 
     try {
@@ -244,6 +253,7 @@ class DocumentPropertiesManager {
       formData.append('filename', updates.filename);
       formData.append('version', updates.version);
       formData.append('summary', updates.summary);
+      formData.append('tags', updates.tags);
 
       const response = await fetch('/json/documentUpdate', {
         method: 'POST',
@@ -265,6 +275,7 @@ class DocumentPropertiesManager {
       this.currentFile.filename = updates.filename;
       this.currentFile.version = updates.version;
       this.currentFile.summary = updates.summary;
+      this.currentFile.tags = updates.tags;
       this.isEditing = false;
       this.render(this.currentFile);
       this.editor.setUnsavedChanges(false);

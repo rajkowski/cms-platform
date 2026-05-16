@@ -65,6 +65,9 @@ public class FileAjax extends GenericWidget {
     if (StringUtils.isNotEmpty(fileItem.getSummary())) {
       sb.append("\"summary\":\"").append(JsonCommand.toJson(fileItem.getSummary())).append("\",");
     }
+    if (fileItem.getTags() != null && fileItem.getTags().length > 0) {
+      sb.append("\"tags\":\"").append(JsonCommand.toJson(StringUtils.join(fileItem.getTags(), ", "))).append("\",");
+    }
     if (StringUtils.isNotEmpty(fileItem.getVersion())) {
       sb.append("\"version\":\"").append(JsonCommand.toJson(fileItem.getVersion())).append("\",");
     }

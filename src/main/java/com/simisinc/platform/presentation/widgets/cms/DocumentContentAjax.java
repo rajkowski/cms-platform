@@ -74,6 +74,7 @@ public class DocumentContentAjax extends GenericJsonService {
     sb.append("\"versionCount\":").append(fileItem.getVersionCount()).append(",");
     sb.append("\"downloadCount\":").append(fileItem.getDownloadCount()).append(",");
     sb.append("\"summary\":\"").append(JsonCommand.toJson(StringUtils.defaultString(fileItem.getSummary()))).append("\",");
+    sb.append("\"tags\":\"").append(JsonCommand.toJson(fileItem.getTags() != null ? StringUtils.join(fileItem.getTags(), ", ") : "")).append("\",");
     sb.append("\"created\":\"").append(fileItem.getCreated() != null ? JsonCommand.toJson(fileItem.getCreated().toString()) : "")
         .append("\",");
     sb.append("\"modified\":\"").append(fileItem.getModified() != null ? JsonCommand.toJson(fileItem.getModified().toString()) : "")

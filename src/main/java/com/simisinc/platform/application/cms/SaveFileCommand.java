@@ -51,9 +51,8 @@ public class SaveFileCommand {
       if (StringUtils.isBlank(fileItemBean.getFilename())) {
         throw new DataException("A file name is required, please check the fields and try again");
       }
-      if (StringUtils.isBlank(fileItemBean.getFileServerPath()) && !
-          ("url".equals(fileItemBean.getExtension()) && UrlCommand.isUrlValid(fileItemBean.getFilename()))
-      ) {
+      if (StringUtils.isBlank(fileItemBean.getFileServerPath())
+          && !("url".equals(fileItemBean.getExtension()) && UrlCommand.isUrlValid(fileItemBean.getFilename()))) {
         LOG.error("The developer needs to set a path");
         throw new DataException("A system path error occurred");
       }
@@ -125,6 +124,9 @@ public class SaveFileCommand {
     fileItem.setTitle(fileItemBean.getTitle());
     fileItem.setVersion(fileItemBean.getVersion());
     fileItem.setSummary(fileItemBean.getSummary());
+    if (fileItemBean.getTags() != null) {
+      fileItem.setTags(TagCommand.normalize(fileItemBean.getTags()));
+    }
     fileItem.setModifiedBy(fileItemBean.getModifiedBy());
     return FileItemRepository.save(fileItem);
   }
@@ -161,6 +163,9 @@ public class SaveFileCommand {
     fileItem.setExpirationDate(fileItemBean.getExpirationDate());
     fileItem.setPrivacyType(fileItemBean.getPrivacyType());
     fileItem.setDefaultToken(fileItemBean.getDefaultToken());
+    if (fileItemBean.getTags() != null) {
+      fileItem.setTags(TagCommand.normalize(fileItemBean.getTags()));
+    }
     // Determine the web path for downloads, can randomize, etc.
     Date created = new Date(System.currentTimeMillis());
     SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");

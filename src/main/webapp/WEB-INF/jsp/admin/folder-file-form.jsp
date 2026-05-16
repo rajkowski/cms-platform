@@ -15,6 +15,7 @@
   --%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="js" uri="/WEB-INF/tlds/javascript-escape.tld" %>
 <%@ taglib prefix="group" uri="/WEB-INF/tlds/group-functions.tld" %>
 <jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
@@ -67,6 +68,9 @@
   </label>
   <label>Summary
     <input type="text" placeholder="Summary" name="summary" id="summary" value="">
+  </label>
+  <label>Tags
+    <input type="text" placeholder="tag1, tag2" name="tags" id="tags" value="${fn:join(fileItem.tags, ', ')}">
   </label>
   <div class="button-container">
     <c:choose>

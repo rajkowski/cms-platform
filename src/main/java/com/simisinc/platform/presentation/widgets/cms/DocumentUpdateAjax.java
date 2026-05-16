@@ -23,6 +23,7 @@ import org.apache.commons.logging.LogFactory;
 import com.simisinc.platform.application.DataException;
 import com.simisinc.platform.application.cms.CheckFolderPermissionCommand;
 import com.simisinc.platform.application.cms.SaveFileCommand;
+import com.simisinc.platform.application.cms.TagCommand;
 import com.simisinc.platform.domain.model.cms.FileItem;
 import com.simisinc.platform.infrastructure.persistence.cms.FileItemRepository;
 import com.simisinc.platform.presentation.controller.WidgetContext;
@@ -67,6 +68,7 @@ public class DocumentUpdateAjax extends GenericWidget {
 
     String title = StringUtils.trimToNull(context.getParameter("title"));
     String summary = context.getParameter("summary");
+    String tags = context.getParameter("tags");
     String version = StringUtils.trimToNull(context.getParameter("version"));
     String filename = StringUtils.trimToNull(context.getParameter("filename"));
 
@@ -76,6 +78,9 @@ public class DocumentUpdateAjax extends GenericWidget {
     }
     if (summary != null) {
       fileItem.setSummary(StringUtils.trimToNull(summary));
+    }
+    if (tags != null) {
+      fileItem.setTags(TagCommand.normalize(tags));
     }
     if (version != null) {
       fileItem.setVersion(version);

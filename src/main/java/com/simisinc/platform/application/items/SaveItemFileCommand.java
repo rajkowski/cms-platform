@@ -26,6 +26,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.application.cms.TagCommand;
 import com.simisinc.platform.application.cms.UrlCommand;
 import com.simisinc.platform.domain.model.Group;
 import com.simisinc.platform.domain.model.items.ItemFileItem;
@@ -144,6 +145,9 @@ public class SaveItemFileCommand {
     fileItem.setTitle(fileItemBean.getTitle());
     fileItem.setVersion(fileItemBean.getVersion());
     fileItem.setSummary(fileItemBean.getSummary());
+    if (fileItemBean.getTags() != null) {
+      fileItem.setTags(TagCommand.normalize(fileItemBean.getTags()));
+    }
     fileItem.setModifiedBy(fileItemBean.getModifiedBy());
     return ItemFileItemRepository.save(fileItem);
   }
@@ -205,6 +209,9 @@ public class SaveItemFileCommand {
     fileItem.setExpirationDate(fileItemBean.getExpirationDate());
     fileItem.setPrivacyType(fileItemBean.getPrivacyType());
     fileItem.setDefaultToken(fileItemBean.getDefaultToken());
+    if (fileItemBean.getTags() != null) {
+      fileItem.setTags(TagCommand.normalize(fileItemBean.getTags()));
+    }
     // Determine the web path for downloads, can randomize, etc.
     Date created = new Date(System.currentTimeMillis());
     SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");

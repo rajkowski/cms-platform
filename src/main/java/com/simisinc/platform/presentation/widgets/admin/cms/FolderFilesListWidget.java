@@ -19,6 +19,8 @@ package com.simisinc.platform.presentation.widgets.admin.cms;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
+import org.apache.commons.beanutils.BeanUtils;
+
 import com.simisinc.platform.application.AppException;
 import com.simisinc.platform.application.DataException;
 import com.simisinc.platform.application.cms.CheckFolderPermissionCommand;
@@ -27,6 +29,7 @@ import com.simisinc.platform.application.cms.LoadFileCommand;
 import com.simisinc.platform.application.cms.LoadFolderCommand;
 import com.simisinc.platform.application.cms.SaveFileCommand;
 import com.simisinc.platform.application.cms.SaveFilePartCommand;
+import com.simisinc.platform.application.cms.TagCommand;
 import com.simisinc.platform.application.cms.ValidateFileCommand;
 import com.simisinc.platform.domain.model.cms.FileItem;
 import com.simisinc.platform.domain.model.cms.Folder;
@@ -38,10 +41,8 @@ import com.simisinc.platform.infrastructure.persistence.cms.FolderCategoryReposi
 import com.simisinc.platform.infrastructure.persistence.cms.FolderRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.SubFolderRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.SubFolderSpecification;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
 import com.simisinc.platform.presentation.controller.WidgetContext;
-
-import org.apache.commons.beanutils.BeanUtils;
+import com.simisinc.platform.presentation.widgets.GenericWidget;
 
 /**
  * Description
@@ -181,6 +182,7 @@ public class FolderFilesListWidget extends GenericWidget {
         fileItemBean.setVersion(context.getParameter("version"));
         fileItemBean.setTitle(context.getParameter("title"));
         fileItemBean.setSummary(context.getParameter("summary"));
+        fileItemBean.setTags(TagCommand.normalize(context.getParameter("tags")));
         fileItemBean.setCreatedBy(context.getUserId());
         fileItemBean.setModifiedBy(context.getUserId());
         // Validate the file

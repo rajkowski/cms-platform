@@ -48,6 +48,7 @@ public class FileItem extends Entity {
   private int width = -1;
   private int height = -1;
   private String summary = null;
+  private String[] tags = null;
   private long createdBy = -1;
   private long modifiedBy = -1;
   private Timestamp created = null;
@@ -196,6 +197,14 @@ public class FileItem extends Entity {
 
   public void setSummary(String summary) {
     this.summary = summary;
+  }
+
+  public String[] getTags() {
+    return tags;
+  }
+
+  public void setTags(String[] tags) {
+    this.tags = tags;
   }
 
   public long getCreatedBy() {

@@ -73,6 +73,9 @@
       <c:if test="${canDelete eq 'true'}">
         <a title="Delete file" href="${widgetContext.uri}?command=delete&widget=${widgetContext.uniqueId}&token=${userSession.formToken}&fileId=${file.id}" onclick="return confirm('Are you sure you want to delete <c:out value="${js:escape(file.filename)}" />?');"><i class="fa fa-remove"></i></a>
       </c:if>
+      <c:if test="${!empty file.tags}">
+        <br /><small>Tags: <c:out value="${fn:join(file.tags, ', ')}" /></small>
+      </c:if>
     </li>
   </c:forEach>
   </ul>

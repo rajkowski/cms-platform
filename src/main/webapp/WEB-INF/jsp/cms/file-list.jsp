@@ -72,6 +72,10 @@
         <br />
         <small><c:out value="${file.summary}" /></small>
       </c:if>
+      <c:if test="${!empty file.tags}">
+        <br />
+        <small>Tags: <c:out value="${fn:join(file.tags, ', ')}" /></small>
+      </c:if>
     </li>
   </c:forEach>
   </ul>

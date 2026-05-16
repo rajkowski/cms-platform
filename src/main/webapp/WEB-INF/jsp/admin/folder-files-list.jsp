@@ -93,6 +93,9 @@
         <c:if test="${!empty file.summary}">
           <br /><small><c:out value="${file.summary}" /></small>
         </c:if>
+        <c:if test="${!empty file.tags}">
+          <br /><small>Tags: <c:out value="${fn:join(file.tags, ', ')}" /></small>
+        </c:if>
       </td>
       <td nowrap>
         <c:choose>
@@ -182,6 +185,9 @@
       if (data.hasOwnProperty('summary')) {
         document.getElementById('summary').value = data.summary;
       }
+      if (data.hasOwnProperty('tags')) {
+        document.getElementById('tags').value = data.tags;
+      }
       if (data.hasOwnProperty('filename')) {
         document.getElementById('filename').value = data.filename;
       }
@@ -262,6 +268,9 @@
       </label>
       <label>Summary
         <input type="text" placeholder="File Summary" name="summary" id="summary" value="">
+      </label>
+      <label>Tags
+        <input type="text" placeholder="tag1, tag2" name="tags" id="tags" value="">
       </label>
       <label>URL/Filename
         <input type="text" placeholder="Filename" name="filename" id="filename" value="">
