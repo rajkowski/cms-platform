@@ -16,6 +16,14 @@
 
 package com.simisinc.platform.presentation.widgets.admin;
 
+import static com.simisinc.platform.presentation.widgets.dashboard.StatisticCardWidget.valueForColor;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
+
 import com.simisinc.platform.application.maps.FindMapTilesCredentialsCommand;
 import com.simisinc.platform.domain.model.Session;
 import com.simisinc.platform.domain.model.dashboard.StatisticsData;
@@ -24,19 +32,12 @@ import com.simisinc.platform.infrastructure.persistence.SessionRepository;
 import com.simisinc.platform.infrastructure.persistence.UserRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageHitRepository;
 import com.simisinc.platform.infrastructure.persistence.login.UserLoginRepository;
+import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
 import com.simisinc.platform.presentation.widgets.cms.PreferenceEntriesList;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import org.apache.commons.lang3.StringUtils;
 
 import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbBuilder;
-
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-import static com.simisinc.platform.presentation.widgets.dashboard.StatisticCardWidget.valueForColor;
 
 /**
  * Description
@@ -74,6 +75,7 @@ public class SiteStatsWidget extends GenericWidget {
     int intervalValue = Integer.parseInt(context.getPreferences().getOrDefault("days", "7"));
     char intervalType = 'd';
     int limit = Integer.parseInt(context.getPreferences().getOrDefault("limit", "10"));
+    boolean showWhenEmpty = "true".equals(context.getPreferences().getOrDefault("showWhenEmpty", "true"));
 
     // Determine the Chart preference (reports can override)
     String JSP = LINE_CHART_JSP;
@@ -98,7 +100,7 @@ public class SiteStatsWidget extends GenericWidget {
     }
 
     // Run the report
-    JSP = runReport(context, report, JSP, intervalValue, intervalType, limit);
+    JSP = runReport(context, report, JSP, intervalValue, intervalType, limit, showWhenEmpty);
     if (JSP == null) {
       return context;
     }
@@ -123,9 +125,11 @@ public class SiteStatsWidget extends GenericWidget {
       intervalType = value.charAt(value.length() - 1);
     }
 
+    boolean showWhenEmpty = "true".equals(context.getPreferences().getOrDefault("showWhenEmpty", "true"));
+
     // Output JSON
     String json = "[]";
-    String success = runReport(context, report, "json", intervalValue, intervalType, limit);
+    String success = runReport(context, report, "json", intervalValue, intervalType, limit, showWhenEmpty);
     if (success != null) {
       List<StatisticsData> statisticsDataList = (List) context.getRequest().getAttribute("statisticsDataList");
       if (statisticsDataList != null) {
@@ -141,7 +145,8 @@ public class SiteStatsWidget extends GenericWidget {
     return execute(context);
   }
 
-  private String runReport(WidgetContext context, String report, String JSP, int intervalValue, char intervalType, int limit) {
+  private String runReport(WidgetContext context, String report, String JSP, int intervalValue, char intervalType, int limit,
+      boolean showWhenEmpty) {
     // Run the report
     if ("dau".equalsIgnoreCase(report)) {
       List<StatisticsData> statisticsDataList = UserLoginRepository.findUniqueDailyLogins(30);
@@ -188,10 +193,16 @@ public class SiteStatsWidget extends GenericWidget {
       return CARD_JSP;
     } else if ("locations-list".equalsIgnoreCase(report)) {
       List<Session> sessionList = SessionRepository.findDailyUniqueLocations(intervalValue);
+      if (sessionList.isEmpty() && !showWhenEmpty) {
+        return null;
+      }
       context.getRequest().setAttribute("sessionList", sessionList);
       return LOCATIONS_JSP;
     } else if ("locations-map".equalsIgnoreCase(report)) {
       List<Session> sessionList = SessionRepository.findDailyUniqueLocations(intervalValue);
+      if (sessionList.isEmpty() && !showWhenEmpty) {
+        return null;
+      }
       context.getRequest().setAttribute("sessionList", sessionList);
       // Determine the mapping service
       MapCredentials mapCredentials = FindMapTilesCredentialsCommand.getCredentials();
