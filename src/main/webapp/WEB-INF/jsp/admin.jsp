@@ -58,6 +58,9 @@
       <li<c:if test="${pageRenderInfo.name eq '/admin'}"> class="is-active"</c:if>><a href="javascript:void(0)" onclick="loadAdminContent('${ctx}/admin', this)"><i class="${font:far()} fa-home fa-fw"></i> <span>Welcome</span></a></li>
       <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/documentation')}"> class="is-active"</c:if>><a href="javascript:void(0)" onclick="loadAdminContent('${ctx}/admin/documentation/wiki/Home', this)"><i class="${font:far()} fa-book fa-fw"></i> <span>Documentation</span></a></li>
       <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/activity')}"> class="is-active"</c:if>><a href="javascript:void(0)" onclick="loadAdminContent('${ctx}/admin/activity', this)"><i class="${font:far()} fa-exchange-alt fa-fw"></i> <span>Activity</span></a></li>
+      <c:if test="${userSession.hasRole('admin') || userSession.hasRole('content-manager')}">
+        <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/visual')}"> class="is-active"</c:if>><a href="javascript:void(0)" onclick="loadAdminContent('${ctx}/admin/visual-analytics-dashboard', this)"><i class="${font:far()} fa-edit fa-fw"></i> <span>Dashboard</span></a></li>
+      </c:if>
     </ul>
     <%-- Community menu --%>
     <c:if test="${userSession.hasRole('admin') || userSession.hasRole('community-manager')}">
@@ -77,7 +80,6 @@
       <ul class="vertical menu">
         <li class="section-title">Content</li>
         <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/content/analytics')}"> class="is-active"</c:if>><a href="javascript:void(0)" onclick="loadAdminContent('${ctx}/admin/content/analytics', this)"><i class="${font:far()} fa-chart-line fa-fw"></i> <span>Analytics</span></a></li>
-        <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/visual')}"> class="is-active"</c:if>><a href="javascript:void(0)" onclick="loadAdminContent('${ctx}/admin/visual-content-editor', this)"><i class="${font:far()} fa-edit fa-fw"></i> <span>Visual Editors</span></a></li>
         <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/sitemap')}"> class="is-active"</c:if>><a href="javascript:void(0)" onclick="loadAdminContent('${ctx}/admin/sitemap', this)"><i class="${font:far()} fa-sitemap fa-fw"></i> <span>Site Map</span></a></li>
         <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/web-page')}"> class="is-active"</c:if>><a href="javascript:void(0)" onclick="loadAdminContent('${ctx}/admin/web-pages', this)"><i class="${font:far()} fa-sticky-note fa-fw"></i> <span>Web Pages</span></a></li>
         <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/image')}"> class="is-active"</c:if>><a href="javascript:void(0)" onclick="loadAdminContent('${ctx}/admin/images', this)"><i class="${font:far()} fa-image fa-fw"></i> <span>Images</span></a></li>
