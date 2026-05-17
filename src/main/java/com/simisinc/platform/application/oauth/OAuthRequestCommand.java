@@ -26,7 +26,6 @@ import javax.servlet.http.HttpSession;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.commons.text.RandomStringGenerator;
 
 import com.simisinc.platform.application.login.AuthenticateLoginCommand;
 import com.simisinc.platform.domain.model.login.OAuthToken;

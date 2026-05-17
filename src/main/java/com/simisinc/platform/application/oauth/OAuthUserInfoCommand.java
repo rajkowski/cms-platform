@@ -126,18 +126,43 @@ public class OAuthUserInfoCommand {
     if (user == null) {
       user = UserRepository.findByUsername(userBean.getUsername());
     }
+
+    boolean isNewUser = false;
     if (user == null) {
       LOG.info("User was not found, setting up a new user: " + userBean.getEmail());
       user = new User();
+      isNewUser = true;
     }
+
     // Update related values
     user.setModifiedBy(-1);
     user.setUsername(userBean.getUsername());
     user.setEmail(userBean.getEmail());
     user.setFirstName(userBean.getFirstName());
     user.setLastName(userBean.getLastName());
-    user.setGroupList(userBean.getGroupList());
+    // Set the OAuth values
     user.setRoleList(userBean.getRoleList());
+    user.setGroupList(userBean.getGroupList());
+
+    // Override groups and roles based on OAuth configuration and whether user is new
+    if (!isNewUser) {
+      boolean hasOAuthRoleAttribute = StringUtils.isNotBlank(LoadSitePropertyCommand.loadByName("oauth.role.attribute"));
+      boolean hasOAuthGroupAttribute = StringUtils.isNotBlank(LoadSitePropertyCommand.loadByName("oauth.group.attribute"));
+      if (!hasOAuthRoleAttribute) {
+        LOG.debug("No OAuth role attributes configured, preserving existing roles");
+        // Get the list of roles the user has
+        List<Role> roleList = RoleRepository.findAllByUserId(user.getId());
+        user.setRoleList(roleList);
+      }
+
+      if (!hasOAuthGroupAttribute) {
+        LOG.debug("No OAuth group attributes configured, preserving existing groups");
+        // Get the list of user groups the user belongs to
+        List<Group> groupList = GroupRepository.findAllByUserId(user.getId());
+        user.setGroupList(groupList);
+      }
+    }
+
     // Save everything
     try {
       user = SaveUserCommand.saveUser(user, true);
