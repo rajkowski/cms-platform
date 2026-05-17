@@ -16,20 +16,28 @@
 
 package com.simisinc.platform.application.maps;
 
-import com.maxmind.db.CHMCache;
-import com.maxmind.geoip2.DatabaseReader;
-import com.maxmind.geoip2.model.CityResponse;
-import com.maxmind.geoip2.model.CountryResponse;
-import com.simisinc.platform.domain.model.maps.GeoIP;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import javax.servlet.ServletContext;
 import java.io.File;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.URL;
+
+import javax.servlet.ServletContext;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.maxmind.db.CHMCache;
+import com.maxmind.geoip2.DatabaseReader;
+import com.maxmind.geoip2.model.CityResponse;
+import com.maxmind.geoip2.model.CountryResponse;
+import com.maxmind.geoip2.record.City;
+import com.maxmind.geoip2.record.Continent;
+import com.maxmind.geoip2.record.Country;
+import com.maxmind.geoip2.record.Location;
+import com.maxmind.geoip2.record.Postal;
+import com.maxmind.geoip2.record.Subdivision;
+import com.simisinc.platform.domain.model.maps.GeoIP;
 
 /**
  * Methods to integrate with geo IP services
@@ -100,30 +108,42 @@ public class GeoIPCommand {
       if (LOG.isTraceEnabled()) {
         LOG.trace(response.toJson());
       }
-      if (response.getContinent() != null) {
-        geoIP.setContinent(response.getContinent().getName());
+
+      Continent continent = response.continent();
+      if (continent != null) {
+        geoIP.setContinent(continent.name());
       }
-      if (response.getCountry() != null) {
-        geoIP.setCountryISOCode(response.getCountry().getIsoCode());
-        geoIP.setCountry(response.getCountry().getName());
+
+      Country country = response.country();
+      if (country != null) {
+        geoIP.setCountryISOCode(country.isoCode());
+        geoIP.setCountry(country.name());
       }
-      if (response.getMostSpecificSubdivision() != null) {
-        geoIP.setStateISOCode(response.getMostSpecificSubdivision().getIsoCode());
-        geoIP.setState(response.getMostSpecificSubdivision().getName());
-      } else if (response.getLeastSpecificSubdivision() != null) {
-        geoIP.setStateISOCode(response.getLeastSpecificSubdivision().getIsoCode());
-        geoIP.setState(response.getLeastSpecificSubdivision().getName());
+
+      Subdivision subdivision = response.mostSpecificSubdivision();
+      if (subdivision != null) {
+        geoIP.setStateISOCode(subdivision.isoCode());
+        geoIP.setState(subdivision.name());
+      } else if (response.leastSpecificSubdivision() != null) {
+        geoIP.setStateISOCode(response.leastSpecificSubdivision().isoCode());
+        geoIP.setState(response.leastSpecificSubdivision().name());
       }
-      if (response.getCity() != null) {
-        geoIP.setCity(response.getCity().getName());
+
+      City city = response.city();
+      if (city != null) {
+        geoIP.setCity(city.name());
       }
-      if (response.getPostal() != null) {
-        geoIP.setPostalCode(response.getPostal().getCode());
+
+      Postal postal = response.postal();
+      if (postal != null) {
+        geoIP.setPostalCode(postal.code());
       }
-      if (response.getLocation() != null) {
-        geoIP.setTimezone(response.getLocation().getTimeZone());
-        geoIP.setLatitude(response.getLocation().getLatitude());
-        geoIP.setLongitude(response.getLocation().getLongitude());
+
+      Location location = response.location();
+      if (location != null) {
+        geoIP.setTimezone(location.timeZone());
+        geoIP.setLatitude(location.latitude());
+        geoIP.setLongitude(location.longitude());
       }
       return geoIP;
     } catch (Exception e) {
@@ -215,8 +235,9 @@ public class GeoIPCommand {
       if (LOG.isTraceEnabled()) {
         LOG.trace(response.toJson());
       }
-      if (response.getCountry() != null) {
-        return response.getCountry().getIsoCode();
+      Country country = response.country();
+      if (country != null) {
+        return country.isoCode();
       }
     } catch (Exception e) {
       LOG.warn("Country from IP error: " + e.getMessage());
