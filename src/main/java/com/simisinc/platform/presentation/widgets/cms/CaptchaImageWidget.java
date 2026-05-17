@@ -42,7 +42,7 @@ public class CaptchaImageWidget extends GenericWidget {
 
     // Determine the captcha text
     RandomStringGenerator generator = new RandomStringGenerator.Builder()
-        .selectFrom("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz0123456789".toCharArray()).build();
+        .selectFrom("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz0123456789".toCharArray()).get();
 
     String text = generator.generate(5);
 

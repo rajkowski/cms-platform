@@ -92,7 +92,7 @@ public class OrderCommand {
     }
 
     // Generate a random string
-    String rand = StringUtils.leftPad(RandomStringUtils.randomNumeric(4), 4, '0');
+    String rand = StringUtils.leftPad(RandomStringUtils.secure().nextNumeric(4), 4, '0');
 
     // Use the customer id after insert
     String uniqueId = (prefix + date + "-" + id + "-" + rand);
@@ -229,9 +229,9 @@ public class OrderCommand {
     // @todo consider regenerating
     order.setTaxAmount(cart.getTaxAmount());
     order.setTaxRate(cart.getTaxRate());
-//    order.setTaxId();
-//    order.setShippingTaxAmount();
-//    order.setHandlingFeeTaxAmount();
+    //    order.setTaxId();
+    //    order.setShippingTaxAmount();
+    //    order.setHandlingFeeTaxAmount();
 
     // Total
     order.setTotalAmount(grandTotal);
@@ -249,7 +249,7 @@ public class OrderCommand {
         // Cleanup the old order
         LOG.info("Cleanup old order: " + oldOrderId);
         // @todo
-//        OrderCommand.voidIncompleteOrder(oldOrderId);
+        //        OrderCommand.voidIncompleteOrder(oldOrderId);
       }
       return validOrder;
     }

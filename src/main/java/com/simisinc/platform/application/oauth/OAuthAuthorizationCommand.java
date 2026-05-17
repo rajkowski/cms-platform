@@ -36,7 +36,7 @@ public class OAuthAuthorizationCommand {
   private static Log LOG = LogFactory.getLog(OAuthAuthorizationCommand.class);
 
   private static RandomStringGenerator generator = new RandomStringGenerator.Builder()
-      .selectFrom("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz0123456789".toCharArray()).build();
+      .selectFrom("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz0123456789".toCharArray()).get();
 
   public static String getAuthorizationUrl(String resource) {
     // Check the required configuration

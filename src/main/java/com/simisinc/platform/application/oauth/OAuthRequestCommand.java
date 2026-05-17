@@ -46,9 +46,6 @@ public class OAuthRequestCommand {
 
   private static Log LOG = LogFactory.getLog(OAuthRequestCommand.class);
 
-  private static RandomStringGenerator generator = new RandomStringGenerator.Builder()
-      .selectFrom("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz0123456789".toCharArray()).build();
-
   public static String handleRequest(HttpServletRequest request, HttpServletResponse response, String resource) {
     if (!OAuthConfigurationCommand.isEnabled()) {
       // Skip if not turned on
