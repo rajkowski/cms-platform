@@ -18,6 +18,7 @@ package com.simisinc.platform.application.json;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
@@ -57,8 +58,10 @@ public class JsonCommand {
 
   /* Create a JsonNode object from a URL's resource contents */
   public static JsonNode fromURL(URL resource) throws IOException {
-    ObjectMapper mapper = new ObjectMapper();
-    return mapper.readTree(resource);
+    try (InputStream input = resource.openStream()) {
+      ObjectMapper mapper = new ObjectMapper();
+      return mapper.readTree(input);
+    }
   }
 
   /* Create a JsonNode object from a file's contents */
