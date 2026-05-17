@@ -28,6 +28,7 @@ import org.apache.commons.logging.LogFactory;
 import org.jobrunr.jobs.annotations.Job;
 import org.jobrunr.jobs.lambdas.JobRequest;
 import org.jobrunr.jobs.lambdas.JobRequestHandler;
+import org.jobrunr.server.runner.ThreadLocalJobContext;
 import org.thymeleaf.templateresolver.WebApplicationTemplateResolver;
 import org.thymeleaf.web.servlet.JavaxServletWebApplication;
 
@@ -62,7 +63,7 @@ public class MakeStaticSiteJob implements JobRequest {
     @Override
     @Job(name = "Make a static site")
     public void run(MakeStaticSiteJob jobRequest) {
-      jobContext().saveMetadata("name", "Make Static Site");
+      ThreadLocalJobContext.getJobContext().saveMetadata("name", "Make Static Site");
       execute();
     }
   }

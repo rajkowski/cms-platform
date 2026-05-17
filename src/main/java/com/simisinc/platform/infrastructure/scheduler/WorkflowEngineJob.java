@@ -16,14 +16,17 @@
 
 package com.simisinc.platform.infrastructure.scheduler;
 
-import com.simisinc.platform.domain.events.Event;
-import com.simisinc.platform.infrastructure.workflow.WorkflowManager;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.jobrunr.jobs.annotations.Job;
 import org.jobrunr.jobs.lambdas.JobRequest;
 import org.jobrunr.jobs.lambdas.JobRequestHandler;
+import org.jobrunr.server.runner.ThreadLocalJobContext;
+
+import com.simisinc.platform.domain.events.Event;
+import com.simisinc.platform.infrastructure.workflow.WorkflowManager;
+
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * Runs asynchronous workflows
@@ -51,7 +54,7 @@ public class WorkflowEngineJob implements JobRequest {
     @Override
     @Job(name = "Run a workflow", retries = 1)
     public void run(WorkflowEngineJob jobRequest) {
-      jobContext().saveMetadata("name", jobRequest.getEvent().getDomainEventType());
+      ThreadLocalJobContext.getJobContext().saveMetadata("name", jobRequest.getEvent().getDomainEventType());
       WorkflowManager.findAndRunWorkflow(jobRequest.getEvent());
     }
   }
