@@ -21,6 +21,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -238,7 +239,7 @@ public class PageContentBlocksJsonService extends GenericJsonService {
     if (modifiedById > 0) {
       User user = LoadUserCommand.loadUser(modifiedById);
       if (user != null) {
-        modifiedByName = StringUtils.defaultString(user.getFullName(), user.getEmail());
+        modifiedByName = Objects.toString(user.getFullName(), user.getEmail());
       }
     }
     json.append("\"modifiedBy\":\"").append(JsonCommand.toJson(modifiedByName)).append("\"");

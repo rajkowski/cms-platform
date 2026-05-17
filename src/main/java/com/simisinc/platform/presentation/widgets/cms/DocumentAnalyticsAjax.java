@@ -17,6 +17,7 @@
 package com.simisinc.platform.presentation.widgets.cms;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -87,7 +88,7 @@ public class DocumentAnalyticsAjax extends GenericJsonService {
         first = false;
         sb.append("{");
         sb.append("\"id\":").append(file.getId()).append(",");
-        sb.append("\"title\":\"").append(JsonCommand.toJson(StringUtils.defaultString(file.getTitle(), file.getFilename())))
+        sb.append("\"title\":\"").append(JsonCommand.toJson(Objects.toString(file.getTitle(), file.getFilename())))
             .append("\",");
         sb.append("\"filename\":\"").append(JsonCommand.toJson(StringUtils.defaultString(file.getFilename()))).append("\",");
         sb.append("\"mimeType\":\"").append(JsonCommand.toJson(StringUtils.defaultString(file.getMimeType()))).append("\",");
