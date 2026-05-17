@@ -70,7 +70,7 @@ public class DatasetDownloadRemoteFileCommand {
         return null;
       }
       Map<String, String> headers = new HashMap<>();
-      headersNode.fields().forEachRemaining(entry -> {
+      headersNode.properties().iterator().forEachRemaining(entry -> {
         String key = entry.getKey();
         String value = entry.getValue().asText();
         if (StringUtils.isNotBlank(key) && StringUtils.isNotBlank(value)) {

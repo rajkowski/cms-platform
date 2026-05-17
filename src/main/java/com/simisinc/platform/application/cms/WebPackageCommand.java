@@ -57,7 +57,7 @@ public class WebPackageCommand {
     if (dependencies == null) {
       throw new IOException("Dependencies not found");
     }
-    Iterator<Entry<String, JsonNode>> fields = dependencies.fields();
+    Iterator<Entry<String, JsonNode>> fields = dependencies.properties().iterator();
     while (fields.hasNext()) {
       Entry<String, JsonNode> jsonField = fields.next();
       String name = jsonField.getKey();

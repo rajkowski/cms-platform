@@ -246,7 +246,7 @@ public class SquareOrderCommand {
     try {
       // Create the JSON string
       String data = new ObjectMapper()
-          .setSerializationInclusion(JsonInclude.Include.NON_EMPTY)
+          .setDefaultPropertyInclusion(JsonInclude.Include.NON_EMPTY)
           .writeValueAsString(createOrderRequestBuilder.build());
 
       if (LOG.isDebugEnabled()) {
@@ -272,7 +272,7 @@ public class SquareOrderCommand {
       if (response.getErrors() != null && !response.getErrors().isEmpty()) {
         StringBuilder sb = new StringBuilder();
         for (Error error : response.getErrors()) {
-          if (sb.length() > 0) {
+          if (!sb.isEmpty()) {
             sb.append("; ");
           }
           String errorDetail = error.getDetail();
@@ -347,7 +347,7 @@ public class SquareOrderCommand {
     try {
       // Create the JSON string
       String data = new ObjectMapper()
-          .setSerializationInclusion(JsonInclude.Include.NON_EMPTY)
+          .setDefaultPropertyInclusion(JsonInclude.Include.NON_EMPTY)
           .writeValueAsString(createPaymentRequestBuilder.build());
 
       if (LOG.isDebugEnabled()) {
