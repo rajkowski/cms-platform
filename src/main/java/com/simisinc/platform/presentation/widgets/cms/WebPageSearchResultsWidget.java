@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.application.cms.HtmlCommand;
@@ -232,8 +233,8 @@ public class WebPageSearchResultsWidget extends GenericWidget {
     // Add the search result
     String htmlContent = HtmlCommand.toHtml(content.getHighlight());
     if (StringUtils.isNotBlank(htmlContent)) {
-      htmlContent = StringUtils.replace(htmlContent, "${b}", "<strong>");
-      htmlContent = StringUtils.replace(htmlContent, "${/b}", "</strong>");
+      htmlContent = Strings.CS.replace(htmlContent, "${b}", "<strong>");
+      htmlContent = Strings.CS.replace(htmlContent, "${/b}", "</strong>");
     }
     SearchResult searchResult = resultsMap.get(link);
     if (searchResult == null) {

@@ -20,6 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -84,7 +85,7 @@ public class BreadCrumbsWidget extends GenericWidget {
         if (index > -1) {
           String parameterName = value.substring(index + 7, value.indexOf("}", index));
           String requestParam = context.getParameter(parameterName);
-          value = StringUtils.replace(value, "{param:" + parameterName + "}", requestParam);
+          value = Strings.CS.replace(value, "{param:" + parameterName + "}", requestParam);
         }
         // Update dynamic values
         if (blogPost != null) {

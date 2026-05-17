@@ -16,8 +16,20 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
+import java.lang.reflect.InvocationTargetException;
+import java.sql.Timestamp;
+
+import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
+
 import com.simisinc.platform.application.DataException;
-import com.simisinc.platform.application.cms.*;
+import com.simisinc.platform.application.cms.GenerateBlogUniqueIdCommand;
+import com.simisinc.platform.application.cms.LoadBlogCommand;
+import com.simisinc.platform.application.cms.LoadBlogPostCommand;
+import com.simisinc.platform.application.cms.SaveBlogPostCommand;
+import com.simisinc.platform.application.cms.SaveWebPageCommand;
+import com.simisinc.platform.application.cms.UrlCommand;
 import com.simisinc.platform.domain.model.cms.Blog;
 import com.simisinc.platform.domain.model.cms.BlogPost;
 import com.simisinc.platform.domain.model.cms.WebPage;
@@ -27,11 +39,6 @@ import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageTemplateRepository;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
-import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.lang3.StringUtils;
-
-import java.lang.reflect.InvocationTargetException;
-import java.sql.Timestamp;
 
 /**
  * Description
@@ -98,7 +105,7 @@ public class BlogEditorWidget extends GenericWidget {
           WebPage webPage = WebPageRepository.findByLink(link);
           if (webPage == null) {
             String pageXml = template.getPageXml();
-            pageXml = StringUtils.replace(pageXml, "${webPageName}", blogBean.getUniqueId());
+            pageXml = Strings.CS.replace(pageXml, "${webPageName}", blogBean.getUniqueId());
             webPage = new WebPage(link, pageXml);
             webPage.setCreatedBy(context.getUserId());
             try {

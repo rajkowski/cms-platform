@@ -23,9 +23,9 @@ import java.nio.file.Paths;
 import javax.servlet.http.Part;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.thymeleaf.util.StringUtils;
 
 import com.simisinc.platform.application.DataException;
 import com.simisinc.platform.application.cms.SaveImageCommand;
@@ -71,7 +71,7 @@ public class ImageUploadWidget extends GenericWidget {
       }
       submittedFilename = Paths.get(filePart.getSubmittedFileName()).getFileName().toString(); // MSIE fix.
       if (submittedFilename.startsWith("mceclip0")) {
-        submittedFilename = StringUtils.replace(submittedFilename, "mceclip0", "clip");
+        submittedFilename = Strings.CS.replace(submittedFilename, "mceclip0", "clip");
       }
       extension = FilenameUtils.getExtension(submittedFilename);
       tempFile = new File(serverCompletePath + uniqueFilename + "." + extension);

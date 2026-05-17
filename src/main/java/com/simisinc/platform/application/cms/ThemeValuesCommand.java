@@ -18,7 +18,7 @@ package com.simisinc.platform.application.cms;
 
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -48,7 +48,7 @@ public class ThemeValuesCommand {
     }
     // Replace corresponding properties
     for (SiteProperty property : siteProperties) {
-      content = StringUtils.replace(content, "${" + property.getName() + "}", property.getValue());
+      content = Strings.CS.replace(content, "${" + property.getName() + "}", property.getValue());
     }
     return content;
   }

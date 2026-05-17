@@ -16,15 +16,26 @@
 
 package com.simisinc.platform.presentation.widgets.ecommerce;
 
-import com.simisinc.platform.application.ecommerce.LoadProductCommand;
-import com.simisinc.platform.domain.model.ecommerce.*;
-import com.simisinc.platform.infrastructure.persistence.ecommerce.*;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import org.apache.commons.lang3.StringUtils;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
+
+import com.simisinc.platform.application.ecommerce.LoadProductCommand;
+import com.simisinc.platform.domain.model.ecommerce.Order;
+import com.simisinc.platform.domain.model.ecommerce.OrderEntry;
+import com.simisinc.platform.domain.model.ecommerce.OrderItem;
+import com.simisinc.platform.domain.model.ecommerce.ProductSku;
+import com.simisinc.platform.domain.model.ecommerce.ShippingMethod;
+import com.simisinc.platform.domain.model.ecommerce.TrackingNumber;
+import com.simisinc.platform.infrastructure.persistence.ecommerce.OrderItemRepository;
+import com.simisinc.platform.infrastructure.persistence.ecommerce.OrderRepository;
+import com.simisinc.platform.infrastructure.persistence.ecommerce.ProductSkuRepository;
+import com.simisinc.platform.infrastructure.persistence.ecommerce.ShippingMethodRepository;
+import com.simisinc.platform.infrastructure.persistence.ecommerce.TrackingNumberRepository;
+import com.simisinc.platform.presentation.controller.WidgetContext;
+import com.simisinc.platform.presentation.widgets.GenericWidget;
 
 /**
  * Shows the details of an order to the user
@@ -104,8 +115,8 @@ public class OrderConfirmationWidget extends GenericWidget {
     context.getRequest().setAttribute("calloutHtml", context.getPreferences().get("calloutHtml"));
     String introHtml = context.getPreferences().get("introHtml");
     if (introHtml != null) {
-      introHtml = StringUtils.replace(introHtml, "${email}", order.getEmail());
-      introHtml = StringUtils.replace(introHtml, "${orderNumber}", order.getUniqueId());
+      introHtml = Strings.CS.replace(introHtml, "${email}", order.getEmail());
+      introHtml = Strings.CS.replace(introHtml, "${orderNumber}", order.getUniqueId());
       context.getRequest().setAttribute("introHtml", introHtml);
     }
 

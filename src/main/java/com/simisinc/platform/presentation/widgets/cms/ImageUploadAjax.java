@@ -25,9 +25,9 @@ import java.util.List;
 import javax.servlet.http.Part;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.thymeleaf.util.StringUtils;
 
 import com.simisinc.platform.application.DataException;
 import com.simisinc.platform.application.admin.PermissionEngine;
@@ -106,7 +106,7 @@ public class ImageUploadAjax extends GenericJsonService {
 
         // Handle TinyMCE clipboard filenames
         if (submittedFilename.startsWith("mceclip0")) {
-          submittedFilename = StringUtils.replace(submittedFilename, "mceclip0", "clip");
+          submittedFilename = Strings.CS.replace(submittedFilename, "mceclip0", "clip");
         }
 
         String extension = FilenameUtils.getExtension(submittedFilename);

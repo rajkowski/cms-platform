@@ -20,6 +20,7 @@ import java.io.File;
 import java.nio.file.Files;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -100,22 +101,21 @@ public class ValidateFileCommand {
       }
     }
     if (!title.contains(" - ")) {
-      title = StringUtils.replace(title, "-", " - ");
+      title = Strings.CS.replace(title, "-", " - ");
     }
-    title = StringUtils.replace(title, "_", " ");
-    title = StringUtils.replace(title, "@", " ");
-    title = StringUtils.replace(title, "/", " ");
-    title = StringUtils.replace(title, "\\", " ");
-    title = StringUtils.replace(title, "    ", " ");
-    title = StringUtils.replace(title, "   ", " ");
-    title = StringUtils.replace(title, "  ", " ");
+    title = Strings.CS.replace(title, "_", " ");
+    title = Strings.CS.replace(title, "@", " ");
+    title = Strings.CS.replace(title, "/", " ");
+    title = Strings.CS.replace(title, "\\", " ");
+    title = Strings.CS.replace(title, "    ", " ");
+    title = Strings.CS.replace(title, "   ", " ");
+    title = Strings.CS.replace(title, "  ", " ");
     if (title.contains(".")) {
       // String the extension
       title = title.substring(0, title.lastIndexOf("."));
     }
     return title;
   }
-
 
   public static String getMimeType(File file, String extension) {
     // Finally, check mime type

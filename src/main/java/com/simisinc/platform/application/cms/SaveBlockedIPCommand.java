@@ -41,11 +41,13 @@ public class SaveBlockedIPCommand {
     StringBuilder errorMessages = new StringBuilder();
     if (StringUtils.isBlank(blockedIPBean.getIpAddress())) {
       errorMessages.append("An IP address is required");
-    } else if (!InetAddressUtils.isIPv4Address(blockedIPBean.getIpAddress()) &&
-        !InetAddressUtils.isIPv6Address(blockedIPBean.getIpAddress())) {
-      errorMessages.append("A valid IPv4 or IPv6 address is required");
+    } else {
+      CharSequence ipAddress = blockedIPBean.getIpAddress();
+      if (!InetAddressUtils.isIPv4(ipAddress) && !InetAddressUtils.isIPv6(ipAddress)) {
+        errorMessages.append("A valid IPv4 or IPv6 address is required");
+      }
     }
-    if (errorMessages.length() > 0) {
+    if (!errorMessages.isEmpty()) {
       throw new DataException("Please check the form and try again:\n" + errorMessages.toString());
     }
 

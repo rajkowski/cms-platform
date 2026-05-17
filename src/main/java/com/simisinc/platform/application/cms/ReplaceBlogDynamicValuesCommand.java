@@ -16,10 +16,11 @@
 
 package com.simisinc.platform.application.cms;
 
-import com.simisinc.platform.domain.model.cms.Blog;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.cms.Blog;
 
 /**
  * Methods for working with dynamic values
@@ -41,9 +42,9 @@ public class ReplaceBlogDynamicValuesCommand {
   public static String replaceValues(Blog blog, String value) {
     try {
       // Blog
-      value = StringUtils.replace(value, "${blog.id}", String.valueOf(blog.getId()));
-      value = StringUtils.replace(value, "${blog.uniqueId}", blog.getUniqueId());
-      value = StringUtils.replace(value, "${blog.name}", blog.getName());
+      value = Strings.CS.replace(value, "${blog.id}", String.valueOf(blog.getId()));
+      value = Strings.CS.replace(value, "${blog.uniqueId}", blog.getUniqueId());
+      value = Strings.CS.replace(value, "${blog.name}", blog.getName());
     } catch (Exception e) {
       LOG.warn("Could not replace blog values");
       return null;

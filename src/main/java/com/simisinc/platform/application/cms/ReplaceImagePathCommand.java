@@ -16,7 +16,7 @@
 
 package com.simisinc.platform.application.cms;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -101,7 +101,7 @@ public class ReplaceImagePathCommand {
 
       // Replace the value
       String newWebPath = image.getWebPath();
-      content = StringUtils.replace(content, SEARCH_VALUE + webPath, SEARCH_VALUE + newWebPath);
+      content = Strings.CS.replace(content, SEARCH_VALUE + webPath, SEARCH_VALUE + newWebPath);
     }
 
     return content;

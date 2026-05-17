@@ -16,7 +16,11 @@
 
 package com.simisinc.platform.application.cms;
 
+import java.util.ArrayList;
+import java.util.UUID;
+
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.text.StringEscapeUtils;
@@ -27,9 +31,6 @@ import org.jsoup.nodes.Entities;
 import org.jsoup.safety.Cleaner;
 import org.jsoup.safety.Safelist;
 import org.jsoup.select.Elements;
-
-import java.util.ArrayList;
-import java.util.UUID;
 
 /**
  * HTML encoding and decoding functions
@@ -73,7 +74,7 @@ public class HtmlCommand {
       return null;
     }
     Safelist safelist = Safelist.basic();
-    Document dirty = Jsoup.parseBodyFragment(StringUtils.replace(text, "\r", "<br>"), "http://localhost:8080");
+    Document dirty = Jsoup.parseBodyFragment(Strings.CS.replace(text, "\r", "<br>"), "http://localhost:8080");
     Cleaner cleaner = new Cleaner(safelist);
     Document clean = cleaner.clean(dirty);
 

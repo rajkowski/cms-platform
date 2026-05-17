@@ -22,6 +22,7 @@ import java.sql.Timestamp;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -126,7 +127,7 @@ public class FormDataRepository {
     if (StringUtils.isNotBlank(record.getQueryParameters())) {
       // Convert from URL encoded to plain text
       String queryString = record.getQueryParameters();
-      queryString = StringUtils.replace(queryString, "%20", " ");
+      queryString = Strings.CS.replace(queryString, "%20", " ");
       insertValues.add("query_params", queryString);
       record.setQueryParameters(queryString);
     }

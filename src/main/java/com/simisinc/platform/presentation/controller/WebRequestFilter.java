@@ -40,6 +40,7 @@ import javax.servlet.http.HttpSession;
 import javax.servlet.jsp.jstl.core.Config;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hc.core5.net.InetAddressUtils;
@@ -173,8 +174,9 @@ public class WebRequestFilter implements Filter {
 
     // Redirect to SSL
     if (requireSSL && !"https".equalsIgnoreCase(scheme)) {
-      if (!"localhost".equals(request.getServerName()) && !InetAddressUtils.isIPv4Address(request.getServerName())
-          && !InetAddressUtils.isIPv6Address(request.getServerName())) {
+      CharSequence serverName = request.getServerName();
+      if (!"localhost".equals(serverName) && !InetAddressUtils.isIPv4(serverName)
+          && !InetAddressUtils.isIPv6(serverName)) {
         // Check protocol, server name, port number, and server path
         if (StringUtils.isBlank(httpServletRequest.getRequestURL())) {
           LOG.error("No request URL found, cannot redirect to SSL");
@@ -186,7 +188,7 @@ public class WebRequestFilter implements Filter {
         // If the request is not secure, redirect to the same URL with https
         // Replace "http://" with "https://"
         String requestURL = httpServletRequest.getRequestURL().toString();
-        requestURL = StringUtils.replace(requestURL, "http://", "https://");
+        requestURL = Strings.CS.replace(requestURL, "http://", "https://");
         LOG.debug("Redirecting to: " + requestURL);
         do301(servletResponse, requestURL);
         return;

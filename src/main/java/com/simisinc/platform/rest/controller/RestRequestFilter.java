@@ -25,13 +25,13 @@ import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.Base64;
 import java.util.List;
 import java.util.StringTokenizer;
 import java.util.UUID;
-import java.nio.charset.StandardCharsets;
 
 import javax.security.auth.login.LoginException;
 import javax.servlet.Filter;
@@ -44,6 +44,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hc.core5.net.InetAddressUtils;
@@ -123,13 +124,12 @@ public class RestRequestFilter implements Filter {
     }
 
     // Redirect to SSL
-    if (requireSSL && !"https".equalsIgnoreCase(scheme)) {
-      // Only redirect if a hostname was used (skip for local dev)
-      if (!isLocal
-          && !InetAddressUtils.isIPv4Address(request.getServerName())
-          && !InetAddressUtils.isIPv6Address(request.getServerName())) {
+    if (!isLocal && requireSSL && !"https".equalsIgnoreCase(scheme)) {
+      // Only redirect if a hostname was used (skip for local dev and proxy servers)
+      CharSequence ipAddressValue = request.getServerName();
+      if (!InetAddressUtils.isIPv4(ipAddressValue) && !InetAddressUtils.isIPv6(ipAddressValue)) {
         String requestURL = ((HttpServletRequest) request).getRequestURL().toString();
-        requestURL = StringUtils.replace(requestURL, "http://", "https://");
+        requestURL = Strings.CS.replace(requestURL, "http://", "https://");
         LOG.debug("Redirecting to: " + requestURL);
         do301(servletResponse, requestURL);
         return;

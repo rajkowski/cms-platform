@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import com.simisinc.platform.application.cms.HtmlCommand;
 import com.simisinc.platform.domain.model.cms.BlogPost;
@@ -87,8 +88,8 @@ public class BlogPostSearchResultsWidget extends GenericWidget {
       // Include an excerpt
       String htmlContent = HtmlCommand.toHtml(blogPost.getHighlight());
       if (StringUtils.isNotBlank(htmlContent)) {
-        htmlContent = StringUtils.replace(htmlContent, "${b}", "<strong>");
-        htmlContent = StringUtils.replace(htmlContent, "${/b}", "</strong>");
+        htmlContent = Strings.CS.replace(htmlContent, "${b}", "<strong>");
+        htmlContent = Strings.CS.replace(htmlContent, "${/b}", "</strong>");
         searchResult.setHtmlExcerpt(htmlContent);
       }
       searchResultList.add(searchResult);

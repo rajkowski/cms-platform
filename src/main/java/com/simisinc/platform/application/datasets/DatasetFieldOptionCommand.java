@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.text.StringTokenizer;
@@ -180,7 +181,7 @@ public class DatasetFieldOptionCommand {
         // Replace value with another value
         String[] vars = extractVars(token, "replace");
         if (vars != null && vars.length == 2) {
-          value = StringUtils.replace(value, vars[0], vars[1]);
+          value = Strings.CS.replace(value, vars[0], vars[1]);
         }
       } else if (token.startsWith("blank(")) {
         // Blank the matching term

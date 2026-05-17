@@ -16,6 +16,12 @@
 
 package com.simisinc.platform.presentation.widgets.items;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
+
 import com.simisinc.platform.application.cms.HtmlCommand;
 import com.simisinc.platform.domain.model.cms.SearchResult;
 import com.simisinc.platform.domain.model.items.Item;
@@ -25,10 +31,6 @@ import com.simisinc.platform.infrastructure.persistence.items.ItemSpecification;
 import com.simisinc.platform.presentation.controller.RequestConstants;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
-import org.apache.commons.lang3.StringUtils;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Description
@@ -104,8 +106,8 @@ public class ItemsSearchResultsWidget extends GenericWidget {
       // Include an excerpt
       String htmlContent = HtmlCommand.toHtml(item.getHighlight());
       if (StringUtils.isNotBlank(htmlContent)) {
-        htmlContent = StringUtils.replace(htmlContent, "${b}", "<strong>");
-        htmlContent = StringUtils.replace(htmlContent, "${/b}", "</strong>");
+        htmlContent = Strings.CS.replace(htmlContent, "${b}", "<strong>");
+        htmlContent = Strings.CS.replace(htmlContent, "${/b}", "</strong>");
         searchResult.setHtmlExcerpt(htmlContent);
       }
       searchResultList.add(searchResult);

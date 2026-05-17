@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -147,7 +148,8 @@ public class ContentHtmlCommand {
       return html;
     }
 
-    boolean hasEditorPermission = (context.hasRole("admin") || context.hasRole("content-manager"));
+    // boolean hasEditorPermission = (context.hasRole("admin") || context.hasRole("content-manager"));
+    boolean hasEditorPermission = false; // @todo for now, turn off the embedded editor links until we can work out the details of how to manage them with the main editor
     boolean hasDraftContent = false;
 
     // Replace content instances of embedded uniqueIds
@@ -225,8 +227,8 @@ public class ContentHtmlCommand {
     }
 
     // Standardize the content
-    html = StringUtils.replaceIgnoreCase(html, "<hr />", "<hr>");
-    html = StringUtils.replaceIgnoreCase(html, "<hr/>", "<hr>");
+    html = Strings.CI.replace(html, "<hr />", "<hr>");
+    html = Strings.CI.replace(html, "<hr/>", "<hr>");
 
     // Remove starting <hr>
     if (html.startsWith("<hr>")) {

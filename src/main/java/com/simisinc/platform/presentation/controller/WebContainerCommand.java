@@ -37,6 +37,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.text.StringEscapeUtils;
@@ -189,23 +190,23 @@ public class WebContainerCommand implements Serializable {
             String value = widget.getPreferences().get(preference);
             // check for dynamic preferences
             while (value.contains("${ctx}")) {
-              value = StringUtils.replace(value, "${ctx}", pageRequest.getContextPath());
+              value = Strings.CS.replace(value, "${ctx}", pageRequest.getContextPath());
             }
             if (value.contains("${platform.")) {
-              value = StringUtils.replace(value, "${platform.name}",
+              value = Strings.CS.replace(value, "${platform.name}",
                   StringEscapeUtils.escapeXml11(ApplicationInfo.PRODUCT_NAME));
-              value = StringUtils.replace(value, "${platform.url}", ApplicationInfo.PRODUCT_URL);
-              value = StringUtils.replace(value, "${platform.version}", ApplicationInfo.VERSION);
+              value = Strings.CS.replace(value, "${platform.url}", ApplicationInfo.PRODUCT_URL);
+              value = Strings.CS.replace(value, "${platform.version}", ApplicationInfo.VERSION);
             }
             if (value.contains("${webPage.")) {
               if (webContainerContext.getWebPage() != null) {
-                value = StringUtils.replace(value, "${webPage.link}", webContainerContext.getWebPage().getLink());
+                value = Strings.CS.replace(value, "${webPage.link}", webContainerContext.getWebPage().getLink());
               } else {
-                value = StringUtils.replace(value, "${webPage.link}", pageRequest.getPagePath());
+                value = Strings.CS.replace(value, "${webPage.link}", pageRequest.getPagePath());
               }
               if (widgetContext.getUri().contains("/")) {
                 String webPageUniqueId = widgetContext.getUri().substring(widgetContext.getUri().lastIndexOf("/") + 1);
-                value = StringUtils.replace(value, "${webPage.uniqueId}", webPageUniqueId);
+                value = Strings.CS.replace(value, "${webPage.uniqueId}", webPageUniqueId);
               }
             }
             if (value.contains("${collection.") && coreData.containsKey("collectionUniqueId")) {
@@ -420,14 +421,14 @@ public class WebContainerCommand implements Serializable {
                 // The XML indicates that there is an item
                 if (webContainerContext.getPage().getItemUniqueId().contains("*")) {
                   // Substitute the item's unique id
-                  actionRedirect = StringUtils.replace(webContainerContext.getPage().getItemUniqueId(), "*",
+                  actionRedirect = Strings.CS.replace(webContainerContext.getPage().getItemUniqueId(), "*",
                       widgetContext.getCoreData().get("itemUniqueId"));
                 }
               } else if (webContainerContext.getPage().checkForCollectionUniqueId()) {
                 // The XML indicates that there is a collection
                 if (webContainerContext.getPage().getCollectionUniqueId().contains("*")) {
                   // Substitute the collection's uniqueId (/uri/*)
-                  actionRedirect = StringUtils.replace(webContainerContext.getPage().getCollectionUniqueId(), "*",
+                  actionRedirect = Strings.CS.replace(webContainerContext.getPage().getCollectionUniqueId(), "*",
                       widgetContext.getCoreData().get("collectionUniqueId"));
                 } else if ("?collectionId".equals(webContainerContext.getPage().getCollectionUniqueId())) {
                   // Use the collection's id (/admin/collection-form{?collectionId})
@@ -606,7 +607,7 @@ public class WebContainerCommand implements Serializable {
 
     String searchString = content.substring(startIdx, endIdx + 1);
     if (splitIdx == -1) {
-      return StringUtils.replace(content, searchString, replacementValue);
+      return Strings.CS.replace(content, searchString, replacementValue);
     }
 
     // Use the encoding
@@ -618,9 +619,9 @@ public class WebContainerCommand implements Serializable {
     } else if ("json".equals(encoding)) {
       replacementValue = StringEscapeUtils.escapeJson(replacementValue);
     } else if ("sql".equals(encoding)) {
-      replacementValue = StringUtils.replace(replacementValue, "'", "''");
+      replacementValue = Strings.CS.replace(replacementValue, "'", "''");
     }
-    return StringUtils.replace(content, searchString, replacementValue);
+    return Strings.CS.replace(content, searchString, replacementValue);
   }
 
   public static String replaceVariableWithParameterValue(PageRequest request, String content) {
@@ -654,8 +655,8 @@ public class WebContainerCommand implements Serializable {
     } else if ("json".equals(encoding)) {
       replacementValue = StringEscapeUtils.escapeJson(replacementValue);
     } else if ("sql".equals(encoding)) {
-      replacementValue = StringUtils.replace(replacementValue, "'", "''");
+      replacementValue = Strings.CS.replace(replacementValue, "'", "''");
     }
-    return StringUtils.replace(content, searchString, replacementValue);
+    return Strings.CS.replace(content, searchString, replacementValue);
   }
 }

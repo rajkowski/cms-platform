@@ -17,6 +17,7 @@
 package com.simisinc.platform.presentation.widgets.login;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import com.simisinc.platform.application.UserPasswordCommand;
 import com.simisinc.platform.application.login.LogoutCommand;
@@ -110,7 +111,7 @@ public class AccountValidationWidget extends GenericWidget {
     if ("new".equals(user.getPassword()) || StringUtils.isNotBlank(user.getAccountToken())) {
       String password = context.getParameter("password");
       String password2 = context.getParameter("password2");
-      if (!StringUtils.equals(password, password2)) {
+      if (!Strings.CS.equals(password, password2)) {
         context.setWarningMessage("The password fields did not match, please try again");
         context.setRedirect("/validate-account?confirmation=" + confirmation);
         return context;

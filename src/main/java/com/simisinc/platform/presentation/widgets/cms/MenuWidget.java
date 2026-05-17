@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -373,7 +374,7 @@ public class MenuWidget extends GenericWidget {
       return;
     }
     String pagePath = (String) context.getRequest().getAttribute("pagePath");
-    value = StringUtils.replace(value, "${pagePath}", (pagePath));
+    value = Strings.CS.replace(value, "${pagePath}", (pagePath));
     map.put(name, value);
   }
 

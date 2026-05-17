@@ -16,6 +16,13 @@
 
 package com.simisinc.platform.presentation.widgets.register;
 
+import java.lang.reflect.InvocationTargetException;
+
+import javax.security.auth.login.AccountException;
+
+import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.lang3.Strings;
+
 import com.simisinc.platform.application.DataException;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.application.cms.CaptchaCommand;
@@ -23,13 +30,8 @@ import com.simisinc.platform.application.register.RegisterUserCommand;
 import com.simisinc.platform.domain.events.cms.UserSignedUpEvent;
 import com.simisinc.platform.domain.model.User;
 import com.simisinc.platform.infrastructure.workflow.WorkflowManager;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
 import com.simisinc.platform.presentation.controller.WidgetContext;
-import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.lang3.StringUtils;
-
-import javax.security.auth.login.AccountException;
-import java.lang.reflect.InvocationTargetException;
+import com.simisinc.platform.presentation.widgets.GenericWidget;
 
 /**
  * Description
@@ -106,7 +108,7 @@ public class RegisterWidget extends GenericWidget {
     }
 
     // Check the form values
-    if (!StringUtils.equals(password, password2)) {
+    if (!Strings.CS.equals(password, password2)) {
       isValid = false;
       context.setWarningMessage("The password fields did not match, please try again");
     }

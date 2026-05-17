@@ -23,6 +23,7 @@ import java.util.Properties;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -253,7 +254,7 @@ public class MakeStaticSiteCommand {
           // Process the posts
           for (BlogPost blogPost : blogPostList) {
             // Turn the blog post into a web page
-            String blogLink = StringUtils.replaceOnce(blogPost.getLink(), "*", blog.getUniqueId());
+            String blogLink = Strings.CS.replaceOnce(blogPost.getLink(), "*", blog.getUniqueId());
             webPage.setLink(blogLink);
             LOG.info("Blog post to export: " + blogLink);
             // Export the webpage

@@ -26,6 +26,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.text.WordUtils;
@@ -36,7 +37,6 @@ import com.simisinc.platform.application.DataException;
 import com.simisinc.platform.application.cms.MakeContentUniqueIdCommand;
 import com.simisinc.platform.application.cms.SaveWebPageCommand;
 import com.simisinc.platform.application.cms.UrlCommand;
-import com.simisinc.platform.application.cms.WebPageDesignerToXmlCommand;
 import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.domain.model.cms.WebPageTemplate;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
@@ -181,7 +181,7 @@ public class WebPageDesignerWidget extends GenericWidget {
       if (StringUtils.isBlank(webPageName)) {
         webPageName = "home";
       }
-      template = StringUtils.replace(template, "${webPageName}", webPageName);
+      template = Strings.CS.replace(template, "${webPageName}", webPageName);
       webPage.setPageXml(template);
       webPage.setTemplate(webPageTemplate.getName());
     } else {
@@ -192,7 +192,7 @@ public class WebPageDesignerWidget extends GenericWidget {
       } else {
         // Content is being updated
         String webPageName = MakeContentUniqueIdCommand.parseToValidValue(contentUniqueIdValue);
-        pageXmlValue = StringUtils.replace(pageXmlValue, "${webPageName}", webPageName);
+        pageXmlValue = Strings.CS.replace(pageXmlValue, "${webPageName}", webPageName);
         webPage.setPageXml(pageXmlValue);
       }
     }

@@ -17,6 +17,7 @@
 package com.simisinc.platform.presentation.widgets.cms;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jsoup.Jsoup;
@@ -139,7 +140,7 @@ public class RemoteContentWidget extends GenericWidget {
 
       // Check for additional processing
       if ("true".equals(context.getPreferences().get("adjustTable"))) {
-        content = StringUtils.replace(content, "<table>", "<table class=\"scroll\">");
+        content = Strings.CI.replace(content, "<table>", "<table class=\"scroll\">");
       }
 
       cache.put(url, content);

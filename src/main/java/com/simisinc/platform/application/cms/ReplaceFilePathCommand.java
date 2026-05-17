@@ -16,7 +16,7 @@
 
 package com.simisinc.platform.application.cms;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -110,7 +110,7 @@ public class ReplaceFilePathCommand {
 
       // Replace the value
       String newWebPath = file.getWebPath();
-      content = StringUtils.replace(content, searchValue + webPath, searchValue + newWebPath);
+      content = Strings.CS.replace(content, searchValue + webPath, searchValue + newWebPath);
     }
 
     return content;

@@ -16,11 +16,12 @@
 
 package com.simisinc.platform.presentation.widgets.admin.cms;
 
-import com.simisinc.platform.application.cms.SaveContentCommand;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
+
+import com.simisinc.platform.application.cms.SaveContentCommand;
+import com.simisinc.platform.presentation.controller.WidgetContext;
+import com.simisinc.platform.presentation.widgets.GenericWidget;
 
 /**
  * Widget for displaying a system administration form to add/update content
@@ -55,7 +56,7 @@ public class ContentFormWidget extends GenericWidget {
 
     // Do some formatting
     uniqueId = uniqueId.trim().toLowerCase();
-    uniqueId = StringUtils.replace(uniqueId, " ", "-");
+    uniqueId = Strings.CS.replace(uniqueId, " ", "-");
 
     // Validate the characters
     for (int i = 0; i < uniqueId.length(); i++) {
