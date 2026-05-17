@@ -528,6 +528,7 @@
           <report>locations-map</report>
           <days>14</days>
 <!--          <mapHeight>200</mapHeight>-->
+          <showWhenEmpty>false</showWhenEmpty>
         </widget>
       </column>
     </section>
