@@ -124,9 +124,6 @@ public class GeoIPCommand {
         geoIP.setTimezone(response.getLocation().getTimeZone());
         geoIP.setLatitude(response.getLocation().getLatitude());
         geoIP.setLongitude(response.getLocation().getLongitude());
-        if (response.getLocation().getMetroCode() != null) {
-          geoIP.setMetroCode(response.getLocation().getMetroCode());
-        }
       }
       return geoIP;
     } catch (Exception e) {
