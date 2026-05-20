@@ -40,6 +40,7 @@ public class MyInfoWidget extends GenericWidget {
     // Preferences
     context.getRequest().setAttribute("showName", context.getPreferences().getOrDefault("showName", "true"));
     context.getRequest().setAttribute("showNickname", context.getPreferences().getOrDefault("showNickname", "false"));
+    context.getRequest().setAttribute("showEmail", context.getPreferences().getOrDefault("showEmail", "false"));
     context.getRequest().setAttribute("showJoinDate", context.getPreferences().getOrDefault("showJoinDate", "true"));
 
     context.getRequest().setAttribute("user", context.getUserSession().getUser());
