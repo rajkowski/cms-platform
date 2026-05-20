@@ -2,12 +2,12 @@
   "name": "cms-platform",
   "author": "Matt Rajkowski",
   "homepage": "https://github.com/rajkowski/cms-platform",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "CMS Platform: Agile, Enterprise, Open Source Content Management System (CMS) and Portal, frontend dependencies",
   "license": "Apache License 2.0",
   "engines": {
     "npm": ">=9.6",
-    "node": ">=18.17"
+    "node": ">=22.11"
   },
   "scripts": {
     "postinstall": "ts-node src/main/scripts/dependencies.ts",
@@ -41,7 +41,6 @@
     "motion-ui": "2.0.8",
     "payform": "1.4.0",
     "prismjs": "1.30.0",
-    "quill": "^2.0.3",
     "sortablejs": "1.15.7",
     "spectrum-colorpicker": "1.8.1",
     "swiper": "12.1.4",
