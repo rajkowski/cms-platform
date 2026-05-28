@@ -34,6 +34,7 @@ import org.jobrunr.storage.InMemoryStorageProvider;
 import org.jobrunr.storage.StorageProvider;
 import org.jobrunr.storage.StorageProviderUtils;
 import org.jobrunr.storage.sql.common.SqlStorageProviderFactory;
+import org.jobrunr.utils.mapper.jackson.JacksonJsonMapper;
 
 import com.simisinc.platform.infrastructure.database.ConnectionPool;
 import com.simisinc.platform.infrastructure.instance.InstanceManager;
@@ -121,6 +122,7 @@ public class SchedulerManager {
 
       // Initialize the scheduler
       JobRunr.configure()
+          .useJsonMapper(new JacksonJsonMapper())
           .useStorageProvider(jobStorageProvider)
           //          .useJobActivator(new JobActivator() {
           //            public <T> T activateJob(Class<T> aClass) {
