@@ -100,10 +100,10 @@ public class DocumentAddVersionAjax extends GenericWidget {
       fileItemBean.setFolderId(existingFile.getFolderId());
       fileItemBean.setSubFolderId(existingFile.getSubFolderId());
       fileItemBean.setCategoryId(existingFile.getCategoryId());
-      fileItemBean.setFilename(existingFile.getFilename());
       fileItemBean.setTitle(existingFile.getTitle());
       fileItemBean.setSummary(existingFile.getSummary());
       fileItemBean.setVersion(StringUtils.defaultIfBlank(newVersion, "1.0"));
+      fileItemBean.setFilename(uploadedFile.getFilename());
       fileItemBean.setExtension(uploadedFile.getExtension());
       fileItemBean.setFileServerPath(uploadedFile.getFileServerPath());
       fileItemBean.setFileLength(uploadedFile.getFileLength());
