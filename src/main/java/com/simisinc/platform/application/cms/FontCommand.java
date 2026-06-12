@@ -29,8 +29,8 @@ public class FontCommand {
 
   private static Log LOG = LogFactory.getLog(FontCommand.class);
 
-  private static String version = "free6";
-//  private static String version = "pro6";
+  private static String version = "free";
+//  private static String version = "pro";
 
   public static final String REGULAR = "regular";
   public static final String LIGHT = "light";
@@ -40,19 +40,14 @@ public class FontCommand {
   public static final String BRANDS = "brands";
 
   public static String fontawesome() {
-    // @todo When entry exists in DB whether true/false
-//    LoadSitePropertyCommand.loadByName("cms.fontawesome.pro", "false");
-    if ("pro6".equals(version)) {
+    if ("pro".equals(version)) {
       return "fontawesome-pro-7.1.0-web";
     }
     return "fontawesome-free-7.1.0-web";
   }
 
   private static String fa(String type) {
-
-    // Font Awesome Pro 6
-    // <i class="fa-regular fa-user"></i>
-    if ("pro6".equals(version)) {
+    if ("pro".equals(version)) {
       if (REGULAR.equals(type)) {
         return "fa-regular";
       }
@@ -73,8 +68,7 @@ public class FontCommand {
       }
     }
 
-    // Font Awesome Free 6
-    // <i class="fa-regular fa-user"></i>
+    // Font Awesome Free
     if (BRANDS.equals(type)) {
       return "fa-brands";
     }
@@ -82,18 +76,30 @@ public class FontCommand {
   }
 
   public static String far() {
+    if ("free".equals(version)) {
+      return fa(SOLID);
+    }
     return fa(REGULAR);
   }
 
   public static String fal() {
+    if ("free".equals(version)) {
+      return fa(SOLID);
+    }
     return fa(LIGHT);
   }
 
   public static String fad() {
+    if ("free".equals(version)) {
+      return fa(SOLID);
+    }
     return fa(DUOTONE);
   }
 
   public static String fat() {
+    if ("free".equals(version)) {
+      return fa(SOLID);
+    }
     return fa(THIN);
   }
 
