@@ -16,12 +16,14 @@
 
 package com.simisinc.platform.application.cms;
 
-import com.simisinc.platform.application.DataException;
-import com.simisinc.platform.domain.model.cms.Content;
-import com.simisinc.platform.infrastructure.persistence.cms.ContentRepository;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.domain.model.cms.Content;
+import com.simisinc.platform.infrastructure.persistence.cms.ContentRepository;
+import com.simisinc.platform.infrastructure.scheduler.cms.RefreshWebPageTextIndexJob;
 
 /**
  * Publishes draft content to live
@@ -63,6 +65,10 @@ public class PublishContentCommand {
     ContentRepository.publish(content);
 
     LOG.debug("Published draft content for: " + uniqueId);
+
+    // Refresh dependent web pages asynchronously
+    RefreshWebPageTextIndexJob.enqueueForContent(uniqueId);
+
     return true;
   }
 }

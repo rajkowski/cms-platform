@@ -16,6 +16,10 @@
 
 package com.simisinc.platform.application.cms;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.simisinc.platform.application.DataException;
 import com.simisinc.platform.domain.events.cms.WebPagePublishedEvent;
 import com.simisinc.platform.domain.events.cms.WebPageUpdatedEvent;
@@ -23,11 +27,6 @@ import com.simisinc.platform.domain.model.cms.SitemapChangeFrequencyOptions;
 import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
 import com.simisinc.platform.infrastructure.workflow.WorkflowManager;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import java.util.Date;
 
 /**
  * Validates and saves web page objects
@@ -128,6 +127,9 @@ public class SaveWebPageCommand {
     WebPage result = WebPageRepository.save(webPage);
 
     if (result != null) {
+      // Refresh page text for search indexing
+      RefreshWebPageTextCommand.refreshPageText(result);
+
       // Check for events
       boolean isNewWebPage = (webPageBean.getId() == -1 || webPageBean.getModified() == null);
       boolean justUpdatedInTheLastDay = !isNewWebPage &&

@@ -16,10 +16,18 @@
 
 package com.simisinc.platform.infrastructure.persistence.cms;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -47,6 +55,9 @@ public class WebPageRepository {
 
   private static String TABLE_NAME = "web_pages";
   private static String[] PRIMARY_KEY = new String[] { "web_page_id" };
+  private static final int MAX_INDIRECT_REFERENCE_DEPTH = 5;
+  private static final int MAX_CONTENT_REFERENCE_NODES = 250;
+  private static final int MAX_INDIRECT_PAGES = 500;
 
   private static SqlWhere createWhereStatement(WebPageSpecification specification) {
     SqlWhere where = null;
@@ -263,6 +274,121 @@ public class WebPageRepository {
     } catch (SQLException se) {
       LOG.error("buildRecord", se);
       return null;
+    }
+  }
+
+  public static List<WebPage> findByContentUniqueId(String contentUniqueId) {
+    if (StringUtils.isBlank(contentUniqueId)) {
+      return new ArrayList<>();
+    }
+    // Query for pages where pageXml contains the uniqueId reference
+    SqlWhere where = DB.WHERE();
+    where.AND("(page_xml LIKE ? OR draft_page_xml LIKE ?)",
+        new String[] { "%" + contentUniqueId + "%", "%" + contentUniqueId + "%" });
+    return (List<WebPage>) DB.selectAllFrom(
+        TABLE_NAME,
+        where,
+        new DataConstraints(),
+        WebPageRepository::buildRecord).getRecords();
+  }
+
+  public static List<WebPage> findIndirectlyAffectedPagesByContentUniqueId(String contentUniqueId) {
+    if (StringUtils.isBlank(contentUniqueId)) {
+      return new ArrayList<>();
+    }
+
+    ArrayDeque<ContentReferenceNode> queue = new ArrayDeque<>();
+    Set<String> visitedContentUniqueIds = new HashSet<>();
+    Map<Long, WebPage> pageById = new HashMap<>();
+
+    queue.add(new ContentReferenceNode(contentUniqueId, 0));
+    visitedContentUniqueIds.add(contentUniqueId);
+
+    int traversedNodes = 0;
+    while (!queue.isEmpty() && canContinueTraversal(traversedNodes, pageById.size())) {
+      ContentReferenceNode current = queue.poll();
+      traversedNodes++;
+      if (current.depth < MAX_INDIRECT_REFERENCE_DEPTH) {
+        processParentReferences(current, queue, visitedContentUniqueIds, pageById);
+      }
+    }
+
+    if (traversedNodes >= MAX_CONTENT_REFERENCE_NODES) {
+      LOG.warn("Reached indirect content reference traversal limit for content uniqueId: " + contentUniqueId);
+    }
+    if (pageById.size() >= MAX_INDIRECT_PAGES) {
+      LOG.warn("Reached indirect affected page limit for content uniqueId: " + contentUniqueId);
+    }
+
+    return new ArrayList<>(pageById.values());
+  }
+
+  private static boolean canContinueTraversal(int traversedNodes, int pageCount) {
+    return traversedNodes < MAX_CONTENT_REFERENCE_NODES && pageCount < MAX_INDIRECT_PAGES;
+  }
+
+  private static void processParentReferences(ContentReferenceNode current,
+      ArrayDeque<ContentReferenceNode> queue,
+      Set<String> visitedContentUniqueIds,
+      Map<Long, WebPage> pageById) {
+    List<String> parentContentUniqueIds = findContentUniqueIdsReferencing(current.uniqueId);
+    for (String parentUniqueId : parentContentUniqueIds) {
+      if (canVisitParent(parentUniqueId, visitedContentUniqueIds) && pageById.size() < MAX_INDIRECT_PAGES) {
+        visitedContentUniqueIds.add(parentUniqueId);
+        addPagesByContentUniqueId(parentUniqueId, pageById);
+        if (pageById.size() < MAX_INDIRECT_PAGES) {
+          queue.add(new ContentReferenceNode(parentUniqueId, current.depth + 1));
+        }
+      }
+    }
+  }
+
+  private static boolean canVisitParent(String parentUniqueId, Set<String> visitedContentUniqueIds) {
+    return StringUtils.isNotBlank(parentUniqueId) && !visitedContentUniqueIds.contains(parentUniqueId);
+  }
+
+  private static void addPagesByContentUniqueId(String contentUniqueId, Map<Long, WebPage> pageById) {
+    for (WebPage page : findByContentUniqueId(contentUniqueId)) {
+      if (pageById.size() >= MAX_INDIRECT_PAGES) {
+        return;
+      }
+      if (page != null && page.getId() > -1 && !pageById.containsKey(page.getId())) {
+        pageById.put(page.getId(), page);
+      }
+    }
+  }
+
+  private static List<String> findContentUniqueIdsReferencing(String contentUniqueId) {
+    List<String> referencedByUniqueIds = new ArrayList<>();
+    String directivePattern = "%${uniqueId:" + contentUniqueId + "}%";
+    String sql = "SELECT DISTINCT content_unique_id FROM content " +
+        "WHERE content_unique_id <> ? AND (content LIKE ? OR draft_content LIKE ?)";
+
+    try (Connection connection = DB.getConnection();
+        PreparedStatement pst = connection.prepareStatement(sql)) {
+      int i = 0;
+      pst.setString(++i, contentUniqueId);
+      pst.setString(++i, directivePattern);
+      pst.setString(++i, directivePattern);
+      try (ResultSet rs = pst.executeQuery()) {
+        while (rs.next()) {
+          referencedByUniqueIds.add(rs.getString("content_unique_id"));
+        }
+      }
+    } catch (SQLException se) {
+      LOG.error("findContentUniqueIdsReferencing", se);
+    }
+
+    return referencedByUniqueIds;
+  }
+
+  private static class ContentReferenceNode {
+    private final String uniqueId;
+    private final int depth;
+
+    private ContentReferenceNode(String uniqueId, int depth) {
+      this.uniqueId = uniqueId;
+      this.depth = depth;
     }
   }
 }

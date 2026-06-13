@@ -16,12 +16,14 @@
 
 package com.simisinc.platform.application.cms;
 
-import com.simisinc.platform.application.DataException;
-import com.simisinc.platform.domain.model.cms.Content;
-import com.simisinc.platform.infrastructure.persistence.cms.ContentRepository;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.domain.model.cms.Content;
+import com.simisinc.platform.infrastructure.persistence.cms.ContentRepository;
+import com.simisinc.platform.infrastructure.scheduler.cms.RefreshWebPageTextIndexJob;
 
 /**
  * Validates and saves content objects
@@ -87,7 +89,15 @@ public class SaveContentCommand {
     content.setModifiedBy(contentBean.getModifiedBy() != -1 ? contentBean.getModifiedBy() : contentBean.getCreatedBy());
 
     // Save to repository (timestamps are handled by the database)
-    return ContentRepository.save(content);
+    Content saved = ContentRepository.save(content);
+
+    // If content was published (not draft), refresh dependent web pages asynchronously
+    if (!isDraft && saved != null) {
+      LOG.debug("Enqueuing refresh for web pages dependent on content: " + saved.getUniqueId());
+      RefreshWebPageTextIndexJob.enqueueForContent(saved.getUniqueId());
+    }
+
+    return saved;
   }
 
   /**
@@ -100,7 +110,8 @@ public class SaveContentCommand {
    * @return the saved content object
    * @throws DataException if validation fails
    */
-  public static Content saveSafeContent(String contentUniqueId, String contentHtml, long userId, boolean publish) throws DataException {
+  public static Content saveSafeContent(String contentUniqueId, String contentHtml, long userId, boolean publish)
+      throws DataException {
 
     if (contentHtml == null) {
       throw new DataException("Content is required");
@@ -127,8 +138,12 @@ public class SaveContentCommand {
     }
     content.setCreatedBy(userId);
     content.setModifiedBy(userId);
-    return ContentRepository.save(content);
-
+    Content saved = ContentRepository.save(content);
+    if (saved != null && publish) {
+      LOG.debug("Enqueuing refresh for web pages dependent on content: " + saved.getUniqueId());
+      RefreshWebPageTextIndexJob.enqueueForContent(saved.getUniqueId());
+    }
+    return saved;
   }
 
 }
