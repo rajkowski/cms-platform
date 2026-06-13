@@ -101,6 +101,7 @@
 
 .header-logo:hover {
   color: var(--button-primary);
+  text-decoration: none;
 }
 
 /* Navigation */

@@ -15,11 +15,15 @@
   --%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="font" uri="/WEB-INF/tlds/font-functions.tld" %>
+<%@ taglib prefix="g" uri="http://granule.com/tags" %>
 <%@ taglib prefix="web" uri="/WEB-INF/tlds/web.tld" %>
 <jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="content" class="com.simisinc.platform.domain.model.cms.Content" scope="request"/>
 <jsp:useBean id="isDraft" class="java.lang.String" scope="request"/>
+<g:compress>
+  <link rel="stylesheet" type="text/css" href="${ctx}/css/platform-editor.css" />
+</g:compress>
 <web:script package="tinymce" file="tinymce.min.js" />
 <script>
   $(window).on('resize', function () {
@@ -28,7 +32,7 @@
       var rect = container.getBoundingClientRect(),
         scrollLeft = window.pageXOffset || document.documentElement.scrollLeft,
         scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      var newHeight = $(window).height() - Math.round(rect.top + scrollTop + 106);
+      var newHeight = $(window).height() - Math.round(rect.top + scrollTop);
       $('.tox-tinymce').height(newHeight);
     }, 100);
   });
@@ -116,14 +120,7 @@
   }
 </script>
 <%@include file="../page_messages.jspf" %>
-<p>
-  <small>
-    <c:out value="${content.uniqueId}" />
-    <c:if test="${isDraft eq 'true'}">
-      <span class="label warning">Draft</span>
-    </c:if>
-  </small>
-</p>
+<div id="content-editor-container" class="panel-container">
 <form method="post">
   <%-- Required by controller --%>
   <input type="hidden" name="widget" value="${widgetContext.uniqueId}" />
@@ -131,22 +128,61 @@
   <%-- Form Content --%>
   <input type="hidden" name="uniqueId" value="${content.uniqueId}" />
   <input type="hidden" name="returnPage" value="${returnPage}" />
-  <p>
-    <textarea name="content" class="html-field"><c:out value="${contentHtml}"/></textarea>
-  </p>
-  <div class="button-container">
-    <c:choose>
-      <c:when test="${content.id eq -1}">
-        <input type="submit" class="button radius primary" name="save" value="Save" />
-      </c:when>
-      <c:otherwise>
-        <input type="submit" class="button radius success" name="save" value="Publish Immediately" />
-        <input type="submit" class="button radius warning" name="save" value="Save as Draft" />
+
+  <div id="middle-panel-header" class="panel-header">
+    <div class="titlebar-left">
+      <a href="/" class="header-logo">
+        <c:choose>
+          <c:when test="${!empty sitePropertyMap['site.logo']}">
+            <img class="logo-light" src="${sitePropertyMap['site.logo']}" alt="<c:out value="${sitePropertyMap['site.name']}"/>" />
+            <c:choose>
+              <c:when test="${!empty sitePropertyMap['site.logo.white']}">
+                <img class="logo-dark" src="${sitePropertyMap['site.logo.white']}" alt="<c:out value="${sitePropertyMap['site.name']}"/>" />
+              </c:when>
+              <c:when test="${!empty sitePropertyMap['site.logo.mixed']}">
+                <img class="logo-dark" src="${sitePropertyMap['site.logo.mixed']}" alt="<c:out value="${sitePropertyMap['site.name']}"/>" />
+              </c:when>
+              <c:otherwise>
+                <img class="logo-dark" src="${sitePropertyMap['site.logo']}" alt="<c:out value="${sitePropertyMap['site.name']}"/>" />
+              </c:otherwise>
+            </c:choose>
+          </c:when>
+          <c:otherwise>
+            <i class="fas fa-cube"></i>
+            <span><c:out value="${sitePropertyMap['site.name']}"/></span>
+          </c:otherwise>
+        </c:choose>
+      </a>
+    </div>
+    <h3 id="middle-panel-title">
+      <i id="middle-panel-icon" class="far"></i>
+      <span id="middle-panel-title-text"><c:out value="${content.uniqueId}" />
         <c:if test="${isDraft eq 'true'}">
-          <input type="submit" class="button radius alert" name="save" value="Remove this Draft" />
+          <span class="label warning">Draft</span>
         </c:if>
-      </c:otherwise>
-    </c:choose>
-    <a href="${returnPage}" class="button radius secondary">Cancel</a>
+      </span>
+    </h3>
+    <div id="middle-panel-tools">
+      <div id="content-tools" class="panel-tools">
+        <c:choose>
+          <c:when test="${content.id eq -1}">
+            <input type="submit" class="button tiny radius primary no-gap" name="save" value="Save" />
+          </c:when>
+          <c:otherwise>
+            <input type="submit" class="button tiny radius success no-gap" name="save" value="Publish Immediately" />
+            <input type="submit" class="button tiny radius warning no-gap" name="save" value="Save as Draft" />
+            <c:if test="${isDraft eq 'true'}">
+              <input type="submit" class="button tiny radius alert no-gap" name="save" value="Remove this Draft" />
+            </c:if>
+          </c:otherwise>
+        </c:choose>
+        <a href="${returnPage}" class="button tiny radius secondary no-gap">Cancel</a>
+      </div>    
+    </div>
+  </div>
+  <div id="content-editor">
+    <%--<textarea id="content-html-editor"></textarea>--%>
+    <textarea name="content" class="html-field"><c:out value="${contentHtml}"/></textarea>
   </div>
 </form>
+</div>
