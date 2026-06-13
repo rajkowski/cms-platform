@@ -297,13 +297,13 @@ tinymce.PluginManager.add('fontawesome', function (editor, url) {
   })
 
   editor.ui.registry.addButton('fontawesome', {
-    icon: 'emoji',
+    icon: 'sharpen',
     tooltip: 'Insert an icon',
     onAction: showDialog
   })
 
   editor.ui.registry.addMenuItem('fontawesome', {
-    icon: 'flag',
+    icon: 'sharpen',
     text: 'Icons',
     onAction: showDialog,
     context: 'insert'
