@@ -268,7 +268,7 @@ class VisualWorkflowEditor {
       li.className = 'workflow-list-item';
       li.dataset.jobId = job.id;
       li.innerHTML = `
-        <span class="workflow-list-item-icon"><i class="far fa-clock"></i></span>
+        <span class="workflow-list-item-icon"><i class="fas fa-clock"></i></span>
         <span class="workflow-list-item-content">
           <span class="workflow-list-item-name">${this.escapeHtml(job.name || job.id)}${enqueuedBadge}</span>
           <span class="workflow-list-item-meta">${this.escapeHtml(job.schedule || '')}</span>
@@ -298,7 +298,7 @@ class VisualWorkflowEditor {
       li.className = 'workflow-list-item';
       li.dataset.wfId = wf.id;
       li.innerHTML = `
-        <span class="workflow-list-item-icon"><i class="far fa-bolt"></i></span>
+        <span class="workflow-list-item-icon"><i class="fas fa-bolt"></i></span>
         <span class="workflow-list-item-content">
           <span class="workflow-list-item-name">${this.escapeHtml(wf.name || wf.id)}</span>
           <span class="workflow-list-item-meta">${this.escapeHtml(wf.file || '')}</span>
@@ -665,7 +665,7 @@ class VisualWorkflowEditor {
       </div>
       <div class="info-item trigger-now-item">
         <button class="button small secondary trigger-now-btn" data-job-id="${this.escapeHtml(job.id)}">
-          <i class="far fa-play"></i> Trigger Now
+          <i class="fas fa-play"></i> Trigger Now
         </button>
       </div>
     `;
@@ -687,7 +687,7 @@ class VisualWorkflowEditor {
   triggerJob(jobId, btn) {
     if (btn) {
       btn.disabled = true;
-      btn.innerHTML = '<i class="far fa-spinner fa-spin"></i> Triggering...';
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Triggering...';
     }
     fetch('/json/workflowTaskTrigger', {
       method: 'POST',
@@ -698,15 +698,15 @@ class VisualWorkflowEditor {
     .then(data => {
       if (btn) {
         if (data.error) {
-          btn.innerHTML = '<i class="far fa-times"></i> Failed';
+          btn.innerHTML = '<i class="fas fa-times"></i> Failed';
           btn.classList.add('alert');
         } else {
-          btn.innerHTML = '<i class="far fa-check"></i> Triggered!';
+          btn.innerHTML = '<i class="fas fa-check"></i> Triggered!';
           btn.classList.add('success');
         }
         setTimeout(() => {
           btn.disabled = false;
-          btn.innerHTML = '<i class="far fa-play"></i> Trigger Now';
+          btn.innerHTML = '<i class="fas fa-play"></i> Trigger Now';
           btn.classList.remove('alert', 'success');
         }, 3000);
       }
@@ -718,7 +718,7 @@ class VisualWorkflowEditor {
       console.error('Error triggering job:', err);
       if (btn) {
         btn.disabled = false;
-        btn.innerHTML = '<i class="far fa-play"></i> Trigger Now';
+        btn.innerHTML = '<i class="fas fa-play"></i> Trigger Now';
       }
     });
   }
@@ -819,7 +819,7 @@ class VisualWorkflowEditor {
     const historyContent = document.getElementById('wf-history-content');
     if (!historyContent) return;
 
-    historyContent.innerHTML = '<p style="color: var(--editor-text-muted); font-size: 13px; padding: 12px;"><i class="far fa-spinner fa-spin"></i> Loading history...</p>';
+    historyContent.innerHTML = '<p style="color: var(--editor-text-muted); font-size: 13px; padding: 12px;"><i class="fas fa-spinner fa-spin"></i> Loading history...</p>';
 
     fetch(`/json/workflowTaskHistory?jobId=${encodeURIComponent(jobId)}`, {
       method: 'GET',

@@ -310,7 +310,7 @@ class ImagePropertiesManager {
     try {
       if (saveBtn) {
         saveBtn.disabled = true;
-        saveBtn.innerHTML = '<i class="far fa-spinner fa-spin"></i> Saving...';
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
       }
 
       const formData = this.getFormData();
@@ -426,7 +426,7 @@ class ImagePropertiesManager {
 
     versionsList.innerHTML = `
       <div class="loading-message">
-        <i class="far fa-spinner fa-spin"></i>
+        <i class="fas fa-spinner fa-spin"></i>
         <p>Loading versions...</p>
       </div>
     `;
@@ -512,10 +512,10 @@ class ImagePropertiesManager {
               <div class="version-actions">
                 ${!isCurrent ? `
                   <button class="button tiny secondary no-gap" onclick="imageEditor.imageProperties.revertToVersion(${version.id})" title="Make this version current">
-                    <i class="far fa-undo"></i> Make Current
+                    <i class="fas fa-undo"></i> Make Current
                   </button>
                   <button class="button tiny alert no-gap" onclick="imageEditor.imageProperties.deleteVersion(${version.id})" title="Delete this version">
-                    <i class="far fa-trash"></i>
+                    <i class="fas fa-trash"></i>
                   </button>
                 ` : ''}
               </div>
@@ -673,10 +673,10 @@ class ImagePropertiesManager {
     else if (type === 'warning') icon = 'fa-exclamation-triangle';
     
     toast.innerHTML = `
-      <i class="far ${icon}"></i>
+      <i class="fas ${icon}"></i>
       <span class="save-toast-message">${message}</span>
       <button class="save-toast-close" onclick="this.parentElement.remove()">
-        <i class="far fa-times"></i>
+        <i class="fas fa-times"></i>
       </button>
     `;
     

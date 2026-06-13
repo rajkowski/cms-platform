@@ -227,7 +227,7 @@ class PageLibraryManager {
       pageEl.style.cursor = 'grab';
 
       pageEl.innerHTML = `
-        <i class="far fa-file-lines"></i>
+        <i class="fas fa-file-lines"></i>
         <div style="flex: 1;">
           <div class="page-box-header">
             <span>${this.escapeHtml(page.title)}</span>

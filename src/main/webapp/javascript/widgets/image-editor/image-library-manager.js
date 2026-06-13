@@ -177,7 +177,7 @@ class ImageLibraryManager {
     if (container) {
       container.innerHTML = `
         <div class="loading-message">
-          <i class="far fa-spinner fa-spin"></i>
+          <i class="fas fa-spinner fa-spin"></i>
           <p>Loading images...</p>
         </div>
       `;
@@ -192,7 +192,7 @@ class ImageLibraryManager {
     if (container) {
       container.innerHTML = `
         <div class="no-images-message">
-          <i class="far fa-exclamation-triangle fa-3x"></i>
+          <i class="fas fa-exclamation-triangle fa-3x"></i>
           <p>${message}</p>
           <button id="retry-load-images-btn" class="button tiny primary">Retry</button>
         </div>
@@ -265,7 +265,7 @@ class ImageLibraryManager {
       if (this.searchTerm) {
         container.innerHTML = `
           <div class="no-images-message">
-            <i class="far fa-search fa-3x"></i>
+            <i class="fas fa-search fa-3x"></i>
             <p>No images found matching "${this.escapeHtml(this.searchTerm)}"</p>
             <button id="clear-search-btn" class="button tiny secondary">Clear Search</button>
           </div>
@@ -283,7 +283,7 @@ class ImageLibraryManager {
       } else {
         container.innerHTML = `
           <div class="no-images-message">
-            <i class="far fa-image fa-3x"></i>
+            <i class="fas fa-image fa-3x"></i>
             <p>No images in your library</p>
             <button id="upload-first-image-btn" class="button tiny primary">Upload Your First Image</button>
           </div>
@@ -407,7 +407,7 @@ class ImageLibraryManager {
     // Previous button
     if (this.currentPage > 1) {
       html += `<button class="button tiny secondary pagination-btn" data-page="${this.currentPage - 1}">
-        <i class="far fa-chevron-left"></i>
+        <i class="fas fa-chevron-left"></i>
       </button>`;
     }
 
@@ -437,7 +437,7 @@ class ImageLibraryManager {
     // Next button
     if (this.currentPage < totalPages) {
       html += `<button class="button tiny secondary pagination-btn" data-page="${this.currentPage + 1}">
-        <i class="far fa-chevron-right"></i>
+        <i class="fas fa-chevron-right"></i>
       </button>`;
     }
 
