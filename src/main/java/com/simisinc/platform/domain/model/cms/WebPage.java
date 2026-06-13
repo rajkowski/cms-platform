@@ -56,6 +56,7 @@ public class WebPage extends Entity {
   private String template = null;
   private String comments = null;
   private String[] tags = null;
+  private String pageText = null;
 
   public WebPage() {
   }
@@ -261,4 +262,11 @@ public class WebPage extends Entity {
     this.tags = tags;
   }
 
+  public String getPageText() {
+    return pageText;
+  }
+
+  public void setPageText(String pageText) {
+    this.pageText = pageText;
+  }
 }

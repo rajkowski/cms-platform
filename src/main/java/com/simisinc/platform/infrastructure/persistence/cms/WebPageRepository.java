@@ -130,7 +130,8 @@ public class WebPageRepository {
         .add("page_image_url", record.getImageUrl())
         .add("has_redirect", StringUtils.trimToNull(record.getRedirectUrl()) != null)
         .add("sitemap_priority", record.getSitemapPriority())
-        .add("sitemap_changefreq", StringUtils.trimToNull(record.getSitemapChangeFrequency()));
+        .add("sitemap_changefreq", StringUtils.trimToNull(record.getSitemapChangeFrequency()))
+        .add("page_text", StringUtils.trimToNull(record.getPageText()));
     if (record.getTags() != null && record.getTags().length > 0) {
       insertValues.add(new SqlValue("tags", SqlValue.JSONB_TYPE, JsonCommand.toJsonArray(record.getTags())));
     }
@@ -156,6 +157,7 @@ public class WebPageRepository {
         .add("page_title", StringUtils.trimToNull(record.getTitle()))
         .add("page_keywords", StringUtils.trimToNull(record.getKeywords()))
         .add("page_description", StringUtils.trimToNull(record.getDescription()))
+        .add("page_text", StringUtils.trimToNull(record.getPageText()))
         .add("draft", record.getDraft())
         .add("enabled", record.isEnabled())
         .add("searchable", record.isSearchable())
@@ -222,6 +224,15 @@ public class WebPageRepository {
     WebPageXmlLayoutCommand.removeCustomPage(record.getLink());
   }
 
+  public static void updatePageText(long id, String generatedText) {
+    if (id == -1) {
+      return;
+    }
+    SqlUtils updateValues = new SqlUtils()
+        .add("page_text", generatedText);
+    DB.update(TABLE_NAME, updateValues, DB.WHERE("web_page_id = ?", id));
+  }
+
   private static WebPage buildRecord(ResultSet rs) {
     try {
       WebPage record = new WebPage();
@@ -247,6 +258,7 @@ public class WebPageRepository {
       record.setSitemapPriority(rs.getBigDecimal("sitemap_priority"));
       record.setSitemapChangeFrequency(rs.getString("sitemap_changefreq"));
       record.setTags(JsonCommand.fromJsonArray(rs.getString("tags")));
+      record.setPageText(rs.getString("page_text"));
       return record;
     } catch (SQLException se) {
       LOG.error("buildRecord", se);
