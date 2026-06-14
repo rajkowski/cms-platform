@@ -60,7 +60,7 @@
     toolbar: 'link image media table contentblock | undo redo | blocks | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent hr anchor | fontawesome removeformat visualblocks code',
     external_plugins: {
         "contentblock": "${ctx}/javascript/tinymce-plugins/contentblock/plugin.js",
-        "fontawesome": "${ctx}/javascript/tinymce-plugins/fontawesome/plugin.min.js"
+        "fontawesome": "${ctx}/javascript/tinymce-plugins/fontawesome/plugin.min.js?v=20260614-1"
     },
     image_class_list: [
       {title: 'None', value: ''},
