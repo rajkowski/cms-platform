@@ -53,6 +53,9 @@ public class GenerateWebPageTextCommand {
   // Pattern to match ${uniqueId:example-include}
   private static final Pattern DIRECTIVE_PATTERN = Pattern.compile("\\$\\{uniqueId:([^}]+)\\}");
 
+  // Pattern to match any ${...} directive for cleanup
+  private static final Pattern ANY_DIRECTIVE_PATTERN = Pattern.compile("\\$\\{[^}]+\\}");
+
   // Maximum allowed size for page_text to prevent index bloat
   private static final int MAX_PAGE_TEXT_LENGTH = 50000;
 
@@ -91,6 +94,9 @@ public class GenerateWebPageTextCommand {
       if (result.length() > MAX_PAGE_TEXT_LENGTH) {
         result = result.substring(0, MAX_PAGE_TEXT_LENGTH);
       }
+
+      // Before returning, remove all `${...} placeholders.
+      result = ANY_DIRECTIVE_PATTERN.matcher(result).replaceAll("");
 
       return result;
 
