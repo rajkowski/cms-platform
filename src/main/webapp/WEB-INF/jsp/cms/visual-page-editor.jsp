@@ -1407,7 +1407,7 @@
       
       // Disable create button to prevent double submission
       createBtn.disabled = true;
-      createBtn.innerHTML = '<i class="far fa-spinner fa-spin"></i> Creating...';
+      createBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
       
       // Create the new page
       createNewPage(title, link);

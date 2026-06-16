@@ -1293,7 +1293,7 @@ class ImageViewerManager {
     const noImageDiv = document.querySelector('#image-viewer-content .no-image-selected');
     if (noImageDiv) {
       noImageDiv.innerHTML = `
-        <i class="far fa-spinner fa-spin fa-5x"></i>
+        <i class="fas fa-spinner fa-spin fa-5x"></i>
         <p>Loading image...</p>
       `;
       noImageDiv.style.display = 'flex';
@@ -1312,7 +1312,7 @@ class ImageViewerManager {
     const noImageDiv = document.querySelector('#image-viewer-content .no-image-selected');
     if (noImageDiv) {
       noImageDiv.innerHTML = `
-        <i class="far fa-exclamation-triangle fa-5x"></i>
+        <i class="fas fa-exclamation-triangle fa-5x"></i>
         <p>${message}</p>
       `;
       noImageDiv.style.display = 'flex';
@@ -1342,7 +1342,7 @@ class ImageViewerManager {
     const noImageDiv = document.querySelector('#image-viewer-content .no-image-selected');
     if (noImageDiv) {
       noImageDiv.innerHTML = `
-        <i class="far fa-image fa-5x"></i>
+        <i class="fas fa-image fa-5x"></i>
         <p>Select an image from the library to begin editing</p>
       `;
       noImageDiv.style.display = 'flex';

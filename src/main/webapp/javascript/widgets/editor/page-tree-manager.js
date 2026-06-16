@@ -425,7 +425,7 @@ class PageTreeManager {
         <li class="page-tree-node root-node" data-page-id="root" draggable="false" data-droppable="true">
           <div class="page-tree-item root-item">
             <span class="tree-toggle empty"><i class="fa fa-folder"></i></span>
-            <span class="page-icon"><i class="far fa-folder"></i></span>
+            <span class="page-icon"><i class="fas fa-folder"></i></span>
             <span class="page-title" style="font-weight: 700;">Root</span>
           </div>
           <ul class="page-children" data-parent-id="root" style="min-height: 20px; list-style: none;">
@@ -448,7 +448,7 @@ class PageTreeManager {
       <li class="page-tree-node root-node ${expandedClass}" data-page-id="root" draggable="false" data-droppable="true">
         <div class="page-tree-item root-item">
           <span class="tree-toggle ${expandedClass}" data-page-id="root"><i class="fa ${chevronIcon}"></i></span>
-          <span class="page-icon"><i class="far fa-folder"></i></span>
+          <span class="page-icon"><i class="fas fa-folder"></i></span>
           <span class="page-title" style="font-weight: 700;">Root</span>
         </div>
         <ul class="page-children" data-parent-id="root" style="list-style: none;${isRootExpanded ? '' : ' display: none;'}">
@@ -476,7 +476,7 @@ class PageTreeManager {
     html += this.renderTreeToggle(page);
 
     html += `
-          <span class="page-icon"><i class="far fa-file-lines"></i></span>
+          <span class="page-icon"><i class="fas fa-file-lines"></i></span>
           <span class="page-title">${this.escapeHtml(page.title)}</span>
           <span class="page-link">${this.escapeHtml(page.link)}</span>
     `;
@@ -887,7 +887,7 @@ class PageTreeManager {
       const menuItem = document.createElement('div');
       menuItem.className = 'context-menu-item';
       menuItem.innerHTML = `
-        <i class="far ${item.icon}"></i>
+        <i class="fas ${item.icon}"></i>
         <span>${this.escapeHtml(item.label)}</span>
       `;
       menuItem.addEventListener('click', () => {

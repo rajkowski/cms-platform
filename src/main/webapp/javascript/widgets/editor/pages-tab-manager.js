@@ -311,7 +311,7 @@ class PagesTabManager {
     listEl.innerHTML = '';
 
     if (pages.length === 0) {
-      listEl.innerHTML = '<li style="text-align: center; padding: 40px; color: #999;"><i class="far fa-search"></i> No pages found</li>';
+      listEl.innerHTML = '<li style="text-align: center; padding: 40px; color: #999;"><i class="fas fa-search"></i> No pages found</li>';
       return;
     }
 
@@ -389,7 +389,7 @@ class PagesTabManager {
     title.className = 'web-page-title';
     // Use provided title or default to "New Page"
     const displayTitle = pageTitle || 'New Page';
-    title.innerHTML = `<i class="far fa-plus-circle"></i> ${this.escapeHtml(displayTitle)}`;
+    title.innerHTML = `<i class="fas fa-plus-circle"></i> ${this.escapeHtml(displayTitle)}`;
 
     const link = document.createElement('div');
     link.className = 'web-page-link';
@@ -506,7 +506,7 @@ class PagesTabManager {
       const canvas = this.pageEditor.elements.canvas;
       canvas.innerHTML = `
         <div class="empty-canvas" style="cursor: pointer;">
-          <i class="far fa-plus-circle fa-3x margin-bottom-10"></i>
+          <i class="fas fa-plus-circle fa-3x margin-bottom-10"></i>
           <h5>Start Building Your New Page</h5>
           <p>Click "Add Row" to begin or drag widgets from the palette</p>
         </div>
@@ -835,7 +835,7 @@ class PagesTabManager {
         
         // Create icon element programmatically
         const icon = document.createElement('i');
-        icon.className = 'far fa-chevron-right';
+        icon.className = 'fas fa-chevron-right';
         expandIcon.appendChild(icon);
         
         expandIcon.setAttribute('data-page-id', page.id);

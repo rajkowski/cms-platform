@@ -730,7 +730,7 @@ class VisualCRMEditor {
       container.innerHTML = `
         <div class="crm-stats-row">
           <div class="crm-stat-card">
-            <div class="crm-stat-icon"><i class="far fa-file-alt"></i></div>
+            <div class="crm-stat-icon"><i class="fas fa-file-alt"></i></div>
             <div class="crm-stat-info">
               <div class="crm-stat-value">0</div>
               <div class="crm-stat-label">Forms</div>
@@ -744,14 +744,14 @@ class VisualCRMEditor {
     container.innerHTML = `
       <div class="crm-stats-row">
         <div class="crm-stat-card">
-          <div class="crm-stat-icon"><i class="far fa-file-alt"></i></div>
+          <div class="crm-stat-icon"><i class="fas fa-file-alt"></i></div>
           <div class="crm-stat-info">
             <div class="crm-stat-value">${totalForms}</div>
             <div class="crm-stat-label">Forms</div>
           </div>
         </div>
         <div class="crm-stat-card">
-          <div class="crm-stat-icon"><i class="far fa-inbox"></i></div>
+          <div class="crm-stat-icon"><i class="fas fa-inbox"></i></div>
           <div class="crm-stat-info">
             <div class="crm-stat-value">${totalNew}</div>
             <div class="crm-stat-label">New Submissions</div>
@@ -770,7 +770,7 @@ class VisualCRMEditor {
             <div style="text-align:right; flex-shrink:0;">
               ${(form.newCount || 0) > 0 ? `<div style="font-size:18px; font-weight:700; color:var(--editor-primary);">${form.newCount}</div><div style="font-size:10px; color:var(--editor-text-muted);">new</div>` : ''}
             </div>
-            <div style="color:var(--editor-text-muted); font-size:12px;"><i class="far fa-chevron-right"></i></div>
+            <div style="color:var(--editor-text-muted); font-size:12px;"><i class="fas fa-chevron-right"></i></div>
           </div>`).join('')}
       </div>`;
 
@@ -825,7 +825,7 @@ class VisualCRMEditor {
       container.innerHTML = `
         <div class="crm-stats-row">
           <div class="crm-stat-card">
-            <div class="crm-stat-icon"><i class="far fa-envelope"></i></div>
+            <div class="crm-stat-icon"><i class="fas fa-envelope"></i></div>
             <div class="crm-stat-info">
               <div class="crm-stat-value">0</div>
               <div class="crm-stat-label">Mailing Lists</div>
@@ -850,14 +850,14 @@ class VisualCRMEditor {
     container.innerHTML = `
       <div class="crm-stats-row">
         <div class="crm-stat-card">
-          <div class="crm-stat-icon"><i class="far fa-envelope"></i></div>
+          <div class="crm-stat-icon"><i class="fas fa-envelope"></i></div>
           <div class="crm-stat-info">
             <div class="crm-stat-value">${this.mailingLists.length}</div>
             <div class="crm-stat-label">Mailing Lists</div>
           </div>
         </div>
         <div class="crm-stat-card">
-          <div class="crm-stat-icon"><i class="far fa-users"></i></div>
+          <div class="crm-stat-icon"><i class="fas fa-users"></i></div>
           <div class="crm-stat-info">
             <div class="crm-stat-value">${totalMembers.toLocaleString()}</div>
             <div class="crm-stat-label">Total Members</div>
@@ -879,7 +879,7 @@ class VisualCRMEditor {
               <div style="font-size:18px; font-weight:700; color:var(--editor-primary);">${(list.memberCount || 0).toLocaleString()}</div>
               <div style="font-size:10px; color:var(--editor-text-muted);">members</div>
             </div>
-            <div style="color:var(--editor-text-muted); font-size:12px;"><i class="far fa-chevron-right"></i></div>
+            <div style="color:var(--editor-text-muted); font-size:12px;"><i class="fas fa-chevron-right"></i></div>
           </div>`).join('')}
       </div>`;
 
@@ -1074,7 +1074,7 @@ class VisualCRMEditor {
     this.showPanel('forms');
 
     const titleEl = document.getElementById('crm-submissions-title');
-    if (titleEl) titleEl.innerHTML = `<i class="far fa-file-alt"></i> ${this.escHtml(formUniqueId)}`;
+    if (titleEl) titleEl.innerHTML = `<i class="fas fa-file-alt"></i> ${this.escHtml(formUniqueId)}`;
 
     this.showLoading(true);
     const params = new URLSearchParams({
@@ -1248,7 +1248,7 @@ class VisualCRMEditor {
     this.showPanel('mailinglist');
     const list = this.mailingLists.find(l => String(l.id) === String(listId));
     const titleEl = document.getElementById('crm-members-title');
-    if (titleEl && list) titleEl.innerHTML = `<i class="far fa-envelope"></i> ${this.escHtml(list.name || list.title)}`;
+    if (titleEl && list) titleEl.innerHTML = `<i class="fas fa-envelope"></i> ${this.escHtml(list.name || list.title)}`;
 
     this.showLoading(true);
     const search = document.getElementById('crm-search-input')?.value || '';
@@ -1466,8 +1466,8 @@ class VisualCRMEditor {
     const titleEl = document.getElementById('crm-orders-title');
     if (titleEl) {
       titleEl.innerHTML = customerId
-        ? `<i class="far fa-shopping-bag"></i> Orders for Customer`
-        : `<i class="far fa-shopping-bag"></i> All Orders`;
+        ? `<i class="fas fa-shopping-bag"></i> Orders for Customer`
+        : `<i class="fas fa-shopping-bag"></i> All Orders`;
     }
 
     const params = new URLSearchParams({ page: this.currentPage, limit: 25 });
@@ -1576,7 +1576,7 @@ class VisualCRMEditor {
     const container = document.getElementById('crm-product-catalog-dashboard-content');
     if (!container) return;
 
-    container.innerHTML = '<div style="padding:20px; text-align:center; color:var(--editor-text-muted);"><i class="far fa-spinner fa-spin"></i> Loading...</div>';
+    container.innerHTML = '<div style="padding:20px; text-align:center; color:var(--editor-text-muted);"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
     this.showLoading(true);
 
     Promise.all([
@@ -1596,28 +1596,28 @@ class VisualCRMEditor {
       container.innerHTML = `
         <div class="crm-stats-row">
           <div class="crm-stat-card" style="cursor:pointer;" id="prod-dash-stat-categories">
-            <div class="crm-stat-icon"><i class="far fa-tags"></i></div>
+            <div class="crm-stat-icon"><i class="fas fa-tags"></i></div>
             <div class="crm-stat-info">
               <div class="crm-stat-value">${totalCategories}</div>
               <div class="crm-stat-label">Product Categories</div>
             </div>
           </div>
           <div class="crm-stat-card" style="cursor:pointer;" id="prod-dash-stat-products">
-            <div class="crm-stat-icon"><i class="far fa-cubes"></i></div>
+            <div class="crm-stat-icon"><i class="fas fa-cubes"></i></div>
             <div class="crm-stat-info">
               <div class="crm-stat-value">${totalProducts.toLocaleString()}</div>
               <div class="crm-stat-label">Products</div>
             </div>
           </div>
           <div class="crm-stat-card" style="cursor:pointer;" id="prod-dash-stat-pricing">
-            <div class="crm-stat-icon"><i class="far fa-percent"></i></div>
+            <div class="crm-stat-icon"><i class="fas fa-percent"></i></div>
             <div class="crm-stat-info">
               <div class="crm-stat-value">${totalPricingRules}</div>
               <div class="crm-stat-label">Pricing Rules</div>
             </div>
           </div>
           <div class="crm-stat-card" style="cursor:pointer;" id="prod-dash-stat-shipping">
-            <div class="crm-stat-icon"><i class="far fa-truck"></i></div>
+            <div class="crm-stat-icon"><i class="fas fa-truck"></i></div>
             <div class="crm-stat-info">
               <div class="crm-stat-value">${totalShippingRates}</div>
               <div class="crm-stat-label">Shipping Rates</div>
@@ -1639,7 +1639,7 @@ class VisualCRMEditor {
                 <div style="font-size:18px; font-weight:700; color:var(--editor-primary);">${(cat.productCount || 0).toLocaleString()}</div>
                 <div style="font-size:10px; color:var(--editor-text-muted);">products</div>
               </div>
-              <div style="color:var(--editor-text-muted); font-size:12px;"><i class="far fa-chevron-right"></i></div>
+              <div style="color:var(--editor-text-muted); font-size:12px;"><i class="fas fa-chevron-right"></i></div>
             </div>`).join('')}
         </div>` : ''}
         <div style="padding: 0 16px 16px;">
@@ -1648,19 +1648,19 @@ class VisualCRMEditor {
           </div>
           <div style="display:flex; flex-direction:column; gap:8px;">
             <a href="#" class="prod-dash-quick-link" data-section="products" style="display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--editor-border); border-radius:6px; background:var(--editor-panel-bg); text-decoration:none; color:var(--editor-text); transition:background 0.12s;">
-              <i class="far fa-cubes" style="color:var(--editor-primary); width:16px; text-align:center;"></i>
+              <i class="fas fa-cubes" style="color:var(--editor-primary); width:16px; text-align:center;"></i>
               <span style="font-size:13px;">Browse All Products</span>
-              <i class="far fa-chevron-right" style="margin-left:auto; color:var(--editor-text-muted); font-size:11px;"></i>
+              <i class="fas fa-chevron-right" style="margin-left:auto; color:var(--editor-text-muted); font-size:11px;"></i>
             </a>
             <a href="#" class="prod-dash-quick-link" data-section="pricing-rules" style="display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--editor-border); border-radius:6px; background:var(--editor-panel-bg); text-decoration:none; color:var(--editor-text); transition:background 0.12s;">
-              <i class="far fa-percent" style="color:var(--editor-primary); width:16px; text-align:center;"></i>
+              <i class="fas fa-percent" style="color:var(--editor-primary); width:16px; text-align:center;"></i>
               <span style="font-size:13px;">Pricing Rules &amp; Promo Codes</span>
-              <i class="far fa-chevron-right" style="margin-left:auto; color:var(--editor-text-muted); font-size:11px;"></i>
+              <i class="fas fa-chevron-right" style="margin-left:auto; color:var(--editor-text-muted); font-size:11px;"></i>
             </a>
             <a href="#" class="prod-dash-quick-link" data-section="shipping-rates" style="display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--editor-border); border-radius:6px; background:var(--editor-panel-bg); text-decoration:none; color:var(--editor-text); transition:background 0.12s;">
-              <i class="far fa-truck" style="color:var(--editor-primary); width:16px; text-align:center;"></i>
+              <i class="fas fa-truck" style="color:var(--editor-primary); width:16px; text-align:center;"></i>
               <span style="font-size:13px;">Shipping Rates</span>
-              <i class="far fa-chevron-right" style="margin-left:auto; color:var(--editor-text-muted); font-size:11px;"></i>
+              <i class="fas fa-chevron-right" style="margin-left:auto; color:var(--editor-text-muted); font-size:11px;"></i>
             </a>
           </div>
         </div>`;
@@ -2222,7 +2222,7 @@ class VisualCRMEditor {
     const container = document.getElementById('crm-users-dashboard-content');
     if (!container) return;
 
-    container.innerHTML = '<div style="padding:20px; text-align:center; color:var(--editor-text-muted);"><i class="far fa-spinner fa-spin"></i> Loading...</div>';
+    container.innerHTML = '<div style="padding:20px; text-align:center; color:var(--editor-text-muted);"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
     this.showLoading(true);
 
     Promise.all([
@@ -2240,21 +2240,21 @@ class VisualCRMEditor {
       container.innerHTML = `
         <div class="crm-stats-row">
           <div class="crm-stat-card" style="cursor:pointer;" id="users-dash-stat-users">
-            <div class="crm-stat-icon"><i class="far fa-users"></i></div>
+            <div class="crm-stat-icon"><i class="fas fa-users"></i></div>
             <div class="crm-stat-info">
               <div class="crm-stat-value">${totalUsers.toLocaleString()}</div>
               <div class="crm-stat-label">Total Users</div>
             </div>
           </div>
           <div class="crm-stat-card" style="cursor:pointer;" id="users-dash-stat-groups">
-            <div class="crm-stat-icon"><i class="far fa-layer-group"></i></div>
+            <div class="crm-stat-icon"><i class="fas fa-layer-group"></i></div>
             <div class="crm-stat-info">
               <div class="crm-stat-value">${totalGroups}</div>
               <div class="crm-stat-label">User Groups</div>
             </div>
           </div>
           <div class="crm-stat-card" style="cursor:pointer;" id="users-dash-stat-roles">
-            <div class="crm-stat-icon"><i class="far fa-shield-alt"></i></div>
+            <div class="crm-stat-icon"><i class="fas fa-shield-alt"></i></div>
             <div class="crm-stat-info">
               <div class="crm-stat-value">${totalRoles}</div>
               <div class="crm-stat-label">User Roles</div>
@@ -2267,19 +2267,19 @@ class VisualCRMEditor {
           </div>
           <div style="display:flex; flex-direction:column; gap:8px;">
             <a href="#" class="users-dash-quick-link" data-section="users" style="display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--editor-border); border-radius:6px; background:var(--editor-panel-bg); text-decoration:none; color:var(--editor-text); transition:background 0.12s;">
-              <i class="far fa-users" style="color:var(--editor-primary); width:16px; text-align:center;"></i>
+              <i class="fas fa-users" style="color:var(--editor-primary); width:16px; text-align:center;"></i>
               <span style="font-size:13px;">Browse All Users</span>
-              <i class="far fa-chevron-right" style="margin-left:auto; color:var(--editor-text-muted); font-size:11px;"></i>
+              <i class="fas fa-chevron-right" style="margin-left:auto; color:var(--editor-text-muted); font-size:11px;"></i>
             </a>
             <a href="#" class="users-dash-quick-link" data-section="user-groups" style="display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--editor-border); border-radius:6px; background:var(--editor-panel-bg); text-decoration:none; color:var(--editor-text); transition:background 0.12s;">
-              <i class="far fa-layer-group" style="color:var(--editor-primary); width:16px; text-align:center;"></i>
+              <i class="fas fa-layer-group" style="color:var(--editor-primary); width:16px; text-align:center;"></i>
               <span style="font-size:13px;">Manage User Groups</span>
-              <i class="far fa-chevron-right" style="margin-left:auto; color:var(--editor-text-muted); font-size:11px;"></i>
+              <i class="fas fa-chevron-right" style="margin-left:auto; color:var(--editor-text-muted); font-size:11px;"></i>
             </a>
             <a href="#" class="users-dash-quick-link" data-section="user-roles" style="display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--editor-border); border-radius:6px; background:var(--editor-panel-bg); text-decoration:none; color:var(--editor-text); transition:background 0.12s;">
-              <i class="far fa-shield-alt" style="color:var(--editor-primary); width:16px; text-align:center;"></i>
+              <i class="fas fa-shield-alt" style="color:var(--editor-primary); width:16px; text-align:center;"></i>
               <span style="font-size:13px;">Manage User Roles</span>
-              <i class="far fa-chevron-right" style="margin-left:auto; color:var(--editor-text-muted); font-size:11px;"></i>
+              <i class="fas fa-chevron-right" style="margin-left:auto; color:var(--editor-text-muted); font-size:11px;"></i>
             </a>
           </div>
         </div>`;

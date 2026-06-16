@@ -582,7 +582,7 @@
     if (hubTools) hubTools.style.display = 'none';
 
     if (tabId === 'pages-tab') {
-      if (middlePanelIcon) middlePanelIcon.className = 'far fa-sitemap';
+      if (middlePanelIcon) middlePanelIcon.className = 'fas fa-folder-tree';
       if (middlePanelTitleText) middlePanelTitleText.textContent = 'Site Navigation';
       if (pagesTools) pagesTools.style.display = 'flex';
       ensurePagesReady();
@@ -593,13 +593,13 @@
       if (libBtn) navBtn.classList.remove('active');
       showPagesView('library');
     } else if (tabId === 'content-tab') {
-      if (middlePanelIcon) middlePanelIcon.className = 'far fa-edit';
+      if (middlePanelIcon) middlePanelIcon.className = 'fas fa-edit';
       if (middlePanelTitleText) middlePanelTitleText.textContent = 'Edit Content';
       if (contentTools) contentTools.style.display = 'flex';
       ensureContentReady();
       setMiddlePanelView('content');
     } else if (tabId === 'hub-tab') {
-      if (middlePanelIcon) middlePanelIcon.className = 'far fa-calendar';
+      if (middlePanelIcon) middlePanelIcon.className = 'fas fa-calendar';
       if (middlePanelTitleText) middlePanelTitleText.textContent = 'Hub';
       if (hubTools) hubTools.style.display = 'flex';
       ensureHubReady();

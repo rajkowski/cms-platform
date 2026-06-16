@@ -64,7 +64,7 @@ class ViewportManager {
         button.className = `button tiny no-gap viewport-btn ${viewportKey === this.currentViewport ? 'active' : 'secondary'}`;
       }
       button.setAttribute('data-viewport', viewportKey);
-      button.innerHTML = `<i class="far ${viewport.icon}"></i> ${viewport.name}`;
+      button.innerHTML = `<i class="fas ${viewport.icon}"></i> ${viewport.name}`;
       button.title = `Switch to ${viewport.name} viewport`;
       
       button.addEventListener('click', () => this.switchViewport(viewportKey));

@@ -472,15 +472,15 @@
     files.forEach(function (file) {
       var row = document.createElement('tr');
       row.innerHTML =
-        '<td class="sync-file-name"><i class="far fa-file-archive"></i> ' + file.name + '</td>' +
+        '<td class="sync-file-name"><i class="fas fa-file-archive"></i> ' + file.name + '</td>' +
         '<td>' + file.size + '</td>' +
         '<td>' + new Date(file.modified).toLocaleString() + '</td>' +
         '<td class="sync-file-actions">' +
           '<a href="' + self.downloadUrl + '&token=' + encodeURIComponent(self.token) + '&file=' + encodeURIComponent(file.name) + '" class="button tiny primary radius" download>' +
-            '<i class="far fa-download"></i> Download' +
+            '<i class="fas fa-download"></i> Download' +
           '</a>' +
           '<button class="button tiny alert radius" data-action="delete" data-file="' + file.name + '">' +
-            '<i class="far fa-trash"></i> Delete' +
+            '<i class="fas fa-trash"></i> Delete' +
           '</button>' +
         '</td>';
       self.fileListTbody.appendChild(row);

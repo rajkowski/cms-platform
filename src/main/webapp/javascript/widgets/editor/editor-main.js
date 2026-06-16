@@ -115,12 +115,12 @@ class PageEditor {
     if (isNewPage || isDirty) {
       if (!this.elements.saveBtn.dataset.dirty) {
         this.elements.saveBtn.dataset.dirty = 'true';
-        this.elements.saveBtn.innerHTML = '<i class="far fa-circle-dot"></i> Publish <span style="color: #ff6b6b;">●</span>';
+        this.elements.saveBtn.innerHTML = '<i class="fas fa-circle-dot"></i> Publish <span style="color: #ff6b6b;">●</span>';
       }
     } else {
       if (this.elements.saveBtn.dataset.dirty) {
         delete this.elements.saveBtn.dataset.dirty;
-        this.elements.saveBtn.innerHTML = '<i class="fa-solid fa-save"></i> Publish';
+        this.elements.saveBtn.innerHTML = '<i class="fas fa-save"></i> Publish';
       }
     }
   }
@@ -215,7 +215,7 @@ class PageEditor {
         if (widgetType) {
           html += `
             <div class="widget-palette-item" draggable="true" data-widget-type="${widgetType}">
-              <i class="far ${widget.icon || 'fa-puzzle-piece'}"></i> <strong>${widget.name}</strong>
+              <i class="fas ${widget.icon || 'fa-puzzle-piece'}"></i> <strong>${widget.name}</strong>
               <div style="font-size: 11px; color: #6c757d;">${widget.description || ''}</div>
             </div>
           `;
@@ -258,7 +258,7 @@ class PageEditor {
     const canvas = this.elements.canvas;
     canvas.innerHTML = `
       <div class="empty-canvas" style="cursor: pointer;">
-        <i class="far fa-plus-circle fa-3x margin-bottom-10"></i>
+        <i class="fas fa-plus-circle fa-3x margin-bottom-10"></i>
         <h5>Start Building "${this.escapeHtml(title)}"</h5>
         <p>Click "Add Row" to begin or drag widgets from the palette</p>
       </div>
@@ -924,7 +924,7 @@ class PageEditor {
     // Disable save button to prevent double-submission
     this.elements.saveBtn.disabled = true;
     const originalSaveContent = this.elements.saveBtn.innerHTML;
-    this.elements.saveBtn.innerHTML = '<i class="far fa-spinner fa-spin"></i> Saving...';
+    this.elements.saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
     
     // Track what needs to be saved and results
     const saveResults = {
@@ -1117,7 +1117,7 @@ class PageEditor {
     
     if (failedItems.length === 0) {
       // All saves successful
-      this.elements.saveBtn.innerHTML = '<i class="far fa-check"></i> Saved!';
+      this.elements.saveBtn.innerHTML = '<i class="fas fa-check"></i> Saved!';
       this.updateSaveIndicator();
       
       // Show success toast with what was saved (Requirements 6.5)
@@ -1134,7 +1134,7 @@ class PageEditor {
       
     } else if (savedItems.length > 0) {
       // Partial success - some saved, some failed (Requirements 6.6)
-      this.elements.saveBtn.innerHTML = '<i class="far fa-exclamation-triangle"></i> Partial Save';
+      this.elements.saveBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Partial Save';
       
       // Show warning toast
       const successMsg = savedItems.length > 0 ? `Saved: ${savedItems.join(', ')}. ` : '';
@@ -1149,7 +1149,7 @@ class PageEditor {
       
     } else {
       // All saves failed (Requirements 6.6)
-      this.elements.saveBtn.innerHTML = '<i class="far fa-exclamation-triangle"></i> Save Failed';
+      this.elements.saveBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Save Failed';
       
       // Show error toast with details
       const errorDetails = failedItems.map(f => `${f.name}: ${f.error}`).join('; ');
@@ -1186,10 +1186,10 @@ class PageEditor {
     else if (type === 'warning') icon = 'fa-exclamation-triangle';
     
     toast.innerHTML = `
-      <i class="far ${icon}"></i>
+      <i class="fas ${icon}"></i>
       <span class="save-toast-message">${message}</span>
       <button class="save-toast-close" onclick="this.parentElement.remove()">
-        <i class="far fa-times"></i>
+        <i class="fas fa-times"></i>
       </button>
     `;
     

@@ -282,7 +282,7 @@ class ImageEditor {
       // Show loading state
       if (saveBtn) {
         saveBtn.disabled = true;
-        saveBtn.innerHTML = '<i class="far fa-spinner fa-spin"></i> Saving...';
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
       }
       this.showLoading();
 
@@ -650,10 +650,10 @@ class ImageEditor {
     }
     
     toast.innerHTML = `
-      <i class="far ${icon}"></i>
+      <i class="fas ${icon}"></i>
       <span class="save-toast-message">${message}</span>
       <button class="save-toast-close" onclick="this.parentElement.remove()">
-        <i class="far fa-times"></i>
+        <i class="fas fa-times"></i>
       </button>
     `;
     

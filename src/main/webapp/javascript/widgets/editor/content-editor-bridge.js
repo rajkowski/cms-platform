@@ -171,7 +171,7 @@ class ContentEditorBridge {
           const iconEl = document.getElementById('middle-panel-icon');
           const titleTextEl = document.getElementById('middle-panel-title-text');
           if (iconEl) {
-            iconEl.className = 'far fa-edit';
+            iconEl.className = 'fas fa-edit';
           }
           if (titleTextEl) {
             titleTextEl.textContent = `Edit: ${this.escapeHtml(content.unique_id)} (ID: ${contentId})`;
