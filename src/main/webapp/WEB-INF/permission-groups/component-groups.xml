@@ -23,6 +23,9 @@
   <component class="com.simisinc.platform.presentation.widgets.editor.VisualContentEditorWidget"
              group="visual-content-editor"
              type="WIDGET" />
+  <component class="com.simisinc.platform.presentation.widgets.editor.VisualHierarchyEditorWidget"
+             group="visual-content-editor"
+             type="WIDGET" />
   <component class="com.simisinc.platform.presentation.widgets.editor.VisualPageEditorWidget"
              group="visual-content-editor"
              type="WIDGET" />

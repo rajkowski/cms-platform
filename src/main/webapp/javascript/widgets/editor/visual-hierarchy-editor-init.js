@@ -16,18 +16,11 @@
   };
 
   // Global managers
-  let contentListManager;
   let pageTreeManager;
   let pageLibraryManager;
-  let sitemapExplorer;
-  let hubContentManager;
+  let hierarchyEditor;
   let contentEditorBridge;
   let previewManager;
-  let pageContentBlocksManager;
-  let pagesReady = false;
-  let contentReady = false;
-  let hubReady = false;
-  let libraryReady = false;
 
   /**
    * Initialize the visual content editor
@@ -37,27 +30,17 @@
     contentEditorBridge = new ContentEditorBridge();
 
     // Create other managers
-    contentListManager = new ContentListManager(contentEditorBridge);
     pageTreeManager = new PageTreeManager(contentEditorBridge);
-    pageLibraryManager = new PageLibraryManager(contentEditorBridge);
-    sitemapExplorer = new SitemapExplorer(contentEditorBridge);
-    hubContentManager = new HubContentManager(contentEditorBridge);
+    pageLibraryManager = new PageLibraryManager(contentEditorBridge, pageTreeManager);
+    hierarchyEditor = new VisualHierarchyEditor(contentEditorBridge, pageTreeManager, pageLibraryManager);
     previewManager = new PreviewManager(contentEditorBridge);
-    pageContentBlocksManager = new PageContentBlocksManager(contentEditorBridge);
-
-    // Wire pageContentBlocksManager to the bridge
-    contentEditorBridge.setPageContentBlocksManager(pageContentBlocksManager);
 
     // Initialize core managers
     contentEditorBridge.init();
     previewManager.init();
-    pageContentBlocksManager.init();
 
     // Setup event listeners for tab switching
     setupTabListeners();
-
-    // Setup modal listeners
-    setupModalListeners();
 
     // Setup toolbar listeners
     setupToolbarListeners();
@@ -65,85 +48,13 @@
     // Setup dark mode
     setupDarkMode();
 
-    // Setup Pages view toggle buttons
-    setupPagesViewToggle();
-
     // Setup right panel resize
     setupRightPanelResize();
 
-    // Activate the default tab (Content)
-    activateTab('content-tab');
+    // Activate the default tab (Pages)
+    activateTab('pages-tab');
 
-    console.log('Visual Content Editor initialized');
-  }
-
-  /**
-   * Set up Pages tab view toggle (Site Navigation vs Page Library)
-   */
-  function setupPagesViewToggle() {
-    const navBtn = document.getElementById('view-site-navigation-btn');
-    const libBtn = document.getElementById('view-page-library-btn');
-
-    if (navBtn) {
-      navBtn.addEventListener('click', () => {
-        navBtn.classList.add('active');
-        libBtn.classList.remove('active');
-        showPagesView('navigation');
-      });
-    }
-
-    if (libBtn) {
-      libBtn.addEventListener('click', () => {
-        libBtn.classList.add('active');
-        navBtn.classList.remove('active');
-        showPagesView('library');
-      });
-    }
-  }
-
-  /**
-   * Show specific Pages view (navigation or library)
-   */
-  function showPagesView(view) {
-    const sitemap = document.getElementById('sitemap-explorer');
-    const library = document.getElementById('page-library-explorer');
-    const editor = document.getElementById('content-editor');
-    const calendar = document.getElementById('calendar-view');
-    const zoomControls = document.getElementById('sitemap-zoom-controls');
-    const middlePanelIcon = document.getElementById('middle-panel-icon');
-    const middlePanelTitleText = document.getElementById('middle-panel-title-text');
-    const addMenuTabBtn = document.getElementById('add-menu-tab-btn');
-    const refreshSitemapBtn = document.getElementById('refresh-sitemap-btn');
-    const addRootPageBtn = document.getElementById('add-root-page-btn');
-
-    if (editor) editor.style.display = 'none';
-    if (calendar) calendar.style.display = 'none';
-
-    if (view === 'navigation') {
-      if (sitemap) sitemap.style.display = 'block';
-      if (library) library.style.display = 'none';
-      if (zoomControls) zoomControls.style.display = 'flex';
-      if (middlePanelIcon) middlePanelIcon.className = 'fas fa-sitemap';
-      if (middlePanelTitleText) middlePanelTitleText.textContent = 'Site Navigation';
-      if (addMenuTabBtn) addMenuTabBtn.style.display = 'inline-flex';
-      if (refreshSitemapBtn) refreshSitemapBtn.style.display = 'inline-flex';
-      if (addRootPageBtn) addRootPageBtn.style.display = 'none';
-      // Ensure sitemap is initialized and query/refresh the data
-      ensurePagesReady();
-      if (sitemapExplorer) {
-        sitemapExplorer.refresh();
-      }
-    } else if (view === 'library') {
-      if (sitemap) sitemap.style.display = 'none';
-      if (library) library.style.display = 'flex';
-      if (zoomControls) zoomControls.style.display = 'none';
-      if (middlePanelIcon) middlePanelIcon.className = 'fas fa-folder-open';
-      if (middlePanelTitleText) middlePanelTitleText.textContent = 'Page Library';
-      if (addMenuTabBtn) addMenuTabBtn.style.display = 'none';
-      if (refreshSitemapBtn) refreshSitemapBtn.style.display = 'none';
-      if (addRootPageBtn) addRootPageBtn.style.display = 'inline-flex';
-      ensurePageLibraryReady();
-    }
+    console.log('Visual Hierarchy Editor initialized');
   }
 
   /**
@@ -297,133 +208,6 @@
   }
 
   /**
-   * Set up modal listeners
-   */
-  function setupModalListeners() {
-    const newPageBtn = document.getElementById('new-page-btn');
-    const newContentBtn = document.getElementById('new-content-btn');
-    const newBlogPostBtn = document.getElementById('new-blog-post-btn');
-
-    const newPageModal = document.getElementById('new-page-modal');
-    const newContentModal = document.getElementById('new-content-modal');
-    const newBlogPostModal = document.getElementById('new-blog-post-modal');
-
-    // New Page Modal
-    if (newPageBtn && newPageModal) {
-      newPageBtn.addEventListener('click', () => {
-        newPageModal.style.display = 'flex';
-        document.getElementById('page-title').focus();
-      });
-
-      document.getElementById('cancel-new-page').addEventListener('click', () => {
-        newPageModal.style.display = 'none';
-      });
-
-      document.getElementById('new-page-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const title = document.getElementById('page-title').value;
-        const link = document.getElementById('page-link').value;
-
-        if (!link.startsWith('/')) {
-          document.getElementById('page-link-error').style.display = 'block';
-          return;
-        }
-
-        showNotification('info', 'Page Creation', 'Create pages in the Visual Page Editor for now.');
-        newPageModal.style.display = 'none';
-      });
-    }
-
-    // New Content Modal
-    if (newContentBtn && newContentModal) {
-      newContentBtn.addEventListener('click', () => {
-        newContentModal.style.display = 'flex';
-        document.getElementById('content-unique-id').focus();
-      });
-
-      document.getElementById('cancel-new-content').addEventListener('click', () => {
-        newContentModal.style.display = 'none';
-      });
-
-      document.getElementById('new-content-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const uniqueId = document.getElementById('content-unique-id').value;
-        const initialText = document.getElementById('content-initial-text').value;
-
-        const params = new FormData();
-        params.append('uniqueId', uniqueId);
-        params.append('content', initialText || '<p></p>');
-        params.append('token', window.getFormToken());
-
-        fetch('/json/content/save-draft', {
-          method: 'POST',
-          headers: {
-            'Accept': 'application/json'
-          },
-          body: params
-        })
-          .then(response => response.json())
-          .then(data => {
-            if (data.status === 'ok' && data.data) {
-              showNotification('success', 'Content Created', 'Draft content created successfully.');
-              newContentModal.style.display = 'none';
-              ensureContentReady();
-              contentListManager.refresh();
-              contentEditorBridge.loadContent(data.data.id, data.data.unique_id);
-              activateTab('content-tab');
-            } else {
-              showNotification('error', 'Create Failed', data.error || 'Failed to create content');
-            }
-          })
-          .catch(error => {
-            showNotification('error', 'Create Failed', 'Error creating content: ' + error.message);
-          });
-      });
-    }
-
-    // New Blog Post Modal
-    if (newBlogPostBtn && newBlogPostModal) {
-      newBlogPostBtn.addEventListener('click', () => {
-        // Populate blog selection
-        const blogSelect = document.getElementById('blog-selection');
-        if (hubContentManager && hubContentManager.blogs) {
-          blogSelect.innerHTML = '<option value="">Select a blog...</option>';
-          hubContentManager.blogs.forEach(blog => {
-            const option = document.createElement('option');
-            option.value = blog.id;
-            option.textContent = blog.title;
-            blogSelect.appendChild(option);
-          });
-        }
-
-        newBlogPostModal.style.display = 'flex';
-        blogSelect.focus();
-      });
-
-      document.getElementById('cancel-new-blog-post').addEventListener('click', () => {
-        newBlogPostModal.style.display = 'none';
-      });
-
-      document.getElementById('new-blog-post-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const blogId = document.getElementById('blog-selection').value;
-        const title = document.getElementById('blog-post-title').value;
-        const content = document.getElementById('blog-post-content').value;
-
-        showNotification('info', 'Blog Posts', 'Use the Blog Editor to create new posts.');
-        newBlogPostModal.style.display = 'none';
-      });
-    }
-
-    // Close modals on outside click
-    document.addEventListener('click', (e) => {
-      if (e.target === newPageModal) newPageModal.style.display = 'none';
-      if (e.target === newContentModal) newContentModal.style.display = 'none';
-      if (e.target === newBlogPostModal) newBlogPostModal.style.display = 'none';
-    });
-  }
-
-  /**
    * Set up toolbar listeners
    */
   function setupToolbarListeners() {
@@ -573,96 +357,21 @@
     const middlePanelIcon = document.getElementById('middle-panel-icon');
     const middlePanelTitleText = document.getElementById('middle-panel-title-text');
     const pagesTools = document.getElementById('pages-tools');
-    const contentTools = document.getElementById('content-tools');
-    const hubTools = document.getElementById('hub-tools');
 
     // Hide all tools first
     if (pagesTools) pagesTools.style.display = 'none';
-    if (contentTools) contentTools.style.display = 'none';
-    if (hubTools) hubTools.style.display = 'none';
 
     if (tabId === 'pages-tab') {
-      if (middlePanelIcon) middlePanelIcon.className = 'fas fa-folder-tree';
-      if (middlePanelTitleText) middlePanelTitleText.textContent = 'Site Navigation';
       if (pagesTools) pagesTools.style.display = 'flex';
-      ensurePagesReady();
-      // Reset button group to Pages Library
-      const navBtn = document.getElementById('view-site-navigation-btn');
-      const libBtn = document.getElementById('view-page-library-btn');
-      if (navBtn) libBtn.classList.add('active');
-      if (libBtn) navBtn.classList.remove('active');
-      showPagesView('library');
-    } else if (tabId === 'content-tab') {
-      if (middlePanelIcon) middlePanelIcon.className = 'fas fa-edit';
-      if (middlePanelTitleText) middlePanelTitleText.textContent = 'Edit Content';
-      if (contentTools) contentTools.style.display = 'flex';
-      ensureContentReady();
-      setMiddlePanelView('content');
-    } else if (tabId === 'hub-tab') {
-      if (middlePanelIcon) middlePanelIcon.className = 'fas fa-calendar';
-      if (middlePanelTitleText) middlePanelTitleText.textContent = 'Hub';
-      if (hubTools) hubTools.style.display = 'flex';
-      ensureHubReady();
-      setMiddlePanelView('calendar');
-      // Show calendar if there's an active hubType
-      if (hubContentManager && hubContentManager.currentHubType) {
-        const calendar = document.getElementById('calendar-view');
-        if (calendar) calendar.style.display = 'block';
+      if (hierarchyEditor) {
+        hierarchyEditor.activate();
       }
     }
-  }
-
-  function ensurePagesReady() {
-    if (!pagesReady) {
-      pageTreeManager.init();
-      sitemapExplorer.init();
-      pagesReady = true;
-    }
-  }
-
-  function ensurePageLibraryReady() {
-    if (!libraryReady) {
-      pageLibraryManager.init();
-      libraryReady = true;
-      return;
-    }
-
-    pageLibraryManager.refresh();
-  }
-
-  function ensureContentReady() {
-    if (!contentReady) {
-      contentListManager.init();
-      contentReady = true;
-    }
-  }
-
-  function ensureHubReady() {
-    if (!hubReady) {
-      hubContentManager.init();
-      hubReady = true;
-    }
-    hubContentManager.refresh();
   }
 
   function setMiddlePanelView(view) {
-    const sitemap = document.getElementById('sitemap-explorer');
     const library = document.getElementById('page-library-explorer');
-    const editor = document.getElementById('content-editor');
-    const calendar = document.getElementById('calendar-view');
-    const zoomControls = document.getElementById('sitemap-zoom-controls');
-
-    if (sitemap) sitemap.style.display = view === 'sitemap' ? 'block' : 'none';
     if (library) library.style.display = 'none'; // Always hide page library when in other tabs
-    if (calendar) calendar.style.display = 'none'; // Always hide calendar unless a hub item is selected    
-    if (zoomControls) zoomControls.style.display = view === 'sitemap' || view === 'navigation' ? 'flex' : 'none';
-    if (editor) {
-      if (view === 'content') {
-        editor.style.display = 'block';
-      } else {
-        editor.style.display = 'none';
-      }
-    }
   }
 
   function showNotification(type, title, message) {
@@ -704,13 +413,9 @@
 
   // Expose for debugging
   window.visualContentEditor = {
-    contentListManager,
     pageTreeManager,
     pageLibraryManager,
-    sitemapExplorer,
-    hubContentManager,
-    contentEditorBridge,
-    previewManager,
-    pageContentBlocksManager
+    hierarchyEditor,
+    previewManager
   };
 })();
