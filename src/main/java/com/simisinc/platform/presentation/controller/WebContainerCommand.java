@@ -171,6 +171,7 @@ public class WebContainerCommand implements Serializable {
             }
           }
 
+          LOG.debug("-----------------------------------------------------------------------");
           LOG.debug("Processing widget: " + widget.getWidgetName() + " [" + thisWidgetUniqueId + "]");
           WidgetContext widgetContext = new WidgetContext(webContainerContext.getApplicationURL(), pageRequest, httpRequest, response,
               thisWidgetUniqueId,
@@ -297,7 +298,6 @@ public class WebContainerCommand implements Serializable {
           // Execute the widget
           WidgetContext result = null;
           try {
-            LOG.debug("-----------------------------------------------------------------------");
             LOG.trace("Getting method...");
             String methodName = "execute";
             if (webContainerContext.isPost()) {
