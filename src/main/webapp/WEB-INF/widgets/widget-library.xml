@@ -30,6 +30,7 @@
   <widget name="visualDocumentEditor" class="com.simisinc.platform.presentation.widgets.editor.VisualDocumentEditorWidget" />
   <widget name="visualDataEditor" class="com.simisinc.platform.presentation.widgets.editor.VisualDataEditorWidget" />
   <widget name="visualContentEditor" class="com.simisinc.platform.presentation.widgets.editor.VisualContentEditorWidget" />
+  <widget name="visualHierarchyEditor" class="com.simisinc.platform.presentation.widgets.editor.VisualHierarchyEditorWidget" />
   <widget name="visualWebSyncEditor" class="com.simisinc.platform.presentation.widgets.editor.VisualWebSyncWidget" />
   <widget name="visualWorkflowEditor" class="com.simisinc.platform.presentation.widgets.editor.VisualWorkflowEditorWidget" />
   <widget name="visualCRMEditor" class="com.simisinc.platform.presentation.widgets.editor.VisualCRMEditorWidget" />

@@ -18,7 +18,7 @@
   
   Required variables:
     - editorName: Display name of the current editor (e.g., "Web Page Editor")
-    - activeApp: ID of the active app (e.g., "pages", "images", "documents", "data", "content", "analytics")
+    - activeApp: ID of the active app (e.g., "pages", "images", "documents", "data", "content", "hierarchy", "analytics")
 --%>
 <div class="editor-app-switcher">
   <button class="editor-app-switcher-btn" title="Switch Editor">
@@ -36,6 +36,12 @@
       <a href="${ctx}/admin/visual-content-editor" class="editor-app-item ${activeApp == 'content' ? 'active' : ''} confirm-exit" title="Manage Content">
         <i class="${font:far()} fa-edit"></i>
         <span>Content</span>
+      </a>
+    </c:if>
+    <c:if test="${activeApp == 'hierarchy' || userSession.hasRole('admin') || userSession.hasRole('content-manager')}">
+      <a href="${ctx}/admin/visual-hierarchy-editor" class="editor-app-item ${activeApp == 'hierarchy' ? 'active' : ''} confirm-exit" title="Manage Hierarchy">
+        <i class="${font:far()} fa-folder-tree"></i>
+        <span>Hierarchy</span>
       </a>
     </c:if>
     <c:if test="${activeApp == 'crm' || userSession.hasRole('admin') || userSession.hasRole('content-manager') || userSession.hasRole('ecommerce-manager')}">

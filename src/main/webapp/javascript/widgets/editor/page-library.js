@@ -7,10 +7,13 @@
  */
 
 class PageLibraryManager {
-  constructor(editorBridge) {
+  constructor(editorBridge, pageTreeManager = null) {
     this.editorBridge = editorBridge;
+    this.pageTreeManager = pageTreeManager;
     this.pages = [];
     this.isLoading = false;
+    this.activeFilter = 'available';
+    this.hierarchyPageIds = new Set();
   }
 
   /**
@@ -33,21 +36,44 @@ class PageLibraryManager {
    */
   setupEventListeners() {
     const container = document.getElementById('page-library-content');
-    if (!container) return;
+    if (container) {
+      container.addEventListener('click', (e) => {
+        const pageBox = e.target.closest('.page-hierarchy-box');
+        if (!pageBox) return;
 
-    container.addEventListener('click', (e) => {
-      const pageBox = e.target.closest('.page-hierarchy-box');
-      if (!pageBox) return;
+        document.querySelectorAll('.page-hierarchy-box').forEach(el => el.classList.remove('selected'));
+        pageBox.classList.add('selected');
 
-      document.querySelectorAll('.page-hierarchy-box').forEach(el => el.classList.remove('selected'));
-      pageBox.classList.add('selected');
+        // Show selected page in right pane preview/properties
+        this.showSelectedPagePreview(pageBox);
+      });
+    }
 
-      // Show selected page in right pane preview/properties
-      this.showSelectedPagePreview(pageBox);
+    this.setupSearchListener();
+    this.setupFilterListener();
+
+    document.addEventListener('hierarchy-tree-updated', () => {
+      this.refreshHierarchyMembership();
+    });
+  }
+
+  setupFilterListener() {
+    const filterToggle = document.getElementById('page-library-filter-toggle');
+    if (!filterToggle) return;
+
+    filterToggle.addEventListener('click', (e) => {
+      const button = e.target.closest('button[data-filter]');
+      if (!button) return;
+
+      const filter = button.dataset.filter;
+      if (!filter || filter === this.activeFilter) return;
+
+      this.activeFilter = filter;
+      this.updateFilterButtons();
+      this.applyActiveFilters();
     });
 
-    // Set up search listener on the page library search input
-    this.setupSearchListener();
+    this.updateFilterButtons();
   }
 
   /**
@@ -136,7 +162,7 @@ class PageLibraryManager {
         const pages = Array.isArray(data) ? data : [];
         this.pages = pages.map(page => this.normalizePage(page)).filter(page => page.link);
         this.renderLibrary(container);
-        this.applyActiveSearch();
+        this.refreshHierarchyMembership();
       })
       .catch(error => {
         this.isLoading = false;
@@ -260,39 +286,101 @@ class PageLibraryManager {
     container.appendChild(section);
   }
 
-  applyActiveSearch() {
+  refreshHierarchyMembership() {
+    if (!this.pageTreeManager || typeof this.pageTreeManager.collectHierarchyPageIds !== 'function') {
+      this.hierarchyPageIds = new Set();
+      this.applyActiveFilters();
+      return;
+    }
+
+    Promise.resolve(this.pageTreeManager.collectHierarchyPageIds())
+      .then(pageIds => {
+        this.hierarchyPageIds = pageIds instanceof Set ? pageIds : new Set(pageIds || []);
+        this.applyActiveFilters();
+      })
+      .catch(error => {
+        console.error('[PageLibraryManager] Error loading hierarchy membership:', error);
+        this.hierarchyPageIds = new Set();
+        this.applyActiveFilters();
+      });
+  }
+
+  updateFilterButtons() {
+    const buttons = document.querySelectorAll('#page-library-filter-toggle button[data-filter]');
+    buttons.forEach(button => {
+      button.classList.toggle('active', button.dataset.filter === this.activeFilter);
+    });
+  }
+
+  applyActiveFilters() {
+    const searchInput = document.getElementById('page-library-search');
+    const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    const availableOnly = this.activeFilter !== 'all';
+    const nodes = document.querySelectorAll('.page-hierarchy-container .page-hierarchy-node');
+    let visibleCount = 0;
+
+    nodes.forEach(node => {
+      const box = node.querySelector('.page-hierarchy-box');
+      const title = box?.querySelector('.page-box-header span')?.textContent.toLowerCase() || '';
+      const link = box?.querySelector('.page-box-link')?.textContent.toLowerCase() || '';
+      const pageId = box?.dataset.pageId || '';
+      const matchesSearch = !query || title.includes(query) || link.includes(query);
+      const isInHierarchy = pageId ? this.hierarchyPageIds.has(String(pageId)) : false;
+      const matchesFilter = !availableOnly || !isInHierarchy;
+      const isVisible = matchesSearch && matchesFilter;
+
+      node.style.display = isVisible ? '' : 'none';
+      if (isVisible) {
+        visibleCount += 1;
+      }
+    });
+
+    this.updateEmptyState(visibleCount, query);
+    this.toggleResetButton(query);
+  }
+
+  updateEmptyState(visibleCount, query) {
+    const container = document.getElementById('page-library-content');
+    if (!container) return;
+
+    let emptyState = container.querySelector('.page-library-empty-state');
+    if (!emptyState) {
+      emptyState = document.createElement('div');
+      emptyState.className = 'page-library-status page-library-empty-state';
+      emptyState.style.textAlign = 'center';
+      emptyState.style.padding = '40px';
+      emptyState.style.color = 'var(--editor-text-muted)';
+      container.appendChild(emptyState);
+    }
+
+    if (visibleCount > 0 || this.pages.length === 0) {
+      emptyState.style.display = 'none';
+      emptyState.textContent = '';
+      return;
+    }
+
+    if (query) {
+      emptyState.textContent = 'No pages match the current filters';
+    } else {
+      emptyState.textContent = this.activeFilter === 'all'
+        ? 'No pages match the current search'
+        : 'All pages are already in the hierarchy';
+    }
+    emptyState.style.display = 'block';
+  }
+
+  toggleResetButton(query) {
     const searchInput = document.getElementById('page-library-search');
     if (!searchInput) return;
 
-    const query = searchInput.value.toLowerCase().trim();
-
-    // Toggle reset button visibility
     const resetBtn = searchInput.parentElement.querySelector('.search-reset-btn');
     if (resetBtn) {
       resetBtn.style.display = query ? 'flex' : 'none';
     }
+  }
 
-    if (!query) {
-      // Show all nodes when search is cleared
-      const nodes = document.querySelectorAll('.page-hierarchy-container .page-hierarchy-node');
-      nodes.forEach(node => { node.style.display = ''; });
-      return;
-    }
-
-    const nodes = document.querySelectorAll('.page-hierarchy-container .page-hierarchy-box');
-    nodes.forEach(node => {
-      const title = node.querySelector('.page-box-header span')?.textContent.toLowerCase() || '';
-      const link = node.querySelector('.page-box-link')?.textContent.toLowerCase() || '';
-      const wrapper = node.closest('.page-hierarchy-node');
-
-      if (wrapper) {
-        if (title.includes(query) || link.includes(query)) {
-          wrapper.style.display = '';
-        } else {
-          wrapper.style.display = 'none';
-        }
-      }
-    });
+  applyActiveSearch() {
+    this.applyActiveFilters();
   }
 
   escapeHtml(text) {

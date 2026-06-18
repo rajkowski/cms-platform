@@ -87,12 +87,12 @@
     <div id="left-panel">
       <div class="left-panel-tabs-container">
         <ul class="tabs-nav">
-          <li><a href="#pages-tab" class="active">Pages</a></li>
-          <li><a href="#content-tab">Content</a></li>
+          <li><a href="#content-tab" class="active">Content</a></li>
           <li><a href="#hub-tab">Hub</a></li>
+          <li><a href="#pages-tab">Pages</a></li>
         </ul>
 
-        <div id="pages-tab" class="tab-content active">
+        <div id="pages-tab" class="tab-content">
           <div style="margin-bottom: 15px;">
             <div class="search-input-wrapper">
               <input type="text" id="pages-search" class="property-input no-gap" placeholder="Search pages..." style="width: 100%; padding: 10px; font-size: 14px;" />
@@ -109,7 +109,7 @@
           </ul>
         </div>
 
-        <div id="content-tab" class="tab-content">
+        <div id="content-tab" class="tab-content active">
           <div style="margin-bottom: 15px;">
             <div class="search-input-wrapper">
               <input type="text" id="content-search" class="property-input" placeholder="Search content..." style="width: 100%; padding: 10px; font-size: 14px;" />
@@ -201,7 +201,6 @@
           <div id="pages-tools" class="panel-tools" style="display:none;">
             <button id="add-menu-tab-btn" class="button tiny primary no-gap radius" style="display:none;"><i class="${font:far()} fa-plus"></i> Add Menu Tab</button>
             <button id="refresh-sitemap-btn" class="button tiny secondary no-gap radius" style="display:none;"><i class="${font:far()} fa-refresh"></i> Refresh</button>
-            <button id="add-root-page-btn" class="button tiny primary no-gap radius" style="display:none;"><i class="${font:far()} fa-plus"></i> Add Page</button>
             <div class="button-group">
               <button id="view-page-library-btn" class="button tiny secondary no-gap active" data-view="library">Page Library</button>
               <button id="view-site-navigation-btn" class="button tiny secondary no-gap" data-view="navigation">Site Navigation</button>
