@@ -429,7 +429,7 @@ class PageTreeManager {
             <span class="page-title" style="font-weight: 700;">Root</span>
           </div>
           <ul class="page-children" data-parent-id="root" style="min-height: 20px; list-style: none;">
-            <li class="page-tree-empty">Drag pages here from the Page Library to organize the sitemap</li>
+            <li class="page-tree-empty">Drag pages here from the Page Library to organize hierarchy</li>
           </ul>
         </li>
       `;
@@ -440,7 +440,6 @@ class PageTreeManager {
     const isRootExpanded = this.expandedNodes.has('root');
     const expandedClass = isRootExpanded ? 'expanded' : '';
     const chevronIcon = isRootExpanded ? 'fa-chevron-down' : 'fa-chevron-right';
-    const childrenStyle = isRootExpanded ? '' : 'style="display: none;"';
 
     console.log('[PageTreeManager] Rendering tree - Root expanded:', isRootExpanded, 'Pages count:', this.pages.length);
 
@@ -645,12 +644,11 @@ class PageTreeManager {
   handleDragOver(e) {
     e.preventDefault();
     const draggedNode = this.draggedElement || document.querySelector('[class*="dragging"]');
-    const isLibraryDrag = draggedNode && draggedNode.classList.contains('page-hierarchy-box');
-    const isTreeDrag = draggedNode && draggedNode.closest('#page-tree');
-    const isSitemapDrag = draggedNode && (draggedNode.classList.contains('menu-item') || draggedNode.classList.contains('menu-tab'));
+    const isLibraryDrag = draggedNode?.classList.contains('page-hierarchy-box');
+    const isTreeDrag = draggedNode?.closest('#page-tree');
 
-    // Allow drop from library (copy), tree (move/reorder), or sitemap (copy)
-    if (isLibraryDrag || isSitemapDrag) {
+    // Allow drop from library (copy) or tree (move/reorder)
+    if (isLibraryDrag) {
       e.dataTransfer.dropEffect = 'copy';
     } else if (isTreeDrag) {
       e.dataTransfer.dropEffect = 'move';
@@ -735,9 +733,8 @@ class PageTreeManager {
 
     const isLibraryDrag = draggedNode.classList.contains('page-hierarchy-box');
     const isTreeDrag = draggedNode.closest('#page-tree');
-    const isSitemapDrag = draggedNode.classList.contains('menu-item') || draggedNode.classList.contains('menu-tab');
 
-    if (!isLibraryDrag && !isTreeDrag && !isSitemapDrag) {
+    if (!isLibraryDrag && !isTreeDrag) {
       this.clearDropZones();
       return;
     }
@@ -754,24 +751,10 @@ class PageTreeManager {
     // Get drop zone information
     const dropZone = this.currentDropZone || this.calculateDropZone(e, targetNode);
 
-    if (isLibraryDrag || isSitemapDrag) {
-      // Adding a page from library or sitemap to hierarchy
-      // For sitemap items, try to get pageId from the page data
-      let pageIdToAdd = draggedPageId;
-      
-      if (isSitemapDrag) {
-        // Try to get page data from drag transfer
-        try {
-          const pageData = e.dataTransfer.getData('application/x-page-data');
-          if (pageData) {
-            const page = JSON.parse(pageData);
-            pageIdToAdd = page.id;
-          }
-        } catch (err) {
-          console.error('Error parsing page data from sitemap drag:', err);
-        }
-      }
-      
+    if (isLibraryDrag) {
+      // Adding a page from library to hierarchy
+      const pageIdToAdd = draggedPageId;
+
       if (pageIdToAdd) {
         const parentId = targetPageId === 'root' ? -1 : targetPageId;
         this.addPageToHierarchy(pageIdToAdd, parentId);

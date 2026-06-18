@@ -72,10 +72,11 @@ class ContentEditorBridge {
       convert_unsafe_embeds: true,
       sandbox_iframes: true,
       browser_spellcheck: true,
-      plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code insertdatetime media table wordcount contentblock',
-      toolbar: 'link image media table contentblock | undo redo | blocks | bold italic backcolor | bullist numlist outdent indent hr | removeformat | visualblocks code',
+      plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code insertdatetime media table wordcount fontawesome contentblock',
+      toolbar: 'link image media table contentblock | undo redo | blocks | bold italic backcolor | bullist numlist outdent indent hr | fontawesome removeformat | visualblocks code',
       external_plugins: {
-        "contentblock": "/javascript/tinymce-plugins/contentblock/plugin.js"
+        "contentblock": "/javascript/tinymce-plugins/contentblock/plugin.js",
+        "fontawesome": "${ctx}/javascript/tinymce-plugins/fontawesome/plugin.min.js?v=20260614-1"
       },
       image_class_list: [
         { title: 'None', value: '' },
