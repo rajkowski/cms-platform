@@ -34,9 +34,154 @@ class PageTreeManager {
   init() {
     this.setupEventListeners();
     this.setupSearchListener();
+    this.setupExpandToggle();
     this.setupLibraryDropZone();
     this.loadPages();
     this.startAutoSync();
+  }
+
+  setupExpandToggle() {
+    const toggleButton = document.getElementById('page-tree-expand-toggle');
+    if (!toggleButton) return;
+
+    toggleButton.addEventListener('click', () => {
+      const shouldExpand = !this.areAllLoadedNodesExpanded();
+      this.setExpandToggleDisabled(true);
+
+      const action = shouldExpand ? this.expandAll() : this.collapseAll();
+      Promise.resolve(action)
+        .catch(error => {
+          console.error('[PageTreeManager] Error toggling full tree expansion:', error);
+        })
+        .finally(() => {
+          this.setExpandToggleDisabled(false);
+          this.updateExpandToggleLabel();
+        });
+    });
+
+    this.updateExpandToggleLabel();
+  }
+
+  setExpandToggleDisabled(disabled) {
+    const toggleButton = document.getElementById('page-tree-expand-toggle');
+    if (toggleButton) {
+      toggleButton.disabled = disabled;
+    }
+  }
+
+  updateExpandToggleLabel() {
+    const toggleButton = document.getElementById('page-tree-expand-toggle');
+    if (!toggleButton) return;
+
+    toggleButton.textContent = this.areAllLoadedNodesExpanded() ? 'Collapse All' : 'Expand All';
+  }
+
+  areAllLoadedNodesExpanded() {
+    if (!this.expandedNodes.has('root')) {
+      return false;
+    }
+
+    const loadedBranchIds = [];
+    this.childrenCache.forEach(children => {
+      if (!Array.isArray(children)) return;
+      children.forEach(page => {
+        if (page?.hasChildren) {
+          loadedBranchIds.push(String(page.id));
+        }
+      });
+    });
+
+    return loadedBranchIds.every(pageId => this.expandedNodes.has(pageId));
+  }
+
+  collapseAll() {
+    this.expandedNodes.clear();
+    this.renderTree();
+    this.emitHierarchyUpdated();
+    return Promise.resolve();
+  }
+
+  expandAll() {
+    this.expandedNodes.clear();
+    this.expandedNodes.add('root');
+
+    return this.traverseHierarchy(null, page => {
+      if (page?.hasChildren) {
+        this.expandedNodes.add(String(page.id));
+      }
+    })
+      .then(() => {
+        this.renderTree();
+        this.emitHierarchyUpdated();
+      });
+  }
+
+  fetchChildrenData(parentId) {
+    const normalizedParentId = this.normalizeParentId(parentId);
+    const parentIdParam = normalizedParentId === null ? 'null' : normalizedParentId;
+
+    return fetch(`/json/pages/children?parentId=${parentIdParam}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json'
+      }
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status !== 'ok' || !Array.isArray(data.data)) {
+          return [];
+        }
+
+        const children = data.data;
+        this.setChildrenList(normalizedParentId, children);
+        if (normalizedParentId !== null) {
+          this.loadedParents.add(normalizedParentId);
+        }
+        this.updateParentHasChildren(normalizedParentId);
+        return children;
+      });
+  }
+
+  traverseHierarchy(parentId, visitPage) {
+    return this.fetchChildrenData(parentId)
+      .then(children => Promise.all(children.map(page => {
+        visitPage(page);
+        if (!page?.hasChildren) {
+          return Promise.resolve();
+        }
+        return this.traverseHierarchy(page.id, visitPage);
+      })));
+  }
+
+  getCachedHierarchyPageIds() {
+    const pageIds = new Set();
+    this.childrenCache.forEach(children => {
+      if (!Array.isArray(children)) return;
+      children.forEach(page => {
+        if (page?.id !== null && page?.id !== undefined) {
+          pageIds.add(String(page.id));
+        }
+      });
+    });
+    return pageIds;
+  }
+
+  collectHierarchyPageIds() {
+    const cachedPageIds = this.getCachedHierarchyPageIds();
+    if (cachedPageIds.size > 0 || this.childrenCache.has(null)) {
+      return Promise.resolve(cachedPageIds);
+    }
+
+    const pageIds = new Set();
+    return this.traverseHierarchy(null, page => {
+      if (page?.id !== null && page?.id !== undefined) {
+        pageIds.add(String(page.id));
+      }
+    }).then(() => pageIds);
+  }
+
+  emitHierarchyUpdated() {
+    document.dispatchEvent(new CustomEvent('hierarchy-tree-updated'));
   }
 
   normalizeParentId(parentId) {
@@ -108,7 +253,6 @@ class PageTreeManager {
     const rootIndex = this.pages.findIndex(page => String(page.id) === pageIdStr);
     if (rootIndex >= 0) {
       removedPage = this.pages.splice(rootIndex, 1)[0];
-      parentId = null;
     } else {
       for (const [parentKey, children] of this.childrenCache.entries()) {
         if (!Array.isArray(children)) continue;
@@ -343,10 +487,14 @@ class PageTreeManager {
         if (data.status === 'ok' && data.data) {
           this.pages = Array.isArray(data.data) ? data.data : [];
           this.childrenCache.set(null, this.pages);
-          // Expand root by default when initial pages load
-          this.expandedNodes.add('root');
-          console.log('[PageTreeManager] Pages set:', this.pages.length, 'Root expanded:', this.expandedNodes.has('root'));
-          this.renderTree();
+          console.log('[PageTreeManager] Pages set:', this.pages.length);
+          this.expandAll().catch(error => {
+            console.error('[PageTreeManager] Error expanding initial tree:', error);
+            this.expandedNodes.add('root');
+            this.renderTree();
+            this.updateExpandToggleLabel();
+            this.emitHierarchyUpdated();
+          });
         } else {
           this.showError(data.error || 'Failed to load pages');
         }
@@ -386,26 +534,12 @@ class PageTreeManager {
     this.loadingNodes.add(parentIdStr);
     this.renderTree();
 
-    return fetch(`/json/pages/children?parentId=${parentId}`, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json'
-      }
-    })
-      .then(response => response.json())
-      .then(data => {
-        this.loadedParents.add(parentIdStr);
+    return this.fetchChildrenData(parentId)
+      .then(children => {
         this.loadingNodes.delete(parentIdStr);
-
-        console.log('[PageTreeManager] Children loaded for', parentIdStr, ':', data);
-
-        if (data.status === 'ok' && data.data) {
-          const children = Array.isArray(data.data) ? data.data : [];
-          this.childrenCache.set(parentIdStr, children);
-          console.log('[PageTreeManager] Cached', children.length, 'children for', parentIdStr);
-          // Re-render tree to properly display children, toggle state, and container visibility
-          this.renderTree();
-        }
+        console.log('[PageTreeManager] Cached', children.length, 'children for', parentIdStr);
+        this.renderTree();
+        this.emitHierarchyUpdated();
       })
       .catch(error => {
         this.loadingNodes.delete(parentIdStr);
@@ -456,6 +590,7 @@ class PageTreeManager {
       </li>
     `;
     pageTree.innerHTML = html;
+    this.updateExpandToggleLabel();
   }
 
   /**
@@ -719,13 +854,24 @@ class PageTreeManager {
     e.preventDefault();
 
     let targetNode = e.target.closest('.page-tree-node');
+    let droppedOnEmptyChildren = false;
     const draggedNode = this.draggedElement || document.querySelector('[class*="dragging"]');
 
-    // If no node found, check if dropping on empty UL area
+    // If no node found, check if dropping on empty UL area or page-children elements
     if (!targetNode) {
       // Check if dropping on root UL area (empty drop zone) (#page-tree)
       if (e.target.id === 'page-tree') {
         targetNode = document.querySelector('#page-tree .root-node');
+      } else {
+        // Check if dropping on .page-children elements (empty drop zones within the tree)
+        const childrenList = e.target.closest('.page-children');
+        if (childrenList) {
+          const parentId = childrenList.dataset.parentId;
+          if (parentId) {
+            targetNode = document.querySelector(`.page-tree-node[data-page-id="${parentId}"]`);
+            droppedOnEmptyChildren = true;
+          }
+        }
       }
     }
 
@@ -748,8 +894,11 @@ class PageTreeManager {
       return;
     }
 
-    // Get drop zone information
-    const dropZone = this.currentDropZone || this.calculateDropZone(e, targetNode);
+    // Get drop zone information - force 'inside' if dropped on empty children area
+    let dropZone = this.currentDropZone || this.calculateDropZone(e, targetNode);
+    if (droppedOnEmptyChildren) {
+      dropZone = { position: 'inside', node: targetNode };
+    }
 
     if (isLibraryDrag) {
       // Adding a page from library to hierarchy
@@ -912,7 +1061,7 @@ class PageTreeManager {
       document.body.style.cursor = '';
 
       const draggedNode = document.querySelector('.page-tree-node.dragging');
-      if (!draggedNode || !draggedNode.closest('#page-tree')) return;
+      if (!draggedNode?.closest('#page-tree')) return;
 
       const pageId = draggedNode.dataset.pageId;
       if (pageId && pageId !== 'root') {
@@ -941,7 +1090,7 @@ class PageTreeManager {
       .then(response => response.json())
       .then(data => {
         if (data.status === 'ok') {
-          this.refreshChildren(null);
+          this.refreshChildren(null).finally(() => this.emitHierarchyUpdated());
         } else {
           this.showError(data.error || 'Failed to reorder pages');
         }
@@ -999,10 +1148,14 @@ class PageTreeManager {
       .then(response => response.json())
       .then(data => {
         if (data.status === 'ok') {
-          const refreshes = [];
-          refreshes.push(this.refreshChildren(originalParentId, { render: false }));
-          refreshes.push(this.refreshChildren(position === 'inside' ? targetPageId : targetParentId, { render: false }));
-          Promise.all(refreshes).finally(() => this.renderTree());
+          const refreshes = [
+            this.refreshChildren(originalParentId, { render: false }),
+            this.refreshChildren(position === 'inside' ? targetPageId : targetParentId, { render: false })
+          ];
+          Promise.all(refreshes).finally(() => {
+            this.renderTree();
+            this.emitHierarchyUpdated();
+          });
         } else {
           this.showError(data.error || 'Failed to reorder pages');
           this.refreshChildren(originalParentId);
@@ -1046,11 +1199,11 @@ class PageTreeManager {
       .then(data => {
         if (data.status === 'ok') {
           const message = data?.data?.message ? String(data.data.message) : '';
-          if (message && message.toLowerCase().includes('already in hierarchy')) {
+          if (message?.toLowerCase().includes('already in hierarchy')) {
             this.showError(message);
             return;
           }
-          this.refreshChildren(parentPageId);
+          this.refreshChildren(parentPageId).finally(() => this.emitHierarchyUpdated());
         } else {
           this.showError(data.error || 'Failed to add page to hierarchy');
         }
@@ -1089,7 +1242,7 @@ class PageTreeManager {
       .then(response => response.json())
       .then(data => {
         if (data.status === 'ok') {
-          this.refreshChildren(parentId);
+          this.refreshChildren(parentId).finally(() => this.emitHierarchyUpdated());
         } else {
           this.showError(data.error || 'Failed to remove page from hierarchy');
           this.refreshChildren(parentId);
@@ -1282,11 +1435,11 @@ class PageTreeManager {
   escapeHtml(text) {
     if (!text) return '';
     return String(text)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
   }
 
   /**

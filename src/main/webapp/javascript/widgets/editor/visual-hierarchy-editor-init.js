@@ -31,7 +31,7 @@
 
     // Create other managers
     pageTreeManager = new PageTreeManager(contentEditorBridge);
-    pageLibraryManager = new PageLibraryManager(contentEditorBridge);
+    pageLibraryManager = new PageLibraryManager(contentEditorBridge, pageTreeManager);
     hierarchyEditor = new VisualHierarchyEditor(contentEditorBridge, pageTreeManager, pageLibraryManager);
     previewManager = new PreviewManager(contentEditorBridge);
 
