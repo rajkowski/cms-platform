@@ -76,7 +76,7 @@ class ContentEditorBridge {
       toolbar: 'link image media table contentblock | undo redo | blocks | bold italic backcolor | bullist numlist outdent indent hr | fontawesome removeformat | visualblocks code',
       external_plugins: {
         "contentblock": "/javascript/tinymce-plugins/contentblock/plugin.js",
-        "fontawesome": "${ctx}/javascript/tinymce-plugins/fontawesome/plugin.min.js?v=20260614-1"
+        "fontawesome": "/javascript/tinymce-plugins/fontawesome/plugin.min.js?v=20260614-1"
       },
       image_class_list: [
         { title: 'None', value: '' },

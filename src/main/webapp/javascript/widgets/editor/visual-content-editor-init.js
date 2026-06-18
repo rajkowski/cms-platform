@@ -71,8 +71,8 @@
     // Setup right panel resize
     setupRightPanelResize();
 
-    // Activate the default tab (Pages)
-    activateTab('pages-tab');
+    // Activate the default tab (Content)
+    activateTab('content-tab');
 
     console.log('Visual Content Editor initialized');
   }
@@ -123,7 +123,7 @@
       if (sitemap) sitemap.style.display = 'block';
       if (library) library.style.display = 'none';
       if (zoomControls) zoomControls.style.display = 'flex';
-      if (middlePanelIcon) middlePanelIcon.className = 'far fa-sitemap';
+      if (middlePanelIcon) middlePanelIcon.className = 'fas fa-sitemap';
       if (middlePanelTitleText) middlePanelTitleText.textContent = 'Site Navigation';
       if (addMenuTabBtn) addMenuTabBtn.style.display = 'inline-flex';
       if (refreshSitemapBtn) refreshSitemapBtn.style.display = 'inline-flex';
@@ -137,7 +137,7 @@
       if (sitemap) sitemap.style.display = 'none';
       if (library) library.style.display = 'flex';
       if (zoomControls) zoomControls.style.display = 'none';
-      if (middlePanelIcon) middlePanelIcon.className = 'far fa-folder-open';
+      if (middlePanelIcon) middlePanelIcon.className = 'fas fa-folder-open';
       if (middlePanelTitleText) middlePanelTitleText.textContent = 'Page Library';
       if (addMenuTabBtn) addMenuTabBtn.style.display = 'none';
       if (refreshSitemapBtn) refreshSitemapBtn.style.display = 'none';

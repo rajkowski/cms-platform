@@ -554,7 +554,7 @@ class SitemapExplorer {
 
     modal.innerHTML = `
       <h3 style="margin: 0 0 20px 0; font-size: 18px; color: var(--editor-text, #333);">
-        <i class="far fa-plus-circle"></i> Add Menu Tab
+        <i class="fas fa-plus-circle"></i> Add Menu Tab
       </h3>
       <form id="add-menu-tab-form">
         <div style="margin-bottom: 16px;">
@@ -963,10 +963,10 @@ class SitemapExplorer {
     header.style.marginBottom = '15px';
     header.innerHTML = `
       <h3 style="margin: 0; color: var(--editor-text); font-size: 16px;">
-        <i class="far fa-sitemap"></i> Page Library
+        <i class="fas fa-sitemap"></i> Page Library
       </h3>
       <button class="button tiny primary no-gap radius" id="add-root-page-btn">
-        <i class="far fa-plus"></i> Add Page
+        <i class="fas fa-plus"></i> Add Page
       </button>
     `;
     hierarchySection.appendChild(header);
@@ -1028,10 +1028,10 @@ class SitemapExplorer {
     pageEl.style.cursor = 'move';
 
     pageEl.innerHTML = `
-      ${hasChildren ? '<i class="far fa-chevron-down page-hierarchy-toggle" style="cursor: pointer; font-size: 12px;"></i>' : '<i style="width: 12px;"></i>'}
+      ${hasChildren ? '<i class="fas fa-chevron-down page-hierarchy-toggle" style="cursor: pointer; font-size: 12px;"></i>' : '<i style="width: 12px;"></i>'}
       <div style="flex: 1;">
         <div class="page-box-header">
-          <i class="far fa-file-lines"></i>
+          <i class="fas fa-file-lines"></i>
           <span>${this.escapeHtml(page.title)}</span>
         </div>
         <div class="page-box-link">${this.escapeHtml(page.link)}</div>
@@ -1701,7 +1701,7 @@ class SitemapExplorer {
         const menuItem = document.createElement('div');
         menuItem.className = 'context-menu-item';
         menuItem.innerHTML = `
-          <i class="far ${item.icon}"></i>
+          <i class="fas ${item.icon}"></i>
           <span>${this.escapeHtml(item.label)}</span>
         `;
         menuItem.addEventListener('click', () => {
