@@ -773,12 +773,27 @@ class PageTreeManager {
     this.draggedElement = node;
   }
 
+  getActiveDraggedNode() {
+    const activeDraggingNode = document.querySelector('.page-tree-node.dragging, .page-hierarchy-box.dragging');
+    if (activeDraggingNode) {
+      return activeDraggingNode;
+    }
+
+    if (this.draggedElement?.isConnected) {
+      return this.draggedElement;
+    }
+
+    // Drop handlers can remove nodes before dragend fires; clear stale references.
+    this.draggedElement = null;
+    return null;
+  }
+
   /**
    * Handle drag over
    */
   handleDragOver(e) {
     e.preventDefault();
-    const draggedNode = this.draggedElement || document.querySelector('[class*="dragging"]');
+    const draggedNode = this.getActiveDraggedNode();
     const isLibraryDrag = draggedNode?.classList.contains('page-hierarchy-box');
     const isTreeDrag = draggedNode?.closest('#page-tree');
 
@@ -855,7 +870,7 @@ class PageTreeManager {
 
     let targetNode = e.target.closest('.page-tree-node');
     let droppedOnEmptyChildren = false;
-    const draggedNode = this.draggedElement || document.querySelector('[class*="dragging"]');
+    const draggedNode = this.getActiveDraggedNode();
 
     // If no node found, check if dropping on empty UL area or page-children elements
     if (!targetNode) {
@@ -1060,13 +1075,15 @@ class PageTreeManager {
       libraryExplorer.classList.remove('delete-drop');
       document.body.style.cursor = '';
 
-      const draggedNode = document.querySelector('.page-tree-node.dragging');
+      const draggedNode = this.getActiveDraggedNode();
       if (!draggedNode?.closest('#page-tree')) return;
 
       const pageId = draggedNode.dataset.pageId;
       if (pageId && pageId !== 'root') {
         this.removePageFromHierarchy(pageId);
       }
+
+      this.handleDragEnd(e);
     });
   }
 
