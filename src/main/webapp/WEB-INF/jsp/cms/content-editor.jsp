@@ -164,19 +164,19 @@
     </h3>
     <div id="middle-panel-tools">
       <div id="content-tools" class="panel-tools">
+        <a href="${returnPage}" class="button tiny radius secondary no-gap">Cancel</a>
         <c:choose>
           <c:when test="${content.id eq -1}">
             <input type="submit" class="button tiny radius primary no-gap" name="save" value="Save" />
           </c:when>
           <c:otherwise>
-            <input type="submit" class="button tiny radius success no-gap" name="save" value="Publish Immediately" />
-            <input type="submit" class="button tiny radius warning no-gap" name="save" value="Save as Draft" />
             <c:if test="${isDraft eq 'true'}">
               <input type="submit" class="button tiny radius alert no-gap" name="save" value="Remove this Draft" />
             </c:if>
+            <input type="submit" class="button tiny radius warning no-gap" name="save" value="Save as Draft" />
+            <input type="submit" class="button tiny radius success no-gap" name="save" value="Publish Immediately" />
           </c:otherwise>
         </c:choose>
-        <a href="${returnPage}" class="button tiny radius secondary no-gap">Cancel</a>
       </div>    
     </div>
   </div>
