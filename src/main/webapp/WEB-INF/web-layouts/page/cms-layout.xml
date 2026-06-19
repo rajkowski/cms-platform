@@ -23,24 +23,35 @@
 
   <!-- Default Template -->
   <page name="_new_install_" role="guest">
-    <section class="align-center">
-      <column class="small-9 medium-3 large-4 cell margin-top-100 small-margin-top-0">
+    <section class="align-center align-middle">
+      <column class="small-9 medium-5 large-4 cell margin-top-100 small-margin-top-0">
         <widget name="content" class="text-center">
           <html><![CDATA[
-          <div class="padding-25">
-            <h5><i class="fa fa-2x fa-rocket" style="color:red"></i> Hang on!</h5>
+          <div class="text-center">
+            <i class="fa fa-3x fa-hourglass-2" style="color:#0099cc; margin-bottom:20px"></i>
+            <h2 style="margin-bottom:10px;">Coming Soon!</h2>
+            <h5 style="color:#666;">We&#8217;re building something amazing</h5>
           </div>
+          <hr class="margin-30">
           <p>
-            <h5>This is a new site and<br />it&#8217;s not available to users just yet.</h5>
+            <h4>Thank you for your patience</h4>
+            <p>Our new website is currently under development. We&#8217;re working hard to create an amazing experience for you, and we can&#8217;t wait to launch!</p>
           </p>
-          <p>
-            <small><i class="fa fa-angle-double-left"></i> Please wait while the web team finishes the site <i class="fa fa-angle-double-right"></i></small>
+          <p style="margin-top:40px; color:#999;">
+            <small>Powered by <strong>${platform.name}</strong><br />
+            <a target="_blank" href="${platform.url}">${platform.url}</a></small>
           </p>
-          <p>&nbsp;</p>
-          <p>
-            Powered by ${platform.name}<br />
-            <a target="_blank" href="${platform.url}">${platform.url}</a>
-          </p>
+          ]]></html>
+        </widget>
+      </column>
+      <column class="small-9 medium-5 large-4 cell margin-top-100 small-margin-top-0">
+        <widget name="content" class="text-center margin-left-50 margin-right-50">
+          <html><![CDATA[
+          <div class="callout secondary padding-20" style="margin:30px 0; background:#f5f5f5;">
+            <h5 style="margin-top:0;">Are you the site administrator?</h5>
+            <p><a class="button primary no-gap" href="${ctx}/login"><i class="fa fa-sign-in"></i> Sign In to Get Started</a></p>
+            <p style="font-size:0.9em; color:#666; margin-top:15px;">Once logged in, you can configure your site, add content, and publish pages.</p>
+          </div>
           ]]></html>
         </widget>
       </column>
@@ -49,28 +60,33 @@
 
   <!-- Login -->
   <page name="/login" role="guest,admin,content-manager" title="Login" class="platform-dialog">
-    <section id="platform-login" class="align-center">
-      <column class="small-12 medium-6 large-5 cell">
-        <widget name="content" class="show-for-medium">
+    <section id="platform-login" class="align-center margin-top-40 align-middle">
+      <column class="small-12 medium-8 large-5 small-order-2 medium-order-1 cell">
+        <widget name="login" style="background: white; border-radius: 12px; padding: 2.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 10px 20px rgba(0, 0, 0, 0.06); border: 1px solid #e2e8f0;">
+          <title>Sign in to continue</title>
+          <!--<redirect-success>/profile</redirect-success>-->
+        </widget>
+        <widget name="content" class="text-center margin-top-20">
           <html><![CDATA[
-          &nbsp;
+          <p style="font-size: 0.875rem; color: #718096;">
+            Don't have an account? <a href="${ctx}/register" style="color: #667eea; font-weight: 600; text-decoration: none;">Sign up</a>
+          </p>
+          ]]></html>
+        </widget>
+      </column>
+      <column class="small-12 medium-4 large-5 small-order-1 medium-order-2 cell">
+        <widget name="content" class="text-center">
+          <html><![CDATA[
+            <div style="display: flex; align-items: center; justify-content: center; width: 64px; height: 64px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px; margin: 0 auto 1.5rem; box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);">
+              <i class="fa fa-sign-in" style="color: white; font-size: 28px;"></i>
+            </div>
           ]]></html>
         </widget>
         <widget name="content" class="text-center">
           <uniqueId>login-hello</uniqueId>
-        </widget>
-        <widget name="content" class="show-for-medium">
           <html><![CDATA[
-          <small>&nbsp;</small>
-          ]]></html>
-        </widget>
-        <widget name="login" class="callout box radius">
-          <title>Sign In</title>
-          <!--<redirect-success>/profile</redirect-success>-->
-        </widget>
-        <widget name="content" class="show-for-medium">
-          <html><![CDATA[
-          <p>&nbsp;</p>
+            <h2 style="font-size: 2rem; font-weight: 600; color: #1a202c; margin-bottom: 0.5rem; letter-spacing: -0.5px;">Welcome Back</h2>
+            <p style="font-size: 1rem; color: #718096; font-weight: 400;">Enter your credentials to access your account</p>
           ]]></html>
         </widget>
       </column>
@@ -88,30 +104,42 @@
   </page>
 
   <page name="/register" role="guest,admin,content-manager" title="Create Your Account" class="platform-dialog">
-    <section id="platform-register" class="align-center">
-      <column class="small-12 medium-7 large-6 cell">
-        <widget name="content" class="show-for-medium">
-          <html><![CDATA[
-          &nbsp;
-          ]]></html>
-        </widget>
-        <widget name="content" class="text-center">
-          <uniqueId>register-hello</uniqueId>
-        </widget>
-        <widget name="content" class="show-for-medium">
-          <html><![CDATA[
-          &nbsp;
-          ]]></html>
-        </widget>
-        <widget name="register" class="callout box radius">
-          <title>Create Your Account</title>
-          <showLegalLinks>true</showLegalLinks>
+    <section id="platform-register" class="align-center margin-top-40">
+      <column class="small-12 medium-8 large-5 small-order-2 medium-order-1 cell">
+        <widget name="register" style="background: white; border-radius: 12px; padding: 2.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 10px 20px rgba(0, 0, 0, 0.06); border: 1px solid #e2e8f0;">
+          <title>Create your account</title>
+          <showLegalLinks>false</showLegalLinks>
           <useCaptcha>true</useCaptcha>
           <!--<redirect-success>/profile</redirect-success>-->
         </widget>
-        <widget name="content" class="show-for-medium">
+        <widget name="content" class="text-center margin-top-20">
           <html><![CDATA[
-          <p>&nbsp;</p>
+          <p style="font-size: 0.875rem; color: #718096;">
+            Already have an account? <a href="${ctx}/login" style="color: #667eea; font-weight: 600; text-decoration: none;">Sign in</a>
+          </p>
+          ]]></html>
+        </widget>
+      </column>
+      <column class="small-12 medium-4 large-5 small-order-1 medium-order-2 cell">
+        <widget name="content" class="text-center margin-top-50 margin-bottom-10">
+          <html><![CDATA[
+            <div style="display: flex; align-items: center; justify-content: center; width: 64px; height: 64px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px; margin: 0 auto 1.5rem; box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);">
+              <i class="fa fa-user-plus" style="color: white; font-size: 28px;"></i>
+            </div>
+          ]]></html>
+        </widget>
+        <widget name="content" class="text-center margin-top-30 margin-bottom-10">
+          <uniqueId>register-hello</uniqueId>
+          <html><![CDATA[
+          <h2 style="font-size: 2rem; font-weight: 600; color: #1a202c; margin-bottom: 0.5rem; letter-spacing: -0.5px;">Let's get started.</h2>
+          <p style="font-size: 1rem; color: #718096; font-weight: 400;">Complete the form to create your account.</p>
+          ]]></html>
+        </widget>
+        <widget name="content" class="text-center margin-top-30 margin-bottom-10">
+          <html><![CDATA[
+          <div class="callout secondary" style="background:#f5f5f5; border:1px solid #e2e8f0;">
+            <h5 style="margin-top:0;">By creating an account, you agree to our <a target="_blank" href="${ctx}/terms-of-service" style="color: #667eea; font-weight: 600; text-decoration: none;">Terms of Service</a> and <a target="_blank" href="${ctx}/privacy-policy" style="color: #667eea; font-weight: 600; text-decoration: none;">Privacy Policy</a>.</h5>
+          </div>
           ]]></html>
         </widget>
       </column>
@@ -119,28 +147,17 @@
   </page>
 
   <page name="/validation-sent" role="guest,admin,content-manager" title="Validate Account">
-    <section class="align-center">
-      <column class="small-12 medium-8 large-6 text-center cell">
-        <widget name="content" class="show-for-medium">
-          <html><![CDATA[
-          <p>&nbsp;</p>
-          ]]></html>
-        </widget>
+    <section class="align-center margin-top-30">
+      <column class="small-12 medium-8 large-6 text-center cell margin-50">
         <widget name="content">
           <uniqueId>validate-account-hello</uniqueId>
           <html><![CDATA[<h3>Welcome to our site</h3>]]></html>
         </widget>
-        <widget name="content" class="callout box">
+        <widget name="content" class="callout box margin-top-30">
           <html><![CDATA[
-          <p class="show-for-medium">&nbsp;</p>
-          <p><i class="fa fa-5x fa-envelope-open-o"></i></p>
-          <h3>Confirm Email</h3>
+          <p class="margin-top-20"><i class="fa fa-5x fa-envelope-open-o"></i></p>
+          <h3>Confirm Your Email</h3>
           <p>Confirm your email by clicking the verification link we just sent to your inbox.</p>
-          ]]></html>
-        </widget>
-        <widget name="content" class="show-for-medium">
-          <html><![CDATA[
-          <p>&nbsp;</p>
           ]]></html>
         </widget>
       </column>
@@ -150,55 +167,38 @@
   <page name="/validate-account" title="Validate Account">
     <section class="align-center">
       <column class="small-12 medium-6 cell">
-        <widget name="content" class="show-for-medium">
-          <html><![CDATA[
-          <p>&nbsp;</p>
-          ]]></html>
-        </widget>
-        <widget name="content" class="text-center">
+        <widget name="content" class="text-center margin-50">
           <uniqueId>validation-hello</uniqueId>
           <html><![CDATA[<h1>Account Validation</h1>]]></html>
         </widget>
-        <widget name="content" class="show-for-medium">
-          <html><![CDATA[
-          <small>&nbsp;</small>
-          ]]></html>
-        </widget>
-        <widget name="accountValidation" class="callout box radius" />
-        <widget name="content" class="show-for-medium">
-          <html><![CDATA[
-          <p>&nbsp;</p>
-          ]]></html>
-        </widget>
+        <widget name="accountValidation" class="callout box radius margin-bottom-50" />
       </column>
     </section>
   </page>
 
   <page name="/forgot-password" role="guest,admin,content-manager" title="Forgot Password" class="platform-dialog">
-    <section id="platform-forgot-password" class="align-center">
-      <column class="small-12 medium-7 large-5 cell">
-        <widget name="content" class="show-for-medium">
-          <html><![CDATA[
-          &nbsp;
-          ]]></html>
-        </widget>
-        <widget name="content" class="show-for-medium">
-          <html><![CDATA[
-          &nbsp;
-          ]]></html>
-        </widget>
-        <widget name="forgotPassword" class="callout box radius">
-          <title>Password Reset</title>
+    <section id="platform-forgot-password" class="align-center align-middle margin-top-50">
+      <column class="small-12 medium-8 large-5 small-order-2 medium-order-1 cell">
+        <widget name="forgotPassword" style="background: white; border-radius: 12px; padding: 2.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 10px 20px rgba(0, 0, 0, 0.06); border: 1px solid #e2e8f0;">
+          <title>Enter your email</title>
           <content>Reset my password</content>
         </widget>
-        <widget name="content" class="show-for-medium">
+        <widget name="content" class="text-center" style="margin-top: 1.5rem;">
           <html><![CDATA[
-          <p>&nbsp;</p>
+          <p style="font-size: 0.875rem; color: #718096;">
+            Remember your password? <a href="${ctx}/login" style="color: #667eea; font-weight: 600; text-decoration: none;">Sign in</a>
+          </p>
           ]]></html>
         </widget>
-        <widget name="content" class="show-for-medium">
+      </column>
+      <column class="small-12 medium-4 large-5 small-order-1 medium-order-2 cell">
+        <widget name="content" class="text-center">
           <html><![CDATA[
-          &nbsp;
+            <div style="display: flex; align-items: center; justify-content: center; width: 64px; height: 64px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px; margin: 0 auto 1.5rem; box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);">
+              <i class="fa fa-key" style="color: white; font-size: 28px;"></i>
+            </div>
+            <h2 style="font-size: 2rem; font-weight: 600; color: #1a202c; margin-bottom: 0.5rem; letter-spacing: -0.5px;">Reset Password</h2>
+            <p style="font-size: 1rem; color: #718096; font-weight: 400;">Enter your email to receive a password reset link</p>
           ]]></html>
         </widget>
       </column>
