@@ -16,27 +16,35 @@
   -->
 <template name="My Page: Portal" image="">
   <page role="users" title="My Page">
-    <section>
-      <column class="small-12 medium-3 cell">
+    <section class="padding-20">
+      <!-- Navigation Sidebar -->
+      <column class="small-12 medium-12 large-3 cell callout radius margin-bottom-20">
         <widget name="tableOfContents">
           <uniqueId>user-portal</uniqueId>
         </widget>
       </column>
-      <column class="small-12 medium-5 cell">
+      <!-- Main Content Area -->
+      <column class="small-12 medium-8 large-6 cell callout radius box margin-bottom-20">
         <widget name="content">
           <uniqueId>my-page-content</uniqueId>
-          <html><![CDATA[<p>Welcome to the site</p>]]></html>
+          <html><![CDATA[
+            <h2><i class="fa fa-home"></i> Welcome Back</h2>
+            <p>Access your account information, files, and favorite spaces from your personalized dashboard.</p>
+          ]]></html>
         </widget>
-        <widget name="fileList">
+        <widget name="fileList" class="callout radius margin-bottom-20">
+          <icon>folder</icon>
           <title>User Files</title>
           <showWhenEmpty>false</showWhenEmpty>
           <folderUniqueId>user-files</folderUniqueId>
         </widget>
       </column>
-      <column class="small-12 medium-4 cell">
-        <widget name="myInfo" />
-        <widget name="mySiteInfo"/>
-        <widget name="itemsList">
+      <!-- Account Details Sidebar -->
+      <column class="small-12 medium-4 large-3 cell">
+        <widget name="myInfo" class="callout primary radius margin-bottom-20" />
+        <widget name="mySiteInfo" class="callout secondary radius margin-bottom-20"/>
+        <widget name="itemsList" class="callout success radius margin-bottom-20">
+          <icon>star</icon>
           <title>Favorite Spaces</title>
           <message>Areas you can access...</message>
           <showWhenEmpty>false</showWhenEmpty>
