@@ -255,6 +255,7 @@
   max-width: 600px;
   display: flex;
   flex-direction: column;
+  z-index: 6;
 }
 
 /* Properties Panel Resize Handle */
