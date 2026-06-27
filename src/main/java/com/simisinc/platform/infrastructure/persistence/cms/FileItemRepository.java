@@ -263,7 +263,7 @@ public class FileItemRepository {
       // Update the counts in case the folder changed
       FolderRepository.updateFileCountForFileId(connection, record.getId(), -1);
       SubFolderRepository.updateFileCountForFileId(connection, record.getId(), -1);
-      // Update the record
+      // Update the record, retaining the web_path
       SqlUtils updateValues = new SqlUtils()
           .add("folder_id", record.getFolderId())
           .add("sub_folder_id", record.getSubFolderId(), -1L)
@@ -274,7 +274,6 @@ public class FileItemRepository {
           .add("version", StringUtils.trimToNull(record.getVersion()))
           .add("extension", StringUtils.trimToNull(record.getExtension()))
           .add("path", StringUtils.trimToNull(record.getFileServerPath()))
-          .add("web_path", StringUtils.trimToNull(record.getWebPath()))
           .add("file_length", record.getFileLength())
           .add("file_type", record.getFileType())
           .add("mime_type", record.getMimeType())
