@@ -1,5 +1,5 @@
 /**
- * Swiper 14.0.2
+ * Swiper 14.0.5
  * Most modern mobile touch slider and framework with hardware accelerated transitions
  * https://swiperjs.com
  *
@@ -7,7 +7,7 @@
  *
  * Released under the MIT License
  *
- * Released on: July 7, 2026
+ * Released on: July 9, 2026
  */
 
 var Swiper = (function () {
@@ -4408,7 +4408,10 @@ var Swiper = (function () {
         swiper.virtual = {
             cache: {},
             from: 0,
-            to: 0,
+            // -1 marks "nothing rendered yet": no real update can produce to < from,
+            // so the first update() never mistakes slide 0 for an already-rendered
+            // slide and always appends the full [from, to] window (#8202).
+            to: -1,
             slides: [],
             offset: 0,
             slidesGrid: [],
@@ -10158,7 +10161,7 @@ var Swiper = (function () {
     };
 
     /**
-     * Swiper 14.0.2
+     * Swiper 14.0.5
      * Most modern mobile touch slider and framework with hardware accelerated transitions
      * https://swiperjs.com
      *
@@ -10166,7 +10169,7 @@ var Swiper = (function () {
      *
      * Released under the MIT License
      *
-     * Released on: July 7, 2026
+     * Released on: July 9, 2026
      */
 
 
