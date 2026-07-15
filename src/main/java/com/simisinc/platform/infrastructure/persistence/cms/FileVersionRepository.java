@@ -106,7 +106,7 @@ public class FileVersionRepository {
         .addIfExists("height", record.getHeight(), -1)
         .add("summary", StringUtils.trimToNull(record.getSummary()))
         .add("created_by", record.getCreatedBy());
-    record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+    DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY);
     // Manage a few related tables
     // Finish the transaction
     return record;
