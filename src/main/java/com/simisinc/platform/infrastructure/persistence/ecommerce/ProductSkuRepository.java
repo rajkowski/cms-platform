@@ -93,7 +93,7 @@ public class ProductSkuRepository {
           sb.append("}");
         }
         if (sb.length() > 0) {
-          where.AND("attributes @> '[" + sb.toString() + "]'");
+          where.AND("attributes @> ?::jsonb", "[" + sb.toString() + "]");
         }
       }
     }
