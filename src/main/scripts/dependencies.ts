@@ -1,3 +1,4 @@
+// Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
 import fs from 'fs';
 import path from 'path';
 import packages from '../../../package.json';
