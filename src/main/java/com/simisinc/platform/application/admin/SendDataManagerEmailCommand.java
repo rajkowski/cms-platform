@@ -37,6 +37,7 @@ public class SendDataManagerEmailCommand {
 
   private static Log LOG = LogFactory.getLog(SendDataManagerEmailCommand.class);
 
+  @Deprecated
   public static void sendMessage(String subject, String html, String text) {
 
     // Send to all Community Managers
