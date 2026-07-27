@@ -265,6 +265,7 @@
                 </div>
                 </c:if>
 
+                <%--
                 <c:if test="${userSession.hasRole('admin')}">
                 <div class="user-menu-section">
                   <div class="user-menu-section-title">Page Design Tools</div>
@@ -287,6 +288,7 @@
                   </div>
                 </div>
                 </c:if>
+                --%>
 
                 <c:if test="${userSession.hasRole('admin') || userSession.hasRole('content-manager')}">
                 <div class="user-menu-section">

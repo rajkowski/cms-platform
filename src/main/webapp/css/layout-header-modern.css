@@ -13,8 +13,11 @@
   --header-bg: #ffffff;
   --header-text: #333333;
   --header-border: #e5e5e5;
-  --announcement-bg: #f8f9fa;
-  --announcement-text: #495057;
+  --region-filter-bg: #f8f9fa;
+  --region-filter-text: #495057;
+  --region-filter-border: #ced4da;
+  --region-filter-bg-hover: #e9ecef;
+  --region-filter-text-hover: #495057;
   --nav-hover-bg: #f5f5f5;
   --dropdown-bg: #ffffff;
   --dropdown-shadow: rgba(0, 0, 0, 0.15);
@@ -30,12 +33,15 @@
   --header-bg: #1a1a1a;
   --header-text: #e0e0e0;
   --header-border: #333333;
-  --announcement-bg: #252525;
-  --announcement-text: #b0b0b0;
+  --region-filter-bg: #2a2a2a;
+  --region-filter-text: #e0e0e0;
+  --region-filter-border: #444444;
+  --region-filter-bg-hover: #3a3a3a;
+  --region-filter-text-hover: #e0e0e0;
   --nav-hover-bg: #3a3a3a;
   --dropdown-bg: #2a2a2a;
   --dropdown-shadow: rgba(0, 0, 0, 0.4);
-  --button-primary: #3b82f6;
+  --button-primary: #e0e0e0;
   --button-primary-hover: #4f6f90;
   --button-active: #3b82f6;
   --button-active-dropdown: #3b82f6;
@@ -200,18 +206,6 @@
   margin-left: auto;
 }
 
-/* When screen is wide enough, reorder so nav comes before actions */
-/* @media (min-width: 900px) {
-  .header-nav {
-    order: 2;
-    min-width: 0;
-  }
-  .header-actions {
-    order: 3;
-    margin-left: 0;
-  }
-} */
-
 .header-btn {
   display: inline-flex;
   align-items: center;
@@ -225,6 +219,10 @@
   transition: all 0.2s ease;
   white-space: nowrap;
   cursor: pointer;
+}
+
+button.header-btn .btn-text {
+  padding: 3px 0 3px 0;
 }
 
 .header-btn:hover {
@@ -1186,14 +1184,15 @@
 
 /* Active region indicator */
 .header-btn.region-filter-trigger.has-active-filter {
-  background: var(--button-primary);
-  color: white;
-  border-color: var(--button-primary);
+  background: var(--region-filter-bg);
+  border-color: var(--region-filter-border);
+  color: var(--region-filter-text);
 }
 
 .header-btn.region-filter-trigger.has-active-filter:hover {
-  background: var(--button-primary-hover);
-  border-color: var(--button-primary-hover);
+  background: var(--region-filter-bg-hover);
+  border-color: var(--button-primary);
+  color: var(--region-filter-text-hover);
 }
 
 /* Responsive modal */
