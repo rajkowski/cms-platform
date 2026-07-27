@@ -1,4 +1,5 @@
 <%--
+  ~ Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
   ~ Copyright 2022 SimIS Inc.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,15 +24,15 @@
 <jsp:useBean id="calendarEventList" class="java.util.ArrayList" scope="request"/>
 <jsp:useBean id="showMonthName" class="java.lang.String" scope="request"/>
 <%@include file="../page_messages.jspf" %>
+<c:if test="${!empty title}">
+  <h4><c:if test="${!empty icon}"><i class="fa ${icon}"></i> </c:if><c:out value="${title}"/></h4>
+</c:if>
 <c:choose>
   <c:when test="${empty calendarEventList}">
     <p>No calendar events were found</p>
   </c:when>
   <c:otherwise>
     <div class="platform-calendar-list-container">
-      <c:if test="${!empty title}">
-        <h4><c:if test="${!empty icon}"><i class="fa ${icon}"></i> </c:if><c:out value="${title}"/></h4>
-      </c:if>
       <c:set var="lastMonth" scope="request" value="---"/>
       <c:set var="lastDay" scope="request" value="---"/>
       <c:forEach items="${calendarEventList}" var="calendarEvent">

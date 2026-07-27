@@ -98,6 +98,12 @@
   <component class="com.simisinc.platform.presentation.widgets.cms.CalendarsEventsJsonService"
              group="visual-content-editor"
              type="SERVICE" />
+  <component class="com.zeroio.platform.presentation.services.TemplateListAjax"
+             group="visual-content-editor"
+             type="SERVICE" />
+  <component class="com.zeroio.platform.presentation.services.TemplateContentAjax"
+             group="visual-content-editor"
+             type="SERVICE" />
   <component class="com.simisinc.platform.presentation.widgets.cms.WebPageListAjax"
              group="visual-content-editor"
              type="SERVICE" />

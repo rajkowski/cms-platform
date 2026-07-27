@@ -44,7 +44,6 @@ public class PageRenderInfo implements ContainerRenderInfo, Serializable {
   private String imageUrl;
   private String pagePath;
   private String cssClass = null;
-  private Set<String> javascriptPackages = new LinkedHashSet<>();
 
   public PageRenderInfo() {
   }

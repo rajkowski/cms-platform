@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -120,6 +121,10 @@ public class WidgetContext implements Serializable {
 
   public void setPreferences(Map<String, String> preferences) {
     this.preferences = preferences;
+  }
+
+  public String getPreference(String preference) {
+    return getPreferences().get(preference);
   }
 
   public PreferenceEntriesList getPreferenceAsDataList(String preference) {

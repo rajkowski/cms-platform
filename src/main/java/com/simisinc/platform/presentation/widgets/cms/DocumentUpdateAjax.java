@@ -24,8 +24,16 @@ import com.simisinc.platform.application.DataException;
 import com.simisinc.platform.application.cms.CheckFolderPermissionCommand;
 import com.simisinc.platform.application.cms.SaveFileCommand;
 import com.simisinc.platform.application.cms.TagCommand;
+import com.simisinc.platform.application.items.CheckCollectionPermissionCommand;
+import com.simisinc.platform.application.items.LoadCollectionCommand;
+import com.simisinc.platform.application.items.LoadItemCommand;
+import com.simisinc.platform.application.items.SaveItemFileCommand;
 import com.simisinc.platform.domain.model.cms.FileItem;
+import com.simisinc.platform.domain.model.items.Collection;
+import com.simisinc.platform.domain.model.items.Item;
+import com.simisinc.platform.domain.model.items.ItemFileItem;
 import com.simisinc.platform.infrastructure.persistence.cms.FileItemRepository;
+import com.simisinc.platform.infrastructure.persistence.items.ItemFileItemRepository;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
 
@@ -39,11 +47,17 @@ public class DocumentUpdateAjax extends GenericWidget {
 
   static final long serialVersionUID = -8484048371911908902L;
   private static Log LOG = LogFactory.getLog(DocumentUpdateAjax.class);
+  private static final String FILE_NOT_FOUND_RESPONSE = "{\"success\":false,\"message\":\"File not found\"}";
 
   @Override
   public WidgetContext post(WidgetContext context) {
 
     LOG.debug("DocumentUpdateAjax...");
+
+    String sourceType = context.getParameter("sourceType");
+    if ("collection".equalsIgnoreCase(sourceType)) {
+      return updateCollectionFile(context);
+    }
 
     long fileId = context.getParameterAsLong("id", -1);
     if (fileId == -1) {
@@ -54,7 +68,7 @@ public class DocumentUpdateAjax extends GenericWidget {
 
     FileItem fileItem = FileItemRepository.findById(fileId);
     if (fileItem == null) {
-      context.setJson("{\"success\":false,\"message\":\"File not found\"}");
+      context.setJson(FILE_NOT_FOUND_RESPONSE);
       context.setSuccess(false);
       return context;
     }
@@ -101,6 +115,81 @@ public class DocumentUpdateAjax extends GenericWidget {
     } catch (DataException e) {
       LOG.warn("Error updating file: " + e.getMessage());
       context.setJson("{\"success\":false,\"message\":\"" + e.getMessage().replace("\"", "\\\"") + "\"}");
+      context.setSuccess(false);
+    }
+
+    return context;
+  }
+
+  private WidgetContext updateCollectionFile(WidgetContext context) {
+    long fileId = context.getParameterAsLong("id", -1);
+    if (fileId == -1) {
+      context.setJson("{\"success\":false,\"message\":\"File ID required\"}");
+      context.setSuccess(false);
+      return context;
+    }
+
+    ItemFileItem fileItem = ItemFileItemRepository.findById(fileId);
+    if (fileItem == null) {
+      context.setJson(FILE_NOT_FOUND_RESPONSE);
+      context.setSuccess(false);
+      return context;
+    }
+
+    Item item = LoadItemCommand.loadItemById(fileItem.getItemId());
+    if (item == null) {
+      context.setJson(FILE_NOT_FOUND_RESPONSE);
+      context.setSuccess(false);
+      return context;
+    }
+    Collection collection = LoadCollectionCommand.loadCollectionById(item.getCollectionId());
+    if (collection == null) {
+      context.setJson("{\"success\":false,\"message\":\"Collection not found\"}");
+      context.setSuccess(false);
+      return context;
+    }
+
+    if (!context.hasRole("admin") &&
+        !CheckCollectionPermissionCommand.userHasEditPermission(collection.getId(), context.getUserId())) {
+      context.setJson("{\"success\":false,\"message\":\"Permission denied\"}");
+      context.setSuccess(false);
+      return context;
+    }
+
+    String title = StringUtils.trimToNull(context.getParameter("title"));
+    String summary = context.getParameter("summary");
+    String tags = context.getParameter("tags");
+    String version = StringUtils.trimToNull(context.getParameter("version"));
+    String filename = StringUtils.trimToNull(context.getParameter("filename"));
+
+    if (title != null) {
+      fileItem.setTitle(title);
+    }
+    if (summary != null) {
+      fileItem.setSummary(StringUtils.trimToNull(summary));
+    }
+    if (tags != null) {
+      fileItem.setTags(TagCommand.normalize(tags));
+    }
+    if (version != null) {
+      fileItem.setVersion(version);
+    }
+    if (filename != null) {
+      fileItem.setFilename(filename);
+    }
+    fileItem.setModifiedBy(context.getUserId());
+
+    try {
+      ItemFileItem saved = SaveItemFileCommand.saveFile(fileItem);
+      if (saved != null) {
+        context.setJson("{\"success\":true,\"message\":\"File updated\"}");
+      } else {
+        context.setJson("{\"success\":false,\"message\":\"Failed to update file\"}");
+        context.setSuccess(false);
+      }
+    } catch (DataException e) {
+      LOG.warn("Error updating collection file: " + e.getMessage());
+      context.setJson("{\"success\":false,\"message\":\"" + e.getMessage().replace("\"", "\\\\\"") + "\"}");
       context.setSuccess(false);
     }
 

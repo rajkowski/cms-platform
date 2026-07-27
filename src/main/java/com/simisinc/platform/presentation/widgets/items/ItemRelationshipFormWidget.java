@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -79,6 +80,8 @@ public class ItemRelationshipFormWidget extends GenericWidget {
       return null;
     }
 
+    boolean saveReciprocalRelationships = !"false".equals(context.getPreferences().get("saveReciprocalRelationships"));
+
     // Populate the fields
     ItemRelationship relationshipBean = new ItemRelationship();
     BeanUtils.populate(relationshipBean, context.getParameterMap());
@@ -92,7 +95,7 @@ public class ItemRelationshipFormWidget extends GenericWidget {
     // Save the relationship
     ItemRelationship relationship = null;
     try {
-      relationship = SaveItemRelationshipCommand.saveRelationship(relationshipBean);
+      relationship = SaveItemRelationshipCommand.saveRelationship(relationshipBean, saveReciprocalRelationships);
       if (relationship == null) {
         throw new DataException("The information could not be saved due to a system error. Please try again.");
       }

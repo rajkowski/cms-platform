@@ -227,13 +227,16 @@ ON content FOR EACH ROW EXECUTE PROCEDURE content_tsv_trigger();
 CREATE TABLE content_versions (
   version_id BIGSERIAL PRIMARY KEY,
   content_id BIGINT REFERENCES content(content_id) NOT NULL,
+  version_number INTEGER NOT NULL,
   content TEXT,
   created_by BIGINT REFERENCES users(user_id) NOT NULL,
   created TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
-  notes TEXT
+  notes TEXT,
+  CONSTRAINT content_ver_unique_num UNIQUE (content_id, version_number)
 );
 CREATE INDEX content_ver_cont_idx ON content_versions(content_id);
 CREATE INDEX content_ver_creat_idx ON content_versions(created);
+CREATE INDEX content_ver_num_idx ON content_versions(content_id, version_number);
 
 CREATE TABLE images (
   image_id BIGSERIAL PRIMARY KEY,
@@ -749,6 +752,16 @@ CREATE INDEX file_ver_web_path_idx ON file_versions(web_path);
 
 -- Image Categories/Images
 -- Video Categories/Videos
+
+CREATE TABLE web_page_files (
+  web_page_file_id BIGSERIAL PRIMARY KEY,
+  web_page_id BIGINT REFERENCES web_pages(web_page_id),
+  file_id BIGINT REFERENCES files(file_id),
+  created TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+  created_by BIGINT REFERENCES users(user_id) NOT NULL
+);
+CREATE INDEX web_page_files_web_page_idx ON web_page_files(web_page_id);
+CREATE INDEX web_page_files_file_idx ON web_page_files(file_id);
 
 CREATE TABLE stylesheets (
   stylesheet_id BIGSERIAL PRIMARY KEY,

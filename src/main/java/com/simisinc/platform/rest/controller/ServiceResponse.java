@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,6 +36,7 @@ public class ServiceResponse implements Serializable {
   private Object data = null;
   private Map<String, String> links = new LinkedHashMap<>();
   private Map<String, String> error = new LinkedHashMap<>();
+  private boolean handledResponse = false;
 
   public ServiceResponse(int status) {
     this.status = status;
@@ -62,5 +64,13 @@ public class ServiceResponse implements Serializable {
 
   public Map<String, String> getError() {
     return error;
+  }
+
+  public boolean isHandledResponse() {
+    return handledResponse;
+  }
+
+  public void setHandledResponse(boolean handledResponse) {
+    this.handledResponse = handledResponse;
   }
 }

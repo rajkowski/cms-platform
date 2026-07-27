@@ -38,7 +38,7 @@
     </function>
     <function>
         <description>
-            Returns icon value of a categoryId
+            Returns header color CSS value of a categoryId
         </description>
         <name>headerColorCSS</name>
         <function-class>com.simisinc.platform.application.items.CategoryCommand</function-class>

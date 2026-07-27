@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,16 +17,19 @@
 
 package com.simisinc.platform.presentation.widgets.items;
 
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+
 import com.simisinc.platform.application.cms.UrlCommand;
 import com.simisinc.platform.application.items.LoadCollectionCommand;
+import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.items.Category;
 import com.simisinc.platform.domain.model.items.Collection;
 import com.simisinc.platform.infrastructure.persistence.items.CategoryRepository;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
-import org.apache.commons.lang3.StringUtils;
-
-import java.util.List;
+import com.zeroio.platform.domain.model.cms.SearchCriteria;
 
 /**
  * Description
@@ -55,11 +59,14 @@ public class ItemsSearchFormWidget extends GenericWidget {
     context.getRequest().setAttribute("useIcon", context.getPreferences().getOrDefault("useIcon", "false"));
     context.getRequest().setAttribute("showCategories",
         context.getPreferences().getOrDefault("showCategories", "true"));
-      boolean basedOnItems = "true".equals(context.getPreferences().getOrDefault("basedOnItems", "false"));
+    boolean basedOnItems = "true".equals(context.getPreferences().getOrDefault("basedOnItems", "false"));
+    context.getRequest().setAttribute("showTags", context.getPreferences().getOrDefault("showTags", "false"));
 
     // Search values
     context.getRequest().setAttribute("searchName", context.getRequest().getParameter("searchName"));
     context.getRequest().setAttribute("searchLocation", context.getRequest().getParameter("searchLocation"));
+    String searchTags = context.getRequest().getParameter("searchTags");
+    context.getRequest().setAttribute("searchTags", searchTags);
 
     // Use the current collectionId to get the available categories to search on
     String collectionUniqueId = context.getPreferences().getOrDefault("collectionUniqueId",
@@ -80,6 +87,17 @@ public class ItemsSearchFormWidget extends GenericWidget {
     String categoryId = context.getRequest().getParameter("categoryId");
     if (categoryId != null) {
       context.getRequest().setAttribute("categoryId", categoryId);
+    }
+
+    // Prepare tags for form display
+    if (searchTags != null) {
+      String tagsValue = JsonCommand.toJsonArray(SearchCriteria.parseTags(searchTags));
+      if (tagsValue == null) {
+        tagsValue = "[]";
+      }
+      context.getRequest().setAttribute("tagsValue", tagsValue);
+    } else {
+      context.getRequest().setAttribute("tagsValue", "[]");
     }
 
     // Show the JSP
@@ -110,6 +128,18 @@ public class ItemsSearchFormWidget extends GenericWidget {
     //    if (StringUtils.isNumeric(categoryId) && !"-1".equals(categoryId)) {
     //      context.addSharedRequestValue("categoryId", categoryId);
     //    }
+
+    // Handle tags from JSON string using centralized JsonCommand
+    String tagsValue = context.getParameter("tags");
+    String[] tagsArray = null;
+    String searchTags = null;
+    if (StringUtils.isNotBlank(tagsValue)) {
+      tagsArray = JsonCommand.fromJsonArray(tagsValue);
+      if (tagsArray.length > 0) {
+        searchTags = String.join(",", tagsArray);
+        context.addSharedRequestValue("searchTags", searchTags);
+      }
+    }
 
     String redirectTo = context.getPreferences().get("redirectTo");
     if (StringUtils.isBlank(redirectTo)) {
@@ -144,11 +174,21 @@ public class ItemsSearchFormWidget extends GenericWidget {
       // Category
       if (StringUtils.isNumeric(categoryId) && !"-1".equals(categoryId)) {
         if (!hasFirst) {
+          hasFirst = true;
           redirectTo += "?";
         } else {
           redirectTo += "&";
         }
         redirectTo += "categoryId=" + UrlCommand.encodeUri(categoryId);
+      }
+      if (StringUtils.isNotBlank(searchTags)) {
+        if (!hasFirst) {
+          // hasFirst = true;
+          redirectTo += "?";
+        } else {
+          redirectTo += "&";
+        }
+        redirectTo += "searchTags=" + UrlCommand.encodeUri(searchTags);
       }
 
       context.setRedirect(redirectTo);

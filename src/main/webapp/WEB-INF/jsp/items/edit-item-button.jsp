@@ -1,4 +1,5 @@
 <%--
+  ~ Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
   ~ Copyright 2022 SimIS Inc.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,11 +22,12 @@
 <jsp:useBean id="collection" class="com.simisinc.platform.domain.model.items.Collection" scope="request"/>
 <jsp:useBean id="item" class="com.simisinc.platform.domain.model.items.Item" scope="request"/>
 <jsp:useBean id="buttonName" class="java.lang.String" scope="request"/>
+<jsp:useBean id="buttonClass" class="java.lang.String" scope="request"/>
 <c:choose>
   <c:when test="${!empty editUrl}">
-    <a class="button radius" href="${editUrl}<c:if test="${!empty returnPage}">?returnPage=${returnPage}</c:if>"><i class="${font:fal()} fa-edit"></i> <c:out value="${buttonName}" /></a>
+    <a class="button radius<c:if test="${!empty buttonClass}"> ${buttonClass}</c:if>" href="${editUrl}<c:if test="${!empty returnPage}">?returnPage=${returnPage}</c:if>"><i class="${font:fal()} fa-edit"></i> <c:out value="${buttonName}" /></a>
   </c:when>
   <c:otherwise>
-    <a class="button radius" href="${ctx}/edit/<c:out value="${item.uniqueId}" /><c:if test="${!empty returnPage}">?returnPage=${returnPage}</c:if>"><i class="${font:fal()} fa-edit"></i> <c:out value="${buttonName}" /></a>
+    <a class="button radius<c:if test="${!empty buttonClass}"> ${buttonClass}</c:if>" href="${ctx}/edit/<c:out value="${item.uniqueId}" /><c:if test="${!empty returnPage}">?returnPage=${returnPage}</c:if>"><i class="${font:fal()} fa-edit"></i> <c:out value="${buttonName}" /></a>
   </c:otherwise>
 </c:choose>

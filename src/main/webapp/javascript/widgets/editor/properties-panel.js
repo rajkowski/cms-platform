@@ -1,4 +1,7 @@
 /**
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
+ * Licensed under the Apache License, Version 2.0
+ * 
  * Properties Panel
  * Manages the properties editing panel
  * 
@@ -860,6 +863,9 @@ class PropertiesPanel {
     
     // Initialize contentUniqueId properties
     this.initContentUniqueIdProperties(rowId, columnId, widgetId, definition);
+    
+    // Initialize collectionUniqueId properties
+    this.initCollectionUniqueIdProperties(rowId, columnId, widgetId, definition);
     
     // Initialize icon pickers
     this.initIconPickers(rowId, columnId, widgetId, definition);
@@ -1821,6 +1827,10 @@ class PropertiesPanel {
         html += this.renderContentUniqueIdProperty(name, definition, displayValue, pageLink);
         break;
 
+      case 'collectionUniqueId':
+        html += this.renderCollectionUniqueIdProperty(name, definition, displayValue, pageLink);
+        break;
+
       case 'xml':
         html += this.renderXmlProperty(name, definition, value);
         break;
@@ -2591,6 +2601,292 @@ class PropertiesPanel {
         }
       }
     });
+  }
+
+  /**
+   * Render collectionUniqueId property with collection repository integration
+   */
+  renderCollectionUniqueIdProperty(name, definition, value, pageLink) {
+    let html = '<div class="property-group">';
+    html += `<div class="property-label">${definition.label}${definition.required ? ' *' : ''}</div>`;
+    html += `<div style="display:flex;gap:5px;margin-bottom:5px;">`;
+    html += `<input type="text" class="property-input" id="prop-${name}" value="${this.escapeHtml(value)}" style="flex:1;" />`;
+    html += `<button type="button" class="button small radius" id="browse-collection-${name}" style="white-space:nowrap;">Browse</button>`;
+    // html += `<button type="button" class="button small radius" id="edit-collection-${name}" style="white-space:nowrap;display:none;">Edit</button>`;
+    html += `</div>`;
+    html += `</div>`;
+    
+    return html;
+  }
+  
+  /**
+   * Initialize collectionUniqueId property handlers
+   */
+  initCollectionUniqueIdProperties(rowId, columnId, widgetId, widgetDef) {
+    const self = this;
+    Object.entries(widgetDef.properties).forEach(([propName, propDef]) => {
+      if (propDef.type === 'collectionUniqueId') {
+        const input = document.getElementById(`prop-${propName}`);
+        const browseBtn = document.getElementById(`browse-collection-${propName}`);
+        const editBtn = document.getElementById(`edit-collection-${propName}`);
+        
+        if (!input || !browseBtn) {
+          console.log('Missing required elements for property:', propName);
+          return;
+        }
+        
+        // Browse button - show collection list modal
+        browseBtn.addEventListener('click', () => {
+          self.showCollectionBrowserModal(propName, propDef, rowId, columnId, widgetId);
+        });
+        
+        // Edit button - open collection editor
+        if (editBtn) {
+          editBtn.addEventListener('click', () => {
+            const uniqueId = input.value;
+            if (uniqueId) {
+              self.openCollectionEditor(uniqueId);
+            }
+          });
+        }
+        
+        // Show edit button if value exists
+        input.addEventListener('input', () => {
+          if (input.value && input.value.trim()) {
+            if (editBtn) editBtn.style.display = 'inline-block';
+          } else {
+            if (editBtn) editBtn.style.display = 'none';
+          }
+        });
+        
+        // Initial state
+        if (input.value && input.value.trim()) {
+          if (editBtn) editBtn.style.display = 'inline-block';
+        }
+      }
+    });
+  }
+
+  /**
+   * Show collection browser modal
+   */
+  showCollectionBrowserModal(propName, propDef, rowId, columnId, widgetId) {
+    // Create modal if it doesn't exist
+    let modal = document.getElementById('collection-browser-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'collection-browser-modal';
+      modal.className = 'modal-overlay';
+      modal.innerHTML = `
+        <div class="modal-content" style="max-width:800px;">
+          <h4 style="color:var(--editor-text);margin: 0 0 15px 0; flex-shrink: 0;">Select a Collection</h4>
+          <div id="collection-browser-list" style="flex: 1; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 15px; background: #f9f9f9; min-height: 200px;">
+            <div style="text-align:center;padding:40px;color:var(--editor-text-muted);">
+              <i class="fa fa-spinner fa-spin"></i> Loading collections...
+            </div>
+          </div>
+          <div style="text-align: right; margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end; flex-shrink: 0;">
+            <button type="button" class="button tiny secondary radius" id="close-collection-browser-modal">Cancel</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      
+      // Close button
+      document.getElementById('close-collection-browser-modal').addEventListener('click', () => {
+        modal.classList.remove('active');
+        // Remove escape key listener when modal is closed
+        if (modal.escapeKeyHandler) {
+          document.removeEventListener('keydown', modal.escapeKeyHandler, true);
+          console.log('Collection browser - Escape key listener removed');
+        }
+      });
+      
+      // Close on overlay click
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          modal.classList.remove('active');
+          // Remove escape key listener when modal is closed
+          if (modal.escapeKeyHandler) {
+            document.removeEventListener('keydown', modal.escapeKeyHandler, true);
+            console.log('Collection browser - Escape key listener removed');
+          }
+        }
+      });
+    }
+    
+    // Load collection list
+    this.loadCollectionList(propName, propDef, rowId, columnId, widgetId);
+    
+    // Show modal
+    modal.classList.add('active');
+    
+    // Add escape key listener when modal is shown
+    modal.escapeKeyHandler = (e) => {
+      console.log('Collection browser - Key pressed:', e.key, 'Modal visible:', modal.classList.contains('active'));
+      if (e.key === 'Escape' || e.keyCode === 27) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Collection browser - Escape key detected, hiding modal');
+        modal.classList.remove('active');
+        // Remove escape key listener
+        if (modal.escapeKeyHandler) {
+          document.removeEventListener('keydown', modal.escapeKeyHandler, true);
+          console.log('Collection browser - Escape key listener removed');
+        }
+      }
+    };
+    document.addEventListener('keydown', modal.escapeKeyHandler, true);
+  }
+  
+  /**
+   * Load collection list from server
+   */
+  loadCollectionList(propName, propDef, rowId, columnId, widgetId) {
+    const listContainer = document.getElementById('collection-browser-list');
+    listContainer.innerHTML = '<div style="text-align:center;padding:40px;color:var(--editor-text-muted);"><i class="fa fa-spinner fa-spin"></i> Loading collections...</div>';
+    
+    // Fetch collection list from server
+    fetch('/json/dataCollections', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data && data.collections && Array.isArray(data.collections)) {
+        this.renderCollectionList(data.collections, propName, propDef, rowId, columnId, widgetId);
+      } else {
+        listContainer.innerHTML = '<div style="padding:20px;color:var(--editor-text-muted);">No collections available</div>';
+      }
+    })
+    .catch(error => {
+      console.error('Error loading collection list:', error);
+      listContainer.innerHTML = '<div style="padding:20px;color:#dc3545;">Error loading collection list</div>';
+    });
+  }
+  
+  /**
+   * Render collection list in modal
+   */
+  renderCollectionList(collectionList, propName, propDef, rowId, columnId, widgetId) {
+    const listContainer = document.getElementById('collection-browser-list');
+    const self = this;
+    
+    if (collectionList.length === 0) {
+      listContainer.innerHTML = '<div style="padding:20px;color:var(--editor-text-muted);">No collections available</div>';
+      return;
+    }
+    
+    let html = '<div style="display:grid;gap:10px;">';
+    collectionList.forEach(collection => {
+      const uniqueId = collection.uniqueId || collection.collectionUniqueId || '';
+      const collectionName = collection.name || collection.title || uniqueId || 'Unnamed Collection';
+      const description = collection.description || '';
+      html += `
+        <div class="collection-item" data-unique-id="${this.escapeHtml(uniqueId)}" style="
+          padding:12px;
+          border:1px solid var(--editor-border);
+          border-radius:4px;
+          cursor:pointer;
+          background:var(--editor-bg);
+          transition:all 0.2s;
+        ">
+          <div style="font-weight:600;color:var(--editor-text);margin-bottom:5px;">${this.escapeHtml(collectionName)}</div>
+          <div style="font-size:12px;color:var(--editor-text-muted);">${this.escapeHtml(uniqueId)}</div>
+          ${description ? `<div style="font-size:11px;color:var(--editor-text-muted);margin-top:4px;">${this.escapeHtml(description)}</div>` : ''}
+        </div>
+      `;
+    });
+    html += '</div>';
+    
+    listContainer.innerHTML = html;
+    
+    // Add click handlers
+    listContainer.querySelectorAll('.collection-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const uniqueId = item.getAttribute('data-unique-id');
+        const input = document.getElementById(`prop-${propName}`);
+        const editBtn = document.getElementById(`edit-collection-${propName}`);
+        
+        if (input) {
+          input.value = uniqueId;
+          if (editBtn) {
+            editBtn.style.display = 'inline-block';
+          }
+          
+          // Update widget property
+          const widgetData = self.editor.getLayoutManager().getWidget(rowId, columnId, widgetId);
+          if (widgetData) {
+            widgetData.properties[propName] = uniqueId;
+            if (self.editor.getCanvasController) {
+              const row = self.editor.getLayoutManager().getRow(rowId);
+              self.editor.getCanvasController().renderRow(rowId, row);
+              setTimeout(() => {
+                const rowElement = document.querySelector(`[data-row-id="${rowId}"]`);
+                if (rowElement) {
+                  const columnElement = rowElement.querySelector(`[data-column-id="${columnId}"]`);
+                  if (columnElement) {
+                    const widgetElement = columnElement.querySelector(`[data-widget-id="${widgetId}"]`);
+                    if (widgetElement) {
+                      widgetElement.classList.add('selected');
+                    }
+                  }
+                }
+              }, 0);
+            }
+            if (self.editor.saveToHistory) {
+              self.editor.saveToHistory();
+            }
+            
+            // Enhancement: Auto-refresh preview when property is edited and preview is active
+            self.refreshPreviewIfActive();
+          }
+        }
+        
+        // Close modal
+        const collectionModal = document.getElementById('collection-browser-modal');
+        collectionModal.classList.remove('active');
+        // Remove escape key listener when modal is closed
+        if (collectionModal.escapeKeyHandler) {
+          document.removeEventListener('keydown', collectionModal.escapeKeyHandler, true);
+          console.log('Collection browser - Escape key listener removed');
+        }
+      });
+      
+      item.addEventListener('mouseenter', () => {
+        item.style.borderColor = 'var(--editor-selected-border)';
+        item.style.background = 'var(--editor-hover-bg)';
+      });
+      
+      item.addEventListener('mouseleave', () => {
+        item.style.borderColor = 'var(--editor-border)';
+        item.style.background = 'var(--editor-bg)';
+      });
+    });
+  }
+
+  /**
+   * Open collection editor for a uniqueId
+   */
+  openCollectionEditor(uniqueId) {
+    // Get the currently selected web page
+    const webPageLink = window.pageEditor && window.pageEditor.pagesTabManager 
+      ? window.pageEditor.pagesTabManager.getSelectedPageLink() 
+      : '/';
+    
+    // Open collection editor in the preview iframe
+    const url = `/collection-editor?uniqueId=${encodeURIComponent(uniqueId)}&returnPage=${encodeURIComponent(webPageLink)}`;
+    
+    // Use the global openPageInIframe function if available
+    if (typeof window.openPageInIframe === 'function') {
+      window.openPageInIframe(url, 'Loading collection editor...');
+    } else {
+      console.log('window.openPageInIframe function not available, falling back to window.open');
+      // Fallback to opening in new window if function not available
+      window.open(url, '_blank');
+    }
   }
   
   /**

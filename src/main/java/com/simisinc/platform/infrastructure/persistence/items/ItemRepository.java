@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,7 +24,10 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -51,6 +55,7 @@ import com.simisinc.platform.infrastructure.database.SqlWhere;
 import com.simisinc.platform.infrastructure.persistence.medicine.MedicineRepository;
 import com.simisinc.platform.presentation.controller.DataConstants;
 import com.simisinc.platform.presentation.controller.UserSession;
+import com.zeroio.platform.infrastructure.persistence.items.ItemVersionRepository;
 
 /**
  * Persists and retrieves item objects
@@ -310,6 +315,7 @@ public class ItemRepository {
         ItemFolderCategoryRepository.removeAll(connection, record);
         ItemFolderGroupRepository.removeAll(connection, record);
         ItemFolderRepository.removeAll(connection, record);
+        ItemVersionRepository.removeAll(connection, record);
         CollectionRepository.updateItemCount(connection, record.getCollectionId(), -1);
         CategoryRepository.updateItemCount(connection, record.getCategoryId(), -1);
         MedicineRepository.removeAll(connection, record);
@@ -454,13 +460,12 @@ public class ItemRepository {
           }
           if (ValidateGeoRegion.isValidWorldCitiesRegion(region)) {
             // Use the region
-            // @todo the region is validated because a prepared statement is needed
             if (specification.getWithinMeters() > 0) {
-              //              where.add("ST_DWithin(geom::geography, (SELECT geom::geography FROM world_cities WHERE city = ? AND region = '" + region + "' ORDER BY population DESC LIMIT 1), " + specification.getWithinMeters() + ")", city);
+              //              where.add("ST_DWithin(geom::geography, (SELECT geom::geography FROM world_cities WHERE city = ? AND region = ? ORDER BY population DESC LIMIT 1), " + specification.getWithinMeters() + ")", new String[]{city, region});
             }
-            // Override the order by for closest first
-            orderBy.add("geom <-> (SELECT geom FROM world_cities WHERE city = ? AND region = '" + region
-                + "' ORDER BY population DESC LIMIT 1)", city);
+            // Override the order by for closest first; city and region are bound parameters, not concatenated into SQL
+            orderBy.add("geom <-> (SELECT geom FROM world_cities WHERE city = ? AND region = ? ORDER BY population DESC LIMIT 1)",
+                new String[] { city, region });
           } else {
             // Just use the city
             if (specification.getWithinMeters() > 0) {
@@ -475,13 +480,49 @@ public class ItemRepository {
 
       // Use the search engine
       if (StringUtils.isNotBlank(specification.getSearchName())) {
+
+        // Ranking involves exact matches, matches at the beginning of the name, matches anywhere in the name, and matches for each word in the name
+        // The best method is to use the websearch_to_tsquery() function, which will handle the stemming and stop words, and then use ts_rank_cd() to rank the results
+
+        String term = specification.getSearchName().trim().toLowerCase();
+        // String quotedSearchTerm = "\"" + term + "\"";
+        String searchTermSeparated = term.replaceAll("\\s+", " OR ");
+        // String searchToUse = quotedSearchTerm + " OR " + searchTermSeparated;
+        String whereToUse = term + " OR " + searchTermSeparated;
+
+        // Surround word with "%%" and put into an array for each word in the search term
+        // Escape the values with '!'
+        String[] titleSearchWords = Arrays.stream(term.split("\\s+"))
+            .map(word -> "%" + word.replace("!", "!!").replace("%", "!%").replace("_", "!_").replace("[", "![") + "%")
+            .toArray(String[]::new);
+
+        // Combine into an array the searchToUse, titleSearchPattern1, titleSearchPattern2, and each word in titleSearchWords
+        String[] titleSearchPatterns = new String[1 + titleSearchWords.length];
+        titleSearchPatterns[0] = whereToUse;
+        System.arraycopy(titleSearchWords, 0, titleSearchPatterns, 1, titleSearchWords.length);
+
+        // Highlight the term
         select.add(
-            "ts_headline('english', items.name || ' ' || coalesce(keywords,'') || ' ' || coalesce(summary,''), websearch_to_tsquery('title_stem', ?), 'StartSel=${b}, StopSel=${/b}, MaxWords=30, MinWords=15, ShortWord=3, HighlightAll=FALSE, MaxFragments=2, FragmentDelimiter=\" ... \"') AS highlight",
-            specification.getSearchName().trim());
-        select.add("ts_rank_cd(tsv, websearch_to_tsquery('title_stem', ?)) AS rank", specification.getSearchName().trim());
-        where.AND("tsv @@ websearch_to_tsquery('title_stem', ?)", specification.getSearchName().trim());
+            "ts_headline('english', items.name || ' ' || coalesce(items.keywords,'') || ' ' || coalesce(items.summary,'') || ' ' || coalesce(items.description_text,''), "
+                +
+                "websearch_to_tsquery('title_stem', ?), " +
+                "'StartSel=${b}, StopSel=${/b}, MaxWords=30, MinWords=15, ShortWord=3, HighlightAll=FALSE, MaxFragments=2, FragmentDelimiter=\" ... \"') AS highlight",
+            term);
+
+        // Rank the term
+        select.add(
+            "(ts_rank_cd(tsv, websearch_to_tsquery('title_stem', ?)) " +
+                Arrays.stream(titleSearchWords)
+                    .map(word -> " + CASE WHEN LOWER(items.name) LIKE LOWER(?) ESCAPE '!' THEN 10.0 ELSE 0.0 END")
+                    .collect(Collectors.joining())
+                + ") AS rank",
+            titleSearchPatterns);
+
+        // Include additional where conditions
+        where.AND("tsv @@ websearch_to_tsquery('title_stem', ?)", whereToUse);
+
         // Override the order by for rank first
-        orderBy.add("rank DESC, item_id");
+        orderBy.add("rank DESC, items.modified DESC");
       }
 
       // Find items nearby
@@ -521,6 +562,58 @@ public class ItemRepository {
         } else {
           where.AND("geojson IS NULL");
         }
+      }
+
+      if (specification.getCustomFieldFilters() != null) {
+        for (String[] filter : specification.getCustomFieldFilters()) {
+          where.AND(
+              "EXISTS (SELECT 1 FROM jsonb_array_elements(items.field_values) AS elem WHERE elem->>'name' = ? AND elem->>'value' = ?)",
+              new String[] { filter[0], filter[1] });
+        }
+      }
+
+      if (specification.getRegionTags() != null && specification.getRegionTags().length > 0) {
+        where.AND("tags", specification.getRegionTags(), SqlWhere.OR_OPERATOR);
+      }
+
+      if (specification.getFilterTags() != null && specification.getFilterTags().length > 0) {
+        where.AND("tags", specification.getFilterTags(), SqlWhere.AND_OPERATOR);
+      }
+
+      if (specification.getFieldInFilters() != null) {
+        for (Map.Entry<String, List<String>> entry : specification.getFieldInFilters().entrySet()) {
+          String fieldName = entry.getKey();
+          List<String> values = entry.getValue();
+          if ("tags".equals(fieldName) && !values.isEmpty()) {
+            String placeholders = String.join(", ", Collections.nCopies(values.size(), "?"));
+            where.AND(
+                "EXISTS (SELECT 1 FROM jsonb_array_elements_text(items.tags) AS t WHERE t IN (" + placeholders + "))",
+                values.toArray(new String[0]));
+          }
+        }
+      }
+
+      // Add modified date range filters
+      if (specification.getModifiedAfter() != null) {
+        where.AND("items.modified >= ?", specification.getModifiedAfter());
+      }
+      if (specification.getModifiedBefore() != null) {
+        where.AND("items.modified <= ?", specification.getModifiedBefore());
+      }
+
+      // Add modified by user filter
+      if (specification.getModifiedByUserIds() != null && specification.getModifiedByUserIds().length > 0) {
+        StringBuilder userCondition = new StringBuilder("items.modified_by IN (");
+        Long[] userIdsBoxed = new Long[specification.getModifiedByUserIds().length];
+        for (int i = 0; i < specification.getModifiedByUserIds().length; i++) {
+          if (i > 0) {
+            userCondition.append(",");
+          }
+          userCondition.append("?");
+          userIdsBoxed[i] = specification.getModifiedByUserIds()[i];
+        }
+        userCondition.append(")");
+        where.AND(userCondition.toString(), (Object[]) userIdsBoxed);
       }
     }
     return DB.selectAllFrom(

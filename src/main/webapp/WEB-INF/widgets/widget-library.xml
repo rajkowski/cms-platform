@@ -1,5 +1,6 @@
 <?xml version="1.0" ?>
 <!--
+  ~ Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
   ~ Copyright 2022 SimIS Inc. (https://www.simiscms.com)
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,8 +44,10 @@
   <widget name="breadcrumbs" class="com.simisinc.platform.presentation.widgets.cms.BreadCrumbsWidget" />
   <widget name="searchForm" class="com.simisinc.platform.presentation.widgets.cms.SearchFormWidget" />
   <widget name="searchInfo" class="com.simisinc.platform.presentation.widgets.cms.SearchInfoWidget" />
+  <widget name="searchFilterSidebar" class="com.zeroio.platform.presentation.widgets.cms.SearchFilterSidebarWidget" />
   <widget name="webPageSearchResults" class="com.simisinc.platform.presentation.widgets.cms.WebPageSearchResultsWidget" />
   <widget name="webPageTitleSearchResults" class="com.simisinc.platform.presentation.widgets.cms.WebPageTitleSearchResultsWidget" />
+  <widget name="fileSearchResults" class="com.zeroio.platform.presentation.widgets.cms.FileSearchResultsWidget" />
   <widget name="tableOfContents" class="com.simisinc.platform.presentation.widgets.cms.TableOfContentsWidget" />
   <widget name="tableOfContentsEditor" class="com.simisinc.platform.presentation.widgets.cms.TableOfContentsEditorWidget" />
   <widget name="link" class="com.simisinc.platform.presentation.widgets.cms.LinkWidget" />
@@ -78,6 +81,15 @@
   <widget name="videoBrowser" class="com.simisinc.platform.presentation.widgets.cms.VideoBrowserWidget" />
   <widget name="fileBrowser" class="com.simisinc.platform.presentation.widgets.cms.FileBrowserWidget" />
   <widget name="contentBrowser" class="com.simisinc.platform.presentation.widgets.cms.ContentBrowserWidget" />
+  <widget name="datasetViewer" class="com.zeroio.platform.presentation.widgets.datasets.DatasetDisplayWidget" />
+  <widget name="diagramBrowser" class="com.zeroio.platform.presentation.widgets.cms.DiagramBrowserWidget" />
+  <widget name="pageAnalytics" class="com.zeroio.platform.presentation.widgets.cms.PageAnalyticsWidget" />
+  <widget name="pageBreadcrumb" class="com.zeroio.platform.presentation.widgets.cms.PageBreadcrumbWidget" />
+  <widget name="pageSummary" class="com.zeroio.platform.presentation.widgets.cms.PageSummaryWidget" />
+  <widget name="pageLabels" class="com.zeroio.platform.presentation.widgets.cms.PageLabelsWidget" />
+  <widget name="pageTableOfContents" class="com.zeroio.platform.presentation.widgets.cms.PageTableOfContentsWidget" />
+  <widget name="pageChildren" class="com.zeroio.platform.presentation.widgets.cms.PageChildrenWidget" />
+  <widget name="pageFiles" class="com.zeroio.platform.presentation.widgets.cms.PageFilesWidget" />
   <widget name="wiki" class="com.simisinc.platform.presentation.widgets.cms.WikiWidget" />
   <widget name="wikiEditor" class="com.simisinc.platform.presentation.widgets.cms.WikiEditorWidget" />
   <widget name="streamImage" class="com.simisinc.platform.presentation.widgets.cms.StreamImageWidget" />
@@ -101,6 +113,7 @@
   <widget name="myEmailPreferences" class="com.simisinc.platform.presentation.widgets.userProfile.MyEmailPreferencesWidget" />
   <widget name="myOrderHistory" class="com.simisinc.platform.presentation.widgets.userProfile.MyOrderHistoryWidget" />
   <widget name="myProfileInfo" class="com.simisinc.platform.presentation.widgets.userProfile.MyProfileInfoWidget" />
+  <widget name="myActivity" class="com.zeroio.platform.presentation.widgets.userprofile.MyActivityWidget" />
 <!--  <widget name="myProfileImage" class="com.simisinc.platform.presentation.widgets.userProfile.MyProfileImageWidget" />-->
   <widget name="editMyProfile" class="com.simisinc.platform.presentation.widgets.userProfile.EditMyProfileFormWidget" />
   <!-- E-Commerce Features -->
@@ -129,6 +142,7 @@
   <widget name="upcomingCalendarEvents" class="com.simisinc.platform.presentation.widgets.calendar.UpcomingCalendarEventsWidget" />
   <widget name="calendarEventDetails" class="com.simisinc.platform.presentation.widgets.calendar.CalendarEventDetailsWidget" />
   <widget name="calendarSearchResults" class="com.simisinc.platform.presentation.widgets.calendar.CalendarSearchResultsWidget" />
+  <!-- Other -->
   <widget name="map" class="com.simisinc.platform.presentation.widgets.maps.MapWidget" />
   <widget name="propertyMapApp" class="com.simisinc.platform.presentation.widgets.maps.PropertyMapAppWidget" />
   <widget name="todoList" class="com.simisinc.platform.presentation.widgets.todoList.TodoListWidget" />
@@ -144,6 +158,7 @@
   <widget name="addItemForm" class="com.simisinc.platform.presentation.widgets.items.CreateAnItemWidget" />
   <widget name="editItemButton" class="com.simisinc.platform.presentation.widgets.items.EditItemButtonWidget" />
   <widget name="editItemForm" class="com.simisinc.platform.presentation.widgets.items.EditItemFormWidget" />
+  <widget name="itemVersionHistory" class="com.zeroio.platform.presentation.widgets.items.ItemVersionHistoryWidget" />
   <widget name="editItemGeoJSON" class="com.simisinc.platform.presentation.widgets.items.EditItemGeoJSONWidget" />
   <widget name="approveItemButton" class="com.simisinc.platform.presentation.widgets.items.ApproveItemButtonWidget" />
   <widget name="hideItemButton" class="com.simisinc.platform.presentation.widgets.items.HideItemButtonWidget" />

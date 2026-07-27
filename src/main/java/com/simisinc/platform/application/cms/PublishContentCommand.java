@@ -21,9 +21,15 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.domain.events.cms.WebPageUpdatedEvent;
 import com.simisinc.platform.domain.model.cms.Content;
+import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.infrastructure.persistence.cms.ContentRepository;
+import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
 import com.simisinc.platform.infrastructure.scheduler.cms.RefreshWebPageTextIndexJob;
+import com.simisinc.platform.infrastructure.workflow.WorkflowManager;
+import com.zeroio.platform.domain.model.cms.ContentVersion;
+import com.zeroio.platform.infrastructure.persistence.cms.ContentVersionRepository;
 
 /**
  * Publishes draft content to live
@@ -42,7 +48,7 @@ public class PublishContentCommand {
    * @return true if publish was successful
    * @throws DataException if content not found or no draft exists
    */
-  public static boolean publishContent(String uniqueId) throws DataException {
+  public static boolean publishContent(String uniqueId, long userId) throws DataException {
 
     // Validate input
     if (StringUtils.isBlank(uniqueId)) {
@@ -62,13 +68,53 @@ public class PublishContentCommand {
 
     // Publish using repository's atomic update
     // This atomically moves draft_content to content and clears draft_content
-    ContentRepository.publish(content);
+    boolean published = publishContent(content, userId, null);
+    if (!published) {
+      throw new DataException("Failed to publish content for: " + uniqueId);
+    }
 
     LOG.debug("Published draft content for: " + uniqueId);
 
     // Refresh dependent web pages asynchronously
     RefreshWebPageTextIndexJob.enqueueForContent(uniqueId);
 
+    return true;
+  }
+
+  /**
+   * Publishes draft content to live by atomically moving draft_content to content field
+   *
+   * @param content the content to publish
+   * @param userId the ID of the user performing the publish
+   * @param referringResourcePath the path of the referring web page, if any
+   * @return true if publish was successful
+   */
+  public static boolean publishContent(Content content, long userId, String referringResourcePath) {
+    // Verify draft content exists
+    if (StringUtils.isBlank(content.getDraftContent())) {
+      return false;
+    }
+
+    // Make a content version with the original content
+    ContentVersion version = new ContentVersion();
+    version.setContentId(content.getId());
+    version.setContent(content.getContent());
+    version.setCreatedBy(userId);
+    version.setNotes("Version saved before publishing update");
+    ContentVersionRepository.save(version);
+
+    // Publish the content
+    ContentRepository.publish(content);
+
+    // Use the related web page if there is one
+    WebPage webPage = LoadWebPageCommand.loadByLink(referringResourcePath);
+    if (webPage != null) {
+      // Mark the web page as modified
+      WebPageRepository.markAsModified(webPage, userId);
+
+      // Trigger any necessary events or notifications
+      WorkflowManager.triggerWorkflowForEvent(new WebPageUpdatedEvent(webPage, userId));
+    }
     return true;
   }
 }

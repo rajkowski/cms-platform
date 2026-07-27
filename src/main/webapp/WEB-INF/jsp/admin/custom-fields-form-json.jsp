@@ -1,4 +1,5 @@
 <%--
+  ~ Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
   ~ Copyright 2022 SimIS Inc.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,7 +51,7 @@
 [ {
   "label": "Open",
   "name": "Open",
-  "type": "text | textarea | html | list"
+  "type": "text | textarea | html | list | multi-select list"
 }, {
   "label": "Close",
   "name": "Close",

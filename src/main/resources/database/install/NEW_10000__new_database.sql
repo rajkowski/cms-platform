@@ -1,7 +1,18 @@
--- Copyright 2022 SimIS Inc. (https://www.simiscms.com), Licensed under the Apache License, Version 2.0 (the "License").
+-- Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
+-- Copyright 2022 SimIS Inc. (https://www.simiscms.com)
+-- Licensed under the Apache License, Version 2.0 (the "License").
 -- Core Database
 
-CREATE EXTENSION IF NOT EXISTS postgis;
+-- Have the admin create it
+DO $$
+BEGIN
+    CREATE EXTENSION postgis;
+EXCEPTION
+    WHEN duplicate_object THEN
+        RAISE NOTICE 'PostGIS extension already exists.';
+    WHEN others THEN
+        RAISE WARNING 'An error occurred: %', SQLERRM;
+END $$;
 
 CREATE TABLE database_version (
   version_id BIGSERIAL PRIMARY KEY,
@@ -50,6 +61,8 @@ INSERT INTO site_properties (property_order, property_label, property_name, prop
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (60, 'Show privacy policy link?', 'site.privacy.policy', 'true', 'boolean');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (61, 'Show terms and conditions link?', 'site.terms.conditions', 'true', 'boolean');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (100, 'Default Timezone', 'site.timezone', 'America/New_York', 'timezone');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (145, 'Show global page hierarchy button?', 'site.pageChildren.overlay.enabled', 'false', 'boolean');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (147, 'Use regions?', 'site.regions.enabled', 'false', 'boolean');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (150, 'Show site confirmation?', 'site.confirmation', 'false', 'boolean');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value) VALUES (152, 'Confirmation line 1', 'site.confirmation.line1', 'To visit this site, you must be 21.');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value) VALUES (153, 'Confirmation line 2', 'site.confirmation.line2', 'Please confirm that you are 21 years of age or older.');
@@ -370,6 +383,14 @@ CREATE TABLE permission_group_members (
 );
 
 CREATE INDEX idx_permission_group_members_group_code ON permission_group_members(group_code);
+
+CREATE TABLE regions (
+  region_id BIGSERIAL PRIMARY KEY,
+  level INTEGER NOT NULL DEFAULT 0,
+  code VARCHAR(20) UNIQUE NOT NULL,
+  name VARCHAR(100),
+  values JSONB
+);
 
 -- Apps which use API keys for tracking and analytics, or for third party integrations.
 

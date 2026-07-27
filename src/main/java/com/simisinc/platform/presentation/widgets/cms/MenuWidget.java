@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,7 +31,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
-import com.simisinc.platform.application.cms.FontCommand;
 import com.simisinc.platform.application.cms.LoadTableOfContentsCommand;
 import com.simisinc.platform.application.items.LoadCollectionCommand;
 import com.simisinc.platform.application.items.LoadItemCommand;
@@ -119,6 +119,7 @@ public class MenuWidget extends GenericWidget {
         String roleValue = valueMap.get("role");
         String groupValue = valueMap.get("group");
         String ruleValue = valueMap.get("rule");
+        // Custom Menu Types: "admin", "cart", "myAdminMenu"
         if ("admin".equals(type)) {
           link = "/admin";
           if (StringUtils.isBlank(container)) {
@@ -126,6 +127,10 @@ public class MenuWidget extends GenericWidget {
           }
           if (StringUtils.isBlank(roleValue)) {
             roleValue = "admin,content-manager,community-manager,data-manager,ecommerce-manager";
+          }
+        } else if ("myAdminMenu".equals(type)) {
+          if (StringUtils.isBlank(container)) {
+            container = "myAdminMenu";
           }
         } else if ("cart".equals(type)) {
           // Check that the cart is enabled
@@ -179,8 +184,12 @@ public class MenuWidget extends GenericWidget {
         }
 
         // Prepare the link object
-        Map<String, String> properties = new HashMap();
-        addProperty(context, properties, "name", valueMap.get("name"));
+        String menuName = valueMap.get("name");
+        if ("${user.name}".equals(menuName)) {
+          menuName = context.getUserSession().getUser().getFullName();
+        }
+        Map<String, String> properties = new HashMap<>();
+        addProperty(context, properties, "name", menuName);
         addProperty(context, properties, "link", link);
         addProperty(context, properties, "class", menuItemClass);
         addProperty(context, properties, "container", container);
@@ -192,88 +201,14 @@ public class MenuWidget extends GenericWidget {
         }
         linkList.add(properties);
 
-        // Determine if this is an Admin menu, and the links which are allowed
-        if ("admin".equals(type)) {
-
-          // Determine collection options
-          Collection collection = null;
-          Item item = null;
-          boolean isCollectionPage = pagePath.startsWith("/show/");
-          if (isCollectionPage) {
-            String itemUniqueId = pagePath.substring("/show/".length());
-            if (itemUniqueId.contains("/")) {
-              itemUniqueId = itemUniqueId.substring(0, itemUniqueId.indexOf("/"));
-            }
-            item = LoadItemCommand.loadItemByUniqueIdForAuthorizedUser(itemUniqueId, context.getUserId());
-            if (item == null) {
-              Item unallowedItem = LoadItemCommand.loadItemByUniqueId(itemUniqueId);
-              if (unallowedItem != null) {
-                collection = LoadCollectionCommand.loadCollectionById(unallowedItem.getCollectionId());
-              }
-            } else {
-              collection = LoadCollectionCommand.loadCollectionById(item.getCollectionId());
-            }
+        // Determine if this is an Admin or MyAdmin menu, and add the shared sub-items
+        if ("admin".equals(type) || "myAdminMenu".equals(type)) {
+          addAdminMenuItems(context, linkList, container, pagePath);
+          addDivider(context, linkList, container, "users");
+          if ("myAdminMenu".equals(type)) {
+            addLink(context, linkList, "My Account", "/account", "fas fa-user-cog", container, "users");
           }
-
-          // Skip options that do not apply to the current page
-          boolean thisPageIsSkipped = (pagePath.startsWith("/admin") || pagePath.startsWith("/content-editor")
-              || isCollectionPage);
-
-          // Add the additional admin items
-          addLink(context, linkList, "CMS", "/admin", "fa fa-circle-nodes", container,
-              "admin,content-manager,community-manager,data-manager,ecommerce-manager");
-
-          // Add Page Editing Links
-          if (!thisPageIsSkipped) {
-            addDivider(context, linkList, container, "admin,content-manager");
-            addLink(context, linkList, "Web Page Editor", "/admin/visual-page-editor?webPage=" + pagePath, "fa fa-window-maximize",
-                container, "admin,content-manager");
-            addLink(context, linkList, "Page Info", "/admin/web-page?webPage=" + pagePath, "fa fa-info", container,
-                "admin,content-manager");
-            addLink(context, linkList, "Page CSS", "/admin/css-editor?webPage=" + pagePath + "&returnPage=" + pagePath,
-                "fa fa-css3", container, "admin");
-            addLink(context, linkList, "Code Editor", "/admin/web-page-designer?webPage=" + pagePath, "fa fa-code",
-                container, "admin,content-manager");
-          }
-
-          // Add Collection and Item Editing Links
-          if (isCollectionPage && collection != null) {
-            if (item != null) {
-              addDivider(context, linkList, container, "admin");
-              addLink(context, linkList, "Edit Item Details",
-                  "/edit/" + item.getUniqueId() + "?returnPage=/show/" + item.getUniqueId(), "fa fa-edit", container,
-                  "admin");
-              addLink(context, linkList, "Edit Item GeoJSON",
-                  "/edit/" + item.getUniqueId() + "/geojson?returnPage=/show/" + item.getUniqueId(), "fa fa-edit", container,
-                  "admin");
-              addLink(context, linkList, "Edit Item Settings", "/show/" + item.getUniqueId() + "/settings",
-                  "fa fa-edit", container, "admin");
-            }
-            addDivider(context, linkList, container, "admin");
-            addLink(context, linkList, "Collection Setup",
-                "/admin/collection-details?collectionId=" + collection.getId(), "fa fa-info", container, "admin");
-            addLink(context, linkList, "Collection Theme", "/admin/collection-theme?collectionId=" + collection.getId(),
-                "fa fa-swatchbook", container, "admin");
-            //            addLink(context, linkList, "Collection CSS", "/admin/css-editor?collection=" + collection.getId() + "&returnPage=" + pagePath, "fa fa-css3", container, "admin");
-            //            addLink(context, linkList, "Collection Layout", "/admin/web-page-designer?collection=" + collection.getId() + "&returnPage=" + pagePath, "fa fa-th-large", container, "admin");
-          }
-
-          addDivider(context, linkList, container, "admin");
-          addLink(context, linkList, "Site Theme", "/admin/theme-properties", "fa fa-swatchbook", container, "admin");
-          addLink(context, linkList, "Site CSS", "/admin/css-editor?returnPage=" + pagePath, "fa fa-css3", container,
-              "admin");
-          addLink(context, linkList, "Site Header Layout",
-              "/admin/web-container-designer?name=header.default&returnPage=" + pagePath,
-              FontCommand.fal() + " fa-code", container, "admin");
-          addLink(context, linkList, "Site Footer Layout",
-              "/admin/web-container-designer?name=footer.default&returnPage=" + pagePath,
-              FontCommand.fal() + " fa-code", container, "admin");
-
-          // Add a Logout for users
-          if (linkList.size() > 1) {
-            addDivider(context, linkList, container, "users");
-          }
-          addLink(context, linkList, "Logout", "/logout", "fa fa-sign-out-alt", container, "users");
+          addLink(context, linkList, "Logout", "/logout", "fas fa-sign-out-alt", container, "users");
         }
       } catch (Exception e) {
         LOG.error("Could not get property: " + e.getMessage());
@@ -409,5 +344,122 @@ public class MenuWidget extends GenericWidget {
       properties.put("container", container);
     }
     linkList.add(properties);
+  }
+
+  private static void addSectionTitle(List<Map<String, String>> linkList, String title, String container) {
+    Map<String, String> properties = new HashMap<>();
+    properties.put("section-title", title);
+    if (StringUtils.isNotBlank(container)) {
+      properties.put("container", container);
+    }
+    linkList.add(properties);
+  }
+
+  private static void addAdminLink(WidgetContext context, List<Map<String, String>> linkList,
+      String name, String link, String icon, String container, String roleValue) {
+    if (StringUtils.isNotBlank(roleValue) && !checkUserAccess(context, roleValue, null)) {
+      return;
+    }
+    Map<String, String> properties = new HashMap<>();
+    properties.put("name", name);
+    properties.put("link", link);
+    if (StringUtils.isNotBlank(container)) {
+      properties.put("container", container);
+    }
+    if (StringUtils.isNotBlank(icon)) {
+      properties.put("icon", icon);
+    }
+    properties.put("admin-grid", "true");
+    linkList.add(properties);
+  }
+
+  private static void addAdminMenuItems(WidgetContext context, List<Map<String, String>> linkList,
+      String container, String pagePath) {
+    // Determine collection context
+    boolean isCollectionPage = pagePath.startsWith("/show/");
+    Collection collection = null;
+    Item item = null;
+    if (isCollectionPage) {
+      String itemUniqueId = pagePath.substring("/show/".length());
+      if (itemUniqueId.contains("/")) {
+        itemUniqueId = itemUniqueId.substring(0, itemUniqueId.indexOf("/"));
+      }
+      item = LoadItemCommand.loadItemByUniqueIdForAuthorizedUser(itemUniqueId, context.getUserId());
+      if (item == null) {
+        Item unallowedItem = LoadItemCommand.loadItemByUniqueId(itemUniqueId);
+        if (unallowedItem != null) {
+          collection = LoadCollectionCommand.loadCollectionById(unallowedItem.getCollectionId());
+        }
+      } else {
+        collection = LoadCollectionCommand.loadCollectionById(item.getCollectionId());
+      }
+    }
+    boolean thisPageIsSkipped = (pagePath.startsWith("/admin") || pagePath.startsWith("/content-editor")
+        || isCollectionPage);
+
+    // Admin Tools section
+    addSectionTitle(linkList, "Admin Tools", container);
+    addAdminLink(context, linkList, "Analytics", "/admin/visual-analytics-dashboard",
+        "fas fa-chart-line", container, "admin");
+    addAdminLink(context, linkList, "Content", "/admin/visual-content-editor?webPage=" + pagePath,
+        "fas fa-edit", container, "admin,content-manager");
+    addAdminLink(context, linkList, "Web Pages", "/admin/visual-page-editor?webPage=" + pagePath,
+        "fas fa-file-lines", container, "admin,content-manager");
+    addAdminLink(context, linkList, "Images", "/admin/visual-image-editor?returnPage=" + pagePath,
+        "fas fa-image", container, "admin,content-manager");
+    addAdminLink(context, linkList, "Documents", "/admin/visual-document-editor?returnPage=" + pagePath,
+        "fas fa-folder-open", container, "admin,content-manager");
+    addAdminLink(context, linkList, "Data", "/admin/visual-data-editor?returnPage=" + pagePath,
+        "fas fa-database", container, "admin,data-manager");
+
+    // Classic Tools section
+    addSectionTitle(linkList, "Classic Tools", container);
+    addAdminLink(context, linkList, "Contacts", "/admin/form-data#contact-management",
+        "fas fa-envelope-open-text", container, "admin,community-manager");
+    addAdminLink(context, linkList, "Commerce", "/admin/e-commerce/analytics",
+        "fas fa-shopping-bag", container, "admin,ecommerce-manager");
+    addAdminLink(context, linkList, "Users", "/admin/users",
+        "fas fa-users", container, "admin");
+    addAdminLink(context, linkList, "Theme", "/admin/theme-properties#theme",
+        "fas fa-palette", container, "admin");
+    addAdminLink(context, linkList, "Site CSS", "/admin/css-editor?returnPage=" + pagePath,
+        "fas fa-code", container, "admin");
+    addAdminLink(context, linkList, "Setup", "/admin",
+        "fas fa-cog", container, "admin");
+
+    // Page Tools section (only for non-admin, non-collection pages)
+    if (!thisPageIsSkipped) {
+      addSectionTitle(linkList, "Page Tools", container);
+      addAdminLink(context, linkList, "Page Info", "/admin/web-page?webPage=" + pagePath,
+          "fas fa-info-circle", container, "admin,content-manager");
+      addAdminLink(context, linkList, "Page CSS",
+          "/admin/css-editor?webPage=" + pagePath + "&returnPage=" + pagePath,
+          "fas fa-paint-brush", container, "admin");
+      addAdminLink(context, linkList, "Page XML", "/admin/web-page-designer?webPage=" + pagePath,
+          "fas fa-code", container, "admin,content-manager");
+    }
+
+    // Collection / Item tools
+    if (isCollectionPage && collection != null) {
+      if (item != null) {
+        addSectionTitle(linkList, "Item Tools", container);
+        addAdminLink(context, linkList, "Edit Details",
+            "/edit/" + item.getUniqueId() + "?returnPage=/show/" + item.getUniqueId(),
+            "fas fa-edit", container, "admin");
+        addAdminLink(context, linkList, "Edit GeoJSON",
+            "/edit/" + item.getUniqueId() + "/geojson?returnPage=/show/" + item.getUniqueId(),
+            "fas fa-map", container, "admin");
+        addAdminLink(context, linkList, "Item Settings",
+            "/show/" + item.getUniqueId() + "/settings",
+            "fas fa-cog", container, "admin");
+      }
+      addSectionTitle(linkList, "Collection Tools", container);
+      addAdminLink(context, linkList, "Collection Setup",
+          "/admin/collection-details?collectionId=" + collection.getId(),
+          "fas fa-info-circle", container, "admin");
+      addAdminLink(context, linkList, "Collection Theme",
+          "/admin/collection-theme?collectionId=" + collection.getId(),
+          "fas fa-palette", container, "admin");
+    }
   }
 }

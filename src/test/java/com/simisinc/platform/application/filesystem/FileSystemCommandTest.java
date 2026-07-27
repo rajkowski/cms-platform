@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Matt Rajkowski (https://www.github.com/rajkowski)
+ * Copyright 2024-2026 Matt Rajkowski (https://www.github.com/rajkowski)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mockStatic;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,6 +33,10 @@ import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.simisinc.platform.domain.model.SiteProperty;
 import com.simisinc.platform.infrastructure.cache.CacheManager;
 
+/**
+ * @author matt rajkowski
+ * @created 7/24/26 8:00 AM
+ */
 public class FileSystemCommandTest {
 
   private static List<SiteProperty> findByPrefix(String uniqueId) {
@@ -57,9 +62,24 @@ public class FileSystemCommandTest {
 
   private LoadingCache<String, List<SiteProperty>> sitePropertyListCache;
 
+  /**
+   * FileSystemCommand memoizes its resolved paths in private static fields, and also prefers a
+   * CMS_PATH environment variable over the (mocked) site property cache. Force the cached fields
+   * back to the value the mocked site properties would resolve to, so tests behave the same
+   * whether or not CMS_PATH happens to be set on the host running the tests.
+   */
+  private static void setStaticField(String fieldName, String value) throws Exception {
+    Field field = FileSystemCommand.class.getDeclaredField(fieldName);
+    field.setAccessible(true);
+    field.set(null, value);
+  }
+
   @BeforeEach
-  public void init() {
+  public void init() throws Exception {
     sitePropertyListCache = Caffeine.newBuilder().build(FileSystemCommandTest::findByPrefix);
+    setStaticField("configPath", "." + File.separator);
+    setStaticField("filesPath", "." + File.separator);
+    setStaticField("staticSitePath", null);
   }
 
   @Test

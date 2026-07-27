@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +17,8 @@
 
 package com.simisinc.platform.presentation.widgets.items;
 
+import java.util.List;
+
 import com.simisinc.platform.application.items.ItemCustomFieldCommand;
 import com.simisinc.platform.application.items.LoadItemCommand;
 import com.simisinc.platform.domain.model.CustomField;
@@ -23,8 +26,6 @@ import com.simisinc.platform.domain.model.items.Item;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
 import com.simisinc.platform.presentation.widgets.cms.PreferenceEntriesList;
-
-import java.util.List;
 
 /**
  * Description
@@ -69,6 +70,9 @@ public class ItemFieldsWidget extends GenericWidget {
     // Standard request items
     context.getRequest().setAttribute("icon", context.getPreferences().get("icon"));
     context.getRequest().setAttribute("title", context.getPreferences().get("title"));
+
+    // Set preferences
+    context.getRequest().setAttribute("searchLink", context.getPreferences().getOrDefault("searchLink", "/search"));
 
     // Show the JSP
     context.setJsp(JSP);

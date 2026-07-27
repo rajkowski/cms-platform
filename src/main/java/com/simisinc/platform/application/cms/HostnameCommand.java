@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -75,6 +76,18 @@ public class HostnameCommand {
     }
     LOG.warn("Invalid hostname: " + hostname);
     return false;
+  }
+
+  /**
+   * Determines if an allow list is configured and names this hostname. Unlike passesCheck, an unconfigured allow list
+   * does not vouch for the hostname, so callers can tell "explicitly trusted" apart from "nothing was configured".
+   *
+   * @param hostname the hostname to look for
+   * @return true when a non-empty allow list contains the hostname
+   */
+  public static boolean isExplicitlyAllowed(String hostname) {
+    List<String> hostnameAllowList = listMap.get(HOSTNAME_ALLOW_LIST);
+    return hostnameAllowList != null && !hostnameAllowList.isEmpty() && hostnameAllowList.contains(hostname);
   }
 
 }

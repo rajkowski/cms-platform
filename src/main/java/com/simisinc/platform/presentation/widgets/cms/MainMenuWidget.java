@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,20 +17,16 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
-import com.simisinc.platform.application.cms.LoadMenuTabsCommand;
-import com.simisinc.platform.application.cms.ValidateUserAccessToWebPageCommand;
 import com.simisinc.platform.application.items.LoadCollectionCommand;
-import com.simisinc.platform.domain.model.cms.MenuItem;
 import com.simisinc.platform.domain.model.cms.MenuTab;
 import com.simisinc.platform.domain.model.items.Collection;
 import com.simisinc.platform.presentation.controller.RequestConstants;
-import com.simisinc.platform.presentation.controller.UserSession;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.zeroio.platform.application.cms.RenderMainMenuCommand;
 
 /**
  * Displays the site's main menu
@@ -60,7 +57,7 @@ public class MainMenuWidget extends GenericWidget {
     String view = context.getPreferences().get("view");
     boolean checkUser = "true".equals(context.getPreferences().getOrDefault("checkUser", "true"));
     boolean highlightActiveTab = Boolean.parseBoolean(context.getPreferences().getOrDefault("useHighlight", "true"));
-    context.getRequest().setAttribute("useHighlight", highlightActiveTab ? "true" : "false");    
+    context.getRequest().setAttribute("useHighlight", highlightActiveTab ? "true" : "false");
     boolean highlightSubmenuItem = Boolean.parseBoolean(context.getPreferences().getOrDefault("highlightSubmenuItem", "true"));
     context.getRequest().setAttribute("highlightSubmenuItem", highlightSubmenuItem ? "true" : "false");
     boolean useSmallHighlight = Boolean.parseBoolean(context.getPreferences().getOrDefault("useSmallHighlight", "false"));
@@ -70,13 +67,6 @@ public class MainMenuWidget extends GenericWidget {
     context.getRequest().setAttribute("submenuIcon", context.getPreferences().get("submenuIcon"));
     context.getRequest().setAttribute("submenuIconClass", context.getPreferences().get("submenuIconClass"));
 
-    // Base the menu on the user
-    UserSession userSession = context.getUserSession();
-
-    // Prepare the menu
-    List<MenuTab> menuTabList = LoadMenuTabsCommand.loadActiveIncludeMenuItemList();
-    List<MenuTab> menuTabListToUse = new ArrayList<>();
-
     // Check for a collection to match the title to
     Collection collection = null;
     String collectionUniqueId = context.getCoreData().get("collectionUniqueId");
@@ -85,57 +75,9 @@ public class MainMenuWidget extends GenericWidget {
       context.getRequest().setAttribute("collection", collection);
     }
 
-    int menuTabCounter = 0;
-    for (MenuTab menuTab : menuTabList) {
-      ++menuTabCounter;
-      // Remove redundant Home (the first one)
-      if (menuTabCounter == 1 && menuTab.getLink().equals("/")) {
-        continue;
-      }
-      // Verify the content manager, or that the page has content for other users, based on content, roles and groups
-      if (context.hasRole("admin") || context.hasRole("content-manager") || !checkUser ||
-          ValidateUserAccessToWebPageCommand.hasAccess(menuTab.getLink(), userSession)) {
-        // Copy the MenuTab, since a cache was used
-        MenuTab thisMenuTab = new MenuTab();
-        thisMenuTab.setName(menuTab.getName());
-        thisMenuTab.setLink(menuTab.getLink());
-        thisMenuTab.setIcon(menuTab.getIcon());
-        // Determine if the menuTab should be highlighted
-        if (highlightActiveTab) {
-          // Is active when menuTab matches the page path, or the collection name is a match
-          if ((menuTab.getLink().equals(context.getRequest().getPagePath())) ||
-              (collection != null && collection.getName().equalsIgnoreCase(menuTab.getName()))) {
-            thisMenuTab.setActive(true);
-          }
-        }
-        // Process the sub-menu items
-        if (menuTab.getMenuItemList() != null) {
-          List<MenuItem> thisMenuItemList = new ArrayList<>();
-          for (MenuItem menuItem : menuTab.getMenuItemList()) {
-            if (ValidateUserAccessToWebPageCommand.hasAccess(menuItem.getLink(), userSession)) {
-              // Copy the menu item, since a cache was used
-              MenuItem thisMenuItem = new MenuItem();
-              thisMenuItem.setName(menuItem.getName());
-              thisMenuItem.setLink(menuItem.getLink());
-              // Is active when menuItem matches the page path
-              if (thisMenuItem.getLink().equals(context.getRequest().getPagePath())) {
-                if (highlightActiveTab) {
-                  thisMenuTab.setActive(true);
-                }
-                if ((highlightSubmenuItem)) {
-                  thisMenuItem.setActive(true);
-                }
-              }
-              thisMenuItemList.add(thisMenuItem);
-            }
-          }
-          if (!thisMenuItemList.isEmpty()) {
-            thisMenuTab.setMenuItemList(thisMenuItemList);
-          }
-          menuTabListToUse.add(thisMenuTab);
-        }
-      }
-    }
+    // Prepare the menu based on the user
+    List<MenuTab> menuTabListToUse = RenderMainMenuCommand.renderMainMenu(context.getRequest().getPagePath(), context.getUserSession(),
+        collection, checkUser, highlightActiveTab, highlightSubmenuItem);
     context.getRequest().setAttribute(RequestConstants.MASTER_MENU_TAB_LIST, menuTabListToUse);
 
     // Show the JSP

@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +16,8 @@
  */
 
 package com.simisinc.platform.infrastructure.persistence.cms;
+
+import java.sql.Timestamp;
 
 import com.simisinc.platform.domain.model.Entity;
 import com.simisinc.platform.presentation.controller.DataConstants;
@@ -33,7 +36,7 @@ public class FileSpecification extends Entity {
   private String filename = null;
   private String barcode = null;
   private long createdBy = -1;
-  private String fileType = null;
+  private String[] fileType = null;
   private Long forUserId = -1L;
   private String matchesName = null;
   private String searchName = null;
@@ -41,6 +44,11 @@ public class FileSpecification extends Entity {
   private int withinLastDays = -1;
   private int inASubFolder = DataConstants.UNDEFINED;
   private String versionWebPath = null;
+  private String[] regionTags = null;
+  private String[] filterTags = null;
+  private Timestamp modifiedAfter = null;
+  private Timestamp modifiedBefore = null;
+  private long[] modifiedByUserIds = null;
 
   public String getVersionWebPath() {
     return versionWebPath;
@@ -101,12 +109,24 @@ public class FileSpecification extends Entity {
     this.createdBy = createdBy;
   }
 
-  public String getFileType() {
+  public String[] getFileType() {
     return fileType;
   }
 
-  public void setFileType(String fileType) {
-    this.fileType = fileType;
+  public void setFileType(String[] value) {
+    this.fileType = value;
+  }
+
+  public void setFileType(String value) {
+    if (value != null && !value.isEmpty()) {
+      String[] valueArray = value.split(",");
+      for (int i = 0; i < valueArray.length; i++) {
+        valueArray[i] = valueArray[i].trim();
+      }
+      this.fileType = valueArray;
+    } else {
+      this.fileType = null;
+    }
   }
 
   public Long getForUserId() {
@@ -159,5 +179,45 @@ public class FileSpecification extends Entity {
 
   public void setInASubFolder(boolean inASubFolder) {
     this.inASubFolder = (inASubFolder ? DataConstants.TRUE : DataConstants.FALSE);
+  }
+
+  public String[] getFilterTags() {
+    return filterTags;
+  }
+
+  public void setFilterTags(String[] filterTags) {
+    this.filterTags = filterTags;
+  }
+
+  public String[] getRegionTags() {
+    return regionTags;
+  }
+
+  public void setRegionTags(String[] regionTags) {
+    this.regionTags = regionTags;
+  }
+
+  public Timestamp getModifiedAfter() {
+    return modifiedAfter;
+  }
+
+  public void setModifiedAfter(Timestamp modifiedAfter) {
+    this.modifiedAfter = modifiedAfter;
+  }
+
+  public Timestamp getModifiedBefore() {
+    return modifiedBefore;
+  }
+
+  public void setModifiedBefore(Timestamp modifiedBefore) {
+    this.modifiedBefore = modifiedBefore;
+  }
+
+  public long[] getModifiedByUserIds() {
+    return modifiedByUserIds;
+  }
+
+  public void setModifiedByUserIds(long[] modifiedByUserIds) {
+    this.modifiedByUserIds = modifiedByUserIds;
   }
 }

@@ -1,5 +1,11 @@
 /**
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
+ * Licensed under the Apache License, Version 2.0
+ *
  * Handles file listing, selection, preview, and file uploads
+ * 
+ * @author matt rajkowski
+ * @created 7/24/26 8:00 AM
  */
 
 class DocumentFileManager {
@@ -7,12 +13,16 @@ class DocumentFileManager {
     this.editor = editor;
     this.token = editor.config.token;
     this.folderId = -1;
+    this.collectionId = -1;
     this.parentFolderId = -1;
     this.subFolderId = -1;
+    this.sourceType = 'folder';
     this.files = [];
     this.subfolders = [];
     this.tableBody = null;
     this.searchInput = document.getElementById('file-search');
+    this.errorOnlyToggle = document.getElementById('file-error-toggle');
+    this.showErrorsOnly = false;
     this.viewMode = 'table'; // 'table' or 'preview'
     this.currentFile = null;
   }
@@ -24,6 +34,14 @@ class DocumentFileManager {
     }
     if (this.searchInput) {
       this.searchInput.addEventListener('input', () => this.reload());
+    }
+    if (this.errorOnlyToggle) {
+      this.errorOnlyToggle.addEventListener('click', () => {
+        this.showErrorsOnly = !this.showErrorsOnly;
+        this.errorOnlyToggle.classList.toggle('active', this.showErrorsOnly);
+        this.errorOnlyToggle.setAttribute('aria-pressed', String(this.showErrorsOnly));
+        this.reload();
+      });
     }
 
     // File upload
@@ -173,6 +191,8 @@ class DocumentFileManager {
   }
 
   setFolder(folderId, parentFolderId) {
+    this.sourceType = 'folder';
+    this.collectionId = -1;
     this.folderId = folderId;
     if (parentFolderId) {
       // When parentFolderId is provided, this is a subfolder selection
@@ -190,6 +210,16 @@ class DocumentFileManager {
     this.reload();
   }
 
+  setCollection(collectionId) {
+    this.sourceType = 'collection';
+    this.collectionId = collectionId;
+    this.folderId = -1;
+    this.parentFolderId = -1;
+    this.subFolderId = -1;
+    this.updateBrowserTitle(collectionId, null);
+    this.reload();
+  }
+
   updateBrowserTitle(folderId, parentFolderId) {
     const titleElement = document.getElementById('document-browser-title');
     if (!titleElement) {
@@ -197,6 +227,13 @@ class DocumentFileManager {
     }
 
     // Get the folder object from the library manager
+    if (this.sourceType === 'collection') {
+      const collection = this.editor.library.collections.find((c) => Number(c.id) === Number(folderId));
+      const icon = '<i class="fas fa-layer-group"></i>';
+      titleElement.innerHTML = `${icon} ${collection ? (collection.name || 'Untitled Collection') : 'Collection'}`;
+      return;
+    }
+
     const folder = this.editor.library.getCurrentFolder(folderId);
     if (!folder) {
       titleElement.innerHTML = 'Files';
@@ -224,22 +261,27 @@ class DocumentFileManager {
   }
 
   async reload() {
-    if (this.folderId === -1) {
+    if (this.sourceType !== 'collection' && this.folderId === -1) {
       return;
     }
     try {
       const searchTerm = this.searchInput ? this.searchInput.value.trim() : '';
       const url = new URL(`${this.editor.config.apiBaseUrl}/documentFileList`, globalThis.location.origin);
-      if (this.subFolderId > -1) {
+      if (this.sourceType === 'collection') {
+        url.searchParams.set('collectionId', this.collectionId);
+      } else if (this.subFolderId > -1) {
         url.searchParams.set('folderId', this.parentFolderId);
         url.searchParams.set('subFolderId', this.subFolderId);
       } else {
         url.searchParams.set('folderId', this.folderId);
       }
       url.searchParams.set('page', 1);
-      url.searchParams.set('limit', 50);
+      url.searchParams.set('limit', -1); // Load all files for now
       if (searchTerm) {
         url.searchParams.set('search', searchTerm);
+      }
+      if (this.showErrorsOnly) {
+        url.searchParams.set('errorOnly', 'true');
       }
 
       this.editor.showLoading();
@@ -248,11 +290,13 @@ class DocumentFileManager {
         throw new Error(`HTTP ${response.status}`);
       }
       const payload = await response.json();
-      this.files = payload.files || [];
+      this.files = (payload.files || []).filter((file) => !this.showErrorsOnly || file.error === true || file.error === 'true');
       
       // Load subfolders if viewing a root folder
-      if (this.subFolderId === -1 && this.parentFolderId === -1) {
+      if (this.sourceType === 'folder' && this.subFolderId === -1 && this.parentFolderId === -1) {
         await this.loadSubfoldersForDisplay(this.folderId);
+      } else if (this.sourceType === 'collection') {
+        this.subfolders = [];
       }
       
       this.render();
@@ -292,6 +336,8 @@ class DocumentFileManager {
     }
     this.tableBody.innerHTML = '';
 
+    const files = this.showErrorsOnly ? this.files.filter((file) => file.error === true || file.error === 'true') : this.files;
+
     // If viewing a subfolder, show parent navigation
     if (this.subFolderId > -1 && this.parentFolderId > -1) {
       const row = document.createElement('tr');
@@ -309,7 +355,7 @@ class DocumentFileManager {
     }
 
     // Render subfolders first (if viewing a root folder)
-    if (this.subfolders && this.subfolders.length > 0 && this.subFolderId === -1) {
+    if (this.sourceType === 'folder' && this.subfolders && this.subfolders.length > 0 && this.subFolderId === -1) {
       this.subfolders.forEach((subfolder) => {
         const row = document.createElement('tr');
         row.dataset.subFolderId = subfolder.id;
@@ -346,9 +392,19 @@ class DocumentFileManager {
     this.files.forEach((file) => {
       const row = document.createElement('tr');
       row.dataset.fileId = file.id;
+      row.dataset.sourceType = file.sourceType || this.sourceType;
+      const fileTitle = file.title || file.filename || 'Untitled';
+      const errorBadge = file.error
+        ? '<span class="missing-file-badge" title="File exists in the database but is missing on the server"><i class="fas fa-triangle-exclamation"></i> Error</span>'
+        : '';
 
       row.innerHTML = `
-        <td><span class="file-icon">${this.getMimeIcon(file.mimeType, file.filename)}</span> ${file.title || file.filename || 'Untitled'}</td>
+        <td>
+          <div class="file-title-cell">
+            <span class="file-title-main"><span class="file-icon">${this.getMimeIcon(file.mimeType, file.filename)}</span> ${fileTitle}</span>
+            ${errorBadge}
+          </div>
+        </td>
         <td>${file.version || ''}</td>
         <td>${file.mimeType || ''}</td>
         <td>${file.fileLength ? this.formatSize(file.fileLength) : ''}</td>
@@ -357,7 +413,7 @@ class DocumentFileManager {
       `;
 
       row.addEventListener('click', () => {
-        this.selectFile(file.id);
+        this.selectFile(file);
       });
 
       this.tableBody.appendChild(row);
@@ -395,18 +451,25 @@ class DocumentFileManager {
     }
   }
 
-  selectFile(fileId) {
+  selectFile(fileOrId) {
+    const fileId = typeof fileOrId === 'object' && fileOrId !== null ? fileOrId.id : fileOrId;
+    const selectedFile = typeof fileOrId === 'object' && fileOrId !== null
+      ? fileOrId
+      : this.files.find((f) => Number(f.id) === Number(fileId));
+
     if (this.tableBody) {
       this.tableBody.querySelectorAll('tr').forEach((row) => {
         row.classList.toggle('active', Number(row.dataset.fileId) === Number(fileId));
       });
     }
+
     // Store current file for preview
-    this.currentFile = this.files.find(f => f.id === fileId);
+    this.currentFile = selectedFile || null;
     if (this.currentFile) {
+      this.currentFile.sourceType = this.currentFile.sourceType || this.sourceType;
       this.editor.showFileProperties(this.currentFile);
     }
-    this.editor.properties.loadFile(fileId);
+    this.editor.properties.loadFile(fileId, this.currentFile ? this.currentFile.sourceType : this.sourceType);
   }
 
   async saveVersion() {
@@ -419,12 +482,13 @@ class DocumentFileManager {
       alert('No file selected');
       return;
     }
-    if (!this.currentFile.url) {
+    const downloadUrl = this.currentFile.downloadUrl;
+    if (!downloadUrl) {
       alert('File URL not available');
       return;
     }
     // Open download in new window/tab
-    window.open(`/assets/file/${this.currentFile.url}`, '_blank');
+    window.open(downloadUrl, '_blank');
   }
 
   addVersion() {
@@ -525,6 +589,7 @@ class DocumentFileManager {
       formData.append('token', this.token);
       formData.append('fileId', this.currentFile.id);
       formData.append('file', file);
+      formData.append('sourceType', this.currentFile && this.currentFile.sourceType ? this.currentFile.sourceType : this.sourceType);
       const response = await fetch(`${this.editor.config.apiBaseUrl}/documentAddVersion`, {
         method: 'POST',
         body: formData,
@@ -553,6 +618,10 @@ class DocumentFileManager {
   moveFile() {
     if (!this.currentFile) {
       alert('No file selected');
+      return;
+    }
+    if ((this.currentFile.sourceType || this.sourceType) === 'collection') {
+      alert('Move is not available for collection files.');
       return;
     }
     const modal = document.getElementById('move-file-modal');
@@ -665,6 +734,7 @@ class DocumentFileManager {
       const formData = new FormData();
       formData.append('token', this.token);
       formData.append('fileId', this.currentFile.id);
+      formData.append('sourceType', this.currentFile && this.currentFile.sourceType ? this.currentFile.sourceType : this.sourceType);
       const response = await fetch(`${this.editor.config.apiBaseUrl}/documentDeleteFile`, {
         method: 'POST',
         body: formData,

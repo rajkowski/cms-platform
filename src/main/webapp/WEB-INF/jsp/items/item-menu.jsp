@@ -1,4 +1,5 @@
 <%--
+  ~ Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
   ~ Copyright 2022 SimIS Inc.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +26,7 @@
 <jsp:useBean id="category" class="com.simisinc.platform.domain.model.items.Category" scope="request"/>
 <jsp:useBean id="item" class="com.simisinc.platform.domain.model.items.Item" scope="request"/>
 <jsp:useBean id="itemTabList" class="java.util.ArrayList" scope="request"/>
+<jsp:useBean id="showAdminMenu" class="java.lang.String" scope="request"/>
 <style>
   <%-- Small menu is title-bar --%>
   <%-- Medium and up is menu-bar --%>
@@ -169,7 +171,7 @@
               <button type="button" class="button">Search</button>
             </li>
           </c:if>
-          <c:if test="${userSession.hasRole('admin')}">
+          <c:if test="${'true'.equals(showAdminMenu) && userSession.hasRole('admin')}">
             <li class="has-submenu">
               <a href="#"><i class="fa-fw fa fa-cog"></i></a>
               <ul class="submenu menu vertical">

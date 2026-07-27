@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +26,7 @@ import java.util.List;
 import javax.servlet.http.Part;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -32,6 +34,7 @@ import com.simisinc.platform.application.DataException;
 import com.simisinc.platform.application.filesystem.FileSystemCommand;
 import com.simisinc.platform.domain.model.cms.FileItem;
 import com.simisinc.platform.presentation.controller.WidgetContext;
+import com.zeroio.platform.presentation.controller.FileModulesConstants;
 
 /**
  * Validates, retrieves http file parts, and saves file item objects
@@ -42,57 +45,68 @@ import com.simisinc.platform.presentation.controller.WidgetContext;
 public class SaveFilePartCommand {
 
   private static Log LOG = LogFactory.getLog(SaveFilePartCommand.class);
+  private static String GLOBAL_MODULE = FileModulesConstants.UPLOADS;
 
   public static FileItem saveFile(WidgetContext context) throws DataException {
+    return saveFileToModule(GLOBAL_MODULE, context);
+  }
 
-    // Prepare to save the file
-    String serverRootPath = FileSystemCommand.getFileServerRootPathValue();
-    String serverSubPath = FileSystemCommand.generateFileServerSubPath("uploads");
-    String serverCompletePath = serverRootPath + serverSubPath;
-    String uniqueFilename = FileSystemCommand.generateUniqueFilename(context.getUserId());
-
-    // Find the file in the request and save it
-    String submittedFilename = null;
-    String extension = null;
-    long fileLength = 0;
-    File tempFile = null;
+  public static FileItem saveFileToModule(String serverModule, WidgetContext context) throws DataException {
     try {
       Part filePart = context.getPart("file");
-      if (filePart == null) {
-        return null;
-      }
-      fileLength = filePart.getSize();
-      if (fileLength <= 0) {
-        LOG.debug("The file size was 0");
-        return null;
-      }
+      return saveFile(serverModule, filePart, context.getUserId());
+    } catch (Exception e) {
+      throw new DataException("Could not save the uploaded file: " + e.getMessage());
+    }
+  }
 
+  public static FileItem saveFile(String serverModule, Part filePart, long userId) throws DataException {
+
+    // Validate the parameters
+    if (filePart == null || StringUtils.isBlank(filePart.getSubmittedFileName())) {
+      throw new DataException("An uploaded file was not found");
+    }
+
+    // Validate the file length
+    long fileLength = filePart.getSize();
+    if (fileLength <= 0) {
+      throw new DataException("The uploaded file was empty");
+    }
+
+    // Write the file to the specified path
+    String serverModulePath = FileSystemCommand.generateFileServerSubPath(serverModule);
+    String submittedFilename = null;
+    String extension = null;
+    File tempFile = null;
+    try {
       LOG.debug("Found a file...");
       submittedFilename = Paths.get(filePart.getSubmittedFileName()).getFileName().toString(); // MSIE fix.
-      extension = FilenameUtils.getExtension(submittedFilename);
-      tempFile = new File(serverCompletePath + uniqueFilename + "." + extension);
-
-      LOG.debug("Writing file " + fileLength + " bytes");
-      filePart.write(serverCompletePath + uniqueFilename + "." + extension);
-
+      extension = FileSystemCommand.cleanExtension(FilenameUtils.getExtension(submittedFilename));
+      tempFile = FileSystemCommand.generateTempFile(serverModule, userId, extension);
+      filePart.write(tempFile.getAbsolutePath());
     } catch (Exception e) {
-      LOG.warn("Could not handle file: " + e.getMessage());
       // Clean up the file
       if (tempFile != null && tempFile.exists()) {
-        LOG.warn("Deleting an uploaded file: " + serverCompletePath + uniqueFilename + "." + extension);
+        LOG.warn("Deleting an uploaded file: " + tempFile.getAbsolutePath());
         tempFile.delete();
       }
-      throw new DataException("There was an issue with the file");
+      LOG.debug("Could not save the uploaded file: " + e.getMessage());
+      throw new DataException("The uploaded file could not be saved");
+    }
+
+    if (tempFile == null || tempFile.length() <= 0) {
+      throw new DataException("The uploaded file could not be saved");
     }
 
     // Populate the fields
     FileItem fileItemBean = new FileItem();
     fileItemBean.setFilename(submittedFilename);
-    fileItemBean.setFileLength(fileLength);
-    fileItemBean.setFileServerPath(serverSubPath + uniqueFilename + "." + extension);
+    fileItemBean.setFileLength(tempFile.length());
+    fileItemBean.setFileServerPath(serverModulePath + tempFile.getName());
     fileItemBean.setExtension(extension);
-    fileItemBean.setCreatedBy(context.getUserId());
-    fileItemBean.setModifiedBy(context.getUserId());
+    fileItemBean.setFileHash(FileSystemCommand.getFileChecksum(tempFile));
+    fileItemBean.setCreatedBy(userId);
+    fileItemBean.setModifiedBy(userId);
     return fileItemBean;
   }
 
@@ -116,52 +130,29 @@ public class SaveFilePartCommand {
    * @throws DataException if any file cannot be processed
    */
   public static List<FileItem> saveFiles(Collection<Part> fileParts, long userId) throws DataException {
+    return saveFilesToModule(GLOBAL_MODULE, fileParts, userId);
+  }
+
+  public static List<FileItem> saveFilesToModule(String serverModule, Collection<Part> fileParts, long userId) throws DataException {
     List<FileItem> savedFiles = new ArrayList<>();
 
-    // Prepare to save files
-    String serverRootPath = FileSystemCommand.getFileServerRootPathValue();
-    String serverSubPath = FileSystemCommand.generateFileServerSubPath("uploads");
-    String serverCompletePath = serverRootPath + serverSubPath;
-
     for (Part filePart : fileParts) {
-      String submittedFilename = null;
-      String extension = null;
-      long fileLength = 0;
-      String uniqueFilename = FileSystemCommand.generateUniqueFilename(userId);
-      File tempFile = null;
-
+      // Save each file part and create a FileItem object
+      FileItem fileItemBean = null;
       try {
-        fileLength = filePart.getSize();
-        if (fileLength <= 0) {
-          LOG.debug("Skipping file with size 0");
+        fileItemBean = saveFile(serverModule, filePart, userId);
+        if (fileItemBean == null) {
+          // Skip non-file parts (like token, widget)
+          LOG.warn("File part could not be saved: " + filePart.getName());
           continue;
         }
-
-        LOG.debug("Processing file...");
-        submittedFilename = Paths.get(filePart.getSubmittedFileName()).getFileName().toString(); // MSIE fix.
-        extension = FilenameUtils.getExtension(submittedFilename);
-        tempFile = new File(serverCompletePath + uniqueFilename + "." + extension);
-
-        LOG.debug("Writing file " + fileLength + " bytes");
-        filePart.write(serverCompletePath + uniqueFilename + "." + extension);
-
-        // Populate the fields
-        FileItem fileItemBean = new FileItem();
-        fileItemBean.setFilename(submittedFilename);
-        fileItemBean.setFileLength(fileLength);
-        fileItemBean.setFileServerPath(serverSubPath + uniqueFilename + "." + extension);
-        fileItemBean.setExtension(extension);
-        fileItemBean.setCreatedBy(userId);
-        fileItemBean.setModifiedBy(userId);
-
         savedFiles.add(fileItemBean);
 
       } catch (Exception e) {
         LOG.warn("Could not handle file: " + e.getMessage());
         // Clean up the file if it was created
-        if (tempFile != null && tempFile.exists()) {
-          LOG.warn("Deleting an uploaded file: " + serverCompletePath + uniqueFilename + "." + extension);
-          tempFile.delete();
+        if (fileItemBean != null) {
+          SaveFilePartCommand.cleanupFile(fileItemBean);
         }
         // Continue processing other files instead of throwing
         LOG.warn("Continuing with remaining files after error");

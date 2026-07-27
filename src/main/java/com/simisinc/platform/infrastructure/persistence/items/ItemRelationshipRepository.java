@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -77,8 +78,8 @@ public class ItemRelationshipRepository {
     }
     DataResult result = DB.selectAllFrom(
         TABLE_NAME,
-        DB.WHERE("item_id = ?", item.getId())
-            .AND("related_collection_id = ?", collection.getId()),
+        DB.WHERE("((item_id = ? AND related_collection_id = ?) OR (related_item_id = ? AND collection_id = ?))",
+            new Long[] { item.getId(), collection.getId(), item.getId(), collection.getId() }),
         new DataConstraints().setDefaultColumnToSortBy("relationship_id"),
         ItemRelationshipRepository::buildRecord);
     if (result.hasRecords()) {
@@ -103,7 +104,8 @@ public class ItemRelationshipRepository {
     return false;
   }
 
-  public static boolean isAuthorizedForUser(Item item, Collection relatedCollection, long userId, long collectionRoleId) {
+  public static boolean isAuthorizedForUser(Item item, Collection relatedCollection, long userId,
+      long collectionRoleId) {
     if (item == null || relatedCollection == null || userId < 1) {
       return false;
     }
@@ -113,7 +115,8 @@ public class ItemRelationshipRepository {
             .AND("EXISTS (" +
                 "SELECT 1 FROM members WHERE members.item_id = item_relationships.related_item_id AND members.user_id = ? AND members.approved IS NOT NULL AND archived IS NULL "
                 +
-                "AND EXISTS (SELECT 1 FROM member_roles WHERE members.member_id = member_roles.member_id AND role_id = ?)" +
+                "AND EXISTS (SELECT 1 FROM member_roles WHERE members.member_id = member_roles.member_id AND role_id = ?)"
+                +
                 ")", new Long[] { userId, collectionRoleId }));
     if (count > 0) {
       return true;
@@ -122,13 +125,17 @@ public class ItemRelationshipRepository {
   }
 
   public static ItemRelationship save(ItemRelationship record) {
+    return save(record, true);
+  }
+
+  public static ItemRelationship save(ItemRelationship record, boolean saveReciprocalRelationships) {
     if (record.getId() > -1) {
       return update(record);
     }
-    return add(record);
+    return add(record, saveReciprocalRelationships);
   }
 
-  public static ItemRelationship add(ItemRelationship record) {
+  public static ItemRelationship add(ItemRelationship record, boolean saveReciprocalRelationships) {
     // Save First Relationship record
     SqlUtils insertValues = new SqlUtils()
         .add("item_id", record.getItemId())
@@ -146,19 +153,22 @@ public class ItemRelationshipRepository {
       LOG.error("An id was not set!");
       return null;
     }
+
     // Save Second Relationship record
-    SqlUtils reciprocalInsertValues = new SqlUtils()
-        .add("item_id", record.getRelatedItemId())
-        .add("collection_id", record.getRelatedCollectionId())
-        .add("related_item_id", record.getItemId())
-        .add("related_collection_id", record.getCollectionId())
-        //        .add("relationship_type", record.getRelationshipTypeId())
-        .add("is_active", record.getIsActive())
-        .add("created_by", record.getCreatedBy())
-        .add("modified_by", record.getModifiedBy())
-        .add("start_date", record.getStartDate())
-        .add("end_date", record.getEndDate());
-    DB.insertInto(TABLE_NAME, reciprocalInsertValues, PRIMARY_KEY);
+    if (saveReciprocalRelationships) {
+      SqlUtils reciprocalInsertValues = new SqlUtils()
+          .add("item_id", record.getRelatedItemId())
+          .add("collection_id", record.getRelatedCollectionId())
+          .add("related_item_id", record.getItemId())
+          .add("related_collection_id", record.getCollectionId())
+          //        .add("relationship_type", record.getRelationshipTypeId())
+          .add("is_active", record.getIsActive())
+          .add("created_by", record.getCreatedBy())
+          .add("modified_by", record.getModifiedBy())
+          .add("start_date", record.getStartDate())
+          .add("end_date", record.getEndDate());
+      DB.insertInto(TABLE_NAME, reciprocalInsertValues, PRIMARY_KEY);
+    }
 
     return record;
   }

@@ -125,6 +125,9 @@
           <button id="import-doc-btn" class="button tiny primary no-gap radius" disabled><i class="${font:far()} fa-upload"></i> Upload Files</button>
           <button id="new-url-btn" class="button tiny primary no-gap radius" disabled><i class="${font:far()} fa-link"></i> Add URL</button>
           <button id="reload-files-btn" class="button tiny secondary no-gap radius" disabled><i class="${font:far()} fa-sync"></i> Reload</button>
+          <button id="file-error-toggle" class="button tiny secondary no-gap radius" type="button" aria-pressed="false" title="Show only files with errors">
+            <i class="${font:far()} fa-triangle-exclamation"></i> Errors only
+          </button>
           <input type="text" id="file-search" class="property-input" placeholder="Search files..." />
         </div>
       </div>

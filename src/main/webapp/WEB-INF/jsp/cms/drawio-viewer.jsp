@@ -29,7 +29,29 @@
 <jsp:useBean id="resize" class="java.lang.String" scope="request"/>
 <jsp:useBean id="edit" class="java.lang.String" scope="request"/>
 <jsp:useBean id="filePath" class="java.lang.String" scope="request"/>
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+    }
 
+    #drawio-diagram {
+        max-width: 100%;
+        border: 1px solid #999;
+        overflow: hidden;
+    }
+
+    <c:if test="${param.embedded eq 'true'}">
+    html, body {
+        overflow: hidden;
+        background: #fff;
+    }
+
+    #drawio-diagram {
+        border: 0;
+    }
+    </c:if>
+</style>
 <script src="${ctx}/javascript/drawio-29.3.6/viewer.min.js"></script>
 
 <div style="width: 100%; overflow-x: auto;">
@@ -62,11 +84,11 @@
             return {
                 editable: false,
                 highlight: "<c:out value='${highlight}' />",
-                nav: <c:out value='${nav}' />,
-                toolbar: <c:choose><c:when test="${empty toolbar}">null</c:when><c:otherwise>"<c:out value='${toolbar}'/>"</c:otherwise></c:choose>,
-                "toolbar-position": "<c:out value='${toolbarPosition}' />",
-                "toolbar-nohide": <c:out value='${toolbarNohide}' />,
-                lightbox: <c:choose><c:when test="${lightbox eq 'true'}">"open"</c:when><c:otherwise>false</c:otherwise></c:choose>,
+                nav: <c:choose><c:when test="${param.embedded eq 'true'}">false</c:when><c:otherwise><c:out value='${nav}' /></c:otherwise></c:choose>,
+                toolbar: <c:choose><c:when test="${param.embedded eq 'true'}">null</c:when><c:when test="${empty toolbar}">null</c:when><c:otherwise>"<c:out value='${toolbar}'/>"</c:otherwise></c:choose>,
+                "toolbar-position": <c:choose><c:when test="${param.embedded eq 'true'}">"top"</c:when><c:otherwise>"<c:out value='${toolbarPosition}' />"</c:otherwise></c:choose>,
+                "toolbar-nohide": <c:choose><c:when test="${param.embedded eq 'true'}">false</c:when><c:otherwise><c:out value='${toolbarNohide}' /></c:otherwise></c:choose>,
+                lightbox: <c:choose><c:when test="${param.embedded eq 'true'}">false</c:when><c:when test="${lightbox eq 'true'}">"open"</c:when><c:otherwise>false</c:otherwise></c:choose>,
                 edit: <c:choose><c:when test="${empty edit or 'false' eq edit}">null</c:when><c:otherwise>"true"</c:otherwise></c:choose>,
                 resize: <c:out value='${resize}' />,
                 zoom: <c:out value='${zoom}' />,
@@ -106,12 +128,32 @@
                     if (window.GraphViewer) {
                         window.GraphViewer.processElements();
                     }
+                    notifyParentHeight();
+                    setTimeout(notifyParentHeight, 300);
+                    setTimeout(notifyParentHeight, 1000);
                 })
                 .catch((err) => {
                     console.error("Error loading draw.io file:", err);
                     const graphContainer = document.getElementById('drawio-diagram');
                     graphContainer.innerHTML = '<div style="color: red; padding: 10px;">Error loading diagram: ' + err.message + '</div>';
+                    notifyParentHeight();
                 });
+        }
+
+        function notifyParentHeight() {
+            if (window.parent === window) {
+                return;
+            }
+            const height = Math.max(
+                document.body ? document.body.scrollHeight : 0,
+                document.documentElement ? document.documentElement.scrollHeight : 0,
+                420
+            );
+            window.parent.postMessage({
+                type: 'drawio-embed-height',
+                frameId: '${fn:escapeXml(param.frameId)}',
+                height: height
+            }, '*');
         }
 
         // Render the file

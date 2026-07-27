@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,12 +17,14 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.simisinc.platform.domain.model.cms.WebSearch;
 import com.simisinc.platform.infrastructure.persistence.cms.WebSearchRepository;
 import com.simisinc.platform.presentation.controller.RequestConstants;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
-import org.apache.commons.lang3.StringUtils;
+import com.zeroio.platform.domain.model.cms.SearchCriteria;
 
 /**
  * Displays what the user searched for
@@ -37,21 +40,20 @@ public class SearchInfoWidget extends GenericWidget {
 
   public WidgetContext execute(WidgetContext context) {
 
-    // Standard request items
-    context.getRequest().setAttribute("icon", context.getPreferences().get("icon"));
-    context.getRequest().setAttribute("title", context.getPreferences().get("title"));
-
-    // Determine the query string
-    String pagePath = (String) context.getRequest().getAttribute(RequestConstants.WEB_PAGE_PATH);
-    String query = context.getParameter("query");
-    context.getRequest().setAttribute("query", query);
+    // Determine the search criteria
+    SearchCriteria searchCriteria = new SearchCriteria(context.getParameterMap());
+    context.getRequest().setAttribute("searchCriteria", searchCriteria);
 
     // Track the search terms
-    if (StringUtils.isNotBlank(query) &&
+    if (StringUtils.isNotBlank(searchCriteria.getQuery()) &&
         (!context.getUserSession().isLoggedIn() || !(context.hasRole("admin") || context.hasRole("content-manager")))) {
+
+      // Determine where the query came from
+      String pagePath = (String) context.getRequest().getAttribute(RequestConstants.WEB_PAGE_PATH);
+
       WebSearch webSearch = new WebSearch();
       webSearch.setPagePath(pagePath);
-      webSearch.setQuery(query);
+      webSearch.setQuery(searchCriteria.getQuery());
       webSearch.setIpAddress(context.getRequest().getRemoteAddr());
       webSearch.setSessionId(context.getUserSession().getSessionId());
       webSearch.setIsLoggedIn(context.getUserSession().isLoggedIn());

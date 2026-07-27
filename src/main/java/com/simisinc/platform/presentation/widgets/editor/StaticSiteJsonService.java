@@ -29,13 +29,13 @@ import org.jobrunr.scheduling.BackgroundJobRequest;
 import com.simisinc.platform.application.DataException;
 import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.cms.LoadGitPublishSettingsCommand;
-import com.simisinc.platform.application.cms.MakeStaticSiteCommand;
 import com.simisinc.platform.application.cms.SaveGitPublishSettingsCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.GitPublishSettings;
-import com.simisinc.platform.infrastructure.scheduler.cms.MakeStaticSiteJob;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.zeroio.platform.application.staticsite.MakeStaticSiteCommand;
+import com.zeroio.platform.infrastructure.scheduler.staticsite.MakeStaticSiteJob;
 
 /**
  * Controller for managing static site generation

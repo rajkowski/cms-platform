@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,6 +27,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.cms.HtmlCommand;
+import com.simisinc.platform.application.cms.ResolveContentDirectivesCommand;
 import com.simisinc.platform.domain.model.cms.Content;
 import com.simisinc.platform.infrastructure.cache.CacheManager;
 import com.simisinc.platform.infrastructure.database.DB;
@@ -56,16 +58,23 @@ public class ContentRepository {
           .andAddIfHasValue("content_id = ?", specification.getId(), -1)
           .andAddIfHasValue("content_unique_id = ?", specification.getUniqueId());
       if (StringUtils.isNotBlank(specification.getSearchTerm())) {
+
+        String quotedSearchTerm = "\"" + specification.getSearchTerm().trim() + "\"";
+        String searchTermSeparated = specification.getSearchTerm().trim().replaceAll("\\s+", " OR ");
+        String searchToUse = quotedSearchTerm + " OR " + searchTermSeparated;
         String searchTermPattern = "%" + specification.getSearchTerm().trim() + "%";
+
         select.add(
             "ts_headline('english', content_text, websearch_to_tsquery('content_stem', ?), 'StartSel=${b}, StopSel=${/b}, MaxWords=30, MinWords=15, ShortWord=3, HighlightAll=FALSE, MaxFragments=2, FragmentDelimiter=\" ... \"') AS highlight",
             specification.getSearchTerm().trim());
-        select.add("ts_rank_cd(tsv, websearch_to_tsquery('content_stem', ?)) AS rank", specification.getSearchTerm().trim());
+        select.add("ts_rank_cd(tsv, websearch_to_tsquery('content_stem', ?)) AS rank", searchToUse);
+
         where.AND("(tsv @@ websearch_to_tsquery('content_stem', ?) OR content_unique_id LIKE ?)",
-            new String[] { specification.getSearchTerm().trim(), searchTermPattern });
+            new String[] { searchToUse, searchTermPattern });
+
         // Override the order by for rank first
         orderBy = new SqlUtils();
-        orderBy.add("rank DESC, content_id");
+        orderBy.add("rank DESC, content.modified DESC");
       }
     }
     return DB.selectAllFrom(TABLE_NAME, select, where, orderBy, constraints, ContentRepository::buildRecord);
@@ -108,7 +117,9 @@ public class ContentRepository {
     SqlUtils insertValues = new SqlUtils()
         .add("content_unique_id", StringUtils.trimToNull(record.getUniqueId()))
         .add("content", StringUtils.trimToNull(record.getContent()))
-        .add("content_text", HtmlCommand.text(StringUtils.trimToNull(record.getContent())))
+        .add("content_text",
+            HtmlCommand
+                .text(ResolveContentDirectivesCommand.resolveDirectives(StringUtils.trimToNull(record.getContent()))))
         .add("draft_content", StringUtils.trimToNull(record.getDraftContent()))
         .add("created_by", record.getCreatedBy())
         .add("modified_by", record.getModifiedBy());
@@ -123,7 +134,9 @@ public class ContentRepository {
   public static Content update(Content record) {
     SqlUtils updateValues = new SqlUtils()
         .add("content", StringUtils.trimToNull(record.getContent()))
-        .add("content_text", HtmlCommand.text(StringUtils.trimToNull(record.getContent())))
+        .add("content_text",
+            HtmlCommand
+                .text(ResolveContentDirectivesCommand.resolveDirectives(StringUtils.trimToNull(record.getContent()))))
         .add("draft_content", StringUtils.trimToNull(record.getDraftContent()))
         .add("modified_by", record.getModifiedBy())
         .add("modified", new Timestamp(System.currentTimeMillis()));
@@ -145,12 +158,54 @@ public class ContentRepository {
     SqlUtils updateValues = new SqlUtils();
     updateValues.add("content = draft_content");
     updateValues.add("draft_content = null");
-    updateValues.add("content_text", HtmlCommand.text(StringUtils.trimToNull(record.getContent())));
+    updateValues.add("content_text", HtmlCommand
+        .text(ResolveContentDirectivesCommand.resolveDirectives(StringUtils.trimToNull(record.getContent()))));
     if (DB.update(
         TABLE_NAME,
         updateValues,
         DB.WHERE("draft_content IS NOT NULL AND content_unique_id = ?", record.getUniqueId()))) {
       CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
+    }
+  }
+
+  /**
+   * Finds all content records whose content embeds the given uniqueId via ${uniqueId:...} directive
+   */
+  public static List<Content> findAllEmbeddingReferences(String uniqueId) {
+    if (StringUtils.isBlank(uniqueId)) {
+      return null;
+    }
+    DataResult result = DB.selectAllFrom(
+        TABLE_NAME,
+        new SqlUtils(),
+        DB.WHERE("content LIKE ?", "%${uniqueId:" + uniqueId + "}%"),
+        null,
+        null,
+        ContentRepository::buildRecord);
+    if (result.hasRecords()) {
+      return (List<Content>) result.getRecords();
+    }
+    return null;
+  }
+
+  /**
+   * Updates content_text for all records that embed the given uniqueId
+   */
+  public static void updateEmbeddingContentText(String uniqueId) {
+    List<Content> embeddingRecords = findAllEmbeddingReferences(uniqueId);
+    if (embeddingRecords == null) {
+      return;
+    }
+    for (Content embedding : embeddingRecords) {
+      SqlUtils updateValues = new SqlUtils()
+          .add("content_text",
+              HtmlCommand.text(
+                  ResolveContentDirectivesCommand.resolveDirectives(StringUtils.trimToNull(embedding.getContent()))))
+          .add("modified", new Timestamp(System.currentTimeMillis()));
+      if (DB.update(TABLE_NAME, updateValues, DB.WHERE("content_unique_id = ?", embedding.getUniqueId()))) {
+        CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, embedding.getUniqueId());
+        LOG.debug("Updated content_text for embedding content: " + embedding.getUniqueId());
+      }
     }
   }
 

@@ -1,4 +1,7 @@
 /**
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
+ * Licensed under the Apache License, Version 2.0
+ * 
  * Main Page Editor Controller
  * Coordinates all editor modules and manages the overall editing workflow
  * 
@@ -451,7 +454,7 @@ class PageEditor {
       modalOverlay.id = modalId;
       modalOverlay.className = 'modal-overlay active confirm-dialog-modal';
       modalOverlay.style.cssText = `
-        z-index: 10001;
+        z-index: 10060;
         position: fixed;
         top: 0;
         left: 0;
@@ -475,7 +478,7 @@ class PageEditor {
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         text-align: center;
         position: relative;
-        z-index: 10002;
+        z-index: 10061;
       `;
 
       // Add message
@@ -1044,6 +1047,11 @@ class PageEditor {
         .then(data => {
           // Success! Update the saved state
           this.setSavedState();
+
+          // Refresh layout versions automatically after publish/save
+          if (this.infoTabManager && typeof this.infoTabManager.loadVersionHistory === 'function') {
+            this.infoTabManager.loadVersionHistory();
+          }
           
           // If this was a new page, update the pages list
           if (this.pagesTabManager.selectedPageId === 'new') {

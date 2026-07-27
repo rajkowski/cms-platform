@@ -108,7 +108,9 @@
       <div class="content-browser-item" 
            onclick="mySubmit(this.dataset.uniqueid)" 
            data-uniqueid="<c:out value="${content.uniqueId}"/>"
-           data-searchtext="<c:out value="${fn:toLowerCase(content.uniqueId)}"/>">
+           data-searchtext="<c:out value="${fn:toLowerCase(content.uniqueId)}"/>"
+           data-searchtext-content="<c:out value="${fn:toLowerCase(html:text(content.content))}"/>"
+           >
         <div class="content-browser-item-header">
           <span class="content-browser-item-title"><c:out value="${content.uniqueId}"/></span>
           <span class="content-browser-item-id">${"$"}{uniqueId:<c:out value="${content.uniqueId}"/>}</span>
@@ -138,7 +140,8 @@
     
     for (var i = 0; i < items.length; i++) {
       var searchText = items[i].getAttribute('data-searchtext');
-      if (searchText.indexOf(filter) > -1) {
+      var searchTextContent = items[i].getAttribute('data-searchtext-content');      
+      if (searchText.indexOf(filter) > -1 || searchTextContent.indexOf(filter) > -1) {
         items[i].style.display = '';
       } else {
         items[i].style.display = 'none';

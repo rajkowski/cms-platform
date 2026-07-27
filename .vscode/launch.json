@@ -8,14 +8,14 @@
             "type": "java",
             "name": "ApplicationInfo",
             "request": "launch",
-            "mainClass": "com.simisinc.platform.ApplicationInfo",
+            "mainClass": "com.zeroio.platform.ApplicationInfo",
             "projectName": "cms-platform"
         },
         {
             "type": "java",
             "name": "MakeStaticSiteApp",
             "request": "launch",
-            "mainClass": "com.simisinc.platform.MakeStaticSiteApp",
+            "mainClass": "com.zeroio.platform.MakeStaticSiteApp",
             "projectName": "cms-platform"
         }
     ]

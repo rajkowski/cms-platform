@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2023 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +19,8 @@ package com.simisinc.platform.application.cms;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
@@ -27,9 +30,9 @@ import org.apache.commons.logging.LogFactory;
 import com.simisinc.platform.domain.model.cms.Blog;
 import com.simisinc.platform.domain.model.cms.BlogPost;
 import com.simisinc.platform.domain.model.cms.Content;
-import com.simisinc.platform.infrastructure.persistence.cms.ContentRepository;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.cms.BlogPostWidget;
+import com.zeroio.platform.application.cms.DiagramHtmlCommand;
 
 /**
  * Methods for finding the HTML to be used in a Content-based widget
@@ -43,10 +46,13 @@ public class ContentHtmlCommand {
 
   static String HTML_JSP = "/cms/content-html.jsp";
 
+  private static final String UNIQUE_ID_TOKEN = "${uniqueId:";
+
   public static String getHtmlFromPreferences(WidgetContext context) {
 
     // Content Unique Id can be uniqueId or contentUniqueId
-    String uniqueId = context.getPreferences().getOrDefault("uniqueId", context.getPreferences().get("contentUniqueId"));
+    String uniqueId = context.getPreferences().getOrDefault("uniqueId",
+        context.getPreferences().get("contentUniqueId"));
     // The derived content HTML or the fallback HTML if a uniqueId is not found
     String html = null;
 
@@ -81,6 +87,7 @@ public class ContentHtmlCommand {
 
     // It's possible to have different content injected into this content, so process it
     html = embedInlineContent(context, html);
+    html = DiagramHtmlCommand.replaceDiagramTokens(context, html);
     html = ContentValuesCommand.replaceDynamicValues(html);
 
     // Display a button for admins to add content
@@ -99,13 +106,6 @@ public class ContentHtmlCommand {
     return html;
   }
 
-  /**
-   * For the given uniqueId, replace any dynamic values
-   *  
-   * @param context
-   * @param uniqueId
-   * @return
-   */
   public static String checkForBlogPreferences(WidgetContext context, String uniqueId) {
     if (uniqueId.contains("${blog.") || uniqueId.contains("${blogPost.")) {
       // Check blog by inspecting blogUniqueId preference value
@@ -142,31 +142,18 @@ public class ContentHtmlCommand {
       return null;
     }
 
-    //Check for content containing a reference to another uniqueId
-    int startUniqueIdx = html.indexOf("${uniqueId:");
-    if (startUniqueIdx == -1) {
-      return html;
-    }
+    boolean hasEditorPermission = (context.hasRole("admin") || context.hasRole("content-manager"));
+    AtomicBoolean hasDraftContent = new AtomicBoolean(false);
 
-    // boolean hasEditorPermission = (context.hasRole("admin") || context.hasRole("content-manager"));
-    boolean hasEditorPermission = false; // @todo for now, turn off the embedded editor links until we can work out the details of how to manage them with the main editor
-    boolean hasDraftContent = false;
-
-    // Replace content instances of embedded uniqueIds
-    int endUniqueIdx;
-    StringBuilder sb = new StringBuilder(html.substring(0, startUniqueIdx));
-    while ((endUniqueIdx = html.indexOf("}", startUniqueIdx)) > -1) {
-      String embeddedUniqueId = html.substring(startUniqueIdx + 11, endUniqueIdx).trim();
+    Function<String, String> resolver = embeddedUniqueId -> {
       String embeddedHtml = "";
       Content content = LoadContentCommand.loadContentByUniqueId(embeddedUniqueId);
       if (content != null) {
         embeddedHtml = content.getContent();
         // Look for draft content
-        if (hasEditorPermission) {
-          if (content.getDraftContent() != null) {
-            embeddedHtml = content.getDraftContent();
-            hasDraftContent = true;
-          }
+        if (hasEditorPermission && content.getDraftContent() != null) {
+          embeddedHtml = content.getDraftContent();
+          hasDraftContent.set(true);
         }
       }
       // Embed an editor at each content point
@@ -177,7 +164,7 @@ public class ContentHtmlCommand {
               + FontCommand.fas() + " fa-edit\"></i> Add Content Here</a>";
         } else {
           embeddedHtml = "<div class=\"platform-content-inline-editor\">" +
-              (hasDraftContent ? "<span class=\"label warning\">DRAFT</span>" : "") +
+              (hasDraftContent.get() ? "<span class=\"label warning\">DRAFT</span>" : "") +
               "<a class=\"hollow button small secondary\" href=\"" + context.getContextPath()
               + "/content-editor?uniqueId=" + embeddedUniqueId + "&returnPage=" + context.getUri() + "\"><i class=\""
               + FontCommand.fas() + " fa-edit\"></i></a>" +
@@ -187,9 +174,57 @@ public class ContentHtmlCommand {
         // Turn off the general editor because the embedded ones will be used
         // context.getRequest().setAttribute("showEditor", "false");
       }
+      return embeddedHtml;
+    };
+    // Process up to 5 passes to resolve nested embeds within embedded content
+    String result = html;
+    for (int pass = 0; pass < 5; pass++) {
+      if (!result.contains(UNIQUE_ID_TOKEN)) {
+        break;
+      }
+      result = replaceUniqueIdTokens(result, resolver);
+    }
+    return result;
+  }
 
-      sb.append(embeddedHtml);
-      startUniqueIdx = html.indexOf("${uniqueId:", startUniqueIdx + 1);
+  /**
+   * Replace ${uniqueId:contentUniqueId} patterns with actual content from the repository
+   *
+   * @param html the HTML string containing potential uniqueId patterns
+   * @return the HTML with patterns replaced by content values
+   */
+  public static String replaceContentUniqueIds(String html) {
+    return replaceUniqueIdTokens(html, embeddedUniqueId -> {
+      Content content = LoadContentCommand.loadContentByUniqueId(embeddedUniqueId);
+      if (content != null && content.getContent() != null) {
+        return content.getContent();
+      }
+      return "";
+    });
+  }
+
+  /**
+   * Shared helper that iterates over all ${uniqueId:...} tokens in the given HTML and replaces each
+   * with the value returned by the resolver function. Handles null input and malformed tokens (no closing '}').
+   *
+   * @param html     the HTML string containing potential uniqueId tokens
+   * @param resolver function that maps a uniqueId string to its replacement
+   * @return the HTML with all tokens replaced
+   */
+  private static String replaceUniqueIdTokens(String html, Function<String, String> resolver) {
+    if (html == null) {
+      return null;
+    }
+    int startUniqueIdx = html.indexOf(UNIQUE_ID_TOKEN);
+    if (startUniqueIdx == -1) {
+      return html;
+    }
+    StringBuilder sb = new StringBuilder(html.substring(0, startUniqueIdx));
+    int endUniqueIdx;
+    while ((endUniqueIdx = html.indexOf("}", startUniqueIdx)) > -1) {
+      String embeddedUniqueId = html.substring(startUniqueIdx + UNIQUE_ID_TOKEN.length(), endUniqueIdx).trim();
+      sb.append(resolver.apply(embeddedUniqueId));
+      startUniqueIdx = html.indexOf(UNIQUE_ID_TOKEN, startUniqueIdx + 1);
       if (startUniqueIdx > -1) {
         sb.append(html, endUniqueIdx + 1, startUniqueIdx);
       } else {
@@ -197,11 +232,9 @@ public class ContentHtmlCommand {
         break;
       }
     }
-    //    if (hasDraftContent) {
-    // @todo add the global publish button
-    // <a class="hollow button small warning" href="${widgetContext.uri}?action=publish&widget=${widgetContext.uniqueId}&token=${userSession.formToken}" onclick="return confirm('Publish this content?');">DRAFT</a>
-    // @todo update the publish routine to publish all embedded unique id's
-    //    }
+    if (endUniqueIdx == -1) {
+      sb.append(html.substring(startUniqueIdx));
+    }
     return sb.toString();
   }
 
@@ -419,9 +452,7 @@ public class ContentHtmlCommand {
   }
 
   private static WidgetContext publishContent(WidgetContext context, Content content) {
-    if (StringUtils.isNotBlank(content.getDraftContent())) {
-      ContentRepository.publish(content);
-    }
+    PublishContentCommand.publishContent(content, context.getUserId(), context.getResourcePath());
     return context;
   }
 

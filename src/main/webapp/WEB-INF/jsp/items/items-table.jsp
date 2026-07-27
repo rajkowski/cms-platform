@@ -1,4 +1,5 @@
 <%--
+  ~ Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
   ~ Copyright 2022 SimIS Inc.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,12 +29,47 @@
 <jsp:useBean id="category" class="com.simisinc.platform.domain.model.items.Category" scope="request"/>
 <jsp:useBean id="recordPaging" class="com.simisinc.platform.infrastructure.database.DataConstraints" scope="request"/>
 <jsp:useBean id="tableColumnsList" class="java.util.LinkedHashMap" scope="request"/>
+<jsp:useBean id="isSearchResults" class="java.lang.String" scope="request"/>
+<jsp:useBean id="title" class="java.lang.String" scope="request"/>
+<jsp:useBean id="showPaging" class="java.lang.String" scope="request"/>
 <c:if test="${!empty title}">
   <h4><c:if test="${!empty icon}"><i class="fa ${icon}"></i> </c:if><c:out value="${title}" /></h4>
 </c:if>
 <%@include file="../page_messages.jspf" %>
 <c:choose>
   <c:when test="${!empty itemList}">
+    <c:if test="${isSearchResults eq 'true'}">
+      <p class="search-results subheader">
+        <c:choose>
+          <c:when test="${recordPaging.totalRecordCount == 0}">
+            No search results found
+          </c:when>
+          <c:when test="${recordPaging.totalRecordCount == 1}">
+            Found 1 result
+          </c:when>
+          <c:when test="${recordPaging.totalRecordCount < 0}">
+            Found <fmt:formatNumber value="${itemList.size()}" /> results
+          </c:when>
+          <c:otherwise>
+            Found <fmt:formatNumber value="${recordPaging.totalRecordCount}" /> results
+          </c:otherwise>
+        </c:choose>
+        <%-- Display on one line with the comma correctly placed --%>
+        <c:if test="${!empty searchName}">for <strong>&quot;<c:out value="${searchName}" />&quot;</strong></c:if><c:if test="${!empty searchLocation}">
+        near <strong>&quot;<c:out value="${searchLocation}" />&quot;</strong></c:if><c:if test="${!empty category && !empty category.name}">
+        in <strong>&quot;<c:out value="${category.name}" />&quot;</strong></c:if><c:if test="${!empty searchTags}">
+        having tags <strong>&quot;<c:out value="${searchTags}" />&quot;</strong></c:if><c:if test="${itemList.size() < recordPaging.totalRecordCount}">, showing 
+          <c:choose>
+            <c:when test="${recordPaging.pageNumber gt 1}">
+              page ${recordPaging.pageNumber}...
+            </c:when>
+            <c:otherwise>
+              the first ${recordPaging.pageSize}...
+            </c:otherwise>
+          </c:choose>
+        </c:if>
+      </p>
+    </c:if>
     <table class="stack">
       <thead>
       <tr>
@@ -41,7 +77,15 @@
           <th>&nbsp;</th>
         </c:if>
         <c:forEach items="${tableColumnsList}" var="tableColumn" varStatus="status">
-          <th><c:out value="${tableColumn.value.label}" /></th>
+          <%-- Determine the width by the number of columns, whole values only --%>
+           <c:choose>
+            <c:when test="${status.first}">
+              <th width="<fmt:formatNumber type="number" maxFractionDigits="0" minFractionDigits="0" value="${100 / tableColumnsList.size()}"/>%"><c:out value="${tableColumn.value.label}" /></th>
+            </c:when>
+            <c:otherwise>
+              <th><c:out value="${tableColumn.value.label}" /></th>
+            </c:otherwise>
+           </c:choose>
         </c:forEach>
       </tr>
       </thead>
@@ -90,7 +134,7 @@
               <%-- Fields --%>
               <c:when test="${tableColumn.value.name eq 'name'}">
                 <td>
-                  <a href="${ctx}/show/${item.uniqueId}"><c:out value="${text:trim(item.name, 30, true)}"/><c:if test="${empty item.approved}"> <span class="label warning">Needs approval</span></c:if></a>
+                  <a href="${ctx}/show/${item.uniqueId}"><c:out value="${text:trim(item.name, trimValue, true)}"/><c:if test="${empty item.approved}"> <span class="label warning">Needs approval</span></c:if></a>
                 </td>
               </c:when>
               <c:when test="${tableColumn.value.name eq 'uniqueId'}">
@@ -112,7 +156,7 @@
               </c:when>
               <c:when test="${tableColumn.value.name eq 'description'}">
                 <td>
-                  <c:out value="${item.description}" />
+                  <c:out value="${item.description}" escapeXml="false" />
                 </td>
               </c:when>
               <c:when test="${tableColumn.value.name eq 'textDescription'}">
@@ -123,6 +167,11 @@
               <c:when test="${tableColumn.value.name eq 'keywords'}">
                 <td>
                   <c:out value="${item.keywords}" />
+                </td>
+              </c:when>
+              <c:when test="${tableColumn.value.name eq 'tags'}">
+                <td>
+                  <c:out value="${fn:join(item.tags, ', ')}" />
                 </td>
               </c:when>
               <c:when test="${tableColumn.value.name eq 'geopoint'}">
@@ -273,10 +322,22 @@
       </tbody>
     </table>
     <%-- Paging Control --%>
-    <c:if test="${category.id gt 0}">
-      <c:set var="recordPagingParams" scope="request" value="categoryId=${category.id}"/>
+    <c:if test="${showPaging eq 'true'}">
+      <c:choose>
+        <c:when test="${category.id gt 0 || !empty searchName || !empty searchLocation || !empty searchTags}">
+          <c:set var="recordPagingParams" scope="request"><c:if test="${category.id gt 0}">&categoryId=${category.id}</c:if><c:if test="${!empty searchName}">&searchName=${url:encodeUri(searchName)}</c:if><c:if test="${!empty searchLocation}">&searchLocation=${url:encodeUri(searchLocation)}</c:if><c:if test="${!empty searchTags}">&searchTags=${url:encodeUri(searchTags)}</c:if></c:set>
+        </c:when>
+        <c:when test="${!empty searchCriteria}">
+          <c:set var="recordPagingParams" scope="request">${searchCriteria.uri}</c:set>
+        </c:when>
+      </c:choose>
+      <%@include file="../paging_control.jspf" %>
     </c:if>
-    <%@include file="../paging_control.jspf" %>
+  </c:when>
+  <c:when test="${isSearchResults eq 'true'}">
+    <p class="search-results subheader">
+      No search results found
+    </p>
   </c:when>
   <c:otherwise>
     <p class="subheader">

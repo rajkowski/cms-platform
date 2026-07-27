@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -64,7 +65,7 @@ public class OAuthLoginCommand {
     }
 
     // Track the login
-    LOG.debug("Logging the user in...");
+    LOG.info("Logging an OAuth user in: " + user.getEmail());
     UserLogin userLogin = new UserLogin();
     userLogin.setSource(OAUTH_SOURCE);
     userLogin.setUserId(user.getId());
@@ -121,6 +122,6 @@ public class OAuthLoginCommand {
     userSession.login(user);
     SaveSessionCommand.saveSession(userSession);
     request.getSession().setAttribute(SessionConstants.USER, userSession);
-    LOG.debug("User has been signed in.");
+    LOG.info("OAuth user has been signed in: " + user.getEmail());
   }
 }

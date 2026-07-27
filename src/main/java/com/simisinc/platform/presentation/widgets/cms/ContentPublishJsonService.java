@@ -118,7 +118,7 @@ public class ContentPublishJsonService extends GenericJsonService {
           return context.writeError("Content uniqueId is required");
         }
 
-        boolean published = PublishContentCommand.publishContent(uniqueId);
+        boolean published = PublishContentCommand.publishContent(uniqueId, context.getUserId());
 
         if (!published) {
           return context.writeError("Failed to publish content");

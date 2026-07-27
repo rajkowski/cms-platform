@@ -16,13 +16,6 @@
 
 package com.simisinc.platform.application.email;
 
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.context.Context;
-import org.thymeleaf.templatemode.TemplateMode;
-import org.thymeleaf.templateresolver.FileTemplateResolver;
-
 import java.io.File;
 import java.nio.file.Path;
 import java.sql.Timestamp;
@@ -30,6 +23,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
+import org.thymeleaf.templatemode.TemplateMode;
+import org.thymeleaf.templateresolver.FileTemplateResolver;
 
 /**
  * Tests HTML Templates
@@ -112,6 +112,14 @@ class EmailTemplateTests {
       formData.put("formUniqueId", "contact-us");
       formData.put("ipAddress", "0:0:0:0");
       ctx.setVariable("formData", formData);
+    } else if ("items".equals(parent)) {
+      // Item
+      Map<String, String> item = new HashMap<>();
+      item.put("uniqueId", "the-item-unique-id");
+      item.put("name", "Item Title");
+      item.put("summary", "Item Summary");
+      item.put("description", "Item Description");
+      ctx.setVariable("item", item);
     } else if ("ecommerce".equals(parent)) {
       // Shipping info
       Map<String, String> shippingAddress = new HashMap<>();

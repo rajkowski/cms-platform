@@ -1,0 +1,48 @@
+<pages>
+  <page name="/site-instructions" role="admin,community-manager,content-manager,data-manager" title="Site Instructions">
+    <section>
+      <column class="small-12 cell">
+        <widget name="content" class="callout primary">
+          <title>Site Instructions</title>
+          <html>
+            <![CDATA[
+              <p class="no-gap">This page provides instructions and tools for managing the site.</p>
+            ]]>
+          </html>
+        </widget>
+      </column>
+    </section>
+    <section>
+      <column class="small-12 medium-5 large-4 cell callout box">
+        <widget name="content" role="admin,content-manager">
+          <title>Add a Web Page</title>
+          <html>
+            <![CDATA[
+              <p>To add a new web page, enter the desired Title in the form and click the "Add/Check Web Page" button. If the web page does not already exist, you will have the option to select a template. If it already exists, you will be redirected to the existing page where you can make edits.</p>
+              <form action="/admin/web-page-designer" method="get">
+                <label for="title">Web Page Title:</label>
+                <input type="text" id="title" name="title" placeholder="New Page Title" required>
+                <button type="submit" class="button">Add/Check Web Page</button>
+              </form>
+            ]]>
+          </html>
+        </widget>
+      </column>
+      <column class="small-12 medium-5 large-4 cell callout box">
+        <widget name="content" role="admin,data-manager">
+          <title>Add Data Records</title>
+          <html>
+            <![CDATA[
+              <p>To add data records to the site, navigate to one of the following pages and click on the "Add" button in the side menu.
+              This will take you to a form where you can enter the details of the record.</p>
+              <p>Once you have filled out the form, click the "Save" button to add the record to the site. Now you can relate certain records to other relevant content like FAQs, and upload file attachments.</p>
+              <ul>
+                <li><a href="/directories">All Available Directories</a></li>
+              </ul>
+            ]]>
+          </html>
+        </widget>
+      </column>
+    </section>
+  </page>
+</pages>

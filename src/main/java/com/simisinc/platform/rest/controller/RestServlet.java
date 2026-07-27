@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -53,8 +54,8 @@ import com.simisinc.platform.presentation.controller.RequestConstants;
  * @created 7/17/18 1:51 PM
  */
 @MultipartConfig(fileSizeThreshold = 1024 * 1024 * 2, // 2MB
-    maxFileSize = 1024 * 1024 * 30, // 30MB
-    maxRequestSize = 1024 * 1024 * 50) // 50MB
+    maxFileSize = 1024 * 1024 * 100, // 100MB
+    maxRequestSize = 1024 * 1024 * 100) // 100MB
 public class RestServlet extends HttpServlet {
 
   private static Log LOG = LogFactory.getLog(RestServlet.class);
@@ -173,7 +174,7 @@ public class RestServlet extends HttpServlet {
       // REST endpoint hits
       SaveWebPageHitCommand.saveHit(request.getRemoteAddr(), request.getMethod(),
           "/api/" + (pathEndpoint != null ? pathEndpoint : endpoint),
-          (User) request.getAttribute(RequestConstants.REST_USER));
+          (User) request.getAttribute(RequestConstants.REST_USER), request.getSession().getId());
 
       // Setup the context for this service processor
       ServiceContext serviceContext = new ServiceContext(request, response);
@@ -208,6 +209,10 @@ public class RestServlet extends HttpServlet {
       if (result == null) {
         LOG.debug("Returning an error...");
         sendError(response, SC_NOT_FOUND, "Service error occurred");
+        return;
+      }
+      if (result.isHandledResponse()) {
+        LOG.debug("Response was handled directly by service");
         return;
       }
       if (result.getStatus() != 200) {

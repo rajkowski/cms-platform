@@ -1,4 +1,5 @@
 <%--
+  ~ Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
   ~ Copyright 2022 SimIS Inc.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,24 +22,86 @@
 <%@ taglib prefix="url" uri="/WEB-INF/tlds/url-functions.tld" %>
 <%@ taglib prefix="date" uri="/WEB-INF/tlds/date-functions.tld" %>
 <%@ taglib prefix="number" uri="/WEB-INF/tlds/number-functions.tld" %>
+<%@ taglib prefix="user" uri="/WEB-INF/tlds/user-functions.tld" %>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="sitePropertyMap" class="java.util.HashMap" scope="request"/>
+<jsp:useBean id="recordPaging" class="com.simisinc.platform.infrastructure.database.DataConstraints" scope="request"/>
+<jsp:useBean id="searchCriteria" class="com.zeroio.platform.domain.model.cms.SearchCriteria" scope="request"/>
+<jsp:useBean id="viewMoreType" class="java.lang.String" scope="request"/>
 <c:if test="${!empty title}">
   <h4 class="margin-bottom-20"><c:if test="${!empty icon}"><i class="fa ${icon}"></i> </c:if><c:out value="${title}"/></h4>
+</c:if>
+<c:if test="${empty searchResultList}">
+  <p>No results were found.</p>
 </c:if>
 <c:forEach items="${searchResultList}" var="searchResult" varStatus="status">
   <div class="platform-content-search-result margin-top-10">
     <c:choose>
       <c:when test="${!empty searchResult.pageTitle}">
-        <h5><a href="${ctx}${searchResult.link}"><c:out value="${searchResult.pageTitle}"/></a></h5>
+        <h5>
+          <c:choose>
+            <c:when test="${searchResult.titleLinkEnabled and !empty searchResult.link}">
+              <a href="${ctx}${searchResult.link}"><c:out value="${searchResult.pageTitle}"/></a>
+            </c:when>
+            <c:otherwise>
+              <c:out value="${searchResult.pageTitle}"/>
+            </c:otherwise>
+          </c:choose>
+        </h5>
       </c:when>
       <c:otherwise>
-        <h5><a href="${ctx}${searchResult.link}"><c:out value="${searchResult.link}"/></a></h5>
+        <h5>
+          <c:choose>
+            <c:when test="${searchResult.titleLinkEnabled and !empty searchResult.link}">
+              <a href="${ctx}${searchResult.link}"><c:out value="${searchResult.link}"/></a>
+            </c:when>
+            <c:otherwise>
+              <c:out value="${searchResult.link}"/>
+            </c:otherwise>
+          </c:choose>
+        </h5>
       </c:otherwise>
     </c:choose>
+    <c:if test="${!empty searchResult.actionLink and !empty searchResult.actionLabel}">
+      <p class="margin-bottom-5">
+        <a href="${ctx}${searchResult.actionLink}" class="button tiny no-gap"><c:out value="${searchResult.actionLabel}"/></a>
+      </p>
+    </c:if>
     <c:if test="${!empty searchResult.pageDescription}">
       <p><c:out value="${searchResult.pageDescription}" /></p>
     </c:if>
     <p>${searchResult.htmlExcerpt}</p>
+    <c:if test="${searchResult.modifiedBy > 0 or !empty searchResult.modified}">
+      <div class="margin-top-5" style="font-size: 0.85em; color: #888; margin-bottom: 8px;">
+        <c:if test="${searchResult.modifiedBy > 0}">
+          <span>Modified by: <c:out value="${user:name(searchResult.modifiedBy)}"/></span>
+        </c:if>
+        <c:if test="${!empty searchResult.modified}">
+          <c:if test="${searchResult.modifiedBy > 0}"> | </c:if>
+          <span>Last modified: <fmt:formatDate value="${searchResult.modified}" pattern="MMM dd, yyyy"/></span>
+        </c:if>
+      </div>
+    </c:if>
+    <c:if test="${!empty searchResult.tags and fn:length(searchResult.tags) > 0}">
+      <div class="margin-top-5" style="margin-bottom: 15px;">
+        <c:forEach items="${searchResult.tags}" var="tag" varStatus="tagStatus">
+          <span class="badge"><a href="?label=${url:encodeUri(tag)}"><c:out value="${tag}"/></a></span>
+        </c:forEach>
+      </div>
+    </c:if>
   </div>
 </c:forEach>
+<%-- Paging Control and View More --%>
+<c:if test="${!empty searchCriteria && recordPaging.maxPageNumber gt 1}">
+  <c:choose>
+    <c:when test="${showViewMoreLink eq 'true'}">
+      <a href="?${searchCriteria.uri}&ofType=${viewMoreType}" class="button expanded">View More</a>
+    </c:when>
+    <c:when test="${showPaging eq 'true'}">
+      <div class="margin-top-20 margin-bottom-20">
+        <c:set var="recordPagingParams" scope="request">${searchCriteria.uri}</c:set>
+        <%@include file="../paging_control.jspf" %>
+      </div>
+    </c:when>
+  </c:choose>
+</c:if>

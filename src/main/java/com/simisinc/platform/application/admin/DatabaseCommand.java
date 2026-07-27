@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,10 +25,10 @@ import org.apache.commons.logging.LogFactory;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.output.MigrateResult;
 
-import com.simisinc.platform.ApplicationInfo;
 import com.simisinc.platform.domain.model.DatabaseVersion;
 import com.simisinc.platform.infrastructure.database.ConnectionPool;
 import com.simisinc.platform.infrastructure.persistence.DatabaseVersionRepository;
+import com.zeroio.platform.ApplicationInfo;
 
 /**
  * Installs and upgrades the database

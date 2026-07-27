@@ -20,6 +20,7 @@ import com.simisinc.platform.application.cms.LoadFileCommand;
 import com.simisinc.platform.domain.model.cms.FileItem;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.zeroio.platform.application.cms.IntegrationAttachmentCommand;
 
 /**
  * Displays a Draw.io diagram from a .drawio FileItem using the Draw.io viewer
@@ -37,6 +38,7 @@ public class DrawIOViewerWidget extends GenericWidget {
   public WidgetContext execute(WidgetContext context) {
 
     // GET uri /assets/drawio/20180503171549-5/something.drawio
+    // ALLOW /assets/drawio/integration-638517504/co-packing.drawio
 
     // Use the request uri
     String resourceValue = context.getUri().substring(context.getResourcePath().length() + 1);
@@ -53,14 +55,27 @@ public class DrawIOViewerWidget extends GenericWidget {
     // Determine the file id and web path
     String webPath = resourceValue.substring(0, dashIdx);
     String fileIdValue = resourceValue.substring(dashIdx + 1);
-    long fileId = Long.parseLong(fileIdValue);
+    long fileId = -1;
+
+    if (resourceValue.startsWith(IntegrationAttachmentCommand.INTEGRATION_PREFIX)) {
+      FileItem integrationFileItem = IntegrationAttachmentCommand.loadFileItem(resourceValue);
+      if (integrationFileItem != null) {
+        fileId = integrationFileItem.getId();
+        webPath = integrationFileItem.getWebPath();
+      }
+    }
+
+    if (fileId == -1) {
+      fileId = Long.parseLong(fileIdValue);
+    }
+
     if (fileId <= 0) {
       return null;
     }
 
     // Determine the file and access permissions
     FileItem record;
-    if (context.hasRole("admin")) {
+    if (context.hasRole("admin") || context.hasRole("content-manager")) {
       // The file can be downloaded
       record = LoadFileCommand.loadItemById(fileId);
     } else {

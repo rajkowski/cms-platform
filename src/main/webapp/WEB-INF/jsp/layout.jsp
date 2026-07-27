@@ -1,4 +1,5 @@
 <%--
+  ~ Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
   ~ Copyright 2022 SimIS Inc.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +31,7 @@
 <jsp:useBean id="masterMenuTabList" class="java.util.ArrayList" scope="request"/>
 <jsp:useBean id="masterWebPage" class="com.simisinc.platform.domain.model.cms.WebPage" scope="request"/>
 <jsp:useBean id="controllerShowMainMenu" class="java.lang.String" scope="request"/>
+<jsp:useBean id="requestRegionList" class="java.util.ArrayList" scope="request"/>
 <%-- Navigation --%>
 <c:if test="${controllerShowMainMenu eq 'true'}">
   <c:choose>

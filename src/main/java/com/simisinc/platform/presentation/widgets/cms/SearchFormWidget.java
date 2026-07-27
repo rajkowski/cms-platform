@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,6 +33,10 @@ public class SearchFormWidget extends GenericWidget {
   static String JSP = "/cms/search-form.jsp";
 
   public WidgetContext execute(WidgetContext context) {
+    // Common attributes
+    context.getRequest().setAttribute("icon", context.getPreferences().get("icon"));
+    context.getRequest().setAttribute("title", context.getPreferences().get("title"));
+
     // Preferences
     context.getRequest().setAttribute("placeholder", context.getPreferences().getOrDefault("placeholder", "Search"));
     context.getRequest().setAttribute("linkText", context.getPreferences().get("linkText"));

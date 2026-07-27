@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -53,6 +54,7 @@ public class XapiStatementRepository {
       where = DB.WHERE()
           .andAddIfHasValue("statement_id = ?", specification.getId(), -1)
           .andAddIfHasValue("actor_id = ?", specification.getActorId(), -1)
+          .andAddIfHasValue("object_id = ?", specification.getObjectId(), -1)
           .andAddIfHasValue("verb = ?", specification.getVerb())
           .andAddIfHasValue("object = ?", specification.getObject());
     }

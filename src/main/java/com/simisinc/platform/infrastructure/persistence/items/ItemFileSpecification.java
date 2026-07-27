@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,12 +30,13 @@ public class ItemFileSpecification extends Entity {
 
   private Long id = -1L;
   private long itemId = -1L;
+  private long collectionId = -1L;
   private long folderId = -1L;
   private long subFolderId = -1L;
   private String filename = null;
   private String barcode = null;
   private long createdBy = -1;
-  private String fileType = null;
+  private String[] fileType = null;
   private Long forUserId = -1L;
   private String matchesName = null;
   private String searchName = null;
@@ -59,6 +61,14 @@ public class ItemFileSpecification extends Entity {
 
   public void setItemId(long itemId) {
     this.itemId = itemId;
+  }
+
+  public long getCollectionId() {
+    return collectionId;
+  }
+
+  public void setCollectionId(long collectionId) {
+    this.collectionId = collectionId;
   }
 
   public long getFolderId() {
@@ -101,12 +111,24 @@ public class ItemFileSpecification extends Entity {
     this.createdBy = createdBy;
   }
 
-  public String getFileType() {
+  public String[] getFileType() {
     return fileType;
   }
 
-  public void setFileType(String fileType) {
-    this.fileType = fileType;
+  public void setFileType(String[] value) {
+    this.fileType = value;
+  }
+
+  public void setFileType(String value) {
+    if (value != null && !value.isEmpty()) {
+      String[] valueArray = value.split(",");
+      for (int i = 0; i < valueArray.length; i++) {
+        valueArray[i] = valueArray[i].trim();
+      }
+      this.fileType = valueArray;
+    } else {
+      this.fileType = null;
+    }
   }
 
   public Long getForUserId() {

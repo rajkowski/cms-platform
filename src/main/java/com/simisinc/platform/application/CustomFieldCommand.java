@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -55,7 +56,7 @@ public class CustomFieldCommand {
       field.setName(generateHtmlName(name, null));
       field.setType(valueMap.get("type"));
       field.setPlaceholder(valueMap.get("placeholder"));
-      field.setProperty(valueMap.get("property"));
+      field.setProperty(valueMap.get("value"));
       field.setDefaultValue(valueMap.get("defaultValue"));
       field.setRequired("true".equals(valueMap.get("required")));
       if (valueMap.containsKey("list")) {

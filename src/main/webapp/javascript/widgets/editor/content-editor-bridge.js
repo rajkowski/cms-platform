@@ -1,9 +1,12 @@
 /**
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
+ * Licensed under the Apache License, Version 2.0
+ * 
  * Content Editor Bridge for Visual Content Editor
  * Handles HTML Editor integration, content editing, saving drafts, and publishing
  * 
  * @author matt rajkowski
- * @created 02/07/26 02:00 PM
+ * @created 7/24/26 8:00 AM
  */
 
 class ContentEditorBridge {
@@ -72,11 +75,27 @@ class ContentEditorBridge {
       convert_unsafe_embeds: true,
       sandbox_iframes: true,
       browser_spellcheck: true,
-      plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code insertdatetime media table wordcount fontawesome contentblock',
-      toolbar: 'link image media table contentblock | undo redo | blocks | bold italic backcolor | bullist numlist outdent indent hr | fontawesome removeformat | visualblocks code',
+      content_css: [
+        '/css/${font:fontawesome()}/css/all.min.css',
+        '/css/${font:fontawesome()}/css/v4-shims.min.css',
+        '/css/platform.css?v=202607240800',
+      ],
+      plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code media table wordcount fontawesome contentblock diagram versionhistory cards notes panels templates',
+      toolbar: 
+        [
+          'link image media diagram table fontawesome | notesMenu cardsMenu panelsMenu | contentblock templatesMenu | visualblocks  code | versionhistory',
+          'blocks | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | hr | anchor | removeformat | undo redo'
+        ],
+      toolbar_mode: 'wrap',
       external_plugins: {
-        "contentblock": "/javascript/tinymce-plugins/contentblock/plugin.js",
-        "fontawesome": "/javascript/tinymce-plugins/fontawesome/plugin.min.js?v=20260614-1"
+        "contentblock": "/javascript/tinymce-plugins/contentblock/plugin.js?v=202607240800",
+        "fontawesome": "/javascript/tinymce-plugins/fontawesome/plugin.min.js?v=202607240800",
+        "diagram": "/javascript/tinymce-plugins/diagram/plugin.js?v=202607240800",
+        "versionhistory": "/javascript/tinymce-plugins/versionhistory/plugin.js?v=202607240800",
+        "cards": "/javascript/tinymce-plugins/cards/plugin.js?v=202607240800",
+        "notes": "/javascript/tinymce-plugins/notes/plugin.js?v=202607240800",
+        "panels": "/javascript/tinymce-plugins/panels/plugin.js?v=202607240800",
+        "templates": "/javascript/tinymce-plugins/templates/plugin.js?v=202607240800"
       },
       image_class_list: [
         { title: 'None', value: '' },

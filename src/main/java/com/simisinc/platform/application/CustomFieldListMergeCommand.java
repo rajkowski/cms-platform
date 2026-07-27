@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -84,6 +85,19 @@ public class CustomFieldListMergeCommand {
                   FormFieldCommand.generateHtmlName(thisCustomField.getValue(), null), thisCustomField.getValue());
               LOG.debug("Missing option from item: " + thisCustomField.getValue());
 
+            }
+          }
+        } else if ("multi-select list".equals(existingField.getType())) {
+          // Merge the list options: value is comma-separated display values
+          LOG.debug("Existing multi-select list of options: " + existingField.getListOfOptions());
+          if (StringUtils.isNotBlank(thisCustomField.getValue()) && existingField.getListOfOptions() != null) {
+            for (String storedVal : thisCustomField.getValue().split(",")) {
+              storedVal = storedVal.trim();
+              if (StringUtils.isNotBlank(storedVal) && !existingField.getListOfOptions().containsValue(storedVal)) {
+                existingField.getListOfOptions().put(
+                    FormFieldCommand.generateHtmlName(storedVal, null), storedVal);
+                LOG.debug("Missing multi-select option from item: " + storedVal);
+              }
             }
           }
         }

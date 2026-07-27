@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://www.github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,9 +35,10 @@ public class RequestConstants {
   public static final String MASTER_MENU_TAB_LIST = "masterMenuTabList";
   public static final String MASTER_WEB_PAGE = "masterWebPage";
   public static final String FOOTER_STICKY_LINKS = "footerStickyLinks";
+  public static final String REGION_LIST = "requestRegionList";
 
   public static final String WEB_PACKAGE_LIST = "webPackageList";
-  
+
   public static final String CONTEXT_PATH = "ctx";
   public static final String WEB_PAGE_PATH = "pagePath";
 

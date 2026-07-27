@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -98,7 +99,7 @@ public class DB {
   private static PreparedStatement createPreparedStatement(Connection connection, String sqlQuery, SqlWhere where)
       throws SQLException {
     PreparedStatement pst = connection.prepareStatement(sqlQuery);
-    prepareValues(pst, where);
+    prepareValues(connection, pst, where);
     return pst;
   }
 
@@ -113,33 +114,37 @@ public class DB {
     } else {
       pst = connection.prepareStatement(sqlQuery);
     }
-    prepareValues(pst, insertValues);
+    prepareValues(connection, pst, insertValues);
     return pst;
   }
 
-  private static int prepareValues(PreparedStatement pst, SqlUtils sqlUtils) throws SQLException {
-    return prepareValues(pst, sqlUtils, 0);
+  private static int prepareValues(Connection connection, PreparedStatement pst, SqlUtils sqlUtils) throws SQLException {
+    return prepareValues(connection, pst, sqlUtils, 0);
   }
 
-  private static int prepareValues(PreparedStatement pst, SqlUtils sqlUtils, int fieldIdx) throws SQLException {
+  private static int prepareValues(Connection connection, PreparedStatement pst, SqlUtils sqlUtils, int fieldIdx)
+      throws SQLException {
     if (sqlUtils == null || sqlUtils.getValues() == null || sqlUtils.getValues().isEmpty()) {
       return fieldIdx;
     }
-    return prepareValues(pst, sqlUtils.getValues(), fieldIdx);
+    return prepareValues(connection, pst, sqlUtils.getValues(), fieldIdx);
   }
 
-  private static int prepareValues(PreparedStatement pst, SqlWhere sqlWhere) throws SQLException {
-    return prepareValues(pst, sqlWhere, 0);
+  private static int prepareValues(Connection connection, PreparedStatement pst, SqlWhere sqlWhere)
+      throws SQLException {
+    return prepareValues(connection, pst, sqlWhere, 0);
   }
 
-  private static int prepareValues(PreparedStatement pst, SqlWhere sqlWhere, int fieldIdx) throws SQLException {
+  private static int prepareValues(Connection connection, PreparedStatement pst, SqlWhere sqlWhere, int fieldIdx)
+      throws SQLException {
     if (sqlWhere == null || sqlWhere.getValues() == null || sqlWhere.getValues().isEmpty()) {
       return fieldIdx;
     }
-    return prepareValues(pst, sqlWhere.getValues(), fieldIdx);
+    return prepareValues(connection, pst, sqlWhere.getValues(), fieldIdx);
   }
 
-  private static int prepareValues(PreparedStatement pst, List<SqlValue> sqlValues, int fieldIdx) throws SQLException {
+  private static int prepareValues(Connection connection, PreparedStatement pst, List<SqlValue> sqlValues, int fieldIdx)
+      throws SQLException {
     if (sqlValues == null || sqlValues.isEmpty()) {
       return fieldIdx;
     }
@@ -147,7 +152,9 @@ public class DB {
       if (!sqlValue.hasValue()) {
         continue;
       }
-      if (sqlValue.getSqlType() == Types.VARCHAR) {
+      if (sqlValue.getSqlType() == Types.ARRAY) {
+        pst.setArray(++fieldIdx, connection.createArrayOf("text", sqlValue.getStringValues()));
+      } else if (sqlValue.getSqlType() == Types.VARCHAR) {
         if (sqlValue.getStringValues() != null) {
           for (String value : sqlValue.getStringValues()) {
             pst.setString(++fieldIdx, value);
@@ -649,7 +656,8 @@ public class DB {
 
   public static long insertInto(String tableName, SqlUtils insertValues, String[] primaryKey) {
     try (Connection connection = getConnection();
-        PreparedStatement pst = createPreparedStatementForInsert(connection, tableName, insertValues, primaryKey, null)) {
+        PreparedStatement pst = createPreparedStatementForInsert(connection, tableName, insertValues, primaryKey,
+            null)) {
       return executeInsertGetGeneratedKeys(pst);
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
@@ -766,9 +774,9 @@ public class DB {
   private static PreparedStatement createPreparedStatement(Connection connection, String sqlQuery,
       SqlUtils selectOrUpdate, SqlWhere where, SqlUtils orderBy) throws SQLException {
     PreparedStatement pst = connection.prepareStatement(sqlQuery);
-    int fieldIdx = prepareValues(pst, selectOrUpdate);
-    fieldIdx = prepareValues(pst, where, fieldIdx);
-    prepareValues(pst, orderBy, fieldIdx);
+    int fieldIdx = prepareValues(connection, pst, selectOrUpdate);
+    fieldIdx = prepareValues(connection, pst, where, fieldIdx);
+    prepareValues(connection, pst, orderBy, fieldIdx);
     return pst;
   }
 
@@ -793,11 +801,6 @@ public class DB {
           fieldNamesSb.append(sqlValue.getFieldOrClause());
         } else {
           fieldNamesSb.append(sqlValue.getFieldOrClause()).append(" = ").append(sqlValue.getStringValue());
-          // fieldNamesSb.append(sqlValue.getFieldOrClause()).append(" = ").append(sqlValue.getStringValue());
-          // fieldNamesSb.append(sqlValue.getFieldOrClause()).append(" = ?");
-          // if (sqlValue.getCastType() == SqlValue.JSONB_TYPE) {
-          //   fieldNamesSb.append("::jsonb");
-          // }
         }
       }
       if (isFirst) {

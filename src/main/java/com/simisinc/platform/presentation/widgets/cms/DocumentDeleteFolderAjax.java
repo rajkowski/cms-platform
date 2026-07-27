@@ -20,7 +20,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.DataException;
-import com.simisinc.platform.application.admin.PermissionEngine;
+import com.simisinc.platform.application.cms.CheckFolderPermissionCommand;
 import com.simisinc.platform.application.cms.DeleteFolderCommand;
 import com.simisinc.platform.domain.model.cms.Folder;
 import com.simisinc.platform.infrastructure.persistence.cms.FolderRepository;
@@ -43,12 +43,6 @@ public class DocumentDeleteFolderAjax extends GenericJsonService {
 
     LOG.debug("DocumentDeleteFolderAjax...");
 
-    // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
-      LOG.debug("No permission to: " + DocumentDeleteFolderAjax.class.getSimpleName());
-      return context.writeError("Permission Denied");
-    }
-
     long folderId = context.getParameterAsLong("folderId", -1);
     if (folderId == -1) {
       return context.writeError("Folder ID required");
@@ -57,6 +51,13 @@ public class DocumentDeleteFolderAjax extends GenericJsonService {
     Folder folder = FolderRepository.findById(folderId);
     if (folder == null) {
       return context.writeError("Folder not found");
+    }
+
+    // Check delete permission
+    if (!context.hasRole("admin") &&
+        !CheckFolderPermissionCommand.userHasDeletePermission(folder.getId(), context.getUserId())) {
+      LOG.debug("No delete permission to: " + DocumentDeleteFolderAjax.class.getSimpleName());
+      return context.writeError("Permission Denied");
     }
 
     try {

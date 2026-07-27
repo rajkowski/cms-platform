@@ -1,4 +1,5 @@
 <%--
+  ~ Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
   ~ Copyright 2022 SimIS Inc.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -212,6 +213,13 @@
       </style>
     </g:compress>
   </c:if>
+  <%-- Page Children Overlay Widget --%>
+  <c:if test="${isPreviewMode ne 'true' && sitePropertyMap['site.pageChildren.overlay.enabled'] eq 'true' && !fn:startsWith(pageRenderInfo.name, '/admin') && !fn:startsWith(pageRenderInfo.name, '/content-editor')}">
+      <g:compress>
+          <link rel="stylesheet" type="text/css" href="${ctx}/css/page-children-overlay-widget.css" />
+      </g:compress>
+  </c:if>
+  <%-- Global and Page specific styles must be served last --%>
   <c:if test="${!empty includeGlobalStylesheet}">
     <link rel="stylesheet" type="text/css" href="${ctx}/css/custom/stylesheet.css?v=${includeGlobalStylesheetLastModified}" />
   </c:if>
@@ -270,6 +278,9 @@
   </c:if>
   <%-- Render the page --%>
   <jsp:include page="${PageBody}" flush="true"/>
+  <c:if test="${sitePropertyMap['site.pageChildren.overlay.enabled'] eq 'true' && !fn:startsWith(pageRenderInfo.name, '/admin') && !fn:startsWith(pageRenderInfo.name, '/content-editor')}">
+    <%@ include file="/WEB-INF/jsp/cms/page-children-overlay-widget.jsp" %>
+  </c:if>
   <%-- Site Confirmation Modal --%>
   <c:if test="${!empty sitePropertyMap['site.confirmation'] && sitePropertyMap['site.confirmation'] eq 'true'}">
     <div id="site-confirmation" class="reveal full" data-reveal data-close-on-esc="false" data-close-on-click="false" data-animation-out="fade-out fast">
@@ -356,10 +367,10 @@
 
         </c:when>
         <c:when test="${fn:startsWith(link.link, 'http://') || fn:startsWith(link.link, 'https://')}">
-          <a class="button secondary site-sticky-footer-button" href="${link.link}" target="_blank"><c:out value="${link.name}"/></a>
+          <a class="button secondary site-sticky-footer-button" href="<c:out value="${link.link}"/>" target="_blank"><c:out value="${link.name}"/></a>
         </c:when>
         <c:otherwise>
-          <a class="button secondary site-sticky-footer-button" href="${ctx}${link.link}"><c:out value="${link.name}"/></a>
+          <a class="button secondary site-sticky-footer-button" href="<c:out value="${ctx}${link.link}"/>"><c:out value="${link.name}"/></a>
         </c:otherwise>
       </c:choose>
     </c:forEach>
@@ -378,8 +389,10 @@
   <g:compress>
     <web:script package="what-input" file="what-input.min.js" />
     <web:script package="foundation-sites" file="foundation.min.js" />
+    <script src="${ctx}/javascript/cms-panel-component.js"></script>
     <script>
       $(document).foundation();
+
       <%-- Site Promo Overlay Close Button --%>
       <%--
       $('.card-profile-stats-more-link').click(function(e){
@@ -532,7 +545,32 @@
         }
       });
     </script>
-  </g:compress>
+  </g:compress>  
+  <%-- Region Component --%>
+  <c:if test="${!empty sitePropertyMap['site.regions.enabled'] && sitePropertyMap['site.regions.enabled'] eq 'true'}">
+    <script>
+      // Make available to the script the region code and values for the current user session
+      const USER_REGION_CODE = '${js:escape(userSession.selectedRegionCode)}';
+      const REGION_COOKIE_CODE = 'region-code';
+      const REGION_COOKIE_VALUES = 'region-values';
+      const REGION_COOKIE_EXPIRY_DAYS = 365;
+      const CAN_UNSET_REGION = ${userSession.hasRole('admin') || userSession.hasRole('content-manager') || userSession.hasRole('data-manager')};
+      const REGION_CONFIG = [
+        <c:forEach items="${requestRegionList}" var="region" varStatus="regionStatus">
+          {
+            id: '${js:escape(region.id)}',
+            code: '${js:escape(region.code)}',
+            name: '${js:escape(region.name)}',
+            values: [<c:forEach items="${region.values}" var="value" varStatus="valueStatus">'<c:out value="${js:escape(value)}" />'<c:if test="${!valueStatus.last}">,</c:if></c:forEach>]
+          }<c:if test="${!regionStatus.last}">,</c:if>
+        </c:forEach>
+      ];
+      const REGION_CODES = REGION_CONFIG.map(region => region.code);
+    </script>
+    <g:compress>
+      <script src="${ctx}/javascript/site-region-selector.js"></script>
+    </g:compress>
+  </c:if>
   <c:if test="${!fn:startsWith(pageRenderInfo.name, '/admin')}">
     <c:if test="${!empty analyticsPropertyMap['analytics.service'] && 'google' eq analyticsPropertyMap['analytics.service'] && !empty analyticsPropertyMap['analytics.google.key']}">
       <script async src="https://www.googletagmanager.com/gtag/js?id=${js:escape(analyticsPropertyMap['analytics.google.key'])}"></script>

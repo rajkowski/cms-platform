@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -64,20 +65,26 @@ public class ItemFileDropZoneWidget extends GenericWidget {
     String itemUniqueId = context.getPreferences().getOrDefault("uniqueId", context.getCoreData().get("itemUniqueId"));
     Item item = LoadItemCommand.loadItemByUniqueIdForAuthorizedUser(itemUniqueId, context.getUserId());
     if (item == null) {
+      LOG.debug("No access to item with uniqueId: " + itemUniqueId);
       return null;
     }
     Collection collection = LoadCollectionCommand.loadCollectionByIdForAuthorizedUser(item.getCollectionId(),
         context.getUserId());
     if (collection == null) {
+      LOG.debug("No access to collection with id: " + item.getCollectionId());
       return null;
     }
 
     // Check permissions (allow drop-box permissions)
-    if (!context.hasRole("admin")) {
+    if (!context.hasRole("admin") && !context.hasRole("data-manager")) {
       String defaultName = "Documents";
       ItemFolder folder = ItemFolderRepository.findByName(defaultName, item.getId());
-      if (folder == null
-          || !CheckItemFolderPermissionCommand.userHasAddPermission(folder.getId(), context.getUserId())) {
+      if (folder == null) {
+        LOG.debug("No folder with name: " + defaultName + " for item with id: " + item.getId());
+        return null;
+      }
+      if (!CheckItemFolderPermissionCommand.userHasAddPermission(folder.getId(), context.getUserId())) {
+        LOG.debug("User does not have add permission for folder with id: " + folder.getId());
         return null;
       }
     }
@@ -110,7 +117,7 @@ public class ItemFileDropZoneWidget extends GenericWidget {
     }
 
     // Check permissions (allow drop-box permissions)
-    if (!context.hasRole("admin")) {
+    if (!context.hasRole("admin") && !context.hasRole("data-manager")) {
       String defaultName = "Documents";
       ItemFolder folder = ItemFolderRepository.findByName(defaultName, item.getId());
       if (folder == null
@@ -120,6 +127,7 @@ public class ItemFileDropZoneWidget extends GenericWidget {
     }
 
     ItemFileItem fileItemBean = null;
+
     try {
       // Check for a file
       fileItemBean = SaveItemFilePartCommand.saveFile(context, item);
@@ -128,6 +136,11 @@ public class ItemFileDropZoneWidget extends GenericWidget {
         throw new DataException("A file was not found, please choose a file and try again");
       }
       //      fileItemBean.setFolderId(folder.getId());
+
+      long fileId = context.getParameterAsLong("fileId", -1);
+      if (fileId > -1) {
+        fileItemBean.setId(fileId);
+      }
       fileItemBean.setVersion("1.0");
       fileItemBean.setCreatedBy(context.getUserId());
       fileItemBean.setModifiedBy(context.getUserId());

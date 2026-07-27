@@ -1,4 +1,5 @@
 <%--
+  ~ Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
   ~ Copyright 2022 SimIS Inc.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -51,16 +52,38 @@
     menubar: false,
     relative_urls : false,
     convert_urls : true,
-    convert_unsafe_embeds: true,
-    sandbox_iframes: true,
-    content_css: ['${ctx}/css/${font:fontawesome()}/css/all.min.css'],
+    convert_unsafe_embeds: true, <%-- CVE-2024-29203 fix --%>
+    sandbox_iframes: true, <%-- CVE-2024-29203 fix --%>
+    content_css: [
+      '${ctx}/css/${font:fontawesome()}/css/all.min.css',
+      '${ctx}/css/${font:fontawesome()}/css/v4-shims.min.css',
+      '${ctx}/css/platform.css?v=${includeGlobalStylesheetLastModified}',
+      <c:if test="${!empty includeGlobalStylesheet}">,'${ctx}/css/custom/stylesheet.css?v=${includeGlobalStylesheetLastModified}'</c:if>
+      <c:if test="${!empty includeStylesheet}">,'${ctx}/css/custom/stylesheet${includeStylesheet}.css?v=${includeStylesheetLastModified}'</c:if>
+    ],
+    content_style: "body.platform-content { overflow: auto !important; }",
+    body_class: 'web-content platform-content',
     noneditable_class: 'tinymce-noedit',
     browser_spellcheck: true,
-    plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code media table wordcount fontawesome contentblock',
-    toolbar: 'link image media table contentblock | undo redo | blocks | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent hr anchor | fontawesome removeformat visualblocks code',
+    plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code media table wordcount fontawesome contentblock diagram versionhistory cards notes panels templates imageversion',
+    contextmenu: 'notesContext link',
+    contextmenu_never_use_native: true,
+    toolbar: 
+      [
+        'link image media diagram table fontawesome | notesMenu cardsMenu panelsMenu | contentblock templatesMenu | visualblocks  code | versionhistory',
+        'blocks | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | hr | anchor | removeformat | undo redo'
+      ],
+    toolbar_mode: 'wrap',
     external_plugins: {
-        "contentblock": "${ctx}/javascript/tinymce-plugins/contentblock/plugin.js",
-        "fontawesome": "${ctx}/javascript/tinymce-plugins/fontawesome/plugin.min.js?v=20260614-1"
+        "contentblock": "${ctx}/javascript/tinymce-plugins/contentblock/plugin.js?v=${includeGlobalStylesheetLastModified}",
+        "fontawesome": "${ctx}/javascript/tinymce-plugins/fontawesome/plugin.min.js?v=${includeGlobalStylesheetLastModified}",
+        "diagram": "${ctx}/javascript/tinymce-plugins/diagram/plugin.js?v=${includeGlobalStylesheetLastModified}",
+        "versionhistory": "${ctx}/javascript/tinymce-plugins/versionhistory/plugin.js?v=${includeGlobalStylesheetLastModified}",
+        "cards": "${ctx}/javascript/tinymce-plugins/cards/plugin.js?v=${includeGlobalStylesheetLastModified}",
+        "notes": "${ctx}/javascript/tinymce-plugins/notes/plugin.js?v=${includeGlobalStylesheetLastModified}",
+        "panels": "${ctx}/javascript/tinymce-plugins/panels/plugin.js?v=${includeGlobalStylesheetLastModified}",
+        "templates": "${ctx}/javascript/tinymce-plugins/templates/plugin.js?v=${includeGlobalStylesheetLastModified}",
+        "imageversion": "${ctx}/javascript/tinymce-plugins/imageversion/plugin.js?v=${includeGlobalStylesheetLastModified}"
     },
     image_class_list: [
       {title: 'None', value: ''},
@@ -90,11 +113,54 @@
             callback(fileUrl);
         });
     },
-    images_upload_url: '${ctx}/image-upload?widget=imageUpload1&token=${userSession.formToken}', // return { "location": "folder/sub-folder/new-location.png" }
+    images_upload_handler: function (blobInfo, progress) {
+      return tinymce.activeEditor.plugins.imageversion.uploadImageFromEditor(blobInfo, progress);
+    },
+    image_version_upload_url: '${ctx}/image-upload?widget=imageUpload1&token=${userSession.formToken}',
     automatic_uploads: true
     // paste_word_valid_elements: "p,a,b,strong,i,em,h1,h2,h3,h4,h5,ol,ul,li"
     // paste_retain_style_properties: "color"
     // paste_as_text: true
+  });
+
+  $(function () {
+    const form = document.querySelector('form[method="post"]');
+    if (!form) {
+      return;
+    }
+
+    let processingSubmit = false;
+    form.addEventListener('submit', async function (event) {
+      if (processingSubmit) {
+        return;
+      }
+
+      const submitter = event.submitter;
+      const actionValue = submitter && submitter.name === 'save' ? submitter.value : '';
+      const isPublishAction = actionValue === 'Publish Immediately';
+
+      const imageVersionPlugin = tinymce.activeEditor && tinymce.activeEditor.plugins.imageversion;
+      if (!imageVersionPlugin || !imageVersionPlugin.hasPendingUploads()) {
+        return;
+      }
+
+      event.preventDefault();
+      processingSubmit = true;
+      try {
+        await imageVersionPlugin.flushPendingUploads(isPublishAction);
+        if (submitter && submitter.name) {
+          const hidden = document.createElement('input');
+          hidden.type = 'hidden';
+          hidden.name = submitter.name;
+          hidden.value = submitter.value;
+          form.appendChild(hidden);
+        }
+        form.submit();
+      } catch (e) {
+        processingSubmit = false;
+        alert('Unable to process pending image version uploads. Please try again.');
+      }
+    });
   });
 
   function FileBrowser(value, type, callback) {
@@ -181,8 +247,7 @@
     </div>
   </div>
   <div id="content-editor">
-    <%--<textarea id="content-html-editor"></textarea>--%>
-    <textarea name="content" class="html-field"><c:out value="${contentHtml}"/></textarea>
+    <textarea name="content" class="html-field" data-content-id="${content.id}" data-unique-id="${content.uniqueId}"><c:out value="${contentHtml}"/><p>&nbsp;</p></textarea>
   </div>
 </form>
 </div>

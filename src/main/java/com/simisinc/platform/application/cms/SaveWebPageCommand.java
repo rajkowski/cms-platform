@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +18,7 @@
 package com.simisinc.platform.application.cms;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -27,6 +29,8 @@ import com.simisinc.platform.domain.model.cms.SitemapChangeFrequencyOptions;
 import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
 import com.simisinc.platform.infrastructure.workflow.WorkflowManager;
+import com.zeroio.platform.domain.model.cms.WebPageVersion;
+import com.zeroio.platform.infrastructure.persistence.cms.WebPageVersionRepository;
 
 /**
  * Validates and saves web page objects
@@ -93,7 +97,7 @@ public class SaveWebPageCommand {
       errorMessages.append("Sitemap change frequency choice is unavailable");
     }
 
-    if (errorMessages.length() > 0) {
+    if (!errorMessages.isEmpty()) {
       throw new DataException("Please check the form and try again:\n" + errorMessages.toString());
     }
 
@@ -105,12 +109,19 @@ public class SaveWebPageCommand {
       if (webPage == null) {
         throw new DataException("The existing record could not be found");
       }
+      // Capture the current XML before replacing it so edits can be restored later.
+      if (StringUtils.isNotBlank(webPage.getPageXml()) &&
+          !Strings.CS.equals(webPage.getPageXml(), webPageBean.getPageXml())) {
+        long versionUserId = webPageBean.getModifiedBy() > 0 ? webPageBean.getModifiedBy() : webPageBean.getCreatedBy();
+        saveWebPageVersion(webPage.getId(), webPage.getPageXml(), versionUserId, "Version saved before update");
+      }
     } else {
       LOG.debug("Saving a new record... ");
       webPage = new WebPage();
+      webPage.setEnabled(true);
     }
     webPage.setCreatedBy(webPageBean.getCreatedBy());
-    webPage.setModifiedBy(webPageBean.getCreatedBy());
+    webPage.setModifiedBy(webPageBean.getModifiedBy() > 0 ? webPageBean.getModifiedBy() : webPageBean.getCreatedBy());
     webPage.setLink(webPageBean.getLink());
     webPage.setRedirectUrl(webPageBean.getRedirectUrl());
     webPage.setTitle(webPageBean.getTitle());
@@ -124,6 +135,7 @@ public class SaveWebPageCommand {
     webPage.setDraft(webPageBean.getDraft());
     webPage.setSitemapPriority(webPageBean.getSitemapPriority());
     webPage.setSitemapChangeFrequency(webPageBean.getSitemapChangeFrequency());
+    webPage.setTags(webPageBean.getTags());
     WebPage result = WebPageRepository.save(webPage);
 
     if (result != null) {
@@ -139,9 +151,20 @@ public class SaveWebPageCommand {
       if (isNewWebPage) {
         WorkflowManager.triggerWorkflowForEvent(new WebPagePublishedEvent(result));
       } else if (justUpdatedInTheLastDay) {
-        WorkflowManager.triggerWorkflowForEvent(new WebPageUpdatedEvent(result));
+        WorkflowManager.triggerWorkflowForEvent(new WebPageUpdatedEvent(result, webPageBean.getModifiedBy()));
       }
     }
     return result;
+  }
+
+  private static void saveWebPageVersion(long webPageId, String pageXml, long userId, String notes) {
+    if (webPageId > 0 && StringUtils.isNotBlank(pageXml)) {
+      WebPageVersion version = new WebPageVersion();
+      version.setWebPageId(webPageId);
+      version.setPageXml(pageXml);
+      version.setCreatedBy(userId);
+      version.setNotes(notes);
+      WebPageVersionRepository.save(version);
+    }
   }
 }

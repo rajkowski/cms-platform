@@ -1,4 +1,5 @@
 <%--
+  ~ Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
   ~ Copyright 2022 SimIS Inc.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,8 +24,13 @@
 <%@ taglib prefix="number" uri="/WEB-INF/tlds/number-functions.tld" %>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="sitePropertyMap" class="java.util.HashMap" scope="request"/>
+<jsp:useBean id="searchCriteria" class="com.zeroio.platform.domain.model.cms.SearchCriteria" scope="request"/>
+<jsp:useBean id="viewMoreType" class="java.lang.String" scope="request"/>
 <c:if test="${!empty title}">
   <h4 class="margin-bottom-20"><c:if test="${!empty icon}"><i class="fa ${icon}"></i> </c:if><c:out value="${title}"/></h4>
+</c:if>
+<c:if test="${empty searchResultList}">
+  <p>No results were found.</p>
 </c:if>
 <c:forEach items="${searchResultList}" var="searchResult" varStatus="status">
   <div class="platform-content-search-result margin-top-10">
@@ -42,3 +48,17 @@
     <p>${searchResult.htmlExcerpt}</p>
   </div>
 </c:forEach>
+<%-- Paging Control and View More --%>
+<c:if test="${!empty searchCriteria && recordPaging.maxPageNumber gt 1}">
+  <c:choose>
+    <c:when test="${showViewMoreLink eq 'true'}">
+      <a href="?${searchCriteria.uri}&ofType=${viewMoreType}" class="button expanded">View More</a>
+    </c:when>
+    <c:when test="${showPaging eq 'true'}">
+      <div class="margin-top-20 margin-bottom-20">
+        <c:set var="recordPagingParams" scope="request">${searchCriteria.uri}</c:set>
+        <%@include file="../paging_control.jspf" %>
+      </div>
+    </c:when>
+  </c:choose>
+</c:if>

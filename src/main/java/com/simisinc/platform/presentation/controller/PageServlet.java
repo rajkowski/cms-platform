@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -56,12 +57,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
-import com.simisinc.platform.application.cms.LoadMenuTabsCommand;
+import com.simisinc.platform.application.analytics.SavePerformanceMetricCommand;
 import com.simisinc.platform.application.cms.LoadStylesheetCommand;
 import com.simisinc.platform.application.cms.LoadTableOfContentsCommand;
 import com.simisinc.platform.application.cms.LoadWebPageCommand;
 import com.simisinc.platform.application.cms.SaveWebPageHitCommand;
-import com.simisinc.platform.application.analytics.SavePerformanceMetricCommand;
 import com.simisinc.platform.application.cms.WebContainerLayoutCommand;
 import com.simisinc.platform.application.cms.WebPackageCommand;
 import com.simisinc.platform.application.cms.WebPageXmlLayoutCommand;
@@ -76,6 +76,9 @@ import com.simisinc.platform.domain.model.items.Category;
 import com.simisinc.platform.domain.model.items.Collection;
 import com.simisinc.platform.domain.model.items.Item;
 import com.simisinc.platform.presentation.widgets.cms.WebContainerContext;
+import com.zeroio.platform.application.cms.RenderMainMenuCommand;
+import com.zeroio.platform.domain.model.Region;
+import com.zeroio.platform.infrastructure.persistence.RegionRepository;
 
 /**
  * Handles all web browser page requests
@@ -321,7 +324,10 @@ public class PageServlet extends HttpServlet {
     response.setHeader("X-Frame-Options", "SAMEORIGIN");
     response.setHeader("X-Content-Type-Options", "nosniff");
     response.setHeader("X-XSS-Protection", "1; mode=block");
-
+    response.setHeader("Content-Security-Policy", "base-uri 'self'; object-src 'none'; frame-ancestors 'self'");
+    if ("true".equals(LoadSitePropertyCommand.loadByName("system.ssl"))) {
+      response.setHeader("Strict-Transport-Security", "max-age=31536000");
+    }
     try {
       // The PageRequest encapsulates and reduces the HttpServletRequest
       PageRequest pageRequest = new PageRequest(request);
@@ -684,8 +690,16 @@ public class PageServlet extends HttpServlet {
         // @todo determine if this is needed still (it is, but until all JSP layouts are removed?)
         // Load the main menu
         request.setAttribute(SHOW_MAIN_MENU, "true");
-        List<MenuTab> menuTabList = LoadMenuTabsCommand.loadActiveIncludeMenuItemList();
+
+        List<MenuTab> menuTabList = RenderMainMenuCommand.renderMainMenu(pageRequest.getPagePath(), userSession, thisCollection, true,
+            true, true);
         request.setAttribute(MASTER_MENU_TAB_LIST, menuTabList);
+
+        // Load the region list if enabled
+        if ("true".equals(sitePropertyMap.getOrDefault("site.regions.enabled", "false"))) {
+          List<Region> regionList = RegionRepository.findAll();
+          request.setAttribute(RequestConstants.REGION_LIST, regionList);
+        }
 
         // @note this is needed globally
         if (!"container".equals(request.getSession().getAttribute(SessionConstants.X_VIEW_MODE))) {

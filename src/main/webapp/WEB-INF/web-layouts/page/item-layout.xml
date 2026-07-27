@@ -34,17 +34,20 @@
   <page name="/show/*" itemUniqueId="/show/*">
     <section class="margin-bottom-15">
       <column class="small-12 cell">
-        <widget name="itemMenu" />
+        <widget name="itemMenu">
+          <showAdminMenu>false</showAdminMenu>
+        </widget>
       </column>
     </section>
     <section>
-      <column class="small-12 medium-7 cell">
+      <column class="auto cell">
         <widget name="itemFields" class="callout box">
-          <title>Summary</title>
+          <title>Information</title>
           <uniqueId>${item.uniqueId}</uniqueId>
           <fields>
             <field value="summary" type="textarea" />
           </fields>
+          <showAllCustomFields>false</showAllCustomFields>
         </widget>
         <widget name="itemFields" class="callout box">
           <title>Details</title>
@@ -52,9 +55,33 @@
           <fields>
             <field value="description" type="html" />
           </fields>
+          <showAllCustomFields>false</showAllCustomFields>
+        </widget>
+        <widget name="itemFields" class="callout box">
+          <uniqueId>${item.uniqueId}</uniqueId>
+          <showAllCustomFields>true</showAllCustomFields>
+        </widget>
+        <widget name="itemFields" class="callout box">
+          <uniqueId>${item.uniqueId}</uniqueId>
+          <fields>
+            <field value="tags" type="tags" />
+          </fields>
+          <showAllCustomFields>false</showAllCustomFields>
         </widget>
       </column>
-      <column class="small-12 medium-5 cell">
+      <column class="small-12 medium-5 large-4 cell">
+        <widget name="editItemButton">
+          <buttonName>Edit this item</buttonName>
+          <buttonClass>expanded</buttonClass>
+          <uniqueId>${item.uniqueId}</uniqueId>
+          <returnPage>${ctx}/show/${item.uniqueId}</returnPage>
+        </widget>
+        <widget name="button" role="admin,data-manager">
+          <name>Manage Documents</name>
+          <leftIcon>fa-folder-open</leftIcon>
+          <link>${ctx}/show/${item.uniqueId}/documents</link>
+          <class>button radius expanded</class>
+        </widget>
         <widget name="itemFields" class="callout box">
           <title>Information</title>
           <uniqueId>${item.uniqueId}</uniqueId>
@@ -68,7 +95,7 @@
             <field name="Id" value="barcode" />
             <field name="URL" value="url" type="text" />
           </fields>
-          <showAllCustomFields>true</showAllCustomFields>
+          <showAllCustomFields>false</showAllCustomFields>
         </widget>
         <widget name="itemFields">
           <uniqueId>${item.uniqueId}</uniqueId>
@@ -90,6 +117,23 @@
           <markerTitle>${item.name}</markerTitle>
           <markerText>${item.city}, ${item.state}</markerText>
         </widget>
+        <widget name="itemFileList" class="callout box">
+          <title>Documents</title>
+          <!-- <type>pdf,spreadsheet</type> -->
+          <uniqueId>${item.uniqueId}</uniqueId>
+          <showWhenEmpty>false</showWhenEmpty>
+          <useViewer>true</useViewer>
+          <emptyMessage>No documents were found</emptyMessage>
+        </widget>
+        <widget name="itemRelationshipsList" class="callout box">
+          <title>Related Items</title>
+          <showRemoveRelationship>true</showRemoveRelationship>
+          <showWhenEmpty>false</showWhenEmpty>
+        </widget>
+        <widget name="itemRelationshipForm" class="callout box" role="admin,data-manager">
+          <title>Add a related item</title>
+          <saveReciprocalRelationships>false</saveReciprocalRelationships>
+        </widget>
       </column>
     </section>
   </page>
@@ -100,13 +144,18 @@
       <column class="small-12 cell">
         <widget name="itemMenu" />
       </column>
+      <column class="small-12 cell">
+        <widget name="content" class="padding-top-15 padding-left-15 no-gap-all">
+          <html><![CDATA[<p><a href="${ctx}/show/${item.uniqueId}">&larr; Back to content</a></p>]]></html>
+        </widget>
+      </column>
     </section>
     <section>
       <column class="auto cell">
-        <widget name="activityList" role="admin,user">
+        <widget name="activityList">
           <uniqueId>${item.uniqueId}</uniqueId>
         </widget>
-        <widget name="activityForm" role="admin,user">
+        <widget name="activityForm">
           <uniqueId>${item.uniqueId}</uniqueId>
         </widget>
       </column>
@@ -128,16 +177,25 @@
       <column class="small-12 cell">
         <widget name="itemMenu" />
       </column>
+      <column class="small-12 cell">
+        <widget name="content" class="padding-top-15 padding-left-15 no-gap-all">
+          <html><![CDATA[<p><a href="${ctx}/show/${item.uniqueId}">&larr; Back to content</a></p>]]></html>
+        </widget>
+      </column>
     </section>
     <section>
       <column class="auto cell">
         <widget name="itemFileList" class="callout box">
           <title>Documents</title>
-          <type>pdf</type>
           <uniqueId>${item.uniqueId}</uniqueId>
           <showWhenEmpty>true</showWhenEmpty>
           <useViewer>true</useViewer>
           <emptyMessage>No documents were found</emptyMessage>
+        </widget>
+      </column>
+      <column class="small-12 medium-4 cell">
+        <widget name="itemFileDropZone" class="callout box" role="admin,data-manager">
+          <title>Upload a document</title>
         </widget>
       </column>
     </section>
@@ -148,6 +206,11 @@
     <section class="margin-bottom-15">
       <column class="small-12 cell">
         <widget name="itemMenu" />
+      </column>
+      <column class="small-12 cell">
+        <widget name="content" class="padding-top-15 padding-left-15 no-gap-all">
+          <html><![CDATA[<p><a href="${ctx}/show/${item.uniqueId}">&larr; Back to content</a></p>]]></html>
+        </widget>
       </column>
     </section>
     <section>
@@ -168,6 +231,11 @@
     <section class="margin-bottom-15">
       <column class="small-12 cell">
         <widget name="itemMenu" />
+      </column>
+      <column class="small-12 cell">
+        <widget name="content" class="padding-top-15 padding-left-15 no-gap-all">
+          <html><![CDATA[<p><a href="${ctx}/show/${item.uniqueId}">&larr; Back to content</a></p>]]></html>
+        </widget>
       </column>
     </section>
     <section>
@@ -202,8 +270,12 @@
         </widget>
       </column>
       <column class="small-4 cell">
-        <widget name="itemFileDropZone" class="callout box" role="admin">
-          <title>Upload a file</title>
+        <widget name="itemRelationshipsList" class="callout box">
+          <title>Related Items</title>
+          <showWhenEmpty>false</showWhenEmpty>
+        </widget>
+        <widget name="itemRelationshipForm" class="callout box" role="admin">
+          <title>Add a related item</title>
         </widget>
       </column>
       <column class="small-4 cell">
@@ -216,13 +288,6 @@
           <buttonName>Delete this item</buttonName>
           <uniqueId>${item.uniqueId}</uniqueId>
           <returnPage>${ctx}/directory/${item.collectionUniqueId}</returnPage>
-        </widget>
-        <widget name="itemRelationshipsList" class="callout box">
-          <title>Related Items</title>
-          <showWhenEmpty>false</showWhenEmpty>
-        </widget>
-        <widget name="itemRelationshipForm" class="callout box" role="admin">
-          <title>Add a related item</title>
         </widget>
       </column>
     </section>

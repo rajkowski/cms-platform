@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Matt Rajkowski (https://github.com/rajkowski)
+ * Copyright 2025-2026 Matt Rajkowski (https://github.com/rajkowski)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.simisinc.platform.presentation.controller.DataConstants;
 
 /**
@@ -30,6 +32,9 @@ import com.simisinc.platform.presentation.controller.DataConstants;
  * @created 2/15/2025 3:11 PM
  */
 public class SqlWhere {
+
+  public static final String AND_OPERATOR = "AND";
+  public static final String OR_OPERATOR = "OR";
 
   private List<SqlValue> values = new ArrayList<>();
 
@@ -50,6 +55,11 @@ public class SqlWhere {
 
   public SqlWhere AND(String name, String[] value) {
     values.add(new SqlValue(name, value));
+    return this;
+  }
+
+  public SqlWhere AND(String name, String[] value, int sqlType) {
+    values.add(new SqlValue(name, value, sqlType));
     return this;
   }
 
@@ -200,4 +210,103 @@ public class SqlWhere {
     return values;
   }
 
+  public SqlWhere AND(String jsonbColumnName, String[] arrayValues, String operator) {
+    String whereStatement = arrayToSqlStatementList(jsonbColumnName, arrayValues, operator);
+    if (StringUtils.isBlank(whereStatement)) {
+      return this;
+    }
+
+    // Each placeholder is cast to jsonb, so each value must be its own single-element JSON array
+    String[] jsonArrayValues = new String[arrayValues.length];
+    for (int i = 0; i < arrayValues.length; i++) {
+      jsonArrayValues[i] = toJsonArrayLiteral(arrayValues[i]);
+    }
+
+    values.add(new SqlValue(whereStatement, jsonArrayValues));
+    return this;
+  }
+
+  /**
+   * Wraps a single string value as a one-element JSON array literal, escaping characters
+   * as required by the JSON spec, so it can be bound to a {@code ?::jsonb} placeholder
+   * used in a {@code @>} containment check (e.g. {@code value} → {@code ["value"]}).
+   *
+   * @param value the value to wrap
+   * @return a JSON array literal containing the single value
+   */
+  private static String toJsonArrayLiteral(String value) {
+    StringBuilder sql = new StringBuilder("[\"");
+    if (value != null) {
+      for (int i = 0; i < value.length(); i++) {
+        char c = value.charAt(i);
+        switch (c) {
+          case '"':
+            sql.append("\\\"");
+            break;
+          case '\\':
+            sql.append("\\\\");
+            break;
+          case '\n':
+            sql.append("\\n");
+            break;
+          case '\r':
+            sql.append("\\r");
+            break;
+          case '\t':
+            sql.append("\\t");
+            break;
+          default:
+            if (c < 0x20) {
+              sql.append(String.format("\\u%04x", (int) c));
+            } else {
+              sql.append(c);
+            }
+        }
+      }
+    }
+    sql.append("\"]");
+    return sql.toString();
+  }
+
+  /**
+   * Builds a parameterized SQL condition for filtering a JSONB array column against multiple values.
+   *
+   * <p>PostgreSQL has no single operator to test JSONB array containment against a list of values
+   * using ANY()/ALL() semantics, so this method expands the values into individual
+   * {@code sqlColumn @> ?::jsonb} containment checks and joins them with the given logical
+   * operator, wrapped in parenthesis:
+   * <ul>
+   *   <li>{@code "OR"} → {@code (sqlColumn @> ?::jsonb OR sqlColumn @> ?::jsonb)}</li>
+   *   <li>any other value (including null) → defaults to AND</li>
+   * </ul>
+   * </p>
+   *
+   * <p>The returned condition contains one {@code ?} placeholder per value, in order. The caller
+   * is responsible for binding each value (individually wrapped as a JSON array, e.g.
+   * {@code toJsonArray(new String[]{value})}) to its corresponding placeholder, such as via
+   * {@code SqlWhere.AND(condition, Object[] values)}.</p>
+   *
+   * @param sqlColumn the JSONB column to filter (may include a table prefix, e.g. "files.tags")
+   * @param values the values to match against the JSONB column
+   * @param operator logical operator used to combine conditions ("AND" or "OR")
+   * @return a parenthesized SQL condition string with one "?" placeholder per value, or {@code null}
+   *         if {@code sqlColumn} is blank or {@code values} is null or empty
+   */
+  private static String arrayToSqlStatementList(String jsonbColumnName, String[] arrayValues, String operator) {
+    if (StringUtils.isBlank(jsonbColumnName) || arrayValues == null || arrayValues.length == 0) {
+      return null;
+    }
+
+    // Default to AND if operator is null or invalid
+    String op = OR_OPERATOR.equalsIgnoreCase(operator) ? OR_OPERATOR : AND_OPERATOR;
+    StringBuilder sql = new StringBuilder("(");
+    for (int i = 0; i < arrayValues.length; i++) {
+      if (i > 0) {
+        sql.append(" ").append(op).append(" ");
+      }
+      sql.append(jsonbColumnName).append(" @> ?::jsonb");
+    }
+    sql.append(")");
+    return sql.toString();
+  }
 }

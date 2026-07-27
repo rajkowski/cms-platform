@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,16 +17,16 @@
 
 package com.simisinc.platform.application.cms;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.simisinc.platform.domain.model.cms.WebPage;
-import com.simisinc.platform.presentation.controller.WebComponentCommand;
 import com.simisinc.platform.presentation.controller.Column;
 import com.simisinc.platform.presentation.controller.Page;
 import com.simisinc.platform.presentation.controller.Section;
-import com.simisinc.platform.presentation.controller.Widget;
 import com.simisinc.platform.presentation.controller.UserSession;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import com.simisinc.platform.presentation.controller.WebComponentCommand;
+import com.simisinc.platform.presentation.controller.Widget;
 
 /**
  * Validates access to a link's web page object
@@ -41,19 +42,17 @@ public class ValidateUserAccessToWebPageCommand {
     if (userSession.hasRole("admin") || userSession.hasRole("content-manager")) {
       return true;
     }
+
+    // Check the web pages in the repository
     WebPage webPage = LoadWebPageCommand.loadByLink(link);
-    if (webPage == null) {
-      return false;
+    if (webPage != null) {
+      // The page is a draft
+      if (webPage.getDraft()) {
+        return false;
+      }
     }
-    // The page is a draft
-    if (webPage.getDraft()) {
-      return false;
-    }
-    // The page is empty
-    if (StringUtils.isBlank(webPage.getPageXml())) {
-      return false;
-    }
-    // The user does not have access to any widgets on the page
+
+    // Check the page layout (from repository or application files)
     Page pageRef = WebPageXmlLayoutCommand.retrievePageForRequest(webPage, link);
     if (pageRef == null) {
       return false;

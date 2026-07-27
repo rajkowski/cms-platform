@@ -28,6 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.domain.model.cms.WebPageHierarchy;
 import com.simisinc.platform.infrastructure.database.DB;
 import com.simisinc.platform.infrastructure.database.SqlUtils;
@@ -352,6 +353,25 @@ public class WebPageHierarchyRepository {
       LOG.error("Error removing by path: " + e.getMessage());
       return false;
     }
+  }
+
+  /**
+   * Removes a hierarchy record for a given web page
+   *
+   * @param connection the database connection
+   * @param record the web page record
+   * @return true if the hierarchy record was removed
+   */
+  public static boolean remove(Connection connection, WebPage record) {
+    if (record == null) {
+      return false;
+    }
+    // Based on the webPageId, find the hierarchy record and remove it by path
+    WebPageHierarchy hierarchyRecord = findByPageId(connection, record.getId());
+    if (hierarchyRecord != null && StringUtils.isNotBlank(hierarchyRecord.getPath())) {
+      return removeByPath(connection, hierarchyRecord.getPath());
+    }
+    return false;
   }
 
   /**

@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,40 +20,27 @@ package com.simisinc.platform.presentation.widgets.cms;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
 
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.application.cms.HtmlCommand;
-import com.simisinc.platform.application.cms.LoadMenuTabsCommand;
-import com.simisinc.platform.application.cms.WebPageXmlLayoutCommand;
-import com.simisinc.platform.domain.model.cms.Content;
-import com.simisinc.platform.domain.model.cms.MenuItem;
-import com.simisinc.platform.domain.model.cms.MenuTab;
 import com.simisinc.platform.domain.model.cms.SearchResult;
-import com.simisinc.platform.domain.model.cms.TableOfContents;
-import com.simisinc.platform.domain.model.cms.TableOfContentsLink;
 import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.persistence.cms.ContentRepository;
-import com.simisinc.platform.infrastructure.persistence.cms.ContentSpecification;
-import com.simisinc.platform.infrastructure.persistence.cms.TableOfContentsRepository;
-import com.simisinc.platform.infrastructure.persistence.cms.WebPageHierarchyRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageSpecification;
-import com.simisinc.platform.presentation.controller.Column;
-import com.simisinc.platform.presentation.controller.Page;
 import com.simisinc.platform.presentation.controller.RequestConstants;
-import com.simisinc.platform.presentation.controller.Section;
-import com.simisinc.platform.presentation.controller.UserSession;
-import com.simisinc.platform.presentation.controller.WebComponentCommand;
-import com.simisinc.platform.presentation.controller.Widget;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.zeroio.platform.domain.model.Region;
+import com.zeroio.platform.domain.model.cms.SearchCriteria;
+import com.zeroio.platform.infrastructure.persistence.RegionRepository;
 
 /**
- * Description
+ * Returns search results for web pages
  *
  * @author matt rajkowski
  * @created 8/28/19 12:15 PM
@@ -65,9 +53,40 @@ public class WebPageSearchResultsWidget extends GenericWidget {
 
   public WidgetContext execute(WidgetContext context) {
 
+    // Determine the search criteria
+    SearchCriteria searchCriteria = new SearchCriteria(context.getParameterMap());
+    String location = context.getParameter("location");
+    if (!searchCriteria.hasFilters() && StringUtils.isBlank(location)) {
+      return null;
+    }
+    context.getRequest().setAttribute("searchCriteria", searchCriteria);
+
+    // Check the 'ofType' filter - only show resources when filter is 'pages', 'all', or empty
+    String isOfType = Objects.toString(searchCriteria.getOfType(), SearchCriteria.ALL);
+    if (!SearchCriteria.ALL.equals(isOfType) && !SearchCriteria.PAGES.equals(isOfType)) {
+      // User has selected a different content type filter (e.g., 'resources')
+      return null;
+    }
+
+    // Check the 'showWhenOfType' preference
+    String showWhenOfType = context.getPreferences().getOrDefault("showWhenOfType", SearchCriteria.ALL);
+    if (!showWhenOfType.equals(isOfType)) {
+      // Widget is configured to show a different content type than the current search criteria
+      return null;
+    }
+
+    // View More takes over the 'ofType' for paging to use
+    context.getRequest().setAttribute("viewMoreType", SearchCriteria.PAGES);
+
     // Standard request items
     context.getRequest().setAttribute("icon", context.getPreferences().get("icon"));
     context.getRequest().setAttribute("title", context.getPreferences().get("title"));
+
+    // Get widget preferences with defaults
+    context.getRequest().setAttribute("showPaging", context.getPreferences().getOrDefault("showPaging", "false"));
+    context.getRequest().setAttribute("showViewMoreLink",
+        context.getPreferences().getOrDefault("showViewMoreLink", "false"));
+    boolean useUserRegionPref = "true".equals(context.getPreferences().getOrDefault("useUserRegion", "false"));
 
     // Determine the record paging
     int limit = Integer.parseInt(context.getPreferences().getOrDefault("limit", "15"));
@@ -76,190 +95,105 @@ public class WebPageSearchResultsWidget extends GenericWidget {
     DataConstraints constraints = new DataConstraints(page, itemsPerPage);
     context.getRequest().setAttribute(RequestConstants.RECORD_PAGING, constraints);
 
-    // Determine the search term
-    String query = context.getParameter("query");
-    if (StringUtils.isBlank(query)) {
-      return null;
+    // Spec out the conditions for the query
+    WebPageSpecification specification = new WebPageSpecification();
+    // Admins or content managers can see all pages, but regular users only see published pages that are searchable, and not drafts
+    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
+      // Limit the search to published pages that are enabled, searchable, and not drafts
+      specification.setSearchable(true);
+      specification.setDraft(false);
+    }
+    specification.setEnabled(true);
+    specification.setHasRedirect(false);
+    // Query term
+    if (StringUtils.isNotBlank(searchCriteria.getQuery())) {
+      specification.setSearchTerm(searchCriteria.getQuery());
+    }
+    if (searchCriteria.hasTags()) {
+      specification.setFilterTags(searchCriteria.getTags());
     }
 
-    boolean requirePageInNavigation = "true".equals(context.getPreferences().getOrDefault("requirePageInNavigation", "false"));
+    // Check if we should include the user's region preferences as tags to filter by
+    if (useUserRegionPref) {
+      String userRegionCode = context.getUserSession().getSelectedRegionCode();
+      if (StringUtils.isNotBlank(userRegionCode)) {
+        Region region = RegionRepository.findByCode(userRegionCode);
+        if (region != null) {
+          specification.setRegionTags(region.getValues());
+        }
+      }
+    }
+    if (searchCriteria.getFromDate() != null) {
+      specification.setModifiedAfter(searchCriteria.getFromDate());
+    }
+    if (searchCriteria.getToDate() != null) {
+      specification.setModifiedBefore(searchCriteria.getToDate());
+    }
+    if (searchCriteria.hasContributorFilter()) {
+      specification.setModifiedByUserIds(searchCriteria.getContributorFilter());
+    }
 
-    // Load the menu tabs, these are the directly linkable web pages
-    List<MenuTab> menuTabList = requirePageInNavigation ? LoadMenuTabsCommand.findAllActiveIncludeMenuItemList() : null;
-
-    // Load the table of contents
-    List<TableOfContents> tableOfContentsList = requirePageInNavigation ? TableOfContentsRepository.findAll(null, null) : null;
-
-    // Search the content and figure out the matching web pages
-    ContentSpecification contentSpecification = new ContentSpecification();
-    contentSpecification.setSearchTerm(query);
-    List<Content> contentList = ContentRepository.findAll(contentSpecification, constraints);
+    // Query the data
+    List<WebPage> webPageList = WebPageRepository.findAll(specification, constraints);
+    LOG.debug("Found " + (webPageList != null ? webPageList.size() : 0) + " web pages matching filters");
 
     // Prepare the response
     Map<String, SearchResult> resultsMap = new LinkedHashMap<>();
-    if (contentList == null) {
-      // No content was found, return early
+    if (webPageList == null || webPageList.isEmpty()) {
+      // No pages match the filters, return empty results
+      LOG.debug("No web pages found matching filter criteria");
       return finishRequest(context, resultsMap);
     }
 
-    // Determine the web pages that can be searched
-    UserSession userSession = context.getUserSession();
-    WebPageSpecification webPageSpecification = new WebPageSpecification();
-    // Admins or content managers can see all pages, but regular users only see published pages that are searchable, and not drafts
-    if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-      // Limit the search to published pages that are searchable, and not drafts
-      webPageSpecification.setSearchable(true);
-      webPageSpecification.setDraft(false);
-    }
-    webPageSpecification.setHasRedirect(false);
-    List<WebPage> webPageList = WebPageRepository.findAll(webPageSpecification, null);
-
-    // Now search the web pages for a matching unique id
-    contentLoop: for (Content content : contentList) {
-      String contentUniqueId = content.getUniqueId();
-
-      // Find active web pages with the matching content object
-      for (WebPage webPage : webPageList) {
-        String link = webPage.getLink();
-        // Skip blank links
-        if (StringUtils.isBlank(link)) {
-          continue;
-        }
-        // Skip my page, unless user is logged in
-        if (link.startsWith("/my-page") && !context.getUserSession().isLoggedIn()) {
-          continue;
-        }
-        // Skip the cart to give priority to content pages
-        if ("/cart".equals(link)) {
-          continue;
-        }
-
-        // Find an active page the content is valid on
-        if (StringUtils.isBlank(webPage.getPageXml()) ||
-            (!webPage.getPageXml().contains("<uniqueId>" + contentUniqueId + "</uniqueId>") &&
-                !webPage.getPageXml().contains("${uniqueId:" + contentUniqueId + "}"))) {
-          // No uniqueIds on this page to confirm
-          continue;
-        }
-
-        // Confirm the content is in a content widget, and verify the widget will render for this user
-        Page pageRef = WebPageXmlLayoutCommand.retrievePageForRequest(webPage, link);
-        if (pageRef == null) {
-          continue;
-        }
-        if (!WebComponentCommand.allowsUser(pageRef, userSession)) {
-          continue;
-        }
-        for (Section section : pageRef.getSections()) {
-          if (!WebComponentCommand.allowsUser(section, userSession)) {
-            continue;
-          }
-          for (Column column : section.getColumns()) {
-            if (!WebComponentCommand.allowsUser(column, userSession)) {
-              continue;
-            }
-            for (Widget widget : column.getWidgets()) {
-              if (!WebComponentCommand.allowsUser(widget, userSession)) {
-                continue;
-              }
-              // Check the widget
-              if (!"content".equals(widget.getWidgetName())) {
-                continue;
-              }
-              for (String key : widget.getPreferences().keySet()) {
-                String value = widget.getPreferences().get(key);
-                LOG.debug("Pref: " + key + "=" + value);
-                if ((("uniqueId".equals(key) && value.contains(contentUniqueId)) || (value.contains("${uniqueId:" + contentUniqueId + "}"))) &&
-                    (!requirePageInNavigation || isPageInTheNavigation(context, link, menuTabList, tableOfContentsList, webPageList))) {
-                  // Page was found, but we only want to show results for linked pages, to avoid hidden pages
-                  addTheSearchResult(webPage, link, content, resultsMap);
-                  // No need to show more web pages which have the same repeated contentId
-                  continue contentLoop;
-                }
-              }
-            }
-          }
-        }
+    // Return the results...
+    for (WebPage webPage : webPageList) {
+      String link = webPage.getLink();
+      // Skip blank links
+      if (StringUtils.isBlank(link)) {
+        LOG.debug("Skipping web page with blank link - ID: " + webPage.getId() + ", Title: " + webPage.getTitle());
+        continue;
       }
+      addTheSearchResult(webPage, link, resultsMap);
     }
     context.getRequest().setAttribute("searchResultList", resultsMap.values());
     return finishRequest(context, resultsMap);
   }
 
-  private boolean isPageInTheNavigation(WidgetContext context, String link, List<MenuTab> menuTabList,
-      List<TableOfContents> tableOfContentsList, List<WebPage> webPageList) {
-    // Allow the admin to see results for any page
-    if (context.hasRole("admin") || context.hasRole("content-manager")) {
-      return true;
-    }
-    // Determine if the link is in the navigation... like menu tabs, menu items, table of contents
-    if (menuTabList != null) {
-      for (MenuTab menuTab : menuTabList) {
-        if (menuTab.getLink().equals(link)) {
-          return true;
-        }
-        for (MenuItem menuItem : menuTab.getMenuItemList()) {
-          if (menuItem.getLink().equals(link)) {
-            return true;
-          }
-        }
-      }
-    }
-    // Determine if the link is in the table of contents
-    if (tableOfContentsList != null) {
-      for (TableOfContents tableOfContents : tableOfContentsList) {
-        for (TableOfContentsLink tableOfContentsLink : tableOfContents.getEntries()) {
-          if (link.equals(tableOfContentsLink.getLink())) {
-            return true;
-          }
-        }
-      }
-    }
-    // Determine if the link is in the web page hierarchy
-    if (webPageList != null) {
-      for (WebPage webPage : webPageList) {
-        if (link.equals(webPage.getLink())) {
-          if (WebPageHierarchyRepository.findByPageId(webPage.getId()) != null) {
-            return true;
-          }
-          break;
-        }
-      }
-    }
-    return false;
-  }
+  private void addTheSearchResult(WebPage webPage, String link, Map<String, SearchResult> resultsMap) {
 
-  private void addTheSearchResult(WebPage webPage, String link, Content content, Map<String, SearchResult> resultsMap) {
-    // Add the search result
-    String htmlContent = HtmlCommand.toHtml(content.getHighlight());
-    if (StringUtils.isNotBlank(htmlContent)) {
-      htmlContent = Strings.CS.replace(htmlContent, "${b}", "<strong>");
-      htmlContent = Strings.CS.replace(htmlContent, "${/b}", "</strong>");
+    String htmlContent = HtmlCommand.toHtml(webPage.getHighlight());
+    if (StringUtils.isBlank(htmlContent)) {
+      LOG.debug("No highlight content for web page with link: " + link + " - skipping search result");
+      return;
     }
-    SearchResult searchResult = resultsMap.get(link);
-    if (searchResult == null) {
-      searchResult = new SearchResult();
-      searchResult.setLink(link);
-      if ("/".equals(link)) {
-        // It's the home page
-        searchResult.setPageTitle(LoadSitePropertyCommand.loadByName("site.name"));
-      } else {
-        searchResult.setPageTitle(webPage.getTitle());
-      }
-      if (StringUtils.isNotBlank(webPage.getDescription())) {
-        searchResult.setPageDescription(webPage.getDescription());
-      }
-      searchResult.setHtmlExcerpt(htmlContent);
-      resultsMap.put(link, searchResult);
+
+    // Highlight is available, format it
+    htmlContent = Strings.CS.replace(htmlContent, "${b}", "<strong>");
+    htmlContent = Strings.CS.replace(htmlContent, "${/b}", "</strong>");
+    SearchResult searchResult = new SearchResult();
+    searchResult.setLink(link);
+    if ("/".equals(link)) {
+      // It's the home page
+      searchResult.setPageTitle(LoadSitePropertyCommand.loadByName("site.name"));
     } else {
-      searchResult.setHtmlExcerpt(searchResult.getHtmlExcerpt() + " " + htmlContent);
+      searchResult.setPageTitle(webPage.getTitle());
     }
+    if (StringUtils.isNotBlank(webPage.getDescription())) {
+      searchResult.setPageDescription(webPage.getDescription());
+    }
+    searchResult.setHtmlExcerpt(htmlContent);
+    searchResult.setTags(webPage.getTags());
+    // Set modified date and modified by user
+    searchResult.setModified(webPage.getModified());
+    searchResult.setModifiedBy(webPage.getModifiedBy());
+    resultsMap.put(link, searchResult);
   }
 
   private WidgetContext finishRequest(WidgetContext context, Map<String, SearchResult> resultsMap) {
     // Determine if the widget is shown
     boolean showWhenEmpty = "true".equals(context.getPreferences().getOrDefault("showWhenEmpty", "true"));
     if (resultsMap.isEmpty() && !showWhenEmpty) {
+      LOG.debug("No results found and showWhenEmpty is false - not rendering widget");
       return context;
     }
 

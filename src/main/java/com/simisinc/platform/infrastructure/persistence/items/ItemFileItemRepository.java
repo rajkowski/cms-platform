@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +22,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.sql.Types;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -65,10 +68,14 @@ public class ItemFileItemRepository {
     if (specification != null) {
 
       joins.add("LEFT JOIN item_folders ON (item_files.folder_id = item_folders.folder_id)");
+      if (specification.getCollectionId() > -1) {
+        joins.add("LEFT JOIN items ON (item_files.item_id = items.item_id)");
+      }
 
       where
           .andAddIfHasValue("file_id = ?", specification.getId(), -1)
           .andAddIfHasValue("item_files.item_id = ?", specification.getItemId(), -1)
+          .andAddIfHasValue("items.collection_id = ?", specification.getCollectionId(), -1)
           .andAddIfHasValue("item_folders.folder_id = ?", specification.getFolderId(), -1)
           .andAddIfHasValue("sub_folder_id = ?", specification.getSubFolderId(), -1)
           .andAddIfHasValue("barcode = ?", specification.getBarcode());
@@ -76,7 +83,8 @@ public class ItemFileItemRepository {
         where.AND("LOWER(item_files.filename) = ?", specification.getFilename().trim().toLowerCase());
       }
       if (specification.getFileType() != null) {
-        where.AND("LOWER(item_files.file_type) = ?", specification.getFileType().trim().toLowerCase());
+        where.AND("LOWER(item_files.file_type) = ANY(?)",
+            Arrays.stream(specification.getFileType()).map(String::toLowerCase).toArray(String[]::new), Types.ARRAY);
       }
       if (specification.getMatchesName() != null) {
         String likeValue = specification.getMatchesName().trim()
@@ -109,7 +117,8 @@ public class ItemFileItemRepository {
                   "OR (has_allowed_groups = true " +
                   "AND EXISTS (SELECT 1 FROM item_folder_groups WHERE item_folder_groups.folder_id = item_folders.folder_id AND view_all = true "
                   +
-                  "AND EXISTS (SELECT 1 FROM user_groups WHERE user_groups.group_id = item_folder_groups.group_id AND user_id = ?))" +
+                  "AND EXISTS (SELECT 1 FROM user_groups WHERE user_groups.group_id = item_folder_groups.group_id AND user_id = ?))"
+                  +
                   ")" +
                   ")",
               specification.getForUserId());
@@ -118,7 +127,8 @@ public class ItemFileItemRepository {
 
       // Use the search engine
       if (StringUtils.isNotBlank(specification.getSearchName())) {
-        select.add("ts_rank_cd(tsv, websearch_to_tsquery('item_file_stem', ?)) AS rank", specification.getSearchName().trim());
+        select.add("ts_rank_cd(tsv, websearch_to_tsquery('item_file_stem', ?)) AS rank",
+            specification.getSearchName().trim());
         where.AND("tsv @@ websearch_to_tsquery('item_file_stem', ?)", specification.getSearchName().trim());
         // Override the order by for rank first
         orderBy.add("rank DESC, file_id");
@@ -135,6 +145,50 @@ public class ItemFileItemRepository {
     return (ItemFileItem) DB.selectRecordFrom(
         TABLE_NAME,
         DB.WHERE("file_id = ?", id),
+        ItemFileItemRepository::buildRecord);
+  }
+
+  public static ItemFileItem findByWebPath(String webPath) {
+    if (StringUtils.isBlank(webPath)) {
+      return null;
+    }
+
+    return (ItemFileItem) DB.selectRecordFrom(
+        TABLE_NAME,
+        DB.WHERE("web_path = ?", webPath),
+        ItemFileItemRepository::buildRecord);
+  }
+
+  public static ItemFileItem findByWebPathAndFileId(String webPath, long fileId) {
+    if (StringUtils.isBlank(webPath)) {
+      return null;
+    }
+    if (fileId <= -1) {
+      return null;
+    }
+
+    SqlWhere where = DB.WHERE();
+    where.AND("web_path = ?", webPath);
+    where.AND("file_id = ?", fileId);
+
+    return (ItemFileItem) DB.selectRecordFrom(
+        TABLE_NAME,
+        where,
+        ItemFileItemRepository::buildRecord);
+  }
+
+  public static ItemFileItem findByWebPath(long itemId, String webPath) {
+    if (StringUtils.isBlank(webPath)) {
+      return null;
+    }
+
+    SqlWhere where = DB.WHERE();
+    where.AND("item_id = ?", itemId);
+    where.AND("web_path = ?", webPath);
+
+    return (ItemFileItem) DB.selectRecordFrom(
+        TABLE_NAME,
+        where,
         ItemFileItemRepository::buildRecord);
   }
 
@@ -343,7 +397,8 @@ public class ItemFileItemRepository {
     return DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("sub_folder_id = ?", record.getId()));
   }
 
-  private static PreparedStatement createPreparedStatementForUpdateDownloadCount(Connection connection, ItemFileItem record)
+  private static PreparedStatement createPreparedStatementForUpdateDownloadCount(Connection connection,
+      ItemFileItem record)
       throws SQLException {
     String SQL_QUERY = "UPDATE item_files " +
         "SET download_count = download_count + 1 " +
@@ -383,7 +438,12 @@ public class ItemFileItemRepository {
       record.setExtension(rs.getString("extension"));
       record.setFileServerPath(rs.getString("path"));
       record.setFileLength(rs.getLong("file_length"));
-      record.setFileType(rs.getString("file_type"));
+      String fileType = rs.getString("file_type");
+      if (fileType != null) {
+        record.setFileType(fileType.toLowerCase());
+      } else {
+        record.setFileType(null);
+      }
       record.setMimeType(rs.getString("mime_type"));
       record.setFileHash(rs.getString("file_hash"));
       record.setWidth(rs.getInt("width"));

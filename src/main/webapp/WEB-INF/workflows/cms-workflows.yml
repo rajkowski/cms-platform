@@ -93,3 +93,15 @@
       verb: updated
       object: webPage
       object-id: '{{ webPage.id }}'
+
+- id: web-page-draft-content-edited
+  vars:
+    user: '{{ event.user }}'
+    webPage: '{{ event.webPage }}'
+  workflow:
+    - history:
+      message: '_{{ user.fullName }}_ **{{ verb }}** draft content on a web page: [{{ event.title }}]({{ webPage.link }})'
+      actor-id: '{{ user.id }}'
+      verb: edited
+      object: webPageContent
+      object-id: '{{ webPage.id }}'

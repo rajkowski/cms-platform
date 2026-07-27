@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,15 +17,18 @@
 
 package com.simisinc.platform.rest.services.items;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.simisinc.platform.domain.model.CustomField;
+import com.simisinc.platform.domain.model.items.Collection;
 import com.simisinc.platform.domain.model.items.Item;
 
 /**
- * Description
+ * Item Response
  *
  * @author matt rajkowski
  * @created 1/22/19 12:12 PM
@@ -36,6 +40,8 @@ public class ItemDetailsResponse {
   String name;
   @JsonInclude(JsonInclude.Include.NON_EMPTY)
   String summary;
+  @JsonInclude(JsonInclude.Include.NON_EMPTY)
+  String description;
   @JsonInclude(JsonInclude.Include.NON_EMPTY)
   String location;
   @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -54,12 +60,15 @@ public class ItemDetailsResponse {
   String imageUrl;
   @JsonInclude(JsonInclude.Include.NON_EMPTY)
   String barcode;
+  @JsonInclude(JsonInclude.Include.NON_EMPTY)
+  String[] tags;
   private Map<String, String> customFields;
 
-  public ItemDetailsResponse(Item record) {
+  public ItemDetailsResponse(Item record, Collection collection) {
     uniqueId = record.getUniqueId();
     name = record.getName();
     summary = record.getSummary();
+    description = record.getDescription();
     location = record.getLocation();
     street = record.getStreet();
     city = record.getCity();
@@ -71,8 +80,19 @@ public class ItemDetailsResponse {
     }
     imageUrl = record.getImageUrl();
     barcode = record.getBarcode();
-    if (record.getCustomFieldList() != null && !record.getCustomFieldList().isEmpty()) {
-      // @todo set the fields and values to return
+    tags = record.getTags();
+    if (collection.getCustomFieldList() != null && !collection.getCustomFieldList().isEmpty()
+        && record.getCustomFieldList() != null && !record.getCustomFieldList().isEmpty()) {
+      customFields = new LinkedHashMap<>();
+      for (CustomField fieldDef : collection.getCustomFieldList().values()) {
+        CustomField itemField = record.getCustomField(fieldDef.getName());
+        if (itemField != null && itemField.getValue() != null) {
+          customFields.put(fieldDef.getName(), itemField.getValue());
+        }
+      }
+      if (customFields.isEmpty()) {
+        customFields = null;
+      }
     }
   }
 
@@ -86,6 +106,10 @@ public class ItemDetailsResponse {
 
   public String getSummary() {
     return summary;
+  }
+
+  public String getDescription() {
+    return description;
   }
 
   public String getLocation() {
@@ -122,6 +146,10 @@ public class ItemDetailsResponse {
 
   public String getBarcode() {
     return barcode;
+  }
+
+  public String[] getTags() {
+    return tags;
   }
 
   @JsonAnyGetter

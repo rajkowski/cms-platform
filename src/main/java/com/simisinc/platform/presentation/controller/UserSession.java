@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,19 +17,20 @@
 
 package com.simisinc.platform.presentation.controller;
 
+import java.io.Serializable;
+import java.util.List;
+import java.util.UUID;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.simisinc.platform.application.LoadUserCommand;
 import com.simisinc.platform.domain.model.Group;
 import com.simisinc.platform.domain.model.Role;
 import com.simisinc.platform.domain.model.User;
 import com.simisinc.platform.domain.model.ecommerce.Cart;
 import com.simisinc.platform.domain.model.maps.GeoIP;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import java.io.Serializable;
-import java.util.List;
-import java.util.UUID;
 
 /**
  * Details about the current user
@@ -65,6 +67,8 @@ public class UserSession implements Serializable {
   private long lastOrderId = -1;
   private boolean showSiteConfirmation = true;
   private boolean showSiteNewsletterSignup = true;
+  private boolean showRegionSelection = true;
+  private String selectedRegionCode = null;
 
   public UserSession() {
   }
@@ -254,5 +258,26 @@ public class UserSession implements Serializable {
 
   public void setShowSiteNewsletterSignup(boolean showSiteNewsletterSignup) {
     this.showSiteNewsletterSignup = showSiteNewsletterSignup;
+  }
+
+  public boolean getShowRegionSelection() {
+    return showRegionSelection;
+  }
+
+  public void setShowRegionSelection(boolean showRegionSelection) {
+    this.showRegionSelection = showRegionSelection;
+  }
+
+  // Region preference methods
+  public String getSelectedRegionCode() {
+    return selectedRegionCode;
+  }
+
+  public void setSelectedRegionCode(String selectedRegionCode) {
+    this.selectedRegionCode = selectedRegionCode;
+  }
+
+  public boolean hasRegionSelected() {
+    return selectedRegionCode != null && !selectedRegionCode.trim().isEmpty();
   }
 }

@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +20,10 @@ package com.simisinc.platform.infrastructure.persistence.items;
 import com.simisinc.platform.presentation.controller.DataConstants;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Properties for querying objects from the item repository
@@ -50,6 +55,13 @@ public class ItemSpecification {
   private boolean unapprovedOnly = false;
   private long datasetId = -1L;
   private Timestamp datasetSyncTimestampThreshold = null;
+  private String[] filterTags = null;
+  private String[] regionTags = null;
+  private List<String[]> customFieldFilters = null;
+  private Map<String, List<String>> fieldInFilters = null;
+  private Timestamp modifiedAfter = null;
+  private Timestamp modifiedBefore = null;
+  private long[] modifiedByUserIds = null;
 
   public ItemSpecification() {
   }
@@ -244,6 +256,73 @@ public class ItemSpecification {
 
   public void setDatasetSyncTimestampThreshold(Timestamp datasetSyncTimestampThreshold) {
     this.datasetSyncTimestampThreshold = datasetSyncTimestampThreshold;
+  }
+
+  public String[] getFilterTags() {
+    return filterTags;
+  }
+
+  public void setFilterTags(String[] filterTags) {
+    this.filterTags = filterTags;
+  }
+
+  public String[] getRegionTags() {
+    return regionTags;
+  }
+
+  public void setRegionTags(String[] regionTags) {
+    this.regionTags = regionTags;
+  }
+
+  public List<String[]> getCustomFieldFilters() {
+    return customFieldFilters;
+  }
+
+  public void addCustomFieldFilter(String name, String value) {
+    if (customFieldFilters == null) {
+      customFieldFilters = new ArrayList<>();
+    }
+    // Validate field name: only allow alphanumeric, space, underscore, hyphen
+    if (!name.matches("[A-Za-z0-9 _-]+")) {
+      // LOG.warn("filter custom field name contains invalid characters: " + name);
+      return;
+    }
+    customFieldFilters.add(new String[] { name, value });
+  }
+
+  public Map<String, List<String>> getFieldInFilters() {
+    return fieldInFilters;
+  }
+
+  public void addFieldInFilter(String fieldName, List<String> values) {
+    if (fieldInFilters == null) {
+      fieldInFilters = new LinkedHashMap<>();
+    }
+    fieldInFilters.put(fieldName, values);
+  }
+
+  public Timestamp getModifiedAfter() {
+    return modifiedAfter;
+  }
+
+  public void setModifiedAfter(Timestamp modifiedAfter) {
+    this.modifiedAfter = modifiedAfter;
+  }
+
+  public Timestamp getModifiedBefore() {
+    return modifiedBefore;
+  }
+
+  public void setModifiedBefore(Timestamp modifiedBefore) {
+    this.modifiedBefore = modifiedBefore;
+  }
+
+  public long[] getModifiedByUserIds() {
+    return modifiedByUserIds;
+  }
+
+  public void setModifiedByUserIds(long[] modifiedByUserIds) {
+    this.modifiedByUserIds = modifiedByUserIds;
   }
 
 }

@@ -1,4 +1,5 @@
 <%--
+  ~ Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
   ~ Copyright 2022 SimIS Inc.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,29 +22,41 @@
 <jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="fieldList" class="java.util.ArrayList" scope="request"/>
+<jsp:useBean id="searchLink" class="java.lang.String" scope="request"/>
 <c:if test="${!empty title}">
   <h4><c:if test="${!empty icon}"><i class="fa ${icon}"></i> </c:if><c:out value="${title}" /></h4>
 </c:if>
 <%@include file="../page_messages.jspf" %>
 <c:forEach items="${fieldList}" var="field" varStatus="status">
-  <c:choose>
-    <c:when test="${'html' eq field.type}">
-      <c:if test="${!empty field.label}">
-        <strong><c:out value="${field.label}"/></strong>:
-      </c:if>
-      <p>${field.value}</p>
-    </c:when>
-    <c:when test="${'image' eq field.type}">
-      <p><img src="<c:out value="${field.value}" />" /></p>
-    </c:when>
-    <c:when test="${'url' eq field.type && (fn:startsWith(field.value, 'http://') || fn:startsWith(field.value, 'https://'))}">
-      <p><a class="button small no-gap" href="${url:encode(field.value)}" target="_blank" rel="nofollow">${field.label} <i class="fa fa-external-link"></i></a></p>
-    </c:when>
-    <c:otherwise>
-      <c:if test="${!empty field.label}">
-        <strong><c:out value="${field.label}"/></strong>:
-      </c:if>
-      <p><c:out value="${field.value}"/></p>
-    </c:otherwise>
-  </c:choose>
+  <c:if test="${!empty field.value}">
+    <c:choose>
+      <c:when test="${'html' eq field.type}">
+        <c:if test="${!empty field.label}">
+          <p><strong><c:out value="${field.label}"/>:</strong></p>
+        </c:if>
+        <div class="platform-content">
+          <c:out value="${field.value}" escapeXml="false"/>
+        </div>
+      </c:when>
+      <c:when test="${'image' eq field.type}">
+        <p><img src="<c:out value="${field.value}" />" /></p>
+      </c:when>
+      <c:when test="${'tags' eq field.property}">
+        <p>
+          <c:forEach items="${fn:split(field.value, '|')}" var="tag" varStatus="tagStatus">
+            <span class="badge"><a href="${ctx}${searchLink}?label=${fn:escapeXml(tag)}"><c:out value="${tag}"/></a></span>
+          </c:forEach>
+        </p>
+      </c:when>
+      <c:when test="${'url' eq field.type && (fn:startsWith(field.value, 'http://') || fn:startsWith(field.value, 'https://'))}">
+        <p><a class="button small no-gap" href="${url:encode(field.value)}" target="_blank" rel="nofollow">${field.label} <i class="fa fa-external-link"></i></a></p>
+      </c:when>
+      <c:otherwise>
+        <c:if test="${!empty field.label}">
+          <p class="no-gap"><strong><c:out value="${field.label}"/>:</strong></p>
+        </c:if>
+        <p><c:out value="${field.value}"/></p>
+      </c:otherwise>
+    </c:choose>
+  </c:if>
 </c:forEach>

@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +31,7 @@ import com.simisinc.platform.application.filesystem.FileSystemCommand;
 import com.simisinc.platform.domain.model.cms.Image;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.zeroio.platform.application.cms.IntegrationAttachmentCommand;
 
 /**
  * Streams previously uploaded images
@@ -42,25 +44,30 @@ public class StreamImageWidget extends GenericWidget {
   static final long serialVersionUID = -8484048371911908893L;
   private static Log LOG = LogFactory.getLog(StreamImageWidget.class);
 
+  @Override
   public WidgetContext execute(WidgetContext context) {
 
     // GET uri /assets/img/20180503171549-5/logo.png
     // GET uri /assets/img/20180503171549-5/logo-thumb.png (for thumbnails)
     LOG.debug("Found request uri: " + context.getUri());
-    
+
     // Check if this is a thumbnail request
     boolean isThumbnail = context.getUri().contains("/thumb-");
-    
+
     Image record = ImageUrlCommand.decodeToImageRecord(context.getUri());
     if (record == null) {
-      return null;
+      record = IntegrationAttachmentCommand.loadImage(context.getUri());
+      if (record == null) {
+        LOG.debug("Image record not found for uri: " + context.getUri());
+        return null;
+      }
     }
-    
+
     // Use thumbnail path if requested and available
-    String filePath = isThumbnail && record.hasThumbnail() 
-        ? record.getProcessedPath() 
+    String filePath = isThumbnail && record.hasThumbnail()
+        ? record.getProcessedPath()
         : record.getFileServerPath();
-    
+
     File file = FileSystemCommand.getFileServerRootPath(filePath);
     if (!file.isFile()) {
       LOG.warn("Server file does not exist: " + filePath);

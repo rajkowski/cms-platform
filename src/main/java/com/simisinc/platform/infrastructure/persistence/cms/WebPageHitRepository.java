@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,8 +24,11 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -256,7 +260,7 @@ public class WebPageHitRepository {
   }
 
   /**
-   * Find top pages with detailed metrics (views, unique users, avg time, bounce rate)
+   * Find top pages with detailed metrics (views, sessions, users, avg time, bounce rate)
    */
   public static List<ObjectNode> findTopPagesWithMetrics(int days, int recordLimit) {
     String sqlQuery = "WITH page_sessions AS ( " +
@@ -283,18 +287,26 @@ public class WebPageHitRepository {
         "    SUM(CASE WHEN hit_count = 1 THEN 1 ELSE 0 END) AS bounce_count " +
         "  FROM page_sessions " +
         "  GROUP BY page_path " +
+        "), " +
+        "user_visits AS ( " +
+        "  SELECT wph.page_path, COUNT(DISTINCT ul.user_id) AS unique_system_users " +
+        "  FROM web_page_hits wph " +
+        "  JOIN user_logins ul ON ul.session_id = wph.session_id " +
+        "  WHERE wph.hit_date > NOW() - INTERVAL '" + days + " days' " +
+        "  AND wph.is_logged_in = TRUE " +
+        "  AND NOT EXISTS (SELECT 1 FROM sessions WHERE session_id = wph.session_id AND is_bot = TRUE) " +
+        "  GROUP BY wph.page_path " +
         ") " +
         "SELECT " +
         "  ps.page_path, " +
         "  ps.total_views AS view_count, " +
-        "  ps.unique_sessions, " +
-        "  COUNT(DISTINCT wph.ip_address) AS unique_users, " +
+        "  ps.unique_sessions AS unique_users, " +
+        "  COALESCE(uv.unique_system_users, 0) AS unique_system_users, " +
         "  ROUND(CAST(COALESCE(ps.avg_time_seconds, 0) AS NUMERIC), 1) AS avg_time_seconds, " +
-        "  ROUND(CAST(CASE WHEN ps.session_count > 0 THEN (ps.bounce_count::float / ps.session_count) * 100 ELSE 0 END AS NUMERIC), 1) AS bounce_rate " +
+        "  ROUND(CAST(CASE WHEN ps.session_count > 0 THEN (ps.bounce_count::float / ps.session_count) * 100 ELSE 0 END AS NUMERIC), 1) AS bounce_rate "
+        +
         "FROM page_stats ps " +
-        "LEFT JOIN web_page_hits wph ON ps.page_path = wph.page_path " +
-        "  AND wph.hit_date > NOW() - INTERVAL '" + days + " days' " +
-        "GROUP BY ps.page_path, ps.total_views, ps.unique_sessions, ps.avg_time_seconds, ps.session_count, ps.bounce_count " +
+        "LEFT JOIN user_visits uv ON ps.page_path = uv.page_path " +
         "ORDER BY ps.total_views DESC " +
         "LIMIT " + recordLimit;
 
@@ -308,6 +320,7 @@ public class WebPageHitRepository {
         node.put("pagePath", rs.getString("page_path"));
         node.put("views", rs.getLong("view_count"));
         node.put("uniqueUsers", rs.getLong("unique_users"));
+        node.put("uniqueSystemUsers", rs.getLong("unique_system_users"));
         node.put("avgTime", rs.getDouble("avg_time_seconds"));
         node.put("bounceRate", rs.getDouble("bounce_rate"));
         records.add(node);
@@ -334,7 +347,7 @@ public class WebPageHitRepository {
     sqlQuery.append("     page_path LIKE '%.zip' OR page_path LIKE '%.exe' OR page_path LIKE '%.ppt%' OR ");
     sqlQuery.append("     page_path LIKE '%.drawio' OR page_path LIKE '%.vsdx') ");
     sqlQuery.append("AND NOT EXISTS (SELECT 1 FROM sessions WHERE session_id = web_page_hits.session_id AND is_bot = TRUE) ");
-    
+
     // Add asset type filter if specified
     if (assetType != null && !assetType.trim().isEmpty()) {
       sqlQuery.append("AND (");
@@ -372,7 +385,7 @@ public class WebPageHitRepository {
       }
       sqlQuery.append(") ");
     }
-    
+
     sqlQuery.append("GROUP BY page_path ");
     sqlQuery.append("ORDER BY view_count DESC ");
     sqlQuery.append("LIMIT ").append(recordLimit);
@@ -477,15 +490,187 @@ public class WebPageHitRepository {
    * Determine asset type from file extension
    */
   private static String getAssetType(String filePath) {
-    if (filePath.toLowerCase().endsWith(".pdf")) return "PDF";
-    if (filePath.toLowerCase().endsWith(".docx") || filePath.toLowerCase().endsWith(".doc")) return "Document";
-    if (filePath.toLowerCase().endsWith(".xlsx") || filePath.toLowerCase().endsWith(".xls")) return "Spreadsheet";
-    if (filePath.toLowerCase().endsWith(".pptx") || filePath.toLowerCase().endsWith(".ppt")) return "Presentation";
-    if (filePath.toLowerCase().endsWith(".drawio") || filePath.toLowerCase().endsWith(".vsdx")) return "Diagram";
-    if (filePath.toLowerCase().endsWith(".jpg") || filePath.toLowerCase().endsWith(".jpeg") || 
-        filePath.toLowerCase().endsWith(".png") || filePath.toLowerCase().endsWith(".gif")) return "Image";
-    if (filePath.toLowerCase().endsWith(".zip")) return "Archive";
-    if (filePath.toLowerCase().endsWith(".exe")) return "Executable";
+    if (filePath.toLowerCase().endsWith(".pdf"))
+      return "PDF";
+    if (filePath.toLowerCase().endsWith(".docx") || filePath.toLowerCase().endsWith(".doc"))
+      return "Document";
+    if (filePath.toLowerCase().endsWith(".xlsx") || filePath.toLowerCase().endsWith(".xls"))
+      return "Spreadsheet";
+    if (filePath.toLowerCase().endsWith(".pptx") || filePath.toLowerCase().endsWith(".ppt"))
+      return "Presentation";
+    if (filePath.toLowerCase().endsWith(".drawio") || filePath.toLowerCase().endsWith(".vsdx"))
+      return "Diagram";
+    if (filePath.toLowerCase().endsWith(".jpg") || filePath.toLowerCase().endsWith(".jpeg") ||
+        filePath.toLowerCase().endsWith(".png") || filePath.toLowerCase().endsWith(".gif"))
+      return "Image";
+    if (filePath.toLowerCase().endsWith(".zip"))
+      return "Archive";
+    if (filePath.toLowerCase().endsWith(".exe"))
+      return "Executable";
     return "File";
+  }
+
+  public static List<StatisticsData> findDailyWebHitsForPage(String pagePath, int daysToLimit) {
+    String searchedPagePath = normalizePagePath(pagePath);
+    String SQL_QUERY = "SELECT to_char(hit_date::date, 'YYYY-MM-DD') AS day, count(*) AS hit_count " +
+        "FROM web_page_hits " +
+        "WHERE page_path = ? " +
+        "AND hit_date >= NOW() - INTERVAL '" + daysToLimit + " days' " +
+        "AND NOT EXISTS (SELECT 1 FROM sessions WHERE session_id = web_page_hits.session_id AND is_bot = TRUE) " +
+        "GROUP BY page_path, hit_date::date " +
+        "ORDER BY day";
+    List<StatisticsData> records = new ArrayList<>();
+    try (Connection connection = DB.getConnection();
+        PreparedStatement pst = connection.prepareStatement(SQL_QUERY)) {
+      pst.setString(1, searchedPagePath);
+      try (ResultSet rs = pst.executeQuery()) {
+        while (rs.next()) {
+          StatisticsData data = new StatisticsData();
+          data.setLabel(rs.getString("day"));
+          data.setValue(String.valueOf(rs.getLong("hit_count")));
+          records.add(data);
+        }
+      }
+    } catch (SQLException se) {
+      LOG.error("SQLException: " + se.getMessage());
+    }
+    return records;
+  }
+
+  public static List<StatisticsData> findDailyWebHitsForPage(String pagePath, java.time.LocalDate fromDate,
+      java.time.LocalDate toDate) {
+    String searchedPagePath = normalizePagePath(pagePath);
+    java.time.LocalDate startDate = fromDate != null ? fromDate : toDate;
+    java.time.LocalDate endDate = toDate != null ? toDate : fromDate;
+    if (startDate == null || endDate == null) {
+      return null;
+    }
+    String SQL_QUERY = "SELECT to_char(hit_date::date, 'YYYY-MM-DD') AS day, count(*) AS hit_count " +
+        "FROM web_page_hits " +
+        "WHERE hit_date >= ? " +
+        "AND hit_date < ? " +
+        "AND page_path = ? " +
+        "AND NOT EXISTS (SELECT 1 FROM sessions WHERE session_id = web_page_hits.session_id AND is_bot = TRUE) " +
+        "GROUP BY page_path, hit_date::date " +
+        "ORDER BY day";
+    List<StatisticsData> records = new ArrayList<>();
+    Map<String, Long> hitCounts = new LinkedHashMap<>();
+    try (Connection connection = DB.getConnection();
+        PreparedStatement pst = connection.prepareStatement(SQL_QUERY)) {
+      pst.setTimestamp(1, java.sql.Timestamp.valueOf(startDate.atStartOfDay()));
+      pst.setTimestamp(2, java.sql.Timestamp.valueOf(endDate.plusDays(1).atStartOfDay()));
+      pst.setString(3, searchedPagePath);
+      try (ResultSet rs = pst.executeQuery()) {
+        while (rs.next()) {
+          hitCounts.put(rs.getString("day"), rs.getLong("hit_count"));
+        }
+      }
+      for (java.time.LocalDate cursor = startDate; !cursor.isAfter(endDate); cursor = cursor.plusDays(1)) {
+        String day = cursor.toString();
+        StatisticsData data = new StatisticsData();
+        data.setLabel(day);
+        data.setValue(String.valueOf(hitCounts.getOrDefault(day, 0L)));
+        records.add(data);
+      }
+    } catch (SQLException se) {
+      LOG.error("SQLException: " + se.getMessage());
+    }
+    return records;
+  }
+
+  public static List<ObjectNode> findAuthenticatedUserVisitsForPage(String pagePath, int days, int recordLimit) {
+    java.time.LocalDate endDate = java.time.LocalDate.now();
+    java.time.LocalDate startDate = endDate.minusDays(Math.max(0, days - 1));
+    return findAuthenticatedUserVisitsForPageRange(pagePath, startDate, endDate, recordLimit);
+  }
+
+  public static List<ObjectNode> findAuthenticatedUserVisitsForPage(String pagePath, java.time.LocalDate fromDate,
+      java.time.LocalDate toDate, int recordLimit) {
+    java.time.LocalDate startDate = fromDate != null ? fromDate : toDate;
+    java.time.LocalDate endDate = toDate != null ? toDate : fromDate;
+    if (startDate == null || endDate == null) {
+      return null;
+    }
+    return findAuthenticatedUserVisitsForPageRange(pagePath, startDate, endDate, recordLimit);
+  }
+
+  private static List<ObjectNode> findAuthenticatedUserVisitsForPageRange(String pagePath, java.time.LocalDate startDate,
+      java.time.LocalDate endDate, int recordLimit) {
+    String normalizedPagePath = normalizePagePath(pagePath);
+    if (normalizedPagePath == null) {
+      return null;
+    }
+    String SQL_QUERY = "SELECT * FROM (" +
+        "  SELECT page_visits.page_path, " +
+        "    ul.user_id, " +
+        "    u.first_name, " +
+        "    u.last_name, " +
+        "    u.email, " +
+        "    u.username, " +
+        "    COUNT(DISTINCT page_visits.session_id) AS session_count, " +
+        "    SUM(page_visits.visit_count) AS visit_count, " +
+        "    MIN(page_visits.first_hit) AS first_hit, " +
+        "    MAX(page_visits.last_hit) AS last_hit " +
+        "  FROM ( " +
+        "    SELECT page_path, session_id, " +
+        "      MIN(hit_date) AS first_hit, " +
+        "      MAX(hit_date) AS last_hit, " +
+        "      COUNT(*) AS visit_count " +
+        "    FROM web_page_hits " +
+        "    WHERE hit_date >= ? " +
+        "      AND hit_date < ? " +
+        "      AND page_path = ? " +
+        "      AND is_logged_in = TRUE " +
+        "      AND session_id IS NOT NULL " +
+        "      AND NOT EXISTS (SELECT 1 FROM sessions s WHERE s.session_id = web_page_hits.session_id AND s.is_bot = TRUE) " +
+        "    GROUP BY page_path, session_id " +
+        "  ) page_visits " +
+        "  JOIN user_logins ul ON ul.session_id = page_visits.session_id " +
+        "  JOIN users u ON u.user_id = ul.user_id " +
+        "  GROUP BY page_visits.page_path, ul.user_id, u.first_name, u.last_name, u.email, u.username " +
+        ") member_visits " +
+        "ORDER BY last_hit DESC " +
+        "LIMIT " + recordLimit;
+    List<ObjectNode> records = null;
+    try (Connection connection = DB.getConnection();
+        PreparedStatement pst = connection.prepareStatement(SQL_QUERY)) {
+      pst.setTimestamp(1, java.sql.Timestamp.valueOf(startDate.atStartOfDay()));
+      pst.setTimestamp(2, java.sql.Timestamp.valueOf(endDate.plusDays(1).atStartOfDay()));
+      pst.setString(3, normalizedPagePath);
+      try (ResultSet rs = pst.executeQuery()) {
+        records = new ArrayList<>();
+        while (rs.next()) {
+          ObjectNode node = com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.objectNode();
+          node.put("pagePath", rs.getString("page_path"));
+          node.put("userId", rs.getLong("user_id"));
+          node.put("fullName", StringUtils.trimToNull(rs.getString("first_name") + " " + rs.getString("last_name")));
+          node.put("email", rs.getString("email"));
+          node.put("username", rs.getString("username"));
+          node.put("sessionCount", rs.getLong("session_count"));
+          node.put("visitCount", rs.getLong("visit_count"));
+          node.put("firstVisit", rs.getTimestamp("first_hit") != null ? rs.getTimestamp("first_hit").toString() : null);
+          node.put("lastVisit", rs.getTimestamp("last_hit") != null ? rs.getTimestamp("last_hit").toString() : null);
+          records.add(node);
+        }
+      }
+    } catch (SQLException se) {
+      LOG.error("SQLException: " + se.getMessage());
+    }
+    return records;
+  }
+
+  private static String normalizePagePath(String pagePath) {
+    String normalizedPagePath = StringUtils.trimToNull(pagePath);
+    if (normalizedPagePath == null) {
+      return null;
+    }
+    int queryIndex = normalizedPagePath.indexOf('?');
+    if (queryIndex > -1) {
+      normalizedPagePath = normalizedPagePath.substring(0, queryIndex);
+    }
+    if (normalizedPagePath.endsWith("/") && normalizedPagePath.length() > 1) {
+      normalizedPagePath = normalizedPagePath.substring(0, normalizedPagePath.length() - 1);
+    }
+    return normalizedPagePath;
   }
 }

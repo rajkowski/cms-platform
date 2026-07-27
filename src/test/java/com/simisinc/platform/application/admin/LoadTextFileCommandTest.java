@@ -91,8 +91,7 @@ class LoadTextFileCommandTest {
   void testLoadSomeBytes() throws DataException, IOException {
     try (MockedStatic<CacheManager> cacheManager = mockStatic(CacheManager.class)) {
       cacheManager.when(() -> CacheManager.getLoadingCache(anyString())).thenReturn(sitePropertyListCache);
-      File testResourcePath = FileSystemCommand.getFileServerConfigPath("src", "test", "resources");
-      File testFile = new File(testResourcePath, "simple-list.csv");
+      File testFile = new File("src/test/resources", "simple-list.csv");
 
       // Mock FileSystemCommand to return our test file
       try (MockedStatic<FileSystemCommand> fsCommand = mockStatic(FileSystemCommand.class)) {
@@ -115,8 +114,7 @@ class LoadTextFileCommandTest {
     try (MockedStatic<CacheManager> cacheManager = mockStatic(CacheManager.class)) {
       cacheManager.when(() -> CacheManager.getLoadingCache(anyString())).thenReturn(sitePropertyListCache);
 
-      File testResourcePath = FileSystemCommand.getFileServerConfigPath("src", "test", "resources");
-      File testFile = new File(testResourcePath, "simple-list.csv");
+      File testFile = new File("src/test/resources", "simple-list.csv");
 
       try (MockedStatic<FileSystemCommand> fsCommand = mockStatic(FileSystemCommand.class)) {
         fsCommand.when(() -> FileSystemCommand.getFileServerRootPath(any()))
@@ -136,8 +134,7 @@ class LoadTextFileCommandTest {
     try (MockedStatic<CacheManager> cacheManager = mockStatic(CacheManager.class)) {
       cacheManager.when(() -> CacheManager.getLoadingCache(anyString())).thenReturn(sitePropertyListCache);
 
-      File testResourcePath = FileSystemCommand.getFileServerConfigPath("src", "test", "resources");
-      File testFile = new File(testResourcePath, "simple-list.csv");
+      File testFile = new File("src/test/resources", "simple-list.csv");
 
       try (MockedStatic<FileSystemCommand> fsCommand = mockStatic(FileSystemCommand.class)) {
         fsCommand.when(() -> FileSystemCommand.getFileServerRootPath(any()))
@@ -157,8 +154,7 @@ class LoadTextFileCommandTest {
   void testLoadBytesWithZeroBytes() throws DataException, IOException {
     try (MockedStatic<CacheManager> cacheManager = mockStatic(CacheManager.class)) {
       cacheManager.when(() -> CacheManager.getLoadingCache(anyString())).thenReturn(sitePropertyListCache);
-      File testResourcePath = FileSystemCommand.getFileServerConfigPath("src", "test", "resources");
-      File testFile = new File(testResourcePath, "simple-list.csv");
+      File testFile = new File("src/test/resources", "simple-list.csv");
 
       try (MockedStatic<FileSystemCommand> fsCommand = mockStatic(FileSystemCommand.class)) {
         fsCommand.when(() -> FileSystemCommand.getFileServerRootPath(any()))
@@ -204,8 +200,7 @@ class LoadTextFileCommandTest {
   void testLoadLines() throws DataException, IOException {
     try (MockedStatic<CacheManager> cacheManager = mockStatic(CacheManager.class)) {
       cacheManager.when(() -> CacheManager.getLoadingCache(anyString())).thenReturn(sitePropertyListCache);
-      File testResourcePath = FileSystemCommand.getFileServerConfigPath("src", "test", "resources");
-      File testFile = new File(testResourcePath, "simple-list.csv");
+      File testFile = new File("src/test/resources", "simple-list.csv");
 
       try (MockedStatic<FileSystemCommand> fsCommand = mockStatic(FileSystemCommand.class)) {
         fsCommand.when(() -> FileSystemCommand.getFileServerRootPath(any()))
@@ -226,8 +221,7 @@ class LoadTextFileCommandTest {
   void testLoadLinesWithMoreLinesThanFile() throws DataException, IOException {
     try (MockedStatic<CacheManager> cacheManager = mockStatic(CacheManager.class)) {
       cacheManager.when(() -> CacheManager.getLoadingCache(anyString())).thenReturn(sitePropertyListCache);
-      File testResourcePath = FileSystemCommand.getFileServerConfigPath("src", "test", "resources");
-      File testFile = new File(testResourcePath, "simple-list.csv");
+      File testFile = new File("src/test/resources", "simple-list.csv");
 
       try (MockedStatic<FileSystemCommand> fsCommand = mockStatic(FileSystemCommand.class)) {
         fsCommand.when(() -> FileSystemCommand.getFileServerRootPath(any()))
@@ -246,8 +240,7 @@ class LoadTextFileCommandTest {
   void testLoadLinesWithZeroLines() throws DataException, IOException {
     try (MockedStatic<CacheManager> cacheManager = mockStatic(CacheManager.class)) {
       cacheManager.when(() -> CacheManager.getLoadingCache(anyString())).thenReturn(sitePropertyListCache);
-      File testResourcePath = FileSystemCommand.getFileServerConfigPath("src", "test", "resources");
-      File testFile = new File(testResourcePath, "simple-list.csv");
+      File testFile = new File("src/test/resources", "simple-list.csv");
 
       try (MockedStatic<FileSystemCommand> fsCommand = mockStatic(FileSystemCommand.class)) {
         fsCommand.when(() -> FileSystemCommand.getFileServerRootPath(any()))
@@ -293,8 +286,7 @@ class LoadTextFileCommandTest {
   void testLoadBytesPreservesContent() throws DataException, IOException {
     try (MockedStatic<CacheManager> cacheManager = mockStatic(CacheManager.class)) {
       cacheManager.when(() -> CacheManager.getLoadingCache(anyString())).thenReturn(sitePropertyListCache);
-      File testResourcePath = FileSystemCommand.getFileServerConfigPath("src", "test", "resources");
-      File testFile = new File(testResourcePath, "simple-list.csv");
+      File testFile = new File("src/test/resources", "simple-list.csv");
 
       try (MockedStatic<FileSystemCommand> fsCommand = mockStatic(FileSystemCommand.class)) {
         fsCommand.when(() -> FileSystemCommand.getFileServerRootPath(any()))
@@ -314,8 +306,7 @@ class LoadTextFileCommandTest {
   void testLoadLinesPreservesLineContent() throws DataException, IOException {
     try (MockedStatic<CacheManager> cacheManager = mockStatic(CacheManager.class)) {
       cacheManager.when(() -> CacheManager.getLoadingCache(anyString())).thenReturn(sitePropertyListCache);
-      File testResourcePath = FileSystemCommand.getFileServerConfigPath("src", "test", "resources");
-      File testFile = new File(testResourcePath, "simple-list.csv");
+      File testFile = new File("src/test/resources", "simple-list.csv");
 
       try (MockedStatic<FileSystemCommand> fsCommand = mockStatic(FileSystemCommand.class)) {
         fsCommand.when(() -> FileSystemCommand.getFileServerRootPath(any()))
@@ -335,8 +326,7 @@ class LoadTextFileCommandTest {
   void testLoadBytesReturnsRowArray() throws DataException, IOException {
     try (MockedStatic<CacheManager> cacheManager = mockStatic(CacheManager.class)) {
       cacheManager.when(() -> CacheManager.getLoadingCache(anyString())).thenReturn(sitePropertyListCache);
-      File testResourcePath = FileSystemCommand.getFileServerConfigPath("src", "test", "resources");
-      File testFile = new File(testResourcePath, "simple-list.csv");
+      File testFile = new File("src/test/resources", "simple-list.csv");
 
       try (MockedStatic<FileSystemCommand> fsCommand = mockStatic(FileSystemCommand.class)) {
         fsCommand.when(() -> FileSystemCommand.getFileServerRootPath(any()))

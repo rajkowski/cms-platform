@@ -1,4 +1,7 @@
 /**
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
+ * Licensed under the Apache License, Version 2.0
+ * 
  * Page Content Blocks Manager for Visual Content Editor
  * Handles loading and displaying content blocks referenced by a selected page
  * in the right panel preview tab
@@ -232,6 +235,18 @@ class PageContentBlocksManager {
       existingEditor.remove();
     }
 
+    // Get modal to retrieve content info for version history
+    const modal = document.getElementById('content-block-editor-modal');
+    const contentId = modal ? modal.dataset.contentId : '';
+    const uniqueId = modal ? modal.dataset.uniqueId : '';
+
+    // Set data attributes on the textarea for the plugin to access
+    const textarea = document.getElementById('content-block-html-editor');
+    if (textarea) {
+      textarea.setAttribute('data-content-id', contentId);
+      textarea.setAttribute('data-unique-id', uniqueId);
+    }
+
     tinymce.init({
       selector: '#content-block-html-editor',
       branding: false,
@@ -244,8 +259,11 @@ class PageContentBlocksManager {
       convert_unsafe_embeds: true,
       sandbox_iframes: true,
       browser_spellcheck: true,
-      plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code insertdatetime media table wordcount',
-      toolbar: 'link image media table | undo redo | blocks | bold italic backcolor | bullist numlist outdent indent hr | removeformat | visualblocks code',
+      plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code insertdatetime media table wordcount versionhistory',
+      toolbar: 'link image media table | undo redo | blocks | bold italic backcolor | bullist numlist outdent indent hr | removeformat | visualblocks code | versionhistory',
+      external_plugins: {
+        "versionhistory": "/javascript/tinymce-plugins/versionhistory/plugin.js"
+      },
       image_class_list: [
         { title: 'None', value: '' },
         { title: 'Image Left/Wrap Text Right', value: 'image-left' },

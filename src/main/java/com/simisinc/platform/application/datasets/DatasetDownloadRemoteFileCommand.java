@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,6 +40,7 @@ import com.simisinc.platform.application.http.HttpGetCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.datasets.Dataset;
 import com.simisinc.platform.infrastructure.persistence.datasets.DatasetRepository;
+import com.zeroio.platform.presentation.controller.FileModulesConstants;
 
 /**
  * Functions for working with dataset files
@@ -97,15 +99,9 @@ public class DatasetDownloadRemoteFileCommand {
     }
 
     // Prepare to save the file
-    String serverRootPath = FileSystemCommand.getFileServerRootPathValue();
-    String serverSubPath = FileSystemCommand.generateFileServerSubPath("datasets");
-    String serverCompletePath = serverRootPath + serverSubPath;
-    String uniqueFilename = FileSystemCommand.generateUniqueFilename(userId);
-    String filesystemPath = serverCompletePath + uniqueFilename + "." + extension;
-    String dataPath = serverSubPath + uniqueFilename + "." + extension;
+    File tempFile = FileSystemCommand.generateTempFile(FileModulesConstants.DATASETS, userId, extension);
+    String dataPath = FileModulesConstants.DATASETS + tempFile.getName();
 
-    // Download the file
-    File tempFile = new File(filesystemPath);
     // Parse request configuration for headers
     Map<String, String> requestHeaders = parseRequestHeaders(dataset.getRequestConfig());
     try {
@@ -180,7 +176,7 @@ public class DatasetDownloadRemoteFileCommand {
     } catch (DataException e) {
       // Clean up the file
       if (tempFile.exists()) {
-        LOG.warn("Deleting the temporary file: " + filesystemPath);
+        LOG.warn("Deleting the temporary file: " + tempFile.getAbsolutePath());
         tempFile.delete();
       }
     } catch (Exception e) {
@@ -203,7 +199,8 @@ public class DatasetDownloadRemoteFileCommand {
    * @param tempFile
    * @return
    */
-  public static boolean downloadPagedFile(String url, Map<String, String> headers, String jsonPagingPath, String jsonRecordsPath, File tempFile) {
+  public static boolean downloadPagedFile(String url, Map<String, String> headers, String jsonPagingPath, String jsonRecordsPath,
+      File tempFile) {
 
     // Download the first file, as a string
     String content = HttpGetCommand.execute(url, headers);
@@ -246,7 +243,8 @@ public class DatasetDownloadRemoteFileCommand {
     }
   }
 
-  private static void appendNextUrls(JsonNode jsonRecordsNode, JsonNode currentJson, Map<String, String> headers, String jsonPagingPath,
+  private static void appendNextUrls(JsonNode jsonRecordsNode, JsonNode currentJson, Map<String, String> headers,
+      String jsonPagingPath,
       String jsonRecordsPath) throws IOException {
 
     if (currentJson == null) {

@@ -1,4 +1,7 @@
 /**
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
+ * Licensed under the Apache License, Version 2.0
+ * 
  * Page Tree Manager for Visual Content Editor
  * Handles loading and displaying the hierarchical page structure with drag-and-drop
  * 
@@ -343,11 +346,8 @@ class PageTreeManager {
     if (this.isLoading || this.isSyncing || this.pendingMutations.size > 0) return;
 
     const requests = [];
-    const shouldSyncRoot = this.expandedNodes.has('root') || this.pages.length === 0;
 
-    if (shouldSyncRoot) {
-      requests.push(this.refreshChildren(null, { render: false }));
-    }
+    requests.push(this.refreshChildren(null, { render: false }));
 
     this.expandedNodes.forEach(pageId => {
       if (pageId === 'root') return;

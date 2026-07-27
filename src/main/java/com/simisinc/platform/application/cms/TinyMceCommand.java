@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,15 +17,11 @@
 
 package com.simisinc.platform.application.cms;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
-import java.util.List;
-import java.util.stream.Stream;
-
-import static java.util.stream.Collectors.toList;
+import com.zeroio.platform.application.cms.EditorDiagramsCommand;
+import com.zeroio.platform.application.cms.EditorIconsCommand;
+import com.zeroio.platform.application.cms.EditorInlineContentCommand;
 
 /**
  * Methods for working with TinyMCE content
@@ -34,180 +31,36 @@ import static java.util.stream.Collectors.toList;
  */
 public class TinyMceCommand {
 
-  private static Log LOG = LogFactory.getLog(TinyMceCommand.class);
-
-  private static final String[] TINY_MCE_ICON_TAGS = new String[]{"span", "em"};
-  private static final String[] FA_ICON_CSS = new String[]{"far", "fas", "fal", "fad", "fab", "fa"};
-
-  // Set the icon tags for use in TinyMCE
+  /**
+   * Prepares the content HTML for the HTML content editor by converting tokens,
+   * content block references, and HTML elements to editable span tags.
+   *
+   * @param contentHtml the original content HTML
+   * @return the content HTML prepared for the editor
+   */
   public static String prepareContentForEditor(String contentHtml) {
     if (StringUtils.isBlank(contentHtml)) {
       return contentHtml;
     }
+    // Convert diagram tokens to span tags for editing
+    contentHtml = EditorDiagramsCommand.convertDiagramTokensToSpans(contentHtml);
     // Convert plain text content block references to span tags for editing
-    contentHtml = convertContentBlockTextToSpans(contentHtml);
-    // Swap the tags
-    return replaceIconTagsInContent(contentHtml, "i", "span", false);
-  }
-
-  /**
-   * Convert plain text ${uniqueId:value} references to content block span tags
-   * This is called when loading content into the editor
-   */
-  private static String convertContentBlockTextToSpans(String contentHtml) {
-    if (!contentHtml.contains("${uniqueId:")) {
-      return contentHtml;
-    }
-    
-    // Find all ${uniqueId:value} references and convert them to span tags
-    int refIdx = 0;
-    while ((refIdx = contentHtml.indexOf("${uniqueId:", refIdx)) != -1) {
-      // Find the end of the reference
-      int refEnd = contentHtml.indexOf("}", refIdx);
-      if (refEnd == -1) {
-        break;
-      }
-      
-      // Extract the unique ID
-      String uniqueId = contentHtml.substring(refIdx + 11, refEnd); // 11 = length of '${uniqueId:'
-      
-      // Create the span tag
-      String spanTag = "<span class=\"content-block-ref\" contenteditable=\"false\" data-uniqueid=\"" + 
-                      uniqueId + "\" style=\"background-color: #e3f2fd; padding: 2px 6px; border-radius: 3px; " +
-                      "border: 1px solid #90caf9; display: inline-block; font-family: monospace; font-size: 0.9em;\">" +
-                      "${uniqueId:" + uniqueId + "}" +
-                      "</span>";
-      
-      // Replace the reference with the span tag
-      contentHtml = contentHtml.substring(0, refIdx) + spanTag + contentHtml.substring(refEnd + 1);
-      
-      // Continue search from after the replacement
-      refIdx = refIdx + spanTag.length();
-    }
-    
+    contentHtml = EditorInlineContentCommand.convertContentBlockTextToSpans(contentHtml);
+    // Swap the icon tags
+    contentHtml = EditorIconsCommand.switchIconTagsInContent(contentHtml, "i", "span", false);
     return contentHtml;
   }
 
-  // Replace icon tags from TinyMCE with FontAwesome tags
+  // Replace icon tags from Editor with FontAwesome tags
   public static String updateContentFromEditor(String contentHtml) {
     if (StringUtils.isBlank(contentHtml)) {
       return contentHtml;
     }
+    contentHtml = EditorDiagramsCommand.convertDiagramSpansToTokens(contentHtml);
     // Convert content block span tags back to plain text references
-    contentHtml = convertContentBlockSpansToText(contentHtml);
-    // Swap the tags
-    for (String tag : TINY_MCE_ICON_TAGS) {
-      contentHtml = replaceIconTagsInContent(contentHtml, tag, "i", true);
-    }
-    return contentHtml;
-  }
-
-  /**
-   * Convert content block span tags back to plain text ${uniqueId:value} references
-   * This is called when saving content from the editor
-   */
-  private static String convertContentBlockSpansToText(String contentHtml) {
-    if (!contentHtml.contains("content-block-ref")) {
-      return contentHtml;
-    }
-    
-    // Find all content-block-ref spans and convert them to plain text
-    int spanIdx = 0;
-    while ((spanIdx = contentHtml.indexOf("data-uniqueid=\"", spanIdx)) != -1) {
-      // Find the unique ID value
-      int uniqueIdStart = spanIdx + 15; // length of 'data-uniqueid="'
-      int uniqueIdEnd = contentHtml.indexOf("\"", uniqueIdStart);
-      if (uniqueIdEnd == -1) {
-        break;
-      }
-      String uniqueId = contentHtml.substring(uniqueIdStart, uniqueIdEnd);
-      
-      // Find the start of this span tag
-      int spanStart = contentHtml.lastIndexOf("<span", spanIdx);
-      if (spanStart == -1) {
-        break;
-      }
-      
-      // Find the end of this span tag
-      int spanEnd = contentHtml.indexOf("</span>", uniqueIdEnd);
-      if (spanEnd == -1) {
-        break;
-      }
-      spanEnd += 7; // length of '</span>'
-      
-      // Replace the entire span with the plain text reference
-      String replacement = "${uniqueId:" + uniqueId + "}";
-      contentHtml = contentHtml.substring(0, spanStart) + replacement + contentHtml.substring(spanEnd);
-      
-      // Continue search from after the replacement
-      spanIdx = spanStart + replacement.length();
-    }
-    
-    return contentHtml;
-  }
-
-  private static String replaceIconTagsInContent(String contentHtml, String tag, String newTag, boolean fromTinyMCE) {
-    // for (String tag : TINY_MCE_ICON_TAGS (em,span)) {
-    //     replaceIconTagsInContent(contentHtml, tag, "i", true);
-    // Content received will look like: <em class="far fa-code"></em> <em class="far fa-code-2"></em>
-    if (tag.equals(newTag)) {
-      return contentHtml;
-    }
-    if (!contentHtml.contains("<" + tag)) {
-      return contentHtml;
-    }
-    int tagIdx = 0;
-    int endTagIdx = 0;
-    int endTagLength = tag.length() + 3;
-    while (tagIdx > -1) {
-      // <em
-      tagIdx = contentHtml.indexOf("<" + tag + " ", tagIdx);
-      if (tagIdx == -1) {
-        break;
-      }
-      // </em>
-      endTagIdx = contentHtml.indexOf("</" + tag + ">", tagIdx);
-      if (endTagIdx == -1) {
-        break;
-      }
-
-      LOG.trace("TAG IDX (tagIdx:" + tagIdx + "; endTagIdx:" + endTagIdx + ")");
-
-      // Look for a class attribute in-between
-      int classIdx = contentHtml.indexOf("class=\"", tagIdx);
-      if (classIdx == -1 || classIdx > endTagIdx) {
-        tagIdx = endTagIdx + endTagLength;
-        continue;
-      }
-      int endClassIdx = contentHtml.indexOf("\"", classIdx + 7);
-      if (endClassIdx == -1) {
-        tagIdx = endTagIdx + endTagLength;
-        continue;
-      }
-      // If the class values contain 1 or more of the cssClassArray, switch this to required <i></i>
-      String classValue = contentHtml.substring(classIdx + 7, endClassIdx).trim();
-      LOG.trace("classValue: " + classValue);
-      if (classValue.length() > 0) {
-        List<String> cssValueList = Stream.of(classValue.split(" ")).map(String::trim).collect(toList());
-        if (CollectionUtils.containsAny(cssValueList, FA_ICON_CSS)) {
-          if (fromTinyMCE) {
-            // Remove TinyMCE editor
-            cssValueList.remove("tinymce-noedit");
-          } else {
-            // Add TinyMCE editor
-            cssValueList.add("tinymce-noedit");
-          }
-          // Switch the tag content
-          contentHtml =
-              contentHtml.substring(0, tagIdx) + "<" + newTag + " class=\"" + StringUtils.join(cssValueList, " ") + "\">" +
-                  (fromTinyMCE ? "" : "&nbsp;") +
-              "</" + newTag + ">" + contentHtml.substring(endTagIdx + endTagLength);
-          tagIdx = contentHtml.indexOf("</" + newTag + ">", tagIdx + 1) + newTag.length() + 3;
-          continue;
-        }
-      }
-      tagIdx = endTagIdx + endTagLength;
-    }
+    contentHtml = EditorInlineContentCommand.convertContentBlockSpansToText(contentHtml);
+    // Swap the icon tags
+    contentHtml = EditorIconsCommand.restoreIconTagsInContent(contentHtml);
     return contentHtml;
   }
 }

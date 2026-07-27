@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +22,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.sql.Types;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -42,6 +45,7 @@ import com.simisinc.platform.infrastructure.database.SqlValue;
 import com.simisinc.platform.infrastructure.database.SqlWhere;
 import com.simisinc.platform.presentation.controller.DataConstants;
 import com.simisinc.platform.presentation.controller.UserSession;
+import com.zeroio.platform.infrastructure.persistence.cms.PageFileRepository;
 
 /**
  * Persists and retrieves file item objects
@@ -72,7 +76,8 @@ public class FileItemRepository {
         where.AND("LOWER(files.filename) = ?", specification.getFilename().trim().toLowerCase());
       }
       if (specification.getFileType() != null) {
-        where.AND("LOWER(files.file_type) = ?", specification.getFileType().trim().toLowerCase());
+        where.AND("LOWER(files.file_type) = ANY(?)",
+            Arrays.stream(specification.getFileType()).map(String::toLowerCase).toArray(String[]::new), Types.ARRAY);
       }
       if (specification.getMatchesName() != null) {
         String likeValue = specification.getMatchesName().trim()
@@ -103,8 +108,10 @@ public class FileItemRepository {
           where.AND(
               "(allows_guests = true " +
                   "OR (has_allowed_groups = true " +
-                  "AND EXISTS (SELECT 1 FROM folder_groups WHERE folder_groups.folder_id = folders.folder_id AND view_all = true " +
-                  "AND EXISTS (SELECT 1 FROM user_groups WHERE user_groups.group_id = folder_groups.group_id AND user_id = ?))" +
+                  "AND EXISTS (SELECT 1 FROM folder_groups WHERE folder_groups.folder_id = folders.folder_id AND view_all = true "
+                  +
+                  "AND EXISTS (SELECT 1 FROM user_groups WHERE user_groups.group_id = folder_groups.group_id AND user_id = ?))"
+                  +
                   ")" +
                   ")",
               specification.getForUserId());
@@ -115,15 +122,49 @@ public class FileItemRepository {
       if (specification.getVersionWebPath() != null) {
         where.AND(
             "(web_path = ? OR EXISTS (SELECT 1 FROM file_versions WHERE file_versions.web_path = ? AND file_versions.file_id = ?))",
-            new Object[] { specification.getVersionWebPath(), specification.getVersionWebPath(), specification.getId() });
+            new Object[] { specification.getVersionWebPath(), specification.getVersionWebPath(),
+                specification.getId() });
       }
 
       // Use the search engine
       if (StringUtils.isNotBlank(specification.getSearchName())) {
-        select.add("ts_rank_cd(tsv, websearch_to_tsquery('file_stem', ?)) AS rank", specification.getSearchName().trim());
+        select.add("ts_rank_cd(tsv, websearch_to_tsquery('file_stem', ?)) AS rank",
+            specification.getSearchName().trim());
         where.AND("tsv @@ websearch_to_tsquery('file_stem', ?)", specification.getSearchName().trim());
         // Override the order by for rank first
         orderBy.add("rank DESC, file_id");
+      }
+
+      if (specification.getRegionTags() != null && specification.getRegionTags().length > 0) {
+        where.AND("tags", specification.getRegionTags(), SqlWhere.OR_OPERATOR);
+      }
+
+      if (specification.getFilterTags() != null && specification.getFilterTags().length > 0) {
+        where.AND("tags", specification.getFilterTags(), SqlWhere.AND_OPERATOR);
+      }
+
+      // Add modified date range filters
+      // Some imported files can have a null modified date, so fall back to created.
+      if (specification.getModifiedAfter() != null) {
+        where.AND("COALESCE(files.modified, files.created) >= ?", specification.getModifiedAfter());
+      }
+      if (specification.getModifiedBefore() != null) {
+        where.AND("COALESCE(files.modified, files.created) <= ?", specification.getModifiedBefore());
+      }
+
+      // Add modified by user filter
+      if (specification.getModifiedByUserIds() != null && specification.getModifiedByUserIds().length > 0) {
+        StringBuilder userCondition = new StringBuilder("files.modified_by IN (");
+        Long[] userIdsBoxed = new Long[specification.getModifiedByUserIds().length];
+        for (int i = 0; i < specification.getModifiedByUserIds().length; i++) {
+          if (i > 0) {
+            userCondition.append(",");
+          }
+          userCondition.append("?");
+          userIdsBoxed[i] = specification.getModifiedByUserIds()[i];
+        }
+        userCondition.append(")");
+        where.AND(userCondition.toString(), (Object[]) userIdsBoxed);
       }
     }
     return DB.selectAllFrom(
@@ -137,6 +178,22 @@ public class FileItemRepository {
     return (FileItem) DB.selectRecordFrom(
         TABLE_NAME,
         DB.WHERE("file_id = ?", id),
+        FileItemRepository::buildRecord);
+  }
+
+  public static FileItem findByWebPathAndId(String versionWebPath, long id) {
+    if (StringUtils.isBlank(versionWebPath) || id == -1) {
+      return null;
+    }
+    return (FileItem) DB.selectRecordFrom(TABLE_NAME, DB.WHERE("web_path = ?", versionWebPath).AND("file_id = ?", id),
+        FileItemRepository::buildRecord);
+  }
+
+  public static FileItem findByWebPath(String versionWebPath) {
+    if (StringUtils.isBlank(versionWebPath)) {
+      return null;
+    }
+    return (FileItem) DB.selectRecordFrom(TABLE_NAME, DB.WHERE("web_path = ?", versionWebPath),
         FileItemRepository::buildRecord);
   }
 
@@ -263,7 +320,7 @@ public class FileItemRepository {
       // Update the counts in case the folder changed
       FolderRepository.updateFileCountForFileId(connection, record.getId(), -1);
       SubFolderRepository.updateFileCountForFileId(connection, record.getId(), -1);
-      // Update the record, retaining the web_path
+      // Update the record, including the web_path for new version URL
       SqlUtils updateValues = new SqlUtils()
           .add("folder_id", record.getFolderId())
           .add("sub_folder_id", record.getSubFolderId(), -1L)
@@ -274,6 +331,7 @@ public class FileItemRepository {
           .add("version", StringUtils.trimToNull(record.getVersion()))
           .add("extension", StringUtils.trimToNull(record.getExtension()))
           .add("path", StringUtils.trimToNull(record.getFileServerPath()))
+          .add("web_path", StringUtils.trimToNull(record.getWebPath()))
           .add("file_length", record.getFileLength())
           .add("file_type", record.getFileType())
           .add("mime_type", record.getMimeType())
@@ -319,6 +377,7 @@ public class FileItemRepository {
       FileVersionRepository.removeAll(connection, record);
       FolderRepository.updateFileCount(connection, record.getFolderId(), -1);
       SubFolderRepository.updateFileCount(connection, record.getSubFolderId(), -1);
+      PageFileRepository.removeAll(connection, record);
       // Delete the record
       DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("file_id = ?", record.getId()));
       // Finish transaction
@@ -331,10 +390,12 @@ public class FileItemRepository {
   }
 
   public static void removeAll(Connection connection, Folder record) throws SQLException {
+    PageFileRepository.removeAll(connection, record);
     DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("folder_id = ?", record.getId()));
   }
 
   public static int removeAll(Connection connection, SubFolder record) throws SQLException {
+    PageFileRepository.removeAll(connection, record);
     return DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("sub_folder_id = ?", record.getId()));
   }
 

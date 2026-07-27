@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -65,9 +66,27 @@ public class DatasetRepository {
     if (StringUtils.isBlank(name)) {
       return null;
     }
+    String normalizedName = name.toLowerCase().trim();
+    Dataset record = (Dataset) DB.selectRecordFrom(
+        TABLE_NAME,
+        DB.WHERE("LOWER(name) = ?", normalizedName),
+        DatasetRepository::buildRecord);
+    if (record == null) {
+      record = (Dataset) DB.selectRecordFrom(
+          TABLE_NAME,
+          DB.WHERE("LOWER(name) = ?", normalizedName.replace("-", " ")),
+          DatasetRepository::buildRecord);
+    }
+    return record;
+  }
+
+  public static Dataset findByWebPath(String versionWebPath) {
+    if (StringUtils.isBlank(versionWebPath)) {
+      return null;
+    }
     return (Dataset) DB.selectRecordFrom(
         TABLE_NAME,
-        DB.WHERE("LOWER(name) = ?", name.toLowerCase().trim()),
+        DB.WHERE("web_path = ?", versionWebPath),
         DatasetRepository::buildRecord);
   }
 
