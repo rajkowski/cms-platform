@@ -32,7 +32,7 @@
   --header-border: #333333;
   --announcement-bg: #252525;
   --announcement-text: #b0b0b0;
-  --nav-hover-bg: #2a2a2a;
+  --nav-hover-bg: #3a3a3a;
   --dropdown-bg: #2a2a2a;
   --dropdown-shadow: rgba(0, 0, 0, 0.4);
   --button-primary: #3b82f6;
@@ -529,7 +529,7 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0.5rem;
-  padding: 0 0.5rem 0.25rem 0.5rem;
+  padding: 0.5rem 0.5rem 0.25rem 0.5rem;
 }
 
 .admin-app-item {

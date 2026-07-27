@@ -244,6 +244,7 @@
                   <c:if test="${userSession.hasRole('admin') || userSession.hasRole('content-manager')}">
                   <div class="user-menu-section-title">Page Tools</div>
                   <div class="admin-apps-grid">
+                    
                     <a href="${ctx}/admin/web-page?webPage=${pageRenderInfo.pagePath}" class="admin-app-item" title="View page information">
                       <i class="${font:fas()} fa-info-circle"></i>
                       <span class="admin-app-item-label">Page Info</span>
@@ -253,20 +254,21 @@
                       <i class="${font:fas()} fa-chart-area"></i>
                       <span class="admin-app-item-label">Page Analytics</span>
                     </a>
-                  </div>
-                  </c:if>
-                </div>
-                </c:if>
-
-                <c:if test="${userSession.hasRole('admin') || userSession.hasRole('content-manager')}">
-                <div class="user-menu-section">
-                  <div class="user-menu-section-title">Page Design Tools</div>
-                  <div class="admin-apps-grid">
 
                     <a href="${ctx}/admin/visual-page-editor?webPage=${masterWebPage.link}" class="admin-app-item" title="Edit page structure">
                       <i class="${font:fas()} fa-file-lines"></i>
                       <span class="admin-app-item-label">Page Design</span>
                     </a>
+
+                  </div>
+                  </c:if>
+                </div>
+                </c:if>
+
+                <c:if test="${userSession.hasRole('admin')}">
+                <div class="user-menu-section">
+                  <div class="user-menu-section-title">Page Design Tools</div>
+                  <div class="admin-apps-grid">
 
                     <c:if test="${userSession.hasRole('admin')}">
                       <a href="${ctx}/admin/css-editor?webPage=${masterWebPage.link}&returnPage=${masterWebPage.link}" class="admin-app-item" title="Edit page CSS styles">
@@ -275,10 +277,12 @@
                       </a>
                     </c:if>
                     
+                    <c:if test="${userSession.hasRole('admin')}">
                     <a href="${ctx}/admin/web-page-designer?webPage=${masterWebPage.link}" class="admin-app-item" title="Edit page XML">
                       <i class="${font:fas()} fa-code"></i>
                       <span class="admin-app-item-label">Page XML</span>
                     </a>
+                    </c:if>
 
                   </div>
                 </div>
