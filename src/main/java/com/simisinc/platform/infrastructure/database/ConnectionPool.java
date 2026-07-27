@@ -55,6 +55,7 @@ public class ConnectionPool {
   private static HikariDataSource initApplicationCP(Properties properties) {
     HikariConfig config = new HikariConfig(mergePropertiesFromPrefix(properties, "application"));
     config.setMaxLifetime(600_000);
+    config.setPoolName("Web-Application-Pool");
     return new HikariDataSource(config);
   }
 
@@ -62,6 +63,7 @@ public class ConnectionPool {
   private static HikariDataSource initBackgroundJobsCP(Properties properties) {
     HikariConfig config = new HikariConfig(mergePropertiesFromPrefix(properties, "backgroundJobs"));
     config.setMaxLifetime(600_000);
+    config.setPoolName("Background-Jobs-Pool");
     return new HikariDataSource(config);
   }
 
@@ -69,6 +71,7 @@ public class ConnectionPool {
   private static HikariDataSource initDistributedMessagingCP(Properties properties) {
     HikariConfig config = new HikariConfig(mergePropertiesFromPrefix(properties, "distributedMessaging"));
     config.setMaxLifetime(600_000);
+    config.setPoolName("Distributed-Messaging-Pool");
     return new HikariDataSource(config);
   }
 
