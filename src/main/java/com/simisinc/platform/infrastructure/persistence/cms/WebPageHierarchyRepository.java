@@ -44,6 +44,7 @@ public class WebPageHierarchyRepository {
   private static Log LOG = LogFactory.getLog(WebPageHierarchyRepository.class);
 
   private static String TABLE_NAME = "web_page_hierarchy";
+  private static String[] PRIMARY_KEY = new String[] { "page_hierarchy_id" };
   private static String SQL_EXCEPTION = "SQLException: ";
   private static String COL_WEB_PAGE_ID = "web_page_id";
   private static String COL_PARENT_PAGE_ID = "parent_page_id";
@@ -164,7 +165,7 @@ public class WebPageHierarchyRepository {
         .add(COL_PATH, StringUtils.trimToNull(record.getPath()))
         .add(COL_CREATED, record.getCreated() != null ? record.getCreated() : new Timestamp(System.currentTimeMillis()))
         .add(COL_MODIFIED, record.getModified() != null ? record.getModified() : new Timestamp(System.currentTimeMillis()));
-    DB.insertInto(TABLE_NAME, insertValues, null);
+    DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY);
     return record;
   }
 
@@ -185,7 +186,7 @@ public class WebPageHierarchyRepository {
         .add(COL_CREATED, record.getCreated() != null ? record.getCreated() : new Timestamp(System.currentTimeMillis()))
         .add(COL_MODIFIED, record.getModified() != null ? record.getModified() : new Timestamp(System.currentTimeMillis()));
     try {
-      DB.insertInto(connection, TABLE_NAME, insertValues, null);
+      DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY);
     } catch (SQLException se) {
       LOG.error(SQL_EXCEPTION + se.getMessage());
       return null;
