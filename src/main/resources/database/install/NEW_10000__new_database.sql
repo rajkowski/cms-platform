@@ -378,7 +378,7 @@ CREATE TABLE permission_policies (
 CREATE TABLE permission_group_members (
   member_id BIGSERIAL PRIMARY KEY,
   group_code VARCHAR(100) NOT NULL REFERENCES permission_policies(group_code) ON DELETE CASCADE,
-  class_name VARCHAR(500) NOT NULL,
+  action_name VARCHAR(500) NOT NULL,
   member_type VARCHAR(20) NOT NULL DEFAULT 'WIDGET'
 );
 

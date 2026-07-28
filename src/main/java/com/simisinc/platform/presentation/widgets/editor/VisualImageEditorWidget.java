@@ -40,7 +40,7 @@ public class VisualImageEditorWidget extends GenericWidget {
 
   public WidgetContext execute(WidgetContext context) {
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.visual-image-editor.access", context.getUserSession())) {
       LOG.debug("No permission to: " + VisualImageEditorWidget.class.getSimpleName());
       return context;
     }

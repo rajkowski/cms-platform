@@ -54,7 +54,7 @@ public class PageReorderJsonService extends GenericJsonService {
   public JsonServiceContext post(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.page.reorder", context.getUserSession())) {
       LOG.debug("No permission to: " + PageReorderJsonService.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

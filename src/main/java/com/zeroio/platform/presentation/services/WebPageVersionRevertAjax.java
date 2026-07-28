@@ -44,7 +44,7 @@ public class WebPageVersionRevertAjax extends GenericJsonService {
     LOG.debug("WebPageVersionRevertAjax...");
 
     // Reuse the same permission gate as the visual page save endpoint.
-    if (!PermissionEngine.checkAccess(SaveWebPageAjax.class.getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.web-page.save", context.getUserSession())) {
       LOG.debug("No permission to: " + WebPageVersionRevertAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

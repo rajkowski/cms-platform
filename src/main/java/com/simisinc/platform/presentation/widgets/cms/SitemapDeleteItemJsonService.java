@@ -47,7 +47,7 @@ public class SitemapDeleteItemJsonService extends GenericJsonService {
   public JsonServiceContext post(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.sitemap.delete-item", context.getUserSession())) {
       LOG.debug("No permission to: " + SitemapDeleteItemJsonService.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

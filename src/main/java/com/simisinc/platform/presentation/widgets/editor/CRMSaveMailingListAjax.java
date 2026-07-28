@@ -43,7 +43,7 @@ public class CRMSaveMailingListAjax extends GenericJsonService {
   public JsonServiceContext post(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.crm.save-mailing-list", context.getUserSession())) {
       LOG.debug("No permission to: " + CRMSaveMailingListAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

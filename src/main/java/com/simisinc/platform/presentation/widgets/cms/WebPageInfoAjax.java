@@ -47,7 +47,7 @@ public class WebPageInfoAjax extends GenericJsonService {
     LOG.debug("WebPageInfoAjax...");
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.web-page.info", context.getUserSession())) {
       LOG.debug("No permission to: " + WebPageInfoAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

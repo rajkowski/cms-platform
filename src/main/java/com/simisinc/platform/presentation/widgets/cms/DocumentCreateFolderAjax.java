@@ -41,7 +41,7 @@ public class DocumentCreateFolderAjax extends GenericJsonService {
     LOG.debug("DocumentCreateFolderAjax...");
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.document.create-folder", context.getUserSession())) {
       LOG.debug("No permission to: " + DocumentCreateFolderAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

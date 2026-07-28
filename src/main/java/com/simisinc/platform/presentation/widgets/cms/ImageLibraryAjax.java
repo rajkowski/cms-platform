@@ -48,7 +48,7 @@ public class ImageLibraryAjax extends GenericJsonService {
     LOG.debug("ImageLibraryAjax...");
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.image.library", context.getUserSession())) {
       LOG.debug("No permission to: " + ImageLibraryAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

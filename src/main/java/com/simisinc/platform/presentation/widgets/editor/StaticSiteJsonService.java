@@ -53,7 +53,7 @@ public class StaticSiteJsonService extends GenericWidget {
     LOG.debug("StaticSiteJsonService Action...");
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.static-site.manage", context.getUserSession())) {
       LOG.debug("No permission to: " + StaticSiteJsonService.class.getSimpleName());
       return context.writeError("Permission Denied");
     }
@@ -86,7 +86,7 @@ public class StaticSiteJsonService extends GenericWidget {
     LOG.debug("StaticSiteJsonService POST...");
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.static-site.manage", context.getUserSession())) {
       LOG.debug("No permission to: " + StaticSiteJsonService.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

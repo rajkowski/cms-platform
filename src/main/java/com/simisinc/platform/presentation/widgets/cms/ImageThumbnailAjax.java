@@ -44,7 +44,7 @@ public class ImageThumbnailAjax extends GenericJsonService {
     LOG.debug("ImageThumbnailAjax...");
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.image.thumbnail", context.getUserSession())) {
       LOG.debug("No permission to: " + ImageThumbnailAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

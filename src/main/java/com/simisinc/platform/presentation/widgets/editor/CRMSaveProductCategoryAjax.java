@@ -43,7 +43,7 @@ public class CRMSaveProductCategoryAjax extends GenericJsonService {
   public JsonServiceContext post(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.crm.save-product-category", context.getUserSession())) {
       LOG.debug("No permission to: " + CRMSaveProductCategoryAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

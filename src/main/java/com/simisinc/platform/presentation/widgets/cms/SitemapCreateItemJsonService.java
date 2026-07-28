@@ -52,7 +52,7 @@ public class SitemapCreateItemJsonService extends GenericJsonService {
   public JsonServiceContext post(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.sitemap.create-item", context.getUserSession())) {
       LOG.debug("No permission to: " + SitemapCreateItemJsonService.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

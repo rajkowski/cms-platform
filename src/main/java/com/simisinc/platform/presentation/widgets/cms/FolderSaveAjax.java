@@ -44,7 +44,7 @@ public class FolderSaveAjax extends GenericJsonService {
 
     // Restrict access to editors
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.folder.save", context.getUserSession())) {
       LOG.debug("No permission to: " + FolderSaveAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

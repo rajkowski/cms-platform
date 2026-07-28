@@ -50,7 +50,7 @@ public class FolderGroupsListAjax extends GenericJsonService {
 
     // Restrict access to editors
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.folder.groups-list", context.getUserSession())) {
       LOG.debug("No permission to: " + FolderGroupsListAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

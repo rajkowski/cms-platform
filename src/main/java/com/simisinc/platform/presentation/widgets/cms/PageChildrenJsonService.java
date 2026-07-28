@@ -70,7 +70,7 @@ public class PageChildrenJsonService extends GenericJsonService {
 
       // Load child pages using LoadPageTreeCommand, based on user permissions
       List<PageTreeNode> children;
-      if (PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+      if (PermissionEngine.checkAccess("cms.page.children", context.getUserSession())) {
         // Full permission - load all child pages
         children = LoadPageTreeCommand.loadPageTree(parentId);
       } else {

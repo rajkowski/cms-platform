@@ -51,7 +51,7 @@ public class DocumentContentAjax extends GenericJsonService {
     LOG.debug("DocumentContentAjax...");
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.document.content", context.getUserSession())) {
       LOG.debug("No permission to: " + DocumentContentAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

@@ -51,7 +51,7 @@ public class BlogsPostsJsonService extends GenericJsonService {
   public JsonServiceContext get(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.blogs.posts", context.getUserSession())) {
       LOG.debug("No permission to: " + BlogsPostsJsonService.class.getSimpleName());
       context.setJson("[]");
       return context;

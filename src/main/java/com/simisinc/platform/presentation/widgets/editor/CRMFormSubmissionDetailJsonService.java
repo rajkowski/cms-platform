@@ -42,7 +42,7 @@ public class CRMFormSubmissionDetailJsonService extends GenericJsonService {
   public JsonServiceContext get(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.crm.form-submission-detail", context.getUserSession())) {
       LOG.debug("No permission to: " + CRMFormSubmissionDetailJsonService.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

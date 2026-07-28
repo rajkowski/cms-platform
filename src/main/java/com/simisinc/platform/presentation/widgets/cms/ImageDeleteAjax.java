@@ -44,7 +44,7 @@ public class ImageDeleteAjax extends GenericJsonService {
 
     // Restrict access to editors
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.image.delete", context.getUserSession())) {
       LOG.debug("No permission to: " + ImageDeleteAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

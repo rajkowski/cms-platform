@@ -63,7 +63,7 @@ public class ImageUploadAjax extends GenericJsonService {
     LOG.debug("ImageUploadAjax...");
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.image.upload", context.getUserSession())) {
       LOG.debug("No permission to: " + ImageUploadAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

@@ -41,7 +41,7 @@ public class DocumentCreateSubfolderAjax extends GenericJsonService {
     LOG.debug("DocumentCreateSubfolderAjax...");
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.document.create-subfolder", context.getUserSession())) {
       LOG.debug("No permission to: " + DocumentCreateSubfolderAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

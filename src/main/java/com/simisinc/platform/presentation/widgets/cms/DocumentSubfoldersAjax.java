@@ -46,7 +46,7 @@ public class DocumentSubfoldersAjax extends GenericJsonService {
     LOG.debug("DocumentSubfoldersAjax...");
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.document.subfolders", context.getUserSession())) {
       LOG.debug("No permission to: " + DocumentSubfoldersAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

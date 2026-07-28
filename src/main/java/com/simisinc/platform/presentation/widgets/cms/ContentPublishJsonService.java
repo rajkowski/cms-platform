@@ -56,7 +56,7 @@ public class ContentPublishJsonService extends GenericJsonService {
   public JsonServiceContext post(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.content.publish", context.getUserSession())) {
       LOG.debug("No permission to: " + ContentPublishJsonService.class.getSimpleName());
       return context.writeError("Permission denied");
     }

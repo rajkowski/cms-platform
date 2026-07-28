@@ -57,7 +57,7 @@ public class TemplateListAjax extends GenericJsonService {
   public JsonServiceContext get(JsonServiceContext context) {
 
     // Check permissions - user must be able to edit content
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.template.list", context.getUserSession())) {
       LOG.debug("No permission to: " + TemplateListAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

@@ -47,7 +47,7 @@ public class ImageVersionsAjax extends GenericJsonService {
 
     // Restrict access to editors
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.image.versions", context.getUserSession())) {
       LOG.debug("No permission to: " + ImageVersionsAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

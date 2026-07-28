@@ -43,7 +43,7 @@ public class CRMSaveCustomerAjax extends GenericJsonService {
   public JsonServiceContext post(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.crm.save-customer", context.getUserSession())) {
       LOG.debug("No permission to: " + CRMSaveCustomerAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

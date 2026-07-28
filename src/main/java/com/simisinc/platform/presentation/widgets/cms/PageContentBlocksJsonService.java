@@ -70,7 +70,7 @@ public class PageContentBlocksJsonService extends GenericJsonService {
   public JsonServiceContext get(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.page.content-blocks", context.getUserSession())) {
       LOG.debug("No permission to: " + PageContentBlocksJsonService.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

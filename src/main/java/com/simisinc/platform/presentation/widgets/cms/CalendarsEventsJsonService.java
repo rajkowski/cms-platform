@@ -51,7 +51,7 @@ public class CalendarsEventsJsonService extends GenericJsonService {
   public JsonServiceContext get(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.calendars.events", context.getUserSession())) {
       LOG.debug("No permission to: " + CalendarsEventsJsonService.class.getSimpleName());
       context.setJson("[]");
       return context;

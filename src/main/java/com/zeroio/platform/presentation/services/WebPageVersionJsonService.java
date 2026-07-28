@@ -50,7 +50,7 @@ public class WebPageVersionJsonService extends GenericJsonService {
   @Override
   public JsonServiceContext get(JsonServiceContext context) {
 
-    if (!PermissionEngine.checkAccess(SaveWebPageAjax.class.getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.web-page.save", context.getUserSession())) {
       LOG.debug("No permission to: " + WebPageVersionJsonService.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

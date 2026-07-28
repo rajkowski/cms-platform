@@ -46,7 +46,7 @@ public class SaveStylesheetAjax extends GenericJsonService {
     LOG.debug("SaveStylesheetAjax...");
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.stylesheet.save", context.getUserSession())) {
       LOG.debug("No permission to: " + SaveStylesheetAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

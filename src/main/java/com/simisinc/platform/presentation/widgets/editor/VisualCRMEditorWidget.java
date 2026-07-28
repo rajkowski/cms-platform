@@ -40,7 +40,7 @@ public class VisualCRMEditorWidget extends GenericWidget {
 
   public WidgetContext execute(WidgetContext context) {
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.visual-crm-editor.access", context.getUserSession())) {
       LOG.debug("No permission to: " + VisualCRMEditorWidget.class.getSimpleName());
       return context;
     }

@@ -49,7 +49,7 @@ public class DocumentAnalyticsAjax extends GenericJsonService {
     LOG.debug("DocumentAnalyticsAjax...");
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.document.analytics", context.getUserSession())) {
       LOG.debug("No permission to: " + DocumentAnalyticsAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

@@ -44,7 +44,7 @@ public class ImageMetadataAjax extends GenericJsonService {
 
     // Restrict access to editors
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.image.metadata", context.getUserSession())) {
       LOG.debug("No permission to: " + ImageMetadataAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

@@ -58,7 +58,7 @@ public class DocumentFileListAjax extends GenericJsonService {
     LOG.debug("DocumentFileListAjax...");
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.document.file-list", context.getUserSession())) {
       LOG.debug("No permission to: " + DocumentFileListAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

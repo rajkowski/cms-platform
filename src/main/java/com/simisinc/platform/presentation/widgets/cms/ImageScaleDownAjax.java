@@ -44,7 +44,7 @@ public class ImageScaleDownAjax extends GenericJsonService {
     LOG.debug("ImageScaleDownAjax...");
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.image.scale-down", context.getUserSession())) {
       LOG.debug("No permission to: " + ImageScaleDownAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

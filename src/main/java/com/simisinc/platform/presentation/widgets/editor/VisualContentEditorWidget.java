@@ -40,7 +40,7 @@ public class VisualContentEditorWidget extends GenericWidget {
 
   public WidgetContext execute(WidgetContext context) {
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.visual-content-editor.access", context.getUserSession())) {
       LOG.debug("No permission to: " + VisualContentEditorWidget.class.getSimpleName());
       return context;
     }

@@ -52,7 +52,7 @@ public class PageRemoveFromHierarchyJsonService extends GenericJsonService {
   public JsonServiceContext post(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.page.remove-from-hierarchy", context.getUserSession())) {
       LOG.debug("No permission to: " + PageRemoveFromHierarchyJsonService.class.getSimpleName());
       return context.writeError("Permission Denied");
     }
