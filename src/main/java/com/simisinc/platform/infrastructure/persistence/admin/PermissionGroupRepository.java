@@ -69,19 +69,19 @@ public class PermissionGroupRepository {
   /**
    * Loads all permission group members from the database.
    *
-   * @return map of group_code → list of (className, memberType) pairs as String[2]
+   * @return map of group_code → list of (actionName, memberType) pairs as String[2]
    */
   public static Map<String, List<String[]>> findAllMembers() {
     Map<String, List<String[]>> memberMap = new LinkedHashMap<>();
-    String sql = "SELECT group_code, class_name, member_type FROM " + MEMBERS_TABLE + " ORDER BY group_code";
+    String sql = "SELECT group_code, action_name, member_type FROM " + MEMBERS_TABLE + " ORDER BY group_code";
     try (Connection conn = DB.getConnection();
          PreparedStatement pst = conn.prepareStatement(sql);
          ResultSet rs = pst.executeQuery()) {
       while (rs.next()) {
         String groupCode = rs.getString("group_code");
-        String className = rs.getString("class_name");
+        String actionName = rs.getString("action_name");
         String memberType = rs.getString("member_type");
-        memberMap.computeIfAbsent(groupCode, k -> new ArrayList<>()).add(new String[]{className, memberType});
+        memberMap.computeIfAbsent(groupCode, k -> new ArrayList<>()).add(new String[]{actionName, memberType});
       }
     } catch (SQLException e) {
       LOG.error("PermissionGroupRepository.findAllMembers error", e);
