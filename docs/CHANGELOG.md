@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the [Common Changelog](https://common-changelog.org/).
 
+## 2026-07-27
+
+- Added Web Page and Item content versioning with history, revert, and current-version selection
+- Added Content editor plugins for notes, panels, diagrams, cards, and templates
+- Added Page Table of Contents, Page Breadcrumb, Page Children, Page Labels, and Page Summary widgets
+- Added My Activity widget
+- Added Page Analytics viewer
+- Added Dataset Display widget with filter conditions and sortable columns
+- Added Diagram Browser widget for embedding and browsing draw.io diagrams
+- Added Region domain model and site region selector for geographic content filtering
+- Added Search Filter Sidebar widget and rebuilt Web Page Search Results with faceted filtering
+- Added File Search Results widget for documents
+- Added REST services for raw file, image, and dataset uploads, plus webPages/webPage endpoints
+- Improved Web Page hierarchy loading and main menu rendering performance
+- Added new page templates: Document Content Page, Document Home Page, Document Landing Page, Document Search, Hierarchy Index Page, and My Page - Documents
+- Added system liveness and readiness health check commands
+
 ## 2026-04-16
 
 - Added Azure SPN authentication for PostgreSQL, use:
