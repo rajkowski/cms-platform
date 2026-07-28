@@ -1,16 +1,16 @@
 # Build layer
 FROM mcr.microsoft.com/openjdk/jdk:21-mariner AS builder
 
-ARG ANT_VERSION=1.10.15
-ARG ANT_DOWNLOAD_SHA512=d78427aff207592c024ff1552dc04f7b57065a195c42d398fcffe7a0145e8d00cd46786f5aa52e77ab0fdf81334f065eb8011eecd2b48f7228e97ff4cb20d16c
-ARG ANT_MIRROR=https://downloads.apache.org
+ARG ANT_VERSION=1.10.17
+ARG ANT_DOWNLOAD_SHA512=a96ca6455ec9af5e702df7d1ed5a2ec1cfb381eac3e9a767ecb6be1706e826941045e8fd7ca663ba101bc47bfa18351f540dd27e9e7af57908ac78e65268eee7
+ARG ANT_MIRROR=https://archive.apache.org
 
 RUN tdnf install -y tar
 
 # Install Ant
 RUN set -o errexit -o nounset \
     && echo "Downloading Ant" \
-    && curl -fsL -o ant.tar.gz "${ANT_MIRROR}/ant/binaries/apache-ant-${ANT_VERSION}-bin.tar.gz" \
+    && curl -fsL -o ant.tar.gz "${ANT_MIRROR}/dist/ant/binaries/apache-ant-${ANT_VERSION}-bin.tar.gz" \
     && echo "Checking Ant download hash" \
     && echo "${ANT_DOWNLOAD_SHA512} ant.tar.gz" | sha512sum -c - \
     && echo "Extracting Ant" \
