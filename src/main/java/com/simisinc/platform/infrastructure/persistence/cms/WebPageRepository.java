@@ -66,45 +66,6 @@ public class WebPageRepository {
   private static final int MAX_CONTENT_REFERENCE_NODES = 250;
   private static final int MAX_INDIRECT_PAGES = 500;
 
-  /**
-   * Builds a PostgreSQL JSONB tag filter condition.
-   *
-   * <p>Each tag is converted into a JSONB containment expression using
-   * the {@code tags @> '["value"]'::jsonb} operator.</p>
-   *
-   * <p>The individual tag conditions are combined using the specified logical operator:
-   * <ul>
-   *   <li>{@code "OR"} → joins conditions with OR</li>
-   *   <li>any other value (including null) → defaults to AND</li>
-   * </ul>
-   * </p>
-   *
-   * @param filterTags array of tag values to filter by
-   * @param operator logical operator used to combine conditions ("AND" or "OR")
-   * @return SQL condition string like:
-   *         {@code (tags @> '["apac"]'::jsonb OR tags @> '["na"]'::jsonb)}
-   *         or {@code null} if {@code filterTags} is null or empty
-   */
-  private static String buildTagFilterCondition(String[] filterTags, String operator) {
-    if (filterTags == null || filterTags.length == 0) {
-      return null;
-    }
-
-    // Default to AND if operator is null or invalid
-    String op = ("OR".equalsIgnoreCase(operator)) ? " OR " : " AND ";
-    StringBuilder condition = new StringBuilder("(");
-    for (int i = 0; i < filterTags.length; i++) {
-      if (i > 0) {
-        condition.append(op);
-      }
-      // Escape special characters and build JSONB containment check
-      String escapedTag = filterTags[i].replace("\\", "\\\\").replace("\"", "\\\"");
-      condition.append("web_pages.tags @> '[\"").append(escapedTag).append("\"]'::jsonb");
-    }
-    condition.append(")");
-    return condition.toString();
-  }
-
   private static DataResult query(WebPageSpecification specification, DataConstraints constraints) {
     SqlUtils select = new SqlUtils();
     SqlJoins joins = new SqlJoins();
