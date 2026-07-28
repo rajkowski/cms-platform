@@ -33,8 +33,12 @@ RUN ant package
 # Runtime layer
 FROM tomcat:9.0-jdk21
 
+LABEL org.opencontainers.image.description="CMS Platform web application"
+LABEL org.opencontainers.image.source="https://github.com/rajkowski/cms-platform"
+LABEL org.opencontainers.image.licenses="Apache"
+
 COPY --from=builder target/cms-platform.war /usr/local/tomcat/webapps/ROOT.war
 ENV CATALINA_OPTS="-XX:InitialRAMPercentage=10 -XX:MinRAMPercentage=50 -XX:MaxRAMPercentage=80 -XX:+ExitOnOutOfMemoryError"
 EXPOSE 8080
-HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=3 CMD curl -I -f --max-time 5 --header "X-Monitor: healthcheck" http://localhost:8080 || exit 1
+HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=3 CMD curl -I -f --max-time 5 --header "X-Monitor: healthcheck" http://localhost:8080/api/liveness || exit 1
 CMD ["catalina.sh", "run"]
