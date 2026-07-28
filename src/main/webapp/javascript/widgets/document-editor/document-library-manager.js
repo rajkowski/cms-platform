@@ -1,5 +1,11 @@
 /**
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
+ * Licensed under the Apache License, Version 2.0
+ *
  * Handles folder loading/search, subfolder navigation, and selection in the document editor
+ * 
+ * @author matt rajkowski
+ * @created 7/24/26 8:00 AM
  */
 
 class DocumentLibraryManager {
@@ -7,9 +13,12 @@ class DocumentLibraryManager {
     this.editor = editor;
     this.token = editor.config.token;
     this.folders = [];
+    this.collections = [];
     this.subfolders = [];
     this.parentFolderId = -1;
     this.currentSubFolderId = -1;
+    this.currentCollectionId = -1;
+    this.currentSourceType = 'folder';
     this.breadcrumbs = [];
     this.searchInput = document.getElementById('document-search');
     this.listContainer = document.getElementById('folder-list-container');
@@ -39,6 +48,7 @@ class DocumentLibraryManager {
       }
       const payload = await response.json();
       this.folders = payload.folders || [];
+      this.collections = payload.collections || [];
       this.render();
     } catch (err) {
       console.error('Unable to load folders', err);
@@ -88,9 +98,12 @@ class DocumentLibraryManager {
     }
 
     const items = this.parentFolderId === -1 ? this.folders : this.subfolders;
+    const rootCollections = this.parentFolderId === -1 ? this.collections : [];
     if (this.parentFolderId === -1 && !items.length) {
-      this.listContainer.insertAdjacentHTML('beforeend', '<div class="empty-state">No repositories found</div>');
-      return;
+      if (!rootCollections.length) {
+        this.listContainer.insertAdjacentHTML('beforeend', '<div class="empty-state">No repositories found</div>');
+        return;
+      }
     }
 
     // When a folder is selected, keep it visible above its subfolders
@@ -140,6 +153,7 @@ class DocumentLibraryManager {
         item.className = 'folder-item subfolder-item';
       }
       item.dataset.folderId = folder.id;
+      item.dataset.sourceType = this.parentFolderId === -1 ? 'folder' : 'subfolder';
 
       const header = document.createElement('div');
       header.className = 'folder-header';
@@ -191,6 +205,50 @@ class DocumentLibraryManager {
       this.listContainer.appendChild(item);
     });
 
+    if (this.parentFolderId === -1 && rootCollections.length > 0) {
+      const sectionHeader = document.createElement('div');
+      sectionHeader.className = 'folder-section-header';
+      sectionHeader.textContent = 'Collections';
+      this.listContainer.appendChild(sectionHeader);
+
+      rootCollections.forEach((collection) => {
+        const item = document.createElement('div');
+        item.className = 'folder-item collection-item';
+        item.dataset.folderId = collection.id;
+        item.dataset.sourceType = 'collection';
+
+        const header = document.createElement('div');
+        header.className = 'folder-header';
+
+        const icon = document.createElement('span');
+        icon.className = 'folder-icon';
+        icon.innerHTML = '<i class="fas fa-layer-group"></i>';
+        header.appendChild(icon);
+
+        const name = document.createElement('div');
+        name.className = 'folder-name';
+        name.textContent = collection.name || 'Untitled Collection';
+        header.appendChild(name);
+
+        item.appendChild(header);
+
+        const meta = document.createElement('div');
+        meta.className = 'folder-meta';
+        const itemCount = collection.itemCount || 0;
+        meta.innerHTML = `<span>${itemCount} items</span><span>Item Files</span>`;
+        if (collection.hasAllowedGroups) {
+          meta.innerHTML += '<span>Restricted</span>';
+        }
+        item.appendChild(meta);
+
+        item.addEventListener('click', () => {
+          this.selectCollection(collection.id);
+        });
+
+        this.listContainer.appendChild(item);
+      });
+    }
+
     // Add "New Subfolder" button if in folder view
     if (this.parentFolderId > 0) {
       const addBtn = document.createElement('button');
@@ -205,8 +263,11 @@ class DocumentLibraryManager {
     if (!this.listContainer) {
       return;
     }
+    this.currentSourceType = 'folder';
+    this.currentCollectionId = -1;
     this.listContainer.querySelectorAll('.folder-item').forEach((el) => {
-      el.classList.toggle('active', Number(el.dataset.folderId) === Number(folderId));
+      const isFolderType = el.dataset.sourceType !== 'collection';
+      el.classList.toggle('active', isFolderType && Number(el.dataset.folderId) === Number(folderId));
     });
     this.listContainer.querySelectorAll('.parent-folder').forEach((el) => {
       el.classList.toggle('active', Number(el.dataset.folderId) === Number(folderId));
@@ -249,10 +310,31 @@ class DocumentLibraryManager {
       }
     }
     // Enable file-toolbar buttons when a folder is selected
-    this.enableFileToolbar();
+    this.enableFileToolbar('folder');
   }
 
-  enableFileToolbar() {
+  selectCollection(collectionId) {
+    if (!this.listContainer) {
+      return;
+    }
+
+    this.currentSourceType = 'collection';
+    this.currentCollectionId = collectionId;
+    this.currentSubFolderId = -1;
+    this.parentFolderId = -1;
+
+    this.listContainer.querySelectorAll('.folder-item').forEach((el) => {
+      const isCollection = el.dataset.sourceType === 'collection';
+      el.classList.toggle('active', isCollection && Number(el.dataset.folderId) === Number(collectionId));
+    });
+
+    const collection = this.collections.find((c) => Number(c.id) === Number(collectionId));
+    this.editor.fileManager.setCollection(collectionId);
+    this.editor.showCollectionProperties(collection || { id: collectionId, name: 'Collection' });
+    this.enableFileToolbar('collection');
+  }
+
+  enableFileToolbar(sourceType = 'folder') {
     const buttons = [
       'new-subfolder-btn',
       'import-doc-btn',
@@ -262,7 +344,11 @@ class DocumentLibraryManager {
     buttons.forEach((btnId) => {
       const btn = document.getElementById(btnId);
       if (btn) {
-        btn.disabled = false;
+        if (sourceType === 'collection') {
+          btn.disabled = btnId !== 'reload-files-btn';
+        } else {
+          btn.disabled = false;
+        }
       }
     });
   }
@@ -308,6 +394,8 @@ class DocumentLibraryManager {
   navigateToRoot() {
     this.parentFolderId = -1;
     this.currentSubFolderId = -1;
+    this.currentCollectionId = -1;
+    this.currentSourceType = 'folder';
     this.breadcrumbs = [];
     this.subfolders = [];
     this.render();

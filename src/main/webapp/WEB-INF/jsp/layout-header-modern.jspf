@@ -18,34 +18,49 @@
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="g" uri="http://granule.com/tags" %>
+<c:set var="adminPagePath" value="${not empty pageRenderInfo.pagePath ? pageRenderInfo.pagePath : masterWebPage.link}" />
 <g:compress>
   <link rel="stylesheet" href="${ctx}/css/layout-header-modern.css">
 </g:compress>
-
-<header class="modern-header" data-theme="${theme}">
-  <!-- Announcement Bar -->
+<header id="platform-menu" class="modern-header" data-theme="${theme}">
+  <%-- Announcement Bar --%>
   <c:if test="${!empty sitePropertyMap['site.header.line1']}">
-    <div class="announcement-bar">
+    <div class="announcement-bar utility-bar">
       <div class="grid-container">
-        <p><c:out value="${sitePropertyMap['site.header.line1']}" /></p>
+        <p>
+          <c:out value="${sitePropertyMap['site.header.line1']}" />
+          <c:if test="${!empty sitePropertyMap['site.header.page']}">
+            <c:choose>
+              <c:when test="${!empty sitePropertyMap['site.header.link']}">
+                <a style="white-space: nowrap" href="${ctx}${sitePropertyMap['site.header.page']}"><c:out value="${sitePropertyMap['site.header.link']}" /></a>
+              </c:when>
+              <c:otherwise>
+                <a href="${ctx}${sitePropertyMap['site.header.page']}">Details</a>
+              </c:otherwise>
+            </c:choose>
+          </c:if>
+          <c:if test="${userSession.hasRole('admin')}">
+            <a class="hollow button tiny secondary" style="padding:2px; margin:0;" href="${ctx}/admin/site-header-properties"><i class="${font:fas()} fa-edit"></i></a>
+          </c:if>
+        </p>
       </div>
     </div>
   </c:if>
 
-  <!-- Main Header -->
+  <%-- Main Header --%>
   <div class="main-header">
     <div class="header-container">
-      <!-- Logo/Brand -->
+      <%-- Logo/Brand --%>
       <a href="/" class="header-logo">
         <c:choose>
           <c:when test="${!empty sitePropertyMap['site.logo']}">
             <img class="logo-light" src="${sitePropertyMap['site.logo']}" alt="<c:out value="${sitePropertyMap['site.name']}"/>" />
             <c:choose>
-              <c:when test="${!empty sitePropertyMap['site.logo.white']}">
-                <img class="logo-dark" src="${sitePropertyMap['site.logo.white']}" alt="<c:out value="${sitePropertyMap['site.name']}"/>" />
-              </c:when>
               <c:when test="${!empty sitePropertyMap['site.logo.mixed']}">
                 <img class="logo-dark" src="${sitePropertyMap['site.logo.mixed']}" alt="<c:out value="${sitePropertyMap['site.name']}"/>" />
+              </c:when>
+              <c:when test="${!empty sitePropertyMap['site.logo.white']}">
+                <img class="logo-dark" src="${sitePropertyMap['site.logo.white']}" alt="<c:out value="${sitePropertyMap['site.name']}"/>" />
               </c:when>
               <c:otherwise>
                 <img class="logo-dark" src="${sitePropertyMap['site.logo']}" alt="<c:out value="${sitePropertyMap['site.name']}"/>" />
@@ -53,33 +68,32 @@
             </c:choose>
           </c:when>
           <c:otherwise>
-            <i class="fas fa-cube"></i>
+            <i class="${font:fas()} fa-cube"></i>
             <span><c:out value="${sitePropertyMap['site.name']}"/></span>
           </c:otherwise>
         </c:choose>
       </a>
 
-      <!-- Main Navigation -->
+      <%-- Main Navigation --%>
       <nav class="header-nav" id="mainNav">
         <ul class="nav-menu">
           <c:forEach items="${masterMenuTabList}" var="menuItem" varStatus="menuTabStatus">            
             <c:if test="${not (menuItem.link eq '/' && menuTabStatus.index == 0)}">
-              <li class="nav-item ${not empty menuItem.menuItemList ? 'has-dropdown' : ''}">
-                <a href="${menuItem.link}" class="nav-link ${menuItem.active ? 'active' : ''}">
+              <li class="nav-item${not empty menuItem.menuItemList ? ' has-dropdown' : ''}">
+                <a href="${menuItem.link}" class="nav-link${menuItem.active ? ' active' : ''}">
                   <c:if test="${not empty menuItem.icon}">
                     <i class="${menuItem.icon}"></i>
                   </c:if>
                   <c:out value="${menuItem.name}" />
                   <c:if test="${not empty menuItem.menuItemList}">
-                    <i class="fas fa-chevron-down" style="font-size: 0.75rem; margin-left: 0.25rem;"></i>
+                    <i class="${font:fas()} fa-chevron-down" style="font-size: 0.75rem; margin-left: 0.25rem;"></i>
                   </c:if>
                 </a>
-                
-                <!-- Dropdown Menu -->
+                <%-- Dropdown Menu --%>
                 <c:if test="${not empty menuItem.menuItemList}">
                   <div class="dropdown-menu">
                     <c:forEach items="${menuItem.menuItemList}" var="subItem">
-                      <a href="${subItem.link}" class="dropdown-item">
+                      <a href="${subItem.link}" class="dropdown-item${subItem.active ? ' active' : ''}">
                         <c:if test="${not empty subItem.icon}">
                           <i class="${subItem.icon}" style="margin-right: 0.5rem;"></i>
                         </c:if>
@@ -94,33 +108,52 @@
         </ul>
       </nav>
 
-      <!-- Header Actions -->
+      <%-- Header Actions --%>
       <div class="header-actions">
         
-        <!-- Search Form -->
-        <form method="get" action="/search" class="search-form">
-          <input type="text" name="query" placeholder="Search..." class="search-input" />
-          <button type="submit" class="search-submit" title="Search">
-            <i class="fas fa-search"></i>
-          </button>
+        <%-- Search Form --%>
+        <form id="topSearchForm" method="get" action="${ctx}/search" class="search-form" autocomplete="off">
+          <div class="search-form-row">
+            <input type="text" id="searchInput" name="query" value="<c:out value='${param.query}'/>" placeholder="Search..." class="search-input" autocomplete="off" />
+            <button type="submit" class="search-submit" title="Search">
+              <i class="${font:fas()} fa-search"></i>
+            </button>
+          </div>
+          <div id="searchDropdownPanel" class="search-dropdown-panel" aria-hidden="true">
+            <div id="searchResults" class="search-dropdown-results">Type at least 3 characters...</div>
+          </div>
         </form>
 
-        <!-- Ask AI Button -->
+        <%-- Region Filter Button --%>
+        <c:if test="${!empty requestRegionList}">
+          <button type="button" class="header-btn region-filter-trigger" title="Filter by Region" onclick="window.openRegionModal()">
+            <i class="${font:fas()} fa-globe-americas"></i>
+            <span class="btn-text">Region</span>
+          </button>
+        </c:if>
+
+        <%-- Ask AI Button --%>
+        <%-- Enable for Ask AI Drawer
+        <button type="button" class="header-btn ask-ai-trigger" title="Ask AI" onclick="toggleAskAIDrawer()">
+          <i class="${font:fas()} fa-brain"></i>
+          <span class="btn-text">Ask AI</span>
+        </button>
+        --%>
         <a href="/ask-ai" class="header-btn" title="Ask AI">
-          <i class="fas fa-brain"></i>
+          <i class="${font:fas()} fa-brain"></i>
           <span class="btn-text">Ask AI</span>
         </a>
 
-        <!-- Cart (E-commerce) -->
+        <%-- Cart (E-commerce) --%>
         <c:if test="${ecommerceEnabled}">
           <div class="cart-btn header-btn" title="Shopping Cart">
-            <i class="fas fa-shopping-cart"></i>
+            <i class="${font:fas()} fa-shopping-cart"></i>
             <span class="btn-text">Cart</span>
             <c:if test="${cartItemCount > 0}">
               <span class="cart-badge">${cartItemCount}</span>
             </c:if>
             
-            <!-- Cart Dropdown -->
+            <%-- Cart Dropdown --%>
             <div class="cart-dropdown">
               <div class="cart-dropdown-header">
                 Shopping Cart (${cartItemCount} items)
@@ -163,157 +196,192 @@
           </div>
         </c:if>
         
-        <!-- Contact Us Button -->
+        <%-- Contact Us Button --%>
         <a href="/contact-us" class="header-btn" title="Contact Us">
-          <i class="fas fa-envelope"></i>
+          <i class="${font:fas()} fa-envelope"></i>
           <span class="btn-text">Contact</span>
         </a>
 
-        <!-- Language Selector -->
+        <%-- Language Selector --%>
+        <%--
         <div class="language-selector">
           <button class="header-btn language-btn" title="Select Language">
-            <i class="fas fa-globe"></i>
+            <i class="${font:fas()} fa-globe"></i>
             <span class="btn-text">${currentLanguage.code}</span>
-            <i class="fas fa-chevron-down" style="font-size: 0.75rem;"></i>
+            <i class="${font:fas()} fa-chevron-down" style="font-size: 0.75rem;"></i>
           </button>
           <div class="language-dropdown">
             <a href="?lang=en_US" class="language-option">
-              <i class="fas fa-check" style="margin-right: 0.5rem;"></i>
+              <i class="${font:fas()} fa-check" style="margin-right: 0.5rem;"></i>
               US English
             </a>
             <c:forEach items="${availableLanguages}" var="lang">
               <a href="?lang=${lang.code}" class="language-option">
-                <i class="fas fa-check" style="margin-right: 0.5rem; ${lang.code == currentLanguage.code ? '' : 'visibility: hidden;'}"></i>
+                <i class="${font:fas()} fa-check" style="margin-right: 0.5rem; ${lang.code == currentLanguage.code ? '' : 'visibility: hidden;'}"></i>
                 ${lang.name}
               </a>
             </c:forEach>
           </div>
         </div>
+        --%>
 
-        <!-- User Section -->
+        <%-- User Section --%>
         <c:choose>
           <c:when test="${not empty userSession.user}">
-            <!-- User Menu -->
+            <%-- User Menu --%>
             <div class="user-menu">
               <div class="user-menu-trigger" title="User Menu">
-                <i class="fas fa-user-circle"></i>
+                <i class="${font:fas()} fa-user-circle"></i>
                 <span>${userSession.user.firstName} ${userSession.user.lastName}</span>
-                <i class="fas fa-chevron-down" style="font-size: 0.75rem;"></i>
+                <i class="${font:fas()} fa-chevron-down" style="font-size: 0.75rem;"></i>
               </div>
               
               <div class="user-menu-dropdown">
-                <!-- Admin Apps Section -->
-                <c:if test="${userSession.hasRole('admin')}">
-                  <div class="user-menu-section">
-                    <div class="user-menu-section-title">Admin Tools</div>
+
+                <%-- Page and Site Section --%>
+                <c:if test="${userSession.hasRole('admin') || userSession.hasRole('content-manager')}">
+                <div class="user-menu-section">
+                  <c:if test="${userSession.hasRole('admin') || userSession.hasRole('content-manager')}">
+                  <div class="user-menu-section-title">Page Tools</div>
+                  <div class="admin-apps-grid">
                     
-                    <div class="admin-apps-grid">
-                      <a href="${ctx}/admin/visual-analytics-dashboard" class="admin-app-item" title="View site analytics and reports">
-                        <i class="fas fa-chart-line"></i>
-                        <span class="admin-app-item-label">Analytics</span>
-                      </a>
-                      
-                      <a href="${ctx}/admin/visual-content-editor?webPage=${pageRenderInfo.pagePath}" class="admin-app-item" title="Edit web pages and content">
-                        <i class="fas fa-edit"></i>
-                        <span class="admin-app-item-label">Content</span>
-                      </a>
+                    <a href="${ctx}/admin/web-page?webPage=${pageRenderInfo.pagePath}" class="admin-app-item" title="View page information">
+                      <i class="${font:fas()} fa-info-circle"></i>
+                      <span class="admin-app-item-label">Page Info</span>
+                    </a>
 
-                      <a href="${ctx}/admin/visual-page-editor?webPage=${pageRenderInfo.pagePath}" class="admin-app-item" title="Edit web pages and content">
-                        <i class="fas fa-file-lines"></i>
-                        <span class="admin-app-item-label">Web Pages</span>
-                      </a>
+                    <a href="${ctx}/page-analytics?webPage=${adminPagePath}" class="admin-app-item" title="View analytics for this page">
+                      <i class="${font:fas()} fa-chart-area"></i>
+                      <span class="admin-app-item-label">Page Analytics</span>
+                    </a>
 
-                      <a href="${ctx}/admin/visual-image-editor?returnPage=${pageRenderInfo.pagePath}" class="admin-app-item" title="Manage images and media">
-                        <i class="fas fa-image"></i>
-                        <span class="admin-app-item-label">Images</span>
-                      </a>
-
-                      <a href="${ctx}/admin/visual-document-editor?returnPage=${pageRenderInfo.pagePath}" class="admin-app-item" title="Manage documents and file links">
-                        <i class="fas fa-folder-open"></i>
-                        <span class="admin-app-item-label">Documents</span>
-                      </a>
-
-                      <a href="${ctx}/admin/visual-data-editor?returnPage=${pageRenderInfo.pagePath}" class="admin-app-item" title="Manage data sources">
-                        <i class="fas fa-database"></i>
-                        <span class="admin-app-item-label">Data</span>
-                      </a>
-                    </div>
-
-                    <div class="user-menu-section-title">Classic Tools</div>
-                    <div class="admin-apps-grid">
-                      
-                      <a href="/admin/form-data#contact-management" class="admin-app-item" title="Manage contacts, form submissions, and mailing lists">
-                        <i class="fas fa-envelope-open-text"></i>
-                        <span class="admin-app-item-label">Contacts</span>
-                      </a>
-                                            
-                      <a href="/admin/e-commerce/analytics" class="admin-app-item" title="Products and orders">
-                        <i class="fas fa-shopping-bag"></i>
-                        <span class="admin-app-item-label">Commerce</span>
-                      </a>
-
-                      <a href="/admin/users" class="admin-app-item" title="Manage user accounts">
-                        <i class="fas fa-users"></i>
-                        <span class="admin-app-item-label">Users</span>
-                      </a>
-
-                      <a href="/admin/theme-properties#theme" class="admin-app-item" title="Customize appearance">
-                        <i class="fas fa-palette"></i>
-                        <span class="admin-app-item-label">Theme</span>
-                      </a>
-
-                      <a href="/admin/css-editor?returnPage=${pageRenderInfo.pagePath}" class="admin-app-item" title="Manage CSS styles">
-                        <i class="fas fa-code"></i>
-                        <span class="admin-app-item-label">Site CSS</span>
-                      </a>
-
-                      <a href="/admin" class="admin-app-item" title="System configuration">
-                        <i class="fas fa-cog"></i>
-                        <span class="admin-app-item-label">Setup</span>
-                      </a>
-                    </div>
-
-                    <c:if test="${userSession.hasRole('admin')}">
-                    <div class="user-menu-section-title">Page Tools</div>
-                    <div class="admin-apps-grid">
-                      <a href="${ctx}/admin/web-page?webPage=${pageRenderInfo.pagePath}" class="admin-app-item" title="View page information">
-                        <i class="fas fa-info-circle"></i>
-                        <span class="admin-app-item-label">Page Info</span>
-                      </a>
-                      <a href="/admin/css-editor?webPage=${masterWebPage.link}&returnPage=${masterWebPage.link}" class="admin-app-item" title="Edit page CSS styles">
-                        <i class="fas fa-paint-brush"></i>
-                        <span class="admin-app-item-label">Page CSS</span>
-                      </a>
-                      <a href="${ctx}/admin/web-page-designer?webPage=${masterWebPage.link}" class="admin-app-item" title="Edit page XML structure">
-                        <i class="fas fa-code"></i>
-                        <span class="admin-app-item-label">Page XML</span>
-                      </a>
-                    </div>
-                  </c:if>
+                    <a href="${ctx}/admin/visual-page-editor?webPage=${masterWebPage.link}" class="admin-app-item" title="Edit page structure">
+                      <i class="${font:fas()} fa-file-lines"></i>
+                      <span class="admin-app-item-label">Page Design</span>
+                    </a>
 
                   </div>
-
+                  </c:if>
+                </div>
                 </c:if>
 
-                <!-- User Actions Section -->
+                <%--
+                <c:if test="${userSession.hasRole('admin')}">
+                <div class="user-menu-section">
+                  <div class="user-menu-section-title">Page Design Tools</div>
+                  <div class="admin-apps-grid">
+
+                    <c:if test="${userSession.hasRole('admin')}">
+                      <a href="${ctx}/admin/css-editor?webPage=${masterWebPage.link}&returnPage=${masterWebPage.link}" class="admin-app-item" title="Edit page CSS styles">
+                        <i class="${font:fab()} fa-css"></i>
+                        <span class="admin-app-item-label">Page CSS</span>
+                      </a>
+                    </c:if>
+                    
+                    <c:if test="${userSession.hasRole('admin')}">
+                    <a href="${ctx}/admin/web-page-designer?webPage=${masterWebPage.link}" class="admin-app-item" title="Edit page XML">
+                      <i class="${font:fas()} fa-code"></i>
+                      <span class="admin-app-item-label">Page XML</span>
+                    </a>
+                    </c:if>
+
+                  </div>
+                </div>
+                </c:if>
+                --%>
+
+                <c:if test="${userSession.hasRole('admin') || userSession.hasRole('content-manager')}">
+                <div class="user-menu-section">
+                  <div class="user-menu-section-title">Content Tools</div>
+                  <div class="admin-apps-grid">
+
+                    <a href="${ctx}/admin/visual-document-editor?returnPage=${pageRenderInfo.pagePath}" class="admin-app-item" title="Manage documents and file links">
+                      <i class="${font:fas()} fa-folder-open"></i>
+                      <span class="admin-app-item-label">All Files</span>
+                    </a>
+
+                    <a href="${ctx}/admin/visual-image-editor?returnPage=${pageRenderInfo.pagePath}" class="admin-app-item" title="Manage images and media">
+                      <i class="${font:fas()} fa-image"></i>
+                      <span class="admin-app-item-label">All Images</span>
+                    </a>
+
+                    <a href="${ctx}/admin/visual-hierarchy-editor?webPage=${pageRenderInfo.pagePath}" class="admin-app-item" title="Edit web page hierarchy and structure">
+                      <i class="${font:fas()} fa-sitemap"></i>
+                      <span class="admin-app-item-label">Page Hierarchy</span>
+                    </a>
+
+                  </div>
+                </div>
+                </c:if>
+
+                <c:if test="${userSession.hasRole('admin') || userSession.hasRole('community-manager') || userSession.hasRole('content-manager') || userSession.hasRole('data-manager')}">
+                <div class="user-menu-section">
+                  <div class="user-menu-section-title">Admin Tools</div>
+                  <div class="admin-apps-grid">
+
+                    <a href="/site-instructions" class="admin-app-item" title="View administration information">
+                      <i class="${font:fas()} fa-circle-info"></i>
+                      <span class="admin-app-item-label">Instructions</span>
+                    </a>
+
+                    <c:if test="${userSession.hasRole('admin') || userSession.hasRole('content-manager')}">
+                      <a href="${ctx}/admin/visual-analytics-dashboard" class="admin-app-item" title="View site analytics and reports">
+                        <i class="${font:fas()} fa-chart-line"></i>
+                        <span class="admin-app-item-label">Site Analytics</span>
+                      </a>
+                    </c:if>
+
+                    <c:if test="${userSession.hasRole('admin') || userSession.hasRole('community-manager')}">
+                      <a href="/admin/users" class="admin-app-item" title="Manage user accounts">
+                        <i class="${font:fas()} fa-users"></i>
+                        <span class="admin-app-item-label">Users</span>
+                      </a>
+                    </c:if>
+
+                    <c:if test="${userSession.hasRole('admin')}">
+                      <a href="${ctx}/admin/site-header-properties" class="admin-app-item" title="Change announcement banner message">
+                        <i class="${font:fas()} fa-bullhorn"></i>
+                        <span class="admin-app-item-label">Announcement</span>
+                      </a>
+                    </c:if>
+
+                    <c:if test="${userSession.hasRole('admin')}">
+                      <a href="${ctx}/admin/css-editor?returnPage=${pageRenderInfo.pagePath}" class="admin-app-item" title="Manage CSS styles">
+                        <i class="${font:fab()} fa-css"></i>
+                        <span class="admin-app-item-label">Site CSS</span>
+                      </a>
+                    </c:if>
+
+                    <c:if test="${userSession.hasRole('admin')}">
+                      <a href="/admin" class="admin-app-item" title="System configuration">
+                        <i class="${font:fas()} fa-cog"></i>
+                        <span class="admin-app-item-label">Setup</span>
+                      </a>
+                    </c:if>
+                    
+                  </div>
+                </div>
+                </c:if>
+
+                <%-- User Actions Section --%>
                 <div class="user-menu-section">
 
                   <a href="javascript:void(0);" onclick="toggleDarkMode()" class="user-menu-item" title="Toggle Light/Dark Mode">
-                    <i class="fas fa-moon" id="themeIconMenu"></i>
+                    <i class="${font:fas()} fa-moon" id="themeIconMenu"></i>
                     <div class="user-menu-item-content">
                       <span class="user-menu-item-label">Toggle Light/Dark Mode</span>
                     </div>
                   </a>     
                   
                   <a href="/account" class="user-menu-item">
-                    <i class="fas fa-user-cog"></i>
+                    <i class="${font:fas()} fa-user-cog"></i>
                     <div class="user-menu-item-content">
                       <span class="user-menu-item-label">My Account</span>
                     </div>
                   </a>
                   
                   <a href="/logout" class="user-menu-item">
-                    <i class="fas fa-sign-out-alt"></i>
+                    <i class="${font:fas()} fa-sign-out-alt"></i>
                     <div class="user-menu-item-content">
                       <span class="user-menu-item-label">Logout</span>
                     </div>
@@ -323,13 +391,13 @@
             </div>
           </c:when>
           <c:otherwise>
-            <!-- Theme Toggle -->
+            <%-- Theme Toggle --%>
             <button class="theme-toggle" onclick="toggleDarkMode()" title="Toggle Dark Mode" aria-label="Toggle Dark Mode">
-              <i class="fas fa-moon" id="themeIcon"></i>
+              <i class="${font:fas()} fa-moon" id="themeIcon"></i>
             </button>
-            <!-- Login -->
+            <%-- Login --%>
             <a href="/login" class="header-btn primary" title="Login">
-              <i class="fas fa-sign-in-alt"></i>
+              <i class="${font:fas()} fa-sign-in-alt"></i>
               <span class="btn-text">Login</span>
             </a>
           </c:otherwise>
@@ -337,13 +405,75 @@
 
       </div>
 
-      <!-- Mobile Menu Toggle -->
+      <%-- Mobile Menu Toggle --%>
       <button class="mobile-menu-toggle" onclick="toggleMobileMenu()" aria-label="Toggle Menu">
-        <i class="fas fa-bars"></i>
+        <i class="${font:fas()} fa-bars"></i>
       </button>
     </div>
   </div>
 </header>
+
+<div id="searchBackdrop" class="search-backdrop" aria-hidden="true"></div>
+
+<%-- Ask AI Drawer --%>
+<%--
+<div id="askAIDrawer" class="ask-ai-drawer">
+  <div class="ask-ai-drawer-header">
+    <h3><i class="${font:fas()} fa-brain"></i> Ask AI Assistant</h3>
+    <button type="button" class="ask-ai-close" onclick="toggleAskAIDrawer()" aria-label="Close">
+      <i class="${font:fas()} fa-times"></i>
+    </button>
+  </div>
+  <div class="ask-ai-drawer-content">
+    <div class="ask-ai-messages" id="askAIMessages">
+      <div class="ask-ai-message ask-ai-message-system">
+        <div class="ask-ai-message-icon">
+          <i class="${font:fas()} fa-info-circle"></i>
+        </div>
+        <div class="ask-ai-message-text">
+          <strong>AI Assistant Not Connected</strong>
+          <p>The AI assistant service is currently not configured. Please contact your administrator to enable this feature.</p>
+        </div>
+      </div>
+    </div>
+    <div class="ask-ai-input-container">
+      <form class="ask-ai-form" onsubmit="handleAskAISubmit(event)">
+        <textarea 
+          id="askAIInput" 
+          class="ask-ai-input" 
+          placeholder="Type your question here..." 
+          rows="3"
+          disabled
+        ></textarea>
+        <button type="submit" class="ask-ai-send" disabled title="AI assistant not connected">
+          <i class="${font:fas()} fa-paper-plane"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+--%>
+
+<%-- Region Filter Modal --%>
+<c:if test="${!empty requestRegionList}">
+  <div id="regionModal" class="region-modal">
+    <div class="region-modal-content">
+      <div class="region-modal-header">
+        <h3><i class="${font:fas()} fa-globe-americas"></i> To get started, select your region / market:</h3>
+        <button type="button" class="region-modal-close" onclick="window.closeRegionModal()" aria-label="Close">
+          <i class="${font:fas()} fa-times"></i>
+        </button>
+      </div>
+      <div class="region-modal-body">
+        <form id="regionFilterForm" autocomplete="off">
+          <%-- Region options will be generated by JavaScript --%>
+          <div class="region-options" id="regionOptionsContainer">
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</c:if>
 
 <script>
   // Mobile Menu Toggle
@@ -454,6 +584,25 @@
     });
   }
 
+  <%--
+  // Ask AI Drawer Functions
+  function toggleAskAIDrawer() {
+    const drawer = document.getElementById('askAIDrawer');
+    if (drawer) {
+      drawer.classList.toggle('open');
+    }
+  }
+
+  function handleAskAISubmit(event) {
+    event.preventDefault();
+    const input = document.getElementById('askAIInput');
+    if (input && input.value.trim()) {
+      // TODO: Send message to AI service when connected
+      input.value = '';
+    }
+  }
+  --%>
+
   // Load saved theme preference and initialize interactive menus
   document.addEventListener('DOMContentLoaded', function() {
     const header = document.querySelector('.modern-header');
@@ -475,7 +624,182 @@
       // Scrolling up
       header.style.transform = 'translateY(0)';
     }
-    
     lastScroll = currentScroll;
+  });
+
+  <%-- Dynamic Search Capability --%>
+
+  document.addEventListener('DOMContentLoaded', () => {
+
+    const MIN_CHARS = 3;
+    const DEBOUNCE_DELAY = 300;
+
+    const searchInput = document.getElementById('searchInput');
+    const searchDropdownPanel = document.getElementById('searchDropdownPanel');
+    const searchResults = document.getElementById('searchResults');
+    const searchForm = document.getElementById('topSearchForm');
+    const searchBackdrop = document.getElementById('searchBackdrop');
+
+    let debounceTimer;
+    let activeRequestId = 0;
+
+    const positionSearchPanel = () => {
+      const formRect = searchForm.getBoundingClientRect();
+      const inputRect = searchInput.getBoundingClientRect();
+      const panelTop = Math.max((inputRect.bottom - formRect.top) + 6, 8);
+      const viewportPadding = 16;
+      const panelWidth = Math.min(Math.max(320, window.innerWidth * 0.6), window.innerWidth - (viewportPadding * 2));
+      const viewportCenterX = window.innerWidth / 2;
+      const panelLeft = viewportCenterX - formRect.left;
+
+      searchDropdownPanel.style.width = `\${panelWidth}px`;
+      searchDropdownPanel.style.top = `\${panelTop}px`;
+      searchDropdownPanel.style.left = `\${panelLeft}px`;
+      searchDropdownPanel.style.transform = 'translateX(-50%)';
+    };
+
+    // Dropdown helpers
+    const openSearchPanel = () => {
+      positionSearchPanel();
+      searchDropdownPanel.classList.add('is-open');
+      searchDropdownPanel.setAttribute('aria-hidden', 'false');
+      searchForm.classList.add('search-open');
+      if (searchBackdrop) {
+        searchBackdrop.classList.add('is-open');
+        searchBackdrop.setAttribute('aria-hidden', 'false');
+      }
+    };
+
+    const closeSearchPanel = () => {
+      searchDropdownPanel.classList.remove('is-open');
+      searchDropdownPanel.setAttribute('aria-hidden', 'true');
+      searchForm.classList.remove('search-open');
+      if (searchBackdrop) {
+        searchBackdrop.classList.remove('is-open');
+        searchBackdrop.setAttribute('aria-hidden', 'true');
+      }
+    };
+
+    // Expose globally (used in HTML onclick)
+    window.closeSearchModal = closeSearchPanel;
+
+    // Utility: show message
+    const showMessage = (msg) => {
+      searchResults.innerHTML = `<p>\${msg}</p>`;
+    };
+
+    // Remove unwanted elements from HTML
+    const cleanContent = (content) => {
+      const removeSelectors = [
+        '.landing-page-search',
+        'form',
+        'input',
+        'button',
+        'h2'
+      ];
+
+      removeSelectors.forEach(selector => {
+        content.querySelectorAll(selector).forEach(el => el.remove());
+      });
+
+      return content;
+    };
+
+    const contextPath = "${ctx}";
+
+    // Core search function
+    const performSearch = async (query) => {
+      const requestId = ++activeRequestId;
+
+      try {
+        showMessage('Loading...');
+
+        const response = await fetch(`\${contextPath}/search?query=\${encodeURIComponent(query)}`);
+        const html = await response.text();
+
+        // Ignore out-of-order responses from stale queries
+        if (requestId !== activeRequestId) {
+          return;
+        }
+
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const content = doc.querySelector('.search-main-content');
+
+        if (!content) {
+          showMessage('No results found');
+          return;
+        }
+
+        cleanContent(content);
+
+        // Check results existence
+        const resultLinks = content.querySelectorAll('a');
+        if (!resultLinks.length) {
+          showMessage('No results found');
+          return;
+        }
+
+        // Inject cleaned content
+        searchResults.innerHTML = content.innerHTML;
+
+      } catch (error) {
+        console.error('Search error:', error);
+        showMessage('Error loading results');
+      }
+    };
+
+    // Input handler with debounce
+    const handleSearchInput = (e) => {
+      const query = e.target.value.trim();
+
+      if (query.length < MIN_CHARS) {
+        closeSearchPanel();
+        return;
+      }
+
+      openSearchPanel();
+
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => performSearch(query), DEBOUNCE_DELAY);
+    };
+
+    // Event delegation (better performance)
+    searchResults.addEventListener('click', (e) => {
+      if (e.target.closest('a')) {
+        closeSearchPanel();
+      }
+    });
+
+    // Event bindings
+    searchInput.addEventListener('input', handleSearchInput);
+    searchInput.addEventListener('focus', (e) => {
+      const query = e.target.value.trim();
+      if (query.length >= MIN_CHARS) {
+        openSearchPanel();
+      }
+    });
+
+    searchForm.addEventListener('submit', () => {
+      closeSearchPanel();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeSearchPanel();
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!searchForm.contains(e.target)) {
+        closeSearchPanel();
+      }
+    });
+
+    window.addEventListener('resize', () => {
+      if (searchDropdownPanel.classList.contains('is-open')) {
+        positionSearchPanel();
+      }
+    });
+
   });
 </script>

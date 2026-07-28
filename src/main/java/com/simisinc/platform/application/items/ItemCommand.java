@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -158,7 +159,7 @@ public class ItemCommand {
     if (StringUtils.isBlank(value)) {
       return;
     }
-    if (textSb.length() > 0) {
+    if (!textSb.isEmpty()) {
       textSb.append("\n");
     }
     if (label.endsWith("?")) {

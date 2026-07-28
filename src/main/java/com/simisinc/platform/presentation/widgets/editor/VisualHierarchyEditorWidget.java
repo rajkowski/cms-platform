@@ -40,7 +40,7 @@ public class VisualHierarchyEditorWidget extends GenericWidget {
 
   public WidgetContext execute(WidgetContext context) {
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.visual-hierarchy-editor.access", context.getUserSession())) {
       LOG.debug("No permission to: " + VisualHierarchyEditorWidget.class.getSimpleName());
       return context;
     }

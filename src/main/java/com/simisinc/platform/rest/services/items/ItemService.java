@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +22,7 @@ import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.items.LoadCollectionCommand;
 import com.simisinc.platform.application.items.LoadItemCommand;
+import com.simisinc.platform.domain.model.items.Collection;
 import com.simisinc.platform.domain.model.items.Item;
 import com.simisinc.platform.rest.controller.GenericRestService;
 import com.simisinc.platform.rest.controller.ServiceContext;
@@ -51,8 +53,9 @@ public class ItemService extends GenericRestService {
     }
 
     // Validate access to the collection
-    if (LoadCollectionCommand.loadCollectionByIdForAuthorizedUser(item.getCollectionId(),
-        context.getUserId()) == null) {
+    Collection collection = LoadCollectionCommand.loadCollectionByIdForAuthorizedUser(item.getCollectionId(),
+        context.getUserId());
+    if (collection == null) {
       LOG.warn("User does not have access to this collection");
       ServiceResponse response = new ServiceResponse(400);
       response.getError().put("title", "Item was not found");
@@ -60,7 +63,7 @@ public class ItemService extends GenericRestService {
     }
 
     // Set the fields to return
-    ItemDetailsResponse itemDetails = new ItemDetailsResponse(item);
+    ItemDetailsResponse itemDetails = new ItemDetailsResponse(item, collection);
 
     // Prepare the response
     ServiceResponse response = new ServiceResponse(200);

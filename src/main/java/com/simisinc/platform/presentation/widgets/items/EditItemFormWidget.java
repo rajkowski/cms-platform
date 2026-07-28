@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +31,7 @@ import com.simisinc.platform.domain.model.items.Item;
 import com.simisinc.platform.infrastructure.persistence.items.CategoryRepository;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.widgets.cms.PreferenceEntriesList;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -38,8 +40,11 @@ import org.apache.commons.logging.LogFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Description
@@ -110,6 +115,37 @@ public class EditItemFormWidget extends GenericWidget {
     Map<String, CustomField> customFieldList = CustomFieldListMergeCommand.mergeCustomFieldLists(
         collection.getCustomFieldList(),
         item.getCustomFieldList());
+
+    // If specific fields are configured, restrict which fields are shown
+    PreferenceEntriesList entriesList = context.getPreferenceAsDataList("fields");
+    if (!entriesList.isEmpty()) {
+      Set<String> allowedFields = new LinkedHashSet<>();
+      Map<String, String> fieldLabels = new LinkedHashMap<>();
+      for (Map<String, String> entry : entriesList) {
+        String objectParam = entry.get("value");
+        String fieldName = entry.get("name");
+        if (StringUtils.isNotBlank(objectParam)) {
+          allowedFields.add(objectParam);
+          if (StringUtils.isNotBlank(fieldName)) {
+            fieldLabels.put(objectParam, fieldName);
+          }
+        }
+      }
+      if (!allowedFields.isEmpty()) {
+        context.getRequest().setAttribute("allowedFields", allowedFields);
+        context.getRequest().setAttribute("fieldLabels", fieldLabels);
+        // Filter the custom field list to only include fields specified in the preference
+        if (customFieldList != null) {
+          Map<String, CustomField> filteredCustomFieldList = new LinkedHashMap<>();
+          for (Map.Entry<String, CustomField> entry : customFieldList.entrySet()) {
+            if (allowedFields.contains("custom." + entry.getKey())) {
+              filteredCustomFieldList.put(entry.getKey(), entry.getValue());
+            }
+          }
+          customFieldList = filteredCustomFieldList;
+        }
+      }
+    }
     context.getRequest().setAttribute("customFieldList", customFieldList);
 
     // Standard request items
@@ -165,27 +201,59 @@ public class EditItemFormWidget extends GenericWidget {
     itemBean.setModifiedBy(context.getUserId());
     itemBean.setIpAddress(context.getRequest().getRemoteAddr());
 
-    // Handle the categories
-    long mainCategoryId = itemBean.getCategoryId();
-    if (mainCategoryId == 0) {
-      mainCategoryId = -1;
+    // If a tags string was submitted, parse it into an array
+    String tagsParam = context.getParameter("tags");
+    if (tagsParam != null) {
+      if (tagsParam.isBlank()) {
+        itemBean.setTags(null);
+      } else {
+        String[] tagsArray = tagsParam.split(",");
+        for (int i = 0; i < tagsArray.length; i++) {
+          tagsArray[i] = tagsArray[i].trim();
+        }
+        itemBean.setTags(tagsArray);
+      }
     }
-    List<Category> categoryList = CategoryRepository.findAllByCollectionId(itemBean.getCollectionId());
-    List<Long> categoryIdList = new ArrayList<>();
-    for (Category category : categoryList) {
-      long categoryId = context.getParameterAsLong("categoryId" + category.getId());
-      if (categoryId != -1) {
-        categoryIdList.add(categoryId);
-        if (mainCategoryId == -1) {
-          mainCategoryId = categoryId;
+
+    // Determine which custom fields are allowed (based on the fields preference, if set)
+    PreferenceEntriesList fieldEntriesList = context.getPreferenceAsDataList("fields");
+    Set<String> allowedCustomFieldKeys = null;
+    if (!fieldEntriesList.isEmpty()) {
+      allowedCustomFieldKeys = new LinkedHashSet<>();
+      for (Map<String, String> entry : fieldEntriesList) {
+        String objectParam = entry.get("value");
+        if (StringUtils.isNotBlank(objectParam) && objectParam.startsWith("custom.")) {
+          allowedCustomFieldKeys.add(objectParam.substring("custom.".length()));
         }
       }
     }
-    if (mainCategoryId != -1 && !categoryIdList.contains(mainCategoryId)) {
-      categoryIdList.add(mainCategoryId);
+
+    // Handle the categories - if category fields were not submitted, preserve existing assignments
+    if (context.getParameter("categoryId") == null) {
+      itemBean.setCategoryId(previousBean.getCategoryId());
+      itemBean.setCategoryIdList(previousBean.getCategoryIdList());
+    } else {
+      long mainCategoryId = itemBean.getCategoryId();
+      if (mainCategoryId == 0) {
+        mainCategoryId = -1;
+      }
+      List<Category> categoryList = CategoryRepository.findAllByCollectionId(itemBean.getCollectionId());
+      List<Long> categoryIdList = new ArrayList<>();
+      for (Category category : categoryList) {
+        long categoryId = context.getParameterAsLong("categoryId" + category.getId());
+        if (categoryId != -1) {
+          categoryIdList.add(categoryId);
+          if (mainCategoryId == -1) {
+            mainCategoryId = categoryId;
+          }
+        }
+      }
+      if (mainCategoryId != -1 && !categoryIdList.contains(mainCategoryId)) {
+        categoryIdList.add(mainCategoryId);
+      }
+      itemBean.setCategoryId(mainCategoryId);
+      itemBean.setCategoryIdList(categoryIdList.toArray(new Long[0]));
     }
-    itemBean.setCategoryId(mainCategoryId);
-    itemBean.setCategoryIdList(categoryIdList.toArray(new Long[0]));
 
     // Determine custom fields to check for
     Map<String, CustomField> customFieldList = CustomFieldListMergeCommand.mergeCustomFieldLists(
@@ -195,12 +263,32 @@ public class EditItemFormWidget extends GenericWidget {
     // Check the request for custom field values
     if (customFieldList != null) {
       for (CustomField field : customFieldList.values()) {
+        // Skip custom fields not in the allowed list when fields preference is specified
+        if (allowedCustomFieldKeys != null && !allowedCustomFieldKeys.contains(field.getName())) {
+          itemBean.addCustomField(field);
+          continue;
+        }
         String parameterName = context.getUniqueId() + field.getName();
-        String parameterValue = context.getParameter(parameterName);
-        if ("list".equals(field.getType()) && field.getListOfOptions() != null) {
-          field.setValue(field.getListOfOptions().get(parameterValue));
+        if ("multi-select list".equals(field.getType()) && field.getListOfOptions() != null) {
+          String[] parameterValues = context.getParameterMap().get(parameterName);
+          if (parameterValues != null && parameterValues.length > 0) {
+            List<String> selectedValues = new ArrayList<>();
+            for (String val : parameterValues) {
+              if (field.getListOfOptions().containsKey(val)) {
+                selectedValues.add(field.getListOfOptions().get(val));
+              }
+            }
+            field.setValue(selectedValues.isEmpty() ? null : String.join(", ", selectedValues));
+          } else {
+            field.setValue(null);
+          }
         } else {
-          field.setValue(parameterValue);
+          String parameterValue = context.getParameter(parameterName);
+          if ("list".equals(field.getType()) && field.getListOfOptions() != null) {
+            field.setValue(field.getListOfOptions().get(parameterValue));
+          } else {
+            field.setValue(parameterValue);
+          }
         }
         itemBean.addCustomField(field);
       }

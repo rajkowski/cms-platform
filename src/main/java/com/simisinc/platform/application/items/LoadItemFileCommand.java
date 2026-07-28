@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +17,7 @@
 
 package com.simisinc.platform.application.items;
 
+import com.simisinc.platform.domain.model.items.Item;
 import com.simisinc.platform.domain.model.items.ItemFileItem;
 import com.simisinc.platform.infrastructure.persistence.items.ItemFileItemRepository;
 import com.simisinc.platform.infrastructure.persistence.items.ItemFileSpecification;
@@ -52,5 +54,12 @@ public class LoadItemFileCommand {
       return itemList.get(0);
     }
     return null;
+  }
+
+  public static ItemFileItem loadFileByWebPath(Item item, String webPath) {
+    if (item == null || webPath == null) {
+      return null;
+    }
+    return ItemFileItemRepository.findByWebPath(item.getId(), webPath);
   }
 }

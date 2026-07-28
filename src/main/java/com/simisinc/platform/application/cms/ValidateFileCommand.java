@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,9 +50,7 @@ public class ValidateFileCommand {
 
     // Simplify the filename for display
     if (StringUtils.isBlank(fileItemBean.getTitle())) {
-      if (StringUtils.isBlank(fileItemBean.getTitle())) {
-        fileItemBean.setTitle(generateTitle(fileItemBean.getFilename().trim()));
-      }
+      fileItemBean.setTitle(generateTitle(fileItemBean.getFilename().trim()));
     }
 
     // Generate Hash

@@ -43,7 +43,7 @@ public class CRMSaveSalesTaxNexusAjax extends GenericJsonService {
   public JsonServiceContext post(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.crm.save-sales-tax-nexus", context.getUserSession())) {
       LOG.debug("No permission to: " + CRMSaveSalesTaxNexusAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

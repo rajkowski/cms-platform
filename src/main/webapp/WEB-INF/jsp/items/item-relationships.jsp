@@ -1,4 +1,5 @@
 <%--
+  ~ Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
   ~ Copyright 2022 SimIS Inc.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,36 +46,43 @@
   </p>
 </c:if>
 <c:if test="${!empty itemRelationshipList}">
-  <ul class="no-bullet">
+  <ul>
     <c:forEach items="${itemRelationshipList}" var="itemRelationship">
-      <c:set var="item" scope="request" value="${item:itemById(itemRelationship.relatedItemId)}"/>
+      <c:choose>
+        <c:when test="${item.id eq itemRelationship.itemId}">
+          <c:set var="relatedItem" scope="request" value="${item:itemById(itemRelationship.relatedItemId)}"/>
+        </c:when>
+        <c:otherwise>
+          <c:set var="relatedItem" scope="request" value="${item:itemById(itemRelationship.itemId)}"/>
+        </c:otherwise>
+      </c:choose>
       <li>
         <c:choose>
-          <c:when test="${!empty item.imageUrl}">
+          <c:when test="${!empty relatedItem.imageUrl}">
             <div class="item-image">
-              <img alt="item image" src="<c:out value="${item.imageUrl}"/>" />
+              <img alt="item image" src="<c:out value="${relatedItem.imageUrl}"/>" />
             </div>
           </c:when>
-          <c:when test="${!empty collection:icon(item.collectionId)}">
-            <i class="${font:fad()} fa-<c:out value="${collection:icon(item.collectionId)}" />"></i>
+          <c:when test="${!empty collection:icon(relatedItem.collectionId)}">
+            <i class="${font:fad()} fa-<c:out value="${collection:icon(relatedItem.collectionId)}" />"></i>
           </c:when>
         </c:choose>
         <c:choose>
-          <c:when test="${item:hasViewPermission(item, userSession.user)}">
-            <a href="${ctx}/show/${item.uniqueId}"><c:out value="${item.name}"/></a>
+          <c:when test="${item:hasViewPermission(relatedItem, userSession.user)}">
+            <a href="${ctx}/show/${relatedItem.uniqueId}"><c:out value="${relatedItem.name}"/></a>
           </c:when>
           <c:otherwise>
-            <c:out value="${item.name}"/>
+            <c:out value="${relatedItem.name}"/>
           </c:otherwise>
         </c:choose>
         <c:if test="${showRelatedCollectionName eq 'true'}">
-          / <c:out value="${collection:name(itemRelationship.relatedCollectionId)}"/>
+          / <c:out value="${collection:name(relatedItem.collectionId)}"/>
         </c:if>
-        <c:if test="${!empty item.city}">
-          <small class="subheader"><c:out value="${item.city}"/></small>
+        <c:if test="${!empty relatedItem.city}">
+          <small class="subheader"><c:out value="${relatedItem.city}"/></small>
         </c:if>
         <c:if test="${showRemoveRelationshipButton eq 'true'}">
-          <a href="javascript:removeRelationship${widgetContext.uniqueId}(${itemRelationship.relatedItemId})" class="button radius tiny warning no-gap">Remove</a>
+          <a href="javascript:removeRelationship${widgetContext.uniqueId}(${relatedItem.id})" class="button radius tiny warning no-gap">Remove</a>
         </c:if>
       </li>
     </c:forEach>

@@ -1,7 +1,12 @@
 /**
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
+ * Licensed under the Apache License, Version 2.0
+ *
  * Main controller for the Visual Document Editor
+ * 
+ * @author matt rajkowski
+ * @created 7/24/26 8:00 AM
  */
-
 class DocumentEditor {
   constructor(config) {
     this.config = config;
@@ -316,6 +321,42 @@ class DocumentEditor {
     }
 
     document.getElementById('properties-panel-title').textContent = 'Repository: ' + (folder.name || 'Untitled');
+  }
+
+  showCollectionProperties(collection) {
+    // Hide repository/subfolder/form sections for collections
+    document.getElementById('repository-properties-section').style.display = 'none';
+    document.getElementById('subfolder-properties-section').style.display = 'none';
+    document.getElementById('file-properties-section').style.display = 'none';
+
+    const tabsNav = document.getElementById('properties-tabs');
+    if (tabsNav) {
+      tabsNav.style.display = 'none';
+    }
+
+    const folderDetailsTab = document.getElementById('folder-details-tab');
+    if (folderDetailsTab) {
+      folderDetailsTab.style.display = 'none';
+      folderDetailsTab.innerHTML = '';
+    }
+    const folderPermissionsTab = document.getElementById('folder-permissions-tab');
+    if (folderPermissionsTab) {
+      folderPermissionsTab.style.display = 'none';
+      folderPermissionsTab.innerHTML = '';
+    }
+    const folderAnalyticsTab = document.getElementById('folder-analytics-tab');
+    if (folderAnalyticsTab) {
+      folderAnalyticsTab.style.display = 'none';
+      folderAnalyticsTab.innerHTML = '';
+    }
+
+    const contentArea = document.getElementById('document-properties-content');
+    if (contentArea) {
+      contentArea.style.display = 'block';
+      contentArea.innerHTML = '<div class="empty-state">Select a file to view details</div>';
+    }
+
+    document.getElementById('properties-panel-title').textContent = 'Collection: ' + (collection.name || 'Untitled');
   }
 
   showSubfolderProperties(subfolder) {

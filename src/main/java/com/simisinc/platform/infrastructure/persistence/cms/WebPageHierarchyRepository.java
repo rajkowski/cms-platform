@@ -28,6 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.domain.model.cms.WebPageHierarchy;
 import com.simisinc.platform.infrastructure.database.DB;
 import com.simisinc.platform.infrastructure.database.SqlUtils;
@@ -43,6 +44,7 @@ public class WebPageHierarchyRepository {
   private static Log LOG = LogFactory.getLog(WebPageHierarchyRepository.class);
 
   private static String TABLE_NAME = "web_page_hierarchy";
+  private static String[] PRIMARY_KEY = new String[] { "page_hierarchy_id" };
   private static String SQL_EXCEPTION = "SQLException: ";
   private static String COL_WEB_PAGE_ID = "web_page_id";
   private static String COL_PARENT_PAGE_ID = "parent_page_id";
@@ -163,7 +165,7 @@ public class WebPageHierarchyRepository {
         .add(COL_PATH, StringUtils.trimToNull(record.getPath()))
         .add(COL_CREATED, record.getCreated() != null ? record.getCreated() : new Timestamp(System.currentTimeMillis()))
         .add(COL_MODIFIED, record.getModified() != null ? record.getModified() : new Timestamp(System.currentTimeMillis()));
-    DB.insertInto(TABLE_NAME, insertValues, null);
+    DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY);
     return record;
   }
 
@@ -184,7 +186,7 @@ public class WebPageHierarchyRepository {
         .add(COL_CREATED, record.getCreated() != null ? record.getCreated() : new Timestamp(System.currentTimeMillis()))
         .add(COL_MODIFIED, record.getModified() != null ? record.getModified() : new Timestamp(System.currentTimeMillis()));
     try {
-      DB.insertInto(connection, TABLE_NAME, insertValues, null);
+      DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY);
     } catch (SQLException se) {
       LOG.error(SQL_EXCEPTION + se.getMessage());
       return null;
@@ -352,6 +354,25 @@ public class WebPageHierarchyRepository {
       LOG.error("Error removing by path: " + e.getMessage());
       return false;
     }
+  }
+
+  /**
+   * Removes a hierarchy record for a given web page
+   *
+   * @param connection the database connection
+   * @param record the web page record
+   * @return true if the hierarchy record was removed
+   */
+  public static boolean remove(Connection connection, WebPage record) {
+    if (record == null) {
+      return false;
+    }
+    // Based on the webPageId, find the hierarchy record and remove it by path
+    WebPageHierarchy hierarchyRecord = findByPageId(connection, record.getId());
+    if (hierarchyRecord != null && StringUtils.isNotBlank(hierarchyRecord.getPath())) {
+      return removeByPath(connection, hierarchyRecord.getPath());
+    }
+    return false;
   }
 
   /**

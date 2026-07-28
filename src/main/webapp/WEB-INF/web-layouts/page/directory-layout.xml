@@ -4,7 +4,7 @@
   <page name="/directory{/collectionUniqueId}" collectionUniqueId="/directory/*" class="full-page">
     <section class="grid-x grid-margin-x platform-no-margin">
       <column class="small-12 cell">
-        <widget name="content" class="text-center padding-10">
+        <widget name="content" class="text-center padding-10 padding-top-30">
           <html><![CDATA[
 <h1>${collection.name}</h1>
 <p>Make a selection for more information</p>
@@ -22,7 +22,8 @@
         <widget name="itemsSearchForm" class="callout secondary">
           <title>${collection.name}</title>
           <icon>fa-search</icon>
-          <useLocation>true</useLocation>
+          <showTags>false</showTags>
+          <useLocation>false</useLocation>
           <redirectTo>/directory/${collection.uniqueId}</redirectTo>
         </widget>
         <widget name="addItemButton" class="text-center">
@@ -35,6 +36,7 @@
           <showWhenEmpty>true</showWhenEmpty>
           <collectionUniqueId>${collection.uniqueId}</collectionUniqueId>
           <view>table</view>
+          <trimValue>50</trimValue>
 <!--          <columns>3</columns>-->
 <!--          <limit>42</limit>-->
         </widget>
@@ -91,6 +93,10 @@
         <widget name="deleteItemButton">
           <buttonName>Delete this listing</buttonName>
           <buttonClass>alert expanded</buttonClass>
+          <uniqueId>${item.uniqueId}</uniqueId>
+        </widget>
+        <widget name="itemVersionHistory" class="callout box">
+          <title>Version History</title>
           <uniqueId>${item.uniqueId}</uniqueId>
         </widget>
       </column>

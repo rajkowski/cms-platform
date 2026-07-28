@@ -45,7 +45,7 @@ public class CRMSavePricingRuleAjax extends GenericJsonService {
   public JsonServiceContext post(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.crm.save-pricing-rule", context.getUserSession())) {
       LOG.debug("No permission to: " + CRMSavePricingRuleAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

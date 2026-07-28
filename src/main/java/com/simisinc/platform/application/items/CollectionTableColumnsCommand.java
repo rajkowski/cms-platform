@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Matt Rajkowski (https://github.com/rajkowski)
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ public class CollectionTableColumnsCommand {
     addToList(list, new CustomField("description", "HTML Description"));
     addToList(list, new CustomField("textDescription", "Text Description"));
     addToList(list, new CustomField("keywords", "Keywords"));
+    addToList(list, new CustomField("tags", "Tags"));
     addToList(list, new CustomField("geopoint", "Geo Point"));
     addToList(list, new CustomField("latitude", "Latitude"));
     addToList(list, new CustomField("longitude", "Longitude"));
@@ -71,7 +72,9 @@ public class CollectionTableColumnsCommand {
   }
 
   public static void addToList(Map<String, CustomField> list, CustomField field) {
-    list.put(field.getName(), field);
+    if (field != null) {
+      list.put(field.getName(), field);
+    }
   }
 
   public static Map<String, CustomField> createListFromSettings(Collection collection, String commaSeparatedValues) {
@@ -91,8 +94,30 @@ public class CollectionTableColumnsCommand {
     // Use the widget preference first, if there is one
     if (StringUtils.isNotBlank(commaSeparatedValues)) {
       String[] columns = commaSeparatedValues.split(Pattern.quote(","));
-      for (String name : columns) {
-        CollectionTableColumnsCommand.addToList(tableColumnsList, possibleTableColumnList.get(name.trim()));
+      for (String rawColumn : columns) {
+        String lookupName = rawColumn.trim();
+        String overrideLabel = null;
+
+        // Handle "fieldName=DisplayLabel" renaming
+        int eqIndex = lookupName.indexOf('=');
+        if (eqIndex > 0) {
+          overrideLabel = lookupName.substring(eqIndex + 1).trim();
+          lookupName = lookupName.substring(0, eqIndex).trim();
+        }
+
+        // Handle "custom." prefix
+        if (lookupName.startsWith("custom.")) {
+          lookupName = lookupName.substring("custom.".length());
+        }
+
+        CustomField field = possibleTableColumnList.get(lookupName);
+        if (field == null) {
+          continue;
+        }
+        if (overrideLabel != null) {
+          field = new CustomField(field.getName(), overrideLabel, field.getType(), field.getValue());
+        }
+        CollectionTableColumnsCommand.addToList(tableColumnsList, field);
       }
     }
 

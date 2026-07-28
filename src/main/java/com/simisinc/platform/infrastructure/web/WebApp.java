@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Matt Rajkowski (https://www.github.com/rajkowski)
+ * Copyright 2024-2026 Matt Rajkowski (https://www.github.com/rajkowski)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,10 @@ public class WebApp {
     } catch (Exception e) {
       return null;
     }
+  }
+
+  public static boolean isAvailable() {
+    return context != null;
   }
 
 }

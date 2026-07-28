@@ -54,7 +54,7 @@ public class PageAddToHierarchyJsonService extends GenericJsonService {
   public JsonServiceContext post(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.page.add-to-hierarchy", context.getUserSession())) {
       LOG.debug("No permission to: " + PageAddToHierarchyJsonService.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

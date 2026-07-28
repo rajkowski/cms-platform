@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,24 +17,26 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
-import java.io.File;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.file.Paths;
 
-import javax.servlet.http.Part;
-
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.Strings;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.application.cms.SaveFilePartCommand;
 import com.simisinc.platform.application.cms.SaveImageCommand;
+import com.simisinc.platform.application.cms.SaveImageVersionCommand;
+import com.simisinc.platform.application.cms.UrlCommand;
 import com.simisinc.platform.application.cms.ValidateImageCommand;
-import com.simisinc.platform.application.filesystem.FileSystemCommand;
+import com.simisinc.platform.domain.model.cms.FileItem;
 import com.simisinc.platform.domain.model.cms.Image;
+import com.simisinc.platform.domain.model.cms.ImageVersion;
+import com.simisinc.platform.infrastructure.persistence.cms.ImageRepository;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.zeroio.platform.application.cms.IntegrationAttachmentCommand;
+import com.zeroio.platform.presentation.controller.FileModulesConstants;
 
 /**
  * Handles image uploads
@@ -44,65 +47,40 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
 public class ImageUploadWidget extends GenericWidget {
 
   static final long serialVersionUID = -8484048371911908893L;
-//  private static String JSP = "/admin/dataset-upload-form.jsp";
+
   private static Log LOG = LogFactory.getLog(ImageUploadWidget.class);
 
   public WidgetContext post(WidgetContext context) throws InvocationTargetException, IllegalAccessException {
 
-    // /image-upload
     LOG.debug("ImageUploadWidget...");
-    
-    // Prepare to save the file
-    String serverSubPath = FileSystemCommand.generateFileServerSubPath("images");
-    String serverRootPath = FileSystemCommand.getFileServerRootPathValue();
-    String serverCompletePath = serverRootPath + serverSubPath;
-    String uniqueFilename = FileSystemCommand.generateUniqueFilename(context.getUserId());
-
-    // Find the file in the request and save it
-    String submittedFilename = null;
-    String extension = null;
-    long fileLength = 0;
-    File tempFile = null;
+    FileItem fileItem = null;
     try {
-      Part filePart = context.getPart("file");
-      if (filePart == null) {
-        context.setWarningMessage("A file was not found, please choose a file and try again");
-        return context;
-      }
-      submittedFilename = Paths.get(filePart.getSubmittedFileName()).getFileName().toString(); // MSIE fix.
-      if (submittedFilename.startsWith("mceclip0")) {
-        submittedFilename = Strings.CS.replace(submittedFilename, "mceclip0", "clip");
-      }
-      extension = FilenameUtils.getExtension(submittedFilename);
-      tempFile = new File(serverCompletePath + uniqueFilename + "." + extension);
-      fileLength = filePart.getSize();
-      if (fileLength > 0) {
-        filePart.write(serverCompletePath + uniqueFilename + "." + extension);
-      }
+      fileItem = SaveFilePartCommand.saveFileToModule(FileModulesConstants.IMAGES, context);
     } catch (Exception e) {
-      // Clean up the file
-      if (tempFile != null && tempFile.exists()) {
-        LOG.warn("Deleting an uploaded file: " + serverCompletePath + uniqueFilename + "." + extension);
-        tempFile.delete();
-      }
+      LOG.warn("An error occurred", e);
+      context.setErrorMessage("An error occurred while saving the file: " + e.getMessage());
       return context;
     }
 
-    // Make sure a file was processed
-    if (fileLength <= 0) {
-      if (tempFile.exists()) {
-        LOG.warn("Deleting an uploaded file: " + serverCompletePath + uniqueFilename + "." + extension);
-        tempFile.delete();
+    long imageId = context.getParameterAsLong("imageId", -1);
+    String imageWebPath = StringUtils.trimToNull(context.getParameter("imageWebPath"));
+    Image versionTargetImage = null;
+    if (imageId > -1) {
+      versionTargetImage = ImageRepository.findById(imageId);
+      if (versionTargetImage == null) {
+        SaveFilePartCommand.cleanupFile(fileItem);
+        context.setErrorMessage("The selected image could not be found");
+        return context;
       }
-      context.setErrorMessage("The file size was 0 and could not be saved");
-      return context;
+    } else if (imageWebPath != null) {
+      versionTargetImage = ImageRepository.findByWebPath(imageWebPath);
     }
 
     // Populate the fields
     Image imageBean = new Image();
-    imageBean.setFilename(submittedFilename);
-    imageBean.setFileLength(fileLength);
-    imageBean.setFileServerPath(serverSubPath + uniqueFilename + "." + extension);
+    imageBean.setFilename(fileItem.getFilename());
+    imageBean.setFileLength(fileItem.getFileLength());
+    imageBean.setFileServerPath(fileItem.getFileServerPath());
     imageBean.setCreatedBy(context.getUserId());
     imageBean.setModifiedBy(context.getUserId());
 
@@ -110,23 +88,44 @@ public class ImageUploadWidget extends GenericWidget {
     Image image = null;
     try {
       ValidateImageCommand.checkFile(imageBean);
-      image = SaveImageCommand.saveImage(imageBean);
+      if (versionTargetImage != null) {
+        ImageVersion versionBean = new ImageVersion();
+        versionBean.setFilename(imageBean.getFilename());
+        versionBean.setFileServerPath(imageBean.getFileServerPath());
+        versionBean.setFileLength(imageBean.getFileLength());
+        versionBean.setFileType(imageBean.getFileType());
+        versionBean.setWidth(imageBean.getWidth());
+        versionBean.setHeight(imageBean.getHeight());
+        versionBean.setCreatedBy(context.getUserId());
+
+        ImageVersion version = SaveImageVersionCommand.addNewVersion(versionTargetImage.getId(), versionBean);
+        if (version == null) {
+          throw new DataException("Your information could not be saved due to a system error. Please try again.");
+        }
+        image = ImageRepository.findById(versionTargetImage.getId());
+      } else {
+        image = SaveImageCommand.saveImage(imageBean);
+      }
       if (image == null) {
         throw new DataException("Your information could not be saved due to a system error. Please try again.");
       }
     } catch (DataException e) {
       // Clean up the file
-      if (tempFile.exists()) {
-        LOG.warn("Deleting an uploaded file: " + serverCompletePath + uniqueFilename);
-        tempFile.delete();
-      }
+      SaveFilePartCommand.cleanupFile(fileItem);
       context.setErrorMessage(e.getMessage());
       context.setRequestObject(imageBean);
       return context;
     }
 
-    // Return Json with the new image's URL
-    context.setJson("{\"location\": \"" + "/assets/img/" + image.getUrl() + "\"}");
+    // Preserve integration-style reference when the request targeted a webPath-only image.
+    String imageLocation = "/assets/img/" + image.getUrl();
+    if (imageId == -1 && imageWebPath != null && imageWebPath.startsWith(IntegrationAttachmentCommand.INTEGRATION_PREFIX)) {
+      imageLocation = "/assets/img/" + imageWebPath + "/" + UrlCommand.encodeUri(image.getFilename())
+          + (image.getVersionNumber() > 1 ? "?v=" + image.getVersionNumber() : "");
+    }
+
+    // Return Json with the new image URL
+    context.setJson("{\"location\": \"" + imageLocation + "\"}");
     return context;
   }
 }

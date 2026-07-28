@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -86,6 +87,16 @@ public class ImageRepository {
         TABLE_NAME,
         DB.WHERE("web_path = ?", versionWebPath)
             .AND("image_id = ?", id),
+        ImageRepository::buildRecord);
+  }
+
+  public static Image findByWebPath(String versionWebPath) {
+    if (StringUtils.isBlank(versionWebPath)) {
+      return null;
+    }
+    return (Image) DB.selectRecordFrom(
+        TABLE_NAME,
+        DB.WHERE("web_path = ?", versionWebPath),
         ImageRepository::buildRecord);
   }
 

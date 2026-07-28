@@ -45,7 +45,7 @@ public class FolderGroupSaveJsonService extends GenericJsonService {
 
     // Restrict access to editors
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.folder.group-save", context.getUserSession())) {
       LOG.debug("No permission to: " + FolderGroupSaveJsonService.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

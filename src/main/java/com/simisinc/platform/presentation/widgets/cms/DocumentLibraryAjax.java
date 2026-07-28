@@ -26,9 +26,12 @@ import org.apache.commons.logging.LogFactory;
 import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.Folder;
+import com.simisinc.platform.domain.model.items.Collection;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.cms.FolderRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.FolderSpecification;
+import com.simisinc.platform.infrastructure.persistence.items.CollectionRepository;
+import com.simisinc.platform.infrastructure.persistence.items.CollectionSpecification;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.controller.UserSession;
 import com.simisinc.platform.presentation.services.GenericJsonService;
@@ -51,7 +54,7 @@ public class DocumentLibraryAjax extends GenericJsonService {
 
     // Restrict access to editors
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.document.library", context.getUserSession())) {
       LOG.debug("No permission to: " + DocumentLibraryAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }
@@ -60,10 +63,7 @@ public class DocumentLibraryAjax extends GenericJsonService {
     int limit = context.getParameterAsInt("limit", 100);
     int page = context.getParameterAsInt("page", 1);
 
-    DataConstraints constraints = new DataConstraints();
-    constraints.setColumnToSortBy("name", "ASC");
-    constraints.setPageNumber(page);
-    constraints.setPageSize(limit);
+    DataConstraints constraints = buildConstraints(page, limit);
 
     FolderSpecification specification = new FolderSpecification();
     long userId = context.getUserId();
@@ -77,24 +77,79 @@ public class DocumentLibraryAjax extends GenericJsonService {
     }
 
     List<Folder> folders = FolderRepository.findAll(specification, constraints);
+    List<Collection> collections = loadAuthorizedCollections(context, userId, constraints);
 
     // Optional search filter (case-insensitive contains)
     if (StringUtils.isNotBlank(searchTerm)) {
-      List<Folder> filtered = new ArrayList<>();
       String lowered = searchTerm.toLowerCase();
-      for (Folder folder : folders) {
-        String name = StringUtils.defaultString(folder.getName()).toLowerCase();
-        if (name.contains(lowered)) {
-          filtered.add(folder);
-        }
-      }
-      folders = filtered;
+      folders = filterFoldersByName(folders, lowered);
+      collections = filterCollectionsByName(collections, lowered);
     }
 
     StringBuilder sb = new StringBuilder();
     sb.append("{");
     sb.append("\"folders\": [");
 
+    appendFoldersJson(sb, folders);
+
+    sb.append("],");
+    sb.append("\"collections\": [");
+
+    appendCollectionsJson(sb, collections);
+
+    sb.append("],");
+    sb.append("\"page\":").append(page).append(",");
+    sb.append("\"limit\":").append(limit).append(",");
+    sb.append("\"total\":").append(folders.size() + collections.size());
+    sb.append("}");
+
+    context.setJson(sb.toString());
+    return context;
+  }
+
+  private DataConstraints buildConstraints(int page, int limit) {
+    DataConstraints constraints = new DataConstraints();
+    constraints.setColumnToSortBy("name", "ASC");
+    constraints.setPageNumber(page);
+    constraints.setPageSize(limit);
+    return constraints;
+  }
+
+  private List<Collection> loadAuthorizedCollections(JsonServiceContext context, long userId, DataConstraints constraints) {
+    CollectionSpecification collectionSpecification = new CollectionSpecification();
+    if (userId > -1) {
+      if (!context.hasRole("admin")) {
+        collectionSpecification.setForUserId(userId);
+      }
+    } else {
+      collectionSpecification.setForUserId((long) UserSession.GUEST_ID);
+    }
+    return CollectionRepository.findAll(collectionSpecification, constraints);
+  }
+
+  private List<Folder> filterFoldersByName(List<Folder> folders, String loweredSearch) {
+    List<Folder> filtered = new ArrayList<>();
+    for (Folder folder : folders) {
+      String name = StringUtils.defaultString(folder.getName()).toLowerCase();
+      if (name.contains(loweredSearch)) {
+        filtered.add(folder);
+      }
+    }
+    return filtered;
+  }
+
+  private List<Collection> filterCollectionsByName(List<Collection> collections, String loweredSearch) {
+    List<Collection> filtered = new ArrayList<>();
+    for (Collection collection : collections) {
+      String name = StringUtils.defaultString(collection.getName()).toLowerCase();
+      if (name.contains(loweredSearch)) {
+        filtered.add(collection);
+      }
+    }
+    return filtered;
+  }
+
+  private void appendFoldersJson(StringBuilder sb, List<Folder> folders) {
     boolean first = true;
     for (Folder folder : folders) {
       if (!first) {
@@ -112,14 +167,24 @@ public class DocumentLibraryAjax extends GenericJsonService {
       sb.append("\"hasCategories\":").append(folder.doCategoriesCheck());
       sb.append("}");
     }
+  }
 
-    sb.append("],");
-    sb.append("\"page\":").append(page).append(",");
-    sb.append("\"limit\":").append(limit).append(",");
-    sb.append("\"total\":").append(folders.size());
-    sb.append("}");
+  private void appendCollectionsJson(StringBuilder sb, List<Collection> collections) {
+    boolean first = true;
+    for (Collection collection : collections) {
+      if (!first) {
+        sb.append(",");
+      }
+      first = false;
 
-    context.setJson(sb.toString());
-    return context;
+      sb.append("{");
+      sb.append("\"id\":").append(collection.getId()).append(",");
+      sb.append("\"name\":\"").append(JsonCommand.toJson(StringUtils.defaultString(collection.getName()))).append("\",");
+      sb.append("\"uniqueId\":\"").append(JsonCommand.toJson(StringUtils.defaultString(collection.getUniqueId()))).append("\",");
+      sb.append("\"summary\":\"").append(JsonCommand.toJson(StringUtils.defaultString(collection.getDescription()))).append("\",");
+      sb.append("\"itemCount\":").append(collection.getItemCount()).append(",");
+      sb.append("\"hasAllowedGroups\":").append(collection.doAllowedGroupsCheck());
+      sb.append("}");
+    }
   }
 }

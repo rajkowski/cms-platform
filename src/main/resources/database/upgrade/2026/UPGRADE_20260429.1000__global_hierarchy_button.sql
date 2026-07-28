@@ -1,0 +1,1 @@
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (145, 'Show global page hierarchy button?', 'site.pageChildren.overlay.enabled', 'false', 'boolean');

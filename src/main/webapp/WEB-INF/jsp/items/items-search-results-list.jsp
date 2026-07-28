@@ -1,4 +1,5 @@
 <%--
+  ~ Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
   ~ Copyright 2022 SimIS Inc.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,6 +28,7 @@
 <jsp:useBean id="recordPaging" class="com.simisinc.platform.infrastructure.database.DataConstraints" scope="request"/>
 <jsp:useBean id="searchName" class="java.lang.String" scope="request"/>
 <jsp:useBean id="searchLocation" class="java.lang.String" scope="request"/>
+<jsp:useBean id="searchTags" class="java.lang.String" scope="request"/>
 <c:if test="${!empty title}">
   <h4><c:if test="${!empty icon}"><i class="fa ${icon}"></i> </c:if><c:out value="${title}" /></h4>
 </c:if>
@@ -50,7 +52,7 @@
       </c:choose>
       <%-- Display on one line with the comma correctly placed --%>
       <c:if test="${!empty searchName}">for <strong>&quot;<c:out value="${searchName}" />&quot;</strong></c:if><c:if test="${!empty searchLocation}">
-      near <strong>&quot;<c:out value="${searchLocation}" />&quot;</strong></c:if><c:if test="${!empty category}">
+      near <strong>&quot;<c:out value="${searchLocation}" />&quot;</strong></c:if><c:if test="${!empty category && !empty category.name}">
       in <strong>&quot;<c:out value="${category.name}" />&quot;</strong></c:if><c:if test="${itemList.size() < recordPaging.totalRecordCount}">, showing 
         <c:choose>
           <c:when test="${recordPaging.pageNumber gt 1}">
@@ -84,10 +86,17 @@
       </c:forEach>
     </ul>
     <%-- Paging Control --%>
-    <c:if test="${category.id gt 0 || !empty searchName || !empty searchLocation}">
-      <c:set var="recordPagingParams" scope="request"><c:if test="${category.id gt 0}">&categoryId=${category.id}</c:if><c:if test="${!empty searchName}">&searchName=${url:encodeUri(searchName)}</c:if><c:if test="${!empty searchLocation}">&searchLocation=${url:encodeUri(searchLocation)}</c:if></c:set>
+    <c:if test="${showPaging eq 'true'}">
+      <c:choose>
+        <c:when test="${category.id gt 0 || !empty searchName || !empty searchLocation || !empty searchTags}">
+          <c:set var="recordPagingParams" scope="request"><c:if test="${category.id gt 0}">&categoryId=${category.id}</c:if><c:if test="${!empty searchName}">&searchName=${url:encodeUri(searchName)}</c:if><c:if test="${!empty searchLocation}">&searchLocation=${url:encodeUri(searchLocation)}</c:if><c:if test="${!empty searchTags}">&searchTags=${url:encodeUri(searchTags)}</c:if></c:set>
+        </c:when>
+        <c:when test="${!empty searchCriteria}">
+          <c:set var="recordPagingParams" scope="request">${searchCriteria.uri}</c:set>
+        </c:when>
+      </c:choose>
+      <%@include file="../paging_control.jspf" %>
     </c:if>
-    <%@include file="../paging_control.jspf" %>
   </c:when>
   <c:otherwise>
     <p class="search-results subheader">

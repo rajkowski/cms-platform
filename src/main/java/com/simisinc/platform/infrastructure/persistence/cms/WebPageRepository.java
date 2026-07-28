@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,15 +34,21 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.cms.TextCommand;
 import com.simisinc.platform.application.cms.WebPageXmlLayoutCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.WebPage;
+import com.simisinc.platform.infrastructure.database.AutoRollback;
+import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
 import com.simisinc.platform.infrastructure.database.DB;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.database.DataResult;
+import com.simisinc.platform.infrastructure.database.SqlJoins;
 import com.simisinc.platform.infrastructure.database.SqlUtils;
 import com.simisinc.platform.infrastructure.database.SqlValue;
 import com.simisinc.platform.infrastructure.database.SqlWhere;
+import com.zeroio.platform.infrastructure.persistence.cms.PageFileRepository;
+import com.zeroio.platform.infrastructure.persistence.cms.WebPageVersionRepository;
 
 /**
  * Persists and retrieves web page objects
@@ -59,9 +66,53 @@ public class WebPageRepository {
   private static final int MAX_CONTENT_REFERENCE_NODES = 250;
   private static final int MAX_INDIRECT_PAGES = 500;
 
-  private static SqlWhere createWhereStatement(WebPageSpecification specification) {
+  /**
+   * Builds a PostgreSQL JSONB tag filter condition.
+   *
+   * <p>Each tag is converted into a JSONB containment expression using
+   * the {@code tags @> '["value"]'::jsonb} operator.</p>
+   *
+   * <p>The individual tag conditions are combined using the specified logical operator:
+   * <ul>
+   *   <li>{@code "OR"} → joins conditions with OR</li>
+   *   <li>any other value (including null) → defaults to AND</li>
+   * </ul>
+   * </p>
+   *
+   * @param filterTags array of tag values to filter by
+   * @param operator logical operator used to combine conditions ("AND" or "OR")
+   * @return SQL condition string like:
+   *         {@code (tags @> '["apac"]'::jsonb OR tags @> '["na"]'::jsonb)}
+   *         or {@code null} if {@code filterTags} is null or empty
+   */
+  private static String buildTagFilterCondition(String[] filterTags, String operator) {
+    if (filterTags == null || filterTags.length == 0) {
+      return null;
+    }
+
+    // Default to AND if operator is null or invalid
+    String op = ("OR".equalsIgnoreCase(operator)) ? " OR " : " AND ";
+    StringBuilder condition = new StringBuilder("(");
+    for (int i = 0; i < filterTags.length; i++) {
+      if (i > 0) {
+        condition.append(op);
+      }
+      // Escape special characters and build JSONB containment check
+      String escapedTag = filterTags[i].replace("\\", "\\\\").replace("\"", "\\\"");
+      condition.append("web_pages.tags @> '[\"").append(escapedTag).append("\"]'::jsonb");
+    }
+    condition.append(")");
+    return condition.toString();
+  }
+
+  private static DataResult query(WebPageSpecification specification, DataConstraints constraints) {
+    SqlUtils select = new SqlUtils();
+    SqlJoins joins = new SqlJoins();
     SqlWhere where = null;
+    SqlUtils orderBy = null;
+
     if (specification != null) {
+
       where = DB.WHERE()
           .andAddIfHasValue("LOWER(link) = ?", specification.getLink())
           .andAddIfDataConstantExists("enabled = ?", specification.getEnabled())
@@ -69,13 +120,64 @@ public class WebPageRepository {
           .andAddIfDataConstantExists("searchable = ?", specification.getSearchable())
           .andAddIfDataConstantExists("show_in_sitemap = ?", specification.getInSitemap())
           .andAddIfDataConstantExists("has_redirect = ?", specification.getHasRedirect());
-    }
-    return where;
-  }
 
-  private static DataResult query(WebPageSpecification specification, DataConstraints constraints) {
-    SqlWhere where = createWhereStatement(specification);
-    return DB.selectAllFrom(TABLE_NAME, where, constraints, WebPageRepository::buildRecord);
+      if (specification.getRegionTags() != null && specification.getRegionTags().length > 0) {
+        where.AND("web_pages.tags", specification.getRegionTags(), SqlWhere.OR_OPERATOR);
+      }
+
+      if (specification.getFilterTags() != null && specification.getFilterTags().length > 0) {
+        where.AND("web_pages.tags", specification.getFilterTags(), SqlWhere.AND_OPERATOR);
+      }
+
+      // Add modified date range filters
+      if (specification.getModifiedAfter() != null) {
+        where.AND("web_pages.modified >= ?", specification.getModifiedAfter());
+      }
+      if (specification.getModifiedBefore() != null) {
+        where.AND("web_pages.modified <= ?", specification.getModifiedBefore());
+      }
+
+      // Add modified by user filter
+      if (specification.getModifiedByUserIds() != null && specification.getModifiedByUserIds().length > 0) {
+        StringBuilder userCondition = new StringBuilder("web_pages.modified_by IN (");
+        Long[] userIdsBoxed = new Long[specification.getModifiedByUserIds().length];
+        for (int i = 0; i < specification.getModifiedByUserIds().length; i++) {
+          if (i > 0) {
+            userCondition.append(",");
+          }
+          userCondition.append("?");
+          userIdsBoxed[i] = specification.getModifiedByUserIds()[i];
+        }
+        userCondition.append(")");
+        where.AND(userCondition.toString(), (Object[]) userIdsBoxed);
+      }
+
+      if (StringUtils.isNotBlank(specification.getSearchTerm())) {
+
+        String term = specification.getSearchTerm().trim().toLowerCase();
+
+        String quotedSearchTerm = "\"" + term + "\"";
+        String searchTermSeparated = term.replaceAll("\\s+", " OR ");
+        String searchToUse = quotedSearchTerm + " OR " + searchTermSeparated;
+        String titleSearchPattern1 = term + "%";
+        String titleSearchPattern2 = "%" + term + "%";
+
+        select.add(
+            "ts_headline('english', page_text, websearch_to_tsquery('web_page_stem', ?), 'StartSel=${b}, StopSel=${/b}, MaxWords=40, MinWords=30, ShortWord=3, HighlightAll=FALSE, MaxFragments=2, FragmentDelimiter=\" ... \"') AS highlight",
+            term);
+        select.add(
+            "(ts_rank_cd(web_pages.tsv, websearch_to_tsquery('web_page_stem', ?)) + CASE WHEN LOWER(web_pages.page_title) LIKE LOWER(?) THEN 200.0 ELSE 0.0 END + CASE WHEN LOWER(web_pages.page_title) LIKE LOWER(?) THEN 100.0 ELSE 0.0 END) AS rank",
+            new String[] { searchToUse, titleSearchPattern1, titleSearchPattern2 });
+
+        where.AND("web_pages.tsv @@ websearch_to_tsquery('web_page_stem', ?)", searchToUse);
+
+        // Override the order by for rank first
+        orderBy = new SqlUtils();
+        orderBy.add("rank DESC, web_pages.modified DESC");
+      }
+    }
+
+    return DB.selectAllFrom(TABLE_NAME, select, joins, where, orderBy, constraints, WebPageRepository::buildRecord);
   }
 
   public static WebPage findById(long id) {
@@ -109,6 +211,35 @@ public class WebPageRepository {
     constraints.setDefaultColumnToSortBy("link");
     DataResult result = query(specification, constraints);
     return (List<WebPage>) result.getRecords();
+  }
+
+  /**
+   * Retrieves all distinct tags from published web pages and items
+   * @return List of unique tag strings, sorted alphabetically
+   */
+  public static List<String> findAllDistinctTags() {
+    String SQL_QUERY = "SELECT DISTINCT tag FROM ( " +
+        "SELECT jsonb_array_elements_text(tags) AS tag FROM web_pages WHERE tags IS NOT NULL AND enabled = true AND draft = false "
+        +
+        "UNION ALL " +
+        "SELECT jsonb_array_elements_text(tags) AS tag FROM items WHERE tags IS NOT NULL " +
+        ") AS all_tags " +
+        "WHERE tag IS NOT NULL AND tag <> '' " +
+        "ORDER BY tag";
+    List<String> tags = new ArrayList<>();
+    try (Connection connection = DB.getConnection();
+        PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
+        ResultSet rs = pst.executeQuery()) {
+      while (rs.next()) {
+        String tag = rs.getString("tag");
+        if (StringUtils.isNotBlank(tag)) {
+          tags.add(tag);
+        }
+      }
+    } catch (SQLException se) {
+      LOG.error("findAllDistinctTags", se);
+    }
+    return tags;
   }
 
   public static WebPage save(WebPage record) {
@@ -181,6 +312,11 @@ public class WebPageRepository {
         .add("has_redirect", StringUtils.trimToNull(record.getRedirectUrl()) != null)
         .add("sitemap_priority", record.getSitemapPriority())
         .add("sitemap_changefreq", StringUtils.trimToNull(record.getSitemapChangeFrequency()));
+    if (record.getTags() != null && record.getTags().length > 0) {
+      updateValues.add(new SqlValue("tags", SqlValue.JSONB_TYPE, JsonCommand.toJsonArray(record.getTags())));
+    } else {
+      updateValues.add(new SqlValue("tags", SqlValue.JSONB_TYPE, null));
+    }
     if (DB.update(TABLE_NAME, updateValues, DB.WHERE("web_page_id = ?", record.getId()))) {
       // Force the page(s) to re-cache
       if (previousRecord != null) {
@@ -227,10 +363,28 @@ public class WebPageRepository {
     }
   }
 
-  public static void remove(WebPage record) {
-    DB.deleteFrom(TABLE_NAME, DB.WHERE("web_page_id = ?", record.getId()));
-    // Force the page to re-cache
-    WebPageXmlLayoutCommand.removeCustomPage(record.getLink());
+  public static boolean remove(WebPage record) {
+    if (record == null || record.getId() == -1) {
+      return false;
+    }
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+      // Delete the references
+      PageFileRepository.removeAll(connection, record);
+      WebPageHierarchyRepository.remove(connection, record);
+      WebPageVersionRepository.removeAll(connection, record);
+      // Delete the record
+      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("web_page_id = ?", record.getId()));
+      // Finish transaction
+      transaction.commit();
+      // Force the page to re-cache
+      WebPageXmlLayoutCommand.removeCustomPage(record.getLink());
+      return true;
+    } catch (SQLException se) {
+      LOG.error("SQLException: " + se.getMessage());
+    }
+    return false;
   }
 
   public static void updatePageText(long id, String generatedText) {
@@ -267,6 +421,11 @@ public class WebPageRepository {
       record.setSitemapPriority(rs.getBigDecimal("sitemap_priority"));
       record.setSitemapChangeFrequency(rs.getString("sitemap_changefreq"));
       record.setTags(JsonCommand.fromJsonArray(rs.getString("tags")));
+      if (DB.hasColumn(rs, "highlight")) {
+        record.setHighlight(rs.getString("highlight"));
+      } else {
+        record.setHighlight(StringUtils.trimToNull(TextCommand.trim(rs.getString("page_text"), 512, true)));
+      }
       return record;
     } catch (SQLException se) {
       LOG.error("buildRecord", se);

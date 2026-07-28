@@ -1,0 +1,231 @@
+/* Page Children Overlay Widget Icon Styles */
+
+.children-pages-trigger {
+  position: fixed;
+  top: 12rem;
+  left: -2px;
+  z-index: 1100;
+  width: 1.55rem;
+  height: 3.45rem;
+  border: 0;
+  border-radius: 0 8px 8px 0 !important;
+  background: #de7b00;
+  color: #ffffff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.children-pages-trigger:hover,
+.children-pages-trigger:focus {
+  background: #b46301;
+  transform: translateX(1px);
+  outline: none;
+}
+
+.children-pages-trigger-icon {
+  font-size: 0.76rem;
+  line-height: 1;
+}
+
+.children-pages-panel {
+  position: fixed;
+  top: 6.5rem;
+  left: 0;
+  bottom: 1rem;
+  width: min(22rem, calc(100vw - 1.2rem));
+  z-index: 1150;
+  background: #ffffff;
+  border: 1px solid #dfe1e6;
+  border-left: 0;
+  border-radius: 0 14px 14px 0;
+  box-shadow: 0 16px 34px rgba(9, 30, 66, 0.2);
+  padding: 0.75rem 0.3rem 0.9rem 0.35rem;
+  overflow-y: auto;
+  transform: translateX(calc(-100% - 1rem));
+  transition: transform 0.22s ease;
+}
+
+.children-pages-panel.is-open {
+  transform: translateX(0);
+}
+
+.children-pages-panel-header {
+  position: sticky;
+  top: -0.75rem;
+  z-index: 1;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+  padding: 0.45rem 0.2rem 0.55rem 0.55rem;
+  border-bottom: 1px solid #ebecf0;
+}
+
+.children-pages-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #172b4d;
+  letter-spacing: 0;
+}
+
+.children-pages-close {
+  border: 0;
+  background: transparent;
+  color: #42526e;
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.12rem 0.28rem;
+  border-radius: 6px;
+}
+
+.children-pages-close:hover,
+.children-pages-close:focus {
+  background: #f4f5f7;
+}
+
+.children-pages-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1140;
+  background: rgba(9, 30, 66, 0.18);
+}
+
+.children-pages-panel .overlay-page-tree {
+  --tree-line-color: #b7c0cd;
+  list-style: none;
+  padding-left: 0.35rem;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.children-pages-panel .overlay-tree-item {
+  margin: 0;
+  padding: 0;
+  position: relative;
+}
+
+.children-pages-panel .overlay-tree-item + .overlay-tree-item {
+  margin-top: 0.16rem;
+}
+
+.children-pages-panel .overlay-tree-content {
+  display: block;
+  min-height: 1.7rem;
+  margin-left: var(--indent, 0px);
+  padding-left: 1.05rem;
+  position: relative;
+}
+
+/* Draw vertical line for all but last sibling */
+.children-pages-panel .overlay-tree-item:not(:last-child) > .overlay-tree-content::before {
+  content: "";
+  position: absolute;
+  left: 0.22rem;
+  top: -0.22rem;
+  width: 1px;
+  height: 1.7rem;
+  background: var(--tree-line-color);
+}
+/* Draw vertical line only for last sibling up to the horizontal connector */
+.children-pages-panel .overlay-tree-item:last-child > .overlay-tree-content::before {
+  content: "";
+  position: absolute;
+  left: 0.22rem;
+  top: -0.22rem;
+  width: 1px;
+  height: 0.74rem;
+  background: var(--tree-line-color);
+}
+/* Draw horizontal connector for all except level-1 */
+.children-pages-panel .overlay-tree-item.level-1 .overlay-tree-content::before,
+.children-pages-panel .overlay-tree-item.level-1 .overlay-tree-content::after {
+  display: none;
+}
+.children-pages-panel .overlay-tree-content::after {
+  content: "";
+  position: absolute;
+  left: 0.22rem;
+  top: 0.74rem;
+  width: 0.62rem;
+  height: 1px;
+  background: var(--tree-line-color);
+}
+
+.children-pages-panel .overlay-tree-item .overlay-tree-link {
+  font-weight: 400;
+  font-size: 0.9rem;
+  color: #3d70b2;
+  text-decoration: none;
+  transition: color 0.2s ease;
+  display: block;
+  line-height: 1.3;
+  padding: 0.14rem 0;
+}
+
+.children-pages-panel .overlay-tree-item .overlay-tree-link:hover {
+  color: #2e5f9b;
+  text-decoration: underline;
+}
+
+/* Keep typography consistent across all hierarchy levels in the overlay */
+.children-pages-panel .overlay-tree-item.level-1 .overlay-tree-link,
+.children-pages-panel .overlay-tree-item.level-2 .overlay-tree-link,
+.children-pages-panel .overlay-tree-item.level-3 .overlay-tree-link,
+.children-pages-panel .overlay-tree-item.level-4 .overlay-tree-link,
+.children-pages-panel .overlay-tree-item.level-5 .overlay-tree-link {
+  font-weight: 400;
+  font-size: 0.9rem;
+  color: #3d70b2;
+}
+
+.children-pages-panel .overlay-tree-item.overlay-tree-item-parent .overlay-tree-link {
+  font-weight: 500;
+  color: #355d93;
+}
+
+.children-pages-panel .overlay-tree-item.level-1 {
+  margin-top: 0.08rem;
+}
+
+.children-pages-panel .overlay-tree-item-current .overlay-tree-link {
+  font-weight: 600;
+  color: #274f86;
+}
+
+.children-pages-panel::-webkit-scrollbar {
+  width: 9px;
+}
+
+.children-pages-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.children-pages-panel::-webkit-scrollbar-thumb {
+  background: #c1c7d0;
+  border-radius: 8px;
+  border: 2px solid #ffffff;
+}
+
+.children-pages-panel::-webkit-scrollbar-thumb:hover {
+  background: #a5adba;
+}
+
+@media (max-width: 640px) {
+  .children-pages-trigger {
+    top: auto;
+    bottom: 1rem;
+  }
+
+  .children-pages-panel {
+    top: 5.5rem;
+    bottom: 0;
+    width: min(22rem, calc(100vw - 1rem));
+  }
+}

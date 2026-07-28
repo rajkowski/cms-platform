@@ -479,7 +479,7 @@ label {
   display: flex;
   align-items: center;
   /* flex-wrap: wrap; */
-  padding: 8px 10px;
+  padding: 2px 10px;
   background: var(--editor-panel-bg);
   border: 1px solid var(--editor-border);
   border-radius: 4px;
@@ -523,7 +523,7 @@ label {
 
 .page-tree-title {
   flex-grow: 1;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--editor-text);
   font-weight: 500;
 }
@@ -550,6 +550,7 @@ label {
   color: var(--editor-text);
   flex: 1 1 auto;
   /* min-width: 10rem; */
+  font-size: 13px;
 }
 
 .page-link {

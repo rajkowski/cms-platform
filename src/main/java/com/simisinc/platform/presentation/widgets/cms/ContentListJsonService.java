@@ -50,7 +50,7 @@ public class ContentListJsonService extends GenericJsonService {
   public JsonServiceContext get(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.content.list", context.getUserSession())) {
       LOG.debug("No permission to: " + ContentListJsonService.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

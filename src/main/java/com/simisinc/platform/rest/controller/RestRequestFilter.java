@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +21,7 @@ import static com.simisinc.platform.presentation.controller.UserSession.API_SOUR
 import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
 import static javax.servlet.http.HttpServletResponse.SC_MOVED_PERMANENTLY;
 import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
+import static javax.servlet.http.HttpServletResponse.SC_SERVICE_UNAVAILABLE;
 import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 
 import java.io.IOException;
@@ -68,6 +70,8 @@ import com.simisinc.platform.infrastructure.persistence.login.UserTokenRepositor
 import com.simisinc.platform.presentation.controller.ContextConstants;
 import com.simisinc.platform.presentation.controller.RequestConstants;
 import com.simisinc.platform.presentation.controller.UserSession;
+import com.zeroio.platform.application.SystemLivenessCommand;
+import com.zeroio.platform.application.SystemReadinessCommand;
 
 /**
  * Authorizes the REST request
@@ -108,6 +112,24 @@ public class RestRequestFilter implements Filter {
     String requestURI = httpServletRequest.getRequestURI();
     String resource = requestURI.substring(contextPath.length());
     String ipAddress = request.getRemoteAddr();
+
+    // Look for a readiness request
+    if ("/api/readiness".equals(resource)) {
+      // See if app is ready, else return SC_SERVICE_UNAVAILABLE
+      if (SystemReadinessCommand.isSystemReady(request.getServletContext())) {
+        do200(servletResponse, "{ \"status\": \"ok\" }");
+      } else {
+        do503(servletResponse);
+      }
+    }
+    // Look for a liveness request
+    if ("/api/liveness".equals(resource)) {
+      if (SystemLivenessCommand.isSystemLive(request.getServletContext())) {
+        do200(servletResponse, "{ \"status\": \"ok\" }");
+      } else {
+        do503(servletResponse);
+      }
+    }
 
     // Check allowed hostnames
     if (!HostnameCommand.passesCheck(request.getServerName())) {
@@ -454,6 +476,21 @@ public class RestRequestFilter implements Filter {
     RestServlet.sendError(response, SC_UNAUTHORIZED, "Unauthorized");
   }
 
+  private void do200(ServletResponse servletResponse, String json) throws IOException {
+    HttpServletResponse response = (HttpServletResponse) servletResponse;
+    response.setContentType("application/json");
+    response.setCharacterEncoding("UTF-8");
+    if (json != null && !json.isEmpty()) {
+      response.setContentLength(json.getBytes(StandardCharsets.UTF_8).length);
+      try (PrintWriter out = response.getWriter()) {
+        out.print(json);
+        out.flush();
+      }
+    } else {
+      response.setContentLength(0);
+    }
+  }
+
   private void do301(ServletResponse servletResponse, String redirectLocation) throws IOException {
     HttpServletResponse response = (HttpServletResponse) servletResponse;
     response.setHeader("Location", redirectLocation);
@@ -468,5 +505,10 @@ public class RestRequestFilter implements Filter {
   private void do429(ServletResponse servletResponse) throws IOException {
     HttpServletResponse response = (HttpServletResponse) servletResponse;
     RestServlet.sendError(response, 429, "Too many requests");
+  }
+
+  private void do503(ServletResponse servletResponse) throws IOException {
+    HttpServletResponse response = (HttpServletResponse) servletResponse;
+    RestServlet.sendError(response, SC_SERVICE_UNAVAILABLE, "Service unavailable");
   }
 }

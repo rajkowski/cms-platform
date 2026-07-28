@@ -44,7 +44,7 @@ public class ImageVersionRevertAjax extends GenericJsonService {
 
     // Restrict access to editors
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.image.version-revert", context.getUserSession())) {
       LOG.debug("No permission to: " + ImageVersionRevertAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

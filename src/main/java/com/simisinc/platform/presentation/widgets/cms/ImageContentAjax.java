@@ -44,7 +44,7 @@ public class ImageContentAjax extends GenericJsonService {
     LOG.debug("ImageContentAjax...");
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.image.content", context.getUserSession())) {
       LOG.debug("No permission to: " + ImageContentAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

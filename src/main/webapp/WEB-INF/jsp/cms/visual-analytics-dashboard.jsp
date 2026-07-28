@@ -84,6 +84,18 @@
       <button id="refresh-btn" class="titlebar-btn" title="Refresh Data">
         <i class="${font:far()} fa-sync-alt"></i>
       </button>
+      <c:choose>
+        <c:when test="${!empty returnPage}">
+          <a href="${returnPage}" class="titlebar-btn apps-btn confirm-exit" title="Exit back to site">
+            <i class="${font:far()} fa-arrow-right-from-bracket"></i>
+          </a>
+        </c:when>
+        <c:otherwise>
+          <a href="${ctx}/" class="titlebar-btn apps-btn confirm-exit" title="Exit back to site">
+            <i class="${font:far()} fa-arrow-right-from-bracket"></i>
+          </a>
+        </c:otherwise>
+      </c:choose>
     </div>
   </div>
 
@@ -229,7 +241,8 @@
                 <tr>
                   <th>Page</th>
                   <th>Views</th>
-                  <th>Unique Users</th>
+                  <th>Sessions</th>
+                  <th>Users</th>
                   <th>Avg Time</th>
                   <th>Bounce Rate</th>
                 </tr>
@@ -452,9 +465,9 @@
 </div>
 
 <g:compress>
-  <script src="/javascript/analytics/analytics-dashboard.js"></script>
-  <script src="/javascript/analytics/analytics-api.js"></script>
-  <script src="/javascript/analytics/analytics-charts.js"></script>
+  <script src="${ctx}/javascript/widgets/analytics/analytics-dashboard.js"></script>
+  <script src="${ctx}/javascript/widgets/analytics/analytics-api.js"></script>
+  <script src="${ctx}/javascript/widgets/analytics/analytics-charts.js"></script>
   <script src="${ctx}/javascript/apps-menu-controller.js"></script>
 </g:compress>
 

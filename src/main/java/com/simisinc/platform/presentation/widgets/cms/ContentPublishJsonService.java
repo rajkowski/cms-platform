@@ -56,7 +56,7 @@ public class ContentPublishJsonService extends GenericJsonService {
   public JsonServiceContext post(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.content.publish", context.getUserSession())) {
       LOG.debug("No permission to: " + ContentPublishJsonService.class.getSimpleName());
       return context.writeError("Permission denied");
     }
@@ -118,7 +118,7 @@ public class ContentPublishJsonService extends GenericJsonService {
           return context.writeError("Content uniqueId is required");
         }
 
-        boolean published = PublishContentCommand.publishContent(uniqueId);
+        boolean published = PublishContentCommand.publishContent(uniqueId, context.getUserId());
 
         if (!published) {
           return context.writeError("Failed to publish content");

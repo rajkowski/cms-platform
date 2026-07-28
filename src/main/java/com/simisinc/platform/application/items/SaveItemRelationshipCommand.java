@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,6 +34,10 @@ public class SaveItemRelationshipCommand {
   private static Log LOG = LogFactory.getLog(SaveItemRelationshipCommand.class);
 
   public static ItemRelationship saveRelationship(ItemRelationship relationshipBean) throws DataException {
+    return saveRelationship(relationshipBean, true);
+  }
+  
+  public static ItemRelationship saveRelationship(ItemRelationship relationshipBean, boolean saveReciprocalRelationships) throws DataException {
 
     // Validate the required fields
     if (relationshipBean.getItemId() == -1) {
@@ -70,7 +75,7 @@ public class SaveItemRelationshipCommand {
     relationship.setCreatedBy(relationshipBean.getCreatedBy());
     relationship.setModifiedBy(relationshipBean.getModifiedBy());
 
-    return ItemRelationshipRepository.save(relationship);
+    return ItemRelationshipRepository.save(relationship, saveReciprocalRelationships);
   }
 
 }

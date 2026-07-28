@@ -1,4 +1,5 @@
 <%--
+  ~ Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
   ~ Copyright 2022 SimIS Inc.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -68,7 +69,7 @@
   <p>
     Mapped Collection:
     <c:if test="${!empty collection.name}"><span class="label"><c:out value="${collection.name}" /></span></c:if>
-    <c:if test="${fn:startsWith(dataset.collectionUniqueId, 'NEW-')}"><span class="label">&lt;${dataset.name}&gt;</span></c:if>
+    <c:if test="${fn:startsWith(dataset.collectionUniqueId, 'NEW-')}"><span class="label">&lt;<c:out value="${dataset.name}"/>&gt;</span></c:if>
     <br />
     Unique Column for Merge
     <c:choose>

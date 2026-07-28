@@ -53,7 +53,7 @@ public class CRMFormsListJsonService extends GenericJsonService {
   public JsonServiceContext get(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.crm.forms-list", context.getUserSession())) {
       LOG.debug("No permission to: " + CRMFormsListJsonService.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

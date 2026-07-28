@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,24 +17,27 @@
 
 package com.simisinc.platform.presentation.widgets.calendar;
 
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Objects;
+
+import org.apache.commons.lang3.StringUtils;
+
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.domain.model.cms.CalendarEvent;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.cms.CalendarEventRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.CalendarEventSpecification;
 import com.simisinc.platform.presentation.controller.RequestConstants;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
 import com.simisinc.platform.presentation.controller.WidgetContext;
-import org.apache.commons.lang3.StringUtils;
-
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.List;
+import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.zeroio.platform.domain.model.cms.SearchCriteria;
 
 /**
- * Description
+ * Calendar Search Results Widget
  *
  * @author matt rajkowski
  * @created 8/28/19 11:31 AM
@@ -45,6 +49,23 @@ public class CalendarSearchResultsWidget extends GenericWidget {
   static String JSP = "/calendar/calendar-search-results.jsp";
 
   public WidgetContext execute(WidgetContext context) {
+
+    // Determine the search criteria
+    SearchCriteria searchCriteria = new SearchCriteria(context.getParameterMap());
+
+    // Check the 'ofType' filter - only show resources when filter is 'calendar', 'all', or empty
+    String isOfType = Objects.toString(searchCriteria.getOfType(), SearchCriteria.ALL);
+    if (!SearchCriteria.ALL.equals(isOfType) && !SearchCriteria.CALENDAR.equals(isOfType)) {
+      // User has selected a different content type filter (e.g., 'resources')
+      return null;
+    }
+
+    // Check the 'showWhenOfType' preference
+    String showWhenOfType = context.getPreferences().getOrDefault("showWhenOfType", SearchCriteria.ALL);
+    if (!showWhenOfType.equals(isOfType)) {
+      // Widget is configured to show a different content type than the current search criteria
+      return null;
+    }
 
     // Standard request items
     context.getRequest().setAttribute("icon", context.getPreferences().get("icon"));
@@ -58,7 +79,7 @@ public class CalendarSearchResultsWidget extends GenericWidget {
     context.getRequest().setAttribute(RequestConstants.RECORD_PAGING, constraints);
 
     // Determine the search term
-    String query = context.getParameter("query");
+    String query = searchCriteria.getQuery();
     if (StringUtils.isBlank(query)) {
       return null;
     }

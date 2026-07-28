@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -82,17 +83,42 @@ public class ItemListService extends GenericRestService {
     // Determine the constraints
     int pageNumber = context.getParameterAsInt("page", 1);
     int pageSize = context.getParameterAsInt("size", 20);
-    DataConstraints constraints = new DataConstraints(pageNumber, pageSize);
+    if (pageNumber < 1 || pageSize < 1) {
+      ServiceResponse response = new ServiceResponse(400);
+      response.getError().put("title", "Required query params: page (>=1) and size (>=1)");
+      return response;
+    }
 
-    // Determine the filters
+    // Prepare the specification
     ItemSpecification specification = new ItemSpecification();
     specification.setCollectionId(collection.getId());
     specification.setForUserId(context.getUserId());
+
     if (category != null) {
       specification.setCategoryId(category.getId());
     }
-    
+
+    // Check for tags
+    String tagsValue = context.getParameter("tags");
+    if (StringUtils.isNotBlank(tagsValue)) {
+      List<String> filterTagList = new ArrayList<>();
+      String[] tagsArray = tagsValue.split(",");
+      for (String tag : tagsArray) {
+        filterTagList.add(tag.trim());
+      }
+      if (!filterTagList.isEmpty()) {
+        specification.setFilterTags(filterTagList.toArray(new String[0]));
+      }
+    }
+
+    // Check for a search query
+    String query = context.getParameter("query");
+    if (StringUtils.isNotBlank(query)) {
+      specification.setSearchName(query);
+    }
+
     // Retrieve the records
+    DataConstraints constraints = new DataConstraints(pageNumber, pageSize);
     List<Item> itemList = ItemRepository.findAll(specification, constraints);
 
     // Set the fields to return

@@ -1,5 +1,11 @@
 /**
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
+ * Licensed under the Apache License, Version 2.0
+ *
  * Handles right-panel metadata display and editing for the document editor
+ * 
+ * @author matt rajkowski
+ * @created 7/24/26 8:00 AM
  */
 
 class DocumentPropertiesManager {
@@ -9,6 +15,7 @@ class DocumentPropertiesManager {
     this.contentEl = document.getElementById('document-properties-content');
     this.infoSection = null;
     this.currentFile = null;
+    this.currentFileSourceType = 'folder';
     this.isEditing = false;
     this.activeTab = 'preview';
     this.analyticsDays = 30;
@@ -44,19 +51,24 @@ class DocumentPropertiesManager {
     previewContent.style.height = Math.max(availableHeight, 200) + 'px';
   }
 
-  async loadFile(fileId) {
+  async loadFile(fileId, sourceType = 'folder') {
     if (!fileId) {
       return;
     }
     try {
       const url = new URL(`${this.editor.config.apiBaseUrl}/documentContent`, globalThis.location.origin);
       url.searchParams.set('fileId', fileId);
+      if (sourceType) {
+        url.searchParams.set('sourceType', sourceType);
+      }
       this.editor.showLoading();
       const response = await fetch(url.toString(), { credentials: 'same-origin' });
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
       this.currentFile = await response.json();
+      this.currentFileSourceType = sourceType || this.currentFile.sourceType || 'folder';
+      this.currentFile.sourceType = this.currentFile.sourceType || this.currentFileSourceType;
       this.isEditing = false;
       this.activeTab = 'preview';
       this.render(this.currentFile);
@@ -100,10 +112,17 @@ class DocumentPropertiesManager {
     }
 
     const editModeClass = this.isEditing ? 'editable' : '';
-    const isPreviewActive = this.activeTab === 'preview';
+    const sourceType = (file && file.sourceType) || this.currentFileSourceType || 'folder';
+    const supportsVersions = sourceType !== 'collection';
+    const supportsAnalytics = sourceType !== 'collection';
+    const supportsMove = sourceType !== 'collection';
+    if ((!supportsVersions && this.activeTab === 'versions') || (!supportsAnalytics && this.activeTab === 'analytics')) {
+      this.activeTab = 'preview';
+    }
+    const isPreviewActive = this.activeTab === 'preview' || (!supportsVersions && this.activeTab === 'versions') || (!supportsAnalytics && this.activeTab === 'analytics');
     const isInfoActive = this.activeTab === 'info';
-    const isVersionsActive = this.activeTab === 'versions';
-    const isAnalyticsActive = this.activeTab === 'analytics';
+    const isVersionsActive = supportsVersions && this.activeTab === 'versions';
+    const isAnalyticsActive = supportsAnalytics && this.activeTab === 'analytics';
     const titleInput = this.isEditing
       ? `<input type="text" class="property-input" id="prop-title" value="${file.title || file.filename || ''}" />`
       : `<div class="property-value">${file.title || file.filename || 'Untitled'}</div>`;
@@ -124,14 +143,14 @@ class DocumentPropertiesManager {
       <div class="property-tabs">
         <button class="property-tab ${isPreviewActive ? 'active' : ''}" data-tab="preview">Preview</button>
         <button class="property-tab ${isInfoActive ? 'active' : ''}" data-tab="info">Properties</button>
-        <button class="property-tab ${isVersionsActive ? 'active' : ''}" data-tab="versions">Versions</button>
-        <button class="property-tab ${isAnalyticsActive ? 'active' : ''}" data-tab="analytics">Analytics</button>
+        ${supportsVersions ? `<button class="property-tab ${isVersionsActive ? 'active' : ''}" data-tab="versions">Versions</button>` : ''}
+        ${supportsAnalytics ? `<button class="property-tab ${isAnalyticsActive ? 'active' : ''}" data-tab="analytics">Analytics</button>` : ''}
       </div>
       <div class="property-section no-gap ${isPreviewActive ? 'active' : ''}" data-tab="preview">
         <div class="preview-toolbar" style="padding: 0.5rem; display: flex; gap: 0.5rem;">
           <button id="preview-download-btn" class="button tiny success no-gap radius" title="Download this file"><i class="fas fa-download"></i> Download</button>
           <button id="preview-add-version-btn" class="button tiny primary no-gap radius" title="Add a new version of this file"><i class="fas fa-plus"></i> Add Version</button>
-          <button id="preview-move-file-btn" class="button tiny secondary no-gap radius" title="Move file to another folder"><i class="fas fa-folder"></i> Move...</button>
+          ${supportsMove ? '<button id="preview-move-file-btn" class="button tiny secondary no-gap radius" title="Move file to another folder"><i class="fas fa-folder"></i> Move...</button>' : ''}
           <button id="preview-delete-file-btn" class="button tiny alert no-gap radius" title="Delete this file"><i class="fas fa-trash"></i> Delete File</button>
         </div>
         <div id="file-preview-content" style="padding: 1rem; overflow: auto; height: 300px;">
@@ -249,6 +268,7 @@ class DocumentPropertiesManager {
       const formData = new FormData();
       formData.append('token', updates.token);
       formData.append('id', updates.id);
+      formData.append('sourceType', this.currentFile.sourceType || this.currentFileSourceType || 'folder');
       formData.append('title', updates.title);
       formData.append('filename', updates.filename);
       formData.append('version', updates.version);
@@ -335,22 +355,24 @@ class DocumentPropertiesManager {
     const fileUrl = file.url || '';
 
     // If we don't have a URL yet, show a loading state
-    if (!fileUrl && !fileType && !mimeType) {
+    if (!fileUrl && !file.viewUrl && !fileType && !mimeType) {
       return '<div class="empty-state">Loading preview...</div>';
     }
 
     // If no URL but we have type info, show type-based message
-    if (!fileUrl) {
+    if (!fileUrl && !file.viewUrl) {
       return '<div class="empty-state">No preview available</div>';
     }
 
     // Image preview
     if (fileType === 'image' || mimeType.startsWith('image/')) {
-      return `<img src="/assets/view/${fileUrl}" alt="${this.escapeHtml(file.title || file.filename)}" style="max-width: 100%; height: auto;" />`;
+      const imageSource = file.viewUrl || `/assets/view/${fileUrl}`;
+      return `<img src="${this.escapeHtml(imageSource)}" alt="${this.escapeHtml(file.title || file.filename)}" style="max-width: 100%; height: auto;" />`;
     }
     // PDF preview
     else if (fileType === 'pdf' || mimeType === 'application/pdf') {
-      return `<iframe src="/assets/view/${fileUrl}" type="application/pdf" style="width: 100%; height: 500px; border: none;"></iframe>`;
+      const pdfSource = file.viewUrl || `/assets/view/${fileUrl}`;
+      return `<iframe src="${this.escapeHtml(pdfSource)}" type="application/pdf" style="width: 100%; height: 500px; border: none;"></iframe>`;
     }
     // URL preview
     else if (fileType === 'url' || mimeType === 'text/uri-list') {
@@ -360,7 +382,7 @@ class DocumentPropertiesManager {
     else if (fileType === 'video' || mimeType.startsWith('video/')) {
       return `
         <video controls style="max-width: 100%; height: auto;">
-          <source src="/assets/view/${fileUrl}" type="${mimeType}">
+          <source src="${this.escapeHtml(file.viewUrl || `/assets/view/${fileUrl}`)}" type="${mimeType}">
           Your browser does not support the video tag.
         </video>
       `;
@@ -368,13 +390,13 @@ class DocumentPropertiesManager {
     // DrawIO preview
     else if (mimeType === 'application/vnd.jgraph.mxfile') {
       return `
-        <iframe src="/assets/drawio/${fileUrl}" style="width: 100%; height: 450px; border: none;"></iframe>
+        <iframe src="${this.escapeHtml(file.viewUrl || `/assets/drawio/${fileUrl}`)}" style="width: 100%; height: 450px; border: none;"></iframe>
       `;
     }
     // Text preview (will be loaded asynchronously)
     else if (mimeType.startsWith('text/') || mimeType === 'application/json') {
       // Return placeholder that will be replaced
-      setTimeout(() => this.loadTextPreview('/assets/view/' + fileUrl), 100);
+      setTimeout(() => this.loadTextPreview(file.viewUrl || ('/assets/view/' + fileUrl)), 100);
       return '<div id="text-preview-loading">Loading text preview...</div>';
     }
     // Default message
@@ -385,7 +407,7 @@ class DocumentPropertiesManager {
           ${icon}
           <div style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--text-muted);">${this.escapeHtml(mimeType || 'Unknown type')}</div>
           <div style="margin-top: 0.5rem;">Preview not available for this file type</div>
-          <a href="/assets/file/${fileUrl}" target="_blank" style="margin-top: 0.5rem; display: inline-block;">Download File</a>
+          <a href="${this.escapeHtml(file.downloadUrl || `/assets/file/${fileUrl}`)}" target="_blank" style="margin-top: 0.5rem; display: inline-block;">Download File</a>
         </div>
       `;
     }

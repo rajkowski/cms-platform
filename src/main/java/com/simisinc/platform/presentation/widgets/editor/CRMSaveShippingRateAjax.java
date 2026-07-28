@@ -49,7 +49,7 @@ public class CRMSaveShippingRateAjax extends GenericJsonService {
   public JsonServiceContext get(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.crm.save-shipping-rate", context.getUserSession())) {
       LOG.debug("No permission to: " + CRMSaveShippingRateAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }
@@ -78,7 +78,7 @@ public class CRMSaveShippingRateAjax extends GenericJsonService {
   public JsonServiceContext post(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.crm.save-shipping-rate", context.getUserSession())) {
       LOG.debug("No permission to: " + CRMSaveShippingRateAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

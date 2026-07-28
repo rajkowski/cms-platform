@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Matt Rajkowski (https://github.com/rajkowski)
+ * Copyright 2024-2026 Matt Rajkowski (https://github.com/rajkowski)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,6 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.templateresolver.AbstractConfigurableTemplateResolver;
 
-import com.simisinc.platform.ApplicationInfo;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.application.cms.LoadMenuTabsCommand;
 import com.simisinc.platform.application.cms.LoadStylesheetCommand;
@@ -71,6 +70,7 @@ import com.simisinc.platform.domain.model.items.Category;
 import com.simisinc.platform.domain.model.items.Collection;
 import com.simisinc.platform.domain.model.items.Item;
 import com.simisinc.platform.presentation.widgets.cms.WebContainerContext;
+import com.zeroio.platform.ApplicationInfo;
 
 /**
  * Handles page template rendering requests

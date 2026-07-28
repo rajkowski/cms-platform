@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,6 +34,7 @@ import com.univocity.parsers.common.record.Record;
 import com.univocity.parsers.conversions.Conversions;
 import com.univocity.parsers.csv.CsvParser;
 import com.univocity.parsers.csv.CsvParserSettings;
+import com.zeroio.platform.presentation.controller.FileModulesConstants;
 
 /**
  * Methods to import mailing lists
@@ -51,7 +53,7 @@ public class ProcessEmailCSVFileCommand {
     FileItem fileItemBean = null;
     try {
       // Check for a file
-      fileItemBean = SaveFilePartCommand.saveFile(context);
+      fileItemBean = SaveFilePartCommand.saveFileToModule(FileModulesConstants.UPLOADS, context);
       if (fileItemBean == null) {
         throw new DataException("Valid file not found");
       }

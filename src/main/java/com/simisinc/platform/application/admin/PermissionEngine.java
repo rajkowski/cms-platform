@@ -43,8 +43,8 @@ import com.simisinc.platform.presentation.controller.UserSession;
  * </pre>
  * Multiple conditions may be joined with {@code ||} (OR) or {@code &amp;&amp;} (AND).
  *
- * <p>If a component's class name is not registered, {@code checkAccess} returns
- * {@code false} (closed by default — the engine restricts classes).
+ * <p>If a component's Action is not registered, {@code checkAccess} returns
+ * {@code false} (closed by default — the engine restricts actions).
  *
  * @author matt rajkowski
  * @created 3/6/26 8:00 AM
@@ -53,8 +53,8 @@ public class PermissionEngine {
 
   private static Log LOG = LogFactory.getLog(PermissionEngine.class);
 
-  // Keyed by fully-qualified class name → its governing PermissionGroup
-  private static Map<String, PermissionGroup> componentMap = Collections.emptyMap();
+  // Keyed by Action name (e.g. "cms.content.save-draft") → its governing PermissionGroup
+  private static Map<String, PermissionGroup> actionMap = Collections.emptyMap();
 
   // Keyed by group code → PermissionGroup (for admin display)
   private static Map<String, PermissionGroup> groupMap = Collections.emptyMap();
@@ -68,27 +68,27 @@ public class PermissionEngine {
    */
   public static synchronized void load(List<PermissionGroup> groups) {
     Map<String, PermissionGroup> newGroupMap = new LinkedHashMap<>();
-    Map<String, PermissionGroup> newComponentMap = new LinkedHashMap<>();
+    Map<String, PermissionGroup> newActionMap = new LinkedHashMap<>();
     for (PermissionGroup group : groups) {
       newGroupMap.put(group.getCode(), group);
-      for (String className : group.getMemberClassNames()) {
-        newComponentMap.put(className, group);
+      for (String action : group.getMemberActions()) {
+        newActionMap.put(action, group);
       }
     }
     groupMap = Collections.unmodifiableMap(newGroupMap);
-    componentMap = Collections.unmodifiableMap(newComponentMap);
-    LOG.info("PermissionEngine loaded " + newGroupMap.size() + " groups covering " + newComponentMap.size() + " components");
+    actionMap = Collections.unmodifiableMap(newActionMap);
+    LOG.info("PermissionEngine loaded " + newGroupMap.size() + " groups covering " + newActionMap.size() + " actions");
   }
 
   /**
-   * Checks whether the given user session is permitted to access the named component class.
+   * Checks whether the given user session is permitted to perform the named Action.
    *
-   * @param className   fully-qualified class name of the widget or service
+   * @param action      the Action name of the widget or service (e.g. "cms.content.save-draft")
    * @param userSession current user session
-   * @return {@code true} if permitted (or if the class is not governed by any policy)
+   * @return {@code true} if permitted (or if the action is not governed by any policy)
    */
-  public static boolean checkAccess(String className, UserSession userSession) {
-    PermissionGroup group = componentMap.get(className);
+  public static boolean checkAccess(String action, UserSession userSession) {
+    PermissionGroup group = actionMap.get(action);
     if (group == null) {
       // Not registered — disallow by default
       return false;

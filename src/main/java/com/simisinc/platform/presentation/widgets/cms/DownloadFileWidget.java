@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,6 +35,7 @@ import com.simisinc.platform.infrastructure.persistence.cms.FileItemRepository;
 import com.simisinc.platform.presentation.controller.MultipartFileSender;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.zeroio.platform.application.cms.IntegrationAttachmentCommand;
 
 /**
  * Streams previously uploaded files and videos, supports resume 
@@ -46,10 +48,12 @@ public class DownloadFileWidget extends GenericWidget {
   static final long serialVersionUID = -8484048371911908893L;
   private static Log LOG = LogFactory.getLog(DownloadFileWidget.class);
 
+  @Override
   public WidgetContext execute(WidgetContext context) {
 
     // GET uri /assets/file/20180503171549-5/something.pdf
     // GET uri /assets/view/20180503171549-5/something.pdf
+    // ALLOW /assets/file/integration-638517504/sample.drawio
 
     // Use the request uri
     String resourceValue = context.getUri().substring(context.getResourcePath().length() + 1);
@@ -65,14 +69,29 @@ public class DownloadFileWidget extends GenericWidget {
     // Determine the file id and web path
     String webPath = resourceValue.substring(0, dashIdx);
     String fileIdValue = resourceValue.substring(dashIdx + 1);
-    long fileId = Long.parseLong(fileIdValue);
+
+    LOG.info("Download request for webPath: " + webPath + " and fileIdValue: " + fileIdValue);
+    long fileId = -1;
+
+    if (resourceValue.startsWith(IntegrationAttachmentCommand.INTEGRATION_PREFIX)) {
+      FileItem integrationFileItem = IntegrationAttachmentCommand.loadFileItem(resourceValue);
+      if (integrationFileItem != null) {
+        fileId = integrationFileItem.getId();
+        webPath = integrationFileItem.getWebPath();
+      }
+    }
+
+    if (fileId == -1) {
+      fileId = Long.parseLong(fileIdValue);
+    }
+
     if (fileId <= 0) {
       return null;
     }
 
     // Determine the file and access permissions
     FileItem record;
-    if (context.hasRole("admin")) {
+    if (context.hasRole("admin") || context.hasRole("content-manager")) {
       // The file can be downloaded
       record = LoadFileCommand.loadItemById(fileId);
     } else {
@@ -133,7 +152,8 @@ public class DownloadFileWidget extends GenericWidget {
       }
 
       // The file is being viewed (in a new window)
-      context.getResponse().setHeader("Content-Disposition", "inline; filename=\"" + UrlCommand.encodeUri(record.getFilename()) + "\";");
+      context.getResponse().setHeader("Content-Disposition",
+          "inline; filename=\"" + UrlCommand.encodeUri(record.getFilename()) + "\";");
 
       // Check for a last-modified header and return 304 if possible
       long headerValue = context.getRequest().getDateHeader("If-Modified-Since");
@@ -159,7 +179,7 @@ public class DownloadFileWidget extends GenericWidget {
       context.setHandledResponse(true);
       return context;
     }
-    
+
     // Stream the file
     try {
       FileInputStream in = new FileInputStream(file);

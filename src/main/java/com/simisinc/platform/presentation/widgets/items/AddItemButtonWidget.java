@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -63,6 +64,7 @@ public class AddItemButtonWidget extends GenericWidget {
 
     // Preferences
     context.getRequest().setAttribute("buttonName", context.getPreferences().getOrDefault("buttonName", "Add an item"));
+    context.getRequest().setAttribute("buttonClass", context.getPreferences().getOrDefault("buttonClass", null));
     context.getRequest().setAttribute("addUrl", context.getPreferences().get("addUrl"));
     context.getRequest().setAttribute("returnPage", context.getPreferences().getOrDefault("returnPage", null));
 

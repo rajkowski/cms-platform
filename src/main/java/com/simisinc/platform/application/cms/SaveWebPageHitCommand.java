@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -54,11 +55,12 @@ public class SaveWebPageHitCommand {
     queue.offer(webPageHit);
   }
 
-  public static void saveHit(String ipAddress, String method, String pagePath, User user) {
+  public static void saveHit(String ipAddress, String method, String pagePath, User user, String sessionId) {
     WebPageHit webPageHit = new WebPageHit();
     webPageHit.setIpAddress(ipAddress);
     webPageHit.setMethod(method);
     webPageHit.setPagePath(pagePath);
+    webPageHit.setSessionId(sessionId);
     if (user != null) {
       webPageHit.setLoggedIn(true);
     }

@@ -1,4 +1,5 @@
 <%--
+  ~ Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
   ~ Copyright 2022 SimIS Inc.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,11 +21,25 @@
 <%@ taglib prefix="text" uri="/WEB-INF/tlds/text-functions.tld" %>
 <jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
-<jsp:useBean id="query" class="java.lang.String" scope="request"/>
+<jsp:useBean id="searchCriteria" class="com.zeroio.platform.domain.model.cms.SearchCriteria" scope="request"/>
 <c:choose>
-  <c:when test="${!empty query}">
+  <c:when test="${!empty searchCriteria.query || searchCriteria.hasFilters}">
     <p>
-      You searched for <strong><c:out value="${query}" /></strong>...
+      You searched    
+      <c:if test="${!empty searchCriteria.query}">
+        for <strong><c:out value="${searchCriteria.query}" /></strong>...
+      </c:if>
+      <c:if test="${!empty searchCriteria.tags}">
+        <c:forEach items="${searchCriteria.tags}" var="label" varStatus="status">
+          <strong><c:out value="${fn:trim(label)}" /></strong><c:if test="${!status.last}">, </c:if>
+        </c:forEach>
+        <c:if test="${fn:length(searchCriteria.tags) == 1}">tag</c:if>
+        <c:if test="${fn:length(searchCriteria.tags) > 1}">tags</c:if>
+      </c:if>
+      <c:if test="${!empty searchCriteria.ofType && searchCriteria.ofType != 'all'}">
+        in <strong><c:out value="${searchCriteria.ofType}" /></strong>...
+      </c:if>
+      <c:if test="${searchCriteria.hasDateFilter}"><strong>by date</strong>...</c:if>
     </p>
   </c:when>
   <c:otherwise>

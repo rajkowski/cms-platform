@@ -54,7 +54,7 @@ public class SitemapStructureJsonService extends GenericJsonService {
   public JsonServiceContext get(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.sitemap.structure", context.getUserSession())) {
       LOG.debug("No permission to: " + SitemapStructureJsonService.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

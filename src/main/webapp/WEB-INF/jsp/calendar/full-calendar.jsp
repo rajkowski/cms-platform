@@ -1,4 +1,5 @@
 <%--
+  ~ Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
   ~ Copyright 2022 SimIS Inc.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +14,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   --%>
-<%@ page import="static com.simisinc.platform.ApplicationInfo.VERSION" %>
+<%@ page import="static com.zeroio.platform.ApplicationInfo.VERSION" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
@@ -382,14 +383,18 @@
       if (!confirm("Are you sure you want to DELETE this event?")) {
         return;
       }
-      window.location.href = '${widgetContext.uri}?command=delete&widget=${widgetContext.uniqueId}&token=${userSession.formToken}&id=' + document.getElementById('id').value;
+      window.location.href = '${widgetContext.uri}?command=delete&widget=${widgetContext.uniqueId}&token=${userSession.formToken}&id=' + encodeURIComponent(document.getElementById('id').value);
     }
     // Handle the modal and click event
     var eventLink = $('#eventLink');
     eventLink.on('click', function () {
       var $modal = $('#modalReveal');
       $modal.foundation('close');
-      window.location.href = document.getElementById('eventLinkInput').value;
+      var target = document.getElementById('eventLinkInput').value.trim();
+      var scheme = target.match(/^([a-z][a-z0-9+.-]*):/i);
+      if (target && (!scheme || /^https?$/i.test(scheme[1]))) {
+        window.location.href = target;
+      }
     });
   </script>
 </c:if>

@@ -43,7 +43,7 @@ import com.simisinc.platform.domain.model.admin.PermissionGroup;
 /**
  * Loads Cedar permission group configuration from WEB-INF/permission-groups/.
  *
- * <p>Reads {@code component-groups.xml} to map component class names to group codes,
+ * <p>Reads {@code component-groups.xml} to map component Action names to group codes,
  * then loads the corresponding {@code .cedar} policy files from the {@code policies/}
  * subdirectory. Call {@link #mergeDbOverrides} after loading to apply runtime DB
  * overrides before passing the list to {@link PermissionEngine#load}.
@@ -83,7 +83,7 @@ public class PermissionLoader {
       } else {
         result.add(group);
         LOG.info(
-            "PermissionLoader: loaded group '" + group.getCode() + "' with " + group.getMemberClassNames().size() + " component(s)");
+            "PermissionLoader: loaded group '" + group.getCode() + "' with " + group.getMemberActions().size() + " action(s)");
       }
     }
     return result;
@@ -100,7 +100,7 @@ public class PermissionLoader {
    *
    * @param xmlGroups   mutable list from {@link #load} (modified in-place)
    * @param dbPolicies  rows from {@code permission_policies} table
-   * @param dbMembers   map of group_code → list of {className, memberType} pairs
+   * @param dbMembers   map of group_code → list of {actionName, memberType} pairs
    */
   public static void mergeDbOverrides(List<PermissionGroup> xmlGroups,
       List<PermissionGroup> dbPolicies, Map<String, List<String[]>> dbMembers) {
@@ -121,19 +121,19 @@ public class PermissionLoader {
         existing.setCedarPolicyText(dbGroup.getCedarPolicyText());
         LOG.info("PermissionLoader: DB override applied for group '" + code + "'");
         if (dbMembers.containsKey(code)) {
-          existing.getMemberClassNames().clear();
+          existing.getMemberActions().clear();
           existing.getMemberTypes().clear();
           for (String[] member : dbMembers.get(code)) {
-            existing.addMemberClassName(member[0], member[1]);
+            existing.addMemberAction(member[0], member[1]);
           }
         }
       } else {
         java.util.List<String[]> members = dbMembers.getOrDefault(code, java.util.Collections.emptyList());
         for (String[] member : members) {
-          dbGroup.addMemberClassName(member[0], member[1]);
+          dbGroup.addMemberAction(member[0], member[1]);
         }
         xmlGroups.add(dbGroup);
-        LOG.info("PermissionLoader: DB-only group '" + code + "' added with " + members.size() + " component(s)");
+        LOG.info("PermissionLoader: DB-only group '" + code + "' added with " + members.size() + " action(s)");
       }
     }
   }
@@ -157,11 +157,11 @@ public class PermissionLoader {
         NodeList components = doc.getElementsByTagName("component");
         for (int i = 0; i < components.getLength(); i++) {
           Element el = (Element) components.item(i);
-          String className = el.getAttribute("class");
+          String action = el.getAttribute("action");
           String groupCode = el.getAttribute("group");
           String type = el.getAttribute("type");
-          if (StringUtils.isBlank(className) || StringUtils.isBlank(groupCode)) {
-            LOG.warn("PermissionLoader: skipping component with missing class or group attribute");
+          if (StringUtils.isBlank(action) || StringUtils.isBlank(groupCode)) {
+            LOG.warn("PermissionLoader: skipping component with missing action or group attribute");
             continue;
           }
           PermissionGroup group = groupByCode.computeIfAbsent(groupCode, code -> {
@@ -170,8 +170,8 @@ public class PermissionLoader {
             g.setName(code.replace('-', ' '));
             return g;
           });
-          group.addMemberClassName(className, StringUtils.defaultIfBlank(type, "WIDGET"));
-          LOG.debug("PermissionLoader: mapped " + className + " → " + groupCode);
+          group.addMemberAction(action, StringUtils.defaultIfBlank(type, "WIDGET"));
+          LOG.debug("PermissionLoader: mapped " + action + " → " + groupCode);
         }
       }
     } catch (Exception e) {

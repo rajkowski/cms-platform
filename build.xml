@@ -19,7 +19,7 @@
   <property name="build.dir" value="${base.dir}/build" />
   <property name="target.dir" value="${base.dir}/target" />
   <property name="out.dir" value="${base.dir}/out" />
-  <property name="exploded.dir" value="${out.dir}/exploded/ROOT" />
+  <property name="exploded.dir" value="${out.dir}/exploded/webapps/ROOT" />
   <property name="exploded.work.dir" value="${out.dir}/exploded-work/ROOT" />
   <property name="custom.dir" value="${base.dir}/web-customizations" />
   <property name="jee.lib.dir" value="${base.dir}/lib/war" />
@@ -49,7 +49,7 @@
   <!-- Version for scripts to use -->
   <target name="version">
     <echo message="Project: ${ant.project.name}"/>
-    <loadfile srcfile="${src.dir}/com/simisinc/platform/ApplicationInfo.java" property="version">
+    <loadfile srcfile="${src.dir}/com/zeroio/platform/ApplicationInfo.java" property="version">
       <filterchain>
         <linecontains>
           <contains value="String VERSION ="/>
@@ -201,9 +201,10 @@
             outputDir="${target.dir}/${project}/WEB-INF/src" />
     <!-- Compile the JSPs -->
     <javac destdir="${target.dir}/${project}/WEB-INF/compiled" source="${jdk}" target="${jdk}"
-           optimize="on" debug="off"
+           optimize="on" debug="on" debuglevel="lines,vars,source" deprecation="on"
            srcdir="${target.dir}/${project}/WEB-INF/src"
-           excludes="**/*.smap">
+           excludes="**/*.smap"
+           includeantruntime="false">
       <classpath>
         <pathelement location="${target.dir}/${project}/WEB-INF/classes"/>
         <fileset dir="${target.dir}/${project}/WEB-INF/lib">

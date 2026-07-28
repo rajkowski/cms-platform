@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,8 +20,11 @@ package com.simisinc.platform.presentation.widgets.items;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.collections4.ListUtils;
@@ -46,6 +50,7 @@ import com.simisinc.platform.infrastructure.persistence.items.CategoryRepository
 import com.simisinc.platform.infrastructure.persistence.items.ItemRepository;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.simisinc.platform.presentation.widgets.cms.PreferenceEntriesList;
 
 /**
  * Create an item widget
@@ -127,6 +132,37 @@ public class CreateAnItemWidget extends GenericWidget {
     Map<String, CustomField> customFieldList = CustomFieldListMergeCommand.mergeCustomFieldLists(
         collection.getCustomFieldList(),
         (item != null ? item.getCustomFieldList() : null));
+
+    // If specific fields are configured, restrict which fields are shown
+    PreferenceEntriesList entriesList = context.getPreferenceAsDataList("fields");
+    if (!entriesList.isEmpty()) {
+      Set<String> allowedFields = new LinkedHashSet<>();
+      Map<String, String> fieldLabels = new LinkedHashMap<>();
+      for (Map<String, String> entry : entriesList) {
+        String objectParam = entry.get("value");
+        String fieldName = entry.get("name");
+        if (StringUtils.isNotBlank(objectParam)) {
+          allowedFields.add(objectParam);
+          if (StringUtils.isNotBlank(fieldName)) {
+            fieldLabels.put(objectParam, fieldName);
+          }
+        }
+      }
+      if (!allowedFields.isEmpty()) {
+        context.getRequest().setAttribute("allowedFields", allowedFields);
+        context.getRequest().setAttribute("fieldLabels", fieldLabels);
+        // Filter the custom field list to only include fields specified in the preference
+        if (customFieldList != null) {
+          Map<String, CustomField> filteredCustomFieldList = new LinkedHashMap<>();
+          for (Map.Entry<String, CustomField> entry : customFieldList.entrySet()) {
+            if (allowedFields.contains("custom." + entry.getKey())) {
+              filteredCustomFieldList.put(entry.getKey(), entry.getValue());
+            }
+          }
+          customFieldList = filteredCustomFieldList;
+        }
+      }
+    }
     context.getRequest().setAttribute("customFieldList", customFieldList);
 
     // Standard request items
@@ -229,6 +265,20 @@ public class CreateAnItemWidget extends GenericWidget {
     itemBean.setSource(context.getUri());
     itemBean.setIpAddress(context.getRequest().getRemoteAddr());
 
+    // If a tags string was submitted, parse it into an array
+    String tagsParam = context.getParameter("tags");
+    if (tagsParam != null) {
+      if (tagsParam.isBlank()) {
+        itemBean.setTags(null);
+      } else {
+        String[] tagsArray = tagsParam.split(",");
+        for (int i = 0; i < tagsArray.length; i++) {
+          tagsArray[i] = tagsArray[i].trim();
+        }
+        itemBean.setTags(tagsArray);
+      }
+    }
+
     // Check if the item requires permission
     if (requiresApproval) {
       itemBean.setApprovedBy(-1);
@@ -243,16 +293,48 @@ public class CreateAnItemWidget extends GenericWidget {
     // Determine custom fields to check for
     Map<String, CustomField> customFieldList = collection.getCustomFieldList();
 
+    // Determine which custom fields are allowed (based on the fields preference, if set)
+    PreferenceEntriesList fieldEntriesList = context.getPreferenceAsDataList("fields");
+    Set<String> allowedCustomFieldKeys = null;
+    if (!fieldEntriesList.isEmpty()) {
+      allowedCustomFieldKeys = new LinkedHashSet<>();
+      for (Map<String, String> entry : fieldEntriesList) {
+        String objectParam = entry.get("value");
+        if (StringUtils.isNotBlank(objectParam) && objectParam.startsWith("custom.")) {
+          allowedCustomFieldKeys.add(objectParam.substring("custom.".length()));
+        }
+      }
+    }
+
     // Check the request for custom field values
     if (customFieldList != null) {
       for (CustomField field : customFieldList.values()) {
+        // Skip custom fields not in the allowed list when fields preference is specified
+        if (allowedCustomFieldKeys != null && !allowedCustomFieldKeys.contains(field.getName())) {
+          continue;
+        }
         String parameterName = context.getUniqueId() + field.getName();
-        String parameterValue = context.getParameter(parameterName);
-        LOG.debug("Checking param/value: " + parameterName + "=" + parameterValue);
-        if ("list".equals(field.getType()) && field.getListOfOptions() != null) {
-          field.setValue(field.getListOfOptions().get(parameterValue));
+        if ("multi-select list".equals(field.getType()) && field.getListOfOptions() != null) {
+          String[] parameterValues = context.getParameterMap().get(parameterName);
+          if (parameterValues != null && parameterValues.length > 0) {
+            List<String> selectedValues = new ArrayList<>();
+            for (String val : parameterValues) {
+              if (field.getListOfOptions().containsKey(val)) {
+                selectedValues.add(field.getListOfOptions().get(val));
+              }
+            }
+            field.setValue(selectedValues.isEmpty() ? null : String.join(", ", selectedValues));
+          } else {
+            field.setValue(null);
+          }
         } else {
-          field.setValue(parameterValue);
+          String parameterValue = context.getParameter(parameterName);
+          LOG.debug("Checking param/value: " + parameterName + "=" + parameterValue);
+          if ("list".equals(field.getType()) && field.getListOfOptions() != null) {
+            field.setValue(field.getListOfOptions().get(parameterValue));
+          } else {
+            field.setValue(parameterValue);
+          }
         }
         itemBean.addCustomField(field);
       }

@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,12 +17,14 @@
 
 package com.simisinc.platform.application.cms;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.validator.routines.UrlValidator;
-
-import java.net.URLEncoder;
 
 /**
  * Functions for encoding and validating web content
@@ -40,7 +43,7 @@ public class UrlCommand {
     }
 
     // Validate first
-    String[] schemes = {"http", "https"};
+    String[] schemes = { "http", "https" };
     UrlValidator urlValidator = new UrlValidator(schemes);
     if (!urlValidator.isValid(url)) {
       return "#";
@@ -70,9 +73,21 @@ public class UrlCommand {
   }
 
   public static boolean isUrlValid(String url) {
-    String[] schemes = {"http", "https"};
+    String[] schemes = { "http", "https" };
     UrlValidator urlValidator = new UrlValidator(schemes);
     return urlValidator.isValid(url);
+  }
+
+  public static boolean isUriValid(String uri) {
+    if (StringUtils.isBlank(uri)) {
+      return false;
+    }
+    try {
+      new URI(uri);
+      return true;
+    } catch (URISyntaxException e) {
+      return false;
+    }
   }
 
   public static String getValidReturnPage(String returnPage) {

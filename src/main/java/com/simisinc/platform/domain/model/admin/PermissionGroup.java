@@ -22,7 +22,7 @@ import com.simisinc.platform.domain.model.Entity;
 
 /**
  * Represents a named permission group that associates a Cedar policy with
- * one or more widget or service component classes.
+ * one or more widget or service component Actions.
  *
  * @author matt rajkowski
  * @created 3/6/26 8:00 AM
@@ -33,7 +33,7 @@ public class PermissionGroup extends Entity {
   private String name;
   private String code;
   private String cedarPolicyText;
-  private List<String> memberClassNames = new ArrayList<>();
+  private List<String> memberActions = new ArrayList<>();
   private List<String> memberTypes = new ArrayList<>();
   private boolean enabled = true;
 
@@ -72,16 +72,16 @@ public class PermissionGroup extends Entity {
     this.cedarPolicyText = cedarPolicyText;
   }
 
-  public List<String> getMemberClassNames() {
-    return memberClassNames;
+  public List<String> getMemberActions() {
+    return memberActions;
   }
 
-  public void setMemberClassNames(List<String> memberClassNames) {
-    this.memberClassNames = memberClassNames;
+  public void setMemberActions(List<String> memberActions) {
+    this.memberActions = memberActions;
   }
 
-  public void addMemberClassName(String className, String type) {
-    memberClassNames.add(className);
+  public void addMemberAction(String action, String type) {
+    memberActions.add(action);
     memberTypes.add(type);
   }
 

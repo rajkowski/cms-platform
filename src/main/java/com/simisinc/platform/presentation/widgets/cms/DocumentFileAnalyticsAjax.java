@@ -52,7 +52,7 @@ public class DocumentFileAnalyticsAjax extends GenericJsonService {
     LOG.debug("DocumentFileAnalyticsAjax...");
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.document.file-analytics", context.getUserSession())) {
       LOG.debug("No permission to: " + DocumentFileAnalyticsAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

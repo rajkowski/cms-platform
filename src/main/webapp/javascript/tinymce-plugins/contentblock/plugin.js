@@ -1,9 +1,11 @@
 /**
- * TinyMCE Content Block Plugin
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
+ * Licensed under the Apache License, Version 2.0
+ *
  * Allows users to insert content block references as ${uniqueId:value}
  * 
  * @author matt rajkowski
- * @created 2/14/26 10:00 PM
+ * @created 7/24/26 8:00 AM
  */
 (function () {
   'use strict';
@@ -87,8 +89,8 @@
      * Register toolbar button
      */
     editor.ui.registry.addButton('contentblock', {
-      icon: 'browse',
-      tooltip: 'Insert Content Block',
+      text: 'Content',
+      tooltip: 'Insert content block',
       onAction: function () {
         openContentBrowser();
       }
@@ -98,8 +100,8 @@
      * Register menu item
      */
     editor.ui.registry.addMenuItem('contentblock', {
-      icon: 'browse',
-      text: 'Insert Content Block',
+      text: 'Content',
+      tooltip: 'Insert Content Block',
       onAction: function () {
         openContentBrowser();
       }
@@ -123,7 +125,7 @@
       getMetadata: function () {
         return {
           name: 'Content Block Plugin',
-          url: 'https://www.simiscms.com'
+          url: 'https://www.github.com/rajkowski/cms-platform'
         };
       }
     };

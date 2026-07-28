@@ -50,7 +50,7 @@ public class SitemapReorderTabJsonService extends GenericJsonService {
   public JsonServiceContext post(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.sitemap.reorder-tab", context.getUserSession())) {
       LOG.debug("No permission to: " + SitemapReorderTabJsonService.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

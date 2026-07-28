@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,9 +36,11 @@ public class WebPageUpdatedEvent extends Event {
   public static final String ID = "web-page-updated";
 
   private WebPage webPage = null;
+  private long userId = -1L;
 
-  public WebPageUpdatedEvent(WebPage webPage) {
+  public WebPageUpdatedEvent(WebPage webPage, long userId) {
     this.webPage = webPage;
+    this.userId = userId;
   }
 
   @Override
@@ -46,7 +49,7 @@ public class WebPageUpdatedEvent extends Event {
   }
 
   public User getUser() {
-    return UserRepository.findByUserId(webPage.getModifiedBy());
+    return UserRepository.findByUserId(userId);
   }
 
   public void setWebPage(WebPage webPage) {

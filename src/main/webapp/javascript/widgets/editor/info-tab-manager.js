@@ -1,4 +1,7 @@
 /**
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
+ * Licensed under the Apache License, Version 2.0
+ * 
  * Info Tab Manager
  * Manages the Info tab content and page metadata editing in the visual editor
  * 
@@ -17,6 +20,9 @@ class InfoTabManager {
     this.container = null;
     this.isLoading = false;
     this.currentPageLink = null;
+    this.pageVersions = [];
+    this.pageVersionsLoading = false;
+    this.pageVersionsError = null;
   }
   
   /**
@@ -49,6 +55,9 @@ class InfoTabManager {
   clearForPageChange() {
     this.originalData = null;
     this.currentData = null;
+    this.pageVersions = [];
+    this.pageVersionsLoading = false;
+    this.pageVersionsError = null;
     // Don't clear currentPageLink yet - it will be set by loadPageInfo
     // Don't clear dirty state here - RightPanelTabs handles that
   }
@@ -100,6 +109,7 @@ class InfoTabManager {
       
       this.isLoading = false;
       this.render();
+      this.renderVersionHistorySection();
       return;
     }
     
@@ -126,6 +136,7 @@ class InfoTabManager {
       
       // Render the form
       this.render();
+      this.loadVersionHistory();
       
     } catch (error) {
       console.error('Error loading page info:', error);
@@ -262,11 +273,394 @@ class InfoTabManager {
             </div>
           ` : ''}
         </div>
+
+        <div class="property-group version-history-group">
+          <div class="version-history-header">
+            <label class="property-label">Layout Versions</label>
+            <button type="button" id="refresh-page-versions-btn" class="button tiny secondary radius no-gap" title="Refresh version list">
+              <i class="far fa-rotate"></i>
+            </button>
+          </div>
+          <div id="page-version-history" class="version-history-container">
+            <div class="version-history-empty">Loading version history...</div>
+          </div>
+        </div>
       </div>
     `;
     
     // Set up event listeners for change detection
     this.setupEventListeners();
+    this.renderVersionHistorySection();
+  }
+
+  getCurrentPageId() {
+    const selectedPageId = parseInt(this.editor?.pagesTabManager?.selectedPageId, 10);
+    if (!Number.isNaN(selectedPageId) && selectedPageId > 0) {
+      return selectedPageId;
+    }
+
+    const currentDataId = parseInt(this.currentData?.id, 10);
+    if (!Number.isNaN(currentDataId) && currentDataId > 0) {
+      return currentDataId;
+    }
+
+    const configId = parseInt(this.editor?.config?.webPageId, 10);
+    if (!Number.isNaN(configId) && configId > 0) {
+      return configId;
+    }
+
+    return -1;
+  }
+
+  normalizeJsonResponse(payload) {
+    if (payload && payload.status === 'ok' && Object.prototype.hasOwnProperty.call(payload, 'data')) {
+      return payload.data;
+    }
+    return payload;
+  }
+
+  async loadVersionHistory() {
+    const pageId = this.getCurrentPageId();
+    if (pageId <= 0) {
+      this.pageVersions = [];
+      this.pageVersionsError = null;
+      this.pageVersionsLoading = false;
+      this.renderVersionHistorySection();
+      return;
+    }
+
+    this.pageVersionsLoading = true;
+    this.pageVersionsError = null;
+    this.renderVersionHistorySection();
+
+    try {
+      const response = await fetch(`/json/webPageVersions?webPageId=${pageId}`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const raw = await response.json();
+      const data = this.normalizeJsonResponse(raw);
+      this.pageVersions = Array.isArray(data) ? data : [];
+      this.pageVersionsError = null;
+    } catch (error) {
+      console.error('Error loading page versions:', error);
+      this.pageVersions = [];
+      this.pageVersionsError = error.message || 'Failed to load versions';
+    } finally {
+      this.pageVersionsLoading = false;
+      this.renderVersionHistorySection();
+    }
+  }
+
+  renderVersionHistorySection() {
+    const historyContainer = document.getElementById('page-version-history');
+    const refreshButton = document.getElementById('refresh-page-versions-btn');
+    if (!historyContainer) {
+      return;
+    }
+
+    const pageId = this.getCurrentPageId();
+    if (refreshButton) {
+      refreshButton.disabled = this.pageVersionsLoading || pageId <= 0;
+      refreshButton.onclick = () => this.loadVersionHistory();
+    }
+
+    if (pageId <= 0) {
+      historyContainer.innerHTML = '<div class="version-history-empty">Save this page first to start tracking layout versions.</div>';
+      return;
+    }
+
+    if (this.pageVersionsLoading) {
+      historyContainer.innerHTML = '<div class="version-history-loading"><i class="far fa-spinner fa-spin"></i> Loading versions...</div>';
+      return;
+    }
+
+    if (this.pageVersionsError) {
+      historyContainer.innerHTML = `<div class="version-history-error">${this.escapeHtml(this.pageVersionsError)}</div>`;
+      return;
+    }
+
+    if (!this.pageVersions || this.pageVersions.length === 0) {
+      historyContainer.innerHTML = '<div class="version-history-empty">No saved versions yet.</div>';
+      return;
+    }
+
+    const itemsHtml = this.pageVersions.slice(0, 30).map((version) => {
+      const created = this.formatVersionTimestamp(version.created);
+      const user = this.escapeHtml(version.createdByName || `User ${version.createdBy || ''}`);
+      const notes = this.escapeHtml(version.notes || 'Version saved before update');
+      return `
+        <li class="version-history-item">
+          <div class="version-history-meta">
+            <div class="version-history-date">${created}</div>
+            <div class="version-history-user">${user}</div>
+            <div class="version-history-notes">${notes}</div>
+          </div>
+          <div class="version-history-actions">
+            <button type="button" class="button tiny secondary radius no-gap preview-page-version-btn" data-version-id="${version.versionId}">
+              Preview
+            </button>
+            <button type="button" class="button tiny primary radius no-gap restore-page-version-btn" data-version-id="${version.versionId}">
+              Restore
+            </button>
+          </div>
+        </li>
+      `;
+    }).join('');
+
+    historyContainer.innerHTML = `<ul class="version-history-list">${itemsHtml}</ul>`;
+
+    historyContainer.querySelectorAll('.preview-page-version-btn').forEach((button) => {
+      button.addEventListener('click', () => {
+        const versionId = parseInt(button.dataset.versionId, 10);
+        if (!Number.isNaN(versionId) && versionId > 0) {
+          const version = this.pageVersions.find((item) => parseInt(item.versionId, 10) === versionId);
+          if (version) {
+            this.showVersionPreviewModal(version);
+          }
+        }
+      });
+    });
+
+    historyContainer.querySelectorAll('.restore-page-version-btn').forEach((button) => {
+      button.addEventListener('click', () => {
+        const versionId = parseInt(button.dataset.versionId, 10);
+        if (!Number.isNaN(versionId) && versionId > 0) {
+          const version = this.pageVersions.find((item) => parseInt(item.versionId, 10) === versionId);
+          if (version) {
+            this.restoreVersion(version);
+          }
+        }
+      });
+    });
+  }
+
+  formatVersionTimestamp(rawValue) {
+    if (!rawValue) {
+      return 'Unknown date';
+    }
+
+    const date = new Date(rawValue);
+    if (Number.isNaN(date.getTime())) {
+      return this.escapeHtml(rawValue);
+    }
+
+    return date.toLocaleString();
+  }
+
+  async showVersionPreviewModal(version) {
+    this.closeVersionPreviewModal();
+
+    const created = this.formatVersionTimestamp(version.created);
+    const createdBy = this.escapeHtml(version.createdByName || `User ${version.createdBy || ''}`);
+    const notes = this.escapeHtml(version.notes || 'Version saved before update');
+
+    const overlay = document.createElement('div');
+    overlay.id = 'page-version-preview-overlay';
+    overlay.className = 'version-modal-overlay';
+    overlay.innerHTML = `
+      <div class="version-modal-dialog" role="dialog" aria-modal="true" aria-label="Version Layout Preview">
+        <div class="version-modal-header">
+          <div>
+            <div class="version-modal-title">Layout Preview</div>
+            <div class="version-modal-subtitle">${created} by ${createdBy}</div>
+          </div>
+          <button type="button" class="version-modal-close" aria-label="Close">&times;</button>
+        </div>
+        <div class="version-modal-notes">${notes}</div>
+        <div class="version-modal-body version-preview-body">
+          <div class="version-preview-loading"><i class="far fa-spinner fa-spin"></i> Loading preview...</div>
+          <iframe id="version-preview-iframe" class="version-preview-iframe" title="Page layout preview" style="display: none;"></iframe>
+        </div>
+        <div class="version-modal-footer">
+          <button type="button" class="button tiny primary radius no-gap restore-preview-version-btn">Restore This Layout</button>
+          <button type="button" class="button tiny secondary radius no-gap close-preview-version-btn">Close</button>
+        </div>
+      </div>
+    `;
+
+    const closeHandler = () => this.closeVersionPreviewModal();
+    overlay.querySelector('.version-modal-close').addEventListener('click', closeHandler);
+    overlay.querySelector('.close-preview-version-btn').addEventListener('click', closeHandler);
+    overlay.querySelector('.restore-preview-version-btn').addEventListener('click', async () => {
+      const versionId = parseInt(version.versionId, 10);
+      if (!Number.isNaN(versionId) && versionId > 0) {
+        await this.restoreVersion(version, { closePreviewOnSuccess: true });
+      }
+    });
+    overlay.addEventListener('click', (event) => {
+      if (event.target === overlay) {
+        closeHandler();
+      }
+    });
+
+    this.versionModalEscapeHandler = (event) => {
+      if (event.key === 'Escape') {
+        closeHandler();
+      }
+    };
+    document.addEventListener('keydown', this.versionModalEscapeHandler);
+
+    document.body.appendChild(overlay);
+
+    // Load preview content
+    try {
+      let pageXmlTrimmed = version.pageXml ? version.pageXml.trim() : '';
+      if (!pageXmlTrimmed) {
+        throw new Error('Page XML is empty or invalid');
+      }
+
+      // Remove BOM (Byte Order Mark) if present
+      if (pageXmlTrimmed.charCodeAt(0) === 0xFEFF) {
+        pageXmlTrimmed = pageXmlTrimmed.slice(1);
+      }
+
+      // Validate that XML starts with < or <?xml
+      if (!pageXmlTrimmed.match(/^<\?xml|^</)) {
+        console.warn('Invalid XML format detected');
+        throw new Error('XML content appears to be malformed or incomplete');
+      }
+
+      const formData = new FormData();
+      formData.append('designerData', pageXmlTrimmed);
+      formData.append('containerPreview', 'true');
+
+      const response = await fetch(this.currentPageLink, {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Preview response error:', response.status, errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 200)}`);
+      }
+
+      const html = await response.text();
+      const iframe = overlay.querySelector('.version-preview-iframe');
+      const loading = overlay.querySelector('.version-preview-loading');
+
+      if (!overlay.isConnected) {
+        return;
+      }
+
+      if (iframe && loading) {
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+        iframeDoc.open();
+        iframeDoc.write(html);
+        iframeDoc.close();
+        loading.style.display = 'none';
+        iframe.style.display = 'block';
+      }
+    } catch (error) {
+      console.error('Error loading version preview:', error);
+      const loading = overlay.querySelector('.version-preview-loading');
+      if (!overlay.isConnected) {
+        return;
+      }
+      if (loading) {
+        const errorMsg = error.message || 'Unknown error';
+        loading.innerHTML = `<div style="color: #dc3545; padding: 20px;"><i class="far fa-exclamation-triangle"></i> Failed to load preview: ${this.escapeHtml(errorMsg)}</div>`;
+      }
+    }
+  }
+
+  closeVersionPreviewModal() {
+    const existing = document.getElementById('page-version-preview-overlay');
+    if (existing && existing.parentNode) {
+      existing.parentNode.removeChild(existing);
+    }
+    if (this.versionModalEscapeHandler) {
+      document.removeEventListener('keydown', this.versionModalEscapeHandler);
+      this.versionModalEscapeHandler = null;
+    }
+  }
+
+  async restoreVersion(version, options = {}) {
+    if (!this.currentPageLink) {
+      return;
+    }
+
+    const versionId = parseInt(version?.versionId, 10);
+    if (Number.isNaN(versionId) || versionId <= 0) {
+      return;
+    }
+
+    if (this.editor && this.editor.isDirty && this.editor.isDirty()) {
+      const proceedDirty = this.editor.showConfirmDialog
+        ? await this.editor.showConfirmDialog('You have unsaved changes. Loading this version will replace the current layout in the editor and discard unsaved edits. Continue?')
+        : window.confirm('You have unsaved changes. Loading this version will replace the current layout in the editor and discard unsaved edits. Continue?');
+      if (!proceedDirty) {
+        return;
+      }
+    }
+
+    const proceed = this.editor && this.editor.showConfirmDialog
+      ? await this.editor.showConfirmDialog('Load this layout version into the editor? This will replace the current page layout in the editor. Click Publish to save it permanently.')
+      : window.confirm('Load this layout version into the editor? This will replace the current page layout in the editor. Click Publish to save it permanently.');
+    if (!proceed) {
+      return;
+    }
+
+    try {
+      if (this.editor && this.editor.showLoadingIndicator) {
+        this.editor.showLoadingIndicator('Loading version...');
+      }
+
+      let pageXmlTrimmed = version.pageXml ? version.pageXml.trim() : '';
+      if (!pageXmlTrimmed) {
+        throw new Error('Selected version has no layout XML');
+      }
+
+      if (pageXmlTrimmed.charCodeAt(0) === 0xFEFF) {
+        pageXmlTrimmed = pageXmlTrimmed.slice(1);
+      }
+
+      if (!pageXmlTrimmed.match(/^<\?xml|^</)) {
+        throw new Error('Selected version contains invalid layout XML');
+      }
+
+      if (this.editor.canvasController) {
+        this.editor.canvasController.selectedElement = null;
+        this.editor.canvasController.selectedContext = null;
+      }
+      if (window.previewHoverManager && typeof window.previewHoverManager.clearLockedSelection === 'function') {
+        window.previewHoverManager.clearLockedSelection();
+      }
+      if (this.editor.propertiesPanel && typeof this.editor.propertiesPanel.clear === 'function') {
+        this.editor.propertiesPanel.clear();
+      }
+
+      this.editor.config.existingXml = pageXmlTrimmed;
+      this.editor.config.hasExistingLayout = true;
+      this.editor.layoutManager.structure = { rows: [] };
+      if (this.editor.layoutManager && this.editor.layoutManager.resetIds) {
+        this.editor.layoutManager.resetIds();
+      }
+      this.editor.loadExistingLayout(pageXmlTrimmed);
+      this.editor.saveToHistory();
+      if (this.editor.updateSaveIndicator) {
+        this.editor.updateSaveIndicator();
+      }
+
+      if (options.closePreviewOnSuccess) {
+        this.closeVersionPreviewModal();
+      }
+
+      if (this.editor && this.editor.showSaveToast) {
+        this.editor.showSaveToast('Layout version loaded into the editor. Click Publish to save it.', 'success');
+      }
+    } catch (error) {
+      console.error('Error restoring page version:', error);
+      if (this.editor && this.editor.showSaveToast) {
+        this.editor.showSaveToast('Failed to load version: ' + error.message, 'error');
+      }
+    } finally {
+      if (this.editor && this.editor.hideLoadingIndicator) {
+        this.editor.hideLoadingIndicator();
+      }
+    }
   }
   
   /**

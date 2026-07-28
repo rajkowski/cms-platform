@@ -16,31 +16,29 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
-import java.io.File;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 import javax.servlet.http.Part;
 
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.Strings;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.DataException;
 import com.simisinc.platform.application.admin.PermissionEngine;
+import com.simisinc.platform.application.cms.SaveFilePartCommand;
 import com.simisinc.platform.application.cms.SaveImageCommand;
 import com.simisinc.platform.application.cms.SaveImageVersionCommand;
 import com.simisinc.platform.application.cms.ValidateImageCommand;
-import com.simisinc.platform.application.filesystem.FileSystemCommand;
 import com.simisinc.platform.application.json.JsonCommand;
+import com.simisinc.platform.domain.model.cms.FileItem;
 import com.simisinc.platform.domain.model.cms.Image;
 import com.simisinc.platform.domain.model.cms.ImageVersion;
 import com.simisinc.platform.infrastructure.persistence.cms.ImageRepository;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.presentation.controller.FileModulesConstants;
 
 /**
  * Handles multiple image uploads for the image editor
@@ -65,7 +63,7 @@ public class ImageUploadAjax extends GenericJsonService {
     LOG.debug("ImageUploadAjax...");
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.image.upload", context.getUserSession())) {
       LOG.debug("No permission to: " + ImageUploadAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }
@@ -84,53 +82,23 @@ public class ImageUploadAjax extends GenericJsonService {
       Collection<Part> fileParts = context.getParts();
       List<Image> uploadedImages = new ArrayList<>();
 
-      // Prepare server paths
-      String serverSubPath = FileSystemCommand.generateFileServerSubPath("images");
-      String serverRootPath = FileSystemCommand.getFileServerRootPathValue();
-      String serverCompletePath = serverRootPath + serverSubPath;
+      List<FileItem> uploadedFileItems = SaveFilePartCommand.saveFilesToModule(FileModulesConstants.IMAGES, fileParts,
+          context.getUserId());
+      if (uploadedFileItems.isEmpty()) {
+        throw new DataException("No files were found in the request");
+      }
 
       // Process each file part
-      for (Part filePart : fileParts) {
-        // Skip non-file parts (like token, widget)
-        String submittedFilename = null;
-        try {
-          submittedFilename = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
-        } catch (Exception e) {
-          // Not a file part, skip it
-          continue;
-        }
-
-        if (submittedFilename == null || submittedFilename.isEmpty()) {
-          continue;
-        }
-
+      for (FileItem fileItemBean : uploadedFileItems) {
         // Handle TinyMCE clipboard filenames
-        if (submittedFilename.startsWith("mceclip0")) {
-          submittedFilename = Strings.CS.replace(submittedFilename, "mceclip0", "clip");
-        }
-
-        String extension = FilenameUtils.getExtension(submittedFilename);
-        String uniqueFilename = FileSystemCommand.generateUniqueFilename(context.getUserId());
-        File tempFile = null;
-        long fileLength = 0;
 
         try {
-          tempFile = new File(serverCompletePath + uniqueFilename + "." + extension);
-          fileLength = filePart.getSize();
-
-          if (fileLength <= 0) {
-            LOG.warn("Skipping empty file: " + submittedFilename);
-            continue;
-          }
-
-          // Write the file
-          filePart.write(serverCompletePath + uniqueFilename + "." + extension);
 
           // Populate the image bean
           Image imageBean = new Image();
-          imageBean.setFilename(submittedFilename);
-          imageBean.setFileLength(fileLength);
-          imageBean.setFileServerPath(serverSubPath + uniqueFilename + "." + extension);
+          imageBean.setFilename(fileItemBean.getFilename());
+          imageBean.setFileLength(fileItemBean.getFileLength());
+          imageBean.setFileServerPath(fileItemBean.getFileServerPath());
           imageBean.setCreatedBy(context.getUserId());
           imageBean.setModifiedBy(context.getUserId());
 
@@ -156,10 +124,8 @@ public class ImageUploadAjax extends GenericJsonService {
 
             ImageVersion version = SaveImageVersionCommand.addNewVersion(imageId, versionBean);
             if (version == null) {
-              LOG.warn("Failed to save image version: " + submittedFilename);
-              if (tempFile != null && tempFile.exists()) {
-                tempFile.delete();
-              }
+              LOG.warn("Failed to save image version: " + fileItemBean.getFilename());
+              SaveFilePartCommand.cleanupFile(fileItemBean);
               continue;
             }
 
@@ -171,10 +137,8 @@ public class ImageUploadAjax extends GenericJsonService {
             // Save as a new image
             Image image = SaveImageCommand.saveImage(imageBean);
             if (image == null) {
-              LOG.warn("Failed to save image: " + submittedFilename);
-              if (tempFile != null && tempFile.exists()) {
-                tempFile.delete();
-              }
+              LOG.warn("Failed to save image: " + fileItemBean.getFilename());
+              SaveFilePartCommand.cleanupFile(fileItemBean);
               continue;
             }
 
@@ -183,18 +147,14 @@ public class ImageUploadAjax extends GenericJsonService {
           }
 
         } catch (DataException e) {
-          LOG.warn("Failed to save image: " + submittedFilename + " - " + e.getMessage());
+          LOG.warn("Failed to save image: " + fileItemBean.getFilename() + " - " + e.getMessage());
           // Clean up the file
-          if (tempFile != null && tempFile.exists()) {
-            tempFile.delete();
-          }
+          SaveFilePartCommand.cleanupFile(fileItemBean);
           // Continue with next file
         } catch (Exception e) {
-          LOG.error("Error processing image: " + submittedFilename, e);
+          LOG.error("Error processing image: " + fileItemBean.getFilename(), e);
           // Clean up the file
-          if (tempFile != null && tempFile.exists()) {
-            tempFile.delete();
-          }
+          SaveFilePartCommand.cleanupFile(fileItemBean);
           // Continue with next file
         }
       }
@@ -231,6 +191,5 @@ public class ImageUploadAjax extends GenericJsonService {
       LOG.error("Unexpected error during image upload: " + e.getMessage(), e);
       return context.writeError("An unexpected error occurred during image upload");
     }
-
   }
 }

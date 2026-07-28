@@ -29,10 +29,12 @@ public class PageTreeNode extends Entity {
   private long id = -1;
   private String title = null;
   private String link = null;
+  private String description = null;
   private boolean hasChildren = false;
   private int level = 0;
 
   public PageTreeNode() {
+    // Default constructor for frameworks and serializers.
   }
 
   public long getId() {
@@ -59,12 +61,20 @@ public class PageTreeNode extends Entity {
     this.link = link;
   }
 
+  public String getDescription() {
+    return description;
+  }
+
+  public void setDescription(String description) {
+    this.description = description;
+  }
+
   public boolean isHasChildren() {
     return hasChildren;
   }
 
   public boolean getHasChildren() {
-    return hasChildren;
+    return isHasChildren();
   }
 
   public void setHasChildren(boolean hasChildren) {

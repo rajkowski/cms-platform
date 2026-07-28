@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,6 +34,7 @@ import com.simisinc.platform.domain.model.items.Collection;
 import com.simisinc.platform.domain.model.items.Item;
 import com.simisinc.platform.infrastructure.persistence.items.CollectionRepository;
 import com.simisinc.platform.infrastructure.persistence.items.ItemRepository;
+import com.zeroio.platform.application.items.SaveItemVersionCommand;
 
 /**
  * Validates and saves an item object
@@ -92,19 +94,35 @@ public class SaveItemCommand {
     if (StringUtils.isNotBlank(itemBean.getUrl())) {
       // Format the URL
       String url = itemBean.getUrl().trim();
-      if (!url.startsWith("http://") && !url.startsWith("https://")) {
-        url = "http://" + url;
-      }
-      // Validate the URL
-      if (!UrlCommand.isUrlValid(url)) {
-        if (errorMessages.length() > 0) {
-          errorMessages.append("\n");
+
+      // Validate internal and external URLs
+      if (url.startsWith("/")) {
+        // First check that the URI is valid (not URL)
+        if (!UrlCommand.isUriValid(url)) {
+          if (!errorMessages.isEmpty()) {
+            errorMessages.append("\n");
+          }
+          errorMessages.append("The URL does not look valid");
+        } else {
+          itemBean.setUrl(url);
         }
-        errorMessages.append("The URL does not look valid");
       } else {
-        itemBean.setUrl(url);
+        // Format the URL
+        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+          url = "http://" + url;
+        }
+        // Validate the URL
+        if (!UrlCommand.isUrlValid(url)) {
+          if (!errorMessages.isEmpty()) {
+            errorMessages.append("\n");
+          }
+          errorMessages.append("The URL does not look valid");
+        } else {
+          itemBean.setUrl(url);
+        }
       }
     }
+
     if (StringUtils.isNotBlank(itemBean.getImageUrl())) {
       // Format the URL
       String url = itemBean.getImageUrl().trim();
@@ -118,7 +136,7 @@ public class SaveItemCommand {
         }
         // Validate the URL
         if (!UrlCommand.isUrlValid(url)) {
-          if (errorMessages.length() > 0) {
+          if (!errorMessages.isEmpty()) {
             errorMessages.append("\n");
           }
           errorMessages.append("The image URL does not look valid");
@@ -127,13 +145,14 @@ public class SaveItemCommand {
         }
       }
     }
+
     if (StringUtils.isNotBlank(itemBean.getEmail())) {
       if (!JMail.isValid(itemBean.getEmail())) {
         errorMessages.append("The email address looks incorrect");
       }
     }
 
-    if (errorMessages.length() > 0) {
+    if (!errorMessages.isEmpty()) {
       throw new DataException("Please check the form and try again:\n" + errorMessages.toString());
     }
 
@@ -152,6 +171,8 @@ public class SaveItemCommand {
       if (item == null) {
         throw new DataException("The existing record could not be found");
       }
+      // Save a version snapshot of the current record before applying changes
+      SaveItemVersionCommand.saveVersion(item);
     } else {
       // Insert
       LOG.debug("Saving a new record... ");
@@ -202,8 +223,7 @@ public class SaveItemCommand {
     item.setKeywords(itemBean.getKeywords());
     item.setCustomFieldList(itemBean.getCustomFieldList());
     item.setIpAddress(itemBean.getIpAddress());
-    // Enable once the field is available in the form
-    // item.setTags();
+    item.setTags(itemBean.getTags());
     return ItemRepository.save(item);
   }
 

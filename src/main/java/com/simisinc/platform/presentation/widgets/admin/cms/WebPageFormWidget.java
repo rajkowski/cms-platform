@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +20,7 @@ package com.simisinc.platform.presentation.widgets.admin.cms;
 import com.simisinc.platform.application.DataException;
 import com.simisinc.platform.application.cms.SaveWebPageCommand;
 import com.simisinc.platform.application.cms.UrlCommand;
+import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.SitemapChangeFrequencyOptions;
 import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
@@ -26,6 +28,8 @@ import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -38,6 +42,7 @@ import java.lang.reflect.InvocationTargetException;
 public class WebPageFormWidget extends GenericWidget {
 
   static final long serialVersionUID = -8484048371911908893L;
+  private static Log LOG = LogFactory.getLog(WebPageFormWidget.class);
 
   static String JSP = "/admin/web-page-form.jsp";
 
@@ -51,19 +56,21 @@ public class WebPageFormWidget extends GenericWidget {
     context.getRequest().setAttribute("returnPage", UrlCommand.getValidReturnPage(context.getParameter("returnPage")));
 
     // Form bean
+    WebPage webPage = null;
     if (context.getRequestObject() != null) {
-      context.getRequest().setAttribute("webPage", context.getRequestObject());
+      webPage = (WebPage) context.getRequestObject();
+      context.getRequest().setAttribute("webPage", webPage);
     } else {
       // Allow either webPageId or just webPage
       long webPageId = context.getParameterAsLong("webPageId");
       if (webPageId > -1) {
-        WebPage webPage = WebPageRepository.findById(webPageId);
+        webPage = WebPageRepository.findById(webPageId);
         context.getRequest().setAttribute("webPage", webPage);
       } else {
         // Determine the page being edited
         String webPageLinkValue = context.getParameter("webPage");
         if (StringUtils.isNotEmpty(webPageLinkValue)) {
-          WebPage webPage = WebPageRepository.findByLink(webPageLinkValue);
+          webPage = WebPageRepository.findByLink(webPageLinkValue);
           if (webPage == null) {
             webPage = new WebPage();
             webPage.setLink(webPageLinkValue);
@@ -71,6 +78,17 @@ public class WebPageFormWidget extends GenericWidget {
           context.getRequest().setAttribute("webPage", webPage);
         }
       }
+    }
+
+    // Prepare tags for form display
+    if (webPage != null) {
+      String tagsValue = JsonCommand.toJsonArray(webPage.getTags());
+      if (tagsValue == null) {
+        tagsValue = "[]";
+      }
+      context.getRequest().setAttribute("tagsValue", tagsValue);
+    } else {
+      context.getRequest().setAttribute("tagsValue", "[]");
     }
 
     context.getRequest().setAttribute("sitemapChangeFrequencyMap", SitemapChangeFrequencyOptions.map);
@@ -91,6 +109,15 @@ public class WebPageFormWidget extends GenericWidget {
 
     // Populate the form fields
     BeanUtils.populate(webPageBean, context.getParameterMap());
+
+    // Handle tags from JSON string using centralized JsonCommand
+    String tagsValue = context.getParameter("tagsValue");
+    if (StringUtils.isNotBlank(tagsValue)) {
+      String[] tagsArray = JsonCommand.fromJsonArray(tagsValue);
+      webPageBean.setTags(tagsArray.length > 0 ? tagsArray : null);
+    } else {
+      webPageBean.setTags(null);
+    }
 
     // Handle publish/draft choice
     String publish = context.getParameter("publish");

@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -61,6 +62,13 @@ public class WebPageTitleSearchResultsWidget extends GenericWidget {
       return null;
     }
     query = query.toLowerCase().trim();
+
+    // Check the 'ofType' filter - only show web page titles when filter is 'pages', 'all', or empty
+    String ofType = context.getParameter("ofType");
+    if (StringUtils.isNotBlank(ofType) && !"all".equals(ofType) && !"pages".equals(ofType)) {
+      // User has selected a different content type filter (e.g., 'resources')
+      return null;
+    }
 
     // Prepare the search results
     List<SearchResult> searchResultList = new ArrayList<>();

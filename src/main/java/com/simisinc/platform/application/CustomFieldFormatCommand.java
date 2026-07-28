@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,13 +17,16 @@
 
 package com.simisinc.platform.application;
 
-import com.simisinc.platform.domain.model.CustomField;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
+import com.simisinc.platform.application.cms.ContentHtmlCommand;
+import com.simisinc.platform.domain.model.CustomField;
+import com.zeroio.platform.application.cms.DiagramHtmlCommand;
 
 /**
  * Custom fields commands
@@ -82,6 +86,11 @@ public class CustomFieldFormatCommand {
       if (!value.startsWith("http://") && !value.startsWith("https://")) {
         value = "http://" + value;
       }
+    } else if ("html".equals(type)) {
+      // Check the HTML for content unique id values and replace with the actual content
+      value = ContentHtmlCommand.replaceContentUniqueIds(value);
+      // Replace diagram tokens (e.g. ${diagram:integration-123;label})
+      value = DiagramHtmlCommand.replaceDiagramTokens(value);
     }
     customField.setValue(value);
   }

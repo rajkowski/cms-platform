@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,7 +44,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.commons.text.StringEscapeUtils;
 import org.thymeleaf.context.Context;
 
-import com.simisinc.platform.ApplicationInfo;
 import com.simisinc.platform.application.LoadUserCommand;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.application.cms.HtmlCommand;
@@ -53,6 +53,7 @@ import com.simisinc.platform.domain.model.User;
 import com.simisinc.platform.domain.model.items.Collection;
 import com.simisinc.platform.domain.model.items.Item;
 import com.simisinc.platform.presentation.widgets.cms.WebContainerContext;
+import com.zeroio.platform.ApplicationInfo;
 
 /**
  * Process for executing the widgets on a web page

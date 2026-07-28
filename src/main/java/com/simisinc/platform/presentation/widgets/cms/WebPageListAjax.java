@@ -43,7 +43,7 @@ public class WebPageListAjax extends GenericJsonService {
   public JsonServiceContext get(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.web-page.list", context.getUserSession())) {
       LOG.debug("No permission to: " + WebPageListAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

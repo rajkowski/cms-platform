@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +20,6 @@ package com.simisinc.platform.presentation.widgets.items;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.OutputStream;
-import java.net.URLDecoder;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -39,6 +39,7 @@ import com.simisinc.platform.infrastructure.persistence.items.ItemFileItemReposi
 import com.simisinc.platform.presentation.controller.MultipartFileSender;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.zeroio.platform.application.cms.IntegrationAttachmentCommand;
 
 /**
  * Description
@@ -54,7 +55,9 @@ public class DownloadItemFileWidget extends GenericWidget {
   public WidgetContext execute(WidgetContext context) {
 
     // GET uri /show/*/assets/file/20180503171549-5/something.pdf
-    // GET uri /show/*assets/view/20180503171549-5/something.pdf
+    // GET uri /show/*/assets/view/20180503171549-5/something.pdf
+    // GET uri /show/*/assets/file/integration-638517504/example.drawio
+    // GET uri /show/*/assets/file/integration-765265429-500/sample.pptx
     LOG.debug("Found request uri: " + context.getUri());
 
     // Verify access to the item
@@ -63,42 +66,66 @@ public class DownloadItemFileWidget extends GenericWidget {
     if (item == null) {
       return null;
     }
-    Collection collection = LoadCollectionCommand.loadCollectionByIdForAuthorizedUser(item.getCollectionId(), context.getUserId());
+    Collection collection = LoadCollectionCommand.loadCollectionByIdForAuthorizedUser(item.getCollectionId(),
+        context.getUserId());
     if (collection == null) {
       return null;
     }
 
-    // Determine the file id
-    long fileId = -1;
-    String fileIdValue = null;
-    String fullPath = context.getUri();
-    int startIdx = fullPath.indexOf("-", fullPath.indexOf("/", 6)) + 1;
-    int endIdx = fullPath.indexOf("/", startIdx);
-    if (endIdx == -1) {
-      fileIdValue = fullPath.substring(startIdx);
-    } else {
-      fileIdValue = fullPath.substring(startIdx, endIdx);
+    // Use the request uri, and use the 5th element as the resource value
+
+    LOG.debug("Using resource path: " + context.getResourcePath());
+    // If the resource path contains a wildcard (e.g. /show/*/assets/view), truncate at /*
+    // so the substring starts from the item unique ID segment, matching the uriParts index below
+    String resourcePath = context.getResourcePath();
+    if (resourcePath.contains("/*")) {
+      resourcePath = resourcePath.substring(0, resourcePath.indexOf("/*"));
     }
-    if (StringUtils.isNumeric(fileIdValue)) {
-      fileId = Long.parseLong(fileIdValue);
-    } else {
-      LOG.warn("Invalid fileId parameter: " + fullPath);
-    }
-    if (fileId == -1) {
+    String resourceValue = context.getUri().substring(resourcePath.length() + 1);
+    LOG.debug("Using resource value: " + resourceValue);
+    String[] uriParts = resourceValue.split("/");
+    if (uriParts.length < 5) {
+      LOG.warn("Invalid request uri: " + context.getUri());
       return null;
+    }
+    resourceValue = uriParts[3];
+    LOG.debug("Using web-path value: " + resourceValue);
+    int dashIdx = resourceValue.lastIndexOf("-");
+    if (dashIdx == -1) {
+      LOG.warn("Invalid web-path value: " + resourceValue);
+      return null;
+    }
+
+    // Determine the item file id
+    long itemFileId = -1;
+    if (resourceValue.startsWith(IntegrationAttachmentCommand.INTEGRATION_PREFIX)) {
+      ItemFileItem integrationFileItem = IntegrationAttachmentCommand.loadItemFileItem(resourceValue);
+      if (integrationFileItem != null) {
+        itemFileId = integrationFileItem.getId();
+      } else {
+        return null;
+      }
+    } else {
+      String itemFileIdValue = resourceValue.substring(dashIdx + 1);
+      if (StringUtils.isNumeric(itemFileIdValue)) {
+        itemFileId = Long.parseLong(itemFileIdValue);
+      } else {
+        LOG.warn("Invalid itemFileId parameter: " + resourceValue);
+        return null;
+      }
     }
 
     // Determine the file and access permissions
     ItemFileItem record;
     if (context.hasRole("admin")) {
       // The file can be downloaded
-      record = LoadItemFileCommand.loadItemById(fileId);
+      record = LoadItemFileCommand.loadItemById(itemFileId);
     } else {
       // User must have view access in the folder's user group
-      record = LoadItemFileCommand.loadFileByIdForAuthorizedUser(fileId, context.getUserId(), item.getId());
+      record = LoadItemFileCommand.loadFileByIdForAuthorizedUser(itemFileId, context.getUserId(), item.getId());
     }
     if (record == null) {
-      LOG.warn("File record does not exist or no access: " + fileId);
+      LOG.warn("File record does not exist or no access: " + itemFileId);
       return null;
     }
 
@@ -118,21 +145,6 @@ public class DownloadItemFileWidget extends GenericWidget {
     File file = FileSystemCommand.getFileServerRootPath(record.getFileServerPath());
     if (!file.isFile()) {
       LOG.warn("Server file does not exist: " + record.getFileServerPath());
-      return null;
-    }
-
-    // Compare the URL with the filename to make sure they are the same
-    String requestedFile = context.getUri().substring(endIdx + 1);
-    if (requestedFile.contains("?")) {
-      requestedFile = requestedFile.substring(0, requestedFile.indexOf("?"));
-    }
-    try {
-      requestedFile = URLDecoder.decode(requestedFile, "UTF-8");
-    } catch (Exception e) {
-      LOG.warn("Could not url decode: " + requestedFile);
-    }
-    if (!requestedFile.equals(record.getFilename())) {
-      LOG.warn("Filename requested did not match saved filename");
       return null;
     }
 
@@ -166,7 +178,8 @@ public class DownloadItemFileWidget extends GenericWidget {
       }
 
       // The file is being viewed (in a new window)
-      context.getResponse().setHeader("Content-Disposition", "inline; filename=\"" + UrlCommand.encodeUri(record.getFilename()) + "\";");
+      context.getResponse().setHeader("Content-Disposition",
+          "inline; filename=\"" + UrlCommand.encodeUri(record.getFilename()) + "\";");
 
       // Check for a last-modified header and return 304 if possible
       long headerValue = context.getRequest().getDateHeader("If-Modified-Since");
@@ -192,7 +205,7 @@ public class DownloadItemFileWidget extends GenericWidget {
       context.setHandledResponse(true);
       return context;
     }
-    
+
     // Stream the file
     try {
       FileInputStream in = new FileInputStream(file);

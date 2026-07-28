@@ -71,7 +71,7 @@ public class SubFolderFormWidget extends GenericWidget {
     }
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.sub-folder-form.access", context.getUserSession())) {
       if (!CheckFolderPermissionCommand.userHasAddPermission(subFolder.getFolderId(), context.getUserId())) {
         return null;
       }
@@ -93,7 +93,7 @@ public class SubFolderFormWidget extends GenericWidget {
     String returnPage = UrlCommand.getValidReturnPage(context.getParameter("returnPage"));
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.sub-folder-form.access", context.getUserSession())) {
       if (!CheckFolderPermissionCommand.userHasAddPermission(subFolderBean.getFolderId(), context.getUserId())) {
         return null;
       }

@@ -1,4 +1,5 @@
 <%--
+  ~ Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
   ~ Copyright 2022 SimIS Inc.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -78,6 +79,17 @@
       </label>
       <label>Description
         <input type="text" placeholder="Describe it..." name="description" value="<c:out value="${webPage.description}"/>">
+      </label>
+      <label>Tags
+        <small>Type a tag and press Tab or Enter, or select from suggestions</small>
+        <div id="tag-input-container" class="tag-input-container">
+          <div id="tag-chips"></div>
+          <input type="text" id="tag-input" placeholder="Add tags..." autocomplete="off"/>          
+          <!-- Dropdown -->
+          <div id="tag-dropdown" class="tag-dropdown" style="display:none;"></div>
+        </div>
+        <input type="hidden" id="tags-hidden" name="tagsValue"
+              value="<c:out value='${tagsValue}'/>" />
       </label>
     </div>
     <div class="small-12 medium-6 cell">
@@ -160,6 +172,174 @@
   <h3>Loading...</h3>
 </div>
 <script>
+    (function() {
+        const tagInput = document.getElementById('tag-input');
+        const tagChips = document.getElementById('tag-chips');
+        const tagsHidden = document.getElementById('tags-hidden');
+        const dropdown = document.getElementById('tag-dropdown');
+
+        let tags = [];
+        let allTags = []; // from API
+        let filteredTags = [];
+        let activeIndex = -1;
+
+        // ===== Load existing tags =====
+        try {
+            const value = tagsHidden.value.trim();
+            if (value && value !== '[]') {
+                tags = JSON.parse(value);
+            }
+        } catch (e) {
+            tags = [];
+        }
+
+        // ===== Fetch tags from API =====
+        fetch('/json/tags')
+            .then(res => res.json())
+            .then(data => {
+                allTags = Array.isArray(data) ? data : (data.data || []);
+            })
+            .catch(() => {
+                allTags = [];
+            });
+
+        function renderTags() {
+            tagChips.innerHTML = '';
+
+            tags.forEach((tag, index) => {
+                const chip = document.createElement('div');
+                chip.className = 'tag-chip';
+
+                const span = document.createElement('span');
+                span.textContent = tag;
+
+                const remove = document.createElement('span');
+                remove.className = 'remove-tag';
+                remove.innerHTML = '&times;';
+                remove.dataset.index = index;
+
+                chip.appendChild(span);
+                chip.appendChild(remove);
+                tagChips.appendChild(chip);
+            });
+
+            tagsHidden.value = JSON.stringify(tags);
+        }
+
+        function addTag(value) {
+            const t = value.trim().toLowerCase();
+            if (t && !tags.includes(t)) {
+                tags.push(t);
+                renderTags();
+            }
+            tagInput.value = '';
+            hideDropdown();
+        }
+
+        function removeTag(index) {
+            tags.splice(index, 1);
+            renderTags();
+        }
+
+        function showDropdown(list) {
+            dropdown.innerHTML = '';
+            if (!list.length) {
+                dropdown.style.display = 'none';
+                return;
+            }
+
+            list.forEach((tag, i) => {
+                const div = document.createElement('div');
+                div.className = 'tag-option';
+                div.textContent = tag;
+
+                // Mark already selected
+                if (tags.includes(tag.toLowerCase())) {
+                    div.style.fontWeight = 'bold';
+                }
+
+                div.addEventListener('click', () => {
+                    addTag(tag);
+                });
+
+                dropdown.appendChild(div);
+            });
+
+            dropdown.style.display = 'block';
+        }
+
+        function hideDropdown() {
+            dropdown.style.display = 'none';
+            activeIndex = -1;
+        }
+
+        function filterTags(query) {
+            const q = query.toLowerCase();
+            filteredTags = allTags.filter(t => t.toLowerCase().includes(q));
+            showDropdown(filteredTags);
+        }
+
+        // ===== Events =====
+
+        tagInput.addEventListener('input', function() {
+            filterTags(this.value);
+        });
+
+        tagInput.addEventListener('focus', function() {
+            filterTags(this.value);
+        });
+
+        tagInput.addEventListener('keydown', function(e) {
+
+            const items = dropdown.querySelectorAll('.tag-option');
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                activeIndex = Math.min(activeIndex + 1, items.length - 1);
+            }
+            else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                activeIndex = Math.max(activeIndex - 1, 0);
+            }
+            else if (e.key === 'Enter') {
+                e.preventDefault();
+
+                if (activeIndex >= 0 && items[activeIndex]) {
+                    addTag(items[activeIndex].textContent);
+                } else {
+                    addTag(tagInput.value); // new tag
+                }
+            }
+            else if (e.key === 'Tab') {
+                // IMPORTANT: Allow tab default for navigation but still add tag
+                addTag(tagInput.value);
+            }
+            else if (e.key === 'Backspace' && tagInput.value === '' && tags.length) {
+                tags.pop();
+                renderTags();
+            }
+
+            // Highlight active item
+            items.forEach((el, i) => {
+                el.classList.toggle('active', i === activeIndex);
+            });
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('#tag-input-container')) {
+                hideDropdown();
+            }
+        });
+
+        tagChips.addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove-tag')) {
+                removeTag(parseInt(e.target.dataset.index));
+            }
+        });
+
+        renderTags();
+
+    })();
     $('#imageBrowserReveal').on('open.zf.reveal', function () {
         $('#imageBrowserReveal').html("<h3>Loading...</h3>");
         $.ajax({

@@ -44,7 +44,7 @@ public class DocumentUserGroupsAjax extends GenericJsonService {
     LOG.debug("DocumentUserGroupsAjax...");
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.document.user-groups", context.getUserSession())) {
       LOG.debug("No permission to: " + DocumentUserGroupsAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

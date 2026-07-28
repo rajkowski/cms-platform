@@ -43,7 +43,7 @@ public class FolderDetailsAjax extends GenericJsonService {
 
     // Restrict access to editors
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.folder.details", context.getUserSession())) {
       LOG.debug("No permission to: " + FolderDetailsAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

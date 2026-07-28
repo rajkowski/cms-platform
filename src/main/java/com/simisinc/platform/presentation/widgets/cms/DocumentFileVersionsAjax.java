@@ -47,7 +47,7 @@ public class DocumentFileVersionsAjax extends GenericJsonService {
     LOG.debug("DocumentFileVersionsAjax...");
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.document.file-versions", context.getUserSession())) {
       LOG.debug("No permission to: " + DocumentFileVersionsAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

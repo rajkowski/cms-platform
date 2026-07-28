@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,6 +27,7 @@ public class XapiStatementSpecification {
 
   private long id = -1L;
   private long actorId = -1L;
+  private long objectId = -1L;
   private String verb = null;
   private String object = null;
 
@@ -66,5 +68,13 @@ public class XapiStatementSpecification {
 
   public void setObject(String object) {
     this.object = object;
+  }
+
+  public long getObjectId() {
+    return objectId;
+  }
+
+  public void setObjectId(long objectId) {
+    this.objectId = objectId;
   }
 }

@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -188,7 +189,7 @@ public class FileSystemCommand {
   }
 
   /**
-   * Generator for scaleable sub-path values using dates
+   * Generator for scalable sub-path values using dates
    * 
    * @param module
    * @return
@@ -211,7 +212,7 @@ public class FileSystemCommand {
   }
 
   /**
-   * Generator for unique filenames
+   * Generator for unique filenames so it cannot collide with existing files
    * 
    * @param appendValue
    * @return
@@ -222,6 +223,20 @@ public class FileSystemCommand {
       return System.currentTimeMillis() + "-" + filenameUUID;
     }
     return System.currentTimeMillis() + "-" + filenameUUID + "-" + appendValue;
+  }
+
+  /**
+   * Reduces a file extension to a safe value (letters and digits only) so it cannot carry path separators or
+   * traversal sequences ("/", "\\", "..") into a file path.
+   *
+   * @param extension the raw extension, typically derived from a user-supplied filename
+   * @return the extension with everything but ASCII letters and digits removed (never null)
+   */
+  public static String cleanExtension(String extension) {
+    if (extension == null) {
+      return "";
+    }
+    return extension.replaceAll("[^A-Za-z0-9]", "");
   }
 
   /**
@@ -256,7 +271,7 @@ public class FileSystemCommand {
   }
 
   /**
-   * Generator to return a filename for temporary files
+   * Generator to return a filename for new files
    * 
    * @param folderName
    * @param userId
@@ -264,11 +279,19 @@ public class FileSystemCommand {
    * @return
    */
   public static File generateTempFile(String folderName, long userId, String extension) {
+    return generateTempFile(folderName, "", userId, extension);
+  }
+
+  public static File generateTempFile(String folderName, String filePrefix, long userId, String extension) {
     String serverRootPath = FileSystemCommand.getFileServerRootPathValue();
     String serverSubPath = FileSystemCommand.generateFileServerSubPath(folderName);
     String serverCompletePath = serverRootPath + serverSubPath;
-    String uniqueFilename = FileSystemCommand.generateUniqueFilename(userId);
-    return new File(serverCompletePath + uniqueFilename + (extension != null ? "." + extension : ""));
+    String uniqueFilename = (filePrefix != null ? filePrefix : "") + FileSystemCommand.generateUniqueFilename(userId);
+    String cleanExtension = FileSystemCommand.cleanExtension(extension);
+    if (StringUtils.isNotBlank(cleanExtension)) {
+      cleanExtension = "." + cleanExtension;
+    }
+    return new File(serverCompletePath + uniqueFilename + cleanExtension);
   }
 
   public static boolean isModified(File file, long previousModifiedValue) {

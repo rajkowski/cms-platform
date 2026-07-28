@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Matt Rajkowski (https://github.com/rajkowski)
+ * Copyright 2025-2026 Matt Rajkowski (https://github.com/rajkowski)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,14 @@
 
 package com.simisinc.platform.infrastructure.database;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
+import java.sql.Connection;
+import java.util.Properties;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.util.Properties;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 
 /**
  * Manages the PostgreSQL database connections and generates the SQL statements
@@ -53,6 +55,7 @@ public class ConnectionPool {
   private static HikariDataSource initApplicationCP(Properties properties) {
     HikariConfig config = new HikariConfig(mergePropertiesFromPrefix(properties, "application"));
     config.setMaxLifetime(600_000);
+    config.setPoolName("Web-Application-Pool");
     return new HikariDataSource(config);
   }
 
@@ -60,6 +63,7 @@ public class ConnectionPool {
   private static HikariDataSource initBackgroundJobsCP(Properties properties) {
     HikariConfig config = new HikariConfig(mergePropertiesFromPrefix(properties, "backgroundJobs"));
     config.setMaxLifetime(600_000);
+    config.setPoolName("Background-Jobs-Pool");
     return new HikariDataSource(config);
   }
 
@@ -67,6 +71,7 @@ public class ConnectionPool {
   private static HikariDataSource initDistributedMessagingCP(Properties properties) {
     HikariConfig config = new HikariConfig(mergePropertiesFromPrefix(properties, "distributedMessaging"));
     config.setMaxLifetime(600_000);
+    config.setPoolName("Distributed-Messaging-Pool");
     return new HikariDataSource(config);
   }
 
@@ -104,4 +109,13 @@ public class ConnectionPool {
     return distributedMessagingDS;
   }
 
+  public static boolean isLive() {
+    // Use the background jobs connection pool to determine if the database is live
+    try (Connection connection = backgroundJobsDS.getConnection()) {
+      return connection.isValid(2);
+    } catch (Exception e) {
+      LOG.error("Database connection is not valid", e);
+      return false;
+    }
+  }
 }

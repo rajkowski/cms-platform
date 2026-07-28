@@ -1,365 +1,148 @@
-<?xml version="1.0" ?>
+<?xml version="1.0"?>
 <!--
-  Maps fully-qualified widget and service class names to their Cedar PermissionGroup.
+  Maps widget and service Actions to their Cedar PermissionGroup.
   The PermissionEngine loads this file at startup and uses it to resolve which policy
-  governs access to each component.
+  governs access to each Action. Actions are stable identifiers passed to
+  PermissionEngine.checkAccess(action, userSession) by the widget/service code
+  and are independent of the Java class name or package, so classes can be
+  renamed or moved without breaking permission mappings.
 
   Attributes:
-    class  - fully-qualified Java class name
+    action - stable Action identifier, dotted lowercase (e.g. "cms.content.save-draft")
     group  - Cedar PermissionGroup entity ID (must match a .cedar policy file name without extension)
     type   - WIDGET | SERVICE | REST
 -->
 <components>
 
-  <!-- Visual Web Sync Editor group -->
-  <component class="com.simisinc.platform.presentation.widgets.editor.VisualWebSyncWidget"
-             group="visual-web-sync-editor"
-             type="WIDGET" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.StaticSiteJsonService"
-             group="visual-web-sync-editor"
-             type="SERVICE" />
-
-  <!-- Visual Content Editor group (content blocks, pages, sitemap, blogs, calendars) -->
-  <component class="com.simisinc.platform.presentation.widgets.editor.VisualContentEditorWidget"
-             group="visual-content-editor"
-             type="WIDGET" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.VisualHierarchyEditorWidget"
-             group="visual-content-editor"
-             type="WIDGET" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.VisualPageEditorWidget"
-             group="visual-content-editor"
-             type="WIDGET" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.ContentListJsonService"
-             group="visual-content-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.ContentGetJsonService"
-             group="visual-content-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.ContentPreviewJsonService"
-             group="visual-content-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.ContentSaveDraftJsonService"
-             group="visual-content-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.ContentPublishJsonService"
-             group="visual-content-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.PageChildrenJsonService"
-             group="visual-content-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.PageReorderJsonService"
-             group="visual-content-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.PageAddToHierarchyJsonService"
-             group="visual-content-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.PageRemoveFromHierarchyJsonService"
-             group="visual-content-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.PageContentBlocksJsonService"
-             group="visual-content-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.SitemapStructureJsonService"
-             group="visual-content-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.SitemapReorderTabJsonService"
-             group="visual-content-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.SitemapReorderItemJsonService"
-             group="visual-content-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.SitemapCreateTabJsonService"
-             group="visual-content-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.SitemapCreateItemJsonService"
-             group="visual-content-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.SitemapUpdateTabJsonService"
-             group="visual-content-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.SitemapUpdateItemJsonService"
-             group="visual-content-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.SitemapDeleteTabJsonService"
-             group="visual-content-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.SitemapDeleteItemJsonService"
-             group="visual-content-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.BlogsListJsonService"
-             group="visual-content-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.BlogsPostsJsonService"
-             group="visual-content-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.CalendarsListJsonService"
-             group="visual-content-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.CalendarsEventsJsonService"
-             group="visual-content-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.WebPageListAjax"
-             group="visual-content-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.WebPageContentAjax"
-             group="visual-content-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.WebPageInfoAjax"
-             group="visual-content-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.SaveWebPageInfoAjax"
-             group="visual-content-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.SaveWebPageAjax"
-             group="visual-content-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.StylesheetAjax"
-             group="visual-content-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.SaveStylesheetAjax"
-             group="visual-content-editor"
-             type="SERVICE" />
-
-  <!-- Visual Image Editor group -->
-  <component class="com.simisinc.platform.presentation.widgets.editor.VisualImageEditorWidget"
-             group="visual-image-editor"
-             type="WIDGET" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.ImageLibraryAjax"
-             group="visual-image-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.ImageContentAjax"
-             group="visual-image-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.ImageMetadataAjax"
-             group="visual-image-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.ImageDeleteAjax"
-             group="visual-image-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.ImageVersionsAjax"
-             group="visual-image-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.ImageVersionRevertAjax"
-             group="visual-image-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.ImageVersionDeleteAjax"
-             group="visual-image-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.ImageThumbnailAjax"
-             group="visual-image-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.ImageScaleDownAjax"
-             group="visual-image-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.ImageUploadAjax"
-             group="visual-image-editor"
-             type="SERVICE" />
-
-  <!-- Visual Document Editor group -->
-  <component class="com.simisinc.platform.presentation.widgets.editor.VisualDocumentEditorWidget"
-             group="visual-document-editor"
-             type="WIDGET" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.DocumentLibraryAjax"
-             group="visual-document-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.DocumentSubfoldersAjax"
-             group="visual-document-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.DocumentCreateFolderAjax"
-             group="visual-document-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.DocumentCreateSubfolderAjax"
-             group="visual-document-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.DocumentFileListAjax"
-             group="visual-document-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.DocumentContentAjax"
-             group="visual-document-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.DocumentUploadAjax"
-             group="visual-document-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.DocumentAddUrlAjax"
-             group="visual-document-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.DocumentFileVersionsAjax"
-             group="visual-document-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.DocumentAddVersionAjax"
-             group="visual-document-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.DocumentAddUrlVersionAjax"
-             group="visual-document-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.DocumentMoveFileAjax"
-             group="visual-document-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.DocumentDeleteFileAjax"
-             group="visual-document-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.DocumentDeleteFolderAjax"
-             group="visual-document-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.DocumentUpdateAjax"
-             group="visual-document-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.DocumentAnalyticsAjax"
-             group="visual-document-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.DocumentFileAnalyticsAjax"
-             group="visual-document-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.DocumentUserGroupsAjax"
-             group="visual-document-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.FolderSaveAjax"
-             group="visual-document-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.FolderDetailsAjax"
-             group="visual-document-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.FolderGroupsListAjax"
-             group="visual-document-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.FolderGroupSaveJsonService"
-             group="visual-document-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.FolderGroupDeleteJsonService"
-             group="visual-document-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.FolderGuestAccessSaveJsonService"
-             group="visual-document-editor"
-             type="SERVICE" />
-
-  <!-- Visual Data Editor group -->
-  <component class="com.simisinc.platform.presentation.widgets.editor.VisualDataEditorWidget"
-             group="visual-data-editor"
-             type="WIDGET" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.DataCollectionsAjax"
-             group="visual-data-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.DataDatasetsAjax"
-             group="visual-data-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.CollectionDetailsAjax"
-             group="visual-data-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.DatasetDetailsAjax"
-             group="visual-data-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.CollectionItemsAjax"
-             group="visual-data-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.DatasetRecordsAjax"
-             group="visual-data-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.SaveCollectionAjax"
-             group="visual-data-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.SaveDatasetAjax"
-             group="visual-data-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.DatasetImportAjax"
-             group="visual-data-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.DatasetScheduleAjax"
-             group="visual-data-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.DatasetSyncAjax"
-             group="visual-data-editor"
-             type="SERVICE" />
-
-  <!-- Visual CRM Editor group -->
-  <component class="com.simisinc.platform.presentation.widgets.editor.VisualCRMEditorWidget"
-             group="visual-crm-editor"
-             type="WIDGET" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.CRMFormsListJsonService"
-             group="visual-crm-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.CRMFormSubmissionsJsonService"
-             group="visual-crm-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.CRMFormSubmissionDetailJsonService"
-             group="visual-crm-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.CRMFormSubmissionUpdateJsonService"
-             group="visual-crm-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.CRMMailingListsJsonService"
-             group="visual-crm-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.CRMMailingListMembersJsonService"
-             group="visual-crm-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.CRMSaveMailingListAjax"
-             group="visual-crm-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.CRMCustomersJsonService"
-             group="visual-crm-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.CRMOrdersJsonService"
-             group="visual-crm-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.CRMSaveCustomerAjax"
-             group="visual-crm-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.CRMSaveProductCategoryAjax"
-             group="visual-crm-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.CRMSaveProductAjax"
-             group="visual-crm-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.CRMSavePricingRuleAjax"
-             group="visual-crm-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.CRMSaveSalesTaxNexusAjax"
-             group="visual-crm-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.CRMSaveShippingRateAjax"
-             group="visual-crm-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.CRMUsersJsonService"
-             group="visual-crm-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.CRMUserGroupsJsonService"
-             group="visual-crm-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.CRMSaveUserGroupAjax"
-             group="visual-crm-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.CRMUserRolesJsonService"
-             group="visual-crm-editor"
-             type="SERVICE" />
-
-  <!-- Visual Workflow Editor group -->
-  <component class="com.simisinc.platform.presentation.widgets.editor.VisualWorkflowEditorWidget"
-             group="visual-workflow-editor"
-             type="WIDGET" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.WorkflowTasksAjax"
-             group="visual-workflow-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.WorkflowEventsAjax"
-             group="visual-workflow-editor"
-             type="SERVICE" />
-  <component class="com.simisinc.platform.presentation.widgets.editor.WorkflowTaskHistoryAjax"
-             group="visual-workflow-editor"
-             type="SERVICE" />
-
   <!-- Site Content Editor group (content widget, menu TOC editor, sub-folder form) -->
-  <component class="com.simisinc.platform.presentation.widgets.cms.ContentWidget"
-             group="site-content-editor"
-             type="WIDGET" />
-  <component class="com.simisinc.platform.presentation.widgets.cms.MenuWidget"
-             group="site-content-editor"
-             type="WIDGET" />
-  <component class="com.simisinc.platform.presentation.widgets.admin.cms.SubFolderFormWidget"
-             group="site-content-editor"
-             type="WIDGET" />
+  <component action="cms.content.widget-access" group="site-content-editor" type="WIDGET" />
+  <component action="cms.menu.access" group="site-content-editor" type="WIDGET" />
+  <component action="cms.sub-folder-form.access" group="site-content-editor" type="WIDGET" />
 
   <!-- Site Blog Editor group (blog post widget with draft and delete access) -->
-  <component class="com.simisinc.platform.presentation.widgets.cms.BlogPostWidget"
-             group="site-blog-editor"
-             type="WIDGET" />
+  <component action="cms.blog-post.access" group="site-blog-editor" type="WIDGET" />
+
+  <!-- Visual Web Sync Editor group -->
+  <component action="cms.visual-web-sync.access" group="visual-web-sync-editor" type="WIDGET" />
+  <component action="cms.static-site.manage" group="visual-web-sync-editor" type="SERVICE" />
+
+  <!-- Visual Content Editor group (content blocks, pages, sitemap, blogs, calendars) -->
+  <component action="cms.visual-content-editor.access" group="visual-content-editor" type="WIDGET" />
+  <component action="cms.visual-hierarchy-editor.access" group="visual-content-editor" type="WIDGET" />
+  <component action="cms.visual-page-editor.access" group="visual-content-editor" type="WIDGET" />
+  <component action="cms.content.list" group="visual-content-editor" type="SERVICE" />
+  <component action="cms.content.get" group="visual-content-editor" type="SERVICE" />
+  <component action="cms.content.preview" group="visual-content-editor" type="SERVICE" />
+  <component action="cms.content.save-draft" group="visual-content-editor" type="SERVICE" />
+  <component action="cms.content.publish" group="visual-content-editor" type="SERVICE" />
+  <component action="cms.page.children" group="visual-content-editor" type="SERVICE" />
+  <component action="cms.page.reorder" group="visual-content-editor" type="SERVICE" />
+  <component action="cms.page.add-to-hierarchy" group="visual-content-editor" type="SERVICE" />
+  <component action="cms.page.remove-from-hierarchy" group="visual-content-editor" type="SERVICE" />
+  <component action="cms.page.content-blocks" group="visual-content-editor" type="SERVICE" />
+  <component action="cms.sitemap.structure" group="visual-content-editor" type="SERVICE" />
+  <component action="cms.sitemap.reorder-tab" group="visual-content-editor" type="SERVICE" />
+  <component action="cms.sitemap.reorder-item" group="visual-content-editor" type="SERVICE" />
+  <component action="cms.sitemap.create-tab" group="visual-content-editor" type="SERVICE" />
+  <component action="cms.sitemap.create-item" group="visual-content-editor" type="SERVICE" />
+  <component action="cms.sitemap.update-tab" group="visual-content-editor" type="SERVICE" />
+  <component action="cms.sitemap.update-item" group="visual-content-editor" type="SERVICE" />
+  <component action="cms.sitemap.delete-tab" group="visual-content-editor" type="SERVICE" />
+  <component action="cms.sitemap.delete-item" group="visual-content-editor" type="SERVICE" />
+  <component action="cms.blogs.list" group="visual-content-editor" type="SERVICE" />
+  <component action="cms.blogs.posts" group="visual-content-editor" type="SERVICE" />
+  <component action="cms.calendars.list" group="visual-content-editor" type="SERVICE" />
+  <component action="cms.calendars.events" group="visual-content-editor" type="SERVICE" />
+  <component action="cms.template.list" group="visual-content-editor" type="SERVICE" />
+  <component action="cms.template.content" group="visual-content-editor" type="SERVICE" />
+  <component action="cms.web-page.list" group="visual-content-editor" type="SERVICE" />
+  <component action="cms.web-page.content" group="visual-content-editor" type="SERVICE" />
+  <component action="cms.web-page.info" group="visual-content-editor" type="SERVICE" />
+  <component action="cms.web-page.save-info" group="visual-content-editor" type="SERVICE" />
+  <component action="cms.web-page.save" group="visual-content-editor" type="SERVICE" />
+  <component action="cms.stylesheet.get" group="visual-content-editor" type="SERVICE" />
+  <component action="cms.stylesheet.save" group="visual-content-editor" type="SERVICE" />
+
+  <!-- Visual Image Editor group -->
+  <component action="cms.visual-image-editor.access" group="visual-image-editor" type="WIDGET" />
+  <component action="cms.image.library" group="visual-image-editor" type="SERVICE" />
+  <component action="cms.image.content" group="visual-image-editor" type="SERVICE" />
+  <component action="cms.image.metadata" group="visual-image-editor" type="SERVICE" />
+  <component action="cms.image.delete" group="visual-image-editor" type="SERVICE" />
+  <component action="cms.image.versions" group="visual-image-editor" type="SERVICE" />
+  <component action="cms.image.version-revert" group="visual-image-editor" type="SERVICE" />
+  <component action="cms.image.version-delete" group="visual-image-editor" type="SERVICE" />
+  <component action="cms.image.thumbnail" group="visual-image-editor" type="SERVICE" />
+  <component action="cms.image.scale-down" group="visual-image-editor" type="SERVICE" />
+  <component action="cms.image.upload" group="visual-image-editor" type="SERVICE" />
+
+  <!-- Visual Document Editor group -->
+  <component action="cms.visual-document-editor.access" group="visual-document-editor" type="WIDGET" />
+  <component action="cms.document.library" group="visual-document-editor" type="SERVICE" />
+  <component action="cms.document.subfolders" group="visual-document-editor" type="SERVICE" />
+  <component action="cms.document.create-folder" group="visual-document-editor" type="SERVICE" />
+  <component action="cms.document.create-subfolder" group="visual-document-editor" type="SERVICE" />
+  <component action="cms.document.file-list" group="visual-document-editor" type="SERVICE" />
+  <component action="cms.document.content" group="visual-document-editor" type="SERVICE" />
+  <component action="cms.document.upload" group="visual-document-editor" type="SERVICE" />
+  <component action="cms.document.add-url" group="visual-document-editor" type="SERVICE" />
+  <component action="cms.document.file-versions" group="visual-document-editor" type="SERVICE" />
+  <component action="cms.document.add-version" group="visual-document-editor" type="SERVICE" />
+  <component action="cms.document.add-url-version" group="visual-document-editor" type="SERVICE" />
+  <component action="cms.document.move-file" group="visual-document-editor" type="SERVICE" />
+  <component action="cms.document.delete-file" group="visual-document-editor" type="SERVICE" />
+  <component action="cms.document.delete-folder" group="visual-document-editor" type="SERVICE" />
+  <component action="cms.document.update" group="visual-document-editor" type="SERVICE" />
+  <component action="cms.document.analytics" group="visual-document-editor" type="SERVICE" />
+  <component action="cms.document.file-analytics" group="visual-document-editor" type="SERVICE" />
+  <component action="cms.document.user-groups" group="visual-document-editor" type="SERVICE" />
+  <component action="cms.folder.save" group="visual-document-editor" type="SERVICE" />
+  <component action="cms.folder.details" group="visual-document-editor" type="SERVICE" />
+  <component action="cms.folder.groups-list" group="visual-document-editor" type="SERVICE" />
+  <component action="cms.folder.group-save" group="visual-document-editor" type="SERVICE" />
+  <component action="cms.folder.group-delete" group="visual-document-editor" type="SERVICE" />
+  <component action="cms.folder.guest-access-save" group="visual-document-editor" type="SERVICE" />
+
+  <!-- Visual Data Editor group -->
+  <component action="cms.visual-data-editor.access" group="visual-data-editor" type="WIDGET" />
+  <component action="cms.data.collections" group="visual-data-editor" type="SERVICE" />
+  <component action="cms.data.datasets" group="visual-data-editor" type="SERVICE" />
+  <component action="cms.collection.details" group="visual-data-editor" type="SERVICE" />
+  <component action="cms.dataset.details" group="visual-data-editor" type="SERVICE" />
+  <component action="cms.collection.items" group="visual-data-editor" type="SERVICE" />
+  <component action="cms.dataset.records" group="visual-data-editor" type="SERVICE" />
+  <component action="cms.collection.save" group="visual-data-editor" type="SERVICE" />
+  <component action="cms.dataset.save" group="visual-data-editor" type="SERVICE" />
+  <component action="cms.dataset.import" group="visual-data-editor" type="SERVICE" />
+  <component action="cms.dataset.schedule" group="visual-data-editor" type="SERVICE" />
+  <component action="cms.dataset.sync" group="visual-data-editor" type="SERVICE" />
+
+  <!-- Visual CRM Editor group -->
+  <component action="cms.visual-crm-editor.access" group="visual-crm-editor" type="WIDGET" />
+  <component action="cms.crm.forms-list" group="visual-crm-editor" type="SERVICE" />
+  <component action="cms.crm.form-submissions" group="visual-crm-editor" type="SERVICE" />
+  <component action="cms.crm.form-submission-detail" group="visual-crm-editor" type="SERVICE" />
+  <component action="cms.crm.form-submission-update" group="visual-crm-editor" type="SERVICE" />
+  <component action="cms.crm.mailing-lists" group="visual-crm-editor" type="SERVICE" />
+  <component action="cms.crm.mailing-list-members" group="visual-crm-editor" type="SERVICE" />
+  <component action="cms.crm.save-mailing-list" group="visual-crm-editor" type="SERVICE" />
+  <component action="cms.crm.customers" group="visual-crm-editor" type="SERVICE" />
+  <component action="cms.crm.orders" group="visual-crm-editor" type="SERVICE" />
+  <component action="cms.crm.save-customer" group="visual-crm-editor" type="SERVICE" />
+  <component action="cms.crm.save-product-category" group="visual-crm-editor" type="SERVICE" />
+  <component action="cms.crm.save-product" group="visual-crm-editor" type="SERVICE" />
+  <component action="cms.crm.save-pricing-rule" group="visual-crm-editor" type="SERVICE" />
+  <component action="cms.crm.save-sales-tax-nexus" group="visual-crm-editor" type="SERVICE" />
+  <component action="cms.crm.save-shipping-rate" group="visual-crm-editor" type="SERVICE" />
+  <component action="cms.crm.users" group="visual-crm-editor" type="SERVICE" />
+  <component action="cms.crm.user-groups" group="visual-crm-editor" type="SERVICE" />
+  <component action="cms.crm.save-user-group" group="visual-crm-editor" type="SERVICE" />
+  <component action="cms.crm.user-roles" group="visual-crm-editor" type="SERVICE" />
+
+  <!-- Visual Workflow Editor group -->
+  <component action="cms.visual-workflow-editor.access" group="visual-workflow-editor" type="WIDGET" />
+  <component action="cms.workflow.tasks" group="visual-workflow-editor" type="SERVICE" />
+  <component action="cms.workflow.events" group="visual-workflow-editor" type="SERVICE" />
+  <component action="cms.workflow.task-history" group="visual-workflow-editor" type="SERVICE" />
 
 </components>

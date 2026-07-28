@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,10 +49,6 @@ public class ItemCustomFieldCommand {
     return parseCustomFields(entriesList, item, true);
   }
 
-  public static List<CustomField> prepareFormValues(PreferenceEntriesList entriesList, Item item) {
-    return parseCustomFields(entriesList, item, false);
-  }
-
   public static List<CustomField> parseCustomFields(PreferenceEntriesList entriesList, Item item,
       boolean requireValue) {
     List<CustomField> fieldList = new ArrayList<>();
@@ -87,7 +84,15 @@ public class ItemCustomFieldCommand {
             }
           }
         } else {
-          value = BeanUtils.getProperty(item, objectParameter);
+          if ("tags".equals(objectParameter)) {
+            if (item.getTags() == null || item.getTags().length == 0) {
+              value = null;
+            } else {
+              value = String.join("|", item.getTags());
+            }
+          } else {
+            value = BeanUtils.getProperty(item, objectParameter);
+          }
           if ("url".equals(objectParameter)) {
             Collection collection = LoadCollectionCommand.loadCollectionById(item.getCollectionId());
             Category category = LoadCategoryCommand.loadCategoryById(item.getCategoryId());

@@ -36,7 +36,7 @@ public class PrototypeWidget extends GenericWidget {
 
     // This widget is only for admins and content managers
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.prototype.access", context.getUserSession())) {
       return null;
     }
 

@@ -11,7 +11,8 @@
     "java.dependency.syncWithFolderExplorer": true,
     "cSpell.words": [
         "Servlet",
-        "tlds"
+        "tlds",
+        "zeroio"
     ],
     "java.test.defaultConfig": "webConfig",
     "java.test.config": [

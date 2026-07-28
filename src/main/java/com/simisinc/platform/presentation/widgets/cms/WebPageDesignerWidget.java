@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -83,14 +84,29 @@ public class WebPageDesignerWidget extends GenericWidget {
 
     // webPage must be specified, even if it doesn't exist
     String webPageLinkValue = context.getParameter("webPage");
-    if (webPage == null) {
-      // Determine the page being edited
-      if (StringUtils.isEmpty(webPageLinkValue)) {
-        LOG.warn("Missing webPage value");
-        return context;
-      }
-      webPage = WebPageRepository.findByLink(webPageLinkValue);
+
+    // Allow just a title to be specified, and make a link value from it
+    String webPageTitleValue = context.getParameter("title");
+    if (StringUtils.isEmpty(webPageLinkValue) && !StringUtils.isEmpty(webPageTitleValue)) {
+      webPageLinkValue = "/" + MakeContentUniqueIdCommand.parseToValidValue(webPageTitleValue);
     }
+
+    // Validate the web page link value
+    if (StringUtils.isEmpty(webPageLinkValue)) {
+      LOG.warn("Missing webPage value");
+      return context;
+    }
+
+    // Try loading the webPage
+    webPage = WebPageRepository.findByLink(webPageLinkValue);
+
+    // Check if this is a title-only request and the page already exists
+    if (webPage != null && StringUtils.isNotBlank(webPageTitleValue)) {
+      // Web Page Already exists and a title was specified, so redirect to this page for the user to see it
+      context.setRedirect(webPage.getLink());
+      return context;
+    }
+
     if (webPage == null) {
       LOG.debug("Could not find an existing page, ready to create a new one");
       webPage = new WebPage();
@@ -99,13 +115,18 @@ public class WebPageDesignerWidget extends GenericWidget {
       String title = webPageLinkValue.replace("-", " ");
       title = StringUtils.substringAfterLast(title, "/");
       title = WordUtils.capitalizeFully(title, ' ');
+      // Or use the specified title
+      if (StringUtils.isNotBlank(webPageTitleValue)) {
+        title = webPageTitleValue;
+      }
       webPage.setTitle(title);
     }
     // Show some templates
     if (StringUtils.isBlank(webPage.getPageXml())) {
 
       // Load web templates from the filesystem and database
-      List<WebPageTemplate> webPageTemplateList = XMLWebPageTemplateLoader.retrieveTemplateList(context.getServletContext());
+      List<WebPageTemplate> webPageTemplateList = XMLWebPageTemplateLoader
+          .retrieveTemplateList(context.getServletContext());
       if (!webPageTemplateList.isEmpty()) {
         LOG.debug("Found templates...");
 
@@ -168,7 +189,8 @@ public class WebPageDesignerWidget extends GenericWidget {
       webPageTemplate = WebPageTemplateRepository.findById(Long.parseLong(templateIdValue));
     } else if (StringUtils.isNumeric(templateUniqueIdValue)) {
       // Filesystem template
-      List<WebPageTemplate> webPageTemplateList = XMLWebPageTemplateLoader.retrieveTemplateList(context.getServletContext());
+      List<WebPageTemplate> webPageTemplateList = XMLWebPageTemplateLoader
+          .retrieveTemplateList(context.getServletContext());
       webPageTemplate = webPageTemplateList.stream()
           .filter(template -> Long.parseLong(templateUniqueIdValue) == template.getUniqueId())
           .findFirst()
@@ -221,7 +243,8 @@ public class WebPageDesignerWidget extends GenericWidget {
         LOG.error("User input: pageXml did not validate: " + e.getMessage());
         context.setRequestObject(webPage);
         context.setErrorMessage(
-            "The XML could not be validated. Use <page><section><column><widget> notation. Error reported: " + e.getMessage());
+            "The XML could not be validated. Use <page><section><column><widget> notation. Error reported: "
+                + e.getMessage());
         return context;
       }
 

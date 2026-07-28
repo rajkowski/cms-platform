@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,10 +17,12 @@
 
 package com.simisinc.platform.application.items;
 
-import com.simisinc.platform.domain.model.items.Collection;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.commons.text.StringEscapeUtils;
+
+import com.simisinc.platform.domain.model.items.Collection;
 
 /**
  * Methods to display information about a collection
@@ -48,5 +51,16 @@ public class CollectionCommand {
       return null;
     }
     return collection.getIcon();
+  }
+
+  public static String headerColorCSS(Long collectionId) {
+    Collection collection = LoadCollectionCommand.loadCollectionById(collectionId);
+    if (collection == null) {
+      return null;
+    }
+    if (StringUtils.isBlank(collection.getHeaderTextColor()) || StringUtils.isBlank(collection.getHeaderBgColor())) {
+      return null;
+    }
+    return "background:" + StringEscapeUtils.escapeXml11(collection.getHeaderBgColor()) + ";color:" + StringEscapeUtils.escapeXml11(collection.getHeaderTextColor());
   }
 }

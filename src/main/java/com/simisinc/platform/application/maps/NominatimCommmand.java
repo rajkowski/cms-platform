@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,9 +30,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jobrunr.utils.resilience.RateLimiter;
 
-import com.simisinc.platform.ApplicationInfo;
 import com.simisinc.platform.application.http.HttpGetCommand;
 import com.simisinc.platform.domain.model.items.Item;
+import com.zeroio.platform.ApplicationInfo;
 
 /**
  * Nominatim integration

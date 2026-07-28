@@ -51,7 +51,7 @@ public class SitemapUpdateTabJsonService extends GenericJsonService {
   public JsonServiceContext post(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.sitemap.update-tab", context.getUserSession())) {
       LOG.debug("No permission to: " + SitemapUpdateTabJsonService.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

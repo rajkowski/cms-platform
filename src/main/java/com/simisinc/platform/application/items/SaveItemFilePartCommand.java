@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,19 +18,18 @@
 package com.simisinc.platform.application.items;
 
 import java.io.File;
-import java.nio.file.Paths;
 
-import javax.servlet.http.Part;
-
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.application.cms.SaveFilePartCommand;
 import com.simisinc.platform.application.filesystem.FileSystemCommand;
+import com.simisinc.platform.domain.model.cms.FileItem;
 import com.simisinc.platform.domain.model.items.Item;
 import com.simisinc.platform.domain.model.items.ItemFileItem;
 import com.simisinc.platform.presentation.controller.WidgetContext;
+import com.zeroio.platform.presentation.controller.FileModulesConstants;
 
 /**
  * Validates and saves an item's uploaded file item object
@@ -43,53 +43,23 @@ public class SaveItemFilePartCommand {
 
   public static ItemFileItem saveFile(WidgetContext context, Item item) throws DataException {
 
-    // Prepare to save the file
-    String serverRootPath = FileSystemCommand.getFileServerRootPathValue();
-    String serverSubPath = FileSystemCommand.generateFileServerSubPath("item-uploads");
-    String serverCompletePath = serverRootPath + serverSubPath;
-    String uniqueFilename = FileSystemCommand.generateUniqueFilename(context.getUserId());
-
-    // Find the file in the request and save it
-    String submittedFilename = null;
-    String extension = null;
-    long fileLength = 0;
-    File tempFile = null;
+    FileItem fileItem = null;
     try {
-      Part filePart = context.getPart("file");
-      if (filePart == null) {
-        return null;
-      }
-      fileLength = filePart.getSize();
-      if (fileLength <= 0) {
-        LOG.debug("The file size was 0");
-        return null;
-      }
-
-      LOG.debug("Found a file...");
-      submittedFilename = Paths.get(filePart.getSubmittedFileName()).getFileName().toString(); // MSIE fix.
-      extension = FilenameUtils.getExtension(submittedFilename);
-      tempFile = new File(serverCompletePath + uniqueFilename + "." + extension);
-
-      LOG.debug("Writing file " + fileLength + " bytes");
-      filePart.write(serverCompletePath + uniqueFilename + "." + extension);
-
+      fileItem = SaveFilePartCommand.saveFile(FileModulesConstants.ITEMS_UPLOADS, context.getPart("file"), context.getUserId());
     } catch (Exception e) {
       LOG.warn("Could not handle file: " + e.getMessage());
       // Clean up the file
-      if (tempFile != null && tempFile.exists()) {
-        LOG.warn("Deleting an uploaded file: " + serverCompletePath + uniqueFilename + "." + extension);
-        tempFile.delete();
-      }
+      SaveFilePartCommand.cleanupFile(fileItem);
       throw new DataException("There was an issue with the file");
     }
 
     // Populate the fields
     ItemFileItem fileItemBean = new ItemFileItem();
     fileItemBean.setItemId(item.getId());
-    fileItemBean.setFilename(submittedFilename);
-    fileItemBean.setFileLength(fileLength);
-    fileItemBean.setFileServerPath(serverSubPath + uniqueFilename + "." + extension);
-    fileItemBean.setExtension(extension);
+    fileItemBean.setFilename(fileItem.getFilename());
+    fileItemBean.setFileLength(fileItem.getFileLength());
+    fileItemBean.setFileServerPath(fileItem.getFileServerPath());
+    fileItemBean.setExtension(fileItem.getExtension());
     fileItemBean.setCreatedBy(context.getUserId());
     fileItemBean.setModifiedBy(context.getUserId());
     return fileItemBean;

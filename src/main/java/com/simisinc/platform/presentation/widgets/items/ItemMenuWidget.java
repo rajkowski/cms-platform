@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -63,7 +64,8 @@ public class ItemMenuWidget extends GenericWidget {
     context.getRequest().setAttribute("item", item);
 
     // Check access to the collection
-    Collection collection = LoadCollectionCommand.loadCollectionByIdForAuthorizedUser(item.getCollectionId(), context.getUserId());
+    Collection collection = LoadCollectionCommand.loadCollectionByIdForAuthorizedUser(item.getCollectionId(),
+        context.getUserId());
     if (collection == null) {
       return null;
     }
@@ -118,6 +120,9 @@ public class ItemMenuWidget extends GenericWidget {
     if ((!itemTabList.isEmpty() && itemTabList.size() > 1)) {
       context.getRequest().setAttribute("itemTabList", itemTabList);
     }
+
+    // Determine the preferences
+    context.getRequest().setAttribute("showAdminMenu", context.getPreferences().getOrDefault("showAdminMenu", "false"));
 
     // Determine the view
     if ("extended".equals(context.getPreferences().get("view"))) {

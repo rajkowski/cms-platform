@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -61,7 +62,8 @@ public class ItemFileListWidget extends GenericWidget {
     String orderBy = context.getPreferences().get("orderBy");
     int withinLastDays = Integer.parseInt(context.getPreferences().getOrDefault("withinLastDays", "-1"));
     String showWhenEmpty = context.getPreferences().getOrDefault("showWhenEmpty", "true");
-    context.getRequest().setAttribute("emptyMessage", context.getPreferences().getOrDefault("emptyMessage", "No documents were found"));
+    context.getRequest().setAttribute("emptyMessage",
+        context.getPreferences().getOrDefault("emptyMessage", "No documents were found"));
 
     // Verify access to the item
     String itemUniqueId = context.getPreferences().getOrDefault("uniqueId", context.getCoreData().get("itemUniqueId"));
@@ -69,7 +71,8 @@ public class ItemFileListWidget extends GenericWidget {
     if (item == null) {
       return null;
     }
-    Collection collection = LoadCollectionCommand.loadCollectionByIdForAuthorizedUser(item.getCollectionId(), context.getUserId());
+    Collection collection = LoadCollectionCommand.loadCollectionByIdForAuthorizedUser(item.getCollectionId(),
+        context.getUserId());
     if (collection == null) {
       return null;
     }
@@ -116,6 +119,12 @@ public class ItemFileListWidget extends GenericWidget {
       canEdit = CheckItemFolderPermissionCommand.userHasEditPermission(folder.getId(), context.getUserId());
       canDelete = CheckItemFolderPermissionCommand.userHasDeletePermission(folder.getId(), context.getUserId());
     }
+    if (CheckCollectionPermissionCommand.userHasDeletePermission(item.getCollectionId(), context.getUserId())) {
+      canDelete = true;
+    }
+    if (CheckCollectionPermissionCommand.userHasEditPermission(item.getCollectionId(), context.getUserId())) {
+      canEdit = true;
+    }
     if (context.hasRole("admin")) {
       canEdit = true;
       canDelete = true;
@@ -151,7 +160,8 @@ public class ItemFileListWidget extends GenericWidget {
     if (item == null) {
       return null;
     }
-    Collection collection = LoadCollectionCommand.loadCollectionByIdForAuthorizedUser(item.getCollectionId(), context.getUserId());
+    Collection collection = LoadCollectionCommand.loadCollectionByIdForAuthorizedUser(item.getCollectionId(),
+        context.getUserId());
     if (collection == null) {
       return null;
     }
@@ -175,6 +185,9 @@ public class ItemFileListWidget extends GenericWidget {
     boolean canDelete = false;
     if (folder != null) {
       canDelete = CheckItemFolderPermissionCommand.userHasDeletePermission(folder.getId(), context.getUserId());
+    }
+    if (CheckCollectionPermissionCommand.userHasDeletePermission(item.getCollectionId(), context.getUserId())) {
+      canDelete = true;
     }
     if (context.hasRole("admin")) {
       canDelete = true;

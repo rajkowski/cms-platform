@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!--
+  ~ Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
   ~ Copyright 2022 SimIS Inc. (https://www.simiscms.com)
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,5 +36,13 @@
         <name>icon</name>
         <function-class>com.simisinc.platform.application.items.CollectionCommand</function-class>
         <function-signature>java.lang.String icon(java.lang.Long)</function-signature>
+    </function>
+    <function>
+        <description>
+            Returns header color CSS value for a collectionId
+        </description>
+        <name>headerColorCSS</name>
+        <function-class>com.simisinc.platform.application.items.CollectionCommand</function-class>
+        <function-signature>java.lang.String headerColorCSS(java.lang.Long)</function-signature>
     </function>
 </taglib>

@@ -24,13 +24,6 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
 
 /**
  * Visual Analytics Dashboard Widget for site usage and visitor analytics
- *
- * Provides a real-time and historical analytics surface for admins and editors
- * with KPI cards, trend charts, live sessions, content analytics, audience insights,
- * and technical metrics.
- *
- * @author matt rajkowski
- * @created 01/31/26 02:00 PM
  */
 public class VisualAnalyticsDashboardWidget extends GenericWidget {
 
@@ -41,22 +34,17 @@ public class VisualAnalyticsDashboardWidget extends GenericWidget {
 
   @Override
   public WidgetContext execute(WidgetContext context) {
-
-    // Check if user has admin permissions to access analytics
     if (!context.getUserSession().hasRole("admin") && !context.getUserSession().hasRole("content-manager")) {
       context.setErrorMessage("You do not have permission to access the analytics dashboard");
       return context;
     }
 
-    // Set the JSP
-    context.setJsp(DASHBOARD_JSP);
-
-    // Set initial configuration
     context.getRequest().setAttribute("allowedRoles", "admin,content-manager,community-manager");
-    context.getRequest().setAttribute("defaultTimeRange", "7d"); // Last 7 days
+    context.getRequest().setAttribute("defaultTimeRange", "7d");
     context.getRequest().setAttribute("liveEnabled", true);
     context.getRequest().setAttribute("technicalMetricsEnabled", true);
 
+    context.setJsp(DASHBOARD_JSP);
     return context;
   }
 }

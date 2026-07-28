@@ -47,7 +47,7 @@ public class CRMMailingListMembersJsonService extends GenericJsonService {
   public JsonServiceContext get(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.crm.mailing-list-members", context.getUserSession())) {
       LOG.debug("No permission to: " + CRMMailingListMembersJsonService.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

@@ -1,4 +1,5 @@
 <%--
+  ~ Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
   ~ Copyright 2022 SimIS Inc.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,18 +15,19 @@
   ~ limitations under the License.
   --%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix="js" uri="/WEB-INF/tlds/javascript-escape.tld" %>
+<c%@ taglib prefix="js" uri="/WEB-INF/tlds/javascript-escape.tld" %>
 <jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="collection" class="com.simisinc.platform.domain.model.items.Collection" scope="request"/>
 <jsp:useBean id="buttonName" class="java.lang.String" scope="request"/>
+<jsp:useBean id="buttonClass" class="java.lang.String" scope="request"/>
 <c:if test="${collection.id gt 0}">
   <c:choose>
     <c:when test="${!empty addUrl}">
-      <a class="button radius" href="${addUrl}<c:if test="${!empty returnPage}">?returnPage=${returnPage}</c:if>"><c:out value="${buttonName}" /> <i class="fa fa-arrow-circle-right"></i></a>
+      <a class="button radius<c:if test="${!empty buttonClass}"> ${buttonClass}</c:if>" href="${addUrl}<c:if test="${!empty returnPage}">?returnPage=${returnPage}</c:if>"><c:out value="${buttonName}" /> <i class="fa fa-arrow-circle-right"></i></a>
     </c:when>
     <c:otherwise>
-      <a class="button radius" href="${ctx}/add-an-item?collectionUniqueId=<c:out value="${collection.uniqueId}" /><c:if test="${!empty returnPage}">&returnPage=${returnPage}</c:if>"><c:out value="${buttonName}" /> <i class="fa fa-arrow-circle-right"></i></a>
+      <a class="button radius<c:if test="${!empty buttonClass}"> ${buttonClass}</c:if>" href="${ctx}/add-an-item?collectionUniqueId=<c:out value="${collection.uniqueId}" /><c:if test="${!empty returnPage}">&returnPage=${returnPage}</c:if>"><c:out value="${buttonName}" /> <i class="fa fa-arrow-circle-right"></i></a>
     </c:otherwise>
   </c:choose>
 </c:if>

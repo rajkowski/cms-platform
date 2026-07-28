@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -55,6 +56,7 @@ public class WebPage extends Entity {
   private String draftPageXml = null;
   private String template = null;
   private String comments = null;
+  private String highlight = null;
   private String[] tags = null;
 
   public WebPage() {
@@ -251,6 +253,14 @@ public class WebPage extends Entity {
 
   public void setSitemapChangeFrequency(String sitemapChangeFrequency) {
     this.sitemapChangeFrequency = sitemapChangeFrequency;
+  }
+
+  public String getHighlight() {
+    return highlight;
+  }
+
+  public void setHighlight(String highlight) {
+    this.highlight = highlight;
   }
 
   public String[] getTags() {

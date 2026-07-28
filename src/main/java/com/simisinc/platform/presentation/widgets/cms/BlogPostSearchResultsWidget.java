@@ -18,6 +18,7 @@ package com.simisinc.platform.presentation.widgets.cms;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
@@ -31,6 +32,7 @@ import com.simisinc.platform.infrastructure.persistence.cms.BlogPostSpecificatio
 import com.simisinc.platform.presentation.controller.RequestConstants;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.zeroio.platform.domain.model.cms.SearchCriteria;
 
 /**
  * Returns search results for blog posts
@@ -46,6 +48,36 @@ public class BlogPostSearchResultsWidget extends GenericWidget {
 
   public WidgetContext execute(WidgetContext context) {
 
+    // Determine the search criteria
+    SearchCriteria searchCriteria = new SearchCriteria(context.getParameterMap());
+    if (!searchCriteria.hasFilters()) {
+      return null;
+    }
+    context.getRequest().setAttribute("searchCriteria", searchCriteria);
+
+    // Check the 'ofType' filter - only show attachments when filter is 'attachments', 'all', or empty
+    String isOfType = Objects.toString(searchCriteria.getOfType(), SearchCriteria.ALL);
+    if (!SearchCriteria.ALL.equals(isOfType) && !SearchCriteria.POSTS.equals(isOfType)) {
+      // User has selected a different content type filter (e.g., 'pages')
+      return null;
+    }
+
+    // Check the 'showWhenOfType' preference
+    String showWhenOfType = context.getPreferences().getOrDefault("showWhenOfType", SearchCriteria.ALL);
+    if (!showWhenOfType.equals(isOfType)) {
+      // Widget is configured to show a different content type than the current search criteria
+      return null;
+    }
+
+    // View More takes over the 'ofType' for paging to use
+    context.getRequest().setAttribute("viewMoreType", SearchCriteria.POSTS);
+
+    // Standard request items
+    context.getRequest().setAttribute("icon", context.getPreferences().get("icon"));
+    context.getRequest().setAttribute("title", context.getPreferences().get("title"));
+    context.getRequest().setAttribute("showPaging", context.getPreferences().getOrDefault("showPaging", "true"));
+    context.getRequest().setAttribute("returnPage", context.getRequest().getRequestURI());
+
     // Determine the record paging
     int limit = Integer.parseInt(context.getPreferences().getOrDefault("limit", "15"));
     int page = context.getParameterAsInt("page", 1);
@@ -57,21 +89,22 @@ public class BlogPostSearchResultsWidget extends GenericWidget {
     }
     context.getRequest().setAttribute(RequestConstants.RECORD_PAGING, constraints);
 
-    // Determine the search term
-    String query = context.getParameter("query");
-    if (StringUtils.isBlank(query)) {
-      return null;
-    }
-
     // Determine criteria
     BlogPostSpecification specification = new BlogPostSpecification();
     specification.setPublishedOnly(true);
-    specification.setSearchTerm(query);
+
+    String query = searchCriteria.getQuery();
+    if (StringUtils.isNotBlank(query)) {
+      specification.setSearchTerm(query);
+    }
 
     // Query the data
     List<BlogPost> blogPostList = BlogPostRepository.findAll(specification, constraints);
     if (blogPostList == null || blogPostList.isEmpty()) {
-      return context;
+      boolean showWhenEmpty = "true".equals(context.getPreferences().getOrDefault("showWhenEmpty", "true"));
+      if (!showWhenEmpty) {
+        return context;
+      }
     }
     context.getRequest().setAttribute("blogPostList", blogPostList);
 
@@ -95,12 +128,6 @@ public class BlogPostSearchResultsWidget extends GenericWidget {
       searchResultList.add(searchResult);
     }
     context.getRequest().setAttribute("searchResultList", searchResultList);
-
-    // Standard request items
-    context.getRequest().setAttribute("icon", context.getPreferences().get("icon"));
-    context.getRequest().setAttribute("title", context.getPreferences().get("title"));
-    context.getRequest().setAttribute("showPaging", context.getPreferences().getOrDefault("showPaging", "true"));
-    context.getRequest().setAttribute("returnPage", context.getRequest().getRequestURI());
 
     // Show the JSP
     context.setJsp(JSP);

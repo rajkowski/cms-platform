@@ -47,7 +47,7 @@ public class SaveWebPageAjax extends GenericJsonService {
     LOG.debug("SaveWebPageAjax...");
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.web-page.save", context.getUserSession())) {
       LOG.debug("No permission to: " + SaveWebPageAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

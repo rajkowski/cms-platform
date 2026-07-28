@@ -12,8 +12,8 @@
           <p>You can edit the page design if you wish to create the page.</p>
           </div>
           <p>
-            <a class="button radius small primary" href="${ctx}/admin/web-page-designer?webPage=${webPage.link}"><i class="fa fa-bars"></i> Choose a Template</a><br/>
-            <a class="button radius small primary" href="${ctx}/admin/visual-page-editor?webPage=${webPage.link}"><i class="fa fa-window-maximize"></i> Create a Webpage</a>
+            <a class="button radius small primary" href="${ctx}/admin/web-page-designer?webPage=${webPage.link}"><i class="fa fa-bars"></i> Choose a Template</a>
+            <a class="button radius small primary" href="${ctx}/admin/visual-page-editor?webPage=${webPage.link}"><i class="fa fa-window-maximize"></i> Design a Webpage</a>
           </p>
           ]]></html>
         </widget>
@@ -247,6 +247,9 @@
   </page>
   <page name="/content-browser" role="admin,content-manager" title="Content Browser">
     <widget name="contentBrowser" />
+  </page>
+  <page name="/diagram-browser" role="admin,content-manager" title="Diagram Browser">
+    <widget name="diagramBrowser" />
   </page>
   <page name="/image-upload" role="admin,content-manager">
     <widget name="imageUpload" />

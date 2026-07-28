@@ -50,7 +50,7 @@ public class SitemapCreateTabJsonService extends GenericJsonService {
   public JsonServiceContext post(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess(getClass().getName(), context.getUserSession())) {
+    if (!PermissionEngine.checkAccess("cms.sitemap.create-tab", context.getUserSession())) {
       LOG.debug("No permission to: " + SitemapCreateTabJsonService.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

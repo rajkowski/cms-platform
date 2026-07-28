@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +20,8 @@ package com.simisinc.platform.infrastructure.persistence.cms;
 import com.simisinc.platform.domain.model.Entity;
 import com.simisinc.platform.presentation.controller.DataConstants;
 
+import java.sql.Timestamp;
+
 /**
  * Properties for querying objects from the web page repository
  *
@@ -33,6 +36,12 @@ public class WebPageSpecification extends Entity {
   private int searchable = DataConstants.UNDEFINED;
   private int inSitemap = DataConstants.UNDEFINED;
   private int hasRedirect = DataConstants.UNDEFINED;
+  private String[] regionTags = null;
+  private String[] filterTags = null;
+  private Timestamp modifiedAfter = null;
+  private Timestamp modifiedBefore = null;
+  private long[] modifiedByUserIds = null;
+  private String searchTerm = null;
 
   public WebPageSpecification() {
   }
@@ -103,5 +112,53 @@ public class WebPageSpecification extends Entity {
 
   public void setHasRedirect(boolean hasRedirect) {
     this.hasRedirect = (hasRedirect ? DataConstants.TRUE : DataConstants.FALSE);
+  }
+
+  public String[] getFilterTags() {
+    return filterTags;
+  }
+
+  public void setFilterTags(String[] filterTags) {
+    this.filterTags = filterTags;
+  }
+
+  public String[] getRegionTags() {
+    return regionTags;
+  }
+
+  public void setRegionTags(String[] regionTags) {
+    this.regionTags = regionTags;
+  }
+
+  public Timestamp getModifiedAfter() {
+    return modifiedAfter;
+  }
+
+  public void setModifiedAfter(Timestamp modifiedAfter) {
+    this.modifiedAfter = modifiedAfter;
+  }
+
+  public Timestamp getModifiedBefore() {
+    return modifiedBefore;
+  }
+
+  public void setModifiedBefore(Timestamp modifiedBefore) {
+    this.modifiedBefore = modifiedBefore;
+  }
+
+  public long[] getModifiedByUserIds() {
+    return modifiedByUserIds;
+  }
+
+  public void setModifiedByUserIds(long[] modifiedByUserIds) {
+    this.modifiedByUserIds = modifiedByUserIds;
+  }
+
+  public String getSearchTerm() {
+    return searchTerm;
+  }
+
+  public void setSearchTerm(String searchTerm) {
+    this.searchTerm = searchTerm;
   }
 }

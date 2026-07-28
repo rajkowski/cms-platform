@@ -30,6 +30,7 @@ import com.simisinc.platform.application.filesystem.FileSystemCommand;
 import com.simisinc.platform.domain.model.cms.Image;
 import com.simisinc.platform.domain.model.cms.ImageVersion;
 import com.simisinc.platform.infrastructure.persistence.cms.ImageRepository;
+import com.zeroio.platform.presentation.controller.FileModulesConstants;
 
 /**
  * Scales down images proportionally while maintaining aspect ratio
@@ -90,13 +91,8 @@ public class ScaleDownImageCommand {
       LOG.debug("Scaling image from " + originalWidth + "x" + originalHeight + " to " + scaledWidth + "x" + scaledHeight);
 
       // Generate a new unique filename for the scaled image
-      String serverSubPath = FileSystemCommand.generateFileServerSubPath("images");
-      String serverRootPath = FileSystemCommand.getFileServerRootPathValue();
-      String serverCompletePath = serverRootPath + serverSubPath;
-
-      String uniqueFilename = FileSystemCommand.generateUniqueFilename(image.getModifiedBy());
-      String newFileServerPath = serverSubPath + uniqueFilename + "." + fileType;
-      File scaledImageFile = new File(serverCompletePath + uniqueFilename + "." + fileType);
+      File scaledImageFile = FileSystemCommand.generateTempFile(FileModulesConstants.IMAGES, image.getModifiedBy(), fileType);
+      String newFileServerPath = FileModulesConstants.IMAGES + scaledImageFile.getName();
 
       // Use shared utility to scale and write the image
       ImageScalingUtility.scaleAndWriteImage(

@@ -1,5 +1,6 @@
 <?xml version="1.0" ?>
 <!--
+  ~ Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
   ~ Copyright 2022 SimIS Inc. (https://www.simiscms.com)
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,4 +34,13 @@
   /item-list/unique-id/list-id
   /item-list-entry/unique-id/entry-id
   -->
+  <!-- <service method="post" endpoint="image" class="com.zeroio.platform.rest.ImageService" /> -->
+  <service method="get" endpoint="webPages" class="com.zeroio.platform.rest.WebPagesService" />
+  <service method="post" endpoint="webPage" class="com.zeroio.platform.rest.WebPageService" />
+  <!-- Remotely load data -->
+  <service method="post" endpoint="rawFile" class="com.zeroio.platform.rest.RawFileService" />
+  <service method="get" endpoint="rawImage" class="com.zeroio.platform.rest.RawImageService" />
+  <service method="post" endpoint="rawImage" class="com.zeroio.platform.rest.RawImageService" />
+  <service method="post" endpoint="rawDataset" class="com.zeroio.platform.rest.RawDatasetService" />
+  <service method="post" endpoint="rawItemFile" class="com.zeroio.platform.rest.RawItemFileService" />
 </services>

@@ -1221,6 +1221,16 @@
     </section>
   </page>
 
+  <page name="/page-analytics" role="admin,content-manager" title="Page Analytics" class="full-page">
+    <section class="grid-x">
+      <column class="small-12 cell">
+        <widget name="pageAnalytics">
+          <title>Page Analytics</title>
+        </widget>
+      </column>
+    </section>
+  </page>
+
   <page name="/admin/visual-content-editor" role="admin,content-manager" title="Visual Content Editor" class="full-page">
     <section class="grid-x">
       <column class="small-12 cell">

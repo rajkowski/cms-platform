@@ -1,4 +1,7 @@
 /**
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
+ * Licensed under the Apache License, Version 2.0
+ * 
  * Widget Registry
  * Manages available widgets and their metadata
  * 
@@ -25,6 +28,7 @@ class WidgetRegistry {
    * Load widget definitions
    */
   loadWidgetDefinitions() {
+
     // Content widgets
     this.register('content', {
       name: 'Content',
@@ -39,7 +43,8 @@ class WidgetRegistry {
         videoBackgroundUrl: { type: 'text', label: 'Video Background URL' }
       }
     });
-    
+
+    // Other Content
     this.register('contentAccordion', {
       name: 'Accordion',
       category: 'Content',
@@ -56,39 +61,8 @@ class WidgetRegistry {
       }
     });
     
-    this.register('contentCards', {
-      name: 'Multiple Cards',
-      category: 'Content',
-      icon: 'fa-th',
-      description: 'Content card grid',
-      properties: {
-        icon: { type: 'icon', label: 'Widget Icon', required: false },
-        title: { type: 'text', label: 'Widget Title', required: false },
-        uniqueId: { type: 'contentUniqueId', label: 'Content Repository ID', required: true, default: 'GENERATE' },
-        html: { type: 'html', label: 'Fallback HTML Content (optional)', required: false, default: '<p>Multiple card content separated by HR</p>' },
-        gridMargin: { type: 'checkbox', label: 'Set Grid Margin CSS', default: false },
-        smallCardCount: {
-          type: 'number',
-          label: 'Small Screen Cards',
-          description: 'Number of cards per row on small screens',
-          default: 1
-        },
-        mediumCardCount: {
-          type: 'number',
-          label: 'Medium Screen Cards',
-          description: 'Number of cards per row on medium screens'
-        },
-        largeCardCount: {
-          type: 'number',
-          label: 'Large Screen Cards',
-          description: 'Number of cards per row on large screens'
-        },
-        cardClass: { type: 'text', label: 'Card CSS Class', required: false }
-      }
-    });
-    
     this.register('contentSlider', {
-      name: 'Content Slideshow',
+      name: 'Content Slider/Slideshow',
       category: 'Content',
       icon: 'fa-images',
       description: 'Image/content slider',
@@ -122,12 +96,114 @@ class WidgetRegistry {
         classData: { type: 'text', label: 'CSS Class', required: false }
       }
     });
-    
+
+    this.register('contentCards', {
+      name: 'Multiple Cards',
+      category: 'Content',
+      icon: 'fa-th',
+      description: 'Content card grid',
+      properties: {
+        icon: { type: 'icon', label: 'Widget Icon', required: false },
+        title: { type: 'text', label: 'Widget Title', required: false },
+        uniqueId: { type: 'contentUniqueId', label: 'Content Repository ID', required: true, default: 'GENERATE' },
+        html: { type: 'html', label: 'Fallback HTML Content (optional)', required: false, default: '<p>Multiple card content separated by HR</p>' },
+        gridMargin: { type: 'checkbox', label: 'Set Grid Margin CSS', default: false },
+        smallCardCount: {
+          type: 'number',
+          label: 'Small Screen Cards',
+          description: 'Number of cards per row on small screens',
+          default: 1
+        },
+        mediumCardCount: {
+          type: 'number',
+          label: 'Medium Screen Cards',
+          description: 'Number of cards per row on medium screens'
+        },
+        largeCardCount: {
+          type: 'number',
+          label: 'Large Screen Cards',
+          description: 'Number of cards per row on large screens'
+        },
+        cardClass: { type: 'text', label: 'Card CSS Class', required: false }
+      }
+    });
+
+    // Page widgets
+    this.register('pageBreadcrumb', {
+      name: 'Page Breadcrumb',
+      description: 'Displays breadcrumb navigation for the current page hierarchy.',
+      category: 'Page',
+      icon: 'fa-angle-double-right',
+      properties: {
+        showRootPage: { type: 'checkbox', label: 'Show Root Page', default: true },
+        separator: { type: 'text', label: 'Separator', default: ' / ' },
+        maxItems: { type: 'number', label: 'Maximum Items', default: 10 }
+      }
+    });
+
+    this.register('pageSummary', {
+      name: 'Page Summary',
+      description: 'Displays a summary of the current page including creation/modification information.',
+      category: 'Page',
+      icon: 'fa-list-alt',
+      properties: {}
+    });
+
+    this.register('pageTableOfContents', {
+      name: 'Page Table of Contents',
+      description: 'Displays a dynamically generated table of contents from page headings.',
+      category: 'Page',
+      icon: 'fa-list',
+      properties: {
+        title: { type: 'text', label: 'Title', default: 'Table of Contents' },
+        minHeadingLevel: { type: 'number', label: 'Minimum Heading Level', default: 1 },
+        maxHeadingLevel: { type: 'number', label: 'Maximum Heading Level', default: 3 },
+        showToTop: { type: 'checkbox', label: 'Show To Top Link', default: true },
+        showIfEmpty: { type: 'checkbox', label: 'Show If Empty', default: false },
+        itemUniqueId: { type: 'text', label: 'Item Unique ID (optional, uses item description instead of page content)', required: false }
+      }
+    });
+
+    this.register('pageChildren', {
+      name: 'Page Children',
+      description: 'Displays a hierarchical list of child pages.',
+      category: 'Page',
+      icon: 'fa-sitemap',
+      properties: {
+        pageLink: { type: 'text', label: 'Parent Page Link (optional)', default: '' },
+        maxDepth: { type: 'number', label: 'Maximum Depth', default: 1 },
+        filterPublished: { type: 'checkbox', label: 'Filter Published', default: true },
+        showCount: { type: 'checkbox', label: 'Show Count', default: false }
+      }
+    });
+
+    this.register('pageFiles', {
+      name: 'Page File Attachments',
+      description: 'Displays files attached to the current page.',
+      category: 'Page',
+      icon: 'fa-paperclip',
+      properties: {
+        icon: { type: 'icon', label: 'Widget Icon', required: false },
+        title: { type: 'text', label: 'Widget Title', required: false }
+      }
+    });
+
+    this.register('pageLabels', {
+      name: 'Page Tags/Labels',
+      description: 'Displays labels or tags associated with the current page.',
+      category: 'Page',
+      icon: 'fa-tag',
+      properties: {
+        searchLink: { type: 'text', label: 'Search Page Link', default: '/search' }
+      }
+    });
+
+    // Other widgets
     this.register('tableOfContents', {
-      name: 'Table of Contents',
+      name: 'Page Table of Contents Menu',
       category: 'Content',
       icon: 'fa-book',
-      description: 'A table of contents',
+      description: 'A table of contents backed by a database entry',
       properties: {
         uniqueId: { type: 'text', label: 'Table of Contents Repository ID', required: true },
         link: { type: 'text', label: 'Named Title Link at Top of List (name=/link)' }
@@ -161,6 +237,30 @@ class WidgetRegistry {
         },
         useLinks: { type: 'checkbox', label: 'Use Links Instead of Divs', default: false },
         smudge: { type: 'checkbox', label: 'Selected Tab Sets Anchor in URL', default: true },
+      }
+    });
+
+    this.register('button', {
+      name: 'Button',
+      category: 'Other',
+      icon: 'fa-square',
+      description: 'A button',
+      properties: {
+        name: { type: 'text', label: 'Button Text', required: true, default: 'Go' },
+        link: { type: 'text', label: 'Link URL' },
+        cssClass: { type: 'text', label: 'Button CSS Class' }
+      }
+    });
+
+    this.register('link', {
+      name: 'Link',
+      category: 'Other',
+      icon: 'fa-link',
+      description: 'A hyperlink',
+      properties: {
+        name: { type: 'text', label: 'Link Text', required: true },
+        link: { type: 'text', label: 'Link URL' },
+        cssClass: { type: 'text', label: 'CSS Class' }
       }
     });
 
@@ -218,50 +318,6 @@ class WidgetRegistry {
       }
     });
 
-    this.register('blogPostList', {
-      name: 'Blog Post List',
-      category: 'Content',
-      icon: 'fa-newspaper',
-      description: 'A list of blog posts',
-      properties: {
-        icon: { type: 'icon', label: 'Widget Icon', required: false },
-        title: { type: 'text', label: 'Widget Title', required: false },
-        blogUniqueId: { type: 'text', label: 'Blog Repository ID', required: true },
-        type: { type: 'select', label: 'Type of List', options: ['default', 'recent'], default: 'default' },
-        view: { type: 'select', label: 'View As', options: ['default', 'masonry', 'overview', 'titles', 'cards', 'featured'], default: 'default' },
-        limit: { type: 'number', label: 'Items Per Page', default: 10},
-        showWhenEmpty: { type: 'checkbox', label: 'Show When Empty', default: true },
-        showPaging: { type: 'checkbox', label: 'Show Paging', default: true },
-        showSort: { type: 'checkbox', label: 'Show Sort', default: false },
-        showAuthor: { type: 'checkbox', label: 'Show Author', default: true },
-        showDate: { type: 'checkbox', label: 'Show Date', default: true },
-        addDateToTitle: { type: 'checkbox', label: 'Add Date to Title', default: false },
-        showTags: { type: 'checkbox', label: 'Show Tags', default: false },
-        showImage: { type: 'checkbox', label: 'Show Image', default: true },
-        showSummary: { type: 'checkbox', label: 'Show Summary', default: true },
-        showReadMore: { type: 'checkbox', label: 'Show Read More Link', default: true },
-        readMoreText: { type: 'text', label: 'Read More Text Label', default: 'Read more' },
-        showBullets: { type: 'checkbox', label: 'Show Bullets in Title View', default: false },
-        smallCardCount: {
-          type: 'number',
-          label: 'Small Screen Cards',
-          description: 'Number of cards per row on small screens (default: 3)',
-          default: 3
-        },
-        mediumCardCount: {
-          type: 'number',
-          label: 'Medium Screen Cards',
-          description: 'Number of cards per row on medium screens'
-        },
-        largeCardCount: {
-          type: 'number',
-          label: 'Large Screen Cards',
-          description: 'Number of cards per row on large screens'
-        },
-        cardClass: { type: 'text', label: 'Card CSS Class', required: false }
-      }
-    });
-
     this.register('form', {
       name: 'Form',
       category: 'Content',
@@ -298,156 +354,6 @@ class WidgetRegistry {
             }
           }
         },
-      }
-    });
-
-    this.register('fileDropZone', {
-      name: 'Folder File Drop Zone',
-      category: 'Content',
-      icon: 'fa-upload',
-      description: 'A drop zone for uploading files',
-      properties: {
-        icon: { type: 'icon', label: 'Widget Icon', required: false },
-        title: { type: 'text', label: 'Widget Title', required: false },
-        folderUniqueId: { type: 'text', label: 'Folder Unique ID', required: true }
-      }
-    });
-
-    this.register('photoGallery', {
-      name: 'Folder Photo Gallery',
-      category: 'Content',
-      icon: 'fa-camera-retro',
-      description: 'A gallery of photos',
-      properties: {
-        icon: { type: 'icon', label: 'Widget Icon', required: false },
-        title: { type: 'text', label: 'Widget Title', required: false },
-        folderUniqueId: { type: 'text', label: 'Folder Unique ID', required: true },
-        showCaption: { type: 'checkbox', label: 'Show Caption', default: true },
-        isSticky: { type: 'checkbox', label: 'Is Sticky', default: false },
-        marginTop: { type: 'number', label: 'Sticky Margin Top Value', default: 8 },
-        controlId: { type: 'text', label: 'Control Id', default: 'myAlbum' }
-      }
-    });
-
-    this.register('fileList', {
-      name: 'Folder File List',
-      category: 'Content',
-      icon: 'fa-file-alt',
-      description: 'A list of files',
-      properties: {
-        icon: { type: 'icon', label: 'Widget Icon', required: false },
-        title: { type: 'text', label: 'Widget Title', required: false },
-        folderUniqueId: { type: 'text', label: 'Folder Unique ID' },
-        showWhenEmpty: { type: 'checkbox', label: 'Show When Empty', default: true },
-        showLinks: { type: 'checkbox', label: 'Show Links', default: true },
-        useViewer: { type: 'checkbox', label: 'Enable Viewer', default: false },
-        withinLastDays: {
-          type: 'number',
-          label: 'Sent Within Last Days',
-          description: 'Files sent within the last X days (default: -1)',
-          default: -1
-        },
-        rules: { 
-          type: 'select', 
-          label: 'Access Rules', 
-          options: ['role-based', 'user-created']
-        },
-        orderBy: { 
-          type: 'select', 
-          label: 'Sort Order', 
-          options: ['newest', 'oldest', 'descending', 'ascending'],
-          default: 'ascending'
-        }
-      }
-    });
-
-    this.register('socialMediaLinks', {
-      name: 'Social Media Icons',
-      description: 'Displays a list of this system\'s social media icons, linking to external websites.',
-      category: 'Content',
-      icon: 'fa-share-alt',
-      properties: {
-        iconClass: { type: 'text', label: 'CSS Class for Icons', default: 'margin-left-10' }
-      }
-    });
-
-    this.register('instagram', {
-      name: 'Instagram Feed',
-      description: 'Displays a feed of recent Instagram posts.',
-      category: 'Content',
-      icon: 'fa-instagram',
-      properties: {
-        title: {
-          type: 'text',
-          label: 'Title',
-          description: 'An optional title for the widget'
-        },
-        icon: {
-          type: 'text',
-          label: 'Icon',
-          description: 'An optional icon for the title'
-        },
-        limit: {
-          type: 'number',
-          label: 'Limit',
-          description: 'The number of posts to display (default: 8)'
-        },
-        cardClass: {
-          type: 'text',
-          label: 'Card CSS Class',
-          description: 'CSS class to apply to each post card'
-        },
-        smallCardCount: {
-          type: 'number',
-          label: 'Small Screen Cards',
-          description: 'Number of cards per row on small screens (default: 6)',
-          default: 6
-        },
-        mediumCardCount: {
-          type: 'number',
-          label: 'Medium Screen Cards',
-          description: 'Number of cards per row on medium screens'
-        },
-        largeCardCount: {
-          type: 'number',
-          label: 'Large Screen Cards',
-          description: 'Number of cards per row on large screens'
-        }
-      }
-    });
-
-    this.register('drawIOViewer', {
-      name: 'Draw.io Viewer',
-      description: 'Displays a Draw.io diagram from the document repository.',
-      category: 'Content',
-      icon: 'fa-diagram-project',
-      properties: {
-        icon: { type: 'icon', label: 'Widget Icon', required: false },
-        title: { type: 'text', label: 'Widget Title', required: false }
-      }
-    });
-
-    this.register('leaderboard', {
-      name: 'Dataset Leaderboard',
-      description: 'Displays a leaderboard from a dataset.',
-      category: 'Content',
-      icon: 'fa-trophy',
-      properties: {
-        title: {
-          type: 'text',
-          label: 'Title',
-          description: 'An optional title for the widget'
-        },
-        icon: {
-          type: 'text',
-          label: 'Icon',
-          description: 'An optional icon for the title'
-        },
-        dataset: {
-          type: 'text',
-          label: 'Dataset Name',
-          description: 'The name of the dataset to use for the leaderboard'
-        }
       }
     });
 
@@ -527,45 +433,6 @@ class WidgetRegistry {
       }
     });
 
-    this.register('superset', {
-      name: 'Superset Dashboard',
-      description: 'Renders an embedded Superset dashboard.',
-      category: 'Dashboard',
-      icon: 'fa-chart-pie',
-      properties: {
-        dashboardValue: {
-          type: 'text',
-          label: 'Dashboard Value',
-          description: 'The value/ID of the dashboard to display'
-        },
-        dashboardEmbeddedId: {
-          type: 'text',
-          label: 'Embedded ID',
-          description: 'The embedded ID for the dashboard'
-        },
-        height: {
-          type: 'text',
-          label: 'Height',
-          description: 'The height of the dashboard container (e.g., 300px)'
-        },
-        hideChartTitle: {
-          type: 'boolean',
-          label: 'Hide Chart Title',
-          description: 'Whether to hide the chart title (default: true)'
-        },
-        hideChartControls: {
-          type: 'boolean',
-          label: 'Hide Chart Controls',
-          description: 'Whether to hide the chart controls (default: true)'
-        },
-        clause: {
-          type: 'text',
-          label: 'RLS Clause',
-          description: 'Row-Level Security (RLS) clause to apply'
-        }
-      }
-    });
-
     // User Profile widgets
     this.register('emailSubscribe', {
       name: 'Email Subscribe',
@@ -576,6 +443,269 @@ class WidgetRegistry {
         list: { type: 'text', label: 'List Unique ID', required: true },
         buttonName: { type: 'text', label: 'Button Name' },
         returnPage: { type: 'text', label: 'Return Page' }
+      }
+    });
+
+    this.register('blogPostList', {
+      name: 'Blog Post List',
+      category: 'Content',
+      icon: 'fa-newspaper',
+      description: 'A list of blog posts',
+      properties: {
+        icon: { type: 'icon', label: 'Widget Icon', required: false },
+        title: { type: 'text', label: 'Widget Title', required: false },
+        blogUniqueId: { type: 'text', label: 'Blog Repository ID', required: true },
+        type: { type: 'select', label: 'Type of List', options: ['default', 'recent'], default: 'default' },
+        view: { type: 'select', label: 'View As', options: ['default', 'masonry', 'overview', 'titles', 'cards', 'featured'], default: 'default' },
+        limit: { type: 'number', label: 'Items Per Page', default: 10},
+        showWhenEmpty: { type: 'checkbox', label: 'Show When Empty', default: true },
+        showPaging: { type: 'checkbox', label: 'Show Paging', default: true },
+        showSort: { type: 'checkbox', label: 'Show Sort', default: false },
+        showAuthor: { type: 'checkbox', label: 'Show Author', default: true },
+        showDate: { type: 'checkbox', label: 'Show Date', default: true },
+        addDateToTitle: { type: 'checkbox', label: 'Add Date to Title', default: false },
+        showTags: { type: 'checkbox', label: 'Show Tags', default: false },
+        showImage: { type: 'checkbox', label: 'Show Image', default: true },
+        showSummary: { type: 'checkbox', label: 'Show Summary', default: true },
+        showReadMore: { type: 'checkbox', label: 'Show Read More Link', default: true },
+        readMoreText: { type: 'text', label: 'Read More Text Label', default: 'Read more' },
+        showBullets: { type: 'checkbox', label: 'Show Bullets in Title View', default: false },
+        smallCardCount: {
+          type: 'number',
+          label: 'Small Screen Cards',
+          description: 'Number of cards per row on small screens (default: 3)',
+          default: 3
+        },
+        mediumCardCount: {
+          type: 'number',
+          label: 'Medium Screen Cards',
+          description: 'Number of cards per row on medium screens'
+        },
+        largeCardCount: {
+          type: 'number',
+          label: 'Large Screen Cards',
+          description: 'Number of cards per row on large screens'
+        },
+        cardClass: { type: 'text', label: 'Card CSS Class', required: false }
+      }
+    });
+
+    this.register('photoGallery', {
+      name: 'Folder Photo Gallery',
+      category: 'Content',
+      icon: 'fa-camera-retro',
+      description: 'A gallery of photos',
+      properties: {
+        icon: { type: 'icon', label: 'Widget Icon', required: false },
+        title: { type: 'text', label: 'Widget Title', required: false },
+        folderUniqueId: { type: 'text', label: 'Folder Unique ID', required: true },
+        showCaption: { type: 'checkbox', label: 'Show Caption', default: true },
+        isSticky: { type: 'checkbox', label: 'Is Sticky', default: false },
+        marginTop: { type: 'number', label: 'Sticky Margin Top Value', default: 8 },
+        controlId: { type: 'text', label: 'Control Id', default: 'myAlbum' }
+      }
+    });
+
+    this.register('fileList', {
+      name: 'Folder File List',
+      category: 'Content',
+      icon: 'fa-file-alt',
+      description: 'A list of files',
+      properties: {
+        icon: { type: 'icon', label: 'Widget Icon', required: false },
+        title: { type: 'text', label: 'Widget Title', required: false },
+        folderUniqueId: { type: 'text', label: 'Folder Unique ID' },
+        showWhenEmpty: { type: 'checkbox', label: 'Show When Empty', default: true },
+        showLinks: { type: 'checkbox', label: 'Show Links', default: true },
+        useViewer: { type: 'checkbox', label: 'Enable Viewer', default: false },
+        withinLastDays: {
+          type: 'number',
+          label: 'Sent Within Last Days',
+          description: 'Files sent within the last X days (default: -1)',
+          default: -1
+        },
+        rules: { 
+          type: 'select', 
+          label: 'Access Rules', 
+          options: ['role-based', 'user-created']
+        },
+        orderBy: { 
+          type: 'select', 
+          label: 'Sort Order', 
+          options: ['newest', 'oldest', 'descending', 'ascending'],
+          default: 'ascending'
+        }
+      }
+    });
+
+    this.register('fileDropZone', {
+      name: 'Folder File Drop Zone',
+      category: 'Content',
+      icon: 'fa-upload',
+      description: 'A drop zone for uploading files',
+      properties: {
+        icon: { type: 'icon', label: 'Widget Icon', required: false },
+        title: { type: 'text', label: 'Widget Title', required: false },
+        folderUniqueId: { type: 'text', label: 'Folder Unique ID', required: true }
+      }
+    });
+
+    this.register('socialMediaLinks', {
+      name: 'Social Media Icons',
+      description: 'Displays a list of this system\'s social media icons, linking to external websites.',
+      category: 'Content',
+      icon: 'fa-share-alt',
+      properties: {
+        iconClass: { type: 'text', label: 'CSS Class for Icons', default: 'margin-left-10' }
+      }
+    });
+
+    this.register('instagram', {
+      name: 'Instagram Feed',
+      description: 'Displays a feed of recent Instagram posts.',
+      category: 'Content',
+      icon: 'fa-instagram',
+      properties: {
+        title: {
+          type: 'text',
+          label: 'Title',
+          description: 'An optional title for the widget'
+        },
+        icon: {
+          type: 'text',
+          label: 'Icon',
+          description: 'An optional icon for the title'
+        },
+        limit: {
+          type: 'number',
+          label: 'Limit',
+          description: 'The number of posts to display (default: 8)'
+        },
+        cardClass: {
+          type: 'text',
+          label: 'Card CSS Class',
+          description: 'CSS class to apply to each post card'
+        },
+        smallCardCount: {
+          type: 'number',
+          label: 'Small Screen Cards',
+          description: 'Number of cards per row on small screens (default: 6)',
+          default: 6
+        },
+        mediumCardCount: {
+          type: 'number',
+          label: 'Medium Screen Cards',
+          description: 'Number of cards per row on medium screens'
+        },
+        largeCardCount: {
+          type: 'number',
+          label: 'Large Screen Cards',
+          description: 'Number of cards per row on large screens'
+        }
+      }
+    });
+
+    this.register('drawIOViewer', {
+      name: 'Draw.io Viewer',
+      description: 'Displays a Draw.io diagram from the document repository.',
+      category: 'Content',
+      icon: 'fa-diagram-project',
+      properties: {
+        icon: { type: 'icon', label: 'Widget Icon', required: false },
+        title: { type: 'text', label: 'Widget Title', required: false }
+      }
+    });
+
+    this.register('datasetViewer', {
+      name: 'Dataset Viewer',
+      description: 'Displays a dataset in a table with optional paging, sorting, and filtering controls.',
+      category: 'Content',
+      icon: 'fa-table',
+      properties: {
+        icon: {
+          type: 'icon',
+          label: 'Widget Icon',
+          required: false
+        },
+        title: {
+          type: 'text',
+          label: 'Widget Title',
+          required: false
+        },
+        dataset: {
+          type: 'text',
+          label: 'Dataset Name',
+          description: 'The name of the dataset to display'
+        },
+        columns: {
+          type: 'text',
+          label: 'Columns to Display',
+          description: 'Comma-separated list of column names (leave blank to display all)'
+        },
+        showPaging: {
+          type: 'checkbox',
+          label: 'Show Paging Controls',
+          default: true
+        },
+        showSort: {
+          type: 'checkbox',
+          label: 'Show Sort Controls',
+          default: true
+        },
+        showFilter: {
+          type: 'checkbox',
+          label: 'Show Filter Controls',
+          default: true
+        },
+        showMetadata: {
+          type: 'checkbox',
+          label: 'Show Metadata',
+          default: true,
+          description: 'Display dataset metadata like last updated and total records'
+        },
+        showWhenEmpty: {
+          type: 'checkbox',
+          label: 'Show When Empty',
+          default: true,
+          description: 'Display the widget even if the dataset is empty'
+        },
+        pageSize: {
+          type: 'number',
+          label: 'Records Per Page',
+          default: 25,
+          description: 'Number of records to display per page (User Story 3)'
+        },
+        firstcolumn: {
+          type: 'text',
+          label: 'First Column',
+          description: 'Column name to move to the first position (User Story 1)'
+        },
+        headings: {
+          type: 'text',
+          label: 'Custom Column Headings',
+          description: 'Comma-separated custom heading labels, use empty strings to skip columns (User Story 2)'
+        },
+        sortBy: {
+          type: 'text',
+          label: 'Default Sort Column',
+          description: 'Column name to sort by default (User Story 4)'
+        },
+        reverseSort: {
+          type: 'checkbox',
+          label: 'Reverse Sort Direction',
+          default: false,
+          description: 'Reverse the default sort order (User Story 5)'
+        },
+        cql: {
+          type: 'text',
+          label: 'Filter Criteria',
+          description: 'Comma-separated key=value pairs for filtering (User Story 6, e.g., status=active,type=primary)'
+        },
+        id: {
+          type: 'text',
+          label: 'Widget Configuration ID',
+          description: 'Optional ID for tracking widget configuration (User Story 7)'
+        }
       }
     });
 
@@ -725,7 +855,7 @@ class WidgetRegistry {
       properties: {
         icon: { type: 'icon', label: 'Widget Icon' },
         title: { type: 'text', label: 'Widget Title' },
-        collectionUniqueId: { type: 'text', label: 'Collection Repository ID', required: true },
+        collectionUniqueId: { type: 'collectionUniqueId', label: 'Collection Repository ID', required: true },
         basedOnItems: { type: 'checkbox', label: 'Only Show the Categories Used by the Items', default: false },
         listingsLink: { type: 'text', label: 'Link to go back to the Listings', required: false },
       }
@@ -739,10 +869,10 @@ class WidgetRegistry {
       properties: {
         icon: { type: 'icon', label: 'Widget Icon' },
         title: { type: 'text', label: 'Widget Title' },
-        collectionUniqueId: { type: 'text', label: 'Collection Repository ID', required: false },
+        collectionUniqueId: { type: 'collectionUniqueId', label: 'Collection Repository ID', required: false },
         category: { type: 'text', label: 'Filter by Category Name', required: false },
         nearbyItemUniqueId: { type: 'text', label: 'Nearby Item Unique Id', required: false },
-        view: { type: 'select', label: 'View', options: ['list', 'table', 'cards', 'category-cards', 'jobs'], default: 'list' },
+        view: { type: 'select', label: 'View', options: ['list', 'table', 'cards', 'category-cards', 'jobs', 'tags'], default: 'list' },
         showMine: { type: 'checkbox', label: 'Show Mine Only', default: false },
         showWhenEmpty: { type: 'checkbox', label: 'Show When Empty', default: false },
         limit: { type: 'number', label: 'Limit', default: 20 },
@@ -759,12 +889,26 @@ class WidgetRegistry {
         showUrl: { type: 'checkbox', label: 'Show URL', default: false },
         showBullets: { type: 'checkbox', label: 'Show Bullets in List', default: false },
         showActionLinks: { type: 'checkbox', label: 'Show Action Links', default: false },
+        showCollectionIcon: { type: 'checkbox', label: 'Show Collection Icon', default: true },
         showLaunchLink: { type: 'checkbox', label: 'Show Launch Link', default: false },
+        useUserRegion: { type: 'checkbox', label: 'Filter by Selected User Region', default: false },
         useItemLink: { type: 'checkbox', label: 'Use Item Link', default: false },
         useInfoLink: { type: 'checkbox', label: 'Use Info Link', default: true },
         infoLabel: { type: 'text', label: 'Info Label', default: 'Get Info', required: false },
         launchLabel: { type: 'text', label: 'Launch Label', default: 'Launch', required: false },
+        filter: {
+          type: 'text',
+          label: 'Filter Expression',
+          required: false,
+          description: 'Pipe-separated filters, e.g. custom.Status=Active|tags in ("tag_1","tag_2")'
+        },
         columns: { type: 'text', label: 'Fields to Show in Table View (comma-separated)', required: false },
+        trimValue: {
+          type: 'number',
+          label: 'Trim Title Length',
+          description: 'Maximum title length used in table view before truncation',
+          default: 50
+        },
         smallGridCount: {
           type: 'number',
           label: 'Small Screen Cards',
@@ -862,41 +1006,6 @@ class WidgetRegistry {
       properties: {}
     });
 
-    this.register('searchForm', {
-      name: 'Search Form',
-      category: 'Search',
-      icon: 'fa-search',
-      description: 'A search form',
-      properties: {
-        placeholder: { type: 'text', label: 'Placeholder Text', default: 'Search the site...' },
-        linkText: { type: 'text', label: 'Button Text', default: 'Search' },
-        expand: { type: 'checkbox', label: 'Expand input field when selected', default: false }
-      }
-    });
-
-    this.register('searchInfo', {
-      name: 'Search Info',
-      category: 'Search',
-      icon: 'fa-info',
-      description: 'Displays what the user searched for and a summary',
-      properties: {
-        icon: { type: 'icon', label: 'Widget Icon' },
-        title: { type: 'text', label: 'Widget Title' },
-      }
-    });
-
-    this.register('link', {
-      name: 'Link',
-      category: 'Other',
-      icon: 'fa-link',
-      description: 'A hyperlink',
-      properties: {
-        name: { type: 'text', label: 'Link Text', required: true },
-        link: { type: 'text', label: 'Link URL' },
-        cssClass: { type: 'text', label: 'CSS Class' }
-      }
-    });
-
     this.register('systemMessages', {
       name: 'System Messages',
       category: 'System',
@@ -905,23 +1014,11 @@ class WidgetRegistry {
       properties: {}
     });
 
-    this.register('button', {
-      name: 'Button',
-      category: 'Other',
-      icon: 'fa-square',
-      description: 'A button',
-      properties: {
-        name: { type: 'text', label: 'Button Text', required: true, default: 'Go' },
-        link: { type: 'text', label: 'Link URL' },
-        cssClass: { type: 'text', label: 'Button CSS Class' }
-      }
-    });
-
     this.register('breadcrumbs', {
       name: 'Breadcrumbs',
       category: 'Other',
       icon: 'fa-angle-double-right',
-      description: 'Breadcrumb navigation',
+      description: 'Manual Breadcrumb navigation',
       properties: {
         links: {
           type: 'xml',
@@ -983,6 +1080,30 @@ class WidgetRegistry {
         },
       }
     });
+
+    this.register('searchForm', {
+      name: 'Search Form',
+      category: 'Search',
+      icon: 'fa-search',
+      description: 'A search form',
+      properties: {
+        placeholder: { type: 'text', label: 'Placeholder Text', default: 'Search the site...' },
+        linkText: { type: 'text', label: 'Button Text', default: 'Search' },
+        expand: { type: 'checkbox', label: 'Expand input field when selected', default: false }
+      }
+    });
+
+    this.register('searchInfo', {
+      name: 'Search Info',
+      category: 'Search',
+      icon: 'fa-info',
+      description: 'Displays what the user searched for and a summary',
+      properties: {
+        icon: { type: 'icon', label: 'Widget Icon' },
+        title: { type: 'text', label: 'Widget Title' },
+      }
+    });
+    
 
     this.register('webPageSearchResults', {
       name: 'Web Page Search Results',
@@ -1162,6 +1283,69 @@ class WidgetRegistry {
       category: 'System',
       icon: 'fa-edit',
       properties: {}
+    });
+
+    this.register('superset', {
+      name: 'Superset Dashboard',
+      description: 'Renders an embedded Superset dashboard.',
+      category: 'Dashboard',
+      icon: 'fa-chart-pie',
+      properties: {
+        dashboardValue: {
+          type: 'text',
+          label: 'Dashboard Value',
+          description: 'The value/ID of the dashboard to display'
+        },
+        dashboardEmbeddedId: {
+          type: 'text',
+          label: 'Embedded ID',
+          description: 'The embedded ID for the dashboard'
+        },
+        height: {
+          type: 'text',
+          label: 'Height',
+          description: 'The height of the dashboard container (e.g., 300px)'
+        },
+        hideChartTitle: {
+          type: 'boolean',
+          label: 'Hide Chart Title',
+          description: 'Whether to hide the chart title (default: true)'
+        },
+        hideChartControls: {
+          type: 'boolean',
+          label: 'Hide Chart Controls',
+          description: 'Whether to hide the chart controls (default: true)'
+        },
+        clause: {
+          type: 'text',
+          label: 'RLS Clause',
+          description: 'Row-Level Security (RLS) clause to apply'
+        }
+      }
+    });
+
+    this.register('leaderboard', {
+      name: 'Dataset Leaderboard',
+      description: 'Displays a leaderboard from a dataset.',
+      category: 'Content',
+      icon: 'fa-trophy',
+      properties: {
+        title: {
+          type: 'text',
+          label: 'Title',
+          description: 'An optional title for the widget'
+        },
+        icon: {
+          type: 'text',
+          label: 'Icon',
+          description: 'An optional icon for the title'
+        },
+        dataset: {
+          type: 'text',
+          label: 'Dataset Name',
+          description: 'The name of the dataset to use for the leaderboard'
+        }
+      }
     });
 
     this.register('remoteContent', {
