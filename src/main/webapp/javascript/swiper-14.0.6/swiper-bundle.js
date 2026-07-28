@@ -1,5 +1,5 @@
 /**
- * Swiper 14.0.5
+ * Swiper 14.0.6
  * Most modern mobile touch slider and framework with hardware accelerated transitions
  * https://swiperjs.com
  *
@@ -7,7 +7,7 @@
  *
  * Released under the MIT License
  *
- * Released on: July 9, 2026
+ * Released on: July 20, 2026
  */
 
 var Swiper = (function () {
@@ -4011,6 +4011,9 @@ var Swiper = (function () {
             let spv = 1;
             if (typeof params.slidesPerView === 'number')
                 return params.slidesPerView;
+            // container not measured yet — centered branch below would never break and return ~slides.length (#7586)
+            if (!swiperSize)
+                return spv;
             if (params.centeredSlides) {
                 let slideSize = slides[activeIndex] ? Math.ceil(slides[activeIndex].swiperSlideSize ?? 0) : 0;
                 let breakLoop = false;
@@ -6312,9 +6315,6 @@ var Swiper = (function () {
             let el;
             if (typeof params.el === 'string' && swiper.isElement) {
                 el = swiper.el.querySelector(params.el);
-            }
-            else {
-                el = params.el;
             }
             if (!el && typeof params.el === 'string') {
                 el = document.querySelectorAll(params.el);
@@ -10161,7 +10161,7 @@ var Swiper = (function () {
     };
 
     /**
-     * Swiper 14.0.5
+     * Swiper 14.0.6
      * Most modern mobile touch slider and framework with hardware accelerated transitions
      * https://swiperjs.com
      *
@@ -10169,7 +10169,7 @@ var Swiper = (function () {
      *
      * Released under the MIT License
      *
-     * Released on: July 9, 2026
+     * Released on: July 20, 2026
      */
 
 

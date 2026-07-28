@@ -189,7 +189,7 @@
       ]
     },
     "swiper": {
-      "version": "14.0.5",
+      "version": "14.0.6",
       "paths": [
         "node_modules/swiper/swiper-bundle.css",
         "node_modules/swiper/swiper-bundle.js",
