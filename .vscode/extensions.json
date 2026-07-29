@@ -5,8 +5,6 @@
     "vscjava.vscode-java-debug",
     "vscjava.vscode-java-dependency",
     "vscjava.vscode-java-test",
-    "redhat.vscode-community-server-connector",
-    "redhat.vscode-rsp-ui",
     "Gruntfuggly.triggertaskonsave",
     "davidanson.vscode-markdownlint"
   ]

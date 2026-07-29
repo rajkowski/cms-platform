@@ -7,9 +7,9 @@ description: Options for locally developing CMS Platform
 
 CMS Platform is meant to be fully developed offline. This allows developers to code, build, test, and run with the least friction when developing.
 
-Developers can use [Visual Studio Code](https://code.visualstudio.com) with several recommended extensions for a truly Open Source environment. Developers can also use other IDEs like [IntelliJ IDEA](https://www.jetbrains.com/idea/). Settings for each are included in the CMS Platform source code, however VS Code development is primarily maintained.
+Developers can use [VS Code](https://code.visualstudio.com) with several included recommended extensions for a truly Open Source environment.
 
-## Using VS Code
+## Developing with Tomcat
 
 The following steps will guide you through the developer tools and environment setup so that your code changes can be compiled and copied automatically and then seen in your web browser.
 
@@ -18,25 +18,24 @@ The following steps will guide you through the developer tools and environment s
 3. Install [Apache Tomcat 9.x](https://tomcat.apache.org/download-90.cgi) into a directory of your choice
 4. Install the PostgreSQL database server – natively on MacOS with [Postgres.app](https://postgresapp.com) or with a Docker container like (postgis/postgis:18-3.6-alpine)
 5. Clone the CMS Platform repo – `git clone https://github.com/rajkowski/cms-platform.git`
-6. In the repo directory execute `ant deploy` – this updates code and library changes in a working Tomcat exploded webapp directory `./out/exploded/ROOT`
-7. Open CMS Platform in VS Code and accept the recommended extensions
-8. Manually setup the VS Code Community Server Connector with Apache Tomcat, setup a deployment, and choose to edit the server with your system's settings:
+6. In the repo directory execute `ant deploy` – this updates code and library changes in a working Tomcat exploded webapp directory `./out/exploded/webapps/ROOT`
+7. Copy Tomcat's `conf`, `logs`, and `work` to `./out/exploded/...` – this is where Tomcat will look to run the application
+8. Set environment variables for `CATALINA_BASE` to the source code's working exploded directory, `CMS_PATH` to a new folder for the CMS user attachments, and `DB_NAME` for the PostgreSQL database; see example below...
+9. Start Tomcat and the web application using Tomcat's run command: `bin/run.sh`
 
-```json
-  "mapProperty.launch.env": {
-    "CMS_PATH": "/Users/matt/Web/cms-platform",
-    "DB_NAME": "cms-platform"
-  },
-  "deployables": {
-    "/Users/matt/Source/cms-platform/out/exploded/ROOT": {
-      "label": "/Users/matt/Source/cms-platform/out/exploded/ROOT",
-      "path": "/Users/matt/Source/cms-platform/out/exploded/ROOT",
-      "options": {}
-    }
-  }
+Minimal Environment Variables:
+
+```ini
+CATALINA_BASE=/path/to/cms-platform/out/exploded
+CMS_PATH=/path/to/files/cms-platform
+DB_NAME=cms-platform
+CMS_ADMIN_USERNAME=user@example.com
+CMS_ADMIN_PASSWORD=test
 ```
 
 If not specified, the path for file assets and external configuration on Linux is `/opt/cms-platform`; otherwise `$USER_HOME/Web/cms-platform`
+
+Use `ant deploy` to further update the web application with your changes. In debug mode, many Javascript, JSP, and XML files are automatically reloaded. If there are newly compiled Java files, libraries, or database migration scripts, then restart Tomcat.
 
 ## Developer Resources
 

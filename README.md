@@ -30,23 +30,15 @@ The CHANGELOG is at <https://github.com/rajkowski/cms-platform/blob/main/docs/CH
 
 Documentation is in MKDocs format intended for use in platforms which use MKDocs like [Spotify Backstage](https://backstage.io).
 
+## Developers
+
+Read the [Developer Environment Guide](docs/developer-environment.md) to begin developing.
+
 ## License
 
-```text
-Copyright 2026
+Apache License 2.0 — see [LICENSE.txt](LICENSE.txt). Copyright 2026 Matt Rajkowski.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-```
+See [ATTRIBUTION.md](ATTRIBUTION.md) for the full list of included open-source projects and their licenses.
 
 ## Overview
 
@@ -77,13 +69,12 @@ Need a website or web portal? CMS Platform can be used from Day 1:
 You can use the `docker-compose.yaml` file in this repo to pull the latest images and run them locally:
 <https://github.com/rajkowski/cms-platform/blob/main/docker-compose.yaml>
 
-Create a file called `.env` with the following values, edit as needed:
+In the same directory, create a file called `.env` with the following values, edit as needed:
 
 ```dotenv
-CMS_ADMIN_USERNAME=<Your_Admin_Username>
+CMS_ADMIN_USERNAME=<Your_Admin_Username_or_Email_Address>
 CMS_ADMIN_PASSWORD=<Your_Admin_Password>
 CMS_FORCE_SSL=false
-CMS_NODE_TYPE=main
 DB_SERVER_NAME=db
 DB_SSL=false
 DB_NAME=cms-platform
@@ -109,4 +100,4 @@ Release notes include a list of changes for review.
 
 Download the .war and follow your choice of deployment options.
 
-To log into a new site, add "/login" to the URL. Later, turn on the login setting to reveal a login button for your website.
+To log into a new site, add "/login" to the URL. Later, turn on the site login setting to reveal a login button for your website.
