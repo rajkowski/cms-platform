@@ -147,7 +147,7 @@ ALTER TEXT SEARCH CONFIGURATION web_page_stem
 CREATE OR REPLACE FUNCTION web_page_tsv_trigger() RETURNS trigger AS $$
 begin
   new.tsv :=
-    setweight(to_tsvector('web_page_stem', new.page_title), 'A') ||
+    setweight(to_tsvector('web_page_stem', coalesce(new.page_title,'')), 'A') ||
     setweight(to_tsvector('web_page_stem', coalesce(new.page_keywords,'')), 'B') ||
     setweight(to_tsvector('web_page_stem', coalesce(new.page_description,'')), 'C') ||
     setweight(to_tsvector('web_page_stem', coalesce(new.page_text,'')), 'D');
