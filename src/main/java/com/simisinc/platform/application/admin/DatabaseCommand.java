@@ -40,6 +40,13 @@ public class DatabaseCommand {
 
   private static Log LOG = LogFactory.getLog(DatabaseCommand.class);
 
+  private static final String INSTALL_HISTORY_TABLE = "flyway_install";
+  private static final String INSTALL_SQL_MIGRATION_PREFIX = "NEW_";
+  private static final String REPEATABLE_INSTALL_SQL_MIGRATION_PREFIX = "DO_";
+  private static final String UPGRADE_HISTORY_TABLE = "flyway_history";
+  private static final String UPGRADE_SQL_MIGRATION_PREFIX = "UPGRADE_";
+  private static final String REPEATABLE_SQL_MIGRATION_PREFIX = "REPEAT_";
+
   public static boolean initialize() {
 
     // V (One-Time Version files)
@@ -68,9 +75,9 @@ public class DatabaseCommand {
     {
       // Install the new database
       Flyway flyway = Flyway.configure()
-          .table("flyway_install")
-          .sqlMigrationPrefix("NEW_")
-          .repeatableSqlMigrationPrefix("DO_")
+          .table(INSTALL_HISTORY_TABLE)
+          .sqlMigrationPrefix(INSTALL_SQL_MIGRATION_PREFIX)
+          .repeatableSqlMigrationPrefix(REPEATABLE_INSTALL_SQL_MIGRATION_PREFIX)
           .dataSource(ConnectionPool.getApplicationDataSource())
           .locations("classpath:database/install", "com/simisinc/platform/infrastructure/database/install")
           .placeholderReplacement(false)
@@ -82,19 +89,24 @@ public class DatabaseCommand {
       LOG.info("Database installation completed");
     }
     {
-      // Baseline off the versions
+      // Mark each existing upgrade script as already applied since the install scripts
+      // already reflect the latest schema. This prevents them from running later.
       Flyway flyway = Flyway.configure()
-          .table("flyway_history")
-          .sqlMigrationPrefix("UPGRADE_")
-          .repeatableSqlMigrationPrefix("REPEAT_")
+          .table(UPGRADE_HISTORY_TABLE)
+          .sqlMigrationPrefix(UPGRADE_SQL_MIGRATION_PREFIX)
+          .repeatableSqlMigrationPrefix(REPEATABLE_SQL_MIGRATION_PREFIX)
           .dataSource(ConnectionPool.getApplicationDataSource())
           .locations(databaseUpgradeLocations())
           .placeholderReplacement(false)
           .cleanDisabled(true)
-          .baselineVersion(ApplicationInfo.VERSION)
+          .skipExecutingMigrations(true)
           .load();
-      flyway.baseline();
-      LOG.info("Database baseline completed");
+      MigrateResult result = flyway.migrate();
+      if (!result.success) {
+        LOG.error("Database upgrade history initialization error occurred: " + result.warnings.toString());
+        return false;
+      }
+      LOG.info("Marked " + result.migrationsExecuted + " existing upgrade script(s) as already applied");
     }
     return true;
   }
@@ -102,10 +114,10 @@ public class DatabaseCommand {
   private static boolean upgrade() {
     // Process the versions
     Flyway flyway = Flyway.configure()
-        .table("flyway_history")
+        .table(UPGRADE_HISTORY_TABLE)
         .validateOnMigrate(false)
-        .sqlMigrationPrefix("UPGRADE_")
-        .repeatableSqlMigrationPrefix("REPEAT_")
+        .sqlMigrationPrefix(UPGRADE_SQL_MIGRATION_PREFIX)
+        .repeatableSqlMigrationPrefix(REPEATABLE_SQL_MIGRATION_PREFIX)
         .dataSource(ConnectionPool.getApplicationDataSource())
         .locations(databaseUpgradeLocations())
         .placeholderReplacement(false)
