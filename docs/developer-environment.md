@@ -19,7 +19,7 @@ The following steps will guide you through the developer tools and environment s
 4. Install the PostgreSQL database server – natively on MacOS with [Postgres.app](https://postgresapp.com) or with a Docker container like (postgis/postgis:18-3.6-alpine)
 5. Clone the CMS Platform repo – `git clone https://github.com/rajkowski/cms-platform.git`
 6. In the repo directory execute `ant deploy` – this updates code and library changes in a working Tomcat exploded webapp directory `./out/exploded/webapps/ROOT`
-7. Copy Tomcat's `conf`, `logs`, and `work` to `./out/exploded/...` – this is where Tomcat will look to run the application
+7. Copy Tomcat's `conf` to `./out/exploded/conf` – this is where Tomcat will look for configuration information
 8. Set environment variables for `CATALINA_BASE` to the source code's working exploded directory, `CMS_PATH` to a new folder for the CMS user attachments, and `DB_NAME` for the PostgreSQL database; see example below...
 9. Start Tomcat and the web application using Tomcat's run command: `bin/catalina.sh run`
 
@@ -46,7 +46,7 @@ Use `ant deploy` to further update the web application with your changes. In deb
 - [JSP 2.3 API](https://tomcat.apache.org/tomcat-9.0-doc/jspapi/index.html)
 - [JSTL 1.2.5 API](https://github.com/javaee/jstl-api)
 - [PostgreSQL Documentation](https://www.postgresql.org/docs/)
-- [Domain Driven Design Intro](https://airbrake.io/blog/software-design/domain-driven-design)
+- [Domain Driven Design Intro](https://software-architecture-guild.com/guide/architecture/domains/what-is-domain-driven-design/)
 - [Foundation for Sites Documentation](https://foundation.zurb.com/sites/docs/)
 - [Font Awesome Icons](https://fontawesome.com/icons?d=gallery)
 - [Apache Commons JEXL](https://commons.apache.org/proper/commons-jexl/reference/syntax.html)
