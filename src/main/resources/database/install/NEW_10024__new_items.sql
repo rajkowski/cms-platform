@@ -272,7 +272,7 @@ CREATE TABLE item_files (
   tsv TSVECTOR,
   sub_folder_id BIGINT REFERENCES item_sub_folders(sub_folder_id),
   category_id BIGINT REFERENCES item_folder_categories(category_id),
-  web_path VARCHAR(50) NOT NULL,
+  web_path VARCHAR(50) UNIQUE NOT NULL,
   tags JSONB
 );
 CREATE INDEX i_files_tsv_idx ON item_files USING gin(tsv);
