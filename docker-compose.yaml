@@ -1,7 +1,7 @@
 services:
 
   db:
-    image: ghcr.io/rajkowski/cms-platform-db:15
+    image: ghcr.io/rajkowski/cms-platform-db:18
     env_file:
       .env
     environment:
