@@ -41,7 +41,7 @@
     content_css: [
       '${ctx}/css/${font:fontawesome()}/css/all.min.css',
       '${ctx}/css/${font:fontawesome()}/css/v4-shims.min.css',
-      '${ctx}/css/platform.css?v=${includeGlobalStylesheetLastModified}',
+      '${ctx}/css/platform.css?v=${includeGlobalStylesheetLastModified}'
       <c:if test="${!empty includeGlobalStylesheet}">,'${ctx}/css/custom/stylesheet.css?v=${includeGlobalStylesheetLastModified}'</c:if>
       <c:if test="${!empty includeStylesheet}">,'${ctx}/css/custom/stylesheet${includeStylesheet}.css?v=${includeStylesheetLastModified}'</c:if>
     ],
