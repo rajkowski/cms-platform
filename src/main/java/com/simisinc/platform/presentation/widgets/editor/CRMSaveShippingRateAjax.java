@@ -87,7 +87,7 @@ public class CRMSaveShippingRateAjax extends GenericJsonService {
     String countryCode = StringUtils.trimToNull(context.getParameter("countryCode"));
     String region = StringUtils.trimToNull(context.getParameter("region"));
     String postalCode = StringUtils.trimToNull(context.getParameter("postalCode"));
-    long shippingMethodId = context.getParameterAsLong("shippingMethodId", -1L);
+    int shippingMethodId = context.getParameterAsInt("shippingMethodId", -1);
     String shippingFeeStr = StringUtils.trimToNull(context.getParameter("shippingFee"));
     String handlingFeeStr = StringUtils.trimToNull(context.getParameter("handlingFee"));
     String minSubTotalStr = StringUtils.trimToNull(context.getParameter("minSubTotal"));
@@ -107,7 +107,7 @@ public class CRMSaveShippingRateAjax extends GenericJsonService {
       rateBean.setCountryCode(countryCode);
       rateBean.setRegion(region);
       rateBean.setPostalCode(postalCode);
-      rateBean.setShippingMethodId((int) shippingMethodId);
+      rateBean.setShippingMethodId(shippingMethodId);
       rateBean.setDisplayText(displayText);
 
       if (StringUtils.isNotBlank(shippingFeeStr)) {
