@@ -21,7 +21,7 @@ The following steps will guide you through the developer tools and environment s
 6. In the repo directory execute `ant deploy` – this updates code and library changes in a working Tomcat exploded webapp directory `./out/exploded/webapps/ROOT`
 7. Copy Tomcat's `conf`, `logs`, and `work` to `./out/exploded/...` – this is where Tomcat will look to run the application
 8. Set environment variables for `CATALINA_BASE` to the source code's working exploded directory, `CMS_PATH` to a new folder for the CMS user attachments, and `DB_NAME` for the PostgreSQL database; see example below...
-9. Start Tomcat and the web application using Tomcat's run command: `bin/run.sh`
+9. Start Tomcat and the web application using Tomcat's run command: `bin/catalina.sh run`
 
 Minimal Environment Variables:
 
