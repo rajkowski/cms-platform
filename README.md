@@ -36,7 +36,7 @@ Read the [Developer Environment Guide](docs/developer-environment.md) to begin d
 
 ## License
 
-Apache License 2.0 — see [LICENSE.txt](LICENSE.txt). Copyright 2026 Matt Rajkowski.
+Apache License 2.0 – see [LICENSE.txt](LICENSE.txt). Copyright 2026 Matt Rajkowski.
 
 See [ATTRIBUTION.md](ATTRIBUTION.md) for the full list of included open-source projects and their licenses.
 
