@@ -33,16 +33,33 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Parse release version
+        id: version
+        run: |
+          # GITHUB TAG NAME = v20260727.10000
+          # BUILD = 20260727.10000
+          # MINOR = 20260727
+          # MAJOR = 1 (always 1 for this project)
+          TAG_NAME="${{ github.event.release.tag_name }}"
+          if [ -z "$TAG_NAME" ]; then
+            echo "No release tag_name available (likely a workflow_dispatch run); skipping version tags." >&2
+            exit 0
+          fi
+          BUILD="${TAG_NAME#v}"
+          MINOR="${BUILD%%.*}"
+          echo "build=$BUILD" >> "$GITHUB_OUTPUT"
+          echo "minor=$MINOR" >> "$GITHUB_OUTPUT"
+
       - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-            type=raw,value=latest
+            type=raw,value=${{ steps.version.outputs.build }},enable=${{ steps.version.outputs.build != '' }}
+            type=raw,value=${{ steps.version.outputs.minor }},enable=${{ steps.version.outputs.minor != '' }}
+            type=raw,value=1
+            # type=raw,value=latest
 
       - name: Build and push image
         uses: docker/build-push-action@v7
