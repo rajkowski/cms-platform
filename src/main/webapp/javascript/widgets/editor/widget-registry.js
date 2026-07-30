@@ -135,7 +135,7 @@ class WidgetRegistry {
       category: 'Page',
       icon: 'fa-angle-double-right',
       properties: {
-        showRootPage: { type: 'checkbox', label: 'Show Root Page', default: true },
+        showRootPage: { type: 'checkbox', label: 'Show Root Page', default: false },
         separator: { type: 'text', label: 'Separator', default: ' / ' },
         maxItems: { type: 'number', label: 'Maximum Items', default: 10 }
       }
