@@ -62,21 +62,23 @@
 <div id="tooltip" class="tooltip top align-center under-reveal" style="display:none"></div>
 <script>
   function showTooltip(el, event) {
-    let content = "<h5>" + event.title+"</h5>";
+    let tooltip = $("#tooltip");
+    tooltip.empty();
+    $('<h5></h5>').text(event.title || '').appendTo(tooltip);
     if (event.allDay === undefined || !event.allDay) {
-      content += "<p>";
-      content += moment(event.start).format("LT") + " - " + moment(event.end).format("LT");
-      content += "</p>";
+      $('<p></p>').text(moment(event.start).format('LT') + ' - ' + moment(event.end).format('LT')).appendTo(tooltip);
     }
     if (event.extendedProps.location) {
-      content += "<p><i class='fa fa-map-marker'></i> " + event.extendedProps.location + "</p>";
+      let locationText = $('<p></p>');
+      $('<i></i>').addClass('fa fa-map-marker').appendTo(locationText);
+      locationText.append(document.createTextNode(' ' + event.extendedProps.location));
+      locationText.appendTo(tooltip);
     }
     if (event.extendedProps.description || event.extendedProps.detailsUrl) {
-      content += "<p class='no-gap'>(click for more details)</p>";
+      $('<p></p>').addClass('no-gap').text('(click for more details)').appendTo(tooltip);
     }
-    $("#tooltip").html(content);
-    let ttHeight = $("#tooltip").outerHeight();
-    let ttWidth = $("#tooltip").outerWidth();
+    let ttHeight = tooltip.outerHeight();
+    let ttWidth = tooltip.outerWidth();
 
     <%-- Center and show it --%>
     let parentTop = Math.round($('#calendar').parent().offset().top);
@@ -171,7 +173,7 @@
             $.getJSON("${ctx}/json/calendarEvent?id=" + info.event.id, function(data) {
               document.getElementById('formTitle').innerHTML = "Update an Event";
               document.getElementById('id').value = data.id;
-              document.getElementById('eventLinkInput').value = '${ctx}/calendar-event/' + info.event.extendedProps.uniqueId + '?returnPage=${widgetContext.uri}';
+              document.getElementById('eventLinkInput').value = info.event.extendedProps.uniqueId || '';
               if ($('#calendarId').is('input, select')) {
                 $("#calendarId").val(data.calendarId);
               } else {
@@ -390,11 +392,14 @@
     eventLink.on('click', function () {
       var $modal = $('#modalReveal');
       $modal.foundation('close');
-      var target = document.getElementById('eventLinkInput').value.trim();
-      var scheme = target.match(/^([a-z][a-z0-9+.-]*):/i);
-      if (target && (!scheme || /^https?$/i.test(scheme[1]))) {
-        window.location.href = target;
+      var rawUniqueId = document.getElementById('eventLinkInput').value;
+      var uniqueId = rawUniqueId ? rawUniqueId.trim() : '';
+      if (!uniqueId) {
+        return;
       }
+      var detailsUrl = new URL('${ctx}/calendar-event/' + encodeURIComponent(uniqueId), window.location.origin);
+      detailsUrl.searchParams.set('returnPage', '${js:escape(widgetContext.uri)}');
+      window.location.href = detailsUrl.toString();
     });
   </script>
 </c:if>

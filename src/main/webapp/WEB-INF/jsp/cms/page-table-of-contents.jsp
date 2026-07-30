@@ -212,6 +212,37 @@
             return (value || '').replace(/\s+/g, ' ').trim();
           }
 
+          function sanitizeFragmentId(value) {
+            return normalizeText(value)
+              .toLowerCase()
+              .replace(/[^a-z0-9\-_.:]/g, '-')
+              .replace(/-+/g, '-')
+              .replace(/^-|-$/g, '');
+          }
+
+          function bindLinkToHeading(link, heading, fallbackId) {
+            if (!heading.id) {
+              heading.id = sanitizeFragmentId(fallbackId);
+            }
+
+            if (!heading.id) {
+              return false;
+            }
+
+            link.setAttribute('data-heading-id', heading.id);
+            link.setAttribute('href', '#' + encodeURIComponent(heading.id));
+            return true;
+          }
+
+          function getTocLinkByHeadingId(headingId, links) {
+            for (let i = 0; i < links.length; i++) {
+              if (links[i].getAttribute('data-heading-id') === headingId) {
+                return links[i];
+              }
+            }
+            return null;
+          }
+
           function isVisibleHeading(heading) {
             if (!heading) {
               return false;
@@ -263,12 +294,7 @@
               const heading = pageHeadings[i];
               const headingText = normalizeText(heading.textContent);
               if (headingText === linkText) {
-                if (!heading.id) {
-                  heading.id = generatedId;
-                }
-                link.setAttribute('data-heading-id', heading.id);
-                link.setAttribute('href', '#' + heading.id);
-                matched = true;
+                matched = bindLinkToHeading(link, heading, generatedId);
                 break;
               }
             }
@@ -279,12 +305,7 @@
                 const heading = pageHeadings[i];
                 const headingText = normalizeText(heading.textContent);
                 if (headingText.indexOf(linkText) !== -1 && linkText.length > 0) {
-                  if (!heading.id) {
-                    heading.id = generatedId;
-                  }
-                  link.setAttribute('data-heading-id', heading.id);
-                  link.setAttribute('href', '#' + heading.id);
-                  matched = true;
+                  matched = bindLinkToHeading(link, heading, generatedId);
                   break;
                 }
               }
@@ -385,7 +406,7 @@
 
               for (let i = 0; i < headings.length; i++) {
                 if (headings[i].offsetTop <= scrollPosition) {
-                  const activeLink = document.querySelector('.page-toc-link[data-heading-id="' + headings[i].id + '"]');
+                  const activeLink = getTocLinkByHeadingId(headings[i].id, tocLinks);
                   if (activeLink) {
                     activeLink.classList.add('is-active');
                   }
@@ -402,4 +423,3 @@
     </c:otherwise>
   </c:choose>
 </div>
-
