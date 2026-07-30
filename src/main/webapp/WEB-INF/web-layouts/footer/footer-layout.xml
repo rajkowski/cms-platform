@@ -70,10 +70,10 @@
           <maxHeight>50px</maxHeight>
         </widget>
         <widget name="content" class="margin-top-15">
-          <html><![CDATA[<p>Since 2007, SimIS has been a pioneer in the modeling and simulation community, creating a bridge between traditional Cyber Security services and responsive, simulated architecture design.</p>]]></html>
+          <html><![CDATA[<p>Include information about your organization or website here</p>]]></html>
         </widget>
         <widget name="button">
-          <title>Learn more about SimIS</title>
+          <title>Learn more about Us</title>
           <link>/about-us</link>
         </widget>
         <widget name="copyright" class="width-full margin-bottom-40" />
