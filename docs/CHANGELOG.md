@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the [Common Changelog](https://common-changelog.org/).
 
+## 2026-07-30
+
+- Document content page template includes a Page Attachments feature
+- Adds `/style-tiles` page for UI context
+
 ## 2026-07-29
 
 - The sitemap.xml can be turned on in the admin site properties
