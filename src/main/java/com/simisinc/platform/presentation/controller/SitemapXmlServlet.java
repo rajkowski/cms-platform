@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,9 +38,15 @@ import org.apache.commons.logging.LogFactory;
 import com.granule.utils.HttpHeaders;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.application.cms.SitemapBuilderCommand;
+import com.simisinc.platform.domain.model.cms.BlogPost;
 import com.simisinc.platform.domain.model.cms.WebPage;
+import com.simisinc.platform.domain.model.items.Item;
+import com.simisinc.platform.infrastructure.persistence.cms.BlogPostRepository;
+import com.simisinc.platform.infrastructure.persistence.cms.BlogPostSpecification;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageSpecification;
+import com.simisinc.platform.infrastructure.persistence.items.ItemRepository;
+import com.simisinc.platform.infrastructure.persistence.items.ItemSpecification;
 
 /**
  * Serves sitemap.xml
@@ -97,44 +104,70 @@ public class SitemapXmlServlet extends HttpServlet {
     // Use ISO 6801 date formatter
     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZZ");
 
-    // @todo Use the main menu first
-    // List<MenuTab> menuTabList = LoadMenuTabsCommand.findAllIncludeMenuItemList();
-
-    // Find the web pages
-    WebPageSpecification specification = new WebPageSpecification();
-    specification.setDraft(false);
-    specification.setInSitemap(true);
-    specification.setHasRedirect(false);
-
-    List<WebPage> webPageList = WebPageRepository.findAll(specification, null);
-    if (webPageList == null || webPageList.isEmpty()) {
-      LOG.debug("No web pages found for the sitemap");
-      response.setStatus(404);
-      return;
-    }
-
     // Start creating the XML
     StringBuilder xml = SitemapBuilderCommand.startSitemapXML();
 
-    // Add each web page
-    for (WebPage webPage : webPageList) {
-      LOG.debug("Found: " + webPage.getLink());
-      if (webPage.getModified().getTime() > mostRecentTimestamp) {
-        mostRecentTimestamp = webPage.getModified().getTime();
+    // Find the web pages
+    WebPageSpecification specification = new WebPageSpecification();
+    specification.setEnabled(true);
+    specification.setDraft(false);
+    specification.setInSitemap(true);
+    specification.setHasRedirect(false);
+    List<WebPage> webPageList = WebPageRepository.findAll(specification, null);
+    if (webPageList != null) {
+      for (WebPage webPage : webPageList) {
+        LOG.debug("Found: " + webPage.getLink());
+        if (webPage.getModified().getTime() > mostRecentTimestamp) {
+          mostRecentTimestamp = webPage.getModified().getTime();
+        }
+        // @todo if web page contains something dynamic... can use frequency instead of date
+        // Ex. blog, calendar, collection
+        SitemapBuilderCommand.appendUrlXml(xml, siteUrl, webPage, sdf);
       }
-      // @todo if web page contains something dynamic... can use frequency instead of date
-      // Ex. blog, calendar, collection
-      SitemapBuilderCommand.appendUrlXml(xml, siteUrl, webPage, sdf);
     }
 
-    // @todo Public Blog posts
-
-    // @todo Public Collections
+    // Public Blog posts
+    BlogPostSpecification blogPostSpecification = new BlogPostSpecification();
+    blogPostSpecification.setPublishedOnly(true);
+    blogPostSpecification.setStartDateIsBeforeNow(true);
+    blogPostSpecification.setIsWithinEndDate(true);
+    List<BlogPost> blogPostList = BlogPostRepository.findAll(blogPostSpecification, null);
+    if (blogPostList != null) {
+      for (BlogPost blogPost : blogPostList) {
+        LOG.debug("Found: " + blogPost.getUniqueId());
+        if (blogPost.getModified().getTime() > mostRecentTimestamp) {
+          mostRecentTimestamp = blogPost.getModified().getTime();
+        }
+        SitemapBuilderCommand.appendUrlXml(xml, siteUrl, blogPost, sdf);
+      }
+    }
 
     // Public Items
+    ItemSpecification itemSpecification = new ItemSpecification();
+    itemSpecification.setApprovedOnly(true);
+    itemSpecification.setForUserId(UserSession.GUEST_ID);
+    List<Item> itemList = ItemRepository.findAll(itemSpecification, null);
+    if (itemList != null) {
+      for (Item item : itemList) {
+        LOG.debug("Found: " + item.getUniqueId());
+        if (item.getModified().getTime() > mostRecentTimestamp) {
+          mostRecentTimestamp = item.getModified().getTime();
+        }
+        SitemapBuilderCommand.appendUrlXml(xml, siteUrl, item, sdf);
+      }
+    }
 
     // Close the XML
     SitemapBuilderCommand.endSitemapXML(xml);
+
+    // If no content, return 404
+    if ((webPageList == null || webPageList.isEmpty()) &&
+        (blogPostList == null || blogPostList.isEmpty()) &&
+        (itemList == null || itemList.isEmpty())) {
+      LOG.warn("No content found for sitemap.xml");
+      response.setStatus(404);
+      return;
+    }
 
     // Check for a last-modified header and return 304 if possible
     if (mostRecentTimestamp > 0) {
@@ -152,7 +185,7 @@ public class SitemapXmlServlet extends HttpServlet {
     if (mostRecentTimestamp > 0) {
       response.setDateHeader("Last-Modified", mostRecentTimestamp);
     } else {
-      HttpHeaders.setCacheExpireDate(response, 6048000);
+      HttpHeaders.setCacheExpireDate(response, 3600);
     }
     LOG.debug("XML original length: " + xml.length());
     if (gzipSupported(request)) {

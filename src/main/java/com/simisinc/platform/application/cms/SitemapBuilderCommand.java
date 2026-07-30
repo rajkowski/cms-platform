@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Matt Rajkowski
+ * Copyright 2024-2026 Matt Rajkowski
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.domain.model.cms.BlogPost;
 import com.simisinc.platform.domain.model.cms.WebPage;
+import com.simisinc.platform.domain.model.items.Item;
 
 /**
  * Sitemap XML functions
@@ -58,6 +60,43 @@ public class SitemapBuilderCommand {
     String lastModified = sdf.format(webPage.getModified());
     String frequency = webPage.getSitemapChangeFrequency();
     BigDecimal priority = webPage.getSitemapPriority();
+    appendUrlXml(xml, siteUrl, link, lastModified, frequency, priority);
+  }
+
+  /**
+   * Generate the xml for the given blog post
+   * @param xml
+   * @param siteUrl
+   * @param blogPost
+   * @param sdf
+   */
+  public static void appendUrlXml(StringBuilder xml, String siteUrl, BlogPost blogPost, SimpleDateFormat sdf) {
+    String link = blogPost.getLink();
+    String lastModified = sdf.format(blogPost.getModified());
+    String frequency = "monthly";
+    BigDecimal priority = BigDecimal.valueOf(0.7);
+    appendUrlXml(xml, siteUrl, link, lastModified, frequency, priority);
+  }
+
+  public static void appendUrlXml(StringBuilder xml, String siteUrl, Item item, SimpleDateFormat sdf) {
+    String link = "/show/" + item.getUniqueId();
+    String lastModified = sdf.format(item.getModified());
+    String frequency = "weekly";
+    BigDecimal priority = BigDecimal.valueOf(0.6);
+    appendUrlXml(xml, siteUrl, link, lastModified, frequency, priority);
+  }
+
+  /**
+   * Generate the xml for the given web page
+   * @param xml
+   * @param siteUrl
+   * @param link
+   * @param lastModified
+   * @param frequency
+   * @param priority
+   */
+  public static void appendUrlXml(StringBuilder xml, String siteUrl, String link, String lastModified, String frequency,
+      BigDecimal priority) {
 
     // loc: This URL must begin with the protocol (such as http/s)
     // lastmod: (ISO 8601) 2022-07-24T14:53:29-0400
