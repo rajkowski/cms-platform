@@ -152,6 +152,12 @@ public class WebRequestFilter implements Filter {
       return;
     }
 
+    // Allow this request to forward to the sitemap.xml processor
+    if (resource.equals("/sitemap.xml")) {
+      chain.doFilter(request, servletResponse);
+      return;
+    }
+
     // Check redirects
     if (redirectMap != null) {
       String redirect = redirectMap.get(resource);
@@ -239,12 +245,6 @@ public class WebRequestFilter implements Filter {
       }
       LOG.debug("OAUTH: Redirecting to " + oauthRedirect);
       do302(servletResponse, oauthRedirect);
-      return;
-    }
-
-    // Allow this request to forward to the sitemap.xml processor
-    if (resource.equals("/sitemap.xml")) {
-      chain.doFilter(request, servletResponse);
       return;
     }
 
