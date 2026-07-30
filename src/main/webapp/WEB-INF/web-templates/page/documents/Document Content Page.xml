@@ -18,9 +18,7 @@
   <page>
     <section>
       <column class="small-12 cell">
-        <widget name="pageBreadcrumb">
-          <showRootPage>false</showRootPage>
-        </widget>
+        <widget name="pageBreadcrumb" />
       </column>
     </section>
     <section>
@@ -34,7 +32,11 @@
           <uniqueId>${webPageName}-content</uniqueId>
         </widget>
         <widget name="pageChildren">
-          <maxDepth>1</maxDepth>
+          <title>Related Pages</title>
+          <maxDepth>3</maxDepth>
+        </widget>
+        <widget name="pageFiles">
+          <title>Attachments</title>
         </widget>
         <widget name="pageLabels" />
       </column>
