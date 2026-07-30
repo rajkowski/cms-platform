@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the [Common Changelog](https://common-changelog.org/).
 
+## 2026-07-29
+
+- The sitemap.xml can be turned on in the admin site properties
+- Blog post urls and item urls are added to the sitemap.xml
+- Fixed missing styles in the content editor for the new plug-ins
+- Fixed pages without a title were left out of the search results
+
 ## 2026-07-27
 
 - Added Web Page and Item content versioning with history, revert, and current-version selection
