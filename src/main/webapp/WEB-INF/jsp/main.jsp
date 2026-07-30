@@ -588,5 +588,35 @@
       <script type="text/javascript" src="//tag.brandcdn.com/autoscript/${js:escape(analyticsPropertyMap['analytics.brandcdn.value'])}/${js:escape(analyticsPropertyMap['analytics.brandcdn.value2'])}"></script>
     </c:if>
   </c:if>
+  <style id="platform-body-min-height"></style>
+  <script>
+    (function () {
+      var styleEl = document.getElementById('platform-body-min-height');
+      function updatePlatformBodyMinHeight() {
+        var menu = document.getElementById('platform-menu');
+        var footer = document.getElementById('platform-footer');
+        var body = document.querySelector('.platform-body');
+        var menuH = menu ? menu.offsetHeight : 0;
+        var footerH = footer ? footer.offsetHeight : 0;
+        var bodyMargin = 0;
+        if (body) {
+          var bodyStyle = window.getComputedStyle(body);
+          bodyMargin = parseFloat(bodyStyle.marginTop) + parseFloat(bodyStyle.marginBottom);
+        }
+        var minHeight = 'calc(100vh - ' + menuH + 'px - ' + footerH + 'px - ' + bodyMargin + 'px)';
+        styleEl.textContent =
+          '.platform-body, #body-home .platform-body { min-height: ' + minHeight + '; }' +
+          '.full-page .platform-body, .platform-dialog .platform-body { min-height: ' + minHeight + '; }';
+      }
+      document.addEventListener('DOMContentLoaded', function () {
+        updatePlatformBodyMinHeight();
+        var targets = [document.getElementById('platform-menu'), document.getElementById('platform-footer')];
+        if (typeof ResizeObserver !== 'undefined') {
+          var ro = new ResizeObserver(updatePlatformBodyMinHeight);
+          targets.forEach(function (el) { if (el) ro.observe(el); });
+        }
+      });
+    }());
+  </script>
 </body>
 </html>

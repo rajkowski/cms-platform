@@ -246,18 +246,6 @@ hr {
   padding: .85em .85rem .85em 0;
 }
 
-/* Default page adjustments for footer when there is minimal content */
-
-.platform-body {
-  min-height: calc(100vh - 107px);
-}
-.full-page .platform-body, .platform-dialog .platform-body {
-  min-height: calc(100vh - 82px);
-}
-#body-home .platform-body {
-  min-height: calc(100vh - 182px);
-}
-
 /* Callout */
 
 .callout.radius {
