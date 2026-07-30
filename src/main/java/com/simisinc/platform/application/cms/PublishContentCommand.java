@@ -110,7 +110,7 @@ public class PublishContentCommand {
     WebPage webPage = LoadWebPageCommand.loadByLink(referringResourcePath);
     if (webPage != null) {
       // Mark the web page as modified
-      WebPageRepository.markAsModified(webPage, userId);
+      WebPageRepository.markAsModifiedAndFindable(webPage, userId);
 
       // Trigger any necessary events or notifications
       WorkflowManager.triggerWorkflowForEvent(new WebPageUpdatedEvent(webPage, userId));

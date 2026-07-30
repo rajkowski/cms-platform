@@ -190,7 +190,7 @@ public class ContentEditorWidget extends GenericWidget {
             || context.getUserId() != webPage.getModifiedBy();
 
         // Mark the page as modified to update the modified date and user, which is used for triggering events and cache invalidation
-        WebPageRepository.markAsModified(webPage, context.getUserId());
+        WebPageRepository.markAsModifiedAndFindable(webPage, context.getUserId());
 
         // Record the web page was updated
         if (doWebPageNotification) {

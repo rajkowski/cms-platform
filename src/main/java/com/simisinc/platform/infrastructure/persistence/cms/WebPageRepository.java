@@ -304,13 +304,31 @@ public class WebPageRepository {
     }
   }
 
-  public static void markAsModified(WebPage record, long userId) {
+  /** Mark the web page as modified and move it to a findable state if content is published on the page */
+  public static void markAsModifiedAndFindable(WebPage record, long userId) {
+    if (record.getId() == -1) {
+      return;
+    }
+    boolean isFirstPublishAfterCreation = record.getCreated() != null && record.getModified() != null
+        && record.getModified().equals(record.getCreated());
+
+    long modified = System.currentTimeMillis();
     SqlUtils updateValues = new SqlUtils()
-        .add("modified", new Timestamp(System.currentTimeMillis()))
+        .add("modified", new Timestamp(modified))
         .add("modified_by", userId);
+    if (isFirstPublishAfterCreation) {
+      updateValues
+          .add("searchable", true)
+          .add("show_in_sitemap", true);
+    }
     DB.update(TABLE_NAME, updateValues, DB.WHERE("web_page_id = ?", record.getId()));
     // Now update the record for additional workflows
     record.setModifiedBy(userId);
+    record.setModified(new Timestamp(modified));
+    if (isFirstPublishAfterCreation) {
+      record.setSearchable(true);
+      record.setShowInSitemap(true);
+    }
   }
 
   public static void removeDraft(WebPage record) {
