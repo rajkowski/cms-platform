@@ -1,0 +1,167 @@
+<?xml version="1.0"?>
+<pages>
+  <page name="/style-tiles" role="admin,content-manager" title="Style Tiles">
+    <section>
+      <column class="small-12 medium-6 cell">
+        <widget name="content">
+          <html><![CDATA[ 
+            <h6>Typography</h6>
+            <h1>H1 Content Example</h1>
+            <h2>H2 Content Example</h2>
+            <h3>H3 Content Example</h3>
+            <h4>H4 Content Example</h4>
+            <h5>H5 Content Example</h5>
+            <p>Body content example.</p>
+            <p><small>Small content example</small></p>
+            <pre>Pre content</pre>
+            ]]></html>
+        </widget>
+      </column>
+      <column class="small-12 medium-6 cell">
+        <widget name="content">
+          <html><![CDATA[
+         <h6>Color Palette</h6>
+ <svg width="477px" height="50px" viewBox="0 0 477 50" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+     <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+         <g id="Style-Guide-(WIP)" transform="translate(-52.000000, -247.000000)">
+             <g id="Color-Palette" transform="translate(52.000000, 247.000000)">
+                 <rect id="Rectangle-1" fill="${theme.body.text.color}" x="0" y="0" width="50" height="50"></rect>
+                 <rect id="Rectangle-2" fill="${theme.button.default.backgroundColor}" x="61" y="0" width="50" height="50"></rect>
+                 <rect id="Rectangle-3" fill="${theme.button.primary.backgroundColor}" x="122" y="0" width="50" height="50"></rect>
+                 <rect id="Rectangle-4" fill="${theme.button.secondary.backgroundColor}" x="183" y="0" width="50" height="50"></rect>
+                 <rect id="Rectangle-5" fill="${theme.button.success.backgroundColor}" x="244" y="0" width="50" height="50"></rect>
+                 <rect id="Rectangle-6" fill="${theme.button.warning.backgroundColor}" x="305" y="0" width="50" height="50"></rect>
+                 <rect id="Rectangle-7" fill="${theme.button.alert.backgroundColor}" x="366" y="0" width="50" height="50"></rect>
+                 <rect id="Rectangle-8" fill="${theme.footer.backgroundColor}" x="427" y="0" width="50" height="50"></rect>
+             </g>
+         </g>
+     </g>
+ </svg>
+         ]]></html>
+        </widget>
+        <widget name="content">
+          <html><![CDATA[
+            <p>Body Copy Typeface Example</p>
+            <p class="subheader">A subheading example</p>
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit <a href="#">biben dum enim</a> nec nisi blandit, et tincidunt libero mollis. Proin gravida, velit eget suscipit hendrerit, nulla felis met vulputate erat, sit amet aliquam massa nunc eget orci. Vestibulum <a href="#">vitae faucibus arcu</a>, at egestas massa aliquam pellentesque elit gravidatortor non consectetur rhoncus. Nam eu orci ac tellus auctor sodales.</p>
+            ]]></html>
+        </widget>
+      </column>
+    </section>
+    <section>
+      <column class="small-12 cell">
+        <widget name="content">
+          <html><![CDATA[<hr />]]></html>
+        </widget>
+      </column>
+    </section>
+    <section>
+      <column class="small-12 cell">
+        <widget name="content">
+          <html><![CDATA[<h6>User Interface Elements</h6>]]></html>
+        </widget>
+      </column>
+      <column class="small-6 medium-3 cell">
+        <widget name="content">
+          <html><![CDATA[<p class="subheader">Input field</p><label>Label<input type="text" placeholder="Hint Text" /></label>]]></html>
+        </widget>
+      </column>
+      <column class="small-6 medium-3 cell">
+        <widget name="content">
+          <html><![CDATA[<p class="subheader">Input field</p><label>Label<input type="text" placeholder="Hint Text" /></label>]]></html>
+        </widget>
+      </column>
+      <column class="small-6 medium-3 cell">
+        <widget name="content">
+          <html><![CDATA[<p class="subheader">Dropdown</p><label>Label                                                                                  
+   <select>                                                                                                                                            
+     <option value="none">Select</option>                                                                                                              
+     <option value="1">Lorem ipsum</option>                                                                                                            
+     <option value="2">Dolor sit</option>                                                                                                              
+     <option value="3">Amet adscipum</option>                                                                                                          
+   </select>                                                                                                                                           
+ </label>]]></html>
+        </widget>
+      </column>
+      <column class="small-6 medium-3 cell">
+        <widget name="content">
+          <html><![CDATA[<p class="subheader">Dropdown</p><label>Label                                                                                  
+   <select>                                                                                                                                            
+     <option value="none">Select</option>                                                                                                              
+     <option value="1">Lorem ipsum</option>                                                                                                            
+     <option value="2">Dolor sit</option>                                                                                                              
+     <option value="3">Amet adscipum</option>                                                                                                          
+   </select>                                                                                                                                           
+ </label>]]></html>
+        </widget>
+      </column>
+      <column class="small-12 medium-5 cell">
+        <widget name="content">
+          <html><![CDATA[<p class="subheader">Paragraph answer form field</p><label>Label<textarea placeholder="Hint Text"></textarea></label>]]></html>
+        </widget>
+      </column>
+      <column class="small-12 medium-5 cell">
+        <widget name="content">
+          <html><![CDATA[<p class="subheader">Radio buttons &amp; Checkboxes</p>                                                                                                                                                       
+         <div class="grid-x grid-padding-x">
+   <fieldset class="large-5 cell">
+     <legend>Choose Your Favorite</legend>
+     <input type="radio" name="pokemon" value="Red" id="pokemonRed" required><label for="pokemonRed">Red</label><br />
+     <input type="radio" name="pokemon" value="Blue" id="pokemonBlue"><label for="pokemonBlue">Blue</label><br />
+     <input type="radio" name="pokemon" value="Yellow" id="pokemonYellow"><label for="pokemonYellow">Yellow</label>
+   </fieldset>
+   <fieldset class="large-7 cell">
+     <legend>Check these out</legend>
+     <input id="checkbox1" type="checkbox"><label for="checkbox1">Checkbox 1</label><br />
+     <input id="checkbox2" type="checkbox"><label for="checkbox2">Checkbox 2</label><br />
+     <input id="checkbox3" type="checkbox"><label for="checkbox3">Checkbox 3</label>
+   </fieldset>
+ </div>
+         ]]></html>
+        </widget>
+      </column>
+    </section>
+    <section>
+      <column class="small-12 cell">
+        <widget name="content">
+          <html><![CDATA[<hr />]]></html>
+        </widget>
+      </column>
+    </section>
+    <section>
+      <column class="small-12 cell">
+        <widget name="content">
+          <html><![CDATA[<a class="button" href="#">Default Button</a>]]></html>
+        </widget>
+      </column>
+    </section>
+    <section>
+      <column class="small-12 cell">
+        <widget name="content">
+          <html><![CDATA[<a class="button primary" href="#">Primary Button</a>]]></html>
+        </widget>
+      </column>
+    </section>
+    <section>
+      <column class="small-12 cell">
+        <widget name="content">
+          <html><![CDATA[<a class="button secondary" href="#">Secondary Button</a>]]></html>
+        </widget>
+      </column>
+    </section>
+    <section>
+      <column class="small-12 cell">
+        <widget name="content">
+          <html><![CDATA[<a class="button call-to-action" href="#">Call to Action</a>]]></html>
+        </widget>
+      </column>
+    </section>
+    <section>
+      <column class="small-12 cell">
+        <widget name="content">
+          <html><![CDATA[<a class="button secondary-call-to-action" href="#">Secondary Call to Action</a>]]></html>
+        </widget>
+      </column>
+    </section>
+  </page>
+</pages>
