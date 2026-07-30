@@ -151,9 +151,10 @@ class InfoTabManager {
    * @param {string} message - The error message to display
    */
   showError(message) {
+    const safeMessage = this.escapeHtml(message || 'An error occurred');
     this.container.innerHTML = `
       <div style="padding: 15px; background: rgba(220, 53, 69, 0.1); border: 1px solid rgba(220, 53, 69, 0.3); border-radius: 4px; color: #dc3545;">
-        <i class="fa fa-exclamation-triangle"></i> ${message}
+        <i class="fa fa-exclamation-triangle"></i> ${safeMessage}
       </div>
     `;
   }
@@ -178,7 +179,7 @@ class InfoTabManager {
     let frequencyOptions = '<option value=""></option>';
     for (const [key, label] of Object.entries(this.sitemapChangeFrequencyOptions)) {
       const selected = data.sitemapChangeFrequency === key ? ' selected' : '';
-      frequencyOptions += `<option value="${key}"${selected}>${label}</option>`;
+      frequencyOptions += `<option value="${this.escapeHtmlAttribute(key)}"${selected}>${this.escapeHtml(label)}</option>`;
     }
     
     this.container.innerHTML = `
@@ -187,7 +188,7 @@ class InfoTabManager {
         <div class="property-group">
           <label class="property-label" for="info-title">Title</label>
           <input type="text" id="info-title" class="property-input" 
-                 value="${this.escapeHtml(data.title || '')}" 
+               value="${this.escapeHtmlAttribute(data.title || '')}" 
                  placeholder="Page title" 
                  ${isHomePage ? 'readonly style="background: var(--editor-hover-bg); cursor: not-allowed;"' : ''} />
           ${isHomePage ? '<div style="font-size: 12px; color: var(--editor-text-muted); margin-top: 5px;">Home page title cannot be edited here</div>' : ''}
@@ -197,7 +198,7 @@ class InfoTabManager {
         <div class="property-group">
           <label class="property-label" for="info-link">Link</label>
           <input type="text" id="info-link" class="property-input" 
-                 value="${this.escapeHtml(data.link || '')}" 
+               value="${this.escapeHtmlAttribute(data.link || '')}" 
                  readonly 
                  style="background: var(--editor-hover-bg); cursor: not-allowed;" />
         </div>
@@ -206,7 +207,7 @@ class InfoTabManager {
         <div class="property-group">
           <label class="property-label" for="info-keywords">Keywords</label>
           <input type="text" id="info-keywords" class="property-input" 
-                 value="${this.escapeHtml(data.keywords || '')}" 
+               value="${this.escapeHtmlAttribute(data.keywords || '')}" 
                  placeholder="Comma-separated keywords" />
         </div>
         
@@ -261,13 +262,13 @@ class InfoTabManager {
           <label class="property-label" for="info-image-url">Open Graph Image</label>
           <div style="display: flex; gap: 8px; align-items: flex-start;">
             <input type="text" id="info-image-url" class="property-input" 
-                   value="${this.escapeHtml(data.imageUrl || '')}" 
+                   value="${this.escapeHtmlAttribute(data.imageUrl || '')}" 
                    placeholder="Image URL" 
                    style="flex: 1;" />
           </div>
           ${data.imageUrl ? `
             <div style="margin-top: 8px;">
-              <img id="info-image-preview" src="${this.escapeHtml(data.imageUrl)}" 
+              <img id="info-image-preview" src="${this.escapeHtmlAttribute(data.imageUrl)}" 
                    style="max-width: 100%; max-height: 100px; border-radius: 4px; border: 1px solid var(--editor-border);" 
                    onerror="this.style.display='none'" />
             </div>
@@ -715,8 +716,23 @@ class InfoTabManager {
       imageUrlInput.addEventListener('input', () => {
         const preview = document.getElementById('info-image-preview');
         if (preview) {
-          preview.src = imageUrlInput.value;
-          preview.style.display = imageUrlInput.value ? 'block' : 'none';
+          const rawUrl = imageUrlInput.value.trim();
+          let safeUrl = '';
+          if (rawUrl) {
+            try {
+              const parsed = new URL(rawUrl, window.location.origin);
+              if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+                safeUrl = rawUrl;
+              }
+            } catch (_) {
+              // relative path — safe to use
+              if (/^\.{0,2}\//.test(rawUrl)) {
+                safeUrl = rawUrl;
+              }
+            }
+          }
+          preview.src = safeUrl;
+          preview.style.display = safeUrl ? 'block' : 'none';
         }
       });
     }
@@ -831,13 +847,17 @@ class InfoTabManager {
       console.log('Save page info result:', result);
       
       if (result.success) {
+        const previousTitle = this.originalData?.title ?? '';
+        const currentTitle = this.currentData?.title ?? '';
+        const titleChanged = currentTitle !== previousTitle;
+
         // Update original data to match current (changes saved)
         this.originalData = { ...this.currentData };
         this.rightPanelTabs.clearDirtyForTab('info');
         
         // If the title changed, update the page name in the left panel
-        if (this.currentData.title !== this.originalData.title) {
-          this.updatePageTitleInLeftPanel(this.currentPageLink, this.currentData.title);
+        if (titleChanged) {
+          this.updatePageTitleInLeftPanel(this.currentPageLink, currentTitle);
         }
       }
       
@@ -859,6 +879,24 @@ class InfoTabManager {
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
+  }
+
+  escapeHtmlAttribute(str) {
+    if (str == null) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  escapeCssValue(str) {
+    const value = str == null ? '' : String(str);
+    if (window.CSS && typeof window.CSS.escape === 'function') {
+      return window.CSS.escape(value);
+    }
+    return value.replace(/[\\"\n\r\f]/g, '\\$&');
   }
   
   /**
@@ -891,21 +929,26 @@ class InfoTabManager {
    * @param {string} newTitle - The new title
    */
   updatePageTitleInLeftPanel(pageLink, newTitle) {
-    // Find the page item in the left panel
-    const pageItem = document.querySelector(`.web-page-item[data-page-link="${pageLink}"]`);
+    // Find the page item by exact data attribute match to avoid CSS selector escaping edge cases
+    const normalizedLink = pageLink == null ? '' : String(pageLink);
+    const pageItem = Array.from(document.querySelectorAll('.web-page-item[data-page-link]'))
+      .find((item) => item.getAttribute('data-page-link') === normalizedLink);
+
     if (pageItem) {
       const titleElement = pageItem.querySelector('.web-page-title');
       if (titleElement) {
+        const safeTitle = newTitle == null ? '' : String(newTitle);
+
         // Preserve the icon if it exists
         const icon = titleElement.querySelector('i');
         if (icon) {
           titleElement.innerHTML = '';
           titleElement.appendChild(icon);
-          titleElement.appendChild(document.createTextNode(' ' + newTitle));
+          titleElement.appendChild(document.createTextNode(' ' + safeTitle));
         } else {
-          titleElement.textContent = newTitle;
+          titleElement.textContent = safeTitle;
         }
-        console.log('Updated page title in left panel:', newTitle);
+        console.log('Updated page title in left panel:', safeTitle);
       }
     }
   }
