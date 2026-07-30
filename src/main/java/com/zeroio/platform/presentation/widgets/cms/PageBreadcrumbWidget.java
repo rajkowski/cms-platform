@@ -51,12 +51,8 @@ public class PageBreadcrumbWidget extends GenericWidget {
     context.setJsp(widgetJsp);
 
     // Optional: Get configuration parameters from widget preferences
-    String showRootPageValue = context.getPreferences().get(PARAM_SHOW_ROOT_PAGE);
-    if (StringUtils.isNotBlank(showRootPageValue)) {
-      context.getRequest().setAttribute(PARAM_SHOW_ROOT_PAGE, "true".equalsIgnoreCase(showRootPageValue));
-    } else {
-      context.getRequest().setAttribute(PARAM_SHOW_ROOT_PAGE, true);
-    }
+    String showRootPageValue = context.getPreferences().getOrDefault(PARAM_SHOW_ROOT_PAGE, "false");
+    context.getRequest().setAttribute(PARAM_SHOW_ROOT_PAGE, showRootPageValue);
 
     String separatorValue = context.getPreferences().get(PARAM_SEPARATOR);
     if (StringUtils.isNotBlank(separatorValue)) {

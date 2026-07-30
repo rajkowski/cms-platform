@@ -4,7 +4,7 @@
   ~ Displays the hierarchical breadcrumb trail of parent pages
   ~
   ~ Widget Configuration:
-  ~ - showRootPage: Boolean (default: true) - Show root page in breadcrumb
+  ~ - showRootPage: String (default: true) - Show root page in breadcrumb
   ~ - separator: String (default: " / ") - Separator between breadcrumb items
   ~ - maxItems: Integer (default: 10) - Maximum breadcrumb items to display
 --%>
@@ -13,13 +13,13 @@
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ page import="com.simisinc.platform.domain.model.cms.WebPage" %>
 <%@ page import="java.util.List" %>
+<jsp:useBean id="showRootPage" class="java.lang.String" scope="request"/>
 <c:set var="breadcrumbItems" value="${requestScope.breadcrumbItems}" />
-<c:set var="showRootPage" value="${requestScope.showRootPage != null ? requestScope.showRootPage : true}" />
 <c:set var="separator" value="${requestScope.separator != null ? requestScope.separator : ' / '}" />
-<c:if test="${not empty breadcrumbItems or showRootPage}">
+<c:if test="${not empty breadcrumbItems or showRootPage eq 'true'}">
   <nav aria-label="Breadcrumbs">
     <ul class="breadcrumbs">
-      <c:if test="${showRootPage}">
+      <c:if test="${showRootPage eq 'true'}">
         <li>
           <a href="/">Home</a>
         </li>
