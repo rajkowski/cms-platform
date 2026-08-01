@@ -18,8 +18,6 @@
 package com.simisinc.platform.application.datasets;
 
 import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -30,6 +28,7 @@ import com.simisinc.platform.domain.model.cms.FileItem;
 import com.simisinc.platform.domain.model.datasets.Dataset;
 import com.simisinc.platform.infrastructure.persistence.datasets.DatasetRepository;
 import com.simisinc.platform.presentation.controller.WidgetContext;
+import com.zeroio.platform.application.cms.GenerateFileWebPath;
 import com.zeroio.platform.presentation.controller.FileModulesConstants;
 
 /**
@@ -75,9 +74,7 @@ public class DatasetUploadFileCommand {
     }
 
     // Determine the web path for downloads, can randomize, etc.
-    Date created = new Date(System.currentTimeMillis());
-    SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
-    dataset.setWebPath(sdf.format(created));
+    dataset.setWebPath(GenerateFileWebPath.getWebPath());
 
     // Verify the file content and enhance the dataset record
     if (!DatasetFileCommand.isValidDatasetFile(dataset, type)) {

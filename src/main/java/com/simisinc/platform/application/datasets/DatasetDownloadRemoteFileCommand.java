@@ -20,8 +20,6 @@ package com.simisinc.platform.application.datasets;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -40,6 +38,7 @@ import com.simisinc.platform.application.http.HttpGetCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.datasets.Dataset;
 import com.simisinc.platform.infrastructure.persistence.datasets.DatasetRepository;
+import com.zeroio.platform.application.cms.GenerateFileWebPath;
 import com.zeroio.platform.presentation.controller.FileModulesConstants;
 
 /**
@@ -139,9 +138,7 @@ public class DatasetDownloadRemoteFileCommand {
     dataset.setFileHash(FileSystemCommand.getFileChecksum(tempFile));
 
     // Determine the web path for downloads, can randomize, etc.
-    Date created = new Date(System.currentTimeMillis());
-    SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
-    dataset.setWebPath(sdf.format(created));
+    dataset.setWebPath(GenerateFileWebPath.getWebPath());
 
     try {
       // Compare the file content with the previous version to see if it is new

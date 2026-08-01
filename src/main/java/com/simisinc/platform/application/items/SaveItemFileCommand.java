@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,9 +17,7 @@
 
 package com.simisinc.platform.application.items;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -36,6 +35,7 @@ import com.simisinc.platform.domain.model.items.PrivacyType;
 import com.simisinc.platform.infrastructure.persistence.GroupRepository;
 import com.simisinc.platform.infrastructure.persistence.items.ItemFileItemRepository;
 import com.simisinc.platform.infrastructure.persistence.items.ItemFolderRepository;
+import com.zeroio.platform.application.cms.GenerateFileWebPath;
 
 /**
  * Validates and saves an item's file item object
@@ -138,9 +138,7 @@ public class SaveItemFileCommand {
       fileItem.setSubFolderId(fileItemBean.getSubFolderId());
       fileItem.setCategoryId(fileItemBean.getCategoryId());
       // Determine the web path for downloads, can randomize, etc.
-      Date created = new Date(System.currentTimeMillis());
-      SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
-      fileItem.setWebPath(sdf.format(created));
+      fileItem.setWebPath(GenerateFileWebPath.getWebPath());
     }
     fileItem.setTitle(fileItemBean.getTitle());
     fileItem.setVersion(fileItemBean.getVersion());
@@ -213,9 +211,7 @@ public class SaveItemFileCommand {
       fileItem.setTags(TagCommand.normalize(fileItemBean.getTags()));
     }
     // Determine the web path for downloads, can randomize, etc.
-    Date created = new Date(System.currentTimeMillis());
-    SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
-    fileItem.setWebPath(sdf.format(created));
+    fileItem.setWebPath(GenerateFileWebPath.getWebPath());
     return ItemFileItemRepository.saveVersion(fileItem);
   }
 

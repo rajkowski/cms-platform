@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,9 +17,6 @@
 
 package com.simisinc.platform.application.cms;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -28,6 +26,7 @@ import com.simisinc.platform.domain.model.cms.Image;
 import com.simisinc.platform.domain.model.cms.ImageVersion;
 import com.simisinc.platform.infrastructure.persistence.cms.ImageRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.ImageVersionRepository;
+import com.zeroio.platform.application.cms.GenerateFileWebPath;
 
 /**
  * Validates and saves image objects
@@ -59,7 +58,7 @@ public class SaveImageCommand {
     // Transform the fields and store...
     Image image;
     boolean isNewImage = (imageBean.getId() == -1);
-    
+
     if (imageBean.getId() > -1) {
       LOG.debug("Saving an existing record... ");
       image = ImageRepository.findById(imageBean.getId());
@@ -70,9 +69,7 @@ public class SaveImageCommand {
       LOG.debug("Saving a new record... ");
       image = new Image();
       // Determine the web path for downloads, can randomize, etc.
-      Date created = new Date(System.currentTimeMillis());
-      SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
-      image.setWebPath(sdf.format(created));
+      image.setWebPath(GenerateFileWebPath.getWebPath());
     }
     image.setFilename(imageBean.getFilename());
     image.setFileServerPath(imageBean.getFileServerPath());
@@ -83,7 +80,7 @@ public class SaveImageCommand {
     image.setWidth(imageBean.getWidth());
     image.setHeight(imageBean.getHeight());
     image = ImageRepository.save(image);
-    
+
     // Create initial ImageVersion record for new images
     if (isNewImage && image != null) {
       ImageVersion version = new ImageVersion();
@@ -99,7 +96,7 @@ public class SaveImageCommand {
       version.setCreatedBy(image.getCreatedBy());
       ImageVersionRepository.save(version);
     }
-    
+
     return image;
   }
 
