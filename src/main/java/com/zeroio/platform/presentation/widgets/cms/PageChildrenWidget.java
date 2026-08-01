@@ -39,10 +39,13 @@ public class PageChildrenWidget extends GenericWidget {
 
   static String widgetJsp = "/cms/page-children-widget.jsp";
 
+  // Configuration parameters
+  private static final String PARAM_USE_ROOT_PARENT = "useRootParent";
   private static final String PARAM_MAX_DEPTH = "maxDepth";
   private static final String PARAM_FILTER_PUBLISHED = "filterPublished";
   private static final String PARAM_SHOW_COUNT = "showCount";
   private static final String PARAM_PAGE_LINK = "pageLink";
+  private static final String PARAM_SHOW_WHEN_EMPTY = "showWhenEmpty";
 
   @Override
   public WidgetContext execute(WidgetContext context) {
@@ -78,13 +81,15 @@ public class PageChildrenWidget extends GenericWidget {
       context.getRequest().setAttribute(PARAM_SHOW_COUNT, false);
     }
 
+    boolean useRootParent = Boolean.parseBoolean(context.getPreferences().get(PARAM_USE_ROOT_PARENT));
+
     // Prepare the children data
-    if (prepareChildrenData(context)) {
+    if (prepareChildrenData(context, useRootParent)) {
       context.setJsp(widgetJsp);
       return context;
     }
 
-    boolean showWhenEmpty = Boolean.parseBoolean(context.getPreferences().get("showWhenEmpty"));
+    boolean showWhenEmpty = Boolean.parseBoolean(context.getPreferences().get(PARAM_SHOW_WHEN_EMPTY));
     // No child pages found, check if we should show the widget when empty
     if (showWhenEmpty) {
       context.setJsp(widgetJsp);
@@ -98,44 +103,65 @@ public class PageChildrenWidget extends GenericWidget {
    *
    * @param context The widget context containing request and preferences
    */
-  private boolean prepareChildrenData(WidgetContext context) {
+  private boolean prepareChildrenData(WidgetContext context, boolean useRootParent) {
     Integer maxDepth = (Integer) context.getRequest().getAttribute(PARAM_MAX_DEPTH);
     Boolean filterPublished = (Boolean) context.getRequest().getAttribute(PARAM_FILTER_PUBLISHED);
-    String pageLink = context.getPreferences().get(PARAM_PAGE_LINK);
 
     if (maxDepth == null || maxDepth < 1) {
       maxDepth = 1;
     }
+
     if (filterPublished == null) {
       filterPublished = true;
     }
 
-    String effectivePageLink = context.getRequest().getPagePath();
-    if (StringUtils.isNotBlank(pageLink)) {
-      effectivePageLink = pageLink.startsWith("/") ? pageLink : "/" + pageLink;
-    }
+    List<PageTreeNode> nodes = null;
+    if (useRootParent) {
+      // useRootParent uses parentId = -1
+      nodes = LoadPageTreeCommand.loadPageTree(-1, maxDepth, filterPublished);
+    } else {
+      // Based on the current page
+      String effectivePageLink = context.getRequest().getPagePath();
 
-    WebPage page = LoadWebPageCommand.loadByLink(effectivePageLink);
-    long pageId = page != null ? page.getId() : -1;
-    if (pageId == -1) {
-      LOG.debug("No page found for link: " + effectivePageLink);
-      return false;
+      // Based on a configured page link
+      String pageLink = context.getPreferences().get(PARAM_PAGE_LINK);
+      if (StringUtils.isNotBlank(pageLink)) {
+        effectivePageLink = pageLink.startsWith("/") ? pageLink : "/" + pageLink;
+      }
+
+      // Verify the page
+      WebPage page = LoadWebPageCommand.loadByLink(effectivePageLink);
+      long pageId = page != null ? page.getId() : -1;
+      if (pageId == -1) {
+        LOG.debug("No page found for link: " + effectivePageLink);
+        return false;
+      }
+
+      // Load the tree
+      nodes = LoadPageTreeCommand.loadPageTree(pageId, maxDepth, filterPublished);
     }
 
     List<PageHierarchyItem> hierarchyItems = new ArrayList<>();
-    List<PageTreeNode> nodes = LoadPageTreeCommand.loadPageTree(pageId, maxDepth, filterPublished);
     for (int i = 0; i < nodes.size(); i++) {
       PageTreeNode node = nodes.get(i);
       WebPage child = new WebPage();
       child.setId(node.getId());
-      child.setTitle(node.getTitle());
+      if (StringUtils.isBlank(node.getTitle())) {
+        if ("/".equals(node.getLink())) {
+          child.setTitle("Home");
+        } else {
+          child.setTitle(node.getLink());
+        }
+      } else {
+        child.setTitle(node.getTitle());
+      }
       child.setLink(node.getLink());
       child.setDescription(node.getDescription());
       hierarchyItems.add(new PageHierarchyItem(child, node.getLevel(), isLastSibling(nodes, i)));
     }
 
     if (hierarchyItems.isEmpty()) {
-      LOG.debug("No child pages found for page link: " + effectivePageLink);
+      LOG.debug("No child pages found");
       return false;
     }
 

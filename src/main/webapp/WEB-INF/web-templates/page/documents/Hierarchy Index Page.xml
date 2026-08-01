@@ -20,6 +20,7 @@
       <column class="small-12 cell callout box">
         <widget name="pageChildren">
           <title>Site Index</title>
+          <useRootParent>true</useRootParent>
           <pageLink>/</pageLink>
           <maxDepth>10</maxDepth>
           <filterPublished>true</filterPublished>

@@ -170,6 +170,7 @@ class WidgetRegistry {
       category: 'Page',
       icon: 'fa-sitemap',
       properties: {
+        useRootParent: { type: 'checkbox', label: 'Use Root Parent', default: false },
         pageLink: { type: 'text', label: 'Parent Page Link (optional)', default: '' },
         maxDepth: { type: 'number', label: 'Maximum Depth', default: 1 },
         filterPublished: { type: 'checkbox', label: 'Filter Published', default: true },

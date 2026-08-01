@@ -138,7 +138,11 @@ public class LoadPageTreeCommand {
         "LPAD(COALESCE(CAST(h.sort_order AS TEXT), '0'), 10, '0') || ':' || LOWER(COALESCE(p.page_title, '')) AS sort_path ");
     sql.append(SQL_FROM_WEB_PAGES);
     sql.append(SQL_JOIN_HIERARCHY);
-    sql.append("WHERE h.parent_page_id = ? ");
+    if (parentId == -1) {
+      sql.append("WHERE h.parent_page_id IS NULL ");
+    } else {
+      sql.append("WHERE h.parent_page_id = ? ");
+    }
     sql.append("UNION ALL ");
     sql.append("SELECT p.web_page_id, p.page_title, p.page_description, p.link, p.enabled, p.draft, ");
     sql.append("h.sort_order, pt.tree_level + 1 AS tree_level, ");
@@ -157,10 +161,12 @@ public class LoadPageTreeCommand {
 
     try (Connection connection = DB.getConnection();
         PreparedStatement pst = connection.prepareStatement(sql.toString())) {
-
-      pst.setLong(1, parentId);
-      pst.setInt(2, Math.max(1, maxDepth));
-      pst.setBoolean(3, filterPublished);
+      int paramIndex = 0;
+      if (parentId > -1) {
+        pst.setLong(++paramIndex, parentId);
+      }
+      pst.setInt(++paramIndex, Math.max(1, maxDepth));
+      pst.setBoolean(++paramIndex, filterPublished);
 
       try (ResultSet rs = pst.executeQuery()) {
         while (rs.next()) {

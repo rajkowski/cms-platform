@@ -17,25 +17,6 @@
 <c:set var="childPages" value="${requestScope.childPages}" />
 <c:set var="showCount" value="${requestScope.showCount != null ? requestScope.showCount : false}" />
 <style>
-  
-  /* .children-pages {
-    --surface: linear-gradient(180deg, #ffffff 0%, #f6f9fc 100%);
-    --surface-strong: #ffffff;
-    --text: #1f2a37;
-    --muted: #5f6f82;
-    --border: rgba(23, 43, 77, 0.12);
-    --shadow: 0 12px 32px rgba(20, 33, 61, 0.08);
-    --accent-1: #005db5;
-    --accent-2: #1b7f6b;
-    --accent-3: #8f3fb2;
-    margin: 0.75rem 0;
-    padding: 0.9rem 1rem 1rem;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    box-shadow: 0 10px 24px rgba(20, 33, 61, 0.06);
-  } */
-
   .children-pages h4 {
     margin: 0;
     color: var(--text);
@@ -79,7 +60,7 @@
   }
 
   .tree-item.level-2 .tree-link {
-    color: #166956;
+    color: var(--accent-2);
     font-weight: 600;
   }
 
