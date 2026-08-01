@@ -35,7 +35,7 @@
           <title>Related Pages</title>
           <maxDepth>3</maxDepth>
         </widget>
-        <widget name="pageFiles">
+        <widget name="pageFiles" hr="true">
           <title>Attachments</title>
         </widget>
         <widget name="pageLabels" />
