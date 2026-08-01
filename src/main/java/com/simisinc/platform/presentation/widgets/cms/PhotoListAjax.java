@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,8 +17,11 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+
 import com.simisinc.platform.application.cms.LoadSubFolderCommand;
-import com.simisinc.platform.application.cms.UrlCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.FileItem;
 import com.simisinc.platform.domain.model.cms.SubFolder;
@@ -26,10 +30,6 @@ import com.simisinc.platform.infrastructure.persistence.cms.FileItemRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.FileSpecification;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
-import org.apache.commons.lang3.StringUtils;
-
-import java.text.SimpleDateFormat;
-import java.util.List;
 
 /**
  * Returns the specified file
@@ -68,12 +68,10 @@ public class PhotoListAjax extends GenericWidget {
     // Determine the results to be shown
     StringBuilder sb = new StringBuilder();
 
-    SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
-
     for (FileItem fileItem : fileList) {
 
-      String url = context.getContextPath() + "/assets/view/" + sdf.format(fileItem.getCreated()) + "-" + fileItem.getId() + "/" + UrlCommand.encodeUri(fileItem.getFilename());
-      if (sb.length() > 0) {
+      String url = context.getContextPath() + "/assets/view/" + fileItem.getUrl();
+      if (!sb.isEmpty()) {
         sb.append(",");
       }
       sb.append("{");
