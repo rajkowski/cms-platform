@@ -254,7 +254,7 @@ CREATE TABLE images (
   processed_file_type VARCHAR(20),
   processed_width INTEGER NOT NULL DEFAULT 0,
   processed_height INTEGER NOT NULL DEFAULT 0,
-  web_path VARCHAR(50) UNIQUE NOT NULL,
+  web_path VARCHAR(50) NOT NULL,
   title VARCHAR(255),
   alt_text VARCHAR(500),
   description TEXT,
@@ -660,7 +660,7 @@ CREATE TABLE files (
   tsv TSVECTOR,
   sub_folder_id BIGINT REFERENCES sub_folders(sub_folder_id),
   category_id BIGINT REFERENCES folder_categories(category_id),
-  web_path VARCHAR(50) UNIQUE NOT NULL,
+  web_path VARCHAR(50) NOT NULL,
   tags JSONB
 );
 CREATE INDEX files_tsv_idx ON files USING gin(tsv);
