@@ -35,34 +35,22 @@
 <jsp:useBean id="moodleBackgroundColor" class="java.lang.String" scope="request"/>
 <jsp:useBean id="moodleTextColor" class="java.lang.String" scope="request"/>
 <link rel="stylesheet" href="${ctx}/css/platform-calendar.css?v=<%= VERSION %>" />
+<web:stylesheet package="fullcalendar" file="skeleton.css" />
+<web:stylesheet package="fullcalendar" file="themes/forma/theme.css" />
+<web:stylesheet package="fullcalendar" file="themes/forma/palettes/blue.css" />
 <web:script package="moment" file="moment.min.js" />
-<web:script package="fullcalendar" file="index.global.min.js" />
+<web:script package="fullcalendar" file="global.js" />
+<web:script package="fullcalendar" file="themes/forma/global.js" />
 <c:if test="${(userSession.hasRole('admin') || userSession.hasRole('content-manager'))}">
-<style>
-  .fc-day:hover{
-    background: #DDECF7;
-    cursor: cell;
-  }
-  <%-- Allow pointer-events through --%>
-  .fc-slats, /*horizontals*/
-  .fc-content-skeleton, /*day numbers*/
-  .fc-bgevent-skeleton /*events container*/{
-    pointer-events:none
-  }
-  <%-- Turn pointer events back on --%>
-  .fc-bgevent,
-  .fc-event-container{
-    pointer-events:auto; /*events*/
-  }
-</style>
+  
 </c:if>
 <%-- Render the widget --%>
 <%@include file="../page_messages.jspf" %>
 <div id="calendar"><c:if test="${(userSession.hasRole('admin') || userSession.hasRole('content-manager'))}"><small><i class="fa fa-calendar-plus-o"></i> Select a date range to create events</small></c:if></div>
-<div id="tooltip" class="tooltip top align-center under-reveal" style="display:none"></div>
+<div id="calendar-tooltip" class="tooltip top align-center under-reveal" style="display:none"></div>
 <script>
-  function showTooltip(el, event) {
-    let tooltip = $("#tooltip");
+  function showTooltip${widgetContext.uniqueId}(el, event) {
+    let tooltip = $("#calendar-tooltip");
     tooltip.empty();
     $('<h5></h5>').text(event.title || '').appendTo(tooltip);
     if (event.allDay === undefined || !event.allDay) {
@@ -87,14 +75,13 @@
     let calendarLeft = $('#calendar').offset().left;
     let elTop = $(el).offset().top;
     let elLeft = Math.round($(el).offset().left);
-    let tdTop = Math.round($(el).closest('.fc-daygrid-event-harness').offset().top);
-    let tdLeft = Math.round($(el).closest('.fc-daygrid-event-harness').offset().left);
-    let tdWidth = Math.round($(el).closest('.fc-daygrid-event-harness').outerWidth());
+    let tdTop = Math.round($(el).closest('.calendar-event').offset().top);
+    let tdLeft = Math.round($(el).closest('.calendar-event').offset().left);
+    let tdWidth = Math.round($(el).closest('.calendar-event').outerWidth());
     let top = Math.round(tdTop - ttHeight - 10);
     let left = tdLeft + (tdWidth/2) - (ttWidth/2);
-    $('#tooltip').css({top: top, left: left});
-    $('#tooltip').fadeIn(200);
-    // alert('parentLeft:' + parentLeft + ' tdLeft: ' + tdLeft + ' calendarLeft:' + calendarLeft + ' tdWidth:' + tdWidth + ' ttWidth:' + ttWidth + ' left:' + left + ' top:' + top);
+    $('#calendar-tooltip').css({top: top, left: left});
+    $('#calendar-tooltip').fadeIn(200);
   }
 
   <c:choose>
@@ -116,12 +103,19 @@
     let calendarEl = document.getElementById('calendar');
     let calendar = new FullCalendar.Calendar(calendarEl, {
       initialView: '${initialView}',
-      <c:if test="${!empty height}">height: <c:out value="${height}" />,</c:if>
+      <c:choose>
+        <c:when test="${!empty height}">
+          height: <c:out value="${height}" />,
+        </c:when>
+        <c:otherwise>
+          height: 'auto',
+        </c:otherwise>
+      </c:choose>
       aspectRatio: 2,
       headerToolbar: {
         start: 'title',
-        center: '',
-        end: '${optionOrder} today prev,next'
+        // center: '${optionOrder}',
+        end: 'today prev,next'
       },
       buttonText: {
         today:    'Today',
@@ -160,6 +154,8 @@
       <c:choose>
         <c:when test="${(userSession.hasRole('admin') || userSession.hasRole('content-manager'))}">
           eventClick: function(info) {
+
+            info.jsEvent.preventDefault(); 
 
             // Reset form
             document.getElementById("calendarEventForm").reset();
@@ -208,6 +204,8 @@
         </c:when>
         <c:otherwise>
           eventClick: function(info) {
+            info.jsEvent.preventDefault(); 
+
             if (info.event.id <= 0) {
               return;
             }
@@ -226,31 +224,31 @@
         if (info.view.type !== 'dayGridMonth') {
           return;
         }
-        showTooltip(info.el, info.event);
+        showTooltip${widgetContext.uniqueId}(info.el, info.event);
       },
       eventMouseLeave: function(info) {
-        $('#tooltip').hide();
+        $('#calendar-tooltip').hide();
       },
       eventSources: [
         <c:if test="${showEvents eq 'true'}">
         {
           url: '/json/calendar?showEvents=true<c:if test="${!empty calendarUniqueId}">&calendarUniqueId=<c:out value="${calendarUniqueId}" /></c:if>',
-          color: '#999999',
-          textColor: '#ffffff'
+          className: 'calendar-event',
+          color: '#999999'
         },
         </c:if>
         <c:if test="${showHolidays eq 'true'}">
         {
           url: '/json/calendar?showHolidays=true',
-          color: '#999999',
-          textColor: '#ffffff'
+          className: 'calendar-event',
+          color: '#111111'
         },
         </c:if>
         <c:if test="${showMoodleEvents eq 'true'}">
         {
           url: '/json/calendar?showMoodleEvents=true',
-          color: '${moodleBackgroundColor}',
-          textColor: '${moodleTextColor}'
+          className: 'calendar-event',
+          color: '${moodleBackgroundColor}'
         }
         </c:if>
       ]
@@ -259,8 +257,8 @@
   });
 </script>
 <c:if test="${(userSession.hasRole('admin') || userSession.hasRole('content-manager'))}">
-  <div class="reveal tiny" id="modalReveal" data-reveal>
-    <h3>Event Options</h3>
+  <div class="reveal tiny" id="modalReveal" data-reveal role="dialog" aria-modal="true" aria-labelledby="modalRevealTitle">
+    <h3 id="modalRevealTitle">Event Options</h3>
     <p>Would you like to make changes or view the details of this event?</p>
     <div class="button-container text-no-wrap">
       <button class="button" data-open="formReveal">Edit this Event</button>
@@ -271,7 +269,7 @@
       <span aria-hidden="true">&times;</span>
     </button>
   </div>
-  <div class="reveal small" id="formReveal" data-reveal data-close-on-esc="false" data-close-on-click="false" data-animation-in="slide-in-down fast">
+  <div class="reveal small" id="formReveal" data-reveal data-close-on-esc="false" data-close-on-click="false" data-animation-in="slide-in-down fast" role="dialog" aria-modal="true" aria-labelledby="formTitle">
     <button class="close-button" data-close aria-label="Close modal" type="button">
       <span aria-hidden="true">&times;</span>
     </button>

@@ -64,9 +64,9 @@ class HubContentManager {
     this.calendar = new FullCalendar.Calendar(container, {
       initialView: 'dayGridMonth',
       headerToolbar: {
-        left: 'prev,next today',
-        center: 'title',
-        right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+        left: 'title',
+        center: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek',
+        right: 'prev,next today'
       },
       editable: false,
       eventSources: [],
@@ -359,9 +359,9 @@ class HubContentManager {
       this.calendar = new FullCalendar.Calendar(calendarContainer, {
         initialView: 'dayGridMonth',
         headerToolbar: {
-          left: 'prev,next today',
-          center: 'title',
-          right: 'dayGridMonth,listMonth'
+          left: 'title',
+          center: 'dayGridMonth,listMonth',
+          right: 'prev,next today'
         },
         events: events,
         eventClick: (info) => this.handleEventClick(info.event),

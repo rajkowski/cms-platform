@@ -114,7 +114,7 @@
       <c:if test="${!empty detailsForCalendarButton}">
         description="<c:out value="${detailsForCalendarButton}" />"
       </c:if>
-      hideBranding="true"></add-to-calendar-button>
+      hideBranding="true" hideBackground="true" forceOverlay="true" buttonStyle="simple"></add-to-calendar-button>
     <c:if test="${!empty calendarEvent.summary}">
       <p class="platform-calendar-event-summary"><c:out value="${calendarEvent.summary}" /></p>
     </c:if>

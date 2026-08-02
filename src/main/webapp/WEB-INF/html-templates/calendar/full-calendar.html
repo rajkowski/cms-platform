@@ -1,42 +1,46 @@
-<!--/* CMS Platform Template, 2024 */-->
+<!--/* CMS Platform Template, Copyright 2024-2026 Matt Rajkowski, Apache License*/-->
 <link rel="stylesheet" th:href="${#strings.concat(ctx, '/css/platform-calendar.css?v=', VERSION)}" />
+<link rel="stylesheet" th:href="#{web.package('fullcalendar', 'skeleton.css')}" />
+<link rel="stylesheet" th:href="#{web.package('fullcalendar', 'themes/forma/theme.css')}" />
+<link rel="stylesheet" th:href="#{web.package('fullcalendar', 'themes/forma/palettes/blue.css')}" />
 <script th:src="#{web.package('moment', 'moment.min.js')}"></script>
-<script th:src="#{web.package('fullcalendar', 'index.global.min.js')}"></script>
+<script th:src="#{web.package('fullcalendar', 'global.js')}"></script>
+<script th:src="#{web.package('fullcalendar', 'themes/forma/global.js')}"></script>
 <div id="calendar"></div>
-<div id="tooltip" class="tooltip top align-center under-reveal" style="display:none"></div>
+<div id="calendar-tooltip" class="tooltip top align-center under-reveal" style="display:none"></div>
 <script th:inline="javascript">
   function showTooltip(el, event) {
-    let content = "<h5>" + event.title+"</h5>";
+    let tooltip = $("#calendar-tooltip");
+    tooltip.empty();
+    $('<h5></h5>').text(event.title || '').appendTo(tooltip);
     if (event.allDay === undefined || !event.allDay) {
-      content += "<p>";
-      content += moment(event.start).format("LT") + " - " + moment(event.end).format("LT");
-      content += "</p>";
+      $('<p></p>').text(moment(event.start).format('LT') + ' - ' + moment(event.end).format('LT')).appendTo(tooltip);
     }
     if (event.extendedProps.location) {
-      content += "<p><i class='fa fa-map-marker'></i> " + event.extendedProps.location + "</p>";
+      let locationText = $('<p></p>');
+      $('<i></i>').addClass('fa fa-map-marker').appendTo(locationText);
+      locationText.append(document.createTextNode(' ' + event.extendedProps.location));
+      locationText.appendTo(tooltip);
     }
     if (event.extendedProps.description || event.extendedProps.detailsUrl) {
-      content += "<p class='no-gap'>(click for more details)</p>";
+      $('<p></p>').addClass('no-gap').text('(click for more details)').appendTo(tooltip);
     }
-    $("#tooltip").html(content);
-    let ttHeight = $("#tooltip").outerHeight();
-    let ttWidth = $("#tooltip").outerWidth();
+    let ttHeight = tooltip.outerHeight();
+    let ttWidth = tooltip.outerWidth();
 
-    // center and show it
     let parentTop = Math.round($('#calendar').parent().offset().top);
     let parentLeft = Math.round($('#calendar').parent().offset().left);
     let calendarTop = $('#calendar').offset().top;
     let calendarLeft = $('#calendar').offset().left;
     let elTop = $(el).offset().top;
     let elLeft = Math.round($(el).offset().left);
-    let tdTop = Math.round($(el).closest('.fc-daygrid-event-harness').offset().top);
-    let tdLeft = Math.round($(el).closest('.fc-daygrid-event-harness').offset().left);
-    let tdWidth = Math.round($(el).closest('.fc-daygrid-event-harness').outerWidth());
+    let tdTop = Math.round($(el).closest('.calendar-event').offset().top);
+    let tdLeft = Math.round($(el).closest('.calendar-event').offset().left);
+    let tdWidth = Math.round($(el).closest('.calendar-event').outerWidth());
     let top = Math.round(tdTop - ttHeight - 10);
     let left = tdLeft + (tdWidth/2) - (ttWidth/2);
-    $('#tooltip').css({top: top, left: left});
-    $('#tooltip').fadeIn(200);
-    // alert('parentLeft:' + parentLeft + ' tdLeft: ' + tdLeft + ' calendarLeft:' + calendarLeft + ' tdWidth:' + tdWidth + ' ttWidth:' + ttWidth + ' left:' + left + ' top:' + top);
+    $('#calendar-tooltip').css({top: top, left: left});
+    $('#calendar-tooltip').fadeIn(200);
   }
 
   document.addEventListener('DOMContentLoaded', function() {
@@ -55,9 +59,9 @@
         start: 'title',
         center: '',
         [# th:switch="${defaultView}"]
-        [# th:case="list"] end: 'listWeek,dayGridMonth today prev,next'[/]
-        [# th:case="day"] end: 'timeGrid,dayGridMonth today prev,next'[/]
-        [# th:case="*"] end: 'dayGridMonth,listWeek today prev,next'[/]
+        [# th:case="list"] end: 'today prev,next'[/]
+        [# th:case="day"] end: 'today prev,next'[/]
+        [# th:case="*"] end: 'today prev,next'[/]
       [/]
       },
       buttonText: {
@@ -70,6 +74,8 @@
       },
       
       eventClick: function(info) {
+        info.jsEvent.preventDefault(); 
+
         if (info.event.id <= 0) {
           return;
         }
@@ -89,7 +95,7 @@
         showTooltip(info.el, info.event);
       },
       eventMouseLeave: function(info) {
-        $('#tooltip').hide();
+        $('#calendar-tooltip').hide();
       },
       eventSources: [
 

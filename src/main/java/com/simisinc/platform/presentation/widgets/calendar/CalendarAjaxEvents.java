@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -78,7 +79,7 @@ public class CalendarAjaxEvents {
     // Determine the results to be shown
     if (!calendarEventList.isEmpty()) {
       for (CalendarEvent calendarEvent : calendarEventList) {
-        if (sb.length() > 0) {
+        if (!sb.isEmpty()) {
           sb.append(",");
         }
         String color = getColor(calendarList, calendarEvent);
@@ -101,12 +102,15 @@ public class CalendarAjaxEvents {
     String startDateHoursMinutes = new SimpleDateFormat("HH:mm").format(calendarEvent.getStartDate());
     String endDateHoursMinutes = new SimpleDateFormat("HH:mm").format(calendarEvent.getEndDate());
     if (calendarEvent.getAllDay()) {
-      // Requied for viewing to extend to the end of the day, otherwise the view uses the day before
+      // Required for viewing to extend to the end of the day, otherwise the view uses the day before
       props.put("start", startDate);
       props.put("end", endDate + "T24:00");
     } else {
       props.put("start", startDate + "T" + startDateHoursMinutes + ":00" + offset);
       props.put("end", endDate + "T" + endDateHoursMinutes + ":00" + offset);
+    }
+    if (color != null) {
+      props.put("color", color);
     }
 
     // Add extended properties
@@ -124,9 +128,6 @@ public class CalendarAjaxEvents {
     }
     if (StringUtils.isNotEmpty(calendarEvent.getLocation())) {
       extendedProps.put("location", calendarEvent.getLocation());
-    }
-    if (color != null) {
-      extendedProps.put("color", color);
     }
     props.put("extendedProps", extendedProps);
     return JsonCommand.createJsonNode(props).toString();

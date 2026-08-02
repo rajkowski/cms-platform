@@ -21,7 +21,11 @@
 <%@ taglib prefix="web" uri="/WEB-INF/tlds/web.tld" %>
 <jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
-<web:script package="fullcalendar" file="index.global.min.js" />
+<web:script package="fullcalendar" file="global.js" />
+<web:script package="fullcalendar" file="themes/forma/global.js" />
+<web:stylesheet package="fullcalendar" file="skeleton.css" />
+<web:stylesheet package="fullcalendar" file="themes/forma/theme.css" />
+<web:stylesheet package="fullcalendar" file="themes/forma/palettes/blue.css" />
 <web:script package="tinymce" file="tinymce.min.js" />
 <web:script package="jquery" file="jquery.min.js" />
 <g:compress>

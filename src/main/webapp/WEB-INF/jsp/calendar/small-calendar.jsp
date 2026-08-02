@@ -35,28 +35,34 @@
 <jsp:useBean id="moodleBackgroundColor" class="java.lang.String" scope="request"/>
 <jsp:useBean id="moodleTextColor" class="java.lang.String" scope="request"/>
 <link rel="stylesheet" href="${ctx}/css/platform-calendar.css?v=<%= VERSION %>" />
+<web:stylesheet package="fullcalendar" file="skeleton.css" />
+<web:stylesheet package="fullcalendar" file="themes/forma/theme.css" />
+<web:stylesheet package="fullcalendar" file="themes/forma/palettes/blue.css" />
 <web:script package="moment" file="moment.min.js" />
-<web:script package="fullcalendar" file="index.global.min.js" />
+<web:script package="fullcalendar" file="global.js" />
+<web:script package="fullcalendar" file="themes/forma/global.js" />
 <%-- Render the widget --%>
 <div id="calendar-small"></div>
-<div id="tooltip-small" class="tooltip top align-center under-reveal" style="display:none"></div>
+<div id="calendar-tooltip-small" class="tooltip top align-center under-reveal" style="display:none"></div>
 <script>
-  function showTooltip(el, event) {
-    let content = "<h5>" + event.title+"</h5>";
+  function showTooltip${widgetContext.uniqueId}(el, event) {
+    let tooltip = $("#calendar-tooltip-small");
+    tooltip.empty();
+    $('<h5></h5>').text(event.title || '').appendTo(tooltip);
     if (event.allDay === undefined || !event.allDay) {
-      content += "<p>";
-      content += moment(event.start).format("LT") + " - " + moment(event.end).format("LT");
-      content += "</p>";
+      $('<p></p>').text(moment(event.start).format('LT') + ' - ' + moment(event.end).format('LT')).appendTo(tooltip);
     }
     if (event.extendedProps.location) {
-      content += "<p><i class='fa fa-map-marker'></i> " + event.extendedProps.location + "</p>";
+      let locationText = $('<p></p>');
+      $('<i></i>').addClass('fa fa-map-marker').appendTo(locationText);
+      locationText.append(document.createTextNode(' ' + event.extendedProps.location));
+      locationText.appendTo(tooltip);
     }
     if (event.extendedProps.description || event.extendedProps.detailsUrl) {
-      content += "<p class='no-gap'>(click for more details)</p>";
+      $('<p></p>').addClass('no-gap').text('(click for more details)').appendTo(tooltip);
     }
-    $("#tooltip-small").html(content);
-    let ttHeight = $("#tooltip-small").outerHeight();
-    let ttWidth = $("#tooltip-small").outerWidth();
+    let ttHeight = tooltip.outerHeight();
+    let ttWidth = tooltip.outerWidth();
 
     <%-- Center and show it --%>
     let parentTop = Math.round($('#calendar-small').parent().offset().top);
@@ -65,14 +71,13 @@
     let calendarLeft = $('#calendar-small').offset().left;
     let elTop = $(el).offset().top;
     let elLeft = Math.round($(el).offset().left);
-    let tdTop = Math.round($(el).closest('.fc-daygrid-event-harness').offset().top);
-    let tdLeft = Math.round($(el).closest('.fc-daygrid-event-harness').offset().left);
-    let tdWidth = Math.round($(el).closest('.fc-daygrid-event-harness').outerWidth());
+    let tdTop = Math.round($(el).closest('.calendar-event').offset().top);
+    let tdLeft = Math.round($(el).closest('.calendar-event').offset().left);
+    let tdWidth = Math.round($(el).closest('.calendar-event').outerWidth());
     let top = Math.round(tdTop - ttHeight - 10);
     let left = tdLeft + (tdWidth/2) - (ttWidth/2);
-    $('#tooltip-small').css({top: top, left: left});
-    $('#tooltip-small').fadeIn(200);
-    // $('#tooltip').show();
+    $('#calendar-tooltip-small').css({top: top, left: left});
+    $('#calendar-tooltip-small').fadeIn(200);
   }
 
   <c:choose>
@@ -94,12 +99,19 @@
     let calendarEl = document.getElementById('calendar-small');
     let calendar = new FullCalendar.Calendar(calendarEl, {
       initialView: '${initialView}',
-      <c:if test="${!empty height}">height: <c:out value="${height}" />,</c:if>
+      <c:choose>
+        <c:when test="${!empty height}">
+          height: <c:out value="${height}" />,
+        </c:when>
+        <c:otherwise>
+          height: 'auto',
+        </c:otherwise>
+      </c:choose>
       aspectRatio: 2,
       headerToolbar: {
         start: 'title',
-        center: '',
-        end: '${optionOrder} today prev,next'
+        // center: '',
+        end: 'today prev,next'
       },
       buttonText: {
         today:    'Today',
@@ -111,6 +123,8 @@
       },
       selectable: false,
       eventClick: function(info) {
+        info.jsEvent.preventDefault(); 
+
         if (info.event.id <= 0) {
           return;
         }
@@ -127,31 +141,31 @@
         if (info.view.type !== 'dayGridMonth') {
           return;
         }
-        showTooltip(info.el, info.event);
+        showTooltip${widgetContext.uniqueId}(info.el, info.event);
       },
       eventMouseLeave: function(info) {
-        $('#tooltip-small').hide();
+        $('#calendar-tooltip-small').hide();
       },
       eventSources: [
         <c:if test="${showEvents eq 'true'}">
         {
           url: '/json/calendar?showEvents=true<c:if test="${!empty calendarUniqueId}">&calendarUniqueId=<c:out value="${calendarUniqueId}" /></c:if>',
-          color: '#999999',
-          textColor: '#ffffff'
+          className: 'calendar-event',
+          color: '#999999'
         },
         </c:if>
         <c:if test="${showHolidays eq 'true'}">
         {
           url: '/json/calendar?showHolidays=true',
-          color: '#999999',
-          textColor: '#ffffff'
+          className: 'calendar-event',
+          color: '#111111'
         },
         </c:if>
         <c:if test="${showMoodleEvents eq 'true'}">
         {
           url: '/json/calendar?showMoodleEvents=true',
-          color: '${moodleBackgroundColor}',
-          textColor: '${moodleTextColor}'
+          className: 'calendar-event',
+          color: '${moodleBackgroundColor}'
         }
         </c:if>
       ]
