@@ -203,18 +203,20 @@
         "node_modules/swiper/swiper-bundle.mjs"
       ]
     },
-    "tinymce": {
-      "version": "6.8.6",
+    "hugerte": {
+      "version": "1.0.12",
       "paths": [
-        "node_modules/tinymce/tinymce.js",
-        "node_modules/tinymce/tinymce.min.js",
-        "node_modules/tinymce/tinymce.d.ts",
-        "node_modules/tinymce/license.txt",
-        "node_modules/tinymce/icons",
-        "node_modules/tinymce/models",
-        "node_modules/tinymce/plugins",
-        "node_modules/tinymce/skins",
-        "node_modules/tinymce/themes"
+        "node_modules/hugerte/hugerte.js",
+        "node_modules/hugerte/hugerte.min.js",
+        "node_modules/hugerte/hugerte.css",
+        "node_modules/hugerte/hugerte.min.css",
+        "node_modules/hugerte/hugerte.d.ts",
+        "node_modules/hugerte/license.txt",
+        "node_modules/hugerte/icons",
+        "node_modules/hugerte/models",
+        "node_modules/hugerte/plugins",
+        "node_modules/hugerte/skins",
+        "node_modules/hugerte/themes"
       ]
     },
     "what-input": {

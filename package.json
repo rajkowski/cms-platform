@@ -27,6 +27,7 @@
     "foundation-datepicker": "1.5.6",
     "foundation-sites": "6.9.0",
     "fullcalendar": "7.0.2",
+    "hugerte": "1.0.12",
     "imagesloaded": "5.0.0",
     "jquery": "3.7.1",
     "jquery-formatcurrency": "1.6.3",
@@ -44,7 +45,6 @@
     "sortablejs": "1.15.7",
     "spectrum-colorpicker": "1.8.1",
     "swiper": "14.0.7",
-    "tinymce": "6.8.6",
     "what-input": "5.2.12"
   },
   "non-npm-dependencies": {
