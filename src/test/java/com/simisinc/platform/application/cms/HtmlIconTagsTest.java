@@ -31,80 +31,80 @@ class HtmlIconTagsTest {
 
   @Test
   void iconTagsBasicTest() {
-    String html = "<em class=\"far fa-code tinymce-noedit\"></em> <span class=\"far fa-code-2 tinymce-noedit\"></span>";
+    String html = "<em class=\"far fa-code mceNonEditable\"></em> <span class=\"far fa-code-2 mceNonEditable\"></span>";
     String expected = "<i class=\"far fa-code\"></i> <i class=\"far fa-code-2\"></i>";
 
-    String value = TinyMceCommand.updateContentFromEditor(html);
+    String value = HtmlEditorCommand.updateContentFromEditor(html);
     assertEquals(expected, value);
 
     // Run it through again
-    value = TinyMceCommand.updateContentFromEditor(value);
+    value = HtmlEditorCommand.updateContentFromEditor(value);
     assertEquals(expected, value);
   }
 
   @Test
   void iconTagsNoMatchTest() {
-    String html = "<p class=\"far fa-code tinymce-noedit\"></p> <p class=\"fab fa-code-2 tinymce-noedit\"></p>";
-    String expected = "<p class=\"far fa-code tinymce-noedit\"></p> <p class=\"fab fa-code-2 tinymce-noedit\"></p>";
+    String html = "<p class=\"far fa-code mceNonEditable\"></p> <p class=\"fab fa-code-2 mceNonEditable\"></p>";
+    String expected = "<p class=\"far fa-code mceNonEditable\"></p> <p class=\"fab fa-code-2 mceNonEditable\"></p>";
 
-    String value = TinyMceCommand.updateContentFromEditor(html);
+    String value = HtmlEditorCommand.updateContentFromEditor(html);
     assertEquals(expected, value);
 
-    value = TinyMceCommand.updateContentFromEditor(value);
+    value = HtmlEditorCommand.updateContentFromEditor(value);
     assertEquals(expected, value);
   }
 
   @Test
   void iconTagsLinkTest() {
     String html = "<p>\n" +
-        "<a href=\"mailto:example@example.com\"><span class=\"fas fa-envelope-square tinymce-noedit\">&nbsp;</span></a>\n" +
-        "<a href=\"https://example.com\" target=\"_blank\"><span class=\"fab fa-linkedin tinymce-noedit\">&nbsp;</span></a>\n" +
+        "<a href=\"mailto:example@example.com\"><span class=\"fas fa-envelope-square mceNonEditable\">&nbsp;</span></a>\n" +
+        "<a href=\"https://example.com\" target=\"_blank\"><span class=\"fab fa-linkedin mceNonEditable\">&nbsp;</span></a>\n" +
         "</p>";
     String expected = "<p>\n" +
         "<a href=\"mailto:example@example.com\"><i class=\"fas fa-envelope-square\"></i></a>\n" +
         "<a href=\"https://example.com\" target=\"_blank\"><i class=\"fab fa-linkedin\"></i></a>\n" +
         "</p>";
 
-    String value = TinyMceCommand.updateContentFromEditor(html);
+    String value = HtmlEditorCommand.updateContentFromEditor(html);
     assertEquals(expected, value);
 
-    value = TinyMceCommand.prepareContentForEditor(value);
+    value = HtmlEditorCommand.prepareContentForEditor(value);
     assertEquals(html, value);
 
     // Run it through again
-    value = TinyMceCommand.updateContentFromEditor(value);
+    value = HtmlEditorCommand.updateContentFromEditor(value);
     assertEquals(expected, value);
   }
 
   @Test
   void iconTagsEmptyTest() {
-    assertNull(TinyMceCommand.updateContentFromEditor(null));
-    assertEquals("", TinyMceCommand.updateContentFromEditor(""));
+    assertNull(HtmlEditorCommand.updateContentFromEditor(null));
+    assertEquals("", HtmlEditorCommand.updateContentFromEditor(""));
   }
 
   @Test
   void iconTagsForEditorTest() {
     String html = "<i class=\"far fa-code\"></i> <i class=\"far fa-code-2\"></i>";
-    String expected = "<span class=\"far fa-code tinymce-noedit\">&nbsp;</span> <span class=\"far fa-code-2 tinymce-noedit\">&nbsp;</span>";
+    String expected = "<span class=\"far fa-code mceNonEditable\">&nbsp;</span> <span class=\"far fa-code-2 mceNonEditable\">&nbsp;</span>";
 
-    String value = TinyMceCommand.prepareContentForEditor(html);
+    String value = HtmlEditorCommand.prepareContentForEditor(html);
     assertEquals(expected, value);
 
     // Run it through again
-    value = TinyMceCommand.prepareContentForEditor(value);
+    value = HtmlEditorCommand.prepareContentForEditor(value);
     assertEquals(expected, value);
   }
 
   @Test
   void iconTagsRoundTripTest() {
     String html = "<i class=\"far fa-code\"></i> <i class=\"far fa-code-2\"></i>";
-    String intermediate = "<span class=\"far fa-code tinymce-noedit\">&nbsp;</span> <span class=\"far fa-code-2 tinymce-noedit\">&nbsp;</span>";
+    String intermediate = "<span class=\"far fa-code mceNonEditable\">&nbsp;</span> <span class=\"far fa-code-2 mceNonEditable\">&nbsp;</span>";
 
-    String value = TinyMceCommand.prepareContentForEditor(html);
+    String value = HtmlEditorCommand.prepareContentForEditor(html);
     assertEquals(intermediate, value);
 
     // Run it backwards
-    value = TinyMceCommand.updateContentFromEditor(intermediate);
+    value = HtmlEditorCommand.updateContentFromEditor(intermediate);
     assertEquals(html, value);
   }@Test
 

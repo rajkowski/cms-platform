@@ -29,6 +29,7 @@ import com.simisinc.platform.application.cms.LoadBlogCommand;
 import com.simisinc.platform.application.cms.LoadBlogPostCommand;
 import com.simisinc.platform.application.cms.SaveBlogPostCommand;
 import com.simisinc.platform.application.cms.SaveWebPageCommand;
+import com.simisinc.platform.application.cms.HtmlEditorCommand;
 import com.simisinc.platform.application.cms.UrlCommand;
 import com.simisinc.platform.domain.model.cms.Blog;
 import com.simisinc.platform.domain.model.cms.BlogPost;
@@ -41,7 +42,7 @@ import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
 
 /**
- * Description
+ * Blog editor widget
  *
  * @author matt rajkowski
  * @created 8/7/18 10:47 AM
@@ -69,13 +70,16 @@ public class BlogEditorWidget extends GenericWidget {
     BlogPost blogPost = null;
     if (context.getRequestObject() != null) {
       blogPost = (BlogPost) context.getRequestObject();
-      context.getRequest().setAttribute("blogPost", blogPost);
     } else {
       long blogPostId = context.getParameterAsLong("blogPostId");
       if (blogPostId > -1) {
         blogPost = LoadBlogPostCommand.loadBlogPostById(blogPostId);
-        context.getRequest().setAttribute("blogPost", blogPost);
       }
+    }
+
+    if (blogPost != null) {
+      blogPost.setBody(HtmlEditorCommand.prepareContentForEditor(blogPost.getBody()));
+      context.getRequest().setAttribute("blogPost", blogPost);
     }
 
     // Determine the blog for this post

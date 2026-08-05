@@ -24,12 +24,12 @@ import com.zeroio.platform.application.cms.EditorIconsCommand;
 import com.zeroio.platform.application.cms.EditorInlineContentCommand;
 
 /**
- * Methods for working with TinyMCE content
+ * Methods for working with HTML Editor content
  *
  * @author matt rajkowski
  * @created 3/2/20 10:00 PM
  */
-public class TinyMceCommand {
+public class HtmlEditorCommand {
 
   /**
    * Prepares the content HTML for the HTML content editor by converting tokens,

@@ -35,7 +35,7 @@ class ContentEditorBridge {
    */
   init() {
     this.setupEventListeners();
-    this.initializeTinyMCE();
+    this.initializeEditor();
   }
 
   /**
@@ -55,15 +55,20 @@ class ContentEditorBridge {
   }
 
   /**
-   * Initialize TinyMCE editor
+   * Initialize HTML editor
    */
-  initializeTinyMCE() {
-    if (typeof tinymce === 'undefined') {
-      console.error('TinyMCE not loaded');
+  initializeEditor() {
+
+    const appVersion = window.CMS_APP_VERSION || (typeof CMS_APP_VERSION !== 'undefined' ? CMS_APP_VERSION : '1');
+    const formToken = window.CMS_FORM_TOKEN || (typeof CMS_FORM_TOKEN !== 'undefined' ? CMS_FORM_TOKEN : '');
+    const fontAwesomeCssPath = window.CMS_FONT_AWESOME_CSS_PATH || (typeof CMS_FONT_AWESOME_CSS_PATH !== 'undefined' ? CMS_FONT_AWESOME_CSS_PATH : '');
+
+    if (typeof hugerte === 'undefined') {
+      console.error('Editor not loaded');
       return;
     }
 
-    tinymce.init({
+    hugerte.init({
       selector: '#content-html-editor',
       branding: false,
       width: '100%',
@@ -76,9 +81,9 @@ class ContentEditorBridge {
       sandbox_iframes: true,
       browser_spellcheck: true,
       content_css: [
-        '/css/${font:fontawesome()}/css/all.min.css',
-        '/css/${font:fontawesome()}/css/v4-shims.min.css',
-        '/css/platform.css?v=202607240800',
+        '/css/' + fontAwesomeCssPath + '/css/all.min.css',
+        '/css/' + fontAwesomeCssPath + '/css/v4-shims.min.css',
+        '/css/platform.css?v=' + appVersion,
       ],
       plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code media table wordcount fontawesome contentblock diagram versionhistory cards notes panels templates',
       toolbar: 
@@ -88,14 +93,14 @@ class ContentEditorBridge {
         ],
       toolbar_mode: 'wrap',
       external_plugins: {
-        "contentblock": "/javascript/tinymce-plugins/contentblock/plugin.js?v=202607240800",
-        "fontawesome": "/javascript/tinymce-plugins/fontawesome/plugin.min.js?v=202607240800",
-        "diagram": "/javascript/tinymce-plugins/diagram/plugin.js?v=202607240800",
-        "versionhistory": "/javascript/tinymce-plugins/versionhistory/plugin.js?v=202607240800",
-        "cards": "/javascript/tinymce-plugins/cards/plugin.js?v=202607240800",
-        "notes": "/javascript/tinymce-plugins/notes/plugin.js?v=202607240800",
-        "panels": "/javascript/tinymce-plugins/panels/plugin.js?v=202607240800",
-        "templates": "/javascript/tinymce-plugins/templates/plugin.js?v=202607240800"
+        "contentblock": "/javascript/tinymce-plugins/contentblock/plugin.js?v=" + appVersion,
+        "fontawesome": "/javascript/tinymce-plugins/fontawesome/plugin.js?v=" + appVersion,
+        "diagram": "/javascript/tinymce-plugins/diagram/plugin.js?v=" + appVersion,
+        "versionhistory": "/javascript/tinymce-plugins/versionhistory/plugin.js?v=" + appVersion,
+        "cards": "/javascript/tinymce-plugins/cards/plugin.js?v=" + appVersion,
+        "notes": "/javascript/tinymce-plugins/notes/plugin.js?v=" + appVersion,
+        "panels": "/javascript/tinymce-plugins/panels/plugin.js?v=" + appVersion,
+        "templates": "/javascript/tinymce-plugins/templates/plugin.js?v=" + appVersion
       },
       image_class_list: [
         { title: 'None', value: '' },
@@ -125,7 +130,7 @@ class ContentEditorBridge {
           callback(fileUrl);
         });
       },
-      images_upload_url: '/image-upload?widget=imageUpload1&token=${userSession.formToken}', // return { "location": "folder/sub-folder/new-location.png" }
+      images_upload_url: '/image-upload?widget=imageUpload1&token=' + formToken, // return { "location": "folder/sub-folder/new-location.png" }
       paste_data_images: true,
       automatic_uploads: true,
       setup: (editor) => {
@@ -155,7 +160,7 @@ class ContentEditorBridge {
         cmsType = 'file';
       }
       var cmsURL = '/' + cmsType + '-browser';
-      const instanceApi = tinyMCE.activeEditor.windowManager.openUrl({
+      const instanceApi = hugerte.activeEditor.windowManager.openUrl({
         title: 'Browser',
         url: cmsURL,
         width: 850,

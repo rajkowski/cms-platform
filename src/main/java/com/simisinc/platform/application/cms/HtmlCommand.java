@@ -132,7 +132,7 @@ public class HtmlCommand {
     }
 
     // Handle conventions used in TinyMCE for editing
-    contentHtml = TinyMceCommand.updateContentFromEditor(contentHtml);
+    contentHtml = HtmlEditorCommand.updateContentFromEditor(contentHtml);
 
     if (LOG.isTraceEnabled()) {
       LOG.trace("CONTENT UPDATED FROM EDITOR: " + contentHtml);

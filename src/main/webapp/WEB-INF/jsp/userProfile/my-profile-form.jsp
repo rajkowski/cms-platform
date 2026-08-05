@@ -23,9 +23,9 @@
 <jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="cancelUrl" class="java.lang.String" scope="request"/>
-<web:script package="tinymce" file="tinymce.min.js" />
+<web:script package="hugerte" file="hugerte.min.js" />
 <script>
-  tinymce.init({
+  hugerte.init({
     selector: '.html-field',
     branding: false,
     width: '100%',

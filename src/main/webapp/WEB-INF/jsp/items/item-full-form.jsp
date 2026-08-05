@@ -14,10 +14,12 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   --%>
+<%@ page import="static com.zeroio.platform.ApplicationInfo.VERSION" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="font" uri="/WEB-INF/tlds/font-functions.tld" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="g" uri="http://granule.com/tags" %>
 <%@ taglib prefix="web" uri="/WEB-INF/tlds/web.tld" %>
 <jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
@@ -25,9 +27,12 @@
 <jsp:useBean id="item" class="com.simisinc.platform.domain.model.items.Item" scope="request"/>
 <jsp:useBean id="categoryList" class="java.util.ArrayList" scope="request"/>
 <jsp:useBean id="cancelUrl" class="java.lang.String" scope="request"/>
-<web:script package="tinymce" file="tinymce.min.js" />
+<g:compress>
+  <link rel="stylesheet" type="text/css" href="${ctx}/css/platform-editor.css" />
+</g:compress>
+<web:script package="hugerte" file="hugerte.min.js" />
 <script>
-  tinymce.init({
+  hugerte.init({
     selector: '.html-field',
     branding: false,
     width: '100%',
@@ -41,12 +46,12 @@
     content_css: [
       '${ctx}/css/${font:fontawesome()}/css/all.min.css',
       '${ctx}/css/${font:fontawesome()}/css/v4-shims.min.css',
-      '${ctx}/css/platform.css?v=${includeGlobalStylesheetLastModified}'
+      '${ctx}/css/platform.css?v=${VERSION}'
       <c:if test="${!empty includeGlobalStylesheet}">,'${ctx}/css/custom/stylesheet.css?v=${includeGlobalStylesheetLastModified}'</c:if>
       <c:if test="${!empty includeStylesheet}">,'${ctx}/css/custom/stylesheet${includeStylesheet}.css?v=${includeStylesheetLastModified}'</c:if>
     ],
     browser_spellcheck: true,
-    noneditable_class: 'tinymce-noedit',
+    noneditable_class: 'mceNonEditable',
     plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code insertdatetime media table wordcount contentblock diagram templates fullscreen',
     toolbar: 
     [
@@ -55,15 +60,29 @@
     ],
     toolbar_mode: 'wrap',
     external_plugins: {
-       "contentblock": "${ctx}/javascript/tinymce-plugins/contentblock/plugin.js?v=${includeGlobalStylesheetLastModified}",
-       "diagram": "${ctx}/javascript/tinymce-plugins/diagram/plugin.js?v=${includeGlobalStylesheetLastModified}",
-       "templates": "${ctx}/javascript/tinymce-plugins/templates/plugin.js?v=${includeGlobalStylesheetLastModified}"
+       "contentblock": "${ctx}/javascript/tinymce-plugins/contentblock/plugin.js?v=${VERSION}",
+       "diagram": "${ctx}/javascript/tinymce-plugins/diagram/plugin.js?v=${VERSION}",
+       "templates": "${ctx}/javascript/tinymce-plugins/templates/plugin.js?v=${VERSION}"
     },
     image_class_list: [
       {title: 'None', value: ''},
       {title: 'Image Left/Wrap Text Right', value: 'image-left'},
       {title: 'Image Right/Wrap Text left', value: 'image-right'},
       {title: 'Image Center On Line', value: 'image-center'}
+    ],
+    link_class_list: [
+      {title: 'None', value: ''},
+      {title: 'Button', value: 'button'},
+      {title: 'Button Primary', value: 'button primary'},
+      {title: 'Button Primary Radius', value: 'button primary radius'},
+      {title: 'Button Primary Round', value: 'button primary round'},
+      {title: 'Button Secondary', value: 'button secondary'},
+      {title: 'Button Secondary Radius', value: 'button secondary radius'},
+      {title: 'Button Secondary Round', value: 'button secondary round'},
+      {title: 'Button Box', value: 'button box'},
+      {title: 'Button Box Radius', value: 'button box radius'},
+      {title: 'Button Box Round', value: 'button box round'},
+      {title: 'Call to Action', value: 'button call-to-action'}
     ],
     extended_valid_elements: 'span[*]',
     file_picker_types: 'file image media',
@@ -87,7 +106,7 @@
       cmsType = 'file';
     }
     var cmsURL = '${ctx}/' + cmsType + '-browser';
-    const instanceApi = tinyMCE.activeEditor.windowManager.openUrl({
+    const instanceApi = hugerte.activeEditor.windowManager.openUrl({
       title: 'Browser',
       url: cmsURL,
       width: 850,

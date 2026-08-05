@@ -23,7 +23,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.admin.PermissionEngine;
-import com.simisinc.platform.application.cms.TinyMceCommand;
+import com.simisinc.platform.application.cms.HtmlEditorCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.Content;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
@@ -77,7 +77,7 @@ public class ContentGetJsonService extends GenericJsonService {
 
       // Include published content, prepared for editor
       if (StringUtils.isNotBlank(content.getContent())) {
-        String preparedContent = TinyMceCommand.prepareContentForEditor(content.getContent());
+        String preparedContent = HtmlEditorCommand.prepareContentForEditor(content.getContent());
         json.append("\"content\": \"").append(JsonCommand.toJson(preparedContent)).append("\",");
       } else {
         json.append("\"content\": \"\",");
@@ -85,7 +85,7 @@ public class ContentGetJsonService extends GenericJsonService {
 
       // Include draft content if exists, prepared for editor
       if (StringUtils.isNotBlank(content.getDraftContent())) {
-        String preparedDraft = TinyMceCommand.prepareContentForEditor(content.getDraftContent());
+        String preparedDraft = HtmlEditorCommand.prepareContentForEditor(content.getDraftContent());
         json.append("\"draft_content\": \"").append(JsonCommand.toJson(preparedDraft)).append("\",");
       } else {
         json.append("\"draft_content\": \"\",");

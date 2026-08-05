@@ -25,7 +25,7 @@ import com.simisinc.platform.application.cms.LoadContentCommand;
 import com.simisinc.platform.application.cms.LoadStylesheetCommand;
 import com.simisinc.platform.application.cms.LoadWebPageCommand;
 import com.simisinc.platform.application.cms.SaveContentCommand;
-import com.simisinc.platform.application.cms.TinyMceCommand;
+import com.simisinc.platform.application.cms.HtmlEditorCommand;
 import com.simisinc.platform.application.cms.UrlCommand;
 import com.simisinc.platform.domain.events.cms.WebPageUpdatedEvent;
 import com.simisinc.platform.domain.model.cms.Content;
@@ -39,7 +39,7 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
 import com.zeroio.platform.domain.events.cms.WebPageDraftContentEditedEvent;
 
 /**
- * Description
+ * Content editor widget
  *
  * @author matt rajkowski
  * @created 4/17/18 8:09 PM
@@ -84,10 +84,10 @@ public class ContentEditorWidget extends GenericWidget {
       contentHtml = content.getDraftContent();
     }
 
-    // Set Icons to Span for TinyMCE editor
+    // Set Icons to Span for HTML editor
     if (contentHtml != null) {
-      // Handle conventions used in TinyMCE for editing
-      contentHtml = TinyMceCommand.prepareContentForEditor(contentHtml);
+      // Handle conventions used in HTML Editor for editing
+      contentHtml = HtmlEditorCommand.prepareContentForEditor(contentHtml);
     }
     context.getRequest().setAttribute("contentHtml", contentHtml);
 

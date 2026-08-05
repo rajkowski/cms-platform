@@ -187,7 +187,7 @@ class PageContentBlocksManager {
   }
 
   /**
-   * Load content into the modal TinyMCE editor
+   * Load content into the modal editor
    */
   loadContentIntoModal(contentId) {
     fetch(`/json/content/get?contentId=${contentId}`, {
@@ -215,22 +215,25 @@ class PageContentBlocksManager {
    * Initialize or set content in the modal editor
    */
   initOrSetModalContent(contentText) {
-    const editor = tinymce.get('content-block-html-editor');
+    const editor = hugerte.get('content-block-html-editor');
     if (editor) {
       editor.setContent(contentText);
     } else {
-      this.initModalTinyMCE(contentText);
+      this.initModalEditor(contentText);
     }
   }
 
   /**
-   * Initialize TinyMCE for the modal editor
+   * Initialize the modal editor
    */
-  initModalTinyMCE(initialContent) {
-    if (typeof tinymce === 'undefined') return;
-
+  initModalEditor(initialContent) {
+    if (typeof hugerte === 'undefined') {
+      console.error('Editor not loaded');
+      return;
+    }
+    
     // Remove any existing instance
-    const existingEditor = tinymce.get('content-block-html-editor');
+    const existingEditor = hugerte.get('content-block-html-editor');
     if (existingEditor) {
       existingEditor.remove();
     }
@@ -247,7 +250,7 @@ class PageContentBlocksManager {
       textarea.setAttribute('data-unique-id', uniqueId);
     }
 
-    tinymce.init({
+    hugerte.init({
       selector: '#content-block-html-editor',
       branding: false,
       width: '100%',
@@ -279,7 +282,7 @@ class PageContentBlocksManager {
           cmsType = 'file';
         }
         var cmsURL = '/' + cmsType + '-browser';
-        const instanceApi = tinyMCE.activeEditor.windowManager.openUrl({
+        const instanceApi = hugerte.activeEditor.windowManager.openUrl({
           title: 'Browser',
           url: cmsURL,
           width: 850,
@@ -367,10 +370,10 @@ class PageContentBlocksManager {
   }
 
   /**
-   * Get content from the modal TinyMCE editor
+   * Get content from the modal editor
    */
   getModalContent() {
-    const editor = tinymce.get('content-block-html-editor');
+    const editor = hugerte.get('content-block-html-editor');
     if (editor) {
       return editor.getContent();
     }

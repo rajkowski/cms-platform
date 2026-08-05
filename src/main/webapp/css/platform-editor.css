@@ -1,17 +1,3 @@
-/* Full Screen Editor Styles */
-
-.main-header {
-  display: none;
-}
-
-.grid-container {
-  padding:0;
-}
-
-.platform-no-margin {
-  margin: 0;
-}
-
 /**
  * Visual Content Editor Styles
  * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
@@ -591,15 +577,17 @@ label {
   background: var(--editor-text-muted);
 }
 
-/* TinyMCE Editor Integration */
-.tinymce-editor-container {
+/* Content Editor Integration */
+.tinymce-editor-container,
+.hugerte-editor-container {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
   margin-bottom: 15px;
 }
 
-.tox:not(.tox-tinymce-inline) .tox-editor-header {
+.tox:not(.tox-tinymce-inline) .tox-editor-header,
+.tox:not(.tox-hugerte-inline) .tox-editor-header {
   padding-top: 0;
 }
 
@@ -607,13 +595,15 @@ label {
   padding: 12px 20px 17px 20px;
 }
 
-
-.tox-tinymce {
-  border: none;
-  border-radius: 0 !important;
-  border-color: var(--editor-border) !important;
-  border-bottom: 1px solid var(--editor-border) !important;
+.tox .tox-edit-area::before {
+  border: 0;
 }
+
+.tox .tox-collection__item-label {
+  line-height: unset;
+}
+
+/* Theme Overrides for Hugerte and TinyMCE */
 
 [data-theme="dark"] .tox .tox-toolbar,
 [data-theme="dark"] .tox .tox-toolbar__primary,
