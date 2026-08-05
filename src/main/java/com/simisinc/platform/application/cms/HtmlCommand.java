@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://www.github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -127,11 +128,14 @@ public class HtmlCommand {
     if (contentHtml.endsWith("<p>&nbsp;</p>")) {
       contentHtml = contentHtml.substring(0, contentHtml.lastIndexOf("<p>&nbsp;</p>"));
     }
+    if (contentHtml.endsWith("<p></p>")) {
+      contentHtml = contentHtml.substring(0, contentHtml.lastIndexOf("<p></p>"));
+    }
     if (contentHtml.endsWith("<br /><br /></p>")) {
       contentHtml = contentHtml.substring(0, contentHtml.lastIndexOf("<br /><br /></p>")) + "</p>";
     }
 
-    // Handle conventions used in TinyMCE for editing
+    // Handle conventions used in html editor for editing
     contentHtml = HtmlEditorCommand.updateContentFromEditor(contentHtml);
 
     if (LOG.isTraceEnabled()) {
