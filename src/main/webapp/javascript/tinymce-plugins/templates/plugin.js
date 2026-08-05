@@ -7,7 +7,7 @@
  * @author matt rajkowski
  * @created 7/24/26 8:00 AM
  */
-tinymce.PluginManager.add('templates', function (editor) {
+const templatesPlugin = (editor) => {
 
     // Template files will be fetched dynamically
     let templates = [];
@@ -59,7 +59,7 @@ tinymce.PluginManager.add('templates', function (editor) {
     // Filter templates based on search input
     function filterTemplates(searchTerm) {
         const lowerSearch = searchTerm.toLowerCase();
-        filteredTemplates = templates.filter(t => 
+        filteredTemplates = templates.filter(t =>
             t.displayName.toLowerCase().includes(lowerSearch) ||
             t.fileName.toLowerCase().includes(lowerSearch)
         );
@@ -160,4 +160,11 @@ tinymce.PluginManager.add('templates', function (editor) {
         onAction: openTemplateDialog
     });
 
-});
+}
+
+// Auto-register the plugin with HugeRTE/TinyMCE when this module loads
+if (typeof hugerte !== 'undefined' && hugerte.PluginManager) {
+    hugerte.PluginManager.add('templates', templatesPlugin);
+} else if (typeof tinymce !== 'undefined' && tinymce.PluginManager) {
+    tinymce.PluginManager.add('templates', templatesPlugin);
+}

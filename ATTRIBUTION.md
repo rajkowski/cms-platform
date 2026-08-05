@@ -54,7 +54,7 @@ This project uses and licenses several technologies:
    FontAwesome                 CC       Icons                                             https://github.com/FortAwesome/Font-Awesome
    FullCalendar                MIT      Calendar                                          https://github.com/fullcalendar/fullcalendar
    Google Fonts                Apache   Fonts                                             https://fonts.google.com
-   GridManager                 MIT      Column editor                                     https://github.com/neokoenig/jQuery-gridmanager
+   HugeRTE                     MIT      HTML Content editor                               https://github.com/hugerte/hugerte
    ImagesLoaded                MIT      UI event handler                                  https://github.com/desandro/imagesloaded
    Jspreadsheet                MIT      Data grid                                         https://github.com/jspreadsheet/ce
    JS Cookie                   MIT      Cookie functions                                  https://github.com/js-cookie/js-cookie
@@ -69,8 +69,6 @@ This project uses and licenses several technologies:
    Spectrum                    MIT      Color picker                                      https://github.com/bgrins/spectrum
    Superset-UI Embedded SDK    Apache   Visualizations and dashboards                     https://github.com/apache/superset
    Swiper                      MIT      Modern mobile touch slider                        https://github.com/nolimits4web/swiper
-   TinyMCE                     LGPL     HTML editor                                       https://github.com/tinymce/tinymce
-   TinyMCE-FontAwesome-Plugin  MIT      Icon chooser                                      https://github.com/josh18/TinyMCE-FontAwesome-Plugin
 
  Testing:
  

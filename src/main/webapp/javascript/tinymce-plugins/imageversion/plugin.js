@@ -33,7 +33,7 @@
   var dialogWatcherInterval = null;
   var uploadDialogPollInterval = null;
 
-  tinymce.PluginManager.add('imageversion', function (editor) {
+  const imageVersionPlugin = (editor) => {
 
     editor.options.register('image_version_upload_url', {
       processor: 'string',
@@ -737,5 +737,14 @@
         };
       }
     };
-  });
+  };
+
+  // Auto-register the plugin with HugeRTE/TinyMCE when this module loads
+  if (typeof hugerte !== 'undefined' && hugerte.PluginManager) {
+    hugerte.PluginManager.add('imageversion', imageVersionPlugin);
+  } else if (typeof tinymce !== 'undefined' && tinymce.PluginManager) {
+    tinymce.PluginManager.add('imageversion', imageVersionPlugin);
+  }
+
 })();
+

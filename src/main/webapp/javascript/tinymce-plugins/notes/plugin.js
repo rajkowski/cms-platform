@@ -7,13 +7,13 @@
  * @author matt rajkowski
  * @created 7/24/26 8:00 AM
  */
-tinymce.PluginManager.add('notes', function (editor) {
+const notesPlugin = (editor) => {
 
     function getSelectedNote() {
         const node = editor.selection.getNode();
         return editor.dom.getParent(
             node,
-            '.confluence-macro-info, .confluence-macro-warning, .confluence-macro-tip, .confluence-macro-note'
+            '.confluence-macro-info, .confluence-macro-note, .confluence-macro-tip, .confluence-macro-warning'
         );
     }
 
@@ -24,17 +24,17 @@ tinymce.PluginManager.add('notes', function (editor) {
                 title: 'Info',
                 className: 'confluence-macro-info'
             },
-            warning: {
-                title: 'Warning',
-                className: 'confluence-macro-warning'
+            note: {
+                title: 'Note',
+                className: 'confluence-macro-note'
             },
             tip: {
                 title: 'Tip',
                 className: 'confluence-macro-tip'
             },
-            note: {
-                title: 'Note',
-                className: 'confluence-macro-note'
+            warning: {
+                title: 'Warning',
+                className: 'confluence-macro-warning'
             }
         };
 
@@ -43,7 +43,7 @@ tinymce.PluginManager.add('notes', function (editor) {
         return `
             <div class="${className}">
                 <div class="macro-note-title">${title}</div>
-                <p>Type your ${title.toLowerCase()} here...</p>
+                <p>Type your ${title.toLowerCase()} here</p>
             </div>
         `;
     }
@@ -55,10 +55,20 @@ tinymce.PluginManager.add('notes', function (editor) {
         return 'note';
     }
 
-    function insertNote(type) {
-        const temp = document.createElement('div');
-        temp.innerHTML = createNote(type);
-        editor.selection.setNode(temp.firstElementChild);
+    function insertNote() {
+        editor.insertContent(createNote('note'));
+    }
+
+    function insertInfo() {
+        editor.insertContent(createNote('info'));
+    }
+
+    function insertTip() {
+        editor.insertContent(createNote('tip'));
+    }
+
+    function insertWarning() {
+        editor.insertContent(createNote('warning'));
     }
 
     function addAbove(type) {
@@ -96,28 +106,47 @@ tinymce.PluginManager.add('notes', function (editor) {
 
                 // INSERT
                 {
-                    type: 'nestedmenuitem',
+                    type: 'menuitem',
+                    text: 'Insert Info',
+                    enabled: !note,
+                    onAction: insertInfo
+                },
+                {
+                    type: 'menuitem',
                     text: 'Insert Note',
-                    getSubmenuItems: () => getTypeMenu(insertNote)
+                    enabled: !note,
+                    onAction: insertNote
                 },
-
-                { type: 'separator' },
-
-                // ADD ABOVE
                 {
-                    type: 'nestedmenuitem',
-                    text: 'Add Above',
-                    enabled: !!note,
-                    getSubmenuItems: () => getTypeMenu(addAbove)
+                    type: 'menuitem',
+                    text: 'Insert Tip',
+                    enabled: !note,
+                    onAction: insertTip
+                },
+                {
+                    type: 'menuitem',
+                    text: 'Insert Warning',
+                    enabled: !note,
+                    onAction: insertWarning
                 },
 
-                // ADD BELOW
-                {
-                    type: 'nestedmenuitem',
-                    text: 'Add Below',
-                    enabled: !!note,
-                    getSubmenuItems: () => getTypeMenu(addBelow)
-                },
+                // { type: 'separator' },
+
+                // // ADD ABOVE
+                // {
+                //     type: 'nestedmenuitem',
+                //     text: 'Add Above',
+                //     enabled: !!note,
+                //     getSubmenuItems: () => getTypeMenu(addAbove)
+                // },
+
+                // // ADD BELOW
+                // {
+                //     type: 'nestedmenuitem',
+                //     text: 'Add Below',
+                //     enabled: !!note,
+                //     getSubmenuItems: () => getTypeMenu(addBelow)
+                // },
 
                 { type: 'separator' },
 
@@ -135,9 +164,9 @@ tinymce.PluginManager.add('notes', function (editor) {
     function getTypeMenu(actionFn) {
         return [
             { type: 'menuitem', text: 'Info', onAction: () => actionFn('info') },
-            { type: 'menuitem', text: 'Warning', onAction: () => actionFn('warning') },
+            { type: 'menuitem', text: 'Note', onAction: () => actionFn('note') },
             { type: 'menuitem', text: 'Tip', onAction: () => actionFn('tip') },
-            { type: 'menuitem', text: 'Note', onAction: () => actionFn('note') }
+            { type: 'menuitem', text: 'Warning', onAction: () => actionFn('warning') }
         ];
     }
 
@@ -145,7 +174,7 @@ tinymce.PluginManager.add('notes', function (editor) {
         update: (element) => {
             const match = editor.dom.getParent(
                 element,
-                '.confluence-macro-info, .confluence-macro-warning, .confluence-macro-tip, .confluence-macro-note'
+                '.confluence-macro-info, .confluence-macro-note, .confluence-macro-tip, .confluence-macro-warning'
             );
             return match ? 'noteAddAbove noteAddBelow noteDelete' : '';
         }
@@ -166,4 +195,11 @@ tinymce.PluginManager.add('notes', function (editor) {
         onAction: deleteNote
     });
 
-});
+};
+
+// Auto-register the plugin with HugeRTE/TinyMCE when this module loads
+if (typeof hugerte !== 'undefined' && hugerte.PluginManager) {
+    hugerte.PluginManager.add('notes', notesPlugin);
+} else if (typeof tinymce !== 'undefined' && tinymce.PluginManager) {
+    tinymce.PluginManager.add('notes', notesPlugin);
+}

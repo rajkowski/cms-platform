@@ -7,17 +7,17 @@
  * @author matt rajkowski
  * @created 7/24/26 8:00 AM
  */
-(function() {
+(function () {
   'use strict';
 
-  tinymce.PluginManager.add('versionhistory', function(editor, url) {
-    
+  const versionHistoryPlugin = (editor, url) => {
+
     // Register the toolbar button
     editor.ui.registry.addButton('versionhistory', {
       text: 'Versions',
       icon: 'restore-draft',
       tooltip: 'View content version history',
-      onAction: function() {
+      onAction: function () {
         openVersionHistoryDialog();
       }
     });
@@ -57,42 +57,42 @@
           'Accept': 'application/json'
         }
       })
-      .then(function(response) {
-        editor.setProgressState(false);
-        if (!response.ok) {
-          // Try to get error details from response
-          return response.text().then(function(text) {
-            var errorMsg = 'HTTP ' + response.status + ': ';
-            try {
-              var json = JSON.parse(text);
-              errorMsg += json.error && json.error.title ? json.error.title : response.statusText;
-            } catch (e) {
-              errorMsg += text || response.statusText;
-            }
-            throw new Error(errorMsg);
+        .then(function (response) {
+          editor.setProgressState(false);
+          if (!response.ok) {
+            // Try to get error details from response
+            return response.text().then(function (text) {
+              var errorMsg = 'HTTP ' + response.status + ': ';
+              try {
+                var json = JSON.parse(text);
+                errorMsg += json.error && json.error.title ? json.error.title : response.statusText;
+              } catch (e) {
+                errorMsg += text || response.statusText;
+              }
+              throw new Error(errorMsg);
+            });
+          }
+          return response.json();
+        })
+        .then(function (data) {
+          // Handle both direct array and wrapped response formats
+          var versions = data;
+          if (data && data.data) {
+            versions = typeof data.data === 'string' ? JSON.parse(data.data) : data.data;
+          }
+
+          // Show dialog with actual version data (or empty if no versions)
+          showVersionHistoryDialog(versions || []);
+        })
+        .catch(function (error) {
+          editor.setProgressState(false);
+          console.error('Error loading version history:', error);
+          editor.notificationManager.open({
+            text: 'Error loading version history: ' + error.message,
+            type: 'error',
+            timeout: 5000
           });
-        }
-        return response.json();
-      })
-      .then(function(data) {
-        // Handle both direct array and wrapped response formats
-        var versions = data;
-        if (data && data.data) {
-          versions = typeof data.data === 'string' ? JSON.parse(data.data) : data.data;
-        }
-        
-        // Show dialog with actual version data (or empty if no versions)
-        showVersionHistoryDialog(versions || []);
-      })
-      .catch(function(error) {
-        editor.setProgressState(false);
-        console.error('Error loading version history:', error);
-        editor.notificationManager.open({
-          text: 'Error loading version history: ' + error.message,
-          type: 'error',
-          timeout: 5000
         });
-      });
     }
 
     /**
@@ -100,7 +100,7 @@
      */
     function showVersionHistoryDialog(versions) {
       var versionListHtml = '';
-      
+
       // Check if there are no versions
       if (!versions || versions.length === 0) {
         versionListHtml = '<div style="padding: 40px; text-align: center; color: #666;">';
@@ -120,7 +120,7 @@
         versionListHtml += '<th style="padding: 10px; text-align: center; border-bottom: 2px solid #ddd; width: 200px;">Actions</th>';
         versionListHtml += '</tr></thead><tbody>';
 
-        versions.forEach(function(version, index) {
+        versions.forEach(function (version, index) {
           var rowStyle = index % 2 === 0 ? 'background: #fafafa;' : 'background: white;';
           var contentPreview = getContentPreview(version.content);
           versionListHtml += '<tr style="' + rowStyle + '" data-version-id="' + version.versionId + '">';
@@ -162,7 +162,7 @@
             text: 'Close'
           }
         ],
-        onClose: function() {
+        onClose: function () {
           // Clean up
           delete window.currentVersions;
           delete window.currentEditor;
@@ -173,91 +173,91 @@
 
       // Define global functions for preview and restore (only if there are versions)
       if (versions && versions.length > 0) {
-        window.previewVersion = function(versionId) {
-        var version = window.currentVersions.find(function(v) { return v.versionId === versionId; });
-        if (!version) return;
+        window.previewVersion = function (versionId) {
+          var version = window.currentVersions.find(function (v) { return v.versionId === versionId; });
+          if (!version) return;
 
-        var previewHtml = '<div style="max-height: 600px; overflow-y: auto; padding: 15px; border: 1px solid #ddd; background: white;">' + version.content + '</div>';
-        
-        window.currentEditor.windowManager.open({
-          title: 'Preview Content Version #' + version.versionNumber + ' (' + formatDate(version.created) + ')',
-          size: 'large',
-          body: {
-            type: 'panel',
-            items: [{
-              type: 'htmlpanel',
-              html: previewHtml
-            }]
-          },
-          buttons: [
-            {
-              type: 'custom',
-              text: 'Restore This Version',
-              name: 'restore',
-              primary: true
-            },
-            {
-              type: 'cancel',
-              text: 'Close'
-            }
-          ],
-          onAction: function(dialogApi, details) {
-            if (details.name === 'restore') {
-              dialogApi.close();
-              window.restoreVersion(versionId);
-            }
-          }
-        });
-      };
+          var previewHtml = '<div style="max-height: 600px; overflow-y: auto; padding: 15px; border: 1px solid #ddd; background: white;">' + version.content + '</div>';
 
-      window.restoreVersion = function(versionId) {
-        var version = window.currentVersions.find(function(v) { return v.versionId === versionId; });
-        if (!version) return;
-
-        // Show confirmation modal instead of alert
-        window.currentEditor.windowManager.open({
-          title: 'Confirm Restore',
-          body: {
-            type: 'panel',
-            items: [
-              {
+          window.currentEditor.windowManager.open({
+            title: 'Preview Content Version #' + version.versionNumber + ' (' + formatDate(version.created) + ')',
+            size: 'large',
+            body: {
+              type: 'panel',
+              items: [{
                 type: 'htmlpanel',
-                html: '<div style="padding: 20px; text-align: center;">' +
-                      '<p style="font-size: 16px; margin-bottom: 15px;">Are you sure you want to restore <strong>Version #' + version.versionNumber + '</strong>?</p>' +
-                      '<p style="color: #d9534f; margin-bottom: 10px;">⚠️ This will replace the current content in the editor.</p>' +
-                      '<p style="color: #666; font-size: 14px;">You will need to save to make the change permanent.</p>' +
-                      '</div>'
-              }
-            ]
-          },
-          buttons: [
-            {
-              type: 'custom',
-              text: 'Confirm',
-              name: 'confirm',
-              primary: true
+                html: previewHtml
+              }]
             },
-            {
-              type: 'cancel',
-              text: 'Cancel'
+            buttons: [
+              {
+                type: 'custom',
+                text: 'Restore This Version',
+                name: 'restore',
+                primary: true
+              },
+              {
+                type: 'cancel',
+                text: 'Close'
+              }
+            ],
+            onAction: function (dialogApi, details) {
+              if (details.name === 'restore') {
+                dialogApi.close();
+                window.restoreVersion(versionId);
+              }
             }
-          ],
-          onAction: function(dialogApi, details) {
-            if (details.name === 'confirm') {
-              dialogApi.close();
-              // Restore the version
-              window.currentEditor.setContent(version.content);
-              window.currentEditor.notificationManager.open({
-                text: 'Version #' + version.versionNumber + ' has been restored. Remember to save your changes.',
-                type: 'success',
-                timeout: 5000
-              });
-              // Close the version history dialog if it's open
-              window.currentEditor.windowManager.close();
+          });
+        };
+
+        window.restoreVersion = function (versionId) {
+          var version = window.currentVersions.find(function (v) { return v.versionId === versionId; });
+          if (!version) return;
+
+          // Show confirmation modal instead of alert
+          window.currentEditor.windowManager.open({
+            title: 'Confirm Restore',
+            body: {
+              type: 'panel',
+              items: [
+                {
+                  type: 'htmlpanel',
+                  html: '<div style="padding: 20px; text-align: center;">' +
+                    '<p style="font-size: 16px; margin-bottom: 15px;">Are you sure you want to restore <strong>Version #' + version.versionNumber + '</strong>?</p>' +
+                    '<p style="color: #d9534f; margin-bottom: 10px;">⚠️ This will replace the current content in the editor.</p>' +
+                    '<p style="color: #666; font-size: 14px;">You will need to save to make the change permanent.</p>' +
+                    '</div>'
+                }
+              ]
+            },
+            buttons: [
+              {
+                type: 'custom',
+                text: 'Confirm',
+                name: 'confirm',
+                primary: true
+              },
+              {
+                type: 'cancel',
+                text: 'Cancel'
+              }
+            ],
+            onAction: function (dialogApi, details) {
+              if (details.name === 'confirm') {
+                dialogApi.close();
+                // Restore the version
+                window.currentEditor.setContent(version.content);
+                window.currentEditor.notificationManager.open({
+                  text: 'Version #' + version.versionNumber + ' has been restored. Remember to save your changes.',
+                  type: 'success',
+                  timeout: 5000
+                });
+                // Close the version history dialog if it's open
+                window.currentEditor.windowManager.close();
+              }
             }
-          }
-        });
-      };
+          });
+        };
       } // End of if (versions && versions.length > 0)
     }
 
@@ -267,12 +267,12 @@
     function formatDate(dateString) {
       if (!dateString) return '-';
       var date = new Date(dateString);
-      var options = { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric', 
-        hour: '2-digit', 
-        minute: '2-digit' 
+      var options = {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
       };
       return date.toLocaleDateString('en-US', options);
     }
@@ -317,12 +317,19 @@
     }
 
     return {
-      getMetadata: function() {
+      getMetadata: function () {
         return {
           name: 'Version History Plugin',
           url: 'https://www.github.com/rajkowski/cms-platform'
         };
       }
     };
-  });
+  }
+
+  // Auto-register the plugin with HugeRTE/TinyMCE when this module loads
+  if (typeof hugerte !== 'undefined' && hugerte.PluginManager) {
+    hugerte.PluginManager.add('versionhistory', versionHistoryPlugin);
+  } else if (typeof tinymce !== 'undefined' && tinymce.PluginManager) {
+    tinymce.PluginManager.add('versionhistory', versionHistoryPlugin);
+  }
 })();
