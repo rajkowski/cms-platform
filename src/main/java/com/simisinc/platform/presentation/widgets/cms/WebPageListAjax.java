@@ -20,7 +20,6 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
@@ -28,6 +27,7 @@ import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageSpecification;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Returns a list of web pages for the visual page editor
@@ -43,7 +43,7 @@ public class WebPageListAjax extends GenericJsonService {
   public JsonServiceContext get(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.web-page.list", context.getUserSession())) {
+    if (!Permission.check("cms.web-page.list", context.getUserSession())) {
       LOG.debug("No permission to: " + WebPageListAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

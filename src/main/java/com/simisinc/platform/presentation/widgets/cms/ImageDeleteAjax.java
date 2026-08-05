@@ -19,12 +19,12 @@ package com.simisinc.platform.presentation.widgets.cms;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.cms.DeleteImageCommand;
 import com.simisinc.platform.domain.model.cms.Image;
 import com.simisinc.platform.infrastructure.persistence.cms.ImageRepository;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Deletes an image in the visual image editor
@@ -44,7 +44,7 @@ public class ImageDeleteAjax extends GenericJsonService {
 
     // Restrict access to editors
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.image.delete", context.getUserSession())) {
+    if (!Permission.check("cms.image.delete", context.getUserSession())) {
       LOG.debug("No permission to: " + ImageDeleteAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

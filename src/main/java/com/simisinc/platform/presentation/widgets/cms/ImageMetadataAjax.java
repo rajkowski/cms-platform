@@ -20,11 +20,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.domain.model.cms.Image;
 import com.simisinc.platform.infrastructure.persistence.cms.ImageRepository;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Saves image metadata (title, alt text, description) in the visual image editor
@@ -44,7 +44,7 @@ public class ImageMetadataAjax extends GenericJsonService {
 
     // Restrict access to editors
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.image.metadata", context.getUserSession())) {
+    if (!Permission.check("cms.image.metadata", context.getUserSession())) {
       LOG.debug("No permission to: " + ImageMetadataAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

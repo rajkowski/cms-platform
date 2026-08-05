@@ -23,7 +23,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.DataException;
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.cms.PublishContentCommand;
 import com.simisinc.platform.application.cms.SaveContentCommand;
 import com.simisinc.platform.application.cms.HtmlEditorCommand;
@@ -34,6 +33,7 @@ import com.simisinc.platform.infrastructure.persistence.cms.ContentRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.ContentSpecification;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Handles JSON/AJAX POST requests for /json/content/publish endpoint
@@ -56,7 +56,7 @@ public class ContentPublishJsonService extends GenericJsonService {
   public JsonServiceContext post(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.content.publish", context.getUserSession())) {
+    if (!Permission.check("cms.content.publish", context.getUserSession())) {
       LOG.debug("No permission to: " + ContentPublishJsonService.class.getSimpleName());
       return context.writeError("Permission denied");
     }

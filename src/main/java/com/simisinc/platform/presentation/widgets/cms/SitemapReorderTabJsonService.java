@@ -22,12 +22,12 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.domain.model.cms.MenuTab;
 import com.simisinc.platform.infrastructure.cache.CacheManager;
 import com.simisinc.platform.infrastructure.persistence.cms.MenuTabRepository;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Handles JSON/AJAX POST requests for /json/sitemap/reorder-tab endpoint
@@ -50,7 +50,7 @@ public class SitemapReorderTabJsonService extends GenericJsonService {
   public JsonServiceContext post(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.sitemap.reorder-tab", context.getUserSession())) {
+    if (!Permission.check("cms.sitemap.reorder-tab", context.getUserSession())) {
       LOG.debug("No permission to: " + SitemapReorderTabJsonService.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

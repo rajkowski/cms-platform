@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +23,6 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.simisinc.platform.application.DataException;
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.cms.CheckFolderPermissionCommand;
 import com.simisinc.platform.application.cms.FolderException;
 import com.simisinc.platform.application.cms.LoadSubFolderCommand;
@@ -31,6 +31,7 @@ import com.simisinc.platform.application.cms.UrlCommand;
 import com.simisinc.platform.domain.model.cms.SubFolder;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Widget for displaying a system administration form to add/update sub-folders
@@ -71,7 +72,7 @@ public class SubFolderFormWidget extends GenericWidget {
     }
 
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.sub-folder-form.access", context.getUserSession())) {
+    if (!Permission.check("cms.sub-folder-form.access", context.getUserSession())) {
       if (!CheckFolderPermissionCommand.userHasAddPermission(subFolder.getFolderId(), context.getUserId())) {
         return null;
       }
@@ -93,7 +94,7 @@ public class SubFolderFormWidget extends GenericWidget {
     String returnPage = UrlCommand.getValidReturnPage(context.getParameter("returnPage"));
 
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.sub-folder-form.access", context.getUserSession())) {
+    if (!Permission.check("cms.sub-folder-form.access", context.getUserSession())) {
       if (!CheckFolderPermissionCommand.userHasAddPermission(subFolderBean.getFolderId(), context.getUserId())) {
         return null;
       }

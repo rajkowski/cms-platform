@@ -23,7 +23,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.filesystem.FileSystemCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.application.items.LoadCollectionCommand;
@@ -40,6 +39,7 @@ import com.simisinc.platform.infrastructure.persistence.items.ItemFileSpecificat
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.controller.UserSession;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Returns file list data for a folder for the visual document editor
@@ -58,7 +58,7 @@ public class DocumentFileListAjax extends GenericJsonService {
     LOG.debug("DocumentFileListAjax...");
 
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.document.file-list", context.getUserSession())) {
+    if (!Permission.check("cms.document.file-list", context.getUserSession())) {
       LOG.debug("No permission to: " + DocumentFileListAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

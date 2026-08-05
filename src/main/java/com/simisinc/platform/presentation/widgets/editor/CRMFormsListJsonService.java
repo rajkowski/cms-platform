@@ -24,11 +24,11 @@ import java.sql.SQLException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.infrastructure.database.DB;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * JSON service to list all form categories (distinct form_unique_id values) with submission counts
@@ -53,7 +53,7 @@ public class CRMFormsListJsonService extends GenericJsonService {
   public JsonServiceContext get(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.crm.forms-list", context.getUserSession())) {
+    if (!Permission.check("cms.crm.forms-list", context.getUserSession())) {
       LOG.debug("No permission to: " + CRMFormsListJsonService.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

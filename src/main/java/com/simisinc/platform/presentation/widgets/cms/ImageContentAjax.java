@@ -20,12 +20,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.Image;
 import com.simisinc.platform.infrastructure.persistence.cms.ImageRepository;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Returns a single image's data for the visual image editor
@@ -44,7 +44,7 @@ public class ImageContentAjax extends GenericJsonService {
     LOG.debug("ImageContentAjax...");
 
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.image.content", context.getUserSession())) {
+    if (!Permission.check("cms.image.content", context.getUserSession())) {
       LOG.debug("No permission to: " + ImageContentAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

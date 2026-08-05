@@ -22,7 +22,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.domain.model.cms.WebPageHierarchy;
 import com.simisinc.platform.infrastructure.database.AutoRollback;
 import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
@@ -30,6 +29,7 @@ import com.simisinc.platform.infrastructure.database.DB;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageHierarchyRepository;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Handles JSON/AJAX POST requests for /json/pages/remove-from-hierarchy endpoint
@@ -52,7 +52,7 @@ public class PageRemoveFromHierarchyJsonService extends GenericJsonService {
   public JsonServiceContext post(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.page.remove-from-hierarchy", context.getUserSession())) {
+    if (!Permission.check("cms.page.remove-from-hierarchy", context.getUserSession())) {
       LOG.debug("No permission to: " + PageRemoveFromHierarchyJsonService.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

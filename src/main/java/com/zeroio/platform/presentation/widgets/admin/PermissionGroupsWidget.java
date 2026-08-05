@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.simisinc.platform.presentation.widgets.admin;
+package com.zeroio.platform.presentation.widgets.admin;
 
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Read-only admin view of loaded Cedar permission groups and their component members.
@@ -36,7 +36,7 @@ public class PermissionGroupsWidget extends GenericWidget {
       LOG.debug("No permission to: " + PermissionGroupsWidget.class.getSimpleName());
       return context;
     }
-    context.getRequest().setAttribute("permissionGroupList", PermissionEngine.getAllGroups());
+    context.getRequest().setAttribute("permissionGroupList", Permission.getAllGroups());
     context.getRequest().setAttribute("icon", context.getPreferences().get("icon"));
     context.getRequest().setAttribute("title", context.getPreferences().get("title"));
     context.setJsp(JSP);

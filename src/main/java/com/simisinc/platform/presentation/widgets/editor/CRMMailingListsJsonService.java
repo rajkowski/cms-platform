@@ -21,12 +21,12 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.mailinglists.MailingList;
 import com.simisinc.platform.infrastructure.persistence.mailinglists.MailingListRepository;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * JSON service to list all mailing lists with member counts
@@ -42,7 +42,7 @@ public class CRMMailingListsJsonService extends GenericJsonService {
   public JsonServiceContext get(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.crm.mailing-lists", context.getUserSession())) {
+    if (!Permission.check("cms.crm.mailing-lists", context.getUserSession())) {
       LOG.debug("No permission to: " + CRMMailingListsJsonService.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

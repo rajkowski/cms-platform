@@ -24,7 +24,6 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.PageTreeNode;
 import com.simisinc.platform.domain.model.cms.WebPage;
@@ -34,6 +33,7 @@ import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
 import com.zeroio.platform.application.cms.LoadPageTreeCommand;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Handles JSON/AJAX GET requests for /json/pages/children endpoint
@@ -70,7 +70,7 @@ public class PageChildrenJsonService extends GenericJsonService {
 
       // Load child pages using LoadPageTreeCommand, based on user permissions
       List<PageTreeNode> children;
-      if (PermissionEngine.checkAccess("cms.page.children", context.getUserSession())) {
+      if (Permission.check("cms.page.children", context.getUserSession())) {
         // Full permission - load all child pages
         children = LoadPageTreeCommand.loadPageTree(parentId);
       } else {

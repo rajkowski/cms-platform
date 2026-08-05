@@ -39,8 +39,6 @@ import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.admin.DatabaseCommand;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
-import com.simisinc.platform.application.admin.PermissionEngine;
-import com.simisinc.platform.application.admin.PermissionLoader;
 import com.simisinc.platform.application.cms.LoadStylesheetCommand;
 import com.simisinc.platform.application.filesystem.FileSystemCommand;
 import com.simisinc.platform.application.maps.GeoIPCommand;
@@ -58,6 +56,8 @@ import com.simisinc.platform.infrastructure.scheduler.cms.LoadSystemFilesJob;
 import com.simisinc.platform.infrastructure.web.WebApp;
 import com.simisinc.platform.infrastructure.workflow.WorkflowManager;
 import com.zeroio.platform.ApplicationInfo;
+import com.zeroio.platform.infrastructure.permission.Permission;
+import com.zeroio.platform.infrastructure.permission.PermissionLoader;
 
 /**
  * Description
@@ -190,7 +190,7 @@ public class ContextListener implements ServletContextListener {
     PermissionLoader.mergeDbOverrides(permissionGroups,
         PermissionGroupRepository.findAllPolicies(),
         PermissionGroupRepository.findAllMembers());
-    PermissionEngine.load(permissionGroups);
+    Permission.load(permissionGroups);
 
     // Startup the distributed job scheduler
     LOG.info("Startup the distributed job scheduler...");

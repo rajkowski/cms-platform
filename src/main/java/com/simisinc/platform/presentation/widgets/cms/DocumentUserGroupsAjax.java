@@ -21,11 +21,11 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.domain.model.Group;
 import com.simisinc.platform.infrastructure.persistence.GroupRepository;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Returns all system user groups for folder permission setup in the visual document editor
@@ -44,7 +44,7 @@ public class DocumentUserGroupsAjax extends GenericJsonService {
     LOG.debug("DocumentUserGroupsAjax...");
 
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.document.user-groups", context.getUserSession())) {
+    if (!Permission.check("cms.document.user-groups", context.getUserSession())) {
       LOG.debug("No permission to: " + DocumentUserGroupsAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

@@ -19,11 +19,11 @@ package com.simisinc.platform.presentation.widgets.cms;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.domain.model.cms.ImageVersion;
 import com.simisinc.platform.infrastructure.persistence.cms.ImageVersionRepository;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Deletes an image version in the visual image editor
@@ -43,7 +43,7 @@ public class ImageVersionDeleteAjax extends GenericJsonService {
 
     // Restrict access to editors
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.image.version-delete", context.getUserSession())) {
+    if (!Permission.check("cms.image.version-delete", context.getUserSession())) {
       LOG.debug("No permission to: " + ImageVersionDeleteAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

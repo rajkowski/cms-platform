@@ -18,7 +18,7 @@ package com.simisinc.platform.presentation.widgets.cms;
 
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
-import com.simisinc.platform.application.admin.PermissionEngine;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Shows up for CMS managers
@@ -36,7 +36,7 @@ public class PrototypeWidget extends GenericWidget {
 
     // This widget is only for admins and content managers
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.prototype.access", context.getUserSession())) {
+    if (!Permission.check("cms.prototype.access", context.getUserSession())) {
       return null;
     }
 

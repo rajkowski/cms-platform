@@ -20,13 +20,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.FormData;
 import com.simisinc.platform.domain.model.cms.FormField;
 import com.simisinc.platform.infrastructure.persistence.cms.FormDataRepository;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * JSON service to return the full detail of a single form submission
@@ -42,7 +42,7 @@ public class CRMFormSubmissionDetailJsonService extends GenericJsonService {
   public JsonServiceContext get(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.crm.form-submission-detail", context.getUserSession())) {
+    if (!Permission.check("cms.crm.form-submission-detail", context.getUserSession())) {
       LOG.debug("No permission to: " + CRMFormSubmissionDetailJsonService.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

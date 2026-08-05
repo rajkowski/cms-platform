@@ -22,13 +22,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.FileVersion;
 import com.simisinc.platform.infrastructure.persistence.cms.FileVersionRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.FileVersionSpecification;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Returns version history for a file item in the visual document editor
@@ -47,7 +47,7 @@ public class DocumentFileVersionsAjax extends GenericJsonService {
     LOG.debug("DocumentFileVersionsAjax...");
 
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.document.file-versions", context.getUserSession())) {
+    if (!Permission.check("cms.document.file-versions", context.getUserSession())) {
       LOG.debug("No permission to: " + DocumentFileVersionsAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

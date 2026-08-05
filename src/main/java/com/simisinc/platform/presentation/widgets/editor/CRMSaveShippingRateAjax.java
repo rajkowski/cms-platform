@@ -24,7 +24,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.DataException;
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.ecommerce.SaveShippingRateCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.ecommerce.ShippingMethod;
@@ -33,6 +32,7 @@ import com.simisinc.platform.infrastructure.persistence.ecommerce.ShippingMethod
 import com.simisinc.platform.infrastructure.persistence.ecommerce.ShippingRateRepository;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * JSON service to save (create/update) a shipping rate from the CRM editor
@@ -49,7 +49,7 @@ public class CRMSaveShippingRateAjax extends GenericJsonService {
   public JsonServiceContext get(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.crm.save-shipping-rate", context.getUserSession())) {
+    if (!Permission.check("cms.crm.save-shipping-rate", context.getUserSession())) {
       LOG.debug("No permission to: " + CRMSaveShippingRateAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }
@@ -78,7 +78,7 @@ public class CRMSaveShippingRateAjax extends GenericJsonService {
   public JsonServiceContext post(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.crm.save-shipping-rate", context.getUserSession())) {
+    if (!Permission.check("cms.crm.save-shipping-rate", context.getUserSession())) {
       LOG.debug("No permission to: " + CRMSaveShippingRateAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

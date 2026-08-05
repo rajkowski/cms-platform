@@ -22,7 +22,6 @@ import java.sql.Timestamp;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.domain.model.cms.WebPageHierarchy;
 import com.simisinc.platform.infrastructure.database.AutoRollback;
@@ -32,6 +31,7 @@ import com.simisinc.platform.infrastructure.persistence.cms.WebPageHierarchyRepo
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Handles JSON/AJAX POST requests for /json/pages/add-to-hierarchy endpoint
@@ -54,7 +54,7 @@ public class PageAddToHierarchyJsonService extends GenericJsonService {
   public JsonServiceContext post(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.page.add-to-hierarchy", context.getUserSession())) {
+    if (!Permission.check("cms.page.add-to-hierarchy", context.getUserSession())) {
       LOG.debug("No permission to: " + PageAddToHierarchyJsonService.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

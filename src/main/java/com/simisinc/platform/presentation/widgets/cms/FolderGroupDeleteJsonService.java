@@ -19,10 +19,10 @@ package com.simisinc.platform.presentation.widgets.cms;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.infrastructure.persistence.cms.FolderGroupRepository;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Deletes folder group permissions in the visual document editor
@@ -42,7 +42,7 @@ public class FolderGroupDeleteJsonService extends GenericJsonService {
 
     // Restrict access to editors
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.folder.group-delete", context.getUserSession())) {
+    if (!Permission.check("cms.folder.group-delete", context.getUserSession())) {
       LOG.debug("No permission to: " + FolderGroupDeleteJsonService.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

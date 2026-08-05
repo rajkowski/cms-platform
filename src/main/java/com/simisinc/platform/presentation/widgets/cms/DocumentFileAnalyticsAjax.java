@@ -24,7 +24,6 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.FileItem;
 import com.simisinc.platform.domain.model.dashboard.StatisticsData;
@@ -32,6 +31,7 @@ import com.simisinc.platform.infrastructure.persistence.cms.FileItemRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageHitRepository;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Returns analytics for a specific file in the visual document editor, querying web_page_hits
@@ -52,7 +52,7 @@ public class DocumentFileAnalyticsAjax extends GenericJsonService {
     LOG.debug("DocumentFileAnalyticsAjax...");
 
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.document.file-analytics", context.getUserSession())) {
+    if (!Permission.check("cms.document.file-analytics", context.getUserSession())) {
       LOG.debug("No permission to: " + DocumentFileAnalyticsAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

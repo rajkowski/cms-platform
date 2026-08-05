@@ -21,13 +21,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.DataException;
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.ecommerce.SaveProductCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.ecommerce.Product;
 import com.simisinc.platform.infrastructure.persistence.ecommerce.ProductRepository;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * JSON service to save (create/update) a product from the CRM editor
@@ -43,7 +43,7 @@ public class CRMSaveProductAjax extends GenericJsonService {
   public JsonServiceContext post(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.crm.save-product", context.getUserSession())) {
+    if (!Permission.check("cms.crm.save-product", context.getUserSession())) {
       LOG.debug("No permission to: " + CRMSaveProductAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

@@ -23,7 +23,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.FileItem;
 import com.simisinc.platform.infrastructure.database.DataConstraints;
@@ -31,6 +30,7 @@ import com.simisinc.platform.infrastructure.persistence.cms.FileItemRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.FileSpecification;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Returns top assets analytics for a document repository in the visual document editor
@@ -49,7 +49,7 @@ public class DocumentAnalyticsAjax extends GenericJsonService {
     LOG.debug("DocumentAnalyticsAjax...");
 
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.document.analytics", context.getUserSession())) {
+    if (!Permission.check("cms.document.analytics", context.getUserSession())) {
       LOG.debug("No permission to: " + DocumentAnalyticsAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

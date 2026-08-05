@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.simisinc.platform.application.admin;
+package com.zeroio.platform.infrastructure.permission;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -46,7 +46,7 @@ import com.simisinc.platform.domain.model.admin.PermissionGroup;
  * <p>Reads {@code component-groups.xml} to map component Action names to group codes,
  * then loads the corresponding {@code .cedar} policy files from the {@code policies/}
  * subdirectory. Call {@link #mergeDbOverrides} after loading to apply runtime DB
- * overrides before passing the list to {@link PermissionEngine#load}.
+ * overrides before passing the list to {@link Permission#load}.
  *
  * @author matt rajkowski
  * @created 3/6/26 8:00 AM
@@ -62,7 +62,7 @@ public class PermissionLoader {
    * Loads all permission groups from the WEB-INF config files.
    *
    * @param context the servlet context used to read resources
-   * @return list of PermissionGroup objects ready for {@link PermissionEngine#load}
+   * @return list of PermissionGroup objects ready for {@link Permission#load}
    */
   public static List<PermissionGroup> load(ServletContext context) {
     // 1. Parse component-groups.xml → build a group-code → PermissionGroup map

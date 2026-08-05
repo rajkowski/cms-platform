@@ -23,13 +23,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.DataException;
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.ecommerce.SavePricingRuleCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.ecommerce.PricingRule;
 import com.simisinc.platform.infrastructure.persistence.ecommerce.PricingRuleRepository;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * JSON service to save (create/update) a pricing rule from the CRM editor
@@ -45,7 +45,7 @@ public class CRMSavePricingRuleAjax extends GenericJsonService {
   public JsonServiceContext post(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.crm.save-pricing-rule", context.getUserSession())) {
+    if (!Permission.check("cms.crm.save-pricing-rule", context.getUserSession())) {
       LOG.debug("No permission to: " + CRMSavePricingRuleAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

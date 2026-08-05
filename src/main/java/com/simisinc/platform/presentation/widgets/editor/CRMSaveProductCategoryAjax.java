@@ -21,13 +21,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.DataException;
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.ecommerce.SaveProductCategoryCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.ecommerce.ProductCategory;
 import com.simisinc.platform.infrastructure.persistence.ecommerce.ProductCategoryRepository;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * JSON service to save (create/update) a product category from the CRM editor
@@ -43,7 +43,7 @@ public class CRMSaveProductCategoryAjax extends GenericJsonService {
   public JsonServiceContext post(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.crm.save-product-category", context.getUserSession())) {
+    if (!Permission.check("cms.crm.save-product-category", context.getUserSession())) {
       LOG.debug("No permission to: " + CRMSaveProductCategoryAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

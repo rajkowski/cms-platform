@@ -24,10 +24,10 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Returns a list of available editor templates for the TinyMCE template plugin
@@ -57,7 +57,7 @@ public class TemplateListAjax extends GenericJsonService {
   public JsonServiceContext get(JsonServiceContext context) {
 
     // Check permissions - user must be able to edit content
-    if (!PermissionEngine.checkAccess("cms.template.list", context.getUserSession())) {
+    if (!Permission.check("cms.template.list", context.getUserSession())) {
       LOG.debug("No permission to: " + TemplateListAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

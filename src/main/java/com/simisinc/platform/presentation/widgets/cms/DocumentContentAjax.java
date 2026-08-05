@@ -20,7 +20,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.application.items.LoadCollectionCommand;
 import com.simisinc.platform.application.items.LoadItemCommand;
@@ -32,6 +31,7 @@ import com.simisinc.platform.infrastructure.persistence.cms.FileItemRepository;
 import com.simisinc.platform.infrastructure.persistence.items.ItemFileItemRepository;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Returns a single file's metadata for the visual document editor
@@ -51,7 +51,7 @@ public class DocumentContentAjax extends GenericJsonService {
     LOG.debug("DocumentContentAjax...");
 
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.document.content", context.getUserSession())) {
+    if (!Permission.check("cms.document.content", context.getUserSession())) {
       LOG.debug("No permission to: " + DocumentContentAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

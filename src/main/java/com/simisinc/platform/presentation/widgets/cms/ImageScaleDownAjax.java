@@ -20,13 +20,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.DataException;
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.cms.ScaleDownImageCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.Image;
 import com.simisinc.platform.infrastructure.persistence.cms.ImageRepository;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Scales down an image proportionally and saves it as a new version
@@ -44,7 +44,7 @@ public class ImageScaleDownAjax extends GenericJsonService {
     LOG.debug("ImageScaleDownAjax...");
 
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.image.scale-down", context.getUserSession())) {
+    if (!Permission.check("cms.image.scale-down", context.getUserSession())) {
       LOG.debug("No permission to: " + ImageScaleDownAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }
