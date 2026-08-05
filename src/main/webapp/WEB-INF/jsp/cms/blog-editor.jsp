@@ -13,18 +13,24 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   --%>
+<%@ page import="static com.zeroio.platform.ApplicationInfo.VERSION" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="font" uri="/WEB-INF/tlds/font-functions.tld" %>
+<%@ taglib prefix="g" uri="http://granule.com/tags" %>
 <%@ taglib prefix="html" uri="/WEB-INF/tlds/html-functions.tld" %>
 <%@ taglib prefix="web" uri="/WEB-INF/tlds/web.tld" %>
 <jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="blog" class="com.simisinc.platform.domain.model.cms.Blog" scope="request"/>
 <jsp:useBean id="blogPost" class="com.simisinc.platform.domain.model.cms.BlogPost" scope="request"/>
-<web:script package="tinymce" file="tinymce.min.js" />
+<g:compress>
+  <link rel="stylesheet" type="text/css" href="${ctx}/css/platform-editor.css" />
+</g:compress>
+<web:script package="hugerte" file="hugerte.min.js" />
 <script>
-  tinymce.init({
+  hugerte.init({
     selector: '.html-field',
     branding: false,
     width: '100%',
@@ -34,15 +40,56 @@
     convert_urls: true,
     convert_unsafe_embeds: true,
     sandbox_iframes: true,
+    content_css: [
+      '${ctx}/css/${font:fontawesome()}/css/all.min.css',
+      '${ctx}/css/${font:fontawesome()}/css/v4-shims.min.css',
+      '${ctx}/css/platform.css?v=${VERSION}'
+      <c:if test="${!empty includeGlobalStylesheet}">,'${ctx}/css/custom/stylesheet.css?v=${includeGlobalStylesheetLastModified}'</c:if>
+      <c:if test="${!empty includeStylesheet}">,'${ctx}/css/custom/stylesheet${includeStylesheet}.css?v=${includeStylesheetLastModified}'</c:if>
+    ],
+    content_style: "body.platform-content { overflow: auto !important; }",
+    body_class: 'web-content platform-content',
+    noneditable_class: 'mceNonEditable',
     browser_spellcheck: true,
     plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code insertdatetime media table wordcount',
-    toolbar: 'link image media table | undo redo | blocks | bold italic backcolor | bullist numlist outdent indent hr | removeformat | visualblocks code',
+    toolbar: 
+      [
+        'link image media diagram table fontawesome | notesMenu | visualblocks  code',
+        'blocks | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | hr | anchor | removeformat | undo redo'
+      ],
+    toolbar_mode: 'wrap',
+    // toolbar: 'link image media table | undo redo | blocks | bold italic backcolor | bullist numlist outdent indent hr | removeformat | visualblocks code',
+    external_plugins: {
+        // "contentblock": "${ctx}/javascript/tinymce-plugins/contentblock/plugin.js?v=${VERSION}",
+        "fontawesome": "${ctx}/javascript/tinymce-plugins/fontawesome/plugin.js?v=${VERSION}",
+        "diagram": "${ctx}/javascript/tinymce-plugins/diagram/plugin.js?v=${VERSION}",
+        // "cards": "${ctx}/javascript/tinymce-plugins/cards/plugin.js?v=${VERSION}",
+        "notes": "${ctx}/javascript/tinymce-plugins/notes/plugin.js?v=${VERSION}",
+        // "panels": "${ctx}/javascript/tinymce-plugins/panels/plugin.js?v=${VERSION}",
+        // "templates": "${ctx}/javascript/tinymce-plugins/templates/plugin.js?v=${VERSION}"
+        // "imageversion": "${ctx}/javascript/tinymce-plugins/imageversion/plugin.js?v=${VERSION}"
+    },
     image_class_list: [
       {title: 'None', value: ''},
       {title: 'Image Left/Wrap Text Right', value: 'image-left'},
       {title: 'Image Right/Wrap Text left', value: 'image-right'},
       {title: 'Image Center On Line', value: 'image-center'}
     ],
+    link_class_list: [
+      {title: 'None', value: ''},
+      {title: 'Button', value: 'button'},
+      {title: 'Button Primary', value: 'button primary'},
+      {title: 'Button Primary Radius', value: 'button primary radius'},
+      {title: 'Button Primary Round', value: 'button primary round'},
+      {title: 'Button Secondary', value: 'button secondary'},
+      {title: 'Button Secondary Radius', value: 'button secondary radius'},
+      {title: 'Button Secondary Round', value: 'button secondary round'},
+      {title: 'Button Box', value: 'button box'},
+      {title: 'Button Box Radius', value: 'button box radius'},
+      {title: 'Button Box Round', value: 'button box round'},
+      {title: 'Call to Action', value: 'button call-to-action'}
+    ],
+    extended_valid_elements: 'span[*]',
     file_picker_types: 'file image media',
     // link_default_target: '_blank',
     file_picker_callback: function (callback, value, meta) {
@@ -50,7 +97,7 @@
             callback(fileUrl);
         });
     },
-    images_upload_url: '${ctx}/image-upload?widget=imageUpload1&token=${userSession.formToken}', // return { "location": "folder/sub-folder/new-location.png" }
+    images_upload_url: '${ctx}/image-upload?widget=imageUpload1&token=${userSession.formToken}',
     paste_data_images: true,
     automatic_uploads: true
   });
@@ -64,7 +111,7 @@
       cmsType = 'file';
     }
     var cmsURL = '${ctx}/' + cmsType + '-browser';
-    const instanceApi = tinyMCE.activeEditor.windowManager.openUrl({
+    const instanceApi = hugerte.activeEditor.windowManager.openUrl({
         title: 'Browser',
         url: cmsURL,
         width: 850,
@@ -76,9 +123,8 @@
     });
     return false;
   }
-</script>
-<%-- Handle banner image uploads --%>
-<script>
+  
+  <%-- Handle banner image uploads --%>
   function SavePhoto(e) {
     var file = e.files[0]; // similar to: document.getElementById("file").files[0]
     var formData = new FormData();
@@ -141,7 +187,7 @@
     <small>Write the post...</small>
     <textarea name="body" class="html-field"><c:out value="${blogPost.body}"/></textarea>
   </p>
-  <div class="full-container">
+
     <div class="grid-x grid-margin-x callout box">
       <div class="auto cell text-right">
         <small>Banner Image</small>
@@ -158,9 +204,9 @@
         <a class="button small primary radius no-gap" data-open="imageBrowserReveal">Browse Images</a>
       </div>
     </div>
-  </div>
+
   <input id="enabled" type="checkbox" name="enabled" value="true" <c:if test="${blogPost.id == -1 || !empty blogPost.published}">checked</c:if>/><label for="enabled">Publish it?</label>
-  <div class="full-container">
+  
     <div class="grid-x grid-margin-x">
       <div class="medium-6 cell">
         <label>Display starting at a specific date/time?
@@ -198,7 +244,7 @@
         </script>
       </div>
     </div>
-  </div>
+  
   <div class="button-container margin-bottom-20">
     <c:choose>
       <c:when test="${!empty returnPage}">
@@ -210,6 +256,7 @@
       </c:otherwise>
     </c:choose>
   </div>
+
 </form>
 <div class="reveal large" id="imageBrowserReveal" data-reveal data-animation-in="slide-in-down fast">
   <h3>Loading...</h3>

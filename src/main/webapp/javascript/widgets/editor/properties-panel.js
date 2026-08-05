@@ -629,7 +629,7 @@ class PropertiesPanel {
    * Show widget properties
    */
   showWidgetProperties(rowId, columnId, widgetId) {
-    // Clean up any existing TinyMCE editors
+    // Clean up any existing editors
     this.cleanupHtmlEditors();
     
     // Clear any previously highlighted row or column
@@ -855,7 +855,7 @@ class PropertiesPanel {
     // Initialize color pickers
     this.initColorPickers(rowId, columnId, widgetId, definition);
     
-    // Initialize HTML editors (TinyMCE)
+    // Initialize HTML editors
     this.initHtmlEditors(rowId, columnId, widgetId, definition);
     
     // Initialize XML properties
@@ -1654,7 +1654,7 @@ class PropertiesPanel {
   }
 
   /**
-   * Initialize HTML editors (TinyMCE) for any html type properties
+   * Initialize HTML editors for any html type properties
    */
   initHtmlEditors(rowId, columnId, widgetId, widgetDef) {
     const htmlFields = this.content.querySelectorAll('textarea.html-editor-field');
@@ -1662,17 +1662,17 @@ class PropertiesPanel {
     
     if (!htmlFields || htmlFields.length === 0) return;
     
-    // Check if TinyMCE is available
-    if (typeof tinymce === 'undefined') {
-      console.warn('TinyMCE is not loaded');
+    // Check if editor is available
+    if (typeof hugerte === 'undefined') {
+      console.warn('Editor is not loaded');
       return;
     }
     
     htmlFields.forEach(textarea => {
       const propName = textarea.id.replace('prop-', '');
       
-      // Initialize TinyMCE on this textarea
-      tinymce.init({
+      // Initialize editor on this textarea
+      hugerte.init({
         target: textarea,
         inline: false,
         menubar: false,
@@ -1770,7 +1770,7 @@ class PropertiesPanel {
         
       case 'html':
         html += `<div class="property-label">${definition.label}${definition.required ? ' *' : ''}</div>`;
-        html += `<div id="tinymce-container-${name}" class="tinymce-editor-container"></div>`;
+        html += `<div id="hugerte-container-${name}" class="hugerte-editor-container"></div>`;
         html += `<textarea class="property-input html-editor-field" id="prop-${name}" rows="5" ${definition.required ? 'required' : ''}>${this.escapeHtml(displayValue)}</textarea>`;
         break;
         
@@ -2198,7 +2198,7 @@ class PropertiesPanel {
    * Clear properties panel
    */
   clear() {
-    // Clean up TinyMCE editors before clearing content
+    // Clean up editors before clearing content
     this.cleanupHtmlEditors();
     
     this.currentContext = null;
@@ -2216,13 +2216,13 @@ class PropertiesPanel {
   }
   
   /**
-   * Cleanup TinyMCE editors
+   * Cleanup editors
    */
   cleanupHtmlEditors() {
-    if (typeof tinymce !== 'undefined') {
+    if (typeof hugerte !== 'undefined') {
       const htmlFields = this.content.querySelectorAll('textarea.html-editor-field');
       htmlFields.forEach(textarea => {
-        const editor = tinymce.get(textarea.id);
+        const editor = hugerte.get(textarea.id);
         if (editor) {
           editor.remove();
         }

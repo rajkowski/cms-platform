@@ -53,8 +53,8 @@ class HtmlCleanerTest {
   void cleanStylesHtml() {
     String html = "<h3><span style=\"background-color: #f1c40f;\">Info Area</span></h3>\n" +
         "<p>This is some content.</p>\n" +
-        "<p><a title=\"First tab\" href=\"/first-tab\">This is some content</a>. <span class=\"fas fa-bowling-ball tinymce-noedit\"></span></p>\n" +
-        "<p>Another line. <span class=\"fas fa-wind tinymce-noedit\"></span></p>\n" +
+        "<p><a title=\"First tab\" href=\"/first-tab\">This is some content</a>. <span class=\"fas fa-bowling-ball mceNonEditable\"></span></p>\n" +
+        "<p>Another line. <span class=\"fas fa-wind mceNonEditable\"></span></p>\n" +
         "<p><img class=\"image-right\" src=\"/assets/img/20210219211416-3/Office%20Desk.jpg\" alt=\"Desk\" width=\"129\" height=\"97\" /></p>\n" +
         "<p>This is some content.</p>\n" +
         "<p>This is some content too.</p>";
@@ -76,7 +76,7 @@ class HtmlCleanerTest {
 
   @Test
   void cleanIconTagsWithExtraSpan() {
-    String html = "<p>This is some content. <span>This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. This is some content.&nbsp;<span class=\"fas fa-caravan tinymce-noedit\"></span> <span class=\"fas fa-mitten tinymce-noedit\"></span></span></p>";
+    String html = "<p>This is some content. <span>This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. This is some content.&nbsp;<span class=\"fas fa-caravan mceNonEditable\"></span> <span class=\"fas fa-mitten mceNonEditable\"></span></span></p>";
     String expected = "<p>This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. This is some content.&nbsp;<i class=\"fas fa-caravan\"></i> <i class=\"fas fa-mitten\"></i></p>";
 
     String value = HtmlCommand.cleanContent(html);
@@ -89,7 +89,7 @@ class HtmlCleanerTest {
 
   @Test
   void cleanExtraSpan() {
-    String html = "<p><span>This is some content. </span><span>This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. <span class=\"fas fa-broadcast-tower tinymce-noedit\"></span> This is some content. This is some content. This is some content. <span class=\"fas fa-closed-captioning tinymce-noedit\"></span> </span></p>";
+    String html = "<p><span>This is some content. </span><span>This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. <span class=\"fas fa-broadcast-tower mceNonEditable\"></span> This is some content. This is some content. This is some content. <span class=\"fas fa-closed-captioning mceNonEditable\"></span> </span></p>";
     String expected = "<p>This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. <i class=\"fas fa-broadcast-tower\"></i> This is some content. This is some content. This is some content. <i class=\"fas fa-closed-captioning\"></i> </p>";
 
     String value = HtmlCommand.cleanContent(html);
@@ -105,8 +105,8 @@ class HtmlCleanerTest {
     String html = "<div><div><p><span>This is some content. </span><span>This is some content.</span></p></div>" +
         "<div><p><span>This is some content. This is some content. This is some content. This is some content. " +
         "This is some content. This is some content. This is some content. This is some content. This is some content. " +
-        "<span class=\"fas fa-broadcast-tower tinymce-noedit\"></span> This is some content. This is some content. This is some content. " +
-        "<span class=\"fas fa-closed-captioning tinymce-noedit\"></span> </span></p>" +
+        "<span class=\"fas fa-broadcast-tower mceNonEditable\"></span> This is some content. This is some content. This is some content. " +
+        "<span class=\"fas fa-closed-captioning mceNonEditable\"></span> </span></p>" +
         "</div></div>";
     String expected = "<p>This is some content. This is some content.</p><p>This is some content. This is some content. This is some content. " +
         "This is some content. This is some content. This is some content. This is some content. This is some content. This is some content. " +

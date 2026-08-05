@@ -26,7 +26,7 @@ import org.apache.commons.logging.LogFactory;
 import java.util.List;
 
 /**
- * Widget to display the content browser for TinyMCE editor
+ * Widget to display the content browser for the html editor
  *
  * @author matt rajkowski
  * @created 2/14/26 10:00 PM

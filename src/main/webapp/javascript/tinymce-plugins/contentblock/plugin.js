@@ -10,13 +10,11 @@
 (function () {
   'use strict';
 
-  var global = tinymce.util.Tools.resolve('tinymce.PluginManager');
-
   /**
    * Register the plugin
    */
-  var Plugin = function (editor) {
-    
+  var contentBlockPlugin = function (editor) {
+
     /**
      * Open content browser dialog
      */
@@ -28,7 +26,7 @@
       // 
       // var cmsURL = ctx + '/content-browser';
       var cmsURL = '/content-browser';
-      
+
       // Open URL dialog
       var instanceApi = editor.windowManager.openUrl({
         title: 'Content Browser',
@@ -50,12 +48,12 @@
      */
     var insertContentBlock = function (uniqueId) {
       // Create the span element with the content block reference
-      var spanHtml = '<span class="content-block-ref" contenteditable="false" data-uniqueid="' + 
-                     uniqueId + '" style="background-color: #e3f2fd; padding: 2px 6px; border-radius: 3px; ' +
-                     'border: 1px solid #90caf9; display: inline-block; font-family: monospace; font-size: 0.9em;">' +
-                     '${uniqueId:' + uniqueId + '}' +
-                     '</span>&nbsp;';
-      
+      var spanHtml = '<span class="content-block-ref" contenteditable="false" data-uniqueid="' +
+        uniqueId + '" style="background-color: #e3f2fd; padding: 2px 6px; border-radius: 3px; ' +
+        'border: 1px solid #90caf9; display: inline-block; font-family: monospace; font-size: 0.9em;">' +
+        '${uniqueId:' + uniqueId + '}' +
+        '</span>&nbsp;';
+
       editor.insertContent(spanHtml);
     };
 
@@ -129,9 +127,13 @@
         };
       }
     };
-  };
+  }
 
-  // Register the plugin
-  global.add('contentblock', Plugin);
+  // Auto-register the plugin with HugeRTE/TinyMCE when this module loads
+  if (typeof hugerte !== 'undefined' && hugerte.PluginManager) {
+    hugerte.PluginManager.add('contentblock', contentBlockPlugin);
+  } else if (typeof tinymce !== 'undefined' && tinymce.PluginManager) {
+    tinymce.PluginManager.add('contentblock', contentBlockPlugin);
+  }
 
 })();

@@ -10,14 +10,12 @@
 (function () {
   'use strict';
 
-  var global = tinymce.util.Tools.resolve('tinymce.PluginManager');
-
   /**
    * Register the plugin
    */
-  var Plugin = function (editor) {
+  var diagramPlugin = function (editor) {
     var selectedDiagramNode = null;
-    
+
     /**
      * Open diagram browser dialog
      */
@@ -25,7 +23,7 @@
       selectedDiagramNode = diagramNode || null;
       // Use an absolute root-relative endpoint to avoid resolving under /content-editor.
       var cmsURL = '/diagram-browser';
-      
+
       // Open URL dialog
       var instanceApi = editor.windowManager.openUrl({
         title: 'Select a Diagram',
@@ -52,11 +50,11 @@
       // Create the span element with the diagram reference
       var displayText = label && label.trim() !== '' ? label : webPath;
       var spanHtml = '<span class="drawio-diagram-ref" contenteditable="false" ' +
-                     'data-webpath="' + escapeHtml(webPath) + '" ' +
-                     'data-label="' + escapeHtml(label || '') + '" ' +
-                     'style="background-color: #fff3cd; padding: 2px 6px; border-radius: 3px; ' +
-                     'border: 1px solid #ffecb5; display: inline-block; font-family: monospace; font-size: 0.9em;">' +
-                     'diagram: ' + escapeHtml(displayText) + '</span>';
+        'data-webpath="' + escapeHtml(webPath) + '" ' +
+        'data-label="' + escapeHtml(label || '') + '" ' +
+        'style="background-color: #fff3cd; padding: 2px 6px; border-radius: 3px; ' +
+        'border: 1px solid #ffecb5; display: inline-block; font-family: monospace; font-size: 0.9em;">' +
+        'diagram: ' + escapeHtml(displayText) + '</span>';
 
       if (diagramNode) {
         editor.dom.setOuterHTML(diagramNode, spanHtml);
@@ -149,9 +147,13 @@
         };
       }
     };
-  };
+  }
 
-  // Register the plugin
-  global.add('diagram', Plugin);
+  // Auto-register the plugin with HugeRTE/TinyMCE when this module loads
+  if (typeof hugerte !== 'undefined' && hugerte.PluginManager) {
+    hugerte.PluginManager.add('diagram', diagramPlugin);
+  } else if (typeof tinymce !== 'undefined' && tinymce.PluginManager) {
+    tinymce.PluginManager.add('diagram', diagramPlugin);
+  }
 
 })();

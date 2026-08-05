@@ -1,6 +1,6 @@
 /**
- * Image Browser Manager for TinyMCE
- * Handles loading, displaying, searching, and paging images in the TinyMCE image browser
+ * Image Browser Manager
+ * Handles loading, displaying, searching, and paging images in the editor image browser
  * 
  * @author github copilot
  * @created 2/14/26
@@ -325,7 +325,7 @@ class ImageBrowserManager {
   }
 
   /**
-   * Select an image and return it to TinyMCE
+   * Select an image and return it to the editor
    */
   selectImage(imageUrl) {
     if (typeof window.mySubmit === 'function') {

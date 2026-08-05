@@ -7,7 +7,8 @@
  * @author matt rajkowski
  * @created 7/24/26 8:00 AM
  */
-tinymce.PluginManager.add('cards', function (editor) {
+
+const cardsPlugin = (editor) => {
 
     function getSelectedCard() {
         const node = editor.selection.getNode();
@@ -44,10 +45,10 @@ tinymce.PluginManager.add('cards', function (editor) {
             </div>
         `;
 
-        const temp = document.createElement('div');
-        temp.innerHTML = containerHtml;
-
-        editor.selection.setNode(temp.firstElementChild);
+        // const temp = document.createElement('div');
+        // temp.innerHTML = containerHtml;
+        // editor.selection.setNode(temp.firstElementChild);
+        editor.insertContent(containerHtml);
     }
 
     function addLeft() {
@@ -80,7 +81,14 @@ tinymce.PluginManager.add('cards', function (editor) {
 
     function deleteCard() {
         const card = getSelectedCard();
-        if (card) card.remove();
+        if (card) {
+            const container = getContainer(card);
+            card.remove();
+            // if the last card is deleted, remove the container as well
+            if (container && container.children.length === 0) {
+                container.remove();
+            }
+        }        
     }
 
     editor.ui.registry.addButton('cardsCreate', {
@@ -161,5 +169,11 @@ tinymce.PluginManager.add('cards', function (editor) {
             e.preventDefault();
         }
     });
+};
 
-});
+// Auto-register the plugin with HugeRTE/TinyMCE when this module loads
+if (typeof hugerte !== 'undefined' && hugerte.PluginManager) {
+    hugerte.PluginManager.add('cards', cardsPlugin);
+} else if (typeof tinymce !== 'undefined' && tinymce.PluginManager) {
+    tinymce.PluginManager.add('cards', cardsPlugin);
+}

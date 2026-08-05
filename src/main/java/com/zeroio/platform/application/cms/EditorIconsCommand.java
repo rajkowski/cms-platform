@@ -91,10 +91,10 @@ public class EditorIconsCommand {
         if (CollectionUtils.containsAny(cssValueList, FA_ICON_CSS)) {
           if (fromTinyMCE) {
             // Remove TinyMCE editor
-            cssValueList.remove("tinymce-noedit");
+            cssValueList.remove("mceNonEditable");
           } else {
             // Add TinyMCE editor
-            cssValueList.add("tinymce-noedit");
+            cssValueList.add("mceNonEditable");
           }
           // Switch the tag content
           contentHtml = contentHtml.substring(0, tagIdx) + "<" + newTag + " class=\"" + StringUtils.join(cssValueList, " ") + "\">" +

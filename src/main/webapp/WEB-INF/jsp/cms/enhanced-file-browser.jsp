@@ -34,7 +34,7 @@
   <web:stylesheet package="foundation-sites" file="foundation.min.css" />
 </g:compress>
 <style>
-  .tinymce-browser-container {
+  .editor-browser-container {
     display: flex;
     flex-wrap: wrap;
     height: 100vh;
@@ -301,7 +301,7 @@
     margin-left: 1rem;
   }
 </style>
-<div class="tinymce-browser-container">
+<div class="editor-browser-container">
   <!-- Tab Navigation -->
   <div class="browser-tabs-container" style="padding: 1rem; border-bottom: 1px solid #e0e0e0;">
     <div class="browser-tabs">

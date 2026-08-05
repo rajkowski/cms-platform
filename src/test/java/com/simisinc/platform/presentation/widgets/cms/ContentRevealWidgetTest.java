@@ -53,14 +53,14 @@ class ContentRevealWidgetTest extends WidgetBase {
             +
             "<h5><a href=\"#reveal-example-bio\">Example Name</a></h5>\n" +
             "<p>Director<br />of Development</p>\n" +
-            "<p><a href=\"mailto:example@example.com\"><span class=\"fas fa-envelope-square tinymce-noedit\">&nbsp;</span></a> <a href=\"#my-example\" target=\"_blank\" rel=\"noopener\"><span class=\"fab fa-linkedin tinymce-noedit\">&nbsp;</span></a></p>\n"
+            "<p><a href=\"mailto:example@example.com\"><span class=\"fas fa-envelope-square mceNonEditable\">&nbsp;</span></a> <a href=\"#my-example\" target=\"_blank\" rel=\"noopener\"><span class=\"fab fa-linkedin mceNonEditable\">&nbsp;</span></a></p>\n"
             +
             "<hr />\n" +
             "<p><img src=\"/assets/img/1564502222206-109/Example2.jpg\" alt=\"Brian Donahue\" width=\"600\" height=\"695\" /></p>\n"
             +
             "<h5><a href=\"#reveal-example2-bio\">Example Name2</a></h5>\n" +
             "<p>Asst. Director<br />of Development</p>\n" +
-            "<p><a href=\"mailto:example2@example.com\"><span class=\"fas fa-envelope-square tinymce-noedit\">&nbsp;</span></a> <a href=\"#my-example-2\" target=\"_blank\" rel=\"noopener\"><span class=\"fab fa-linkedin tinymce-noedit\">&nbsp;</span></a></p>\n"
+            "<p><a href=\"mailto:example2@example.com\"><span class=\"fas fa-envelope-square mceNonEditable\">&nbsp;</span></a> <a href=\"#my-example-2\" target=\"_blank\" rel=\"noopener\"><span class=\"fab fa-linkedin mceNonEditable\">&nbsp;</span></a></p>\n"
             +
             "<hr />");
 

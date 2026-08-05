@@ -14,6 +14,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   --%>
+<%@ page import="static com.zeroio.platform.ApplicationInfo.VERSION" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="font" uri="/WEB-INF/tlds/font-functions.tld" %>
 <%@ taglib prefix="g" uri="http://granule.com/tags" %>
@@ -25,20 +26,42 @@
 <g:compress>
   <link rel="stylesheet" type="text/css" href="${ctx}/css/platform-editor.css" />
 </g:compress>
-<web:script package="tinymce" file="tinymce.min.js" />
+<style>
+  /* Full Screen Editor Styles */
+  .main-header {
+    display: none;
+  }
+
+  .grid-container {
+    padding:0;
+  }
+
+  .platform-no-margin {
+    margin: 0;
+  }
+
+  .tox-tinymce,
+  .tox-hugerte {
+    border: none;
+    border-radius: 0 !important;
+    border-color: var(--editor-border) !important;
+    border-bottom: 1px solid var(--editor-border) !important;
+  }
+</style>
+<web:script package="hugerte" file="hugerte.min.js" />
 <script>
   $(window).on('resize', function () {
     setTimeout(function () {
-      var container = document.getElementsByClassName("tox-tinymce")[0];
+      var container = document.getElementsByClassName("tox-hugerte")[0];
       var rect = container.getBoundingClientRect(),
         scrollLeft = window.pageXOffset || document.documentElement.scrollLeft,
         scrollTop = window.pageYOffset || document.documentElement.scrollTop;
       var newHeight = $(window).height() - Math.round(rect.top + scrollTop);
-      $('.tox-tinymce').height(newHeight);
+      $('.tox-hugerte').height(newHeight);
     }, 100);
   });
 
-  tinymce.init({
+  hugerte.init({
     selector: '.html-field',
     branding: false,
     width: '100%',
@@ -50,20 +73,20 @@
       });
     },
     menubar: false,
-    relative_urls : false,
-    convert_urls : true,
-    convert_unsafe_embeds: true, <%-- CVE-2024-29203 fix --%>
-    sandbox_iframes: true, <%-- CVE-2024-29203 fix --%>
+    relative_urls: false,
+    convert_urls: true,
+    convert_unsafe_embeds: true,
+    sandbox_iframes: true,
     content_css: [
       '${ctx}/css/${font:fontawesome()}/css/all.min.css',
       '${ctx}/css/${font:fontawesome()}/css/v4-shims.min.css',
-      '${ctx}/css/platform.css?v=${includeGlobalStylesheetLastModified}'
+      '${ctx}/css/platform.css?v=${VERSION}'
       <c:if test="${!empty includeGlobalStylesheet}">,'${ctx}/css/custom/stylesheet.css?v=${includeGlobalStylesheetLastModified}'</c:if>
       <c:if test="${!empty includeStylesheet}">,'${ctx}/css/custom/stylesheet${includeStylesheet}.css?v=${includeStylesheetLastModified}'</c:if>
     ],
     content_style: "body.platform-content { overflow: auto !important; }",
     body_class: 'web-content platform-content',
-    noneditable_class: 'tinymce-noedit',
+    noneditable_class: 'mceNonEditable',
     browser_spellcheck: true,
     plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code media table wordcount fontawesome contentblock diagram versionhistory cards notes panels templates imageversion',
     contextmenu: 'notesContext link',
@@ -75,15 +98,15 @@
       ],
     toolbar_mode: 'wrap',
     external_plugins: {
-        "contentblock": "${ctx}/javascript/tinymce-plugins/contentblock/plugin.js?v=${includeGlobalStylesheetLastModified}",
-        "fontawesome": "${ctx}/javascript/tinymce-plugins/fontawesome/plugin.min.js?v=${includeGlobalStylesheetLastModified}",
-        "diagram": "${ctx}/javascript/tinymce-plugins/diagram/plugin.js?v=${includeGlobalStylesheetLastModified}",
-        "versionhistory": "${ctx}/javascript/tinymce-plugins/versionhistory/plugin.js?v=${includeGlobalStylesheetLastModified}",
-        "cards": "${ctx}/javascript/tinymce-plugins/cards/plugin.js?v=${includeGlobalStylesheetLastModified}",
-        "notes": "${ctx}/javascript/tinymce-plugins/notes/plugin.js?v=${includeGlobalStylesheetLastModified}",
-        "panels": "${ctx}/javascript/tinymce-plugins/panels/plugin.js?v=${includeGlobalStylesheetLastModified}",
-        "templates": "${ctx}/javascript/tinymce-plugins/templates/plugin.js?v=${includeGlobalStylesheetLastModified}",
-        "imageversion": "${ctx}/javascript/tinymce-plugins/imageversion/plugin.js?v=${includeGlobalStylesheetLastModified}"
+        "contentblock": "${ctx}/javascript/tinymce-plugins/contentblock/plugin.js?v=${VERSION}",
+        "fontawesome": "${ctx}/javascript/tinymce-plugins/fontawesome/plugin.js?v=${VERSION}",
+        "diagram": "${ctx}/javascript/tinymce-plugins/diagram/plugin.js?v=${VERSION}",
+        "versionhistory": "${ctx}/javascript/tinymce-plugins/versionhistory/plugin.js?v=${VERSION}",
+        "cards": "${ctx}/javascript/tinymce-plugins/cards/plugin.js?v=${VERSION}",
+        "notes": "${ctx}/javascript/tinymce-plugins/notes/plugin.js?v=${VERSION}",
+        "panels": "${ctx}/javascript/tinymce-plugins/panels/plugin.js?v=${VERSION}",
+        "templates": "${ctx}/javascript/tinymce-plugins/templates/plugin.js?v=${VERSION}",
+        "imageversion": "${ctx}/javascript/tinymce-plugins/imageversion/plugin.js?v=${VERSION}"
     },
     image_class_list: [
       {title: 'None', value: ''},
@@ -114,7 +137,7 @@
         });
     },
     images_upload_handler: function (blobInfo, progress) {
-      return tinymce.activeEditor.plugins.imageversion.uploadImageFromEditor(blobInfo, progress);
+      return hugerte.activeEditor.plugins.imageversion.uploadImageFromEditor(blobInfo, progress);
     },
     image_version_upload_url: '${ctx}/image-upload?widget=imageUpload1&token=${userSession.formToken}',
     automatic_uploads: true
@@ -139,7 +162,7 @@
       const actionValue = submitter && submitter.name === 'save' ? submitter.value : '';
       const isPublishAction = actionValue === 'Publish Immediately';
 
-      const imageVersionPlugin = tinymce.activeEditor && tinymce.activeEditor.plugins.imageversion;
+      const imageVersionPlugin = hugerte.activeEditor && hugerte.activeEditor.plugins.imageversion;
       if (!imageVersionPlugin || !imageVersionPlugin.hasPendingUploads()) {
         return;
       }
@@ -172,7 +195,7 @@
       cmsType = 'file';
     }
     var cmsURL = '${ctx}/' + cmsType + '-browser';
-    const instanceApi = tinyMCE.activeEditor.windowManager.openUrl({
+    const instanceApi = hugerte.activeEditor.windowManager.openUrl({
         title: 'Browser',
         url: cmsURL,
         width: 850,

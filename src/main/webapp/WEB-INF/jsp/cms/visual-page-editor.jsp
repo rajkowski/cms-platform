@@ -25,7 +25,7 @@
 <web:stylesheet package="spectrum" file="spectrum.css" />
 <web:stylesheet package="dragula" file="dragula.min.css" />
 <web:script package="spectrum" file="spectrum.js" />
-<web:script package="tinymce" file="tinymce.min.js" />
+<web:script package="hugerte" file="hugerte.min.js" />
 <web:script package="dragula" file="dragula.min.js" />
 <g:compress>
   <link rel="stylesheet" type="text/css" href="${ctx}/css/visual-page-editor.css" />

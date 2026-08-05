@@ -7,30 +7,30 @@
  * @author matt rajkowski
  * @created 7/24/26 8:00 AM
  */
-tinymce.PluginManager.add('panels', function (editor) {
+const panelsPlugin = (editor) => {
 
     function getSelectedPanel() {
         const node = editor.selection.getNode();
-        return editor.dom.getParent(node, '.macrosuite-panel');
+        return editor.dom.getParent(node, '.panel-wrapper, .macrosuite-panel');
     }
 
-    function createPanel () {
+    function createPanel() {
         return `
-            <div class="macrosuite-panel landing-page-gettingstarted-panel confluence-toggle">
+            <div class="panel-wrapper macrosuite-panel landing-page-gettingstarted-panel confluence-toggle">
                 <div class="panel-header landing-page-gettingstarted-headersubheader">
                     <div class="landing-page-gettingstarted">
-                        <div class="panel-title landing-page-gettingstarted" contenteditable="true">
-                            <p>Panel Heading goes here</p>
+                        <div class="panel-title landing-page-gettingstarted">
+                            <h2>Panel Heading</h2>
                         </div>
-                        <div class="panel-subtitle landing-page-gettingstarted" contenteditable="true">
-                            <p> Panel Sub heading goes here</p>
+                        <div class="panel-subtitle landing-page-gettingstarted">
+                            <p>Subheading goes here</p>
                         </div>
-                        <div contenteditable="true">
-                            Click to see additional information
+                        <div>
+                            <em>(Click to see additional information)</em>
                         </div>
                     </div>
                 </div>
-                <div class="landing-page-gettingstarted-accentstrip"></div>
+                <div class="panel-divider landing-page-gettingstarted-accentstrip"></div>
                 <div class="panel-content confluence-toggle-container">
                     <div class="confluence-toggle-column-size-30">
                         <p>Panel content goes here</p>
@@ -76,4 +76,11 @@ tinymce.PluginManager.add('panels', function (editor) {
         }
     });
 
-});
+}
+
+// Auto-register the plugin with HugeRTE/TinyMCE when this module loads
+if (typeof hugerte !== 'undefined' && hugerte.PluginManager) {
+    hugerte.PluginManager.add('panels', panelsPlugin);
+} else if (typeof tinymce !== 'undefined' && tinymce.PluginManager) {
+    tinymce.PluginManager.add('panels', panelsPlugin);
+}

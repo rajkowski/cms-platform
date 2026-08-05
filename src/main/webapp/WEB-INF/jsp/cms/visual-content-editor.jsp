@@ -13,6 +13,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   --%>
+<%@ page import="static com.zeroio.platform.ApplicationInfo.VERSION" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="font" uri="/WEB-INF/tlds/font-functions.tld" %>
@@ -26,7 +27,7 @@
 <web:stylesheet package="fullcalendar" file="skeleton.css" />
 <web:stylesheet package="fullcalendar" file="themes/forma/theme.css" />
 <web:stylesheet package="fullcalendar" file="themes/forma/palettes/blue.css" />
-<web:script package="tinymce" file="tinymce.min.js" />
+<web:script package="hugerte" file="hugerte.min.js" />
 <web:script package="jquery" file="jquery.min.js" />
 <g:compress>
   <link rel="stylesheet" type="text/css" href="${ctx}/css/visual-content-editor.css" />

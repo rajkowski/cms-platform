@@ -18,7 +18,7 @@ package com.zeroio.platform.application.cms;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import com.simisinc.platform.application.cms.TinyMceCommand;
+import com.simisinc.platform.application.cms.HtmlEditorCommand;
 
 /**
  * @author matt rajkowski
@@ -30,7 +30,7 @@ class ContentEditorCommandTest {
   void prepareContentForEditorConvertsContentBlockReference() {
     String content = "<p>Before</p>${uniqueId:sample-content}<p>After</p>";
 
-    String html = TinyMceCommand.prepareContentForEditor(content);
+    String html = HtmlEditorCommand.prepareContentForEditor(content);
 
     Assertions.assertTrue(html.contains("class=\"content-block-ref\""));
     Assertions.assertTrue(html.contains("data-uniqueid=\"sample-content\""));
@@ -41,7 +41,7 @@ class ContentEditorCommandTest {
   void updateContentFromEditorConvertsContentBlockSpanBackToText() {
     String content = "<p>Before</p><span class=\"content-block-ref\" contenteditable=\"false\" data-uniqueid=\"sample-content\">${uniqueId:sample-content}</span><p>After</p>";
 
-    String html = TinyMceCommand.updateContentFromEditor(content);
+    String html = HtmlEditorCommand.updateContentFromEditor(content);
 
     Assertions.assertEquals("<p>Before</p>${uniqueId:sample-content}<p>After</p>", html);
   }
@@ -50,7 +50,7 @@ class ContentEditorCommandTest {
   void prepareContentForEditorConvertsDiagramTokenToSpan() {
     String content = "<p>Before</p>${diagram:confluence-585768776;my diagram v2.drawio}<p>After</p>";
 
-    String html = TinyMceCommand.prepareContentForEditor(content);
+    String html = HtmlEditorCommand.prepareContentForEditor(content);
 
     Assertions.assertTrue(html.contains("class=\"drawio-diagram-ref\""));
     Assertions.assertTrue(html.contains("contenteditable=\"false\""));
@@ -64,7 +64,7 @@ class ContentEditorCommandTest {
   void prepareContentForEditorConvertsUnlabeledDiagramTokenToSpan() {
     String content = "<p>Before</p>${diagram:confluence-585768776}<p>After</p>";
 
-    String html = TinyMceCommand.prepareContentForEditor(content);
+    String html = HtmlEditorCommand.prepareContentForEditor(content);
 
     Assertions.assertTrue(html.contains("class=\"drawio-diagram-ref\""));
     Assertions.assertTrue(html.contains("data-webpath=\"confluence-585768776\""));
@@ -76,7 +76,7 @@ class ContentEditorCommandTest {
   void updateContentFromEditorConvertsDiagramSpanBackToToken() {
     String content = "<p>Before</p><span class=\"drawio-diagram-ref\" contenteditable=\"false\" data-webpath=\"confluence-585768776\" data-label=\"my diagram v2.drawio\" style=\"background-color: #fff3cd;\">diagram: my diagram v2.drawio</span><p>After</p>";
 
-    String html = TinyMceCommand.updateContentFromEditor(content);
+    String html = HtmlEditorCommand.updateContentFromEditor(content);
 
     Assertions.assertEquals("<p>Before</p>${diagram:confluence-585768776;my diagram v2.drawio}<p>After</p>", html);
   }
@@ -85,7 +85,7 @@ class ContentEditorCommandTest {
   void updateContentFromEditorConvertsUnlabeledDiagramSpanBackToToken() {
     String content = "<p>Before</p><span class=\"drawio-diagram-ref\" contenteditable=\"false\" data-webpath=\"confluence-585768776\" data-label=\"\" style=\"background-color: #fff3cd;\">diagram: confluence-585768776</span><p>After</p>";
 
-    String html = TinyMceCommand.updateContentFromEditor(content);
+    String html = HtmlEditorCommand.updateContentFromEditor(content);
 
     Assertions.assertEquals("<p>Before</p>${diagram:confluence-585768776}<p>After</p>", html);
   }
@@ -94,7 +94,7 @@ class ContentEditorCommandTest {
   void prepareContentForEditorConvertsMultipleDiagramTokensToSpans() {
     String content = "${diagram:first-path;First}${diagram:second-path}";
 
-    String html = TinyMceCommand.prepareContentForEditor(content);
+    String html = HtmlEditorCommand.prepareContentForEditor(content);
 
     Assertions.assertEquals(2, html.split("drawio-diagram-ref", -1).length - 1);
     Assertions.assertTrue(html.contains("diagram: First"));

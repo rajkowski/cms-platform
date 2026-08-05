@@ -15,6 +15,7 @@
   ~ limitations under the License.
   --%>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page import="static com.zeroio.platform.ApplicationInfo.VERSION" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="font" uri="/WEB-INF/tlds/font-functions.tld" %>
@@ -250,6 +251,11 @@
     </style>
   </c:if>
   <%-- Javascript before content--%>
+  <script>
+    window.CMS_APP_VERSION = "${VERSION}";
+    window.CMS_FORM_TOKEN = "${userSession.formToken}";
+    window.CMS_FONT_AWESOME_CSS_PATH = "${font:fontawesome()}";
+  </script>
   <c:if test="${!fn:startsWith(pageRenderInfo.name, '/admin') && !fn:startsWith(pageRenderInfo.name, '/content-editor')}">
     <c:if test="${!empty analyticsPropertyMap['analytics.google.tagmanager'] && fn:startsWith(analyticsPropertyMap['analytics.google.tagmanager'], 'GTM-')}">
       <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
