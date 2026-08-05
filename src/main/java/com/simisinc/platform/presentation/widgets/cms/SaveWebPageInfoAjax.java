@@ -23,13 +23,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.DataException;
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.cms.SaveWebPageCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Saves a web page's metadata/info from the visual page editor Info tab
@@ -48,7 +48,7 @@ public class SaveWebPageInfoAjax extends GenericJsonService {
     LOG.debug("SaveWebPageInfoAjax...");
 
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.web-page.save-info", context.getUserSession())) {
+    if (!Permission.check("cms.web-page.save-info", context.getUserSession())) {
       LOG.debug("No permission to: " + SaveWebPageInfoAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

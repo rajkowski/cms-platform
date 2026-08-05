@@ -21,13 +21,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.DataException;
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.application.mailinglists.SaveMailingListCommand;
 import com.simisinc.platform.domain.model.mailinglists.MailingList;
 import com.simisinc.platform.infrastructure.persistence.mailinglists.MailingListRepository;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * JSON service to save (create/update) a mailing list from the CRM editor
@@ -43,7 +43,7 @@ public class CRMSaveMailingListAjax extends GenericJsonService {
   public JsonServiceContext post(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.crm.save-mailing-list", context.getUserSession())) {
+    if (!Permission.check("cms.crm.save-mailing-list", context.getUserSession())) {
       LOG.debug("No permission to: " + CRMSaveMailingListAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

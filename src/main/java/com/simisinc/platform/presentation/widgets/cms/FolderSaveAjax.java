@@ -20,11 +20,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.domain.model.cms.Folder;
 import com.simisinc.platform.infrastructure.persistence.cms.FolderRepository;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Saves folder details in the visual document editor
@@ -44,7 +44,7 @@ public class FolderSaveAjax extends GenericJsonService {
 
     // Restrict access to editors
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.folder.save", context.getUserSession())) {
+    if (!Permission.check("cms.folder.save", context.getUserSession())) {
       LOG.debug("No permission to: " + FolderSaveAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

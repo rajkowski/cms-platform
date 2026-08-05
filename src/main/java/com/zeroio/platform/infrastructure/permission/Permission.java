@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.simisinc.platform.application.admin;
+package com.zeroio.platform.infrastructure.permission;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,9 +49,9 @@ import com.simisinc.platform.presentation.controller.UserSession;
  * @author matt rajkowski
  * @created 3/6/26 8:00 AM
  */
-public class PermissionEngine {
+public class Permission {
 
-  private static Log LOG = LogFactory.getLog(PermissionEngine.class);
+  private static Log LOG = LogFactory.getLog(Permission.class);
 
   // Keyed by Action name (e.g. "cms.content.save-draft") → its governing PermissionGroup
   private static Map<String, PermissionGroup> actionMap = Collections.emptyMap();
@@ -87,7 +87,7 @@ public class PermissionEngine {
    * @param userSession current user session
    * @return {@code true} if permitted (or if the action is not governed by any policy)
    */
-  public static boolean checkAccess(String action, UserSession userSession) {
+  public static boolean check(String action, UserSession userSession) {
     PermissionGroup group = actionMap.get(action);
     if (group == null) {
       // Not registered — disallow by default

@@ -21,13 +21,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.DataException;
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.ecommerce.SaveSalesTaxNexusAddressCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.ecommerce.SalesTaxNexusAddress;
 import com.simisinc.platform.infrastructure.persistence.ecommerce.SalesTaxNexusAddressRepository;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * JSON service to save (create/update) a sales tax nexus address from the CRM editor
@@ -43,7 +43,7 @@ public class CRMSaveSalesTaxNexusAjax extends GenericJsonService {
   public JsonServiceContext post(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.crm.save-sales-tax-nexus", context.getUserSession())) {
+    if (!Permission.check("cms.crm.save-sales-tax-nexus", context.getUserSession())) {
       LOG.debug("No permission to: " + CRMSaveSalesTaxNexusAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

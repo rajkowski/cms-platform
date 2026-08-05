@@ -20,13 +20,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.cms.SaveMenuTabCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.MenuTab;
 import com.simisinc.platform.infrastructure.cache.CacheManager;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Handles JSON/AJAX POST requests for /json/sitemap/create-tab endpoint
@@ -50,7 +50,7 @@ public class SitemapCreateTabJsonService extends GenericJsonService {
   public JsonServiceContext post(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.sitemap.create-tab", context.getUserSession())) {
+    if (!Permission.check("cms.sitemap.create-tab", context.getUserSession())) {
       LOG.debug("No permission to: " + SitemapCreateTabJsonService.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

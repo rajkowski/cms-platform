@@ -23,7 +23,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.DataException;
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.cms.SaveContentCommand;
 import com.simisinc.platform.application.cms.HtmlEditorCommand;
 import com.simisinc.platform.application.json.JsonCommand;
@@ -33,6 +32,7 @@ import com.simisinc.platform.infrastructure.persistence.cms.ContentRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.ContentSpecification;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Handles JSON/AJAX POST requests for /json/content/save-draft endpoint
@@ -55,7 +55,7 @@ public class ContentSaveDraftJsonService extends GenericJsonService {
   public JsonServiceContext post(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.content.save-draft", context.getUserSession())) {
+    if (!Permission.check("cms.content.save-draft", context.getUserSession())) {
       LOG.debug("No permission to: " + ContentSaveDraftJsonService.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

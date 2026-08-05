@@ -20,12 +20,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.cms.SaveFolderCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.Folder;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Creates a new folder for the visual document editor
@@ -41,7 +41,7 @@ public class DocumentCreateFolderAjax extends GenericJsonService {
     LOG.debug("DocumentCreateFolderAjax...");
 
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.document.create-folder", context.getUserSession())) {
+    if (!Permission.check("cms.document.create-folder", context.getUserSession())) {
       LOG.debug("No permission to: " + DocumentCreateFolderAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

@@ -26,7 +26,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.DataException;
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.cms.SaveFilePartCommand;
 import com.simisinc.platform.application.cms.SaveImageCommand;
 import com.simisinc.platform.application.cms.SaveImageVersionCommand;
@@ -38,6 +37,7 @@ import com.simisinc.platform.domain.model.cms.ImageVersion;
 import com.simisinc.platform.infrastructure.persistence.cms.ImageRepository;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 import com.zeroio.platform.presentation.controller.FileModulesConstants;
 
 /**
@@ -63,7 +63,7 @@ public class ImageUploadAjax extends GenericJsonService {
     LOG.debug("ImageUploadAjax...");
 
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.image.upload", context.getUserSession())) {
+    if (!Permission.check("cms.image.upload", context.getUserSession())) {
       LOG.debug("No permission to: " + ImageUploadAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

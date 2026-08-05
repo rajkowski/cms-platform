@@ -23,10 +23,10 @@ import java.io.InputStreamReader;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Returns the HTML content of a specific editor template
@@ -56,7 +56,7 @@ public class TemplateContentAjax extends GenericJsonService {
   public JsonServiceContext get(JsonServiceContext context) {
 
     // Check permissions - user must be able to edit content
-    if (!PermissionEngine.checkAccess("cms.template.content", context.getUserSession())) {
+    if (!Permission.check("cms.template.content", context.getUserSession())) {
       LOG.debug("No permission to: " + TemplateContentAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

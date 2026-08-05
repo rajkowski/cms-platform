@@ -20,12 +20,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.DataException;
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
-import com.simisinc.platform.presentation.widgets.cms.SaveWebPageAjax;
 import com.zeroio.platform.application.cms.SetCurrentWebPageVersionCommand;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Reverts a web page XML layout to a previous version
@@ -44,7 +43,7 @@ public class WebPageVersionRevertAjax extends GenericJsonService {
     LOG.debug("WebPageVersionRevertAjax...");
 
     // Reuse the same permission gate as the visual page save endpoint.
-    if (!PermissionEngine.checkAccess("cms.web-page.save", context.getUserSession())) {
+    if (!Permission.check("cms.web-page.save", context.getUserSession())) {
       LOG.debug("No permission to: " + WebPageVersionRevertAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

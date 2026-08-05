@@ -22,13 +22,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.BlogPost;
 import com.simisinc.platform.infrastructure.persistence.cms.BlogPostRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.BlogPostSpecification;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Handles JSON/AJAX GET requests for /json/blogs/posts endpoint
@@ -51,7 +51,7 @@ public class BlogsPostsJsonService extends GenericJsonService {
   public JsonServiceContext get(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.blogs.posts", context.getUserSession())) {
+    if (!Permission.check("cms.blogs.posts", context.getUserSession())) {
       LOG.debug("No permission to: " + BlogsPostsJsonService.class.getSimpleName());
       context.setJson("[]");
       return context;

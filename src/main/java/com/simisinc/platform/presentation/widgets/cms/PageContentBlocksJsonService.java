@@ -31,7 +31,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.LoadUserCommand;
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.cms.LoadContentCommand;
 import com.simisinc.platform.application.cms.WebPageXmlLayoutCommand;
 import com.simisinc.platform.application.json.JsonCommand;
@@ -45,6 +44,7 @@ import com.simisinc.platform.presentation.controller.Page;
 import com.simisinc.platform.presentation.controller.Section;
 import com.simisinc.platform.presentation.controller.Widget;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Returns the content blocks referenced by a page's XML layout
@@ -70,7 +70,7 @@ public class PageContentBlocksJsonService extends GenericJsonService {
   public JsonServiceContext get(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.page.content-blocks", context.getUserSession())) {
+    if (!Permission.check("cms.page.content-blocks", context.getUserSession())) {
       LOG.debug("No permission to: " + PageContentBlocksJsonService.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

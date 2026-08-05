@@ -22,7 +22,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.commons.text.WordUtils;
 
 import com.simisinc.platform.application.DataException;
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.cms.SaveWebPageCommand;
 import com.simisinc.platform.application.cms.UrlCommand;
 import com.simisinc.platform.application.cms.WebPageJsonToXMLCommand;
@@ -30,6 +29,7 @@ import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Visual Editor Widget for web page design with drag-and-drop interface
@@ -46,7 +46,7 @@ public class VisualPageEditorWidget extends GenericWidget {
 
   public WidgetContext execute(WidgetContext context) {
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.visual-page-editor.access", context.getUserSession())) {
+    if (!Permission.check("cms.visual-page-editor.access", context.getUserSession())) {
       LOG.debug("No permission to: " + VisualPageEditorWidget.class.getSimpleName());
       return context;
     }

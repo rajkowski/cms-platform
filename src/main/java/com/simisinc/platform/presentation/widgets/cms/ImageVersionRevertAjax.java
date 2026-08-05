@@ -20,11 +20,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.DataException;
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.cms.SetCurrentImageVersionCommand;
 import com.simisinc.platform.domain.model.cms.Image;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Reverts an image to a previous version in the visual image editor
@@ -44,7 +44,7 @@ public class ImageVersionRevertAjax extends GenericJsonService {
 
     // Restrict access to editors
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.image.version-revert", context.getUserSession())) {
+    if (!Permission.check("cms.image.version-revert", context.getUserSession())) {
       LOG.debug("No permission to: " + ImageVersionRevertAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

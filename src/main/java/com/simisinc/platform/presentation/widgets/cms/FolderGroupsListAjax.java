@@ -21,7 +21,6 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.domain.model.Group;
 import com.simisinc.platform.domain.model.cms.Folder;
 import com.simisinc.platform.domain.model.cms.FolderGroup;
@@ -30,6 +29,7 @@ import com.simisinc.platform.infrastructure.persistence.cms.FolderGroupRepositor
 import com.simisinc.platform.infrastructure.persistence.cms.FolderRepository;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Returns folder groups and available groups for the visual document editor
@@ -50,7 +50,7 @@ public class FolderGroupsListAjax extends GenericJsonService {
 
     // Restrict access to editors
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.folder.groups-list", context.getUserSession())) {
+    if (!Permission.check("cms.folder.groups-list", context.getUserSession())) {
       LOG.debug("No permission to: " + FolderGroupsListAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

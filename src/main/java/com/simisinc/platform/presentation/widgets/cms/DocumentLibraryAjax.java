@@ -23,7 +23,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.Folder;
 import com.simisinc.platform.domain.model.items.Collection;
@@ -35,6 +34,7 @@ import com.simisinc.platform.infrastructure.persistence.items.CollectionSpecific
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.controller.UserSession;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Returns folder metadata for the visual document editor
@@ -54,7 +54,7 @@ public class DocumentLibraryAjax extends GenericJsonService {
 
     // Restrict access to editors
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.document.library", context.getUserSession())) {
+    if (!Permission.check("cms.document.library", context.getUserSession())) {
       LOG.debug("No permission to: " + DocumentLibraryAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

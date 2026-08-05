@@ -20,13 +20,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.DataException;
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.cms.GenerateThumbnailCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.Image;
 import com.simisinc.platform.infrastructure.persistence.cms.ImageRepository;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Generates a thumbnail for an image
@@ -44,7 +44,7 @@ public class ImageThumbnailAjax extends GenericJsonService {
     LOG.debug("ImageThumbnailAjax...");
 
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.image.thumbnail", context.getUserSession())) {
+    if (!Permission.check("cms.image.thumbnail", context.getUserSession())) {
       LOG.debug("No permission to: " + ImageThumbnailAjax.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

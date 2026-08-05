@@ -26,14 +26,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.User;
 import com.simisinc.platform.infrastructure.persistence.UserRepository;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
-import com.simisinc.platform.presentation.widgets.cms.SaveWebPageAjax;
 import com.zeroio.platform.domain.model.cms.WebPageVersion;
+import com.zeroio.platform.infrastructure.permission.Permission;
 import com.zeroio.platform.infrastructure.persistence.cms.WebPageVersionRepository;
 
 /**
@@ -50,7 +49,7 @@ public class WebPageVersionJsonService extends GenericJsonService {
   @Override
   public JsonServiceContext get(JsonServiceContext context) {
 
-    if (!PermissionEngine.checkAccess("cms.web-page.save", context.getUserSession())) {
+    if (!Permission.check("cms.web-page.save", context.getUserSession())) {
       LOG.debug("No permission to: " + WebPageVersionJsonService.class.getSimpleName());
       return context.writeError("Permission Denied");
     }

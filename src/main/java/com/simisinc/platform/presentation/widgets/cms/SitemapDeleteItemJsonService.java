@@ -19,12 +19,12 @@ package com.simisinc.platform.presentation.widgets.cms;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.application.admin.PermissionEngine;
 import com.simisinc.platform.domain.model.cms.MenuItem;
 import com.simisinc.platform.infrastructure.cache.CacheManager;
 import com.simisinc.platform.infrastructure.persistence.cms.MenuItemRepository;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
  * Handles JSON/AJAX POST requests for /json/sitemap/delete-item endpoint
@@ -47,7 +47,7 @@ public class SitemapDeleteItemJsonService extends GenericJsonService {
   public JsonServiceContext post(JsonServiceContext context) {
 
     // Check permissions
-    if (!PermissionEngine.checkAccess("cms.sitemap.delete-item", context.getUserSession())) {
+    if (!Permission.check("cms.sitemap.delete-item", context.getUserSession())) {
       LOG.debug("No permission to: " + SitemapDeleteItemJsonService.class.getSimpleName());
       return context.writeError("Permission Denied");
     }
