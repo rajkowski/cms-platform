@@ -90,7 +90,7 @@ public class ImageUploadAjax extends GenericJsonService {
 
       // Process each file part
       for (FileItem fileItemBean : uploadedFileItems) {
-        // Handle TinyMCE clipboard filenames
+        // Handle html editor clipboard filenames
 
         try {
 

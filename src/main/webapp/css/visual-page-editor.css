@@ -784,16 +784,17 @@ input[type="range"].property-input:focus::-moz-range-thumb {
   border-color: var(--editor-panel-bg);
 }
 
-/* TinyMCE HTML Editor Styles */
+/* HTML Editor Styles */
+.hugerte-editor-container,
 .tinymce-editor-container {
   margin-bottom: 10px;
 }
 
 .html-editor-field {
-  display: none; /* Hide the textarea when TinyMCE is active */
+  display: none; /* Hide the textarea when editor is active */
 }
 
-/* TinyMCE editor styling for dark mode compatibility */
+/* HTML editor styling for dark mode compatibility */
 .tox .tox-toolbar,
 .tox .tox-toolbar__primary,
 .tox .tox-menubar {

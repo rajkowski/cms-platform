@@ -1781,7 +1781,8 @@ textarea.property-input {
   background: var(--editor-text-muted);
 }
 
-/* TinyMCE Editor Integration */
+/* HTML Editor Integration */
+.hugerte-editor-container,
 .tinymce-editor-container {
   flex-grow: 1;
   display: flex;
@@ -1789,10 +1790,12 @@ textarea.property-input {
   margin-bottom: 15px;
 }
 
+.tox:not(.tox-hugerte-inline) .tox-editor-header,
 .tox:not(.tox-tinymce-inline) .tox-editor-header {
   padding-top: 0;
 }
 
+.tox-hugerte,
 .tox-tinymce {
   border: none;
   border-radius: 0 !important;

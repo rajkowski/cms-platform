@@ -13,7 +13,7 @@ class ContentEditorBridge {
   constructor() {
     this.currentContentId = null;
     this.currentUniqueId = null;
-    this.tinyMceEditor = null;
+    this.htmlEditor = null;
     this.autoSaveTimer = null;
     this.autoSaveInterval = 30000; // 30 seconds
     this.isDirty = false;
@@ -134,7 +134,7 @@ class ContentEditorBridge {
       paste_data_images: true,
       automatic_uploads: true,
       setup: (editor) => {
-        this.tinyMceEditor = editor;
+        this.htmlEditor = editor;
 
         editor.on('change', () => {
           this.isDirty = true;
@@ -205,8 +205,8 @@ class ContentEditorBridge {
           // Load content (prefer draft over published)
           const contentText = content.draft_content || content.content || '';
 
-          if (this.tinyMceEditor) {
-            this.tinyMceEditor.setContent(contentText);
+          if (this.htmlEditor) {
+            this.htmlEditor.setContent(contentText);
           } else {
             document.getElementById('content-html-editor').value = contentText;
           }
@@ -455,8 +455,8 @@ class ContentEditorBridge {
    * Get editor content
    */
   getEditorContent() {
-    if (this.tinyMceEditor) {
-      return this.tinyMceEditor.getContent();
+    if (this.htmlEditor) {
+      return this.htmlEditor.getContent();
     } else {
       return document.getElementById('content-html-editor').value;
     }
