@@ -20,7 +20,6 @@ This project uses and licenses several technologies:
    Google GSON                 Apache   Convert Java Objects to/from JSON representation  https://github.com/google/gson
    Granule                     Apache   CSS and Javascript combine/minify                 https://github.com/rajkowski/Granule
    HikariCP                    Apache   High performance database connection pooling      https://github.com/brettwooldridge/HikariCP
-   im4java                     LGPL     Interface to ImageMagick and GraphicsMagick       http://im4java.sourceforge.net
    Jackson                     Apache   Json Parser                                       https://github.com/FasterXML/jackson
    JavaMail                    CDDL     Mail library                                      https://javaee.github.io/javamail/
    JMail                       MIT      Email validator                                   https://github.com/RohanNagar/jmail
