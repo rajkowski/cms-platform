@@ -59,14 +59,14 @@ public class RefreshAllDocumentTextIndexesJob {
       // Page through all files and update text indexes
       FileSpecification fileSpecification = new FileSpecification();
       fileSpecification.setIsProcessed(false);
-      fileSpecification.setFileType("pdf");
+      fileSpecification.setFileExtension(new String[] { "pdf", "docx", "pptx" });
       List<FileItem> allFiles = FileItemRepository.findAll(fileSpecification, null);
       allFiles.forEach(fileItem -> FileItemDocumentContentCommand.updateTextIndex(fileItem));
 
       // Page through all item files and update text indexes
       ItemFileSpecification itemFileSpecification = new ItemFileSpecification();
       itemFileSpecification.setIsProcessed(false);
-      itemFileSpecification.setFileType("pdf");
+      itemFileSpecification.setFileExtension(new String[] { "pdf", "docx", "pptx" });
       List<ItemFileItem> allItemFiles = ItemFileItemRepository.findAll(itemFileSpecification, null);
       allItemFiles.forEach(itemFileItem -> ItemFileItemDocumentContentCommand.updateTextIndex(itemFileItem));
     } catch (Exception e) {

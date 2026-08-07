@@ -79,6 +79,10 @@ public class FileItemRepository {
         where.AND("LOWER(files.file_type) = ANY(?)",
             Arrays.stream(specification.getFileType()).map(String::toLowerCase).toArray(String[]::new), Types.ARRAY);
       }
+      if (specification.getFileExtension() != null) {
+        where.AND("LOWER(files.extension) = ANY(?)",
+            Arrays.stream(specification.getFileExtension()).map(String::toLowerCase).toArray(String[]::new), Types.ARRAY);
+      }
       if (specification.getMatchesName() != null) {
         String likeValue = specification.getMatchesName().trim()
             .replace("!", "!!")

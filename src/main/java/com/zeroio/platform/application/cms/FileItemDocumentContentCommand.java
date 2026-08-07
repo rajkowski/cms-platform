@@ -45,7 +45,7 @@ public class FileItemDocumentContentCommand {
     if (fileItem == null) {
       return false;
     }
-    
+
     File file = FileSystemCommand.getFileServerRootPath(fileItem.getFileServerPath());
     if (!file.exists()) {
       LOG.warn("File does not exist: " + file.getPath());
@@ -53,8 +53,16 @@ public class FileItemDocumentContentCommand {
     }
 
     // Process PDF files
-    if (fileItem.getFileType().equals("pdf")) {
+    if (fileItem.getExtension().equalsIgnoreCase("pdf")) {
       String text = ExtractTextFromPDFCommand.textFromFile(file);
+      FileItemRepository.updateDocumentText(fileItem, text);
+      return true;
+    } else if (fileItem.getExtension().equalsIgnoreCase("docx")) {
+      String text = ExtractTextFromWordCommand.textFromFile(file);
+      FileItemRepository.updateDocumentText(fileItem, text);
+      return true;
+    } else if (fileItem.getExtension().equalsIgnoreCase("pptx")) {
+      String text = ExtractTextFromPowerPointCommand.textFromFile(file);
       FileItemRepository.updateDocumentText(fileItem, text);
       return true;
     }

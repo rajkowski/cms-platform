@@ -51,8 +51,16 @@ public class ItemFileItemDocumentContentCommand {
       return false;
     }
     // Process PDF files
-    if (fileItem.getFileType().equals("pdf")) {
+    if (fileItem.getExtension().equalsIgnoreCase("pdf")) {
       String text = ExtractTextFromPDFCommand.textFromFile(file);
+      ItemFileItemRepository.updateDocumentText(fileItem, text);
+      return true;
+    } else if (fileItem.getExtension().equalsIgnoreCase("docx")) {
+      String text = ExtractTextFromWordCommand.textFromFile(file);
+      ItemFileItemRepository.updateDocumentText(fileItem, text);
+      return true;
+    } else if (fileItem.getExtension().equalsIgnoreCase("pptx")) {
+      String text = ExtractTextFromPowerPointCommand.textFromFile(file);
       ItemFileItemRepository.updateDocumentText(fileItem, text);
       return true;
     }

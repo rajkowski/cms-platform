@@ -37,6 +37,7 @@ public class ItemFileSpecification extends Entity {
   private String barcode = null;
   private long createdBy = -1;
   private String[] fileType = null;
+  private String[] fileExtension = null;
   private Long forUserId = -1L;
   private String matchesName = null;
   private String searchName = null;
@@ -130,6 +131,14 @@ public class ItemFileSpecification extends Entity {
     } else {
       this.fileType = null;
     }
+  }
+
+  public String[] getFileExtension() {
+    return fileExtension;
+  }
+
+  public void setFileExtension(String[] fileExtension) {
+    this.fileExtension = fileExtension;
   }
 
   public Long getForUserId() {

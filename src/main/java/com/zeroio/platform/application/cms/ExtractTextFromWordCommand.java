@@ -17,34 +17,35 @@
 package com.zeroio.platform.application.cms;
 
 import java.io.File;
+import java.io.FileInputStream;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.pdfbox.Loader;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.text.PDFTextStripper;
+import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
 
 /**
- * Command for extracting text from PDF files
+ * Command for extracting text from Word files
  *
  * @author matt rajkowski
  * @created 8/6/26 5:00 PM
  */
-public class ExtractTextFromPDFCommand {
+public class ExtractTextFromWordCommand {
 
-  private static Log LOG = LogFactory.getLog(ExtractTextFromPDFCommand.class);
+  private static Log LOG = LogFactory.getLog(ExtractTextFromWordCommand.class);
 
   /**
-   * Extracts text from a PDF file 
+   * Extracts text from a Word file 
    *
-   * @param pdfFile the PDF file
+   * @param wordFile the Word file
    * @return the extracted text, or null if unsuccessful
    */
-  public static String textFromFile(File pdfFile) {
-    try (PDDocument document = Loader.loadPDF(pdfFile)) {
-      PDFTextStripper pdfStripper = new PDFTextStripper();
-      String text = pdfStripper.getText(document);
-      LOG.debug("Extracted text from PDF file: " + pdfFile.getPath());
+  public static String textFromFile(File wordFile) {
+    try (FileInputStream fis = new FileInputStream(wordFile);
+        XWPFDocument doc = new XWPFDocument(fis);
+        XWPFWordExtractor extractor = new XWPFWordExtractor(doc)) {
+      String text = extractor.getText();
+      LOG.debug("Extracted text from Word file: " + wordFile.getPath());
       return text;
     } catch (Exception e) {
       LOG.warn(e.getMessage());
