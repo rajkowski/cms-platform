@@ -24,9 +24,9 @@ import org.apache.commons.logging.LogFactory;
 import com.simisinc.platform.application.DataException;
 import com.simisinc.platform.domain.model.cms.Content;
 import com.simisinc.platform.infrastructure.persistence.cms.ContentRepository;
-import com.simisinc.platform.infrastructure.scheduler.cms.RefreshWebPageTextIndexJob;
 import com.zeroio.platform.domain.model.cms.ContentVersion;
 import com.zeroio.platform.infrastructure.persistence.cms.ContentVersionRepository;
+import com.zeroio.platform.infrastructure.scheduler.cms.RefreshWebPageTextIndexJob;
 
 /**
  * Validates and saves content objects

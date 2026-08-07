@@ -26,10 +26,10 @@ import com.simisinc.platform.domain.model.cms.Content;
 import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.infrastructure.persistence.cms.ContentRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
-import com.simisinc.platform.infrastructure.scheduler.cms.RefreshWebPageTextIndexJob;
 import com.simisinc.platform.infrastructure.workflow.WorkflowManager;
 import com.zeroio.platform.domain.model.cms.ContentVersion;
 import com.zeroio.platform.infrastructure.persistence.cms.ContentVersionRepository;
+import com.zeroio.platform.infrastructure.scheduler.cms.RefreshWebPageTextIndexJob;
 
 /**
  * Publishes draft content to live
