@@ -43,6 +43,7 @@ public class FileSpecification extends Entity {
   private String searchContent = null;
   private int withinLastDays = -1;
   private int inASubFolder = DataConstants.UNDEFINED;
+  private int isProcessed = DataConstants.UNDEFINED;
   private String versionWebPath = null;
   private String[] regionTags = null;
   private String[] filterTags = null;
@@ -179,6 +180,18 @@ public class FileSpecification extends Entity {
 
   public void setInASubFolder(boolean inASubFolder) {
     this.inASubFolder = (inASubFolder ? DataConstants.TRUE : DataConstants.FALSE);
+  }
+
+  public int getIsProcessed() {
+    return isProcessed;
+  }
+
+  public void setIsProcessed(int isProcessed) {
+    this.isProcessed = isProcessed;
+  }
+
+  public void setIsProcessed(boolean isProcessed) {
+    this.isProcessed = (isProcessed ? DataConstants.TRUE : DataConstants.FALSE);
   }
 
   public String[] getFilterTags() {

@@ -104,6 +104,13 @@ public class ItemFileItemRepository {
           where.AND("sub_folder_id IS NULL");
         }
       }
+      if (specification.getIsProcessed() != DataConstants.UNDEFINED) {
+        if (specification.getIsProcessed() == DataConstants.TRUE) {
+          where.AND("processed IS NOT NULL");
+        } else {
+          where.AND("processed IS NULL");
+        }
+      }
 
       // For user id
       // User must be in a user group with folder access
@@ -134,6 +141,7 @@ public class ItemFileItemRepository {
         orderBy.add("rank DESC, file_id");
       }
     }
+    // @todo specify the column names
     return DB.selectAllFrom(
         TABLE_NAME, select, joins, where, orderBy, constraints, ItemFileItemRepository::buildRecord);
   }
@@ -363,6 +371,21 @@ public class ItemFileItemRepository {
     }
     LOG.error("The version update failed!");
     return null;
+  }
+
+  public static boolean updateDocumentText(ItemFileItem record, String documentText) {
+    try (Connection connection = DB.getConnection()) {
+      SqlUtils updateValues = new SqlUtils()
+          .add("document_text", documentText)
+          .add("processed", new Timestamp(System.currentTimeMillis()));
+      if (DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("file_id = ?", record.getId()))) {
+        return true;
+      }
+    } catch (SQLException se) {
+      LOG.error("SQLException: " + se.getMessage());
+    }
+    LOG.error("The document text update failed!");
+    return false;
   }
 
   public static boolean remove(ItemFileItem record) {

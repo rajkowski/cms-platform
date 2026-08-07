@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.simisinc.platform.infrastructure.scheduler.cms;
+package com.zeroio.platform.infrastructure.scheduler.cms;
 
 import java.time.Duration;
 import java.util.List;
