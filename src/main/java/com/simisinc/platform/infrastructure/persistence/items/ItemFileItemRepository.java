@@ -459,6 +459,10 @@ public class ItemFileItemRepository {
   }
 
   private static ItemFileItem buildRecord(ResultSet rs) {
+    return buildRecord(rs, false);
+  }
+
+  private static ItemFileItem buildRecord(ResultSet rs, boolean includeDocumentText) {
     try {
       ItemFileItem record = new ItemFileItem();
       record.setId(rs.getLong("file_id"));
@@ -496,6 +500,9 @@ public class ItemFileItemRepository {
       record.setCategoryId(DB.getLong(rs, "category_id", -1L));
       record.setWebPath(rs.getString("web_path"));
       record.setTags(JsonCommand.fromJsonArray(rs.getString("tags")));
+      if (includeDocumentText) {
+        record.setDocumentText(rs.getString("document_text"));
+      }
       return record;
     } catch (SQLException se) {
       LOG.error("buildRecord", se);
