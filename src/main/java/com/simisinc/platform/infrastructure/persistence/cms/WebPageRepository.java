@@ -335,6 +335,45 @@ public class WebPageRepository {
     }
   }
 
+  public static boolean archivePage(WebPage record, long userId) {
+    if (record == null || record.getId() == -1) {
+      return false;
+    }
+    // Explicitly set enabled to false (archived)
+    SqlUtils updateValues = new SqlUtils()
+        .add("enabled", false)
+        .add("modified", new Timestamp(System.currentTimeMillis()))
+        .add("modified_by", userId);
+    boolean updated = DB.update(TABLE_NAME, updateValues, DB.WHERE("web_page_id = ?", record.getId()));
+    if (updated) {
+      record.setEnabled(false);
+      record.setModifiedBy(userId);
+      // Note: We do NOT remove the page from cache when archiving
+      // The page layout/content hasn't changed, only the enabled status
+      // This allows admins/content-managers to still view the archived page
+    }
+    return updated;
+  }
+
+  public static boolean unarchivePage(WebPage record, long userId) {
+    if (record == null || record.getId() == -1) {
+      return false;
+    }
+    // Explicitly set enabled to true (unarchived)
+    SqlUtils updateValues = new SqlUtils()
+        .add("enabled", true)
+        .add("modified", new Timestamp(System.currentTimeMillis()))
+        .add("modified_by", userId);
+    boolean updated = DB.update(TABLE_NAME, updateValues, DB.WHERE("web_page_id = ?", record.getId()));
+    if (updated) {
+      record.setEnabled(true);
+      record.setModifiedBy(userId);
+      // Note: We do NOT remove the page from cache when unarchiving
+      // The page layout/content hasn't changed, only the enabled status
+    }
+    return updated;
+  }
+
   public static void removeDraft(WebPage record) {
     if (record == null || record.getId() == -1) {
       return;
