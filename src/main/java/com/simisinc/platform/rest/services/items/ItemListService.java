@@ -47,7 +47,21 @@ public class ItemListService extends GenericRestService {
 
   private static Log LOG = LogFactory.getLog(ItemListService.class);
 
-  // GET /items/{collectionUniqueId}?category=${categoryUniqueId}&query=value
+  private static final String PARAM_QUERY = "query";
+  private static final String PARAM_CATEGORY = "category";
+  private static final String PARAM_TAGS = "tags";
+
+  private static final String PARAM_FILTER = "filter";
+  private static final String FILTER_BY_NAME = "name";
+  private static final String FILTER_BY_UNIQUE_ID = "uniqueId";
+
+  private static final String PARAM_EXPAND = "expand";
+  private static final String PARAM_PAGE = "page";
+  private static final String PARAM_SIZE = "size";
+
+  private static final String EXPAND_DETAILS = "details";
+
+  // GET /items/{collectionUniqueId}?category=${categoryUniqueId}&query=value&expand=details
   @Override
   public ServiceResponse get(ServiceContext context) {
 
@@ -69,7 +83,7 @@ public class ItemListService extends GenericRestService {
     }
 
     // Check for a specific category
-    String categoryUniqueId = context.getParameter("category");
+    String categoryUniqueId = context.getParameter(PARAM_CATEGORY);
     Category category = null;
     if (!StringUtils.isBlank(categoryUniqueId)) {
       category = LoadCategoryCommand.loadCategoryByUniqueIdWithinCollection(categoryUniqueId, collection.getId());
@@ -81,8 +95,8 @@ public class ItemListService extends GenericRestService {
     }
 
     // Determine the constraints
-    int pageNumber = context.getParameterAsInt("page", 1);
-    int pageSize = context.getParameterAsInt("size", 20);
+    int pageNumber = context.getParameterAsInt(PARAM_PAGE, 1);
+    int pageSize = context.getParameterAsInt(PARAM_SIZE, 20);
     if (pageNumber < 1 || pageSize < 1) {
       ServiceResponse response = new ServiceResponse(400);
       response.getError().put("title", "Required query params: page (>=1) and size (>=1)");
@@ -99,7 +113,7 @@ public class ItemListService extends GenericRestService {
     }
 
     // Check for tags
-    String tagsValue = context.getParameter("tags");
+    String tagsValue = context.getParameter(PARAM_TAGS);
     if (StringUtils.isNotBlank(tagsValue)) {
       List<String> filterTagList = new ArrayList<>();
       String[] tagsArray = tagsValue.split(",");
@@ -112,25 +126,78 @@ public class ItemListService extends GenericRestService {
     }
 
     // Check for a search query
-    String query = context.getParameter("query");
+    String query = context.getParameter(PARAM_QUERY);
     if (StringUtils.isNotBlank(query)) {
       specification.setSearchName(query);
+    }
+
+    // Determine any filters
+    boolean validFilters = true;
+    String[] filterValues = context.getParameterAsArray(PARAM_FILTER);
+    if (filterValues != null) {
+      for (String filterValue : filterValues) {
+        // Handles an 'equals' filter in the form of "fieldName=fieldValue"
+        String[] parts = filterValue.split("=");
+        if (parts.length == 2) {
+          String fieldName = parts[0].trim();
+          String fieldValue = parts[1].trim();
+          if (StringUtils.isNotBlank(fieldName) && StringUtils.isNotBlank(fieldValue)) {
+            if (fieldName.equals(FILTER_BY_NAME)) {
+              // Name filter
+              specification.setName(fieldValue);
+            } else if (fieldName.equals(FILTER_BY_UNIQUE_ID)) {
+              // Unique ID filter
+              specification.setUniqueId(fieldValue);
+            } else {
+              LOG.debug("Unknown field filter: " + fieldName + "=" + fieldValue);
+              validFilters = false;
+            }
+          }
+        }
+      }
+    }
+    if (!validFilters) {
+      ServiceResponse response = new ServiceResponse(400);
+      response.getError().put("title", "Invalid filter query param");
+      return response;
     }
 
     // Retrieve the records
     DataConstraints constraints = new DataConstraints(pageNumber, pageSize);
     List<Item> itemList = ItemRepository.findAll(specification, constraints);
 
-    // Set the fields to return
-    List<ItemResponse> recordList = new ArrayList<>();
-    for (Item item : itemList) {
-      recordList.add(new ItemResponse(item));
-    }
-
     // Prepare the response
     ServiceResponse response = new ServiceResponse(200);
     ServiceResponseCommand.addMeta(response, "item", itemList, constraints);
-    response.setData(recordList);
+
+    // Return the ItemDetailResponse if requested
+    boolean expandItemDetails = false;
+    String[] expand = context.getParameterAsArray(PARAM_EXPAND);
+    if (expand != null) {
+      for (String expandValue : expand) {
+        if (EXPAND_DETAILS.equals(expandValue)) {
+          expandItemDetails = true;
+        }
+      }
+    }
+
+    // Determine the response type
+    if (expandItemDetails) {
+      // Set the fields to return
+      List<ItemDetailsResponse> recordList = new ArrayList<>();
+      for (Item item : itemList) {
+        recordList.add(new ItemDetailsResponse(item, collection));
+      }
+      response.setData(recordList);
+    } else {
+      // Set the fields to return
+      List<ItemResponse> recordList = new ArrayList<>();
+      for (Item item : itemList) {
+        recordList.add(new ItemResponse(item));
+      }
+      response.setData(recordList);
+    }
+
     return response;
   }
 
