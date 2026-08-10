@@ -38,6 +38,7 @@ public class WebPageSpecification extends Entity {
   private int hasRedirect = DataConstants.UNDEFINED;
   private String[] regionTags = null;
   private String[] filterTags = null;
+  private String[] excludeTags = null;
   private Timestamp modifiedAfter = null;
   private Timestamp modifiedBefore = null;
   private long[] modifiedByUserIds = null;
@@ -120,6 +121,14 @@ public class WebPageSpecification extends Entity {
 
   public void setFilterTags(String[] filterTags) {
     this.filterTags = filterTags;
+  }
+
+  public String[] getExcludeTags() {
+    return excludeTags;
+  }
+
+  public void setExcludeTags(String[] excludeTags) {
+    this.excludeTags = excludeTags;
   }
 
   public String[] getRegionTags() {

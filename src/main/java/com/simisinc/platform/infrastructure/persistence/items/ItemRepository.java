@@ -580,6 +580,10 @@ public class ItemRepository {
         where.AND("tags", specification.getFilterTags(), SqlWhere.AND_OPERATOR);
       }
 
+      if (specification.getExcludeTags() != null && specification.getExcludeTags().length > 0) {
+        where.AND("tags", specification.getExcludeTags(), SqlWhere.NOT_OR_OPERATOR);
+      }
+
       if (specification.getFieldInFilters() != null) {
         for (Map.Entry<String, List<String>> entry : specification.getFieldInFilters().entrySet()) {
           String fieldName = entry.getKey();

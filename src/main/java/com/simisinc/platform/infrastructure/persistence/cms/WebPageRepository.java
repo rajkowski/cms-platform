@@ -90,6 +90,10 @@ public class WebPageRepository {
         where.AND("web_pages.tags", specification.getFilterTags(), SqlWhere.AND_OPERATOR);
       }
 
+      if (specification.getExcludeTags() != null && specification.getExcludeTags().length > 0) {
+        where.AND("web_pages.tags", specification.getExcludeTags(), SqlWhere.NOT_OR_OPERATOR);
+      }
+
       // Add modified date range filters
       if (specification.getModifiedAfter() != null) {
         where.AND("web_pages.modified >= ?", specification.getModifiedAfter());

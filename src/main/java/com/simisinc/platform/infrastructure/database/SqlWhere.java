@@ -35,6 +35,8 @@ public class SqlWhere {
 
   public static final String AND_OPERATOR = "AND";
   public static final String OR_OPERATOR = "OR";
+  public static final String NOT_AND_OPERATOR = "NOT AND";
+  public static final String NOT_OR_OPERATOR = "OR";
 
   private List<SqlValue> values = new ArrayList<>();
 
@@ -296,10 +298,20 @@ public class SqlWhere {
     if (StringUtils.isBlank(jsonbColumnName) || arrayValues == null || arrayValues.length == 0) {
       return null;
     }
+    StringBuilder sql = new StringBuilder();
 
     // Default to AND if operator is null or invalid
-    String op = OR_OPERATOR.equalsIgnoreCase(operator) ? OR_OPERATOR : AND_OPERATOR;
-    StringBuilder sql = new StringBuilder("(");
+    String op = (OR_OPERATOR.equalsIgnoreCase(operator) || NOT_OR_OPERATOR.equalsIgnoreCase(operator))
+        ? OR_OPERATOR
+        : AND_OPERATOR;
+
+    // If the operator is a NOT variant, prepend "NOT " to the condition
+    if (NOT_AND_OPERATOR.equalsIgnoreCase(operator) || NOT_OR_OPERATOR.equalsIgnoreCase(operator)) {
+      sql.append("NOT ");
+    }
+
+    // Build the condition with one placeholder per value
+    sql.append("(");
     for (int i = 0; i < arrayValues.length; i++) {
       if (i > 0) {
         sql.append(" ").append(op).append(" ");
