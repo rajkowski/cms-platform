@@ -42,5 +42,6 @@
   <service method="get" endpoint="rawImage" class="com.zeroio.platform.rest.RawImageService" />
   <service method="post" endpoint="rawImage" class="com.zeroio.platform.rest.RawImageService" />
   <service method="post" endpoint="rawDataset" class="com.zeroio.platform.rest.RawDatasetService" />
+  <service method="get" endpoint="rawItemFile/{fileIdentifier}" class="com.zeroio.platform.rest.RawItemFileService" />
   <service method="post" endpoint="rawItemFile" class="com.zeroio.platform.rest.RawItemFileService" />
 </services>

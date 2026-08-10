@@ -16,7 +16,9 @@
 package com.zeroio.platform.rest;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -24,6 +26,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.Part;
 
 import org.apache.commons.lang3.StringUtils;
@@ -31,6 +34,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.filesystem.FileSystemCommand;
+import com.simisinc.platform.application.items.LoadItemCommand;
+import com.simisinc.platform.domain.model.items.Item;
 import com.simisinc.platform.domain.model.items.ItemFileItem;
 import com.simisinc.platform.infrastructure.persistence.items.ItemFileItemRepository;
 import com.simisinc.platform.rest.controller.GenericRestService;
@@ -49,7 +54,89 @@ public class RawItemFileService extends GenericRestService {
   private static final String ERROR_TITLE_KEY = "title";
   private static final Semaphore REQUEST_LOCK = new Semaphore(1);
 
-  // POST /rawItemFile
+  /**
+   * GET /rawItemFile/{webPath} 
+   * Streams the item file data 
+   *  
+   */
+  @Override
+  public ServiceResponse get(ServiceContext context) {
+    // A webPath is required to locate the file
+    String webPath = StringUtils.trimToNull(context.getPathParam());
+    if (webPath == null || !isSafeWebPath(webPath)) {
+      ServiceResponse response = new ServiceResponse(400);
+      response.getError().put(ERROR_TITLE_KEY, "A valid webPath is required");
+      return response;
+    }
+    ItemFileItem itemFile = ItemFileItemRepository.findByWebPath(webPath);
+    if (itemFile == null) {
+      ServiceResponse response = new ServiceResponse(404);
+      response.getError().put(ERROR_TITLE_KEY, "File not found");
+      return response;
+    }
+
+    // Check permissions of the Item record
+    Item item = LoadItemCommand.loadItemById(itemFile.getItemId());
+    if (item != null) {
+      item = LoadItemCommand.loadItemForAuthorizedUser(item, context.getUser());
+    }
+    if (item == null) {
+      ServiceResponse response = new ServiceResponse(404);
+      response.getError().put(ERROR_TITLE_KEY, "Item was not found");
+      return response;
+    }
+
+    // Resolve the target path and check if the file exists
+    Path targetPath = resolveTargetPath(itemFile);
+    if (targetPath == null) {
+      ServiceResponse response = new ServiceResponse(400);
+      response.getError().put(ERROR_TITLE_KEY, "File not found");
+      return response;
+    }
+    File existingFile = targetPath.toFile();
+    if (!existingFile.isFile()) {
+      ServiceResponse response = new ServiceResponse(404);
+      response.getError().put(ERROR_TITLE_KEY, "File not found");
+      return response;
+    }
+
+    // Check for a last-modified header and return 304 if possible
+    long lastModified = itemFile.getModified().getTime();
+    long headerValue = context.getRequest().getDateHeader("If-Modified-Since");
+    if (lastModified <= headerValue + 1000) {
+      ServiceResponse response = new ServiceResponse(HttpServletResponse.SC_NOT_MODIFIED);
+      response.setHandledResponse(true);
+      context.getResponse().setStatus(HttpServletResponse.SC_NOT_MODIFIED);
+      return response;
+    }
+
+    // Set response headers
+    context.getResponse().setDateHeader("Last-Modified", lastModified);
+    context.getResponse().setContentType(itemFile.getMimeType());
+    context.getResponse().setContentLength((int) existingFile.length());
+
+    // Stream the binary data
+    try (FileInputStream in = new FileInputStream(existingFile);
+        OutputStream out = context.getResponse().getOutputStream()) {
+      byte[] buf = new byte[8192];
+      int count;
+      while ((count = in.read(buf)) >= 0) {
+        out.write(buf, 0, count);
+      }
+      out.flush();
+    } catch (Exception e) {
+      log.debug("Stream error: " + e.getMessage());
+    }
+
+    ServiceResponse response = new ServiceResponse(200);
+    response.setHandledResponse(true);
+    return response;
+  }
+
+  /**
+   * POST /rawItemFile
+   * Restores missing item-files on the file server from a posted multipart file and web path.
+   */
   @Override
   public ServiceResponse post(ServiceContext context) {
 
