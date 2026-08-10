@@ -217,6 +217,12 @@ public class ItemFileItemRepository {
     return (List<ItemFileItem>) result.getRecords();
   }
 
+  public static long fileCount(long itemId) {
+    SqlWhere where = DB.WHERE();
+    where.AND("item_id = ?", itemId);
+    return DB.selectCountFrom(TABLE_NAME, where);
+  }
+
   public static ItemFileItem save(ItemFileItem record) {
     if (record.getId() > -1) {
       return update(record);
