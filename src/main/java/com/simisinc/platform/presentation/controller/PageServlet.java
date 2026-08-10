@@ -364,16 +364,9 @@ public class PageServlet extends HttpServlet {
 
       // Always access the WebPage record so it can be used downstream
       WebPage webPage = LoadWebPageCommand.loadByLink(pageRequest.getPagePath());
+      boolean showArchivedMessage = false;
       if (webPage != null) {
-        // Determine if this is a draft page
-        if (webPage.getDraft()) {
-          if (!userSession.hasRole("admin") && !userSession.hasRole("content-manager")) {
-            LOG.error("DRAFT FOUND, no access: " + pageRequest.getPagePath() + " " + pageRequest.getRemoteAddr());
-            controllerSession.clearAllWidgetData();
-            response.sendError(HttpServletResponse.SC_NOT_FOUND);
-            return;
-          }
-        }
+
         // Determine if this is a redirect
         String redirectLocation = webPage.getRedirectUrl();
         if (StringUtils.isNotBlank(redirectLocation)) {
@@ -387,12 +380,44 @@ public class PageServlet extends HttpServlet {
           response.setStatus(SC_MOVED_PERMANENTLY);
           return;
         }
-        // @todo Not needed once pageRenderInfo has calculated title, keywords, description
+
+        // Determine if this is a draft page (and unavailable to general users)
+        if (webPage.getDraft()) {
+          if (!userSession.hasRole("admin") && !userSession.hasRole("content-manager")) {
+            LOG.debug("DRAFT FOUND, no access: " + pageRequest.getPagePath());
+            controllerSession.clearAllWidgetData();
+            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+            return;
+          }
+        }
+
+        // Determine if this page has been archived
+        if (!webPage.isEnabled()) {
+          // Found an archived page, so for logged out users show a 404
+          if (!userSession.isLoggedIn()) {
+            LOG.debug("ARCHIVED FOUND, no access: " + pageRequest.getPagePath());
+            controllerSession.clearAllWidgetData();
+            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+            return;
+          }
+          // Found an archived page, so for normal users show a message instead of the page
+          if (!userSession.hasRole("admin") && !userSession.hasRole("content-manager")) {
+            showArchivedMessage = true;
+          }
+        }
+
+        // @todo Probably not needed once pageRenderInfo has calculated title, keywords, description
         request.setAttribute(MASTER_WEB_PAGE, webPage);
       }
 
       // Determine the Page XML Layout for this request
-      Page pageRef = WebPageXmlLayoutCommand.retrievePageForRequest(webPage, pageRequest.getPagePath());
+      Page pageRef;
+      if (showArchivedMessage) {
+        // Load archived page template for normal users
+        pageRef = WebPageXmlLayoutCommand.retrievePage("_page_archived_");
+      } else {
+        pageRef = WebPageXmlLayoutCommand.retrievePageForRequest(webPage, pageRequest.getPagePath());
+      }
 
       // Load site properties early (needed for online/draft checks and hit tracking)
       Map<String, String> sitePropertyMap = LoadSitePropertyCommand.loadAsMap("site");
