@@ -181,12 +181,52 @@ public class WebPageFormWidget extends GenericWidget {
     context.setRedirect(webPage.getLink());
     String action = context.getParameter("action");
     if ("deletePage".equals(action)) {
+      // Only admins can delete pages
+      if (!context.hasRole("admin")) {
+        context.setErrorMessage("You do not have permission to delete pages");
+        return context;
+      }
       try {
         WebPageRepository.remove(webPage);
         context.setSuccessMessage("Page was deleted");
+        context.setRedirect(webPage.getLink());
       } catch (Exception e) {
         context.setErrorMessage("The page could not be deleted: " + e.getMessage());
       }
+    } else if ("archivePage".equals(action)) {
+      // Content managers and admins can archive pages
+      if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
+        context.setErrorMessage("You do not have permission to archive pages");
+        return context;
+      }
+      boolean success = WebPageRepository.archivePage(webPage, context.getUserId());
+      if (success) {
+        context.setWarningMessage("Page was archived");
+        // Stay on the form page
+        context.setRedirect(context.getUri() + "?webPageId=" + webPageId);
+      } else {
+        context.setErrorMessage("The page could not be archived");
+        // Redirect back to form on error
+        context.setRedirect(context.getUri() + "?webPageId=" + webPageId);
+      }
+    } else if ("unarchivePage".equals(action)) {
+      // Content managers and admins can unarchive pages
+      if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
+        context.setErrorMessage("You do not have permission to unarchive pages");
+        return context;
+      }
+      boolean success = WebPageRepository.unarchivePage(webPage, context.getUserId());
+      if (success) {
+        context.setSuccessMessage("Page was unarchived");
+        // Stay on the form page
+        context.setRedirect(context.getUri() + "?webPageId=" + webPageId);
+      } else {
+        context.setErrorMessage("The page could not be unarchived");
+        // Redirect back to form on error
+        context.setRedirect(context.getUri() + "?webPageId=" + webPageId);
+      }
+    } else {
+      context.setRedirect(webPage.getLink());
     }
     return context;
   }
