@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,6 +45,7 @@ public class ItemFileItem extends Entity {
   private String fileType = null;
   private String mimeType = null;
   private String fileHash = null;
+  private String documentText = null;
   private String webPath = null;
   private int width = -1;
   private int height = -1;
@@ -183,6 +185,14 @@ public class ItemFileItem extends Entity {
     this.fileHash = fileHash;
   }
 
+  public String getDocumentText() {
+    return documentText;
+  }
+
+  public void setDocumentText(String documentText) {
+    this.documentText = documentText;
+  }
+
   public int getWidth() {
     return width;
   }
@@ -302,7 +312,8 @@ public class ItemFileItem extends Entity {
   public void setWebPath(String webPath) {
     this.webPath = webPath;
   }
-public String getUrl() {
+
+  public String getUrl() {
     return webPath + "-" + id + "/" + UrlCommand.encodeUri(filename);
-  }  
+  }
 }

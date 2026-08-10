@@ -52,12 +52,12 @@ public class PageAnalyticsDataService {
 
     if (fromDate != null && toDate != null) {
       dailyViews = WebPageHitRepository.findDailyWebHitsForPage(resolvedPagePath, fromDate, toDate);
-      members = WebPageHitRepository.findAuthenticatedUserVisitsForPage(resolvedPagePath, fromDate, toDate, 100);
+      members = WebPageHitRepository.findAuthenticatedUserVisitsForPage(resolvedPagePath, fromDate, toDate);
       response.put("fromDate", fromDate.toString());
       response.put("toDate", toDate.toString());
     } else {
       dailyViews = WebPageHitRepository.findDailyWebHitsForPage(resolvedPagePath, days);
-      members = WebPageHitRepository.findAuthenticatedUserVisitsForPage(resolvedPagePath, days, 100);
+      members = WebPageHitRepository.findAuthenticatedUserVisitsForPage(resolvedPagePath, days);
       response.put("days", days);
     }
 
@@ -116,7 +116,7 @@ public class PageAnalyticsDataService {
     if (toDateIndex > -1) {
       normalizedPagePath = normalizedPagePath.substring(0, toDateIndex);
     }
-    if (normalizedPagePath.endsWith("/")) {
+    if (normalizedPagePath.endsWith("/") && normalizedPagePath.length() > 1) {
       normalizedPagePath = normalizedPagePath.substring(0, normalizedPagePath.length() - 1);
     }
     return normalizedPagePath;

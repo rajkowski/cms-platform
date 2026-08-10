@@ -87,7 +87,8 @@ public class WebPageHitRepository {
     return false;
   }
 
-  private static PreparedStatement createPreparedStatementForDelete(Connection connection, WebPageHit record) throws SQLException {
+  private static PreparedStatement createPreparedStatementForDelete(Connection connection, WebPageHit record)
+      throws SQLException {
     String SQL_QUERY = "DELETE FROM web_page_hits " +
         "WHERE hit_id = ?";
     int i = 0;
@@ -177,8 +178,10 @@ public class WebPageHitRepository {
   }
 
   public static List<StatisticsData> findMonthlySessions(int monthsLimit) {
-    String SQL_QUERY = "SELECT DATE_TRUNC('month', month)::VARCHAR(10) AS date_column, SUM(unique_sessions) AS monthly_count " +
-        "FROM (SELECT generate_series(NOW() - INTERVAL '" + monthsLimit + " months', NOW(), INTERVAL '1 month')::date) d(month) " +
+    String SQL_QUERY = "SELECT DATE_TRUNC('month', month)::VARCHAR(10) AS date_column, SUM(unique_sessions) AS monthly_count "
+        +
+        "FROM (SELECT generate_series(NOW() - INTERVAL '" + monthsLimit
+        + " months', NOW(), INTERVAL '1 month')::date) d(month) " +
         "LEFT JOIN web_page_hit_snapshots ON DATE_TRUNC('month', snapshot_date) = DATE_TRUNC('month', month) " +
         "GROUP BY d.month " +
         "ORDER BY d.month";
@@ -230,7 +233,8 @@ public class WebPageHitRepository {
         "FROM web_page_hits " +
         "WHERE hit_date > NOW() - INTERVAL '" + value + " " +
         (intervalType == 'y' ? "years"
-            : (intervalType == 'm' ? "months" : (intervalType == 'w' ? "weeks" : (intervalType == 'h' ? "hours" : "days"))))
+            : (intervalType == 'm' ? "months"
+                : (intervalType == 'w' ? "weeks" : (intervalType == 'h' ? "hours" : "days"))))
         +
         "' " +
         "AND page_path NOT LIKE '/admin%' " +
@@ -346,7 +350,8 @@ public class WebPageHitRepository {
     sqlQuery.append("     page_path LIKE '%.jpg' OR page_path LIKE '%.png' OR page_path LIKE '%.gif' OR ");
     sqlQuery.append("     page_path LIKE '%.zip' OR page_path LIKE '%.exe' OR page_path LIKE '%.ppt%' OR ");
     sqlQuery.append("     page_path LIKE '%.drawio' OR page_path LIKE '%.vsdx') ");
-    sqlQuery.append("AND NOT EXISTS (SELECT 1 FROM sessions WHERE session_id = web_page_hits.session_id AND is_bot = TRUE) ");
+    sqlQuery.append(
+        "AND NOT EXISTS (SELECT 1 FROM sessions WHERE session_id = web_page_hits.session_id AND is_bot = TRUE) ");
 
     // Add asset type filter if specified
     if (assetType != null && !assetType.trim().isEmpty()) {
@@ -368,7 +373,8 @@ public class WebPageHitRepository {
           sqlQuery.append("page_path LIKE '%.drawio' OR page_path LIKE '%.vsdx'");
           break;
         case "Image":
-          sqlQuery.append("page_path LIKE '%.jpg' OR page_path LIKE '%.jpeg' OR page_path LIKE '%.png' OR page_path LIKE '%.gif'");
+          sqlQuery.append(
+              "page_path LIKE '%.jpg' OR page_path LIKE '%.jpeg' OR page_path LIKE '%.png' OR page_path LIKE '%.gif'");
           break;
         case "Archive":
           sqlQuery.append("page_path LIKE '%.zip'");
@@ -578,24 +584,24 @@ public class WebPageHitRepository {
     return records;
   }
 
-  public static List<ObjectNode> findAuthenticatedUserVisitsForPage(String pagePath, int days, int recordLimit) {
+  public static List<ObjectNode> findAuthenticatedUserVisitsForPage(String pagePath, int days) {
     java.time.LocalDate endDate = java.time.LocalDate.now();
     java.time.LocalDate startDate = endDate.minusDays(Math.max(0, days - 1));
-    return findAuthenticatedUserVisitsForPageRange(pagePath, startDate, endDate, recordLimit);
+    return findAuthenticatedUserVisitsForPageRange(pagePath, startDate, endDate);
   }
 
   public static List<ObjectNode> findAuthenticatedUserVisitsForPage(String pagePath, java.time.LocalDate fromDate,
-      java.time.LocalDate toDate, int recordLimit) {
+      java.time.LocalDate toDate) {
     java.time.LocalDate startDate = fromDate != null ? fromDate : toDate;
     java.time.LocalDate endDate = toDate != null ? toDate : fromDate;
     if (startDate == null || endDate == null) {
       return null;
     }
-    return findAuthenticatedUserVisitsForPageRange(pagePath, startDate, endDate, recordLimit);
+    return findAuthenticatedUserVisitsForPageRange(pagePath, startDate, endDate);
   }
 
-  private static List<ObjectNode> findAuthenticatedUserVisitsForPageRange(String pagePath, java.time.LocalDate startDate,
-      java.time.LocalDate endDate, int recordLimit) {
+  private static List<ObjectNode> findAuthenticatedUserVisitsForPageRange(String pagePath,
+      java.time.LocalDate startDate, java.time.LocalDate endDate) {
     String normalizedPagePath = normalizePagePath(pagePath);
     if (normalizedPagePath == null) {
       return null;
@@ -622,15 +628,15 @@ public class WebPageHitRepository {
         "      AND page_path = ? " +
         "      AND is_logged_in = TRUE " +
         "      AND session_id IS NOT NULL " +
-        "      AND NOT EXISTS (SELECT 1 FROM sessions s WHERE s.session_id = web_page_hits.session_id AND s.is_bot = TRUE) " +
+        "      AND NOT EXISTS (SELECT 1 FROM sessions s WHERE s.session_id = web_page_hits.session_id AND s.is_bot = TRUE) "
+        +
         "    GROUP BY page_path, session_id " +
         "  ) page_visits " +
         "  JOIN user_logins ul ON ul.session_id = page_visits.session_id " +
         "  JOIN users u ON u.user_id = ul.user_id " +
         "  GROUP BY page_visits.page_path, ul.user_id, u.first_name, u.last_name, u.email, u.username " +
         ") member_visits " +
-        "ORDER BY last_hit DESC " +
-        "LIMIT " + recordLimit;
+        "ORDER BY last_hit DESC";
     List<ObjectNode> records = null;
     try (Connection connection = DB.getConnection();
         PreparedStatement pst = connection.prepareStatement(SQL_QUERY)) {

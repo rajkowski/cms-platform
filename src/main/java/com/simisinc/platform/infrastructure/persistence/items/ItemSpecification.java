@@ -56,6 +56,7 @@ public class ItemSpecification {
   private long datasetId = -1L;
   private Timestamp datasetSyncTimestampThreshold = null;
   private String[] filterTags = null;
+  private String[] excludeTags = null;
   private String[] regionTags = null;
   private List<String[]> customFieldFilters = null;
   private Map<String, List<String>> fieldInFilters = null;
@@ -264,6 +265,14 @@ public class ItemSpecification {
 
   public void setFilterTags(String[] filterTags) {
     this.filterTags = filterTags;
+  }
+
+  public String[] getExcludeTags() {
+    return excludeTags;
+  }
+
+  public void setExcludeTags(String[] excludeTags) {
+    this.excludeTags = excludeTags;
   }
 
   public String[] getRegionTags() {

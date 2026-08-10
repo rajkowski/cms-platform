@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -62,6 +64,20 @@ public class RestServlet extends HttpServlet {
 
   // Services Cache
   private Map<String, Object> serviceInstances = new ConcurrentHashMap<String, Object>();
+
+  private static class RouteMatch {
+    private final Object classRef;
+    private final String endpoint;
+    private final String pathParam;
+    private final String pathParam2;
+
+    private RouteMatch(Object classRef, String endpoint, String pathParam, String pathParam2) {
+      this.classRef = classRef;
+      this.endpoint = endpoint;
+      this.pathParam = pathParam;
+      this.pathParam2 = pathParam2;
+    }
+  }
 
   @Override
   public void init(ServletConfig config) throws ServletException {
@@ -111,6 +127,7 @@ public class RestServlet extends HttpServlet {
 
     long startRequestTime = System.currentTimeMillis();
 
+    LOG.debug("-----------------------------------------------------------------------");
     LOG.debug("Service processor...");
 
     // Determine request values
@@ -143,21 +160,11 @@ public class RestServlet extends HttpServlet {
     // Determine the resource
     try {
       // Get the cached class reference for processing
-      Object classRef = serviceInstances.get(endpoint);
-      String pathEndpoint = null;
-      if (classRef == null) {
-        LOG.debug("Could not find endpoint: " + endpoint);
-        if (endpoint.contains("/")) {
-          // Try as a pathParam
-          pathEndpoint = endpoint.substring(0, endpoint.indexOf("/"));
-          pathParam = endpoint.substring(endpoint.indexOf("/") + 1);
-          if (pathParam.contains("/")) {
-            pathParam2 = pathParam.substring(pathParam.indexOf("/") + 1);
-            pathParam = pathParam.substring(0, pathParam.indexOf("/"));
-          }
-          classRef = serviceInstances.get(pathEndpoint);
-        }
-      }
+      RouteMatch routeMatch = findRoute(endpoint);
+      Object classRef = (routeMatch != null ? routeMatch.classRef : null);
+      String pathEndpoint = (routeMatch != null ? routeMatch.endpoint : null);
+      pathParam = (routeMatch != null ? routeMatch.pathParam : null);
+      pathParam2 = (routeMatch != null ? routeMatch.pathParam2 : null);
       if (classRef == null) {
         LOG.error("Class not found for service: " + endpoint);
         sendError(response, SC_NOT_FOUND, "Endpoint not found");
@@ -187,13 +194,8 @@ public class RestServlet extends HttpServlet {
       // Execute the service
       ServiceResponse result = null;
       try {
-        LOG.debug("-----------------------------------------------------------------------");
-        if (pathEndpoint != null) {
-          LOG.debug("Executing service: " + pathEndpoint);
-        } else {
-          LOG.debug("Executing service: " + endpoint);
-        }
         RestService service = (RestService) classRef;
+        LOG.debug("Executing service: " + service.getClass().getName());
         if ("post".equals(requestMethod)) {
           result = service.post(serviceContext);
         } else if ("put".equals(requestMethod)) {
@@ -259,5 +261,121 @@ public class RestServlet extends HttpServlet {
           "    }");
       out.flush();
     }
+  }
+
+  private RouteMatch findRoute(String requestEndpoint) {
+    if (requestEndpoint != null && requestEndpoint.contains("?")) {
+      requestEndpoint = requestEndpoint.substring(0, requestEndpoint.indexOf("?"));
+    }
+    Object classRef = serviceInstances.get(requestEndpoint);
+    if (classRef != null) {
+      return new RouteMatch(classRef, requestEndpoint, null, null);
+    }
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Could not find exact endpoint: " + requestEndpoint + ", trying path pattern match");
+    }
+
+    List<String> requestParts = splitPath(requestEndpoint);
+    RouteMatch bestExactPatternMatch = null;
+    RouteMatch bestPrefixPatternMatch = null;
+    for (Map.Entry<String, Object> entry : serviceInstances.entrySet()) {
+      String endpointPattern = entry.getKey();
+      if (!endpointPattern.contains("{")) {
+        continue;
+      }
+
+      List<String> patternParts = splitPath(endpointPattern);
+      if (patternParts.size() > requestParts.size()) {
+        continue;
+      }
+
+      RouteMatch routeMatch = matchPattern(entry.getValue(), endpointPattern, patternParts, requestParts);
+      if (routeMatch == null) {
+        continue;
+      }
+
+      if (patternParts.size() == requestParts.size()) {
+        if (bestExactPatternMatch == null || splitPath(bestExactPatternMatch.endpoint).size() < patternParts.size()) {
+          bestExactPatternMatch = routeMatch;
+        }
+      } else if (bestPrefixPatternMatch == null
+          || splitPath(bestPrefixPatternMatch.endpoint).size() < patternParts.size()) {
+        bestPrefixPatternMatch = routeMatch;
+      }
+    }
+
+    if (bestExactPatternMatch != null) {
+      return bestExactPatternMatch;
+    }
+    if (bestPrefixPatternMatch != null) {
+      return bestPrefixPatternMatch;
+    }
+
+    String bestLiteralPrefix = null;
+    for (String endpoint : serviceInstances.keySet()) {
+      if (endpoint.contains("{")) {
+        continue;
+      }
+      if (requestEndpoint.equals(endpoint) || requestEndpoint.startsWith(endpoint + "/")) {
+        if (bestLiteralPrefix == null || splitPath(bestLiteralPrefix).size() < splitPath(endpoint).size()) {
+          bestLiteralPrefix = endpoint;
+        }
+      }
+    }
+    if (bestLiteralPrefix != null) {
+      return new RouteMatch(serviceInstances.get(bestLiteralPrefix), bestLiteralPrefix, null, null);
+    }
+    return null;
+  }
+
+  private RouteMatch matchPattern(Object classRef, String endpointPattern, List<String> patternParts,
+      List<String> requestParts) {
+    String matchedPathParam = null;
+    String matchedPathParam2 = null;
+    int matchedParamCount = 0;
+
+    for (int i = 0; i < patternParts.size(); i++) {
+      String patternPart = patternParts.get(i);
+      String requestPart = requestParts.get(i);
+
+      if (patternPart.startsWith("{") && patternPart.endsWith("}")) {
+        matchedParamCount++;
+        if (matchedParamCount == 1) {
+          matchedPathParam = requestPart;
+        } else if (matchedParamCount == 2) {
+          matchedPathParam2 = requestPart;
+        }
+        continue;
+      }
+
+      if (!patternPart.equals(requestPart)) {
+        return null;
+      }
+    }
+
+    if (requestParts.size() > patternParts.size()) {
+      if (matchedPathParam2 == null && patternParts.size() == 1 && !requestParts.isEmpty()) {
+        matchedPathParam = requestParts.get(0);
+        matchedPathParam2 = requestParts.get(1);
+      } else if (matchedPathParam2 == null && patternParts.size() < requestParts.size()) {
+        matchedPathParam2 = requestParts.get(patternParts.size());
+      }
+    }
+
+    return new RouteMatch(classRef, endpointPattern, matchedPathParam, matchedPathParam2);
+  }
+
+  private List<String> splitPath(String value) {
+    List<String> parts = new ArrayList<>();
+    if (StringUtils.isBlank(value)) {
+      return parts;
+    }
+    for (String part : value.split("/")) {
+      if (StringUtils.isNotBlank(part)) {
+        parts.add(part);
+      }
+    }
+    return parts;
   }
 }

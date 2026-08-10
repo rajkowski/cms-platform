@@ -23,9 +23,7 @@
 <%@ page import="java.nio.charset.StandardCharsets" %>
 <%@ page import="java.util.Iterator" %>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
-
 <web:script package="chartjs" file="chart.umd.js" />
-
 <style>
   .page-analytics-shell { max-width: 1400px; margin: 0 auto; padding: 1.5rem; }
   .page-analytics-header, .page-analytics-toolbar, .page-analytics-chart-panel, .page-analytics-table-panel { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06); }
@@ -213,20 +211,15 @@
       if (!value) {
         return '';
       }
-      const normalized = String(value).replace('T', ' ').replace(/\.\d+$/, '');
-      const date = new Date(normalized.replace(' ', 'T'));
-      if (Number.isNaN(date.getTime())) {
-        return normalized;
-      }
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const year = date.getFullYear();
-      let hours = date.getHours();
-      const minutes = String(date.getMinutes()).padStart(2, '0');
-      const ampm = hours >= 12 ? 'PM' : 'AM';
-      hours = hours % 12;
-      hours = hours === 0 ? 12 : hours;
-      return day + '-' + month + '-' + year + ' ' + String(hours).padStart(2, '0') + ':' + minutes + ' ' + ampm;
+      // Format the date in a locale-sensitive way
+      return new Intl.DateTimeFormat(navigator.language, {
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      }).format(new Date(value));
     }
 
     function renderMembersTable(members) {

@@ -48,6 +48,7 @@ public class FileSpecification extends Entity {
   private String versionWebPath = null;
   private String[] regionTags = null;
   private String[] filterTags = null;
+  private String[] excludeTags = null;
   private Timestamp modifiedAfter = null;
   private Timestamp modifiedBefore = null;
   private long[] modifiedByUserIds = null;
@@ -209,6 +210,14 @@ public class FileSpecification extends Entity {
 
   public void setFilterTags(String[] filterTags) {
     this.filterTags = filterTags;
+  }
+
+  public String[] getExcludeTags() {
+    return excludeTags;
+  }
+
+  public void setExcludeTags(String[] excludeTags) {
+    this.excludeTags = excludeTags;
   }
 
   public String[] getRegionTags() {

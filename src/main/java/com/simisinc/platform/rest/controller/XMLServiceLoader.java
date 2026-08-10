@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -87,12 +88,12 @@ public class XMLServiceLoader implements Serializable {
     NodeList objectTags = document.getElementsByTagName("service");
     for (int i = 0; i < objectTags.getLength(); i++) {
       Element objectTag = (Element) objectTags.item(i);
-      String endpoint = objectTag.getAttribute("endpoint");
       String endpointValue = objectTag.getAttribute("endpoint");
+      String endpoint = endpointValue;
       String serviceClass = objectTag.getAttribute("class");
       String method = objectTag.getAttribute("method");
-      if (endpoint.contains("/{")) {
-        endpoint = endpoint.substring(0, endpoint.indexOf("/{"));
+      if (endpoint.contains("?")) {
+        endpoint = endpoint.substring(0, endpoint.indexOf("?"));
       }
       Map<String, String> service = new HashMap<>();
       service.put("endpoint", endpoint);

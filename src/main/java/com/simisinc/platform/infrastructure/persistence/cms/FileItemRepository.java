@@ -154,6 +154,10 @@ public class FileItemRepository {
         where.AND("tags", specification.getFilterTags(), SqlWhere.AND_OPERATOR);
       }
 
+      if (specification.getExcludeTags() != null && specification.getExcludeTags().length > 0) {
+        where.AND("tags", specification.getExcludeTags(), SqlWhere.NOT_OR_OPERATOR);
+      }
+
       // Add modified date range filters
       // Some imported files can have a null modified date, so fall back to created.
       if (specification.getModifiedAfter() != null) {

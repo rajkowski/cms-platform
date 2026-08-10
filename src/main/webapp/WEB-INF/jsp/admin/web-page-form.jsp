@@ -41,6 +41,42 @@
         xhr.open("POST", '${ctx}/image-upload?widget=imageUpload1&token=${userSession.formToken}');
         xhr.send(formData);
     }
+    <c:if test="${userSession.hasRole('admin') || userSession.hasRole('content-manager')}">
+      function archivePage() {
+          // Update modal content for archive action
+          document.getElementById('archiveModalTitle').textContent = 'Archive Page';
+          document.getElementById('archiveModalMessage').textContent = 'Are you sure you want to ARCHIVE this page?';
+          document.getElementById('archiveConfirmBtn').textContent = 'Archive';
+          document.getElementById('archiveConfirmBtn').className = 'button warning';
+          
+          // Store action URL for confirm button
+          document.getElementById('archiveConfirmBtn').setAttribute('data-action-url', 
+              '${widgetContext.uri}?action=archivePage&widget=${widgetContext.uniqueId}&token=${userSession.formToken}&webPageId=${webPage.id}');
+          
+          // Open modal
+          $('#archiveConfirmModal').foundation('open');
+      }
+      
+      function unarchivePage() {
+          // Update modal content for unarchive action
+          document.getElementById('archiveModalTitle').textContent = 'Unarchive Page';
+          document.getElementById('archiveModalMessage').textContent = 'Are you sure you want to UNARCHIVE this page?';
+          document.getElementById('archiveConfirmBtn').textContent = 'Unarchive';
+          document.getElementById('archiveConfirmBtn').className = 'button success';
+          
+          // Store action URL for confirm button
+          document.getElementById('archiveConfirmBtn').setAttribute('data-action-url', 
+              '${widgetContext.uri}?action=unarchivePage&widget=${widgetContext.uniqueId}&token=${userSession.formToken}&webPageId=${webPage.id}');
+          
+          // Open modal
+          $('#archiveConfirmModal').foundation('open');
+      }
+      
+      function confirmArchive() {
+          var actionUrl = document.getElementById('archiveConfirmBtn').getAttribute('data-action-url');
+          window.location.href = actionUrl;
+      }
+    </c:if>
     <c:if test="${userSession.hasRole('admin')}">
       function deletePage() {
           if (!confirm("Are you sure you want to DELETE this page?")) {
@@ -163,11 +199,35 @@
 
       </c:otherwise>
     </c:choose>
+    <c:if test="${userSession.hasRole('admin') || userSession.hasRole('content-manager')}">
+      <c:choose>
+        <c:when test="${webPage.enabled}">
+          <a class="button radius warning" href="javascript:archivePage()"><i class="fa fa-archive"></i> Archive Page</a>
+        </c:when>
+        <c:otherwise>
+          <a class="button radius success" href="javascript:unarchivePage()"><i class="fa fa-undo"></i> Unarchive Page</a>
+        </c:otherwise>
+      </c:choose>
+    </c:if>
     <c:if test="${userSession.hasRole('admin')}">
       <a class="button radius alert" href="javascript:deletePage()"><i class="fa fa-trash-o"></i> Delete Page</a>
     </c:if>
   </div>
 </form>
+
+<%-- Archive Confirmation Modal --%>
+<div class="reveal small" id="archiveConfirmModal" data-reveal>
+  <h3 id="archiveModalTitle">Archive Page</h3>
+  <p id="archiveModalMessage">Are you sure you want to ARCHIVE this page?</p>
+  <div class="text-right" style="margin-top: 20px;">
+    <button class="button secondary" data-close style="margin-right: 10px;">Cancel</button>
+    <button id="archiveConfirmBtn" class="button warning" onclick="confirmArchive()">Archive</button>
+  </div>
+  <button class="close-button" data-close aria-label="Close modal" type="button">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+
 <div class="reveal large" id="imageBrowserReveal" data-reveal data-animation-in="slide-in-down fast">
   <h3>Loading...</h3>
 </div>
