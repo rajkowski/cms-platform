@@ -738,7 +738,7 @@
     <section class="margin-top-25">
       <column class="small-12 cell">
         <widget name="siteMap">
-          <title>Site Map Editor</title>
+          <title>Navigation Editor</title>
         </widget>
       </column>
     </section>
