@@ -251,6 +251,12 @@ public class RestRequestFilter implements Filter {
         return;
       }
 
+      // At this point a guest may only use GET or HEAD
+      if (!"get".equals(requestMethod) && !"head".equals(requestMethod)) {
+        doUnauthorized(servletResponse);
+        return;
+      }
+
       // Limit the number of hits per minute based on the successful use of the api key
       if (!isLocal && !RateLimitCommand.isAppAllowedRightNow(thisApp, useLenientRateLimit)) {
         do429(servletResponse);
