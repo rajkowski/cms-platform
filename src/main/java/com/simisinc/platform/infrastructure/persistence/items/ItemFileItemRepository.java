@@ -61,11 +61,51 @@ public class ItemFileItemRepository {
   private static String[] PRIMARY_KEY = new String[] { "file_id" };
 
   private static DataResult query(ItemFileSpecification specification, DataConstraints constraints) {
-    SqlUtils select = new SqlUtils();
+
+    SqlUtils select = DB.SELECT(
+        TABLE_NAME + ".file_id",
+        TABLE_NAME + ".item_id",
+        TABLE_NAME + ".folder_id",
+        TABLE_NAME + ".filename",
+        TABLE_NAME + ".title",
+        TABLE_NAME + ".barcode",
+        TABLE_NAME + ".version",
+        TABLE_NAME + ".extension",
+        TABLE_NAME + ".path",
+        TABLE_NAME + ".file_length",
+        TABLE_NAME + ".file_type",
+        TABLE_NAME + ".mime_type",
+        TABLE_NAME + ".file_hash",
+        TABLE_NAME + ".width",
+        TABLE_NAME + ".height",
+        TABLE_NAME + ".summary",
+        TABLE_NAME + ".created_by",
+        TABLE_NAME + ".created",
+        TABLE_NAME + ".modified_by",
+        TABLE_NAME + ".modified",
+        TABLE_NAME + ".processed",
+        TABLE_NAME + ".expiration_date",
+        TABLE_NAME + ".privacy_type",
+        TABLE_NAME + ".default_token",
+        TABLE_NAME + ".version_count",
+        TABLE_NAME + ".download_count",
+        TABLE_NAME + ".sub_folder_id",
+        TABLE_NAME + ".category_id",
+        TABLE_NAME + ".web_path",
+        TABLE_NAME + ".tags");
+
     SqlJoins joins = new SqlJoins();
     SqlWhere where = DB.WHERE();
     SqlUtils orderBy = new SqlUtils();
+
+    final boolean includeDocumentText = specification != null && specification.getIncludeDocumentText();
+
     if (specification != null) {
+
+      // Only include this potentially-large field when requested
+      if (includeDocumentText) {
+        select.add("item_files.document_text");
+      }
 
       joins.add("LEFT JOIN item_folders ON (item_files.folder_id = item_folders.folder_id)");
       if (specification.getCollectionId() > -1) {
@@ -86,6 +126,10 @@ public class ItemFileItemRepository {
         where.AND("LOWER(item_files.file_type) = ANY(?)",
             Arrays.stream(specification.getFileType()).map(String::toLowerCase).toArray(String[]::new), Types.ARRAY);
       }
+      if (specification.getFileExtension() != null) {
+        where.AND("LOWER(item_files.extension) = ANY(?)",
+            Arrays.stream(specification.getFileExtension()).map(String::toLowerCase).toArray(String[]::new), Types.ARRAY);
+      }
       if (specification.getMatchesName() != null) {
         String likeValue = specification.getMatchesName().trim()
             .replace("!", "!!")
@@ -102,6 +146,13 @@ public class ItemFileItemRepository {
           where.AND("sub_folder_id IS NOT NULL");
         } else {
           where.AND("sub_folder_id IS NULL");
+        }
+      }
+      if (specification.getIsProcessed() != DataConstants.UNDEFINED) {
+        if (specification.getIsProcessed() == DataConstants.TRUE) {
+          where.AND("processed IS NOT NULL");
+        } else {
+          where.AND("processed IS NULL");
         }
       }
 
@@ -134,8 +185,11 @@ public class ItemFileItemRepository {
         orderBy.add("rank DESC, file_id");
       }
     }
-    return DB.selectAllFrom(
-        TABLE_NAME, select, joins, where, orderBy, constraints, ItemFileItemRepository::buildRecord);
+
+    return DB.selectFrom(
+        TABLE_NAME, select, joins, where, orderBy, constraints,
+        rs -> buildRecord(rs, includeDocumentText));
+
   }
 
   public static ItemFileItem findById(long id) {
@@ -203,6 +257,12 @@ public class ItemFileItemRepository {
     constraints.setDefaultColumnToSortBy("created DESC");
     DataResult result = query(specification, constraints);
     return (List<ItemFileItem>) result.getRecords();
+  }
+
+  public static long fileCount(long itemId) {
+    SqlWhere where = DB.WHERE();
+    where.AND("item_id = ?", itemId);
+    return DB.selectCountFrom(TABLE_NAME, where);
   }
 
   public static ItemFileItem save(ItemFileItem record) {
@@ -365,6 +425,21 @@ public class ItemFileItemRepository {
     return null;
   }
 
+  public static boolean updateDocumentText(ItemFileItem record, String documentText) {
+    try (Connection connection = DB.getConnection()) {
+      SqlUtils updateValues = new SqlUtils()
+          .add("document_text", documentText)
+          .add("processed", new Timestamp(System.currentTimeMillis()));
+      if (DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("file_id = ?", record.getId()))) {
+        return true;
+      }
+    } catch (SQLException se) {
+      LOG.error("SQLException: " + se.getMessage());
+    }
+    LOG.error("The document text update failed!");
+    return false;
+  }
+
   public static boolean remove(ItemFileItem record) {
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
@@ -426,6 +501,10 @@ public class ItemFileItemRepository {
   }
 
   private static ItemFileItem buildRecord(ResultSet rs) {
+    return buildRecord(rs, false);
+  }
+
+  private static ItemFileItem buildRecord(ResultSet rs, boolean includeDocumentText) {
     try {
       ItemFileItem record = new ItemFileItem();
       record.setId(rs.getLong("file_id"));
@@ -463,6 +542,9 @@ public class ItemFileItemRepository {
       record.setCategoryId(DB.getLong(rs, "category_id", -1L));
       record.setWebPath(rs.getString("web_path"));
       record.setTags(JsonCommand.fromJsonArray(rs.getString("tags")));
+      if (includeDocumentText) {
+        record.setDocumentText(rs.getString("document_text"));
+      }
       return record;
     } catch (SQLException se) {
       LOG.error("buildRecord", se);

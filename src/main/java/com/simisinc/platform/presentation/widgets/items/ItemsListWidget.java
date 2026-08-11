@@ -209,15 +209,23 @@ public class ItemsListWidget extends GenericWidget {
               // Handle the case where the filter value is a reference to another field (e.g., ${item.custom.Code})
               LOG.debug("Processing custom field filter: " + filterFieldName + " = " + filterFieldValue);
               if (filterFieldValue.startsWith("${item.custom.") && filterFieldValue.endsWith("}")) {
-                String referencedFieldName = filterFieldValue.substring("${item.custom.".length(), filterFieldValue.length() - 1);
+                String referencedFieldName = filterFieldValue.substring("${item.custom.".length(),
+                    filterFieldValue.length() - 1);
+
                 // Load the authorized item that this widget is embedded on
                 Item currentItem = LoadItemCommand.loadItemByUniqueId(context.getCoreData().get("itemUniqueId"));
                 if (currentItem == null) {
                   // If the current item is not found, we cannot apply the filter, so we return null to indicate that the widget should not render any items
                   return null;
                 }
+
                 // Retrieve the value of the referenced custom field from the current item in the request context
-                String referencedFieldValue = currentItem.getCustomField(referencedFieldName).getValue();
+                CustomField referencedField = currentItem.getCustomField(referencedFieldName);
+                if (referencedField == null) {
+                  // If the referenced field is not found, we cannot apply the filter, so we return null to indicate that the widget should not render any items
+                  return null;
+                }
+                String referencedFieldValue = referencedField.getValue();
                 if (StringUtils.isBlank(referencedFieldValue)) {
                   // If the referenced field value is blank, we cannot apply the filter, so we return null to indicate that the widget should not render any items
                   return null;

@@ -37,15 +37,19 @@ public class FileSpecification extends Entity {
   private String barcode = null;
   private long createdBy = -1;
   private String[] fileType = null;
+  private String[] fileExtension = null;
   private Long forUserId = -1L;
   private String matchesName = null;
   private String searchName = null;
   private String searchContent = null;
+  private boolean includeDocumentText = false;
   private int withinLastDays = -1;
   private int inASubFolder = DataConstants.UNDEFINED;
+  private int isProcessed = DataConstants.UNDEFINED;
   private String versionWebPath = null;
   private String[] regionTags = null;
   private String[] filterTags = null;
+  private String[] excludeTags = null;
   private Timestamp modifiedAfter = null;
   private Timestamp modifiedBefore = null;
   private long[] modifiedByUserIds = null;
@@ -129,6 +133,14 @@ public class FileSpecification extends Entity {
     }
   }
 
+  public String[] getFileExtension() {
+    return fileExtension;
+  }
+
+  public void setFileExtension(String[] fileExtension) {
+    this.fileExtension = fileExtension;
+  }
+
   public Long getForUserId() {
     return forUserId;
   }
@@ -161,6 +173,14 @@ public class FileSpecification extends Entity {
     this.searchContent = searchContent;
   }
 
+  public boolean getIncludeDocumentText() {
+    return includeDocumentText;
+  }
+
+  public void setIncludeDocumentText(boolean includeDocumentText) {
+    this.includeDocumentText = includeDocumentText;
+  }
+
   public int getWithinLastDays() {
     return withinLastDays;
   }
@@ -181,12 +201,32 @@ public class FileSpecification extends Entity {
     this.inASubFolder = (inASubFolder ? DataConstants.TRUE : DataConstants.FALSE);
   }
 
+  public int getIsProcessed() {
+    return isProcessed;
+  }
+
+  public void setIsProcessed(int isProcessed) {
+    this.isProcessed = isProcessed;
+  }
+
+  public void setIsProcessed(boolean isProcessed) {
+    this.isProcessed = (isProcessed ? DataConstants.TRUE : DataConstants.FALSE);
+  }
+
   public String[] getFilterTags() {
     return filterTags;
   }
 
   public void setFilterTags(String[] filterTags) {
     this.filterTags = filterTags;
+  }
+
+  public String[] getExcludeTags() {
+    return excludeTags;
+  }
+
+  public void setExcludeTags(String[] excludeTags) {
+    this.excludeTags = excludeTags;
   }
 
   public String[] getRegionTags() {

@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,14 +17,16 @@
 
 package com.simisinc.platform.rest.controller;
 
-import com.simisinc.platform.domain.model.App;
-import com.simisinc.platform.domain.model.User;
-import org.apache.commons.lang3.StringUtils;
+import java.io.Serializable;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.Serializable;
-import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
+
+import com.simisinc.platform.domain.model.App;
+import com.simisinc.platform.domain.model.User;
 
 /**
  * Common object for context objects available during a service request
@@ -153,6 +156,10 @@ public class ServiceContext implements Serializable {
       return Integer.parseInt(value);
     }
     return defaultValue;
+  }
+
+  public String[] getParameterAsArray(String name) {
+    return parameterMap.get(name);
   }
 
   public String getPathParam2() {

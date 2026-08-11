@@ -419,6 +419,29 @@ public class DB {
 
   public static DataResult selectAllFrom(String tableName, SqlUtils select, SqlJoins joins, SqlWhere where,
       SqlUtils orderBy, DataConstraints constraints, Function<ResultSet, Entity> buildRecord) {
+    // This method creates a TABLE_NAME.* column automatically (but may be deprecated in the future)
+    if (select == null) {
+      select = DB.SELECT();
+    }
+    // At the front of the columns, add the table's full columns for backwards compatibility
+    select.getValues().add(0, new SqlValue(tableName + ".*"));
+    return selectFrom(tableName, select, joins, where, orderBy, constraints, buildRecord);
+  }
+
+  /**
+   * Select records from the database with the specified parameters.
+   *
+   * @param tableName the name of the table
+   * @param columns the columns values
+   * @param joins the join clauses
+   * @param where the where clause
+   * @param orderBy the order by clause
+   * @param constraints the data constraints
+   * @param buildRecord the function to build an entity from the result set
+   * @return the data result containing the records
+   */
+  public static DataResult selectFrom(String tableName, SqlUtils columns, SqlJoins joins, SqlWhere where,
+      SqlUtils orderBy, DataConstraints constraints, Function<ResultSet, Entity> buildRecord) {
 
     // Determine the max records based on the where conditions
     DataResult dataResult = new DataResult();
@@ -462,10 +485,8 @@ public class DB {
 
     // Prepare the query
     StringBuilder sb = new StringBuilder();
-    sb.append("SELECT ").append(tableName).append(".*");
-    if (select != null) {
-      sb.append(createAdditionalSelectFields(select));
-    }
+    sb.append("SELECT ");
+    sb.append(createSelectFields(columns));
     sb.append(" FROM ").append(tableName);
     sb.append(joinsSb);
     sb.append(whereSb);
@@ -489,7 +510,7 @@ public class DB {
     List<Entity> records = null;
     long startQueryTime = System.currentTimeMillis();
     try (Connection connection = getConnection();
-        PreparedStatement pst = createPreparedStatement(connection, sb.toString(), select, where, orderBy);
+        PreparedStatement pst = createPreparedStatement(connection, sb.toString(), columns, where, orderBy);
         ResultSet rs = pst.executeQuery()) {
       records = new ArrayList<>();
       while (rs.next()) {

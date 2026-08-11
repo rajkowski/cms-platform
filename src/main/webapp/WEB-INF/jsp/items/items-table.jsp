@@ -78,14 +78,7 @@
         </c:if>
         <c:forEach items="${tableColumnsList}" var="tableColumn" varStatus="status">
           <%-- Determine the width by the number of columns, whole values only --%>
-           <c:choose>
-            <c:when test="${status.first}">
-              <th width="<fmt:formatNumber type="number" maxFractionDigits="0" minFractionDigits="0" value="${100 / tableColumnsList.size()}"/>%"><c:out value="${tableColumn.value.label}" /></th>
-            </c:when>
-            <c:otherwise>
-              <th><c:out value="${tableColumn.value.label}" /></th>
-            </c:otherwise>
-           </c:choose>
+          <th width="<fmt:formatNumber type="number" maxFractionDigits="0" minFractionDigits="0" value="${100 / tableColumnsList.size()}"/>%"><c:out value="${tableColumn.value.label}" /></th>
         </c:forEach>
       </tr>
       </thead>

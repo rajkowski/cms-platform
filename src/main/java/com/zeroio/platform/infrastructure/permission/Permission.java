@@ -88,6 +88,13 @@ public class Permission {
    * @return {@code true} if permitted (or if the action is not governed by any policy)
    */
   public static boolean check(String action, UserSession userSession) {
+    if (StringUtils.isBlank(action)) {
+      return false;
+    }
+    if (userSession == null) {
+      return false;
+    }
+    // Look up the governing permission group for this action
     PermissionGroup group = actionMap.get(action);
     if (group == null) {
       // Not registered — disallow by default

@@ -21,6 +21,20 @@
     </section>
   </page>
 
+  <page name="_page_archived_">
+    <section class="align-center margin-top-100">
+      <column class="small-12 medium-8 large-6 cell">
+        <widget name="content" class="text-center callout warning padding-30">
+          <html><![CDATA[
+            <i class="fa fa-3x fa-archive margin-bottom-20"></i>
+            <h4 class="margin-bottom-20">This page is archived</h4>
+            <p>For more information please contact the site administrator.</p>
+          ]]></html>
+        </widget>
+      </column>
+    </section>
+  </page>
+
   <!-- Default Template -->
   <page name="_new_install_" role="guest">
     <section class="align-center align-middle">

@@ -28,7 +28,7 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
 import com.simisinc.platform.presentation.widgets.cms.PreferenceEntriesList;
 
 /**
- * Description
+ * Displays the fields for an item
  *
  * @author matt rajkowski
  * @created 4/20/18 2:23 PM
@@ -47,15 +47,11 @@ public class ItemFieldsWidget extends GenericWidget {
       return null;
     }
 
-    PreferenceEntriesList entriesList = context.getPreferenceAsDataList("fields");
-    if (entriesList.isEmpty()) {
-      return context;
-    }
-
     // Use the fields preference to determine the object properties to be shown
+    PreferenceEntriesList entriesList = context.getPreferenceAsDataList("fields");
     List<CustomField> fieldList = ItemCustomFieldCommand.renderDisplayValues(entriesList, item);
 
-    // Show the custom fields if requested
+    // Append the custom fields if requested
     boolean showAllCustomFields = "true".equals(context.getPreferences().get("showAllCustomFields"));
     if (showAllCustomFields && item.getCustomFieldList() != null && !item.getCustomFieldList().isEmpty()) {
       fieldList.addAll(item.getCustomFieldList().values());
