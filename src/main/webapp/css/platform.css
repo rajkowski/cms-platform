@@ -2417,10 +2417,6 @@ div.landing-page-gettingstarted-kAxIeZ {
   opacity: 1;
 }
 
-.confluence-toggle .confluence-toggle-container {
-  display: none;
-}
-
 .landing-page-gettingstarted-accentstrip {
   position: relative;
   height: 1px;
@@ -2432,6 +2428,7 @@ div.landing-page-gettingstarted-kAxIeZ {
   padding: 1.5em 2em 0.5em;
   line-height: 1.6;
   color: #334155;
+  display: none;
 }
 
 .confluence-toggle-column-size-30 {
