@@ -42,6 +42,7 @@ public class FileSpecification extends Entity {
   private String matchesName = null;
   private String searchName = null;
   private String searchContent = null;
+  private boolean includeDocumentText = false;
   private int withinLastDays = -1;
   private int inASubFolder = DataConstants.UNDEFINED;
   private int isProcessed = DataConstants.UNDEFINED;
@@ -170,6 +171,14 @@ public class FileSpecification extends Entity {
 
   public void setSearchContent(String searchContent) {
     this.searchContent = searchContent;
+  }
+
+  public boolean getIncludeDocumentText() {
+    return includeDocumentText;
+  }
+
+  public void setIncludeDocumentText(boolean includeDocumentText) {
+    this.includeDocumentText = includeDocumentText;
   }
 
   public int getWithinLastDays() {

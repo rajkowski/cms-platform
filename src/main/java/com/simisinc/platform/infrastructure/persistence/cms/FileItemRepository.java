@@ -61,11 +61,51 @@ public class FileItemRepository {
   private static String[] PRIMARY_KEY = new String[] { "file_id" };
 
   private static DataResult query(FileSpecification specification, DataConstraints constraints) {
-    SqlUtils select = new SqlUtils();
+    
+    SqlUtils select = DB.SELECT(
+        TABLE_NAME + ".file_id",
+        TABLE_NAME + ".folder_id",
+        TABLE_NAME + ".filename",
+        TABLE_NAME + ".title",
+        TABLE_NAME + ".barcode",
+        TABLE_NAME + ".version",
+        TABLE_NAME + ".extension",
+        TABLE_NAME + ".path",
+        TABLE_NAME + ".file_length",
+        TABLE_NAME + ".file_type",
+        TABLE_NAME + ".mime_type",
+        TABLE_NAME + ".file_hash",
+        TABLE_NAME + ".width",
+        TABLE_NAME + ".height",
+        TABLE_NAME + ".summary",
+        TABLE_NAME + ".created_by",
+        TABLE_NAME + ".created",
+        TABLE_NAME + ".modified_by",
+        TABLE_NAME + ".modified",
+        TABLE_NAME + ".processed",
+        TABLE_NAME + ".expiration_date",
+        TABLE_NAME + ".privacy_type",
+        TABLE_NAME + ".default_token",
+        TABLE_NAME + ".version_count",
+        TABLE_NAME + ".download_count",
+        TABLE_NAME + ".sub_folder_id",
+        TABLE_NAME + ".category_id",
+        TABLE_NAME + ".web_path",
+        TABLE_NAME + ".tags");
+
     SqlJoins joins = new SqlJoins();
     SqlWhere where = DB.WHERE();
     SqlUtils orderBy = new SqlUtils();
+
+    final boolean includeDocumentText = specification != null && specification.getIncludeDocumentText();
+
     if (specification != null) {
+
+      // Only include this potentially-large field when requested
+      if (includeDocumentText) {
+        select.add(TABLE_NAME + ".document_text");
+      }
+
       joins.add("LEFT JOIN folders ON (files.folder_id = folders.folder_id)");
       where
           .andAddIfHasValue("file_id = ?", specification.getId(), -1)
@@ -182,9 +222,10 @@ public class FileItemRepository {
         where.AND(userCondition.toString(), (Object[]) userIdsBoxed);
       }
     }
-    // @todo specify the column names
-    return DB.selectAllFrom(
-        TABLE_NAME, select, joins, where, orderBy, constraints, FileItemRepository::buildRecord);
+
+    return DB.selectFrom(
+        TABLE_NAME, select, joins, where, orderBy, constraints,
+        rs -> buildRecord(rs, includeDocumentText));
   }
 
   public static FileItem findById(long id) {
@@ -458,6 +499,10 @@ public class FileItemRepository {
   }
 
   private static FileItem buildRecord(ResultSet rs) {
+    return buildRecord(rs, false);
+  }
+  
+  private static FileItem buildRecord(ResultSet rs, boolean includeDocumentText) {
     try {
       FileItem record = new FileItem();
       record.setId(rs.getLong("file_id"));
@@ -494,6 +539,9 @@ public class FileItemRepository {
       record.setCategoryId(DB.getLong(rs, "category_id", -1L));
       record.setWebPath(rs.getString("web_path"));
       record.setTags(JsonCommand.fromJsonArray(rs.getString("tags")));
+      if (includeDocumentText) {
+        record.setDocumentText(rs.getString("document_text"));
+      }
       return record;
     } catch (SQLException se) {
       LOG.error("buildRecord", se);
