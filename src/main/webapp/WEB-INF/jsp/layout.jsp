@@ -49,7 +49,7 @@
 <%-- Archive Warning Banner for Admins and Content Managers --%>
 <c:if test="${(userSession.hasRole('admin') || userSession.hasRole('content-manager')) && !empty masterWebPage && masterWebPage.id > 0 && !masterWebPage.enabled}">
   <div class="callout warning" style="margin-bottom: 0; border-radius: 0;">
-    <h5 style="margin-bottom: 0; text-align: center;"><i class="fa fa-archive"></i> This page has been Archived</h5>
+    <h5 style="margin-bottom: 0; text-align: center;"><i class="fa fa-archive"></i> This page is archived</h5>
   </div>
 </c:if>
 <%-- Widget Renderer --%>

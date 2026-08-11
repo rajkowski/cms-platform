@@ -188,6 +188,22 @@
   </div>
   <div class="button-container">
     <input type="submit" class="button radius success" value="Save" />
+
+    <c:if test="${userSession.hasRole('admin') || userSession.hasRole('content-manager')}">
+      <c:choose>
+        <c:when test="${webPage.enabled}">
+          <a class="button radius warning" href="javascript:archivePage()"><i class="fa fa-archive"></i> Archive Page</a>
+        </c:when>
+        <c:otherwise>
+          <a class="button radius warning" href="javascript:unarchivePage()"><i class="fa fa-undo"></i> Unarchive Page</a>
+        </c:otherwise>
+      </c:choose>
+    </c:if>
+    
+    <c:if test="${userSession.hasRole('admin')}">
+      <a class="button radius alert" href="javascript:deletePage()"><i class="fa fa-trash-o"></i> Delete Page</a>
+    </c:if>
+
     <c:choose>
       <c:when test="${!empty returnPage}">
         <a href="${returnPage}" class="button radius secondary">Cancel</a>
@@ -199,19 +215,7 @@
 
       </c:otherwise>
     </c:choose>
-    <c:if test="${userSession.hasRole('admin') || userSession.hasRole('content-manager')}">
-      <c:choose>
-        <c:when test="${webPage.enabled}">
-          <a class="button radius warning" href="javascript:archivePage()"><i class="fa fa-archive"></i> Archive Page</a>
-        </c:when>
-        <c:otherwise>
-          <a class="button radius success" href="javascript:unarchivePage()"><i class="fa fa-undo"></i> Unarchive Page</a>
-        </c:otherwise>
-      </c:choose>
-    </c:if>
-    <c:if test="${userSession.hasRole('admin')}">
-      <a class="button radius alert" href="javascript:deletePage()"><i class="fa fa-trash-o"></i> Delete Page</a>
-    </c:if>
+
   </div>
 </form>
 

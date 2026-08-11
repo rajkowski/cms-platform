@@ -391,7 +391,7 @@ public class PageServlet extends HttpServlet {
           }
         }
 
-        // Determine if this page has been archived
+        // Determine if this page is archived
         if (!webPage.isEnabled()) {
           // Found an archived page, so for logged out users show a 404
           if (!userSession.isLoggedIn()) {
