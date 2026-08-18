@@ -92,8 +92,8 @@ public class BlogEditorWidget extends GenericWidget {
     }
     // Make sure the blog exists
     if (blog == null) {
-      // Auto-create it if an admin
-      if (context.getUserSession().hasRole("admin")) {
+      // Auto-create the blog and layout of the page
+      if (context.getUserSession().hasRole("admin") || context.getUserSession().hasRole("content-manager")) {
         // The Blog needs an administrative record
         Blog blogBean = new Blog();
         blogBean.setName(blogUniqueId);
@@ -115,7 +115,7 @@ public class BlogEditorWidget extends GenericWidget {
             try {
               SaveWebPageCommand.saveWebPage(webPage);
             } catch (DataException e) {
-              // No concern yet
+              LOG.error("Unable to create the blog page for " + blogBean.getUniqueId(), e);
             }
           }
         }
