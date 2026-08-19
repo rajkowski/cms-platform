@@ -36,7 +36,7 @@ public class SqlWhere {
   public static final String AND_OPERATOR = "AND";
   public static final String OR_OPERATOR = "OR";
   public static final String NOT_AND_OPERATOR = "NOT AND";
-  public static final String NOT_OR_OPERATOR = "OR";
+  public static final String NOT_OR_OPERATOR = "NOT OR";
 
   private List<SqlValue> values = new ArrayList<>();
 
