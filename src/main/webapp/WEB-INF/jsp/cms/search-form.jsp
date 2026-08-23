@@ -67,6 +67,9 @@
     <c:if test="${!empty param.label}">
       <input type="hidden" name="label" value="<c:out value='${param.label}'/>">
     </c:if>
+    <c:if test="${!empty param.excludeLabel}">
+      <input type="hidden" name="excludeLabel" value="<c:out value='${param.excludeLabel}'/>">
+    </c:if>
     <c:if test="${!empty param.contributorFilter}">
       <input type="hidden" name="contributorFilter" value="<c:out value='${param.contributorFilter}'/>">
     </c:if>
