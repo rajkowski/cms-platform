@@ -124,6 +124,7 @@ public class DocumentFileListAjax extends GenericJsonService {
           .append("\",");
       sb.append("\"fileLength\":").append(file.getFileLength()).append(",");
       sb.append("\"url\":\"").append(JsonCommand.toJson(StringUtils.defaultString(file.getUrl()))).append("\",");
+      sb.append("\"downloadUrl\":\"").append("/assets/file/").append(JsonCommand.toJson(StringUtils.defaultString(file.getUrl()))).append("\",");
       sb.append("\"downloadCount\":").append(file.getDownloadCount()).append(",");
       sb.append("\"error\":")
           .append(isMissingOnServer(file.getFileType(), file.getMimeType(), file.getFileServerPath())).append(",");

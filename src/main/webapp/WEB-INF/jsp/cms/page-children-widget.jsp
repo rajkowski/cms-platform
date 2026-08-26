@@ -20,16 +20,12 @@
   .children-pages h4 {
     margin: 0;
     color: var(--text);
-    font-size: 1rem;
-    font-weight: 700;
-    letter-spacing: 0.01em;
   }
 
   .page-tree {
     list-style: none;
     padding: 0.45rem 0 0;
     margin: 0;
-    font-size: 0.92rem;
   }
 
   .tree-item {
@@ -56,24 +52,20 @@
 
   .tree-item.level-1 .tree-link {
     color: var(--accent-1);
-    font-weight: 700;
   }
 
   .tree-item.level-2 .tree-link {
     color: var(--accent-2);
-    font-weight: 600;
   }
 
   .tree-item.level-3 .tree-link {
     color: var(--accent-3);
-    font-weight: 600;
   }
 
   .tree-item.level-4 .tree-link,
   .tree-item.level-5 .tree-link,
   .tree-item.level-6 .tree-link {
     color: var(--text);
-    font-weight: 500;
   }
 
   .tree-indicator {

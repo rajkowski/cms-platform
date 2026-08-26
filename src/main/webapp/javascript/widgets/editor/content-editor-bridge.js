@@ -307,7 +307,7 @@ class ContentEditorBridge {
     }
 
     this.lastPreviewLink = pageLink;
-    iframe.src = pageLink;
+    iframe.src = encodeURI(pageLink);
 
     // Load content blocks for this page
     if (this.pageContentBlocksManager) {

@@ -2590,7 +2590,8 @@ class PropertiesPanel {
             if (preview) {
               const iconClass = input.value.trim();
               if (iconClass) {
-                preview.innerHTML = `<i class="fa ${iconClass}"></i>`;
+                const escapedIconClass = iconClass.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                preview.innerHTML = `<i class="fa ${escapedIconClass}"></i>`;
                 preview.style.color = '#333';
               } else {
                 preview.innerHTML = '';

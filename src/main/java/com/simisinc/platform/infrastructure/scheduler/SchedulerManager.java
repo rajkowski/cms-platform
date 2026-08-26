@@ -34,8 +34,9 @@ import org.jobrunr.storage.InMemoryStorageProvider;
 import org.jobrunr.storage.StorageProvider;
 import org.jobrunr.storage.StorageProviderUtils;
 import org.jobrunr.storage.sql.common.SqlStorageProviderFactory;
-import org.jobrunr.utils.mapper.jackson.JacksonJsonMapper;
+import org.jobrunr.utils.mapper.jackson3.Jackson3JsonMapper;
 
+import com.simisinc.platform.domain.events.Event;
 import com.simisinc.platform.infrastructure.database.ConnectionPool;
 import com.simisinc.platform.infrastructure.instance.InstanceManager;
 import com.simisinc.platform.infrastructure.scheduler.admin.DatasetsDownloadAndSyncJob;
@@ -52,6 +53,8 @@ import com.simisinc.platform.infrastructure.scheduler.medicine.ProcessMedicineSc
 import com.simisinc.platform.infrastructure.scheduler.socialmedia.InstagramMediaSnapshotJob;
 import com.zeroio.platform.infrastructure.scheduler.cms.RefreshAllDocumentTextIndexesJob;
 import com.zeroio.platform.infrastructure.scheduler.cms.RefreshAllWebPageTextIndexesJob;
+
+import tools.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 
 /**
  * Initializes background jobs to be run on a schedule
@@ -126,7 +129,7 @@ public class SchedulerManager {
 
       // Initialize the scheduler
       JobRunr.configure()
-          .useJsonMapper(new JacksonJsonMapper())
+          .useJsonMapper(new Jackson3JsonMapper(BasicPolymorphicTypeValidator.builder().allowIfSubType(Event.class)))
           .useStorageProvider(jobStorageProvider)
           //          .useJobActivator(new JobActivator() {
           //            public <T> T activateJob(Class<T> aClass) {
