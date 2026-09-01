@@ -113,7 +113,7 @@
       ]
     },
     "jsuites": {
-      "version": "6.4.2",
+      "version": "6.4.3",
       "paths": [
         "node_modules/jsuites/dist/jsuites.css",
         "node_modules/jsuites/dist/jsuites.d.ts",
@@ -138,7 +138,7 @@
       "version": "4.2.2"
     },
     "mermaid": {
-      "version": "11.16.0",
+      "version": "11.17.2",
       "paths": [
         "node_modules/mermaid/dist/mermaid.js",
         "node_modules/mermaid/dist/mermaid.min.js"
@@ -191,7 +191,7 @@
       ]
     },
     "swiper": {
-      "version": "14.0.7",
+      "version": "14.2.0",
       "paths": [
         "node_modules/swiper/swiper-bundle.css",
         "node_modules/swiper/swiper-bundle.js",
@@ -204,7 +204,7 @@
       ]
     },
     "hugerte": {
-      "version": "1.0.12",
+      "version": "1.0.13",
       "paths": [
         "node_modules/hugerte/hugerte.js",
         "node_modules/hugerte/hugerte.min.js",
