@@ -26,12 +26,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.domain.model.User;
 import com.simisinc.platform.domain.model.login.UserToken;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 import com.simisinc.platform.infrastructure.persistence.oauth.OAuthTokenRepository;
 
 /**
@@ -51,31 +49,27 @@ public class UserTokenRepository {
     if (StringUtils.isBlank(token)) {
       return null;
     }
-    return (UserToken) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("token = ?", token),
-        UserTokenRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("token = ?", token)
+        .returnRecord(UserTokenRepository::buildRecord);
   }
 
   public static List<UserToken> findAll() {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        null,
-        new DataConstraints().setDefaultColumnToSortBy("token_id").setUseCount(false),
-        UserTokenRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<UserToken>) result.getRecords();
-    }
-    return null;
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("token_id").setUseCount(false))
+        .returnDataResult(UserTokenRepository::buildRecord).getRecords();
   }
 
   public static UserToken add(UserToken record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("user_id", record.getUserId())
-        .add("login_id", record.getLoginId())
-        .add("token", record.getToken())
-        .add("expires", record.getExpires());
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    long generatedId = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("user_id", record.getUserId())
+        .FIELD("login_id", record.getLoginId())
+        .FIELD("token", record.getToken())
+        .FIELD("expires", record.getExpires())
+        .execute();
+    record.setId(generatedId);
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -88,7 +82,7 @@ public class UserTokenRepository {
       return;
     }
     OAuthTokenRepository.remove(userToken);
-    DB.deleteFrom(TABLE_NAME, DB.WHERE("token_id = ?", userToken.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("token_id = ?", userToken.getId()).execute();
   }
 
   public static void removeAll(long userId) {
@@ -96,23 +90,24 @@ public class UserTokenRepository {
       return;
     }
     OAuthTokenRepository.removeAll(userId);
-    DB.deleteFrom(TABLE_NAME, DB.WHERE("user_id = ?", userId));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("user_id = ?", userId).execute();
   }
 
   public static int removeAll(Connection connection, User user) throws SQLException {
     OAuthTokenRepository.removeAll(connection, user);
-    return DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("user_id = ?", user.getId()));
+    return DB.DELETE().FROM(TABLE_NAME).WHERE("user_id = ?", user.getId()).execute(connection) ? 1 : 0;
   }
 
   public static void extendTokenExpiration(String token, int seconds) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("expires", new Timestamp(System.currentTimeMillis() + (seconds * 1000L)));
-    DB.update(TABLE_NAME, updateValues, DB.WHERE("token = ?", token));
+    DB.UPDATE(TABLE_NAME)
+        .SET("expires", new Timestamp(System.currentTimeMillis() + (seconds * 1000L)))
+        .WHERE("token = ?", token)
+        .execute();
   }
 
   public static void deleteOldTokens() {
     OAuthTokenRepository.deleteOldTokens();
-    DB.deleteFrom(TABLE_NAME, DB.WHERE("expires < NOW() - INTERVAL '1 day'"));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("expires < NOW() - INTERVAL '1 day'").execute();
   }
 
   private static UserToken buildRecord(ResultSet rs) {

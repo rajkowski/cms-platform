@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,12 +25,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
+import com.github.rajkowski.database.Insert;
+import com.github.rajkowski.database.Select;
+import com.github.rajkowski.database.Update;
 import com.simisinc.platform.domain.model.cms.WebPageTemplate;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves web page template objects
@@ -44,32 +46,35 @@ public class WebPageTemplateRepository {
   private static String TABLE_NAME = "web_page_templates";
   private static String[] PRIMARY_KEY = new String[] { "template_id" };
 
-  private static DataResult query(WebPageTemplateSpecification specification, DataConstraints constraints) {
-    SqlWhere where = null;
-    if (specification != null) {
-      where = DB.WHERE().andAddIfHasValue("template_id = ?", specification.getId(), -1);
+  private static DataResult<WebPageTemplate> query(WebPageTemplateSpecification specification, DataConstraints constraints) {
+    Select select = DB.SELECT("*").FROM(TABLE_NAME);
+    if (specification != null && specification.getId() != -1) {
+      select.WHERE("template_id = ?", specification.getId());
     }
-    return DB.selectAllFrom(TABLE_NAME, where, constraints, WebPageTemplateRepository::buildRecord);
+    if (constraints != null) {
+      select.WITH(constraints);
+    }
+    return select.returnDataResult(WebPageTemplateRepository::buildRecord);
   }
 
   public static WebPageTemplate findById(long id) {
     if (id == -1) {
       return null;
     }
-    return (WebPageTemplate) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("template_id = ?", id),
-        WebPageTemplateRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("template_id = ?", id)
+        .returnRecord(WebPageTemplateRepository::buildRecord);
   }
 
   public static WebPageTemplate findByName(String name) {
     if (StringUtils.isBlank(name)) {
       return null;
     }
-    return (WebPageTemplate) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("name = ?", name),
-        WebPageTemplateRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("name = ?", name)
+        .returnRecord(WebPageTemplateRepository::buildRecord);
   }
 
   public static List<WebPageTemplate> findAll() {
@@ -81,8 +86,7 @@ public class WebPageTemplateRepository {
       constraints = new DataConstraints();
     }
     constraints.setDefaultColumnToSortBy("template_order, name");
-    DataResult result = query(specification, constraints);
-    return (List<WebPageTemplate>) result.getRecords();
+    return query(specification, constraints).getRecords();
   }
 
   public static WebPageTemplate save(WebPageTemplate record) {
@@ -93,15 +97,15 @@ public class WebPageTemplateRepository {
   }
 
   private static WebPageTemplate add(WebPageTemplate record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("name", StringUtils.trimToNull(record.getName()))
-        .add("image_path", StringUtils.trimToNull(record.getImagePath()))
-        .add("page_xml", StringUtils.trimToNull(record.getPageXml()))
-        .add("template_order", record.getTemplateOrder())
-        .add("description", StringUtils.trimToNull(record.getDescription()))
-        .add("css", StringUtils.trimToNull(record.getCss()))
-        .add("category", StringUtils.trimToNull(record.getCategory()));
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    Insert insert = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("name", StringUtils.trimToNull(record.getName()))
+        .FIELD("image_path", StringUtils.trimToNull(record.getImagePath()))
+        .FIELD("page_xml", StringUtils.trimToNull(record.getPageXml()))
+        .FIELD("template_order", record.getTemplateOrder())
+        .FIELD("description", StringUtils.trimToNull(record.getDescription()))
+        .FIELD("css", StringUtils.trimToNull(record.getCss()))
+        .FIELD("category", StringUtils.trimToNull(record.getCategory()));
+    record.setId(insert.execute());
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -110,15 +114,15 @@ public class WebPageTemplateRepository {
   }
 
   private static WebPageTemplate update(WebPageTemplate record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("name", StringUtils.trimToNull(record.getName()))
-        .add("image_path", StringUtils.trimToNull(record.getImagePath()))
-        .add("page_xml", StringUtils.trimToNull(record.getPageXml()))
-        .add("template_order", record.getTemplateOrder())
-        .add("description", StringUtils.trimToNull(record.getDescription()))
-        .add("css", StringUtils.trimToNull(record.getCss()))
-        .add("category", StringUtils.trimToNull(record.getCategory()));
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("template_id = ?", record.getId()))) {
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("name", StringUtils.trimToNull(record.getName()))
+        .SET("image_path", StringUtils.trimToNull(record.getImagePath()))
+        .SET("page_xml", StringUtils.trimToNull(record.getPageXml()))
+        .SET("template_order", record.getTemplateOrder())
+        .SET("description", StringUtils.trimToNull(record.getDescription()))
+        .SET("css", StringUtils.trimToNull(record.getCss()))
+        .SET("category", StringUtils.trimToNull(record.getCategory()));
+    if (update.WHERE("template_id = ?", record.getId()).execute()) {
       return record;
     }
     LOG.error("The update failed!");

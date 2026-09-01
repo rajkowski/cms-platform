@@ -28,12 +28,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
+import com.github.rajkowski.database.Insert;
+import com.github.rajkowski.database.Select;
+import com.github.rajkowski.database.Update;
 import com.simisinc.platform.domain.model.mailinglists.Email;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves email objects
@@ -48,59 +49,53 @@ public class EmailRepository {
   private static String TABLE_NAME = "emails";
   private static String[] PRIMARY_KEY = new String[] { "email_id" };
 
-  private static DataResult query(EmailSpecification specification, DataConstraints constraints) {
-    SqlUtils select = new SqlUtils();
-    SqlWhere where = DB.WHERE();
-    SqlUtils orderBy = new SqlUtils();
+  private static DataResult<Email> query(EmailSpecification specification, DataConstraints constraints) {
+    Select select = DB.SELECT("*").FROM(TABLE_NAME).WHERE();
     if (specification != null) {
       if (specification.getMailingListId() > -1) {
-        where.AND("EXISTS (SELECT 1 FROM mailing_list_members WHERE email_id = emails.email_id AND list_id = ?)",
+        select.AND("EXISTS (SELECT 1 FROM mailing_list_members WHERE email_id = emails.email_id AND list_id = ?)",
             specification.getMailingListId());
       }
       if (StringUtils.isNotBlank(specification.getMatchesEmail())) {
-        where.AND("LOWER(email) = LOWER(?)", specification.getMatchesEmail().trim());
+        select.AND("LOWER(email) = LOWER(?)", specification.getMatchesEmail().trim());
       }
       if (StringUtils.isNotBlank(specification.getMatchesName())) {
-        // Like matching on a name
         String likeValue = specification.getMatchesName().trim()
             .replace("!", "!!")
             .replace("%", "!%")
             .replace("_", "!_")
             .replace("[", "![");
-        where.AND("LOWER(concat_ws(' ', first_name, last_name)) LIKE LOWER(?) ESCAPE '!'", "%" + likeValue + "%");
+        select.AND("LOWER(concat_ws(' ', first_name, last_name)) LIKE LOWER(?) ESCAPE '!'", "%" + likeValue + "%");
       }
     }
-    return DB.selectAllFrom(
-        TABLE_NAME, select, where, orderBy, constraints, EmailRepository::buildRecord);
+    if (constraints != null) {
+      select.WITH(constraints);
+    }
+    return select.returnDataResult(EmailRepository::buildRecord);
   }
 
   public static List<Email> findAll() {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        null,
-        new DataConstraints().setDefaultColumnToSortBy("email_id desc"),
-        EmailRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<Email>) result.getRecords();
-    }
-    return null;
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("email_id desc"))
+        .returnDataResult(EmailRepository::buildRecord).getRecords();
   }
 
   public static Email findById(long emailId) {
-    return (Email) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("email_id = ?", emailId),
-        EmailRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("email_id = ?", emailId)
+        .returnRecord(EmailRepository::buildRecord);
   }
 
   public static Email findByEmailAddress(String email) {
     if (StringUtils.isBlank(email)) {
       return null;
     }
-    return (Email) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("LOWER(email) = ?", email.trim().toLowerCase()),
-        EmailRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("LOWER(email) = ?", email.trim().toLowerCase())
+        .returnRecord(EmailRepository::buildRecord);
   }
 
   public static List<Email> findAll(EmailSpecification specification, DataConstraints constraints) {
@@ -108,8 +103,7 @@ public class EmailRepository {
       constraints = new DataConstraints();
     }
     constraints.setDefaultColumnToSortBy("email_id desc");
-    DataResult result = query(specification, constraints);
-    return (List<Email>) result.getRecords();
+    return query(specification, constraints).getRecords();
   }
 
   public static List<Email> findDailyUniqueLocations(int daysToLimit) {
@@ -141,39 +135,37 @@ public class EmailRepository {
   }
 
   public static Email add(Email record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("email", record.getEmail().trim().toLowerCase())
-        .addIfExists("first_name", record.getFirstName())
-        .addIfExists("last_name", record.getLastName())
-        .addIfExists("organization", record.getOrganization())
-        .addIfExists("source", record.getSource())
-        .addIfExists("ip_address", record.getIpAddress())
-        .addIfExists("session_id", record.getSessionId())
-        .addIfExists("user_agent", StringUtils.abbreviate(record.getUserAgent(), 500))
-        .addIfExists("referer", StringUtils.abbreviate(record.getReferer(), 250))
-        .addIfExists("continent", record.getContinent())
-        .addIfExists("country_iso", record.getCountryIso())
-        .addIfExists("country", record.getCountry())
-        .addIfExists("city", record.getCity())
-        .addIfExists("state_iso", record.getStateIso())
-        .addIfExists("state", record.getState())
-        .addIfExists("postal_code", record.getPostalCode())
-        .addIfExists("timezone", record.getTimezone())
-        .addIfExists("latitude", record.getLatitude(), 0)
-        .addIfExists("longitude", record.getLongitude(), 0)
-        .addIfExists("metro_code", record.getMetroCode(), -1)
-        .addIfExists("created_by", record.getCreatedBy(), -1)
-        .addIfExists("modified_by", record.getModifiedBy(), -1)
-        .addIfExists("last_emailed", record.getLastEmailed())
-        .addIfExists("subscribed", record.getSubscribed())
-        .addIfExists("unsubscribed", record.getUnsubscribed())
-        .addIfExists("unsubscribe_reason", record.getUnsubscribeReason())
-        .addIfExists("last_order", record.getLastOrder())
-        .add("number_of_orders", record.getNumberOfOrders())
-        .add("total_spent", record.getTotalSpent())
-    // @todo tags
-    ;
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    Insert insert = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("email", record.getEmail().trim().toLowerCase())
+        .FIELD("first_name", record.getFirstName())
+        .FIELD("last_name", record.getLastName())
+        .FIELD("organization", record.getOrganization())
+        .FIELD("source", record.getSource())
+        .FIELD("ip_address", record.getIpAddress())
+        .FIELD("session_id", record.getSessionId())
+        .FIELD("user_agent", StringUtils.abbreviate(record.getUserAgent(), 500))
+        .FIELD("referer", StringUtils.abbreviate(record.getReferer(), 250))
+        .FIELD("continent", record.getContinent())
+        .FIELD("country_iso", record.getCountryIso())
+        .FIELD("country", record.getCountry())
+        .FIELD("city", record.getCity())
+        .FIELD("state_iso", record.getStateIso())
+        .FIELD("state", record.getState())
+        .FIELD("postal_code", record.getPostalCode())
+        .FIELD("timezone", record.getTimezone())
+        .FIELD("latitude", record.getLatitude())
+        .FIELD("longitude", record.getLongitude())
+        .FIELD("metro_code", record.getMetroCode() != -1 ? record.getMetroCode() : null)
+        .FIELD("created_by", record.getCreatedBy() != -1 ? record.getCreatedBy() : null)
+        .FIELD("modified_by", record.getModifiedBy() != -1 ? record.getModifiedBy() : null)
+        .FIELD("last_emailed", record.getLastEmailed())
+        .FIELD("subscribed", record.getSubscribed())
+        .FIELD("unsubscribed", record.getUnsubscribed())
+        .FIELD("unsubscribe_reason", record.getUnsubscribeReason())
+        .FIELD("last_order", record.getLastOrder())
+        .FIELD("number_of_orders", record.getNumberOfOrders())
+        .FIELD("total_spent", record.getTotalSpent());
+    record.setId(insert.execute());
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -182,18 +174,22 @@ public class EmailRepository {
   }
 
   public static Email update(Email record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("modified_by", record.getModifiedBy(), -1)
-        .addIfExists("first_name", record.getFirstName())
-        .addIfExists("last_name", record.getLastName())
-        .addIfExists("organization", record.getOrganization())
-        .add("modified", new Timestamp(System.currentTimeMillis()))
-        .add("subscribed", record.getSubscribed())
-        .add("unsubscribed", record.getUnsubscribed())
-    // @todo tags
-    ;
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("email = ?", record.getEmail().trim().toLowerCase()))) {
-      //      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("modified_by", record.getModifiedBy() != -1 ? record.getModifiedBy() : null)
+        .SET("modified", new Timestamp(System.currentTimeMillis()))
+        .SET("subscribed", record.getSubscribed())
+        .SET("unsubscribed", record.getUnsubscribed());
+    if (record.getFirstName() != null) {
+      update.SET("first_name", record.getFirstName());
+    }
+    if (record.getLastName() != null) {
+      update.SET("last_name", record.getLastName());
+    }
+    if (record.getOrganization() != null) {
+      update.SET("organization", record.getOrganization());
+    }
+    update.WHERE("email = ?", record.getEmail().trim().toLowerCase());
+    if (update.execute()) {
       return record;
     }
     LOG.error("The update failed!");
@@ -204,16 +200,20 @@ public class EmailRepository {
     if (record == null || record.getId() == -1) {
       return;
     }
-    String set = "sync_date = CURRENT_TIMESTAMP";
-    DB.update(TABLE_NAME, set, DB.WHERE("email_id = ?", record.getId()));
+    DB.UPDATE(TABLE_NAME)
+        .SET("sync_date = CURRENT_TIMESTAMP")
+        .WHERE("email_id = ?", record.getId())
+        .execute();
   }
 
   public static void markNotSynced(Email record) {
     if (record == null || record.getId() == -1) {
       return;
     }
-    String setValues = "sync_date = NULL";
-    DB.update(TABLE_NAME, setValues, DB.WHERE("email_id = ?", record.getId()));
+    DB.UPDATE(TABLE_NAME)
+        .SET("sync_date", (Timestamp) null)
+        .WHERE("email_id = ?", record.getId())
+        .execute();
   }
 
   private static Email buildRecord(ResultSet rs) {

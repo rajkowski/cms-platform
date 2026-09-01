@@ -24,13 +24,11 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.domain.model.Role;
 import com.simisinc.platform.domain.model.User;
 import com.simisinc.platform.domain.model.login.UserRole;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves user role objects
@@ -49,34 +47,26 @@ public class UserRoleRepository {
     if (userId == -1) {
       return null;
     }
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        DB.WHERE("user_id = ?", userId),
-        new DataConstraints().setDefaultColumnToSortBy("user_role_id").setUseCount(false),
-        UserRoleRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<UserRole>) result.getRecords();
-    }
-    return null;
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("user_id = ?", userId)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("user_role_id").setUseCount(false))
+        .returnDataResult(UserRoleRepository::buildRecord).getRecords();
   }
 
   public static List<UserRole> findAll() {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        null,
-        new DataConstraints().setDefaultColumnToSortBy("user_role_id"),
-        UserRoleRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<UserRole>) result.getRecords();
-    }
-    return null;
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("user_role_id"))
+        .returnDataResult(UserRoleRepository::buildRecord).getRecords();
   }
 
   public static UserRole add(UserRole record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("user_id", record.getUserId())
-        .add("role_id", record.getRoleId());
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    long generatedId = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("user_id", record.getUserId())
+        .FIELD("role_id", record.getRoleId())
+        .execute();
+    record.setId(generatedId);
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -89,16 +79,15 @@ public class UserRoleRepository {
       return;
     }
     for (Role role : user.getRoleList()) {
-      SqlUtils insertValues = new SqlUtils();
-      insertValues
-          .add("user_id", user.getId())
-          .add("role_id", role.getId());
-      DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY);
+      DB.INSERT().INTO(TABLE_NAME)
+          .FIELD("user_id", user.getId())
+          .FIELD("role_id", role.getId())
+          .execute(connection);
     }
   }
 
   public static void removeAll(Connection connection, User user) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("user_id = ?", user.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("user_id = ?", user.getId()).execute(connection);
   }
 
   private static UserRole buildRecord(ResultSet rs) {

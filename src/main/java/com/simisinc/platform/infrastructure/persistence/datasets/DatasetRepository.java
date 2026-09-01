@@ -26,14 +26,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.CastType;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.Update;
 import com.simisinc.platform.application.CustomFieldListJSONCommand;
 import com.simisinc.platform.application.datasets.DatasetColumnJSONCommand;
 import com.simisinc.platform.domain.model.datasets.Dataset;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlValue;
 
 /**
  * Persists and retrieves dataset objects
@@ -56,10 +55,10 @@ public class DatasetRepository {
     if (id == -1) {
       return null;
     }
-    return (Dataset) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("dataset_id = ?", id),
-        DatasetRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("dataset_id = ?", id)
+        .returnRecord(DatasetRepository::buildRecord);
   }
 
   public static Dataset findByName(String name) {
@@ -67,15 +66,15 @@ public class DatasetRepository {
       return null;
     }
     String normalizedName = name.toLowerCase().trim();
-    Dataset record = (Dataset) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("LOWER(name) = ?", normalizedName),
-        DatasetRepository::buildRecord);
+    Dataset record = DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("LOWER(name) = ?", normalizedName)
+        .returnRecord(DatasetRepository::buildRecord);
     if (record == null) {
-      record = (Dataset) DB.selectRecordFrom(
-          TABLE_NAME,
-          DB.WHERE("LOWER(name) = ?", normalizedName.replace("-", " ")),
-          DatasetRepository::buildRecord);
+      record = DB.SELECT("*")
+          .FROM(TABLE_NAME)
+          .WHERE("LOWER(name) = ?", normalizedName.replace("-", " "))
+          .returnRecord(DatasetRepository::buildRecord);
     }
     return record;
   }
@@ -84,44 +83,41 @@ public class DatasetRepository {
     if (StringUtils.isBlank(versionWebPath)) {
       return null;
     }
-    return (Dataset) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("web_path = ?", versionWebPath),
-        DatasetRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("web_path = ?", versionWebPath)
+        .returnRecord(DatasetRepository::buildRecord);
   }
 
   public static Dataset findByWebPathAndId(String versionWebPath, long id) {
     if (StringUtils.isBlank(versionWebPath) || id == -1) {
       return null;
     }
-    return (Dataset) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("web_path = ?", versionWebPath)
-            .AND("dataset_id = ?", id),
-        DatasetRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("web_path = ?", versionWebPath)
+        .AND("dataset_id = ?", id)
+        .returnRecord(DatasetRepository::buildRecord);
   }
 
   public static List<Dataset> findAll() {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        null,
-        new DataConstraints().setDefaultColumnToSortBy("name"),
-        DatasetRepository::buildRecord);
-    return (List<Dataset>) result.getRecords();
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("name"))
+        .returnDataResult(DatasetRepository::buildRecord).getRecords();
   }
 
   public static List<Dataset> findAllScheduledForDownload() {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        DB.WHERE("schedule_enabled = ?", true)
-            .AND("schedule_frequency IS NOT NULL")
-            .AND("source_url IS NOT NULL")
-            .AND("CURRENT_TIMESTAMP > last_download + schedule_frequency")
-            .AND("queue_date IS NULL OR CURRENT_TIMESTAMP > queue_date + queue_interval")
-            .AND("queue_status = " + STATUS_READY),
-        new DataConstraints().setDefaultColumnToSortBy("queue_status"),
-        DatasetRepository::buildRecord);
-    return (List<Dataset>) result.getRecords();
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("schedule_enabled = ?", true)
+        .AND("schedule_frequency IS NOT NULL")
+        .AND("source_url IS NOT NULL")
+        .AND("CURRENT_TIMESTAMP > last_download + schedule_frequency")
+        .AND("queue_date IS NULL OR CURRENT_TIMESTAMP > queue_date + queue_interval")
+        .AND("queue_status = ?", STATUS_READY)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("queue_status"))
+        .returnDataResult(DatasetRepository::buildRecord).getRecords();
   }
 
   public static Dataset save(Dataset record) {
@@ -132,30 +128,28 @@ public class DatasetRepository {
   }
 
   public static Dataset add(Dataset record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("name", StringUtils.trimToNull(record.getName()))
-        .add("source_url", record.getSourceUrl())
-        .add("source_info", record.getSourceInfo())
-        .add("filename", StringUtils.trimToNull(record.getFilename()))
-        .add("file_length", record.getFileLength())
-        .add("file_type", record.getFileType())
-        .add("file_hash", record.getFileHash())
-        .add("web_path", StringUtils.trimToNull(record.getWebPath()))
-        .add("path", StringUtils.trimToNull(record.getFileServerPath()))
-        .add("last_download", record.getLastDownload())
-        .add("records_path", record.getRecordsPath())
-        .add("paging_url_path", record.getPagingUrlPath())
-        .add("column_count", record.getColumnCount(), -1)
-        .add("row_count", record.getRowCount())
-        .add("collection_unique_id", record.getCollectionUniqueId())
-        .add("category_id", record.getCategoryId())
-        .add("created_by", record.getCreatedBy())
-        .add("modified_by", record.getModifiedBy());
-    insertValues.add(
-        new SqlValue("column_config", SqlValue.JSONB_TYPE, DatasetColumnJSONCommand.createColumnJSONString(record)));
-    insertValues.add(
-        new SqlValue("request_config", SqlValue.JSONB_TYPE, StringUtils.trimToNull(record.getRequestConfig())));
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    record.setId(DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("name", StringUtils.trimToNull(record.getName()))
+        .FIELD("source_url", record.getSourceUrl())
+        .FIELD("source_info", record.getSourceInfo())
+        .FIELD("filename", StringUtils.trimToNull(record.getFilename()))
+        .FIELD("file_length", record.getFileLength())
+        .FIELD("file_type", record.getFileType())
+        .FIELD("file_hash", record.getFileHash())
+        .FIELD("web_path", StringUtils.trimToNull(record.getWebPath()))
+        .FIELD("path", StringUtils.trimToNull(record.getFileServerPath()))
+        .FIELD("last_download", record.getLastDownload())
+        .FIELD("records_path", record.getRecordsPath())
+        .FIELD("paging_url_path", record.getPagingUrlPath())
+        .FIELD("column_count", record.getColumnCount() == -1 ? null : record.getColumnCount())
+        .FIELD("row_count", record.getRowCount())
+        .FIELD("collection_unique_id", record.getCollectionUniqueId())
+        .FIELD("category_id", record.getCategoryId())
+        .FIELD("created_by", record.getCreatedBy())
+        .FIELD("modified_by", record.getModifiedBy())
+        .FIELD("column_config", DatasetColumnJSONCommand.createColumnJSONString(record), CastType.JSONB)
+        .FIELD("request_config", StringUtils.trimToNull(record.getRequestConfig()), CastType.JSONB)
+        .execute());
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -165,28 +159,26 @@ public class DatasetRepository {
 
   public static Dataset update(Dataset record) {
     // Update
-    SqlUtils updateValues = new SqlUtils()
-        .add("name", StringUtils.trimToNull(record.getName()))
-        .add("source_url", record.getSourceUrl())
-        .add("source_info", record.getSourceInfo())
-        .add("filename", StringUtils.trimToNull(record.getFilename()))
-        .add("file_length", record.getFileLength())
-        .add("file_type", record.getFileType())
-        .add("file_hash", record.getFileHash())
-        .add("web_path", StringUtils.trimToNull(record.getWebPath()))
-        .add("path", StringUtils.trimToNull(record.getFileServerPath()))
-        .add("last_download", record.getLastDownload())
-        .add("records_path", record.getRecordsPath())
-        .add("paging_url_path", record.getPagingUrlPath())
-        .add("column_count", record.getColumnCount(), -1)
-        .add("row_count", record.getRowCount())
-        .add("modified_by", record.getModifiedBy());
-    updateValues.add(
-        new SqlValue("column_config", SqlValue.JSONB_TYPE, DatasetColumnJSONCommand.createColumnJSONString(record)));
-    updateValues.add(
-        new SqlValue("request_config", SqlValue.JSONB_TYPE, StringUtils.trimToNull(record.getRequestConfig())));
-    // Where
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("dataset_id = ?", record.getId()))) {
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("name", StringUtils.trimToNull(record.getName()))
+        .SET("source_url", record.getSourceUrl())
+        .SET("source_info", record.getSourceInfo())
+        .SET("filename", StringUtils.trimToNull(record.getFilename()))
+        .SET("file_length", record.getFileLength())
+        .SET("file_type", record.getFileType())
+        .SET("file_hash", record.getFileHash())
+        .SET("web_path", StringUtils.trimToNull(record.getWebPath()))
+        .SET("path", StringUtils.trimToNull(record.getFileServerPath()))
+        .SET("last_download", record.getLastDownload())
+        .SET("records_path", record.getRecordsPath())
+        .SET("paging_url_path", record.getPagingUrlPath())
+        .SET("column_count", record.getColumnCount() == -1 ? null : record.getColumnCount())
+        .SET("row_count", record.getRowCount())
+        .SET("modified_by", record.getModifiedBy())
+        .SET("column_config", DatasetColumnJSONCommand.createColumnJSONString(record), CastType.JSONB)
+        .SET("request_config", StringUtils.trimToNull(record.getRequestConfig()), CastType.JSONB)
+        .WHERE("dataset_id = ?", record.getId());
+    if (update.execute().booleanValue()) {
       return record;
     }
     LOG.error("The update failed!");
@@ -195,12 +187,12 @@ public class DatasetRepository {
 
   public static Dataset updateDetails(Dataset record) {
     // Update
-    SqlUtils updateValues = new SqlUtils()
-        .add("name", record.getName())
-        .add("source_info", record.getSourceInfo())
-        .add("modified_by", record.getModifiedBy());
-    // Where
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("dataset_id = ?", record.getId()))) {
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("name", record.getName())
+        .SET("source_info", record.getSourceInfo())
+        .SET("modified_by", record.getModifiedBy())
+        .WHERE("dataset_id = ?", record.getId());
+    if (update.execute().booleanValue()) {
       return record;
     }
     LOG.error("updateDetails failed!");
@@ -208,16 +200,14 @@ public class DatasetRepository {
   }
 
   public static Dataset updateConfiguration(Dataset record) {
-    // Update
-    SqlUtils updateValues = new SqlUtils()
-        .add("records_path", record.getRecordsPath())
-        .add("paging_url_path", record.getPagingUrlPath())
-        .add("column_count", record.getColumnCount(), -1)
-        .add("row_count", record.getRowCount());
-    updateValues.add(
-        new SqlValue("column_config", SqlValue.JSONB_TYPE, DatasetColumnJSONCommand.createColumnJSONString(record)));
-    // Where
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("dataset_id = ?", record.getId()))) {
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("records_path", record.getRecordsPath())
+        .SET("paging_url_path", record.getPagingUrlPath())
+        .SET("column_count", record.getColumnCount() == -1 ? null : record.getColumnCount())
+        .SET("row_count", record.getRowCount())
+        .SET("column_config", DatasetColumnJSONCommand.createColumnJSONString(record), CastType.JSONB)
+        .WHERE("dataset_id = ?", record.getId());
+    if (update.execute().booleanValue()) {
       return record;
     }
     LOG.error("updateConfiguration failed!");
@@ -225,14 +215,13 @@ public class DatasetRepository {
   }
 
   public static Dataset updateMapping(Dataset record) {
-    // Update
-    SqlUtils updateValues = new SqlUtils()
-        .add("collection_unique_id", StringUtils.trimToNull(record.getCollectionUniqueId()))
-        .add("category_id", record.getCategoryId())
-        .add("unique_column_name", record.getUniqueColumnName());
-    updateValues.add(
-        new SqlValue("column_config", SqlValue.JSONB_TYPE, DatasetColumnJSONCommand.createColumnJSONString(record)));
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("dataset_id = ?", record.getId()))) {
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("collection_unique_id", StringUtils.trimToNull(record.getCollectionUniqueId()))
+        .SET("category_id", record.getCategoryId())
+        .SET("unique_column_name", record.getUniqueColumnName())
+        .SET("column_config", DatasetColumnJSONCommand.createColumnJSONString(record), CastType.JSONB)
+        .WHERE("dataset_id = ?", record.getId());
+    if (update.execute().booleanValue()) {
       return record;
     }
     LOG.error("updateMapping failed!");
@@ -240,14 +229,13 @@ public class DatasetRepository {
   }
 
   public static Dataset updateScheduleAndSyncDetails(Dataset record) {
-    // Update
-    SqlUtils updateValues = new SqlUtils()
-        .add("schedule_enabled", record.getScheduleEnabled())
-        .add(new SqlValue("schedule_frequency", SqlValue.INTERVAL_TYPE, record.getScheduleFrequency()))
-        .add("sync_enabled", record.getSyncEnabled())
-        .add("sync_merge_type", record.getSyncMergeType());
-    // Where
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("dataset_id = ?", record.getId()))) {
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("schedule_enabled", record.getScheduleEnabled())
+        .SET("schedule_frequency", record.getScheduleFrequency(), CastType.INTERVAL)
+        .SET("sync_enabled", record.getSyncEnabled())
+        .SET("sync_merge_type", record.getSyncMergeType())
+        .WHERE("dataset_id = ?", record.getId());
+    if (update.execute().booleanValue()) {
       return record;
     }
     LOG.error("updateScheduleAndSyncDetails failed!");
@@ -255,15 +243,15 @@ public class DatasetRepository {
   }
 
   public static Dataset updateCustomFields(Dataset record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("modified", new Timestamp(System.currentTimeMillis()));
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("modified", new Timestamp(System.currentTimeMillis()));
     if (record.getCustomFieldList() != null && !record.getCustomFieldList().isEmpty()) {
-      updateValues.add(new SqlValue("field_values", SqlValue.JSONB_TYPE,
-          CustomFieldListJSONCommand.createJSONString(record.getCustomFieldList())));
+      update.SET("field_values", CustomFieldListJSONCommand.createJSONString(record.getCustomFieldList()), CastType.JSONB);
     } else {
-      updateValues.add(new SqlValue("field_values", SqlValue.JSONB_TYPE, null));
+      update.SET("field_values", (String) null, CastType.JSONB);
     }
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("collection_id = ?", record.getId()))) {
+    update.WHERE("dataset_id = ?", record.getId());
+    if (update.execute().booleanValue()) {
       return record;
     }
     LOG.error("updateCustomFields failed!");
@@ -271,12 +259,11 @@ public class DatasetRepository {
   }
 
   public static Dataset updateCollectionUniqueId(Dataset record) {
-    // Update
-    SqlUtils updateValues = new SqlUtils()
-        .add("collection_unique_id", StringUtils.trimToNull(record.getCollectionUniqueId()))
-        .add("category_id", record.getCategoryId());
-    // Where
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("dataset_id = ?", record.getId()))) {
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("collection_unique_id", StringUtils.trimToNull(record.getCollectionUniqueId()))
+        .SET("category_id", record.getCategoryId())
+        .WHERE("dataset_id = ?", record.getId());
+    if (update.execute().booleanValue()) {
       return record;
     }
     LOG.error("updateCollectionUniqueId failed!");
@@ -284,10 +271,10 @@ public class DatasetRepository {
   }
 
   public static Dataset updateRowsProcessed(Dataset record) {
-    // Update
-    SqlUtils updateValues = new SqlUtils()
-        .add("rows_processed", record.getRowsProcessed());
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("dataset_id = ?", record.getId()))) {
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("rows_processed", record.getRowsProcessed())
+        .WHERE("dataset_id = ?", record.getId());
+    if (update.execute().booleanValue()) {
       return record;
     }
     LOG.error("updateRowsProcessed failed!");
@@ -299,28 +286,27 @@ public class DatasetRepository {
    * Status 0 = available, 1 = locked, 2 = red flag
    */
   public static boolean markAsQueuedIfAllowed(Dataset record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("queue_status", STATUS_RUNNING)
-        .add("queue_date = CURRENT_TIMESTAMP")
-        .add("queue_attempts = queue_attempts + 1")
-        .add("schedule_last_run = CURRENT_TIMESTAMP");
-    return DB.update(TABLE_NAME, updateValues,
-        DB.WHERE("dataset_id = ?", record.getId())
-            .AND("queue_status = ?", STATUS_READY));
+    return DB.UPDATE(TABLE_NAME)
+        .SET("queue_status", STATUS_RUNNING)
+        .SET("queue_date = CURRENT_TIMESTAMP")
+        .SET("queue_attempts = queue_attempts + 1")
+        .SET("schedule_last_run = CURRENT_TIMESTAMP")
+        .WHERE("dataset_id = ?", record.getId())
+        .AND("queue_status = ?", STATUS_READY)
+        .execute();
   }
 
   public static boolean markAsUnqueued(Dataset record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("queue_status", STATUS_READY)
-        .add("queue_date = NULL")
-        .add("queue_message = NULL")
-        .add("queue_attempts = 0")
-        .add(new SqlValue("queue_interval", SqlValue.INTERVAL_TYPE, "PT5M"));
-    return DB.update(TABLE_NAME, updateValues, DB.WHERE("dataset_id = ?", record.getId()));
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("queue_status", STATUS_READY)
+        .SET("queue_date = NULL")
+        .SET("queue_message = NULL")
+        .SET("queue_attempts = 0")
+        .SET("queue_interval", "PT5M", CastType.INTERVAL);
+    return update.WHERE("dataset_id = ?", record.getId()).execute();
   }
 
   public static boolean markToRetryDownload(Dataset record, String reason) {
-    // Determine when to retry or finally fail
     int queueStatus = STATUS_READY;
     String retryInterval = "PT5M";
     if (record.getQueueAttempts() < 5) {
@@ -334,20 +320,20 @@ public class DatasetRepository {
     } else {
       queueStatus = STATUS_FAILED;
     }
-    SqlUtils updateValues = new SqlUtils()
-        .add("queue_status", queueStatus)
-        .add("queue_message", reason)
-        .add(new SqlValue("queue_interval", SqlValue.INTERVAL_TYPE, retryInterval));
-    return DB.update(TABLE_NAME, updateValues, DB.WHERE("dataset_id = ?", record.getId()));
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("queue_status", queueStatus)
+        .SET("queue_message", reason)
+        .SET("queue_interval", retryInterval, CastType.INTERVAL);
+    return update.WHERE("dataset_id = ?", record.getId()).execute();
   }
 
   public static boolean markLastDownload(Dataset record) {
     Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-    SqlUtils updateValues = new SqlUtils()
-        .add("last_download", timestamp);
-    boolean updated = DB.update(TABLE_NAME, updateValues, DB.WHERE("dataset_id = ?", record.getId()));
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("last_download", timestamp)
+        .WHERE("dataset_id = ?", record.getId());
+    boolean updated = update.execute().booleanValue();
     if (updated) {
-      // Update the record for additional workflows
       record.setLastDownload(timestamp);
     }
     return updated;
@@ -355,23 +341,23 @@ public class DatasetRepository {
 
   public static boolean markScheduleLastRun(Dataset record, int status, String message) {
     Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-    SqlUtils updateValues = new SqlUtils()
-        .add("schedule_last_run", timestamp);
-    boolean updated = DB.update(TABLE_NAME, updateValues, DB.WHERE("dataset_id = ?", record.getId()));
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("schedule_last_run", timestamp)
+        .WHERE("dataset_id = ?", record.getId());
+    boolean updated = update.execute().booleanValue();
     if (updated) {
-      // Update the record for additional workflows
       record.setScheduleLastRun(timestamp);
     }
     return updated;
   }
 
   public static boolean markAsProcessStarted(Dataset record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("process_status", STATUS_RUNNING)
-        .add("process_message", (String) null);
-    boolean updated = DB.update(TABLE_NAME, updateValues, DB.WHERE("dataset_id = ?", record.getId()));
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("process_status", STATUS_RUNNING)
+        .SET("process_message", (String) null)
+        .WHERE("dataset_id = ?", record.getId());
+    boolean updated = update.execute().booleanValue();
     if (updated) {
-      // Update the record for additional workflows
       record.setProcessStatus(STATUS_RUNNING);
       record.setProcessMessage(null);
     }
@@ -380,14 +366,14 @@ public class DatasetRepository {
 
   public static boolean markAsProcessFinished(Dataset record, String message) {
     Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-    SqlUtils updateValues = new SqlUtils()
-        .add("process_status = ?", STATUS_READY)
-        .add("processed", timestamp)
-        .add("process_message", message)
-        .add("processed_ms", record.getTotalProcessTime());
-    boolean updated = DB.update(TABLE_NAME, updateValues, DB.WHERE("dataset_id = ?", record.getId()));
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("process_status", STATUS_READY)
+        .SET("processed", timestamp)
+        .SET("process_message", message)
+        .SET("processed_ms", record.getTotalProcessTime())
+        .WHERE("dataset_id = ?", record.getId());
+    boolean updated = update.execute().booleanValue();
     if (updated) {
-      // Update the record for additional workflows
       record.setProcessStatus(STATUS_READY);
       record.setProcessMessage(message);
     }
@@ -395,13 +381,13 @@ public class DatasetRepository {
   }
 
   public static boolean resetSyncTimestamp(Dataset record, Timestamp timestamp) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("sync_status", STATUS_RUNNING)
-        .add("sync_date", timestamp)
-        .add("sync_message", (String) null);
-    boolean updated = DB.update(TABLE_NAME, updateValues, DB.WHERE("dataset_id = ?", record.getId()));
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("sync_status", STATUS_RUNNING)
+        .SET("sync_date", timestamp)
+        .SET("sync_message", (String) null)
+        .WHERE("dataset_id = ?", record.getId());
+    boolean updated = update.execute().booleanValue();
     if (updated) {
-      // Update the record for additional workflows
       record.setSyncStatus(STATUS_RUNNING);
       record.setSyncDate(timestamp);
       record.setSyncMessage(null);
@@ -410,12 +396,12 @@ public class DatasetRepository {
   }
 
   public static boolean saveSyncResult(Dataset record, String message) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("sync_status", STATUS_READY)
-        .add("sync_message", message);
-    boolean updated = DB.update(TABLE_NAME, updateValues, DB.WHERE("dataset_id = ?", record.getId()));
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("sync_status", STATUS_READY)
+        .SET("sync_message", message)
+        .WHERE("dataset_id = ?", record.getId());
+    boolean updated = update.execute().booleanValue();
     if (updated) {
-      // Update the record for additional workflows
       record.setSyncStatus(STATUS_READY);
       record.setSyncMessage(message);
     }
@@ -423,11 +409,11 @@ public class DatasetRepository {
   }
 
   public static boolean remove(Dataset record) {
-    return (DB.deleteFrom(TABLE_NAME, DB.WHERE("dataset_id = ?", record.getId())) > 0);
+    return DB.DELETE().FROM(TABLE_NAME).WHERE("dataset_id = ?", record.getId()).execute();
   }
 
   public static long findTotalFileSize() {
-    return DB.selectFunction("SUM(file_length)", TABLE_NAME, null);
+    return DB.SELECT("SUM(file_length) AS total_file_length").FROM(TABLE_NAME).returnValue(Long.class);
   }
 
   private static Dataset buildRecord(ResultSet rs) {
