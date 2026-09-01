@@ -24,13 +24,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
+import com.github.rajkowski.database.Insert;
+import com.github.rajkowski.database.Select;
+import com.github.rajkowski.database.Update;
 import com.simisinc.platform.domain.model.App;
 import com.simisinc.platform.infrastructure.cache.CacheManager;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves app objects
@@ -45,34 +46,40 @@ public class AppRepository {
   private static String TABLE_NAME = "apps";
   private static String[] PRIMARY_KEY = new String[] { "app_id" };
 
-  private static DataResult query(AppSpecification specification, DataConstraints constraints) {
-    SqlWhere where = null;
+  private static DataResult<App> query(AppSpecification specification, DataConstraints constraints) {
+    Select select = DB.SELECT("apps.*").FROM(TABLE_NAME).WHERE();
     if (specification != null) {
-      where = DB.WHERE()
-          .andAddIfHasValue("app_id = ?", specification.getId(), -1)
-          .andAddIfHasValue("public_key = ?", specification.getPublicKey());
+      if (specification.getId() > -1) {
+        select.AND("app_id = ?", specification.getId());
+      }
+      if (StringUtils.isNotBlank(specification.getPublicKey())) {
+        select.AND("public_key = ?", specification.getPublicKey());
+      }
     }
-    return DB.selectAllFrom(TABLE_NAME, where, constraints, AppRepository::buildRecord);
+    if (constraints != null) {
+      select.WITH(constraints);
+    }
+    return select.returnDataResult(AppRepository::buildRecord);
   }
 
   public static App findByPublicKey(String publicKey) {
     if (StringUtils.isBlank(publicKey)) {
       return null;
     }
-    return (App) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("public_key = ?", publicKey),
-        AppRepository::buildRecord);
+    return DB.SELECT("apps.*")
+        .FROM(TABLE_NAME)
+        .WHERE("public_key = ?", publicKey)
+        .returnRecord(AppRepository::buildRecord);
   }
 
   public static App findById(long id) {
     if (id == -1) {
       return null;
     }
-    return (App) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("app_id = ?", id),
-        AppRepository::buildRecord);
+    return DB.SELECT("apps.*")
+        .FROM(TABLE_NAME)
+        .WHERE("app_id = ?", id)
+        .returnRecord(AppRepository::buildRecord);
   }
 
   public static List<App> findAll() {
@@ -84,8 +91,7 @@ public class AppRepository {
       constraints = new DataConstraints();
     }
     constraints.setDefaultColumnToSortBy("name");
-    DataResult result = query(specification, constraints);
-    return (List<App>) result.getRecords();
+    return query(specification, constraints).getRecords();
   }
 
   public static App save(App record) {
@@ -96,13 +102,13 @@ public class AppRepository {
   }
 
   private static App add(App record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("name", StringUtils.trimToNull(record.getName()))
-        .add("summary", StringUtils.trimToNull(record.getSummary()))
-        .add("public_key", record.getPublicKey())
-        .add("private_key", record.getPrivateKey())
-        .add("created_by", record.getCreatedBy());
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    Insert insert = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("name", StringUtils.trimToNull(record.getName()))
+        .FIELD("summary", StringUtils.trimToNull(record.getSummary()))
+        .FIELD("public_key", record.getPublicKey())
+        .FIELD("private_key", record.getPrivateKey())
+        .FIELD("created_by", record.getCreatedBy());
+    record.setId(insert.execute());
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -111,10 +117,11 @@ public class AppRepository {
   }
 
   private static App update(App record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("name", StringUtils.trimToNull(record.getName()))
-        .add("summary", StringUtils.trimToNull(record.getSummary()));
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("app_id = ?", record.getId()))) {
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("name", StringUtils.trimToNull(record.getName()))
+        .SET("summary", StringUtils.trimToNull(record.getSummary()))
+        .WHERE("app_id = ?", record.getId());
+    if (update.execute().booleanValue()) {
       CacheManager.invalidateKey(CacheManager.APP_CACHE, record.getPublicKey());
       return record;
     }

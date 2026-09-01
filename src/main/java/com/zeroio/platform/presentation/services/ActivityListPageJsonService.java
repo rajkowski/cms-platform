@@ -23,11 +23,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.application.cms.MarkdownCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.domain.model.xapi.XapiStatement;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
 import com.simisinc.platform.infrastructure.persistence.xapi.XapiStatementRepository;
 import com.simisinc.platform.infrastructure.persistence.xapi.XapiStatementSpecification;

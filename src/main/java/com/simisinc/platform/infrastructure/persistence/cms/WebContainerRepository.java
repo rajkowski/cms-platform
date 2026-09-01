@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,12 +25,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.domain.model.cms.WebContainer;
 import com.simisinc.platform.infrastructure.cache.CacheManager;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves web container objects
@@ -48,44 +47,38 @@ public class WebContainerRepository {
     if (id == -1) {
       return null;
     }
-    return (WebContainer) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("container_id = ?", id),
-        WebContainerRepository::buildRecord);
+    return DB.SELECT("web_containers.*")
+        .FROM(TABLE_NAME)
+        .WHERE("container_id = ?", id)
+        .returnRecord(WebContainerRepository::buildRecord);
   }
 
   public static WebContainer findByName(String name) {
     if (StringUtils.isBlank(name)) {
       return null;
     }
-    return (WebContainer) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("container_name = ?", name),
-        WebContainerRepository::buildRecord);
+    return DB.SELECT("web_containers.*")
+        .FROM(TABLE_NAME)
+        .WHERE("container_name = ?", name)
+        .returnRecord(WebContainerRepository::buildRecord);
   }
 
   public static List<WebContainer> findAllByPrefix(String prefix) {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        DB.WHERE("container_name LIKE ?", prefix + ".%"),
-        new DataConstraints().setDefaultColumnToSortBy("container_name").setUseCount(false),
-        WebContainerRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<WebContainer>) result.getRecords();
-    }
-    return null;
+    DataConstraints constraints = new DataConstraints().setDefaultColumnToSortBy("container_name").setUseCount(false);
+    return DB.SELECT("web_containers.*")
+        .FROM(TABLE_NAME)
+        .WHERE("container_name LIKE ?", prefix + ".%")
+        .WITH(constraints)
+        .returnDataResult(WebContainerRepository::buildRecord)
+        .getRecords();
   }
 
   public static List<WebContainer> findAll() {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        null,
-        new DataConstraints().setDefaultColumnToSortBy("container_id"),
-        WebContainerRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<WebContainer>) result.getRecords();
-    }
-    return null;
+    return DB.SELECT("web_containers.*")
+        .FROM(TABLE_NAME)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("container_id"))
+        .returnDataResult(WebContainerRepository::buildRecord)
+        .getRecords();
   }
 
   public static WebContainer save(WebContainer record) {
@@ -96,14 +89,14 @@ public class WebContainerRepository {
   }
 
   private static WebContainer add(WebContainer record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("container_name", StringUtils.trimToNull(record.getName()))
-        .add("label", StringUtils.trimToNull(record.getLabel()))
-        .add("image_path", StringUtils.trimToNull(record.getImagePath()))
-        .add("draft", record.getDraft())
-        .add("container_xml", StringUtils.trimToNull(record.getContainerXml()))
-        .add("draft_xml", StringUtils.trimToNull(record.getDraftXml()));
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    record.setId(DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("container_name", StringUtils.trimToNull(record.getName()))
+        .FIELD("label", StringUtils.trimToNull(record.getLabel()))
+        .FIELD("image_path", StringUtils.trimToNull(record.getImagePath()))
+        .FIELD("draft", record.getDraft())
+        .FIELD("container_xml", StringUtils.trimToNull(record.getContainerXml()))
+        .FIELD("draft_xml", StringUtils.trimToNull(record.getDraftXml()))
+        .execute());
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -112,14 +105,15 @@ public class WebContainerRepository {
   }
 
   private static WebContainer update(WebContainer record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("container_name", StringUtils.trimToNull(record.getName()))
-        .add("label", StringUtils.trimToNull(record.getLabel()))
-        .add("image_path", StringUtils.trimToNull(record.getImagePath()))
-        .add("draft", record.getDraft())
-        .add("container_xml", StringUtils.trimToNull(record.getContainerXml()))
-        .add("draft_xml", StringUtils.trimToNull(record.getDraftXml()));
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("container_id = ?", record.getId()))) {
+    if (DB.UPDATE(TABLE_NAME)
+        .SET("container_name", StringUtils.trimToNull(record.getName()))
+        .SET("label", StringUtils.trimToNull(record.getLabel()))
+        .SET("image_path", StringUtils.trimToNull(record.getImagePath()))
+        .SET("draft", record.getDraft())
+        .SET("container_xml", StringUtils.trimToNull(record.getContainerXml()))
+        .SET("draft_xml", StringUtils.trimToNull(record.getDraftXml()))
+        .WHERE("container_id = ?", record.getId())
+        .execute()) {
       // Invalidate the cache
       if (record.getName().startsWith("header")) {
         CacheManager.invalidateObjectCacheKey(CacheManager.WEBSITE_HEADER);

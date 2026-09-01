@@ -25,8 +25,8 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
 import com.simisinc.platform.domain.model.cms.PageTreeNode;
-import com.simisinc.platform.infrastructure.database.DB;
 
 /**
  * Loads hierarchical page structure for tree display in the Visual Content Editor

@@ -25,9 +25,9 @@ import org.apache.commons.logging.LogFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.application.cms.MarkdownCommand;
 import com.simisinc.platform.domain.model.xapi.XapiStatement;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.xapi.XapiStatementRepository;
 import com.simisinc.platform.infrastructure.persistence.xapi.XapiStatementSpecification;
 import com.simisinc.platform.presentation.controller.WidgetContext;

@@ -24,14 +24,13 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
 import com.simisinc.platform.domain.model.medicine.Medicine;
 import com.simisinc.platform.domain.model.medicine.MedicineSchedule;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves medicine schedule objects
@@ -77,25 +76,26 @@ public class MedicineScheduleRepository {
   }
 
   private static MedicineSchedule add(Connection connection, MedicineSchedule record) throws SQLException {
-    SqlUtils insertValues = new SqlUtils()
-        .add("medicine_id", record.getMedicineId(), -1)
-        .add("as_needed", record.getFrequency() == MedicineSchedule.AS_NEEDED)
-        .add("every_day", record.getFrequency() == MedicineSchedule.EVERY_DAY)
-        .add("every_x_days", record.getDaysToRepeat())
-        .add("on_monday", record.isOnMonday())
-        .add("on_tuesday", record.isOnTuesday())
-        .add("on_wednesday", record.isOnWednesday())
-        .add("on_thursday", record.isOnThursday())
-        .add("on_friday", record.isOnFriday())
-        .add("on_saturday", record.isOnSaturday())
-        .add("on_sunday", record.isOnSunday())
-        .add("times_a_day", record.getMedicineTimeList() != null ? record.getMedicineTimeList().size() : 0)
-        .add("start_date", record.getStartDate())
-        .add("end_date", record.getEndDate())
-        .add("comments", record.getNotes())
-        .add("created_by", record.getCreatedBy())
-        .add("modified_by", record.getModifiedBy());
-    record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+    long generatedId = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("medicine_id", record.getMedicineId() == -1 ? null : record.getMedicineId())
+        .FIELD("as_needed", record.getFrequency() == MedicineSchedule.AS_NEEDED)
+        .FIELD("every_day", record.getFrequency() == MedicineSchedule.EVERY_DAY)
+        .FIELD("every_x_days", record.getDaysToRepeat())
+        .FIELD("on_monday", record.isOnMonday())
+        .FIELD("on_tuesday", record.isOnTuesday())
+        .FIELD("on_wednesday", record.isOnWednesday())
+        .FIELD("on_thursday", record.isOnThursday())
+        .FIELD("on_friday", record.isOnFriday())
+        .FIELD("on_saturday", record.isOnSaturday())
+        .FIELD("on_sunday", record.isOnSunday())
+        .FIELD("times_a_day", record.getMedicineTimeList() != null ? record.getMedicineTimeList().size() : 0)
+        .FIELD("start_date", record.getStartDate())
+        .FIELD("end_date", record.getEndDate())
+        .FIELD("comments", record.getNotes())
+        .FIELD("created_by", record.getCreatedBy())
+        .FIELD("modified_by", record.getModifiedBy())
+        .execute(connection);
+    record.setId(generatedId);
     if (record.getMedicineTimeList() != null) {
       MedicineTimeRepository.insertMedicineTimeList(connection, record);
     }
@@ -103,23 +103,25 @@ public class MedicineScheduleRepository {
   }
 
   private static MedicineSchedule update(MedicineSchedule record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("as_needed", record.getFrequency() == MedicineSchedule.AS_NEEDED)
-        .add("every_day", record.getFrequency() == MedicineSchedule.EVERY_DAY)
-        .add("every_x_days", record.getDaysToRepeat())
-        .add("on_monday", record.isOnMonday())
-        .add("on_tuesday", record.isOnTuesday())
-        .add("on_wednesday", record.isOnWednesday())
-        .add("on_thursday", record.isOnThursday())
-        .add("on_friday", record.isOnFriday())
-        .add("on_saturday", record.isOnSaturday())
-        .add("on_sunday", record.isOnSunday())
-        .add("times_a_day", record.getMedicineTimeList() != null ? record.getMedicineTimeList().size() : 0)
-        .add("start_date", record.getStartDate())
-        .add("end_date", record.getEndDate())
-        .add("comments", record.getNotes())
-        .add("modified_by", record.getModifiedBy());
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("schedule_id = ?", record.getId()))) {
+    boolean updated = DB.UPDATE(TABLE_NAME)
+        .SET("as_needed", record.getFrequency() == MedicineSchedule.AS_NEEDED)
+        .SET("every_day", record.getFrequency() == MedicineSchedule.EVERY_DAY)
+        .SET("every_x_days", record.getDaysToRepeat())
+        .SET("on_monday", record.isOnMonday())
+        .SET("on_tuesday", record.isOnTuesday())
+        .SET("on_wednesday", record.isOnWednesday())
+        .SET("on_thursday", record.isOnThursday())
+        .SET("on_friday", record.isOnFriday())
+        .SET("on_saturday", record.isOnSaturday())
+        .SET("on_sunday", record.isOnSunday())
+        .SET("times_a_day", record.getMedicineTimeList() != null ? record.getMedicineTimeList().size() : 0)
+        .SET("start_date", record.getStartDate())
+        .SET("end_date", record.getEndDate())
+        .SET("comments", record.getNotes())
+        .SET("modified_by", record.getModifiedBy())
+        .WHERE("schedule_id = ?", record.getId())
+        .execute();
+    if (updated) {
       return record;
     }
     LOG.error("The update failed!");
@@ -131,7 +133,7 @@ public class MedicineScheduleRepository {
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("schedule_id = ?", record.getId()));
+      DB.DELETE().FROM(TABLE_NAME).WHERE("schedule_id = ?", record.getId()).execute(connection);
       // Finish transaction
       transaction.commit();
       return true;
@@ -142,42 +144,38 @@ public class MedicineScheduleRepository {
   }
 
   public static void removeAll(Connection connection, Medicine record) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("medicine_id = ?", record.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("medicine_id = ?", record.getId()).execute(connection);
   }
 
   public static MedicineSchedule findById(long id) {
     if (id == -1) {
       return null;
     }
-    return (MedicineSchedule) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("schedule_id = ?", id),
-        MedicineScheduleRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("schedule_id = ?", id)
+        .returnRecord(MedicineScheduleRepository::buildRecord);
   }
 
   public static MedicineSchedule findByMedicineId(long medicineId) {
     if (medicineId == -1) {
       return null;
     }
-    return (MedicineSchedule) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("medicine_id = ?", medicineId),
-        MedicineScheduleRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("medicine_id = ?", medicineId)
+        .returnRecord(MedicineScheduleRepository::buildRecord);
   }
 
   public static List<MedicineSchedule> findAllByMedicineId(long medicineId) {
     if (medicineId == -1) {
       return null;
     }
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        DB.WHERE("medicine_id = ?", medicineId),
-        new DataConstraints().setDefaultColumnToSortBy("schedule_id").setUseCount(false),
-        MedicineScheduleRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<MedicineSchedule>) result.getRecords();
-    }
-    return null;
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("medicine_id = ?", medicineId)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("schedule_id").setUseCount(false))
+        .returnDataResult(MedicineScheduleRepository::buildRecord).getRecords();
   }
 
   private static MedicineSchedule buildRecord(ResultSet rs) {

@@ -25,15 +25,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.Select;
 import com.simisinc.platform.application.cms.HtmlCommand;
 import com.simisinc.platform.domain.model.socialmedia.InstagramMedia;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves Instagram media objects
@@ -52,10 +50,10 @@ public class InstagramMediaRepository {
     if (StringUtils.isBlank(graphId)) {
       return null;
     }
-    return (InstagramMedia) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("graph_id = ?", graphId),
-        InstagramMediaRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("graph_id = ?", graphId)
+        .returnRecord(InstagramMediaRepository::buildRecord);
   }
 
   public static List<InstagramMedia> findAll() {
@@ -67,13 +65,14 @@ public class InstagramMediaRepository {
       constraints = new DataConstraints();
     }
     constraints.setDefaultColumnToSortBy("created DESC");
-    SqlWhere where = null;
-    if (specification != null) {
-      where = DB.WHERE()
-          .andAddIfHasValue("media_type = ?", specification.getMediaType());
+    Select select = DB.SELECT("*").FROM(TABLE_NAME);
+    if (specification != null && StringUtils.isNotBlank(specification.getMediaType())) {
+      select.WHERE("media_type = ?", specification.getMediaType());
     }
-    DataResult result = DB.selectAllFrom(TABLE_NAME, where, constraints, InstagramMediaRepository::buildRecord);
-    return (List<InstagramMedia>) result.getRecords();
+    if (constraints != null) {
+      select.WITH(constraints);
+    }
+    return select.returnDataResult(InstagramMediaRepository::buildRecord).getRecords();
   }
 
   public static InstagramMedia save(InstagramMedia record) {
@@ -84,15 +83,16 @@ public class InstagramMediaRepository {
   }
 
   public static InstagramMedia add(InstagramMedia record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("graph_id", record.getGraphId())
-        .add("permalink", StringUtils.trimToNull(record.getPermalink()))
-        .add("media_type", StringUtils.trimToNull(record.getMediaType()))
-        .add("media_url", StringUtils.trimToNull(record.getMediaUrl()))
-        .add("caption", HtmlCommand.text(StringUtils.trimToNull(record.getCaption())))
-        .add("short_code", StringUtils.trimToNull(record.getShortCode()))
-        .add("timestamp", StringUtils.trimToNull(record.getTimestamp()));
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    long generatedId = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("graph_id", record.getGraphId())
+        .FIELD("permalink", StringUtils.trimToNull(record.getPermalink()))
+        .FIELD("media_type", StringUtils.trimToNull(record.getMediaType()))
+        .FIELD("media_url", StringUtils.trimToNull(record.getMediaUrl()))
+        .FIELD("caption", HtmlCommand.text(StringUtils.trimToNull(record.getCaption())))
+        .FIELD("short_code", StringUtils.trimToNull(record.getShortCode()))
+        .FIELD("timestamp", StringUtils.trimToNull(record.getTimestamp()))
+        .execute();
+    record.setId(generatedId);
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -101,15 +101,17 @@ public class InstagramMediaRepository {
   }
 
   public static InstagramMedia update(InstagramMedia record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("graph_id", record.getGraphId())
-        .add("permalink", StringUtils.trimToNull(record.getPermalink()))
-        .add("media_type", StringUtils.trimToNull(record.getMediaType()))
-        .add("media_url", StringUtils.trimToNull(record.getMediaUrl()))
-        .add("caption", HtmlCommand.text(StringUtils.trimToNull(record.getCaption())))
-        .add("short_code", StringUtils.trimToNull(record.getShortCode()))
-        .add("timestamp", StringUtils.trimToNull(record.getTimestamp()));
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("id = ?", record.getId()))) {
+    boolean updated = DB.UPDATE(TABLE_NAME)
+        .SET("graph_id", record.getGraphId())
+        .SET("permalink", StringUtils.trimToNull(record.getPermalink()))
+        .SET("media_type", StringUtils.trimToNull(record.getMediaType()))
+        .SET("media_url", StringUtils.trimToNull(record.getMediaUrl()))
+        .SET("caption", HtmlCommand.text(StringUtils.trimToNull(record.getCaption())))
+        .SET("short_code", StringUtils.trimToNull(record.getShortCode()))
+        .SET("timestamp", StringUtils.trimToNull(record.getTimestamp()))
+        .WHERE("id = ?", record.getId())
+        .execute();
+    if (updated) {
       // CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
     }
@@ -126,7 +128,7 @@ public class InstagramMediaRepository {
       // CollectionRepository.updateItemCount(connection, record.getCollectionId(), -1);
       // CategoryRepository.updateItemCount(connection, record.getCategoryId(), -1);
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("id = ?", record.getId()));
+      DB.DELETE().FROM(TABLE_NAME).WHERE("id = ?", record.getId()).execute(connection);
       // Finish transaction
       transaction.commit();
       return true;

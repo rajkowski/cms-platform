@@ -24,9 +24,10 @@ import java.sql.Timestamp;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.Insert;
+import com.github.rajkowski.database.Update;
 import com.simisinc.platform.domain.model.cms.GitPublishSettings;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves Git publish settings objects
@@ -42,10 +43,9 @@ public class GitPublishSettingsRepository {
   private static String[] PRIMARY_KEY = new String[] { "settings_id" };
 
   public static GitPublishSettings findSettings() {
-    return (GitPublishSettings) DB.selectRecordFrom(
-        TABLE_NAME,
-        null,
-        GitPublishSettingsRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .returnRecord(GitPublishSettingsRepository::buildRecord);
   }
 
   public static GitPublishSettings save(GitPublishSettings record) {
@@ -56,23 +56,23 @@ public class GitPublishSettingsRepository {
   }
 
   private static GitPublishSettings add(GitPublishSettings record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("enabled", record.getEnabled())
-        .add("git_provider", record.getGitProvider())
-        .add("repository_url", record.getRepositoryUrl())
-        .add("branch_name", record.getBranchName())
-        .add("base_branch", record.getBaseBranch())
-        .add("access_token", record.getAccessToken())
-        .add("username", record.getUsername())
-        .add("email", record.getEmail())
-        .add("commit_message_template", record.getCommitMessageTemplate())
-        .add("auto_create_pr", record.getAutoCreatePr())
-        .add("pr_title_template", record.getPrTitleTemplate())
-        .add("pr_description_template", record.getPrDescriptionTemplate())
-        .add("target_directory", record.getTargetDirectory())
-        .add("created_by", record.getCreatedBy(), -1)
-        .add("modified_by", record.getModifiedBy(), -1);
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    Insert insert = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("enabled", record.getEnabled())
+        .FIELD("git_provider", record.getGitProvider())
+        .FIELD("repository_url", record.getRepositoryUrl())
+        .FIELD("branch_name", record.getBranchName())
+        .FIELD("base_branch", record.getBaseBranch())
+        .FIELD("access_token", record.getAccessToken())
+        .FIELD("username", record.getUsername())
+        .FIELD("email", record.getEmail())
+        .FIELD("commit_message_template", record.getCommitMessageTemplate())
+        .FIELD("auto_create_pr", record.getAutoCreatePr())
+        .FIELD("pr_title_template", record.getPrTitleTemplate())
+        .FIELD("pr_description_template", record.getPrDescriptionTemplate())
+        .FIELD("target_directory", record.getTargetDirectory())
+        .FIELD("created_by", record.getCreatedBy() == -1 ? null : record.getCreatedBy())
+        .FIELD("modified_by", record.getModifiedBy() == -1 ? null : record.getModifiedBy());
+    record.setId(insert.execute());
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -81,23 +81,24 @@ public class GitPublishSettingsRepository {
   }
 
   private static GitPublishSettings update(GitPublishSettings record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("enabled", record.getEnabled())
-        .add("git_provider", record.getGitProvider())
-        .add("repository_url", record.getRepositoryUrl())
-        .add("branch_name", record.getBranchName())
-        .add("base_branch", record.getBaseBranch())
-        .add("access_token", record.getAccessToken())
-        .add("username", record.getUsername())
-        .add("email", record.getEmail())
-        .add("commit_message_template", record.getCommitMessageTemplate())
-        .add("auto_create_pr", record.getAutoCreatePr())
-        .add("pr_title_template", record.getPrTitleTemplate())
-        .add("pr_description_template", record.getPrDescriptionTemplate())
-        .add("target_directory", record.getTargetDirectory())
-        .add("modified", new Timestamp(System.currentTimeMillis()))
-        .add("modified_by", record.getModifiedBy(), -1);
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("settings_id = ?", record.getId()))) {
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("enabled", record.getEnabled())
+        .SET("git_provider", record.getGitProvider())
+        .SET("repository_url", record.getRepositoryUrl())
+        .SET("branch_name", record.getBranchName())
+        .SET("base_branch", record.getBaseBranch())
+        .SET("access_token", record.getAccessToken())
+        .SET("username", record.getUsername())
+        .SET("email", record.getEmail())
+        .SET("commit_message_template", record.getCommitMessageTemplate())
+        .SET("auto_create_pr", record.getAutoCreatePr())
+        .SET("pr_title_template", record.getPrTitleTemplate())
+        .SET("pr_description_template", record.getPrDescriptionTemplate())
+        .SET("target_directory", record.getTargetDirectory())
+        .SET("modified", new Timestamp(System.currentTimeMillis()))
+        .SET("modified_by", record.getModifiedBy() == -1 ? null : record.getModifiedBy())
+        .WHERE("settings_id = ?", record.getId());
+    if (update.execute().booleanValue()) {
       return record;
     }
     LOG.error("The update failed!");
@@ -105,13 +106,7 @@ public class GitPublishSettingsRepository {
   }
 
   public static boolean remove(GitPublishSettings record) {
-    try (Connection connection = DB.getConnection()) {
-      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("settings_id = ?", record.getId()));
-      return true;
-    } catch (SQLException se) {
-      LOG.error("SQLException: " + se.getMessage());
-    }
-    return false;
+    return DB.DELETE().FROM(TABLE_NAME).WHERE("settings_id = ?", record.getId()).execute();
   }
 
   private static GitPublishSettings buildRecord(ResultSet rs) {

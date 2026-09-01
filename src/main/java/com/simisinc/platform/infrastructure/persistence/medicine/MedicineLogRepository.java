@@ -25,16 +25,16 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
+import com.github.rajkowski.database.Field;
+import com.github.rajkowski.database.Insert;
+import com.github.rajkowski.database.Select;
 import com.simisinc.platform.domain.model.medicine.Medicine;
 import com.simisinc.platform.domain.model.medicine.MedicineLog;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlJoins;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves medicine log objects
@@ -49,22 +49,24 @@ public class MedicineLogRepository {
   private static String TABLE_NAME = "medicine_log";
   private static String[] PRIMARY_KEY = new String[] { "log_id" };
 
-  private static DataResult query(MedicineLogSpecification specification, DataConstraints constraints) {
-    SqlJoins joins = new SqlJoins();
-    SqlWhere where = null;
+  private static DataResult<MedicineLog> query(MedicineLogSpecification specification, DataConstraints constraints) {
+    Select select = DB.SELECT("*").FROM(TABLE_NAME);
     if (specification != null) {
-
-      joins.add("LEFT JOIN medicines medicines ON (medicine_log.medicine_id = medicines.medicine_id)");
-
-      where = DB.WHERE()
-          .andAddIfHasValue("log_id = ?", specification.getId(), -1)
-          .andAddIfHasValue("medicine_log.individual_id = ?", specification.getIndividualId(), -1)
-          .andAddIfHasValue("medicine_log.medicine_id = ?", specification.getMedicineId(), -1);
+      select.LEFT_JOIN("medicines medicines").ON("medicine_log.medicine_id = medicines.medicine_id").WHERE();
+      if (specification.getId() != -1) {
+        select.AND("log_id = ?", specification.getId());
+      }
+      if (specification.getIndividualId() != -1) {
+        select.AND("medicine_log.individual_id = ?", specification.getIndividualId());
+      }
+      if (specification.getMedicineId() != -1) {
+        select.AND("medicine_log.medicine_id = ?", specification.getMedicineId());
+      }
       if (specification.getMinDate() != null) {
-        where.AND("administered >= ?", specification.getMinDate());
+        select.AND("administered >= ?", specification.getMinDate());
       }
       if (specification.getMaxDate() != null) {
-        where.AND("administered < ?", specification.getMaxDate());
+        select.AND("administered < ?", specification.getMaxDate());
       }
       if (specification.getIndividualsList() != null && !specification.getIndividualsList().isEmpty()) {
         StringBuilder sb = new StringBuilder();
@@ -74,10 +76,13 @@ public class MedicineLogRepository {
           }
           sb.append(id);
         }
-        where.AND("medicine_log.individual_id IN (" + sb.toString() + ")");
+        select.AND("medicine_log.individual_id IN (" + sb.toString() + ")");
       }
     }
-    return DB.selectAllFrom(TABLE_NAME, joins, where, constraints, MedicineLogRepository::buildRecord);
+    if (constraints != null) {
+      select.WITH(constraints);
+    }
+    return select.returnDataResult(MedicineLogRepository::buildRecord);
   }
 
   public static List<MedicineLog> findAll(MedicineLogSpecification specification, DataConstraints constraints) {
@@ -85,18 +90,17 @@ public class MedicineLogRepository {
       constraints = new DataConstraints();
     }
     constraints.setDefaultColumnToSortBy("reminder_id");
-    DataResult result = query(specification, constraints);
-    return (List<MedicineLog>) result.getRecords();
+    return query(specification, constraints).getRecords();
   }
 
   public static MedicineLog findById(long id) {
     if (id == -1) {
       return null;
     }
-    return (MedicineLog) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("log_id = ?", id),
-        MedicineLogRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("log_id = ?", id)
+        .returnRecord(MedicineLogRepository::buildRecord);
   }
 
   public static MedicineLog save(MedicineLog record) {
@@ -108,48 +112,46 @@ public class MedicineLogRepository {
   }
 
   private static MedicineLog add(MedicineLog record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("medicine_id", record.getMedicineId())
-        .add("individual_id", record.getIndividualId(), -1)
-        .add("reminder_id", record.getReminderId(), -1)
-        .add("reminder_date", record.getReminderDate())
-        .add("drug_id", record.getDrugId(), -1)
-        .add("drug_name", record.getDrugName())
-        .add("dosage", StringUtils.trimToNull(record.getDosage()))
-        .add("form_of_medicine", StringUtils.trimToNull(record.getFormOfMedicine()))
-        .add("quantity", record.getQuantityGiven())
-        .add("comments", StringUtils.trimToNull(record.getComments()))
-        .add("pills_left", record.getPillsLeft(), -1)
-        .add("administered_by", record.getAdministeredBy())
-        .add("administered", record.getAdministered())
-        .add("was_taken", record.getWasTaken())
-        .add("taken_on_time", record.getTakenOnTime())
-        .add("was_skipped", record.getWasSkipped())
-        .add("reason_comments", StringUtils.trimToNull(record.getReasonComments()));
-    // Check the reason code
+    Insert insert = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("medicine_id", record.getMedicineId())
+        .FIELD("individual_id", record.getIndividualId() != -1 ? record.getIndividualId() : null)
+        .FIELD("reminder_id", record.getReminderId() != -1 ? record.getReminderId() : null)
+        .FIELD("reminder_date", record.getReminderDate())
+        .FIELD("drug_id", record.getDrugId() != -1 ? record.getDrugId() : null)
+        .FIELD("drug_name", record.getDrugName())
+        .FIELD("dosage", StringUtils.trimToNull(record.getDosage()))
+        .FIELD("form_of_medicine", StringUtils.trimToNull(record.getFormOfMedicine()))
+        .FIELD("quantity", record.getQuantityGiven())
+        .FIELD("comments", StringUtils.trimToNull(record.getComments()))
+        .FIELD("pills_left", record.getPillsLeft() != -1 ? record.getPillsLeft() : null)
+        .FIELD("administered_by", record.getAdministeredBy())
+        .FIELD("administered", record.getAdministered())
+        .FIELD("was_taken", record.getWasTaken())
+        .FIELD("taken_on_time", record.getTakenOnTime())
+        .FIELD("was_skipped", record.getWasSkipped())
+        .FIELD("reason_comments", StringUtils.trimToNull(record.getReasonComments()));
     if (record.getReasonCode() == MedicineLog.REASON_INDIVIDUAL_UNAVAILABLE) {
-      insertValues.add("reason_individual", true);
+      insert.FIELD("reason_individual", true);
     } else if (record.getReasonCode() == MedicineLog.REASON_CAREGIVER_UNAVAILABLE) {
-      insertValues.add("reason_caregiver", true);
+      insert.FIELD("reason_caregiver", true);
     } else if (record.getReasonCode() == MedicineLog.REASON_MEDICINE_UNAVAILABLE) {
-      insertValues.add("reason_medicine", true);
+      insert.FIELD("reason_medicine", true);
     } else if (record.getReasonCode() == MedicineLog.REASON_REFUSED) {
-      insertValues.add("reason_refused", true);
+      insert.FIELD("reason_refused", true);
     } else if (record.getReasonCode() == MedicineLog.REASON_HEALTH_CONCERNS) {
-      insertValues.add("reason_health_concerns", true);
+      insert.FIELD("reason_health_concerns", true);
     } else if (record.getReasonCode() == MedicineLog.REASON_RAN_OUT) {
-      insertValues.add("reason_med_ran_out", true);
+      insert.FIELD("reason_med_ran_out", true);
     } else if (record.getReasonCode() == MedicineLog.REASON_DOSE_NOT_NEEDED) {
-      insertValues.add("reason_dose_not_needed", true);
+      insert.FIELD("reason_dose_not_needed", true);
     } else if (record.getReasonCode() == MedicineLog.REASON_OTHER) {
-      insertValues.add("reason_other_concern", true);
+      insert.FIELD("reason_other_concern", true);
     }
 
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
-      // In a transaction (use the existing connection)
-      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+      record.setId(insert.execute(connection));
       if (record.getReminderId() > -1) {
         if (record.getWasTaken()) {
           MedicineReminderRepository.markAsTaken(connection, record.getReminderId(), record.getAdministered());
@@ -168,14 +170,14 @@ public class MedicineLogRepository {
   }
 
   public static void removeAll(Connection connection, Medicine record) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("medicine_id = ?", record.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("medicine_id = ?", record.getId()).execute(connection);
   }
 
   public static void removeReferences(Connection connection, Medicine record) throws SQLException {
-    DB.update(connection,
-        TABLE_NAME,
-        new SqlUtils().add("reminder_id", -1L, -1L),
-        DB.WHERE("medicine_id = ?", record.getId()));
+    DB.UPDATE(TABLE_NAME)
+        .SET(new Field("reminder_id", -1L, true))
+        .WHERE("medicine_id = ?", record.getId())
+        .execute(connection);
   }
 
   public static boolean remove(MedicineLog record) {
@@ -185,7 +187,7 @@ public class MedicineLogRepository {
           AutoRollback transaction = new AutoRollback(connection)) {
         // Delete the references
         // Delete the record
-        DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("log_id = ?", record.getId()));
+        DB.DELETE().FROM(TABLE_NAME).WHERE("log_id = ?", record.getId()).execute(connection);
         // Finish transaction
         transaction.commit();
         return true;

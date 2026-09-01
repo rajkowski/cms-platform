@@ -22,8 +22,8 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.application.json.JsonCommand;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
 
 import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbBuilder;

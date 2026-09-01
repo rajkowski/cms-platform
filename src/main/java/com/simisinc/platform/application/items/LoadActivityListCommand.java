@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,14 +17,15 @@
 
 package com.simisinc.platform.application.items;
 
-import com.simisinc.platform.domain.model.items.Activity;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.persistence.items.ActivityRepository;
-import com.simisinc.platform.infrastructure.persistence.items.ActivitySpecification;
+import java.util.List;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.util.List;
+import com.github.rajkowski.database.DataConstraints;
+import com.simisinc.platform.domain.model.items.Activity;
+import com.simisinc.platform.infrastructure.persistence.items.ActivityRepository;
+import com.simisinc.platform.infrastructure.persistence.items.ActivitySpecification;
 
 /**
  * Loads an activity list from cache or storage

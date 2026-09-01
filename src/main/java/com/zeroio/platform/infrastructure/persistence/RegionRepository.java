@@ -24,12 +24,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.CastType;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataResult;
+import com.github.rajkowski.database.Insert;
+import com.github.rajkowski.database.Update;
 import com.simisinc.platform.application.json.JsonCommand;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlValue;
 import com.zeroio.platform.domain.model.Region;
 
 /**
@@ -49,29 +49,28 @@ public class RegionRepository {
     if (id == -1) {
       return null;
     }
-    return (Region) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("region_id = ?", id),
-        RegionRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("region_id = ?", id)
+        .returnRecord(RegionRepository::buildRecord);
   }
 
   public static Region findByCode(String code) {
     if (StringUtils.isBlank(code)) {
       return null;
     }
-    return (Region) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("code = ?", code),
-        RegionRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("code = ?", code)
+        .returnRecord(RegionRepository::buildRecord);
   }
 
   public static List<Region> findAll() {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        null,
-        new DataConstraints().setDefaultColumnToSortBy("level").setUseCount(false),
-        RegionRepository::buildRecord);
-    return (List<Region>) result.getRecords();
+    DataResult<Region> result = DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .ORDER_BY("level")
+        .returnDataResult(RegionRepository::buildRecord);
+    return result.getRecords();
   }
 
   public static Region save(Region record) {
@@ -82,13 +81,14 @@ public class RegionRepository {
   }
 
   private static Region add(Region record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("code", StringUtils.trimToNull(record.getCode()))
-        .add("name", StringUtils.trimToNull(record.getName()));
+    Insert insert = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("code", StringUtils.trimToNull(record.getCode()))
+        .FIELD("name", StringUtils.trimToNull(record.getName()));
+
     if (record.getValues() != null && record.getValues().length > 0) {
-      insertValues.add(new SqlValue("values", SqlValue.JSONB_TYPE, JsonCommand.toJsonArray(record.getValues())));
+      insert.FIELD("values", JsonCommand.toJsonArray(record.getValues()), CastType.JSONB);
     }
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    record.setId(insert.execute());
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -97,15 +97,16 @@ public class RegionRepository {
   }
 
   private static Region update(Region record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("code", StringUtils.trimToNull(record.getCode()))
-        .add("name", StringUtils.trimToNull(record.getName()));
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("code", StringUtils.trimToNull(record.getCode()))
+        .SET("name", StringUtils.trimToNull(record.getName()));
     if (record.getValues() != null && record.getValues().length > 0) {
-      updateValues.add(new SqlValue("values", SqlValue.JSONB_TYPE, JsonCommand.toJsonArray(record.getValues())));
+      update.SET("values", JsonCommand.toJsonArray(record.getValues()), CastType.JSONB);
     } else {
-      updateValues.add(new SqlValue("values", SqlValue.JSONB_TYPE, null));
+      update.SET("values", (String) null, CastType.JSONB);
     }
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("region_id = ?", record.getId()))) {
+    update.WHERE("region_id = ?", record.getId());
+    if (update.execute().booleanValue()) {
       return record;
     }
     LOG.error("The update failed!");
@@ -113,7 +114,7 @@ public class RegionRepository {
   }
 
   public static boolean remove(Region record) {
-    return DB.deleteFrom(TABLE_NAME, DB.WHERE("region_id = ?", record.getId())) > 0;
+    return DB.DELETE().FROM(TABLE_NAME).WHERE("region_id = ?", record.getId()).execute();
   }
 
   /**

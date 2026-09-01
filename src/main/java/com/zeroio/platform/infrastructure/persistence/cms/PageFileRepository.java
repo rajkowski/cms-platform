@@ -23,16 +23,13 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.Select;
 import com.simisinc.platform.domain.model.cms.FileItem;
 import com.simisinc.platform.domain.model.cms.Folder;
 import com.simisinc.platform.domain.model.cms.SubFolder;
 import com.simisinc.platform.domain.model.cms.WebPage;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlJoins;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 import com.zeroio.platform.domain.model.cms.PageFile;
 
 /**
@@ -56,32 +53,33 @@ public class PageFileRepository {
     if (webPageId == -1) {
       return null;
     }
-    SqlUtils select = new SqlUtils()
-        .add("web_page_files.web_page_file_id")
-        .add("web_page_files.web_page_id")
-        .add("web_page_files.file_id")
-        .add("web_page_files.created")
-        .add("web_page_files.created_by")
-        .add("files.filename")
-        .add("files.title")
-        .add("files.extension")
-        .add("files.file_length")
-        .add("files.file_type")
-        .add("files.mime_type")
-        .add("files.web_path")
-        .add("files.version")
-        .add("files.summary")
-        .add("files.modified")
-        .add("files.modified_by");
-    SqlJoins joins = new SqlJoins();
-    joins.add("JOIN files ON (web_page_files.file_id = files.file_id)");
-    SqlUtils orderBy = new SqlUtils().add("files.filename");
     DataConstraints constraints = new DataConstraints();
     constraints.setUseCount(false);
-    SqlWhere where = DB.WHERE("web_page_files.web_page_id = ?", webPageId);
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME, select, joins, where, orderBy, constraints, PageFileRepository::buildRecord);
-    return (List<PageFile>) result.getRecords();
+
+    Select query = DB.SELECT(
+        "web_page_files.web_page_file_id",
+        "web_page_files.web_page_id",
+        "web_page_files.file_id",
+        "web_page_files.created",
+        "web_page_files.created_by",
+        "files.filename",
+        "files.title",
+        "files.extension",
+        "files.file_length",
+        "files.file_type",
+        "files.mime_type",
+        "files.web_path",
+        "files.version",
+        "files.summary",
+        "files.modified",
+        "files.modified_by")
+        .FROM(TABLE_NAME)
+        .JOIN("files")
+        .ON("web_page_files.file_id = files.file_id")
+        .WHERE("web_page_files.web_page_id = ?", webPageId)
+        .ORDER_BY("files.filename")
+        .WITH(constraints);
+    return query.returnDataResult(PageFileRepository::buildRecord).getRecords();
   }
 
   private static PageFile buildRecord(ResultSet rs) {
@@ -118,27 +116,28 @@ public class PageFileRepository {
     if (pageFileId == -1) {
       return null;
     }
-    SqlUtils select = new SqlUtils()
-        .add("web_page_files.web_page_file_id")
-        .add("web_page_files.web_page_id")
-        .add("web_page_files.file_id")
-        .add("web_page_files.created")
-        .add("web_page_files.created_by")
-        .add("files.filename")
-        .add("files.title")
-        .add("files.extension")
-        .add("files.file_length")
-        .add("files.file_type")
-        .add("files.mime_type")
-        .add("files.web_path")
-        .add("files.version")
-        .add("files.summary")
-        .add("files.modified")
-        .add("files.modified_by");
-    SqlJoins joins = new SqlJoins();
-    joins.add("JOIN files ON (web_page_files.file_id = files.file_id)");
-    SqlWhere where = DB.WHERE("web_page_files.web_page_file_id = ?", pageFileId);
-    return (PageFile) DB.selectRecordFrom(TABLE_NAME, select, joins, where, PageFileRepository::buildRecord);
+    return DB.SELECT(
+        "web_page_files.web_page_file_id",
+        "web_page_files.web_page_id",
+        "web_page_files.file_id",
+        "web_page_files.created",
+        "web_page_files.created_by",
+        "files.filename",
+        "files.title",
+        "files.extension",
+        "files.file_length",
+        "files.file_type",
+        "files.mime_type",
+        "files.web_path",
+        "files.version",
+        "files.summary",
+        "files.modified",
+        "files.modified_by")
+        .FROM(TABLE_NAME)
+        .JOIN("files")
+        .ON("web_page_files.file_id = files.file_id")
+        .WHERE("web_page_files.web_page_file_id = ?", pageFileId)
+        .returnRecord(PageFileRepository::buildRecord);
   }
 
   /**
@@ -149,8 +148,7 @@ public class PageFileRepository {
       return false;
     }
     try {
-      DB.deleteFrom(TABLE_NAME, DB.WHERE("web_page_file_id = ?", pageFile.getId()));
-      return true;
+      return DB.DELETE().FROM(TABLE_NAME).WHERE("web_page_file_id = ?", pageFile.getId()).execute();
     } catch (Exception e) {
       LOG.error("remove", e);
       return false;
@@ -167,11 +165,12 @@ public class PageFileRepository {
     if (pageFile.getId() > -1) {
       return update(pageFile);
     }
-    SqlUtils insertValues = new SqlUtils()
-        .add("web_page_id", pageFile.getWebPageId())
-        .add("file_id", pageFile.getFileId())
-        .add("created_by", pageFile.getCreatedBy());
-    pageFile.setId(DB.insertInto(TABLE_NAME, insertValues, new String[] { PRIMARY_KEY }));
+    long generatedId = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("web_page_id", pageFile.getWebPageId())
+        .FIELD("file_id", pageFile.getFileId())
+        .FIELD("created_by", pageFile.getCreatedBy())
+        .execute();
+    pageFile.setId(generatedId);
     if (pageFile.getId() == -1) {
       LOG.error("An id was not returned when saving: " + pageFile.getWebPageId());
       return null;
@@ -180,10 +179,12 @@ public class PageFileRepository {
   }
 
   public static PageFile update(PageFile pageFile) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("web_page_id", pageFile.getWebPageId())
-        .add("file_id", pageFile.getFileId());
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("web_page_file_id = ?", pageFile.getId()))) {
+    boolean updated = DB.UPDATE(TABLE_NAME)
+        .SET("web_page_id", pageFile.getWebPageId())
+        .SET("file_id", pageFile.getFileId())
+        .WHERE("web_page_file_id = ?", pageFile.getId())
+        .execute();
+    if (updated) {
       return pageFile;
     }
     LOG.error("The page file update failed!");
@@ -194,30 +195,31 @@ public class PageFileRepository {
     if (record == null) {
       return;
     }
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("file_id = ?", record.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("file_id = ?", record.getId()).execute(connection);
   }
 
   public static void removeAll(Connection connection, Folder record) throws SQLException {
     if (record == null) {
       return;
     }
-    DB.deleteFrom(connection, TABLE_NAME,
-        DB.WHERE("file_id IN (SELECT file_id FROM files WHERE folder_id = ?)", record.getId()));
+    DB.DELETE().FROM(TABLE_NAME)
+        .WHERE("file_id IN (SELECT file_id FROM files WHERE folder_id = ?)", record.getId())
+        .execute(connection);
   }
 
   public static void removeAll(Connection connection, SubFolder record) throws SQLException {
     if (record == null) {
       return;
     }
-    DB.deleteFrom(connection, TABLE_NAME,
-        DB.WHERE("file_id IN (SELECT file_id FROM files WHERE sub_folder_id = ?)", record.getId()));
+    DB.DELETE().FROM(TABLE_NAME)
+        .WHERE("file_id IN (SELECT file_id FROM files WHERE sub_folder_id = ?)", record.getId())
+        .execute(connection);
   }
 
   public static void removeAll(Connection connection, WebPage record) throws SQLException {
     if (record == null) {
       return;
     }
-    DB.deleteFrom(connection, TABLE_NAME,
-        DB.WHERE("web_page_id = ?", record.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("web_page_id = ?", record.getId()).execute(connection);
   }
 }

@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +17,11 @@
 
 package com.simisinc.platform.presentation.widgets.items;
 
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.application.UserCommand;
 import com.simisinc.platform.application.cms.FormatDateCommand;
 import com.simisinc.platform.application.items.ActivityListCommand;
@@ -25,14 +31,10 @@ import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.items.Activity;
 import com.simisinc.platform.domain.model.items.Collection;
 import com.simisinc.platform.domain.model.items.Item;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.items.ActivityRepository;
 import com.simisinc.platform.infrastructure.persistence.items.ActivitySpecification;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
 import com.simisinc.platform.presentation.controller.WidgetContext;
-import org.apache.commons.lang3.StringUtils;
-
-import java.util.List;
+import com.simisinc.platform.presentation.widgets.GenericWidget;
 
 /**
  * Performs paging for activity list entries

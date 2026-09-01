@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,8 +24,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
 import com.simisinc.platform.domain.model.maps.ZipCode;
-import com.simisinc.platform.infrastructure.database.DB;
 
 /**
  * Persists and retrieves zip code objects
@@ -45,10 +46,10 @@ public class ZipCodeRepository {
     if (code.length() != 5) {
       return null;
     }
-    return (ZipCode) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("code = ?", code),
-        ZipCodeRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("code = ?", code)
+        .returnRecord(ZipCodeRepository::buildRecord);
   }
 
   private static ZipCode buildRecord(ResultSet rs) {

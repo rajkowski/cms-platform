@@ -34,19 +34,21 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.CastType;
+import com.github.rajkowski.database.ConditionGroup;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
+import com.github.rajkowski.database.Insert;
+import com.github.rajkowski.database.Select;
+import com.github.rajkowski.database.Update;
 import com.simisinc.platform.application.cms.TextCommand;
 import com.simisinc.platform.application.cms.WebPageXmlLayoutCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.WebPage;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlJoins;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlValue;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
+import com.simisinc.platform.presentation.controller.DataConstants;
 import com.zeroio.platform.infrastructure.persistence.cms.PageFileRepository;
 import com.zeroio.platform.infrastructure.persistence.cms.WebPageVersionRepository;
 
@@ -66,103 +68,102 @@ public class WebPageRepository {
   private static final int MAX_CONTENT_REFERENCE_NODES = 250;
   private static final int MAX_INDIRECT_PAGES = 500;
 
-  private static DataResult query(WebPageSpecification specification, DataConstraints constraints) {
-    SqlUtils select = new SqlUtils();
-    SqlJoins joins = new SqlJoins();
-    SqlWhere where = null;
-    SqlUtils orderBy = null;
-
+  private static DataResult<WebPage> query(WebPageSpecification specification, DataConstraints constraints) {
+    Select select = DB.SELECT("web_pages.*").FROM(TABLE_NAME).WHERE();
     if (specification != null) {
-
-      where = DB.WHERE()
-          .andAddIfHasValue("LOWER(link) = ?", specification.getLink())
-          .andAddIfDataConstantExists("enabled = ?", specification.getEnabled())
-          .andAddIfDataConstantExists("draft = ?", specification.getDraft())
-          .andAddIfDataConstantExists("searchable = ?", specification.getSearchable())
-          .andAddIfDataConstantExists("show_in_sitemap = ?", specification.getInSitemap())
-          .andAddIfDataConstantExists("has_redirect = ?", specification.getHasRedirect());
-
+      if (StringUtils.isNotBlank(specification.getLink())) {
+        select.AND("LOWER(link) = ?", specification.getLink().trim().toLowerCase());
+      }
+      if (specification.getEnabled() != DataConstants.UNDEFINED) {
+        select.AND("enabled = ?", specification.getEnabled());
+      }
+      if (specification.getDraft() != DataConstants.UNDEFINED) {
+        select.AND("draft = ?", specification.getDraft());
+      }
+      if (specification.getSearchable() != DataConstants.UNDEFINED) {
+        select.AND("searchable = ?", specification.getSearchable());
+      }
+      if (specification.getInSitemap() != DataConstants.UNDEFINED) {
+        select.AND("show_in_sitemap = ?", specification.getInSitemap());
+      }
+      if (specification.getHasRedirect() != DataConstants.UNDEFINED) {
+        select.AND("has_redirect = ?", specification.getHasRedirect());
+      }
       if (specification.getRegionTags() != null && specification.getRegionTags().length > 0) {
-        where.AND("web_pages.tags", specification.getRegionTags(), SqlWhere.OR_OPERATOR);
+        ConditionGroup condition = ConditionGroup.build("web_pages.tags", specification.getRegionTags(), ConditionGroup.ANY);
+        if (condition != null) {
+          select.AND(condition.sql(), (Object[]) condition.values());
+        }
       }
-
       if (specification.getFilterTags() != null && specification.getFilterTags().length > 0) {
-        where.AND("web_pages.tags", specification.getFilterTags(), SqlWhere.AND_OPERATOR);
+        ConditionGroup filterCondition = ConditionGroup.build("web_pages.tags", specification.getFilterTags(), ConditionGroup.ALL);
+        if (filterCondition != null) {
+          select.AND(filterCondition.sql(), (Object[]) filterCondition.values());
+        }
       }
-
       if (specification.getExcludeTags() != null && specification.getExcludeTags().length > 0) {
-        where.AND("web_pages.tags", specification.getExcludeTags(), SqlWhere.NOT_OR_OPERATOR);
+        ConditionGroup excludeCondition = ConditionGroup.build("web_pages.tags", specification.getExcludeTags(),
+            ConditionGroup.NOT_ANY);
+        if (excludeCondition != null) {
+          select.AND(excludeCondition.sql(), (Object[]) excludeCondition.values());
+        }
       }
-
-      // Add modified date range filters
       if (specification.getModifiedAfter() != null) {
-        where.AND("web_pages.modified >= ?", specification.getModifiedAfter());
+        select.AND("web_pages.modified >= ?", specification.getModifiedAfter());
       }
       if (specification.getModifiedBefore() != null) {
-        where.AND("web_pages.modified <= ?", specification.getModifiedBefore());
+        select.AND("web_pages.modified <= ?", specification.getModifiedBefore());
       }
-
-      // Add modified by user filter
       if (specification.getModifiedByUserIds() != null && specification.getModifiedByUserIds().length > 0) {
+        long[] modifiedByUserIds = specification.getModifiedByUserIds();
         StringBuilder userCondition = new StringBuilder("web_pages.modified_by IN (");
-        Long[] userIdsBoxed = new Long[specification.getModifiedByUserIds().length];
-        for (int i = 0; i < specification.getModifiedByUserIds().length; i++) {
+        Object[] values = new Object[modifiedByUserIds.length];
+        for (int i = 0; i < modifiedByUserIds.length; i++) {
           if (i > 0) {
-            userCondition.append(",");
+            userCondition.append(", ");
           }
           userCondition.append("?");
-          userIdsBoxed[i] = specification.getModifiedByUserIds()[i];
+          values[i] = modifiedByUserIds[i];
         }
         userCondition.append(")");
-        where.AND(userCondition.toString(), (Object[]) userIdsBoxed);
+        select.AND(userCondition.toString(), values);
       }
-
       if (StringUtils.isNotBlank(specification.getSearchTerm())) {
-
         String term = specification.getSearchTerm().trim().toLowerCase();
-
-        String quotedSearchTerm = "\"" + term + "\"";
-        String searchTermSeparated = term.replaceAll("\\s+", " OR ");
-        String searchToUse = quotedSearchTerm + " OR " + searchTermSeparated;
-        String titleSearchPattern1 = term + "%";
-        String titleSearchPattern2 = "%" + term + "%";
-
-        select.add(
+        select.SELECT(
             "ts_headline('english', page_text, websearch_to_tsquery('web_page_stem', ?), 'StartSel=${b}, StopSel=${/b}, MaxWords=40, MinWords=30, ShortWord=3, HighlightAll=FALSE, MaxFragments=2, FragmentDelimiter=\" ... \"') AS highlight",
             term);
-        select.add(
+        select.SELECT(
             "(ts_rank_cd(web_pages.tsv, websearch_to_tsquery('web_page_stem', ?)) + CASE WHEN LOWER(web_pages.page_title) LIKE LOWER(?) THEN 200.0 ELSE 0.0 END + CASE WHEN LOWER(web_pages.page_title) LIKE LOWER(?) THEN 100.0 ELSE 0.0 END) AS rank",
-            new String[] { searchToUse, titleSearchPattern1, titleSearchPattern2 });
-
-        where.AND("web_pages.tsv @@ websearch_to_tsquery('web_page_stem', ?)", searchToUse);
-
-        // Override the order by for rank first
-        orderBy = new SqlUtils();
-        orderBy.add("rank DESC, web_pages.modified DESC");
+            term, term + "%", "%" + term + "%");
+        select.AND("web_pages.tsv @@ websearch_to_tsquery('web_page_stem', ?)", term);
+        select.ORDER_BY("rank DESC, web_pages.modified DESC");
       }
     }
-
-    return DB.selectAllFrom(TABLE_NAME, select, joins, where, orderBy, constraints, WebPageRepository::buildRecord);
+    if (constraints != null) {
+      select.WITH(constraints);
+    }
+    return select.returnDataResult(WebPageRepository::buildRecord);
   }
 
   public static WebPage findById(long id) {
     if (id == -1) {
       return null;
     }
-    return (WebPage) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("web_page_id = ?", id),
-        WebPageRepository::buildRecord);
+    return DB.SELECT("web_pages.*")
+        .FROM(TABLE_NAME)
+        .WHERE("web_page_id = ?", id)
+        .returnRecord(WebPageRepository::buildRecord);
   }
 
   public static WebPage findByLink(String link) {
     if (StringUtils.isBlank(link)) {
       return null;
     }
-    return (WebPage) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("LOWER(link) = ?", link),
-        WebPageRepository::buildRecord);
+    return DB.SELECT("web_pages.*")
+        .FROM(TABLE_NAME)
+        .WHERE("LOWER(link) = ?", link.trim().toLowerCase())
+        .returnRecord(WebPageRepository::buildRecord);
   }
 
   public static List<WebPage> findAll() {
@@ -174,8 +175,7 @@ public class WebPageRepository {
       constraints = new DataConstraints();
     }
     constraints.setDefaultColumnToSortBy("link");
-    DataResult result = query(specification, constraints);
-    return (List<WebPage>) result.getRecords();
+    return query(specification, constraints).getRecords();
   }
 
   /**
@@ -183,28 +183,24 @@ public class WebPageRepository {
    * @return List of unique tag strings, sorted alphabetically
    */
   public static List<String> findAllDistinctTags() {
-    String SQL_QUERY = "SELECT DISTINCT tag FROM ( " +
-        "SELECT jsonb_array_elements_text(tags) AS tag FROM web_pages WHERE tags IS NOT NULL AND enabled = true AND draft = false "
-        +
-        "UNION ALL " +
-        "SELECT jsonb_array_elements_text(tags) AS tag FROM items WHERE tags IS NOT NULL " +
-        ") AS all_tags " +
-        "WHERE tag IS NOT NULL AND tag <> '' " +
-        "ORDER BY tag";
-    List<String> tags = new ArrayList<>();
-    try (Connection connection = DB.getConnection();
-        PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
-        ResultSet rs = pst.executeQuery()) {
-      while (rs.next()) {
-        String tag = rs.getString("tag");
-        if (StringUtils.isNotBlank(tag)) {
-          tags.add(tag);
-        }
-      }
-    } catch (SQLException se) {
-      LOG.error("findAllDistinctTags", se);
-    }
-    return tags;
+    Select subquery = DB.SELECT("jsonb_array_elements_text(tags) AS tag")
+        .FROM("web_pages")
+        .WHERE("tags IS NOT NULL")
+        .AND("enabled = ?", true)
+        .AND("draft = ?", false)
+        .UNION_ALL(DB.SELECT("jsonb_array_elements_text(tags) AS tag")
+            .FROM("items")
+            .WHERE("tags IS NOT NULL"));
+
+    List<String> tags = DB.SELECT("DISTINCT tag")
+        .FROM(subquery)
+        .AS("all_tags")
+        .WHERE("tag IS NOT NULL")
+        .AND("tag <> ?", "")
+        .ORDER_BY("tag")
+        .returnList(rs -> rs.getString("tag"));
+
+    return tags.stream().filter(StringUtils::isNotBlank).toList();
   }
 
   public static WebPage save(WebPage record) {
@@ -219,30 +215,32 @@ public class WebPageRepository {
     if (link != null) {
       link = link.toLowerCase();
     }
-    SqlUtils insertValues = new SqlUtils()
-        .add("link", link)
-        .add("redirect_url", StringUtils.trimToNull(record.getRedirectUrl()))
-        .add("page_title", StringUtils.trimToNull(record.getTitle()))
-        .add("page_keywords", StringUtils.trimToNull(record.getKeywords()))
-        .add("page_description", StringUtils.trimToNull(record.getDescription()))
-        .add("draft", record.getDraft())
-        .add("enabled", record.isEnabled())
-        .add("searchable", record.isSearchable())
-        .add("show_in_sitemap", record.getShowInSitemap())
-        .add("created_by", record.getCreatedBy())
-        .add("role_id_list", record.getRoleIdList())
-        .add("page_xml", record.getPageXml())
-        .add("draft_page_xml", StringUtils.trimToNull(record.getDraftPageXml()))
-        .add("comments", record.getComments())
-        .add("page_image_url", record.getImageUrl())
-        .add("has_redirect", StringUtils.trimToNull(record.getRedirectUrl()) != null)
-        .add("sitemap_priority", record.getSitemapPriority())
-        .add("sitemap_changefreq", StringUtils.trimToNull(record.getSitemapChangeFrequency()));
+
+    Insert insert = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("link", link)
+        .FIELD("redirect_url", StringUtils.trimToNull(record.getRedirectUrl()))
+        .FIELD("page_title", StringUtils.trimToNull(record.getTitle()))
+        .FIELD("page_keywords", StringUtils.trimToNull(record.getKeywords()))
+        .FIELD("page_description", StringUtils.trimToNull(record.getDescription()))
+        .FIELD("draft", record.getDraft())
+        .FIELD("enabled", record.isEnabled())
+        .FIELD("searchable", record.isSearchable())
+        .FIELD("show_in_sitemap", record.getShowInSitemap())
+        .FIELD("created_by", record.getCreatedBy())
+        .FIELD("modified_by", record.getModifiedBy())
+        .FIELD("role_id_list", record.getRoleIdList())
+        .FIELD("page_xml", record.getPageXml())
+        .FIELD("draft_page_xml", StringUtils.trimToNull(record.getDraftPageXml()))
+        .FIELD("comments", record.getComments())
+        .FIELD("page_image_url", record.getImageUrl())
+        .FIELD("has_redirect", StringUtils.trimToNull(record.getRedirectUrl()) != null)
+        .FIELD("sitemap_priority", record.getSitemapPriority())
+        .FIELD("sitemap_changefreq", StringUtils.trimToNull(record.getSitemapChangeFrequency()));
     if (record.getTags() != null && record.getTags().length > 0) {
-      insertValues.add(new SqlValue("tags", SqlValue.JSONB_TYPE, JsonCommand.toJsonArray(record.getTags())));
+      insert.FIELD("tags", JsonCommand.toJsonArray(record.getTags()), CastType.JSONB);
     }
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
-    if (record.getId() == -1) {
+    record.setId(insert.execute());
+    if (record.getId() == Insert.NO_GENERATED_KEY) {
       LOG.error("An id was not set!");
       return null;
     }
@@ -256,34 +254,34 @@ public class WebPageRepository {
     }
     // Before the update, retrieve the existing link for this page in case it changed
     WebPage previousRecord = WebPageRepository.findById(record.getId());
-    // Update the record
-    SqlUtils updateValues = new SqlUtils()
-        .add("link", link)
-        .add("redirect_url", StringUtils.trimToNull(record.getRedirectUrl()))
-        .add("page_title", StringUtils.trimToNull(record.getTitle()))
-        .add("page_keywords", StringUtils.trimToNull(record.getKeywords()))
-        .add("page_description", StringUtils.trimToNull(record.getDescription()))
-        .add("draft", record.getDraft())
-        .add("enabled", record.isEnabled())
-        .add("searchable", record.isSearchable())
-        .add("show_in_sitemap", record.getShowInSitemap())
-        .add("modified", new Timestamp(System.currentTimeMillis()))
-        .add("modified_by", record.getModifiedBy())
-        .add("role_id_list", record.getRoleIdList())
-        .add("page_xml", record.getPageXml())
-        .add("draft_page_xml", StringUtils.trimToNull(record.getDraftPageXml()))
-        .add("comments", record.getComments())
-        .add("page_image_url", record.getImageUrl())
-        .add("has_redirect", StringUtils.trimToNull(record.getRedirectUrl()) != null)
-        .add("sitemap_priority", record.getSitemapPriority())
-        .add("sitemap_changefreq", StringUtils.trimToNull(record.getSitemapChangeFrequency()));
+
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("link", link)
+        .SET("redirect_url", StringUtils.trimToNull(record.getRedirectUrl()))
+        .SET("page_title", StringUtils.trimToNull(record.getTitle()))
+        .SET("page_keywords", StringUtils.trimToNull(record.getKeywords()))
+        .SET("page_description", StringUtils.trimToNull(record.getDescription()))
+        .SET("draft", record.getDraft())
+        .SET("enabled", record.isEnabled())
+        .SET("searchable", record.isSearchable())
+        .SET("show_in_sitemap", record.getShowInSitemap())
+        .SET("modified", new Timestamp(System.currentTimeMillis()))
+        .SET("modified_by", record.getModifiedBy())
+        .SET("role_id_list", record.getRoleIdList())
+        .SET("page_xml", record.getPageXml())
+        .SET("draft_page_xml", StringUtils.trimToNull(record.getDraftPageXml()))
+        .SET("comments", record.getComments())
+        .SET("page_image_url", record.getImageUrl())
+        .SET("has_redirect", StringUtils.trimToNull(record.getRedirectUrl()) != null)
+        .SET("sitemap_priority", record.getSitemapPriority())
+        .SET("sitemap_changefreq", StringUtils.trimToNull(record.getSitemapChangeFrequency()));
     if (record.getTags() != null && record.getTags().length > 0) {
-      updateValues.add(new SqlValue("tags", SqlValue.JSONB_TYPE, JsonCommand.toJsonArray(record.getTags())));
+      update.SET("tags", JsonCommand.toJsonArray(record.getTags()), CastType.JSONB);
     } else {
-      updateValues.add(new SqlValue("tags", SqlValue.JSONB_TYPE, null));
+      update.SET("tags", (String) null, CastType.JSONB);
     }
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("web_page_id = ?", record.getId()))) {
-      // Force the page(s) to re-cache
+    update.WHERE("web_page_id = ?", record.getId());
+    if (update.execute().booleanValue()) {
       if (previousRecord != null) {
         WebPageXmlLayoutCommand.removeCustomPage(previousRecord.getLink());
       }
@@ -298,12 +296,12 @@ public class WebPageRepository {
     if (record.getId() == -1) {
       return;
     }
-    // Handle publishing and making sure there is content to publish
-    if (DB.update(
-        TABLE_NAME,
-        "page_xml = draft_page_xml, draft_page_xml = null, draft = false",
-        DB.WHERE("draft_page_xml IS NOT NULL AND web_page_id = ?", record.getId()))) {
-      // Force the page to re-cache
+    if (DB.UPDATE(TABLE_NAME)
+        .SET("page_xml = draft_page_xml")
+        .SET("draft_page_xml = null")
+        .SET("draft = false")
+        .WHERE("draft_page_xml IS NOT NULL AND web_page_id = ?", record.getId())
+        .execute().booleanValue()) {
       WebPageXmlLayoutCommand.removeCustomPage(record.getLink());
     }
   }
@@ -317,15 +315,14 @@ public class WebPageRepository {
         && record.getModified().equals(record.getCreated());
 
     long modified = System.currentTimeMillis();
-    SqlUtils updateValues = new SqlUtils()
-        .add("modified", new Timestamp(modified))
-        .add("modified_by", userId);
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("modified", new Timestamp(modified))
+        .SET("modified_by", userId);
     if (isFirstPublishAfterCreation) {
-      updateValues
-          .add("searchable", true)
-          .add("show_in_sitemap", true);
+      update.SET("searchable", true)
+          .SET("show_in_sitemap", true);
     }
-    DB.update(TABLE_NAME, updateValues, DB.WHERE("web_page_id = ?", record.getId()));
+    update.WHERE("web_page_id = ?", record.getId()).execute();
     // Now update the record for additional workflows
     record.setModifiedBy(userId);
     record.setModified(new Timestamp(modified));
@@ -340,11 +337,12 @@ public class WebPageRepository {
       return false;
     }
     // Explicitly set enabled to false (archived)
-    SqlUtils updateValues = new SqlUtils()
-        .add("enabled", false)
-        .add("modified", new Timestamp(System.currentTimeMillis()))
-        .add("modified_by", userId);
-    boolean updated = DB.update(TABLE_NAME, updateValues, DB.WHERE("web_page_id = ?", record.getId()));
+    boolean updated = DB.UPDATE(TABLE_NAME)
+        .SET("enabled", false)
+        .SET("modified", new Timestamp(System.currentTimeMillis()))
+        .SET("modified_by", userId)
+        .WHERE("web_page_id = ?", record.getId())
+        .execute();
     if (updated) {
       record.setEnabled(false);
       record.setModifiedBy(userId);
@@ -360,11 +358,12 @@ public class WebPageRepository {
       return false;
     }
     // Explicitly set enabled to true (unarchived)
-    SqlUtils updateValues = new SqlUtils()
-        .add("enabled", true)
-        .add("modified", new Timestamp(System.currentTimeMillis()))
-        .add("modified_by", userId);
-    boolean updated = DB.update(TABLE_NAME, updateValues, DB.WHERE("web_page_id = ?", record.getId()));
+    boolean updated = DB.UPDATE(TABLE_NAME)
+        .SET("enabled", true)
+        .SET("modified", new Timestamp(System.currentTimeMillis()))
+        .SET("modified_by", userId)
+        .WHERE("web_page_id = ?", record.getId())
+        .execute();
     if (updated) {
       record.setEnabled(true);
       record.setModifiedBy(userId);
@@ -378,9 +377,12 @@ public class WebPageRepository {
     if (record == null || record.getId() == -1) {
       return;
     }
-    String setValues = "draft_page_xml = null, draft = false";
-    if (DB.update(TABLE_NAME, setValues, DB.WHERE("web_page_id = ?", record.getId()))) {
-      // Force the page to re-cache
+    if (DB.UPDATE(TABLE_NAME)
+        .SET("draft_page_xml", (String) null)
+        .SET("draft", false)
+        .WHERE("web_page_id = ?", record.getId())
+        .execute()) {
+      // Forces the page to re-cache
       WebPageXmlLayoutCommand.removeCustomPage(record.getLink());
     }
   }
@@ -397,7 +399,10 @@ public class WebPageRepository {
       WebPageHierarchyRepository.remove(connection, record);
       WebPageVersionRepository.removeAll(connection, record);
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("web_page_id = ?", record.getId()));
+      DB.DELETE()
+          .FROM(TABLE_NAME)
+          .WHERE("web_page_id = ?", record.getId())
+          .execute(connection);
       // Finish transaction
       transaction.commit();
       // Force the page to re-cache
@@ -413,9 +418,10 @@ public class WebPageRepository {
     if (id == -1) {
       return;
     }
-    SqlUtils updateValues = new SqlUtils()
-        .add("page_text", generatedText);
-    DB.update(TABLE_NAME, updateValues, DB.WHERE("web_page_id = ?", id));
+    DB.UPDATE(TABLE_NAME)
+        .SET("page_text", generatedText)
+        .WHERE("web_page_id = ?", id)
+        .execute();
   }
 
   private static WebPage buildRecord(ResultSet rs) {
@@ -460,14 +466,9 @@ public class WebPageRepository {
       return new ArrayList<>();
     }
     // Query for pages where pageXml contains the uniqueId reference
-    SqlWhere where = DB.WHERE();
-    where.AND("(page_xml LIKE ? OR draft_page_xml LIKE ?)",
-        new String[] { "%" + contentUniqueId + "%", "%" + contentUniqueId + "%" });
-    return (List<WebPage>) DB.selectAllFrom(
-        TABLE_NAME,
-        where,
-        new DataConstraints(),
-        WebPageRepository::buildRecord).getRecords();
+    return DB.SELECT().FROM(TABLE_NAME)
+        .WHERE("(page_xml LIKE ? OR draft_page_xml LIKE ?)", "%" + contentUniqueId + "%", "%" + contentUniqueId + "%")
+        .returnList(WebPageRepository::buildRecord);
   }
 
   public static List<WebPage> findIndirectlyAffectedPagesByContentUniqueId(String contentUniqueId) {

@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,7 +18,7 @@
 package com.simisinc.platform.application.ecommerce;
 
 import com.simisinc.platform.domain.model.ecommerce.Product;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.ecommerce.ProductRepository;
 import com.simisinc.platform.infrastructure.persistence.ecommerce.ProductSpecification;
 import org.apache.commons.logging.Log;

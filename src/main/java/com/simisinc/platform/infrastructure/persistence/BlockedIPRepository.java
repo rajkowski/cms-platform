@@ -17,6 +17,7 @@
 package com.simisinc.platform.infrastructure.persistence;
 
 import java.io.File;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -26,13 +27,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
+import com.github.rajkowski.database.Insert;
+import com.github.rajkowski.database.Select;
+import com.github.rajkowski.database.Update;
 import com.simisinc.platform.domain.model.BlockedIP;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves blocked IP objects
@@ -47,8 +50,12 @@ public class BlockedIPRepository {
   private static String TABLE_NAME = "block_list";
   private static String[] PRIMARY_KEY = new String[] { "block_list_id" };
 
-  private static DataResult query(DataConstraints constraints) {
-    return DB.selectAllFrom(TABLE_NAME, null, constraints, BlockedIPRepository::buildRecord);
+  private static DataResult<BlockedIP> query(DataConstraints constraints) {
+    Select select = DB.SELECT("block_list.*").FROM(TABLE_NAME);
+    if (constraints != null) {
+      select.WITH(constraints);
+    }
+    return select.returnDataResult(BlockedIPRepository::buildRecord);
   }
 
   public static List<BlockedIP> findAll() {
@@ -60,28 +67,27 @@ public class BlockedIPRepository {
       constraints = new DataConstraints();
     }
     constraints.setDefaultColumnToSortBy("created DESC");
-    DataResult result = query(constraints);
-    return (List<BlockedIP>) result.getRecords();
+    return query(constraints).getRecords();
   }
 
   public static BlockedIP findById(long id) {
     if (id == -1) {
       return null;
     }
-    return (BlockedIP) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("block_list_id = ?", id),
-        BlockedIPRepository::buildRecord);
+    return DB.SELECT("block_list.*")
+        .FROM(TABLE_NAME)
+        .WHERE("block_list_id = ?", id)
+        .returnRecord(BlockedIPRepository::buildRecord);
   }
 
   public static BlockedIP findByIpAddress(String ipAddress) {
     if (StringUtils.isBlank(ipAddress)) {
       return null;
     }
-    return (BlockedIP) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("ip_address = ?", ipAddress),
-        BlockedIPRepository::buildRecord);
+    return DB.SELECT("block_list.*")
+        .FROM(TABLE_NAME)
+        .WHERE("ip_address = ?", ipAddress)
+        .returnRecord(BlockedIPRepository::buildRecord);
   }
 
   public static BlockedIP save(BlockedIP record) {
@@ -92,11 +98,11 @@ public class BlockedIPRepository {
   }
 
   public static BlockedIP add(BlockedIP record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("ip_address", StringUtils.trimToNull(record.getIpAddress()))
-        .addIfExists("reason", StringUtils.trimToNull(record.getReason()))
-        .addIfExists("created", record.getCreated());
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    Insert insert = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("ip_address", StringUtils.trimToNull(record.getIpAddress()))
+        .FIELD("reason", StringUtils.trimToNull(record.getReason()))
+        .FIELD("created", record.getCreated());
+    record.setId(insert.execute());
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -105,11 +111,11 @@ public class BlockedIPRepository {
   }
 
   public static BlockedIP update(BlockedIP record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("ip_address", StringUtils.trimToNull(record.getIpAddress()))
-        .addIfExists("reason", StringUtils.trimToNull(record.getReason()));
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("block_list_id = ?", record.getId()))) {
-      //      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("ip_address", StringUtils.trimToNull(record.getIpAddress()))
+        .SET("reason", StringUtils.trimToNull(record.getReason()))
+        .WHERE("block_list_id = ?", record.getId());
+    if (update.execute().booleanValue()) {
       return record;
     }
     LOG.error("The update failed!");
@@ -120,13 +126,7 @@ public class BlockedIPRepository {
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
-      // Delete the references
-      //        ItemCategoryRepository.removeAll(connection, record);
-      //        CollectionRepository.updateItemCount(connection, record.getCollectionId(), -1);
-      //        CategoryRepository.updateItemCount(connection, record.getCategoryId(), -1);
-      // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("block_list_id = ?", record.getId()));
-      // Finish transaction
+      DB.DELETE().FROM(TABLE_NAME).WHERE("block_list_id = ?", record.getId()).execute(connection);
       transaction.commit();
       return true;
     } catch (SQLException se) {
@@ -150,16 +150,20 @@ public class BlockedIPRepository {
   }
 
   public static void export(DataConstraints constraints, File file) {
-    // Use the specification to filter results
     if (constraints == null) {
       constraints = new DataConstraints();
     }
     constraints.setDefaultColumnToSortBy("block_list_id");
-    DB.exportToCsvAllFrom(TABLE_NAME,
-        DB.SELECT(
-            "ip_address AS \"IP Address\"",
-            "created AS \"Date\"",
-            "reason AS \"Reason\""),
-        null, null, null, constraints, file);
+    List<BlockedIP> records = findAll(constraints);
+    try (java.io.FileWriter writer = new java.io.FileWriter(file)) {
+      writer.write("IP Address,Date,Reason\n");
+      for (BlockedIP record : records) {
+        writer.write((record.getIpAddress() == null ? "" : record.getIpAddress()) + ","
+            + (record.getCreated() == null ? "" : record.getCreated()) + ","
+            + (record.getReason() == null ? "" : record.getReason().replace(",", " ")) + "\n");
+      }
+    } catch (IOException e) {
+      LOG.error("SQLException: " + e.getMessage(), e);
+    }
   }
 }

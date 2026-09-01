@@ -24,8 +24,8 @@ import java.sql.SQLException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
 import com.simisinc.platform.application.json.JsonCommand;
-import com.simisinc.platform.infrastructure.database.DB;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
 import com.zeroio.platform.infrastructure.permission.Permission;

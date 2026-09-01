@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,15 +28,16 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
+import com.github.rajkowski.database.Insert;
+import com.github.rajkowski.database.Select;
+import com.github.rajkowski.database.Update;
 import com.simisinc.platform.domain.model.items.Category;
 import com.simisinc.platform.domain.model.items.Collection;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves category objects
@@ -54,21 +56,21 @@ public class CategoryRepository {
     if (id == -1) {
       return null;
     }
-    return (Category) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("category_id = ?", id),
-        CategoryRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("category_id = ?", id)
+        .returnRecord(CategoryRepository::buildRecord);
   }
 
   public static Category findByUniqueIdWithinCollection(String uniqueId, long collectionId) {
     if (StringUtils.isBlank(uniqueId)) {
       return null;
     }
-    return (Category) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("collection_id = ?", collectionId)
-            .AND("unique_id = ?", uniqueId),
-        CategoryRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("collection_id = ?", collectionId)
+        .AND("unique_id = ?", uniqueId)
+        .returnRecord(CategoryRepository::buildRecord);
   }
 
   public static Category findByNameWithinCollection(String name, long collectionId) {
@@ -78,23 +80,23 @@ public class CategoryRepository {
     if (StringUtils.isBlank(name)) {
       return null;
     }
-    return (Category) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("collection_id = ?", collectionId)
-            .AND("LOWER(name) = ?", name.trim().toLowerCase()),
-        CategoryRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("collection_id = ?", collectionId)
+        .AND("LOWER(name) = ?", name.trim().toLowerCase())
+        .returnRecord(CategoryRepository::buildRecord);
   }
 
   public static List<Category> findAllByItemId(long itemId) {
     if (itemId == -1) {
       return null;
     }
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        DB.WHERE("EXISTS (SELECT 1 FROM item_categories WHERE category_id = categories.category_id AND item_id = ?)", itemId),
-        new DataConstraints().setDefaultColumnToSortBy("name").setUseCount(false),
-        CategoryRepository::buildRecord);
-    return (List<Category>) result.getRecords();
+    DataResult<Category> result = DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("EXISTS (SELECT 1 FROM item_categories WHERE category_id = categories.category_id AND item_id = ?)", itemId)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("name").setUseCount(false))
+        .returnDataResult(CategoryRepository::buildRecord);
+    return result.getRecords();
   }
 
   public static List<Category> findAllByCollectionId(long collectionId) {
@@ -105,27 +107,25 @@ public class CategoryRepository {
     if (collectionId == -1) {
       return null;
     }
-    SqlWhere where = DB.WHERE("collection_id = ?", collectionId);
+    Select select = DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("collection_id = ?", collectionId);
     if (basedOnItems) {
-      where.AND("item_count > 0");
-      //      where.add("EXISTS (SELECT 1 FROM items WHERE category_id = items.category_id AND collection_id = ?)", collectionId);
+      select.AND("item_count > 0");
     }
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        where,
-        new DataConstraints().setDefaultColumnToSortBy("name").setUseCount(false),
-        CategoryRepository::buildRecord);
-    return (List<Category>) result.getRecords();
+    DataResult<Category> result = select
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("name").setUseCount(false))
+        .returnDataResult(CategoryRepository::buildRecord);
+    return result.getRecords();
   }
 
   public static List<Category> findAll() {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        null,
-        new DataConstraints().setDefaultColumnToSortBy("name"),
-        CategoryRepository::buildRecord);
+    DataResult<Category> result = DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("name"))
+        .returnDataResult(CategoryRepository::buildRecord);
     if (result.hasRecords()) {
-      return (List<Category>) result.getRecords();
+      return result.getRecords();
     }
     return null;
   }
@@ -146,7 +146,7 @@ public class CategoryRepository {
       // Update pointers
       CollectionRepository.updateCategoryCount(connection, record.getCollectionId(), -1);
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("category_id = ?", record.getId()));
+      DB.DELETE().FROM(TABLE_NAME).WHERE("category_id = ?", record.getId()).execute(connection);
       // Finish transaction
       transaction.commit();
       return true;
@@ -157,25 +157,29 @@ public class CategoryRepository {
   }
 
   public static void removeAll(Connection connection, Collection record) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("collection_id = ?", record.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("collection_id = ?", record.getId()).execute(connection);
   }
 
   private static Category insert(Category record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("collection_id", record.getCollectionId())
-        .add("unique_id", StringUtils.trimToNull(record.getUniqueId()))
-        .add("name", StringUtils.trimToNull(record.getName()))
-        .add("description", StringUtils.trimToNull(record.getDescription()))
-        .add("created_by", record.getCreatedBy())
-        .add("icon", StringUtils.trimToNull(record.getIcon()))
-        .addIfExists("header_text_color", record.getHeaderTextColor())
-        .addIfExists("header_bg_color", record.getHeaderBgColor())
-        .add("item_url_text", StringUtils.trimToNull(record.getItemUrlText()));
+    Insert insert = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("collection_id", record.getCollectionId())
+        .FIELD("unique_id", StringUtils.trimToNull(record.getUniqueId()))
+        .FIELD("name", StringUtils.trimToNull(record.getName()))
+        .FIELD("description", StringUtils.trimToNull(record.getDescription()))
+        .FIELD("created_by", record.getCreatedBy())
+        .FIELD("icon", StringUtils.trimToNull(record.getIcon()));
+    if (record.getHeaderTextColor() != null) {
+      insert.FIELD("header_text_color", record.getHeaderTextColor());
+    }
+    if (record.getHeaderBgColor() != null) {
+      insert.FIELD("header_bg_color", record.getHeaderBgColor());
+    }
+    insert.FIELD("item_url_text", StringUtils.trimToNull(record.getItemUrlText()));
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
       // Insert the record
-      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+      record.setId(insert.execute(connection));
       // Update the pointer
       CollectionRepository.updateCategoryCount(connection, record.getCollectionId(), 1);
       // Finish transaction
@@ -188,16 +192,17 @@ public class CategoryRepository {
   }
 
   private static Category update(Category record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("unique_id", StringUtils.trimToNull(record.getUniqueId()))
-        .add("name", StringUtils.trimToNull(record.getName()))
-        .add("description", StringUtils.trimToNull(record.getDescription()))
-        .add("icon", StringUtils.trimToNull(record.getIcon()))
-        .add("header_text_color", StringUtils.trimToNull(record.getHeaderTextColor()))
-        .add("header_bg_color", StringUtils.trimToNull(record.getHeaderBgColor()))
-        .add("item_url_text", StringUtils.trimToNull(record.getItemUrlText()))
-        .add("modified", new Timestamp(System.currentTimeMillis()));
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("category_id = ?", record.getId()))) {
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("unique_id", StringUtils.trimToNull(record.getUniqueId()))
+        .SET("name", StringUtils.trimToNull(record.getName()))
+        .SET("description", StringUtils.trimToNull(record.getDescription()))
+        .SET("icon", StringUtils.trimToNull(record.getIcon()))
+        .SET("header_text_color", StringUtils.trimToNull(record.getHeaderTextColor()))
+        .SET("header_bg_color", StringUtils.trimToNull(record.getHeaderBgColor()))
+        .SET("item_url_text", StringUtils.trimToNull(record.getItemUrlText()))
+        .SET("modified", new Timestamp(System.currentTimeMillis()))
+        .WHERE("category_id = ?", record.getId());
+    if (update.execute().booleanValue()) {
       return record;
     }
     LOG.error("The update failed!");

@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,15 +27,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
 import com.simisinc.platform.application.cms.LoadStylesheetCommand;
 import com.simisinc.platform.domain.model.cms.Stylesheet;
 import com.simisinc.platform.infrastructure.cache.CacheManager;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves style sheet objects
@@ -53,29 +53,31 @@ public class StylesheetRepository {
     if (id == -1) {
       return null;
     }
-    return (Stylesheet) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("stylesheet_id = ?", id),
-        StylesheetRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("stylesheet_id = ?", id)
+        .returnRecord(StylesheetRepository::buildRecord);
   }
 
   public static Stylesheet findByWebPageId(long webPageId) {
-    return (Stylesheet) DB.selectRecordFrom(
-        TABLE_NAME,
-        (webPageId > 0 ? DB.WHERE("web_page_id = ?", webPageId) : DB.WHERE("web_page_id IS NULL")),
-        StylesheetRepository::buildRecord);
+    if (webPageId > 0) {
+      return DB.SELECT("*")
+          .FROM(TABLE_NAME)
+          .WHERE("web_page_id = ?", webPageId)
+          .returnRecord(StylesheetRepository::buildRecord);
+    }
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("web_page_id IS NULL")
+        .returnRecord(StylesheetRepository::buildRecord);
   }
 
   public static List<Stylesheet> findAll() {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        null,
-        new DataConstraints().setDefaultColumnToSortBy("stylesheet_id"),
-        StylesheetRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<Stylesheet>) result.getRecords();
-    }
-    return null;
+    DataResult<Stylesheet> result = DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("stylesheet_id"))
+        .returnDataResult(StylesheetRepository::buildRecord);
+    return result.getRecords();
   }
 
   public static Stylesheet save(Stylesheet record) {
@@ -92,11 +94,12 @@ public class StylesheetRepository {
 
   private static Stylesheet add(Stylesheet record) {
     Timestamp modified = new Timestamp(System.currentTimeMillis());
-    SqlUtils insertValues = new SqlUtils()
-        .add("web_page_id", record.getWebPageId(), -1)
-        .add("css", StringUtils.trimToNull(record.getCss()))
-        .add("modified", modified);
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    long id = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("web_page_id", record.getWebPageId() == -1 ? null : record.getWebPageId())
+        .FIELD("css", StringUtils.trimToNull(record.getCss()))
+        .FIELD("modified", modified)
+        .execute();
+    record.setId(id);
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -109,10 +112,12 @@ public class StylesheetRepository {
 
   private static Stylesheet update(Stylesheet record) {
     Timestamp modified = new Timestamp(System.currentTimeMillis());
-    SqlUtils updateValues = new SqlUtils()
-        .add("css", StringUtils.trimToNull(record.getCss()))
-        .add("modified", modified);
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("stylesheet_id = ?", record.getId()))) {
+    boolean updated = DB.UPDATE(TABLE_NAME)
+        .SET("css", StringUtils.trimToNull(record.getCss()))
+        .SET("modified", modified)
+        .WHERE("stylesheet_id = ?", record.getId())
+        .execute();
+    if (updated) {
       CacheManager.invalidateKey(CacheManager.STYLESHEET_WEB_PAGE_ID_CACHE, record.getWebPageId());
       LoadStylesheetCommand.markStylesheetExists(record.getWebPageId(), true);
       record.setModified(modified);
@@ -131,7 +136,7 @@ public class StylesheetRepository {
       // CollectionRepository.updateItemCount(connection, record.getCollectionId(), -1);
       // CategoryRepository.updateItemCount(connection, record.getCategoryId(), -1);
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("stylesheet_id = ?", record.getId()));
+      DB.DELETE().FROM(TABLE_NAME).WHERE("stylesheet_id = ?", record.getId()).execute(connection);
       // Finish transaction
       transaction.commit();
       CacheManager.invalidateKey(CacheManager.STYLESHEET_WEB_PAGE_ID_CACHE, record.getWebPageId());

@@ -21,11 +21,11 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.application.cms.LoadSubFolderCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.FileItem;
 import com.simisinc.platform.domain.model.cms.SubFolder;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.cms.FileItemRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.FileSpecification;
 import com.simisinc.platform.presentation.controller.WidgetContext;

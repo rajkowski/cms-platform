@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,17 +17,7 @@
 
 package com.simisinc.platform.presentation.widgets.calendar;
 
-import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
-import com.simisinc.platform.domain.model.cms.Calendar;
-import com.simisinc.platform.domain.model.cms.CalendarEvent;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.persistence.cms.CalendarEventRepository;
-import com.simisinc.platform.infrastructure.persistence.cms.CalendarEventSpecification;
-import com.simisinc.platform.infrastructure.persistence.cms.CalendarRepository;
-import com.simisinc.platform.presentation.controller.RequestConstants;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import org.apache.commons.lang3.StringUtils;
+import static java.util.stream.Collectors.toList;
 
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -35,7 +26,18 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.toList;
+import org.apache.commons.lang3.StringUtils;
+
+import com.github.rajkowski.database.DataConstraints;
+import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
+import com.simisinc.platform.domain.model.cms.Calendar;
+import com.simisinc.platform.domain.model.cms.CalendarEvent;
+import com.simisinc.platform.infrastructure.persistence.cms.CalendarEventRepository;
+import com.simisinc.platform.infrastructure.persistence.cms.CalendarEventSpecification;
+import com.simisinc.platform.infrastructure.persistence.cms.CalendarRepository;
+import com.simisinc.platform.presentation.controller.RequestConstants;
+import com.simisinc.platform.presentation.controller.WidgetContext;
+import com.simisinc.platform.presentation.widgets.GenericWidget;
 
 /**
  * A widget for displaying a list of upcoming events
@@ -64,7 +66,7 @@ public class UpcomingCalendarEventsWidget extends GenericWidget {
     } else {
       CalendarEvent today = new CalendarEvent();
       today.setTitle("No events were found");
-//      today.setSummary("No events were found");
+      //      today.setSummary("No events were found");
       today.setAllDay(true);
       today.setStartDate(eventSpecification.getStartingDateRange());
       today.setEndDate(eventSpecification.getStartingDateRange());

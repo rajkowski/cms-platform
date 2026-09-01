@@ -24,12 +24,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
+import com.github.rajkowski.database.Select;
 import com.simisinc.platform.domain.model.maps.WorldCity;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves world city objects
@@ -43,23 +42,23 @@ public class WorldCityRepository {
 
   private static String TABLE_NAME = "world_cities";
 
-  private static DataResult query(WorldCitySpecification specification, DataConstraints constraints) {
-    SqlUtils select = new SqlUtils();
-    SqlWhere where = DB.WHERE();
-    SqlUtils orderBy = new SqlUtils();
+  private static DataResult<WorldCity> query(WorldCitySpecification specification, DataConstraints constraints) {
+    Select select = DB.SELECT("*").FROM(TABLE_NAME).WHERE();
     if (specification != null) {
       if (specification.getCity() != null) {
-        where.AND("city = ?", specification.getCity().toLowerCase());
+        select.AND("city = ?", specification.getCity().toLowerCase());
       }
       if (specification.getRegion() != null) {
-        where.AND("region = ?", specification.getRegion().toUpperCase());
+        select.AND("region = ?", specification.getRegion().toUpperCase());
       }
       if (specification.getSearchCity() != null) {
-        where.AND("city LIKE ?", specification.getSearchCity().toLowerCase() + "%");
+        select.AND("city LIKE ?", specification.getSearchCity().toLowerCase() + "%");
       }
     }
-    return DB.selectAllFrom(
-        TABLE_NAME, select, where, orderBy, constraints, WorldCityRepository::buildRecord);
+    if (constraints != null) {
+      select.WITH(constraints);
+    }
+    return select.returnDataResult(WorldCityRepository::buildRecord);
   }
 
   public static List<WorldCity> findAll(WorldCitySpecification specification, DataConstraints constraints) {
@@ -67,26 +66,23 @@ public class WorldCityRepository {
       constraints = new DataConstraints();
     }
     constraints.setDefaultColumnToSortBy("population desc");
-    DataResult result = query(specification, constraints);
-    return (List<WorldCity>) result.getRecords();
+    return query(specification, constraints).getRecords();
   }
 
   public static WorldCity findByCityRegionCountry(String city, String region, String country) {
     if (StringUtils.isBlank(city)) {
       return null;
     }
-    SqlWhere where = DB.WHERE();
-    where.AND("city = ?", city.toLowerCase());
+    Select select = DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("city = ?", city.toLowerCase());
     if (region != null) {
-      where.AND("region = ?", region.toUpperCase());
+      select.AND("region = ?", region.toUpperCase());
     }
     if (country != null) {
-      where.AND("country = ?", country.toLowerCase());
+      select.AND("country = ?", country.toLowerCase());
     }
-    return (WorldCity) DB.selectRecordFrom(
-        TABLE_NAME,
-        where,
-        WorldCityRepository::buildRecord);
+    return select.returnRecord(WorldCityRepository::buildRecord);
   }
 
   private static WorldCity buildRecord(ResultSet rs) {

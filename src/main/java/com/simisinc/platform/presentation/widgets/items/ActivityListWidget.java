@@ -16,20 +16,20 @@
 
 package com.simisinc.platform.presentation.widgets.items;
 
+import java.util.Collections;
+import java.util.List;
+
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.application.cms.FormatDateCommand;
 import com.simisinc.platform.application.items.ActivityListCommand;
 import com.simisinc.platform.application.items.LoadItemCommand;
 import com.simisinc.platform.domain.model.items.Activity;
 import com.simisinc.platform.domain.model.items.Item;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.items.ActivityRepository;
 import com.simisinc.platform.infrastructure.persistence.items.ActivitySpecification;
 import com.simisinc.platform.presentation.controller.RequestConstants;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
 import com.simisinc.platform.presentation.controller.WidgetContext;
-
-import java.util.Collections;
-import java.util.List;
+import com.simisinc.platform.presentation.widgets.GenericWidget;
 
 /**
  * Description

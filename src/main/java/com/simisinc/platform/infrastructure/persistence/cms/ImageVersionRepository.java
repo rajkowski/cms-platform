@@ -25,11 +25,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.Insert;
+import com.github.rajkowski.database.Update;
 import com.simisinc.platform.domain.model.cms.Image;
 import com.simisinc.platform.domain.model.cms.ImageVersion;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves image version objects
@@ -48,21 +49,21 @@ public class ImageVersionRepository {
     if (id == -1) {
       return null;
     }
-    return (ImageVersion) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("version_id = ?", id),
-        ImageVersionRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("version_id = ?", id)
+        .returnRecord(ImageVersionRepository::buildRecord);
   }
 
   public static List<ImageVersion> findAllByImageId(long imageId) {
     if (imageId == -1) {
       return null;
     }
-    return (List<ImageVersion>) DB.selectAllFrom(
-        TABLE_NAME,
-        DB.WHERE("image_id = ?", imageId),
-        new DataConstraints().setDefaultColumnToSortBy("version_number DESC"),
-        ImageVersionRepository::buildRecord).getRecords();
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("image_id = ?", imageId)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("version_number DESC"))
+        .returnDataResult(ImageVersionRepository::buildRecord).getRecords();
   }
 
   public static ImageVersion save(ImageVersion record) {
@@ -73,19 +74,19 @@ public class ImageVersionRepository {
   }
 
   private static ImageVersion add(ImageVersion record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("image_id", record.getImageId())
-        .add("version_number", record.getVersionNumber())
-        .add("filename", StringUtils.trimToNull(record.getFilename()))
-        .add("path", StringUtils.trimToNull(record.getFileServerPath()))
-        .add("file_length", record.getFileLength())
-        .add("file_type", record.getFileType())
-        .add("width", record.getWidth())
-        .add("height", record.getHeight())
-        .add("is_current", record.getIsCurrent())
-        .add("created_by", record.getCreatedBy())
-        .add("notes", StringUtils.trimToNull(record.getNotes()));
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    Insert insert = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("image_id", record.getImageId())
+        .FIELD("version_number", record.getVersionNumber())
+        .FIELD("filename", StringUtils.trimToNull(record.getFilename()))
+        .FIELD("path", StringUtils.trimToNull(record.getFileServerPath()))
+        .FIELD("file_length", record.getFileLength())
+        .FIELD("file_type", record.getFileType())
+        .FIELD("width", record.getWidth())
+        .FIELD("height", record.getHeight())
+        .FIELD("is_current", record.getIsCurrent())
+        .FIELD("created_by", record.getCreatedBy())
+        .FIELD("notes", StringUtils.trimToNull(record.getNotes()));
+    record.setId(insert.execute());
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -94,10 +95,11 @@ public class ImageVersionRepository {
   }
 
   private static ImageVersion update(ImageVersion record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("is_current", record.getIsCurrent())
-        .add("notes", StringUtils.trimToNull(record.getNotes()));
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("version_id = ?", record.getId()))) {
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("is_current", record.getIsCurrent())
+        .SET("notes", StringUtils.trimToNull(record.getNotes()))
+        .WHERE("version_id = ?", record.getId());
+    if (update.execute().booleanValue()) {
       return record;
     }
     LOG.error("The update failed!");
@@ -105,17 +107,18 @@ public class ImageVersionRepository {
   }
 
   public static void remove(ImageVersion record) {
-    DB.deleteFrom(TABLE_NAME, DB.WHERE("version_id = ?", record.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("version_id = ?", record.getId()).execute();
   }
 
   public static void removeAll(Connection connection, Image record) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("image_id = ?", record.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("image_id = ?", record.getId()).execute(connection);
   }
 
   public static boolean markAsNotCurrent(long imageId) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("is_current", false);
-    return DB.update(TABLE_NAME, updateValues, DB.WHERE("image_id = ?", imageId));
+    return DB.UPDATE(TABLE_NAME)
+        .SET("is_current", false)
+        .WHERE("image_id = ?", imageId)
+        .execute();
   }
 
   private static ImageVersion buildRecord(ResultSet rs) {

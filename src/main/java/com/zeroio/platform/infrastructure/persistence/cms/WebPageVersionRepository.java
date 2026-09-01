@@ -24,11 +24,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
 import com.simisinc.platform.domain.model.cms.WebPage;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 import com.zeroio.platform.domain.model.cms.WebPageVersion;
 
 /**
@@ -48,10 +47,10 @@ public class WebPageVersionRepository {
     if (id <= 0) {
       return null;
     }
-    return (WebPageVersion) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("version_id = ?", id),
-        WebPageVersionRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("version_id = ?", id)
+        .returnRecord(WebPageVersionRepository::buildRecord);
   }
 
   public static List<WebPageVersion> findAllByWebPageId(long webPageId) {
@@ -60,11 +59,11 @@ public class WebPageVersionRepository {
     }
     DataConstraints constraints = new DataConstraints();
     constraints.setDefaultColumnToSortBy("created DESC");
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        DB.WHERE("web_page_id = ?", webPageId),
-        constraints,
-        WebPageVersionRepository::buildRecord);
+    DataResult<WebPageVersion> result = DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("web_page_id = ?", webPageId)
+        .WITH(constraints)
+        .returnDataResult(WebPageVersionRepository::buildRecord);
     if (result.hasRecords()) {
       return (List<WebPageVersion>) result.getRecords();
     }
@@ -79,12 +78,13 @@ public class WebPageVersionRepository {
   }
 
   public static WebPageVersion add(WebPageVersion record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("web_page_id", record.getWebPageId())
-        .add("page_xml", StringUtils.trimToNull(record.getPageXml()))
-        .add("created_by", record.getCreatedBy())
-        .add("notes", StringUtils.trimToNull(record.getNotes()));
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    long generatedId = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("web_page_id", record.getWebPageId())
+        .FIELD("page_xml", StringUtils.trimToNull(record.getPageXml()))
+        .FIELD("created_by", record.getCreatedBy())
+        .FIELD("notes", StringUtils.trimToNull(record.getNotes()))
+        .execute();
+    record.setId(generatedId);
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -93,12 +93,12 @@ public class WebPageVersionRepository {
   }
 
   public static WebPageVersion update(WebPageVersion record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("page_xml", StringUtils.trimToNull(record.getPageXml()))
-        .add("notes", StringUtils.trimToNull(record.getNotes()));
-    if (DB.update(TABLE_NAME,
-        updateValues,
-        DB.WHERE("version_id = ?", record.getId()))) {
+    boolean updated = DB.UPDATE(TABLE_NAME)
+        .SET("page_xml", StringUtils.trimToNull(record.getPageXml()))
+        .SET("notes", StringUtils.trimToNull(record.getNotes()))
+        .WHERE("version_id = ?", record.getId())
+        .execute();
+    if (updated) {
       return record;
     }
     LOG.error("The update failed!");
@@ -125,7 +125,6 @@ public class WebPageVersionRepository {
     if (record == null) {
       return;
     }
-    DB.deleteFrom(connection, TABLE_NAME,
-        DB.WHERE("web_page_id = ?", record.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("web_page_id = ?", record.getId()).execute(connection);
   }
 }

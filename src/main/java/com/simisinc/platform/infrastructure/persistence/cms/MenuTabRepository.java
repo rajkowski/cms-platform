@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,13 +27,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
 import com.simisinc.platform.domain.model.cms.MenuTab;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves menu tab objects
@@ -51,39 +51,38 @@ public class MenuTabRepository {
     if (id == -1) {
       return null;
     }
-    return (MenuTab) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("menu_tab_id = ?", id),
-        MenuTabRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("menu_tab_id = ?", id)
+        .returnRecord(MenuTabRepository::buildRecord);
   }
 
   public static MenuTab findByLink(String link) {
     if (link == null) {
       return null;
     }
-    return (MenuTab) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("link = ?", link),
-        MenuTabRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("link = ?", link)
+        .returnRecord(MenuTabRepository::buildRecord);
   }
 
   public static List<MenuTab> findAll() {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        null,
-        new DataConstraints().setDefaultColumnToSortBy("tab_order, menu_tab_id"),
-        MenuTabRepository::buildRecord);
-    return (List<MenuTab>) result.getRecords();
+    DataResult<MenuTab> result = DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("tab_order, menu_tab_id"))
+        .returnDataResult(MenuTabRepository::buildRecord);
+    return result.getRecords();
   }
 
   public static List<MenuTab> findAllActive() {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        DB.WHERE("draft = ?", false)
-            .AND("enabled = ?", true),
-        new DataConstraints().setDefaultColumnToSortBy("tab_order").setUseCount(false),
-        MenuTabRepository::buildRecord);
-    return (List<MenuTab>) result.getRecords();
+    DataResult<MenuTab> result = DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("draft = ?", false)
+        .AND("enabled = ?", true)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("tab_order").setUseCount(false))
+        .returnDataResult(MenuTabRepository::buildRecord);
+    return result.getRecords();
   }
 
   public static MenuTab save(MenuTab record) {
@@ -94,18 +93,19 @@ public class MenuTabRepository {
   }
 
   private static MenuTab add(MenuTab record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("tab_order", record.getTabOrder())
-        .add("name", StringUtils.trimToNull(record.getName()))
-        .add("link", StringUtils.trimToNull(record.getLink()))
-        .add("icon", StringUtils.trimToNull(record.getIcon()))
-        .add("page_title", StringUtils.trimToNull(record.getPageTitle()))
-        .add("page_keywords", StringUtils.trimToNull(record.getPageKeywords()))
-        .add("page_description", StringUtils.trimToNull(record.getPageDescription()))
-        .add("draft", record.isDraft())
-        .add("enabled", record.isEnabled())
-        .add("comments", StringUtils.trimToNull(record.getComments()));
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    long id = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("tab_order", record.getTabOrder())
+        .FIELD("name", StringUtils.trimToNull(record.getName()))
+        .FIELD("link", StringUtils.trimToNull(record.getLink()))
+        .FIELD("icon", StringUtils.trimToNull(record.getIcon()))
+        .FIELD("page_title", StringUtils.trimToNull(record.getPageTitle()))
+        .FIELD("page_keywords", StringUtils.trimToNull(record.getPageKeywords()))
+        .FIELD("page_description", StringUtils.trimToNull(record.getPageDescription()))
+        .FIELD("draft", record.isDraft())
+        .FIELD("enabled", record.isEnabled())
+        .FIELD("comments", StringUtils.trimToNull(record.getComments()))
+        .execute();
+    record.setId(id);
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -114,18 +114,20 @@ public class MenuTabRepository {
   }
 
   private static MenuTab update(MenuTab record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("tab_order", record.getTabOrder())
-        .add("name", StringUtils.trimToNull(record.getName()))
-        .add("link", StringUtils.trimToNull(record.getLink()))
-        .add("icon", StringUtils.trimToNull(record.getIcon()))
-        .add("page_title", StringUtils.trimToNull(record.getPageTitle()))
-        .add("page_keywords", StringUtils.trimToNull(record.getPageKeywords()))
-        .add("page_description", StringUtils.trimToNull(record.getPageDescription()))
-        .add("draft", record.isDraft())
-        .add("enabled", record.isEnabled())
-        .add("comments", StringUtils.trimToNull(record.getComments()));
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("menu_tab_id = ?", record.getId()))) {
+    boolean updated = DB.UPDATE(TABLE_NAME)
+        .SET("tab_order", record.getTabOrder())
+        .SET("name", StringUtils.trimToNull(record.getName()))
+        .SET("link", StringUtils.trimToNull(record.getLink()))
+        .SET("icon", StringUtils.trimToNull(record.getIcon()))
+        .SET("page_title", StringUtils.trimToNull(record.getPageTitle()))
+        .SET("page_keywords", StringUtils.trimToNull(record.getPageKeywords()))
+        .SET("page_description", StringUtils.trimToNull(record.getPageDescription()))
+        .SET("draft", record.isDraft())
+        .SET("enabled", record.isEnabled())
+        .SET("comments", StringUtils.trimToNull(record.getComments()))
+        .WHERE("menu_tab_id = ?", record.getId())
+        .execute();
+    if (updated) {
       return record;
     }
     LOG.error("The update failed!");
@@ -139,7 +141,7 @@ public class MenuTabRepository {
       // Delete the references
       MenuItemRepository.removeAll(connection, record);
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("menu_tab_id = ?", record.getId()));
+      DB.DELETE().FROM(TABLE_NAME).WHERE("menu_tab_id = ?", record.getId()).execute(connection);
       // Finish transaction
       transaction.commit();
       return true;

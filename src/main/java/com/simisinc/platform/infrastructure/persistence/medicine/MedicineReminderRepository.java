@@ -31,17 +31,15 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
+import com.github.rajkowski.database.Select;
 import com.simisinc.platform.domain.model.medicine.Medicine;
 import com.simisinc.platform.domain.model.medicine.MedicineReminder;
 import com.simisinc.platform.domain.model.medicine.MedicineReminderRawData;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlJoins;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 import com.simisinc.platform.presentation.controller.DataConstants;
 
 /**
@@ -58,51 +56,47 @@ public class MedicineReminderRepository {
   private static String[] PRIMARY_KEY = new String[] { "reminder_id" };
 
   private static DataResult query(MedicineReminderSpecification specification, DataConstraints constraints) {
-    SqlJoins joins = new SqlJoins();
-    SqlWhere where = null;
+    Select select = DB.SELECT("*").FROM(TABLE_NAME).WHERE();
     if (specification != null) {
-
-      joins.add("LEFT JOIN medicines medicines ON (medicine_reminders.medicine_id = medicines.medicine_id)");
-      joins.add("LEFT JOIN medicine_schedule sched ON (medicine_reminders.schedule_id = sched.schedule_id)");
-
-      where = DB.WHERE()
-          .andAddIfHasValue("reminder_id = ?", specification.getId(), -1)
-          .andAddIfHasValue("medicine_reminders.individual_id = ?", specification.getIndividualId(), -1)
-          .andAddIfHasValue("medicine_reminders.medicine_id = ?", specification.getMedicineId(), -1);
+      select.LEFT_JOIN("medicines medicines").ON("medicine_reminders.medicine_id = medicines.medicine_id");
+      select.LEFT_JOIN("medicine_schedule sched").ON("medicine_reminders.schedule_id = sched.schedule_id");
+      if (specification.getId() != -1) {
+        select.AND("reminder_id = ?", specification.getId());
+      }
+      if (specification.getIndividualId() != -1) {
+        select.AND("medicine_reminders.individual_id = ?", specification.getIndividualId());
+      }
+      if (specification.getMedicineId() != -1) {
+        select.AND("medicine_reminders.medicine_id = ?", specification.getMedicineId());
+      }
       if (specification.getMinDate() != null) {
-        where.AND("reminder_date >= ?", specification.getMinDate());
+        select.AND("reminder_date >= ?", specification.getMinDate());
       }
       if (specification.getMaxDate() != null) {
-        where.AND("reminder_date < ?", specification.getMaxDate());
+        select.AND("reminder_date < ?", specification.getMaxDate());
       }
       if (specification.getReminderIsAfterNow() != DataConstants.UNDEFINED) {
         if (specification.getReminderIsAfterNow() == DataConstants.TRUE) {
-          // Show the ones which are active
-          where.AND("reminder_date >= NOW()");
+          select.AND("reminder_date >= NOW()");
         }
       }
       if (specification.getIsWithinEndDate() != DataConstants.UNDEFINED) {
         if (specification.getIsWithinEndDate() == DataConstants.TRUE) {
-          // Show the non-expiring and unexpired
-          where.AND("(sched.end_date IS NULL OR sched.end_date >= NOW())");
+          select.AND("(sched.end_date IS NULL OR sched.end_date >= NOW())");
         }
       }
       if (specification.getIsSuspended() != DataConstants.UNDEFINED) {
         if (specification.getIsSuspended() == DataConstants.TRUE) {
-          // Show suspended only
-          where.AND("medicines.suspended IS NOT NULL");
+          select.AND("medicines.suspended IS NOT NULL");
         } else {
-          // Show the non-suspended only
-          where.AND("medicines.suspended IS NULL");
+          select.AND("medicines.suspended IS NULL");
         }
       }
       if (specification.getIsArchived() != DataConstants.UNDEFINED) {
         if (specification.getIsArchived() == DataConstants.TRUE) {
-          // Show archived only
-          where.AND("medicines.archived IS NOT NULL");
+          select.AND("medicines.archived IS NOT NULL");
         } else {
-          // Show the active only
-          where.AND("medicines.archived IS NULL");
+          select.AND("medicines.archived IS NULL");
         }
       }
       if (specification.getIndividualsList() != null && !specification.getIndividualsList().isEmpty()) {
@@ -113,10 +107,13 @@ public class MedicineReminderRepository {
           }
           sb.append(id);
         }
-        where.AND("medicine_reminders.individual_id IN (" + sb.toString() + ")");
+        select.AND("medicine_reminders.individual_id IN (" + sb + ")");
       }
     }
-    return DB.selectAllFrom(TABLE_NAME, joins, where, constraints, MedicineReminderRepository::buildRecord);
+    if (constraints != null) {
+      select.WITH(constraints);
+    }
+    return select.returnDataResult(MedicineReminderRepository::buildRecord);
   }
 
   public static List<MedicineReminder> findAll(MedicineReminderSpecification specification, DataConstraints constraints) {
@@ -132,10 +129,10 @@ public class MedicineReminderRepository {
     if (id == -1) {
       return null;
     }
-    return (MedicineReminder) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("reminder_id = ?", id),
-        MedicineReminderRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("reminder_id = ?", id)
+        .returnRecord(MedicineReminderRepository::buildRecord);
   }
 
   private static PreparedStatement createPreparedStatementForDailyReminders(Connection connection, Timestamp startDate,
@@ -237,13 +234,13 @@ public class MedicineReminderRepository {
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MILLISECOND, 0);
         Timestamp reminder = new Timestamp(calendar.getTimeInMillis());
-        SqlUtils insertValues = new SqlUtils()
-            .add("individual_id", rawData.getIndividualId())
-            .add("medicine_id", rawData.getMedicineId())
-            .add("schedule_id", rawData.getScheduleId())
-            .add("time_id", rawData.getTimeId())
-            .add("reminder_date", reminder);
-        DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY);
+        DB.INSERT().INTO(TABLE_NAME)
+            .FIELD("individual_id", rawData.getIndividualId())
+            .FIELD("medicine_id", rawData.getMedicineId())
+            .FIELD("schedule_id", rawData.getScheduleId())
+            .FIELD("time_id", rawData.getTimeId())
+            .FIELD("reminder_date", reminder)
+            .execute(connection);
       }
       // Finish the transaction
       transaction.commit();
@@ -254,30 +251,30 @@ public class MedicineReminderRepository {
 
   private static void removeMedicineReminders(Connection connection, long medicineId, Timestamp startDate, Timestamp endDate)
       throws SQLException {
-    DB.deleteFrom(connection,
-        TABLE_NAME,
-        DB.WHERE("medicine_id = ?", medicineId)
-            .AND("reminder_date >= ?", startDate)
-            .AND("reminder_date < ?", endDate));
+    DB.DELETE().FROM(TABLE_NAME)
+        .WHERE("medicine_id = ?", medicineId)
+        .WHERE("reminder_date >= ?", startDate)
+        .WHERE("reminder_date < ?", endDate)
+        .execute(connection);
   }
 
   public static void removeAll(Connection connection, Medicine record) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("medicine_id = ?", record.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("medicine_id = ?", record.getId()).execute(connection);
   }
 
   public static void markAsTaken(Connection connection, long reminderId, Timestamp takenTimestamp) throws SQLException {
-    SqlUtils updateValues = new SqlUtils()
-        .add("was_taken", true)
-        .add("logged", takenTimestamp);
-    DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("reminder_id = ?", reminderId));
+    DB.UPDATE(TABLE_NAME)
+        .SET("was_taken", true)
+        .SET("logged", takenTimestamp)
+        .WHERE("reminder_id = ?", reminderId)
+        .execute(connection);
   }
 
   public static void markAsSkipped(Connection connection, long reminderId) throws SQLException {
-    DB.update(
-        connection,
-        TABLE_NAME,
-        new SqlUtils().add("was_skipped", true),
-        DB.WHERE("reminder_id = ?", reminderId));
+    DB.UPDATE(TABLE_NAME)
+        .SET("was_skipped", true)
+        .WHERE("reminder_id = ?", reminderId)
+        .execute(connection);
   }
 
   private static MedicineReminder buildRecord(ResultSet rs) {

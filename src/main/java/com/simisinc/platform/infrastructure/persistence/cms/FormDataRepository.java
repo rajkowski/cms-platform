@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,14 +27,14 @@ import org.apache.commons.lang3.Strings;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
+import com.github.rajkowski.database.Insert;
+import com.github.rajkowski.database.Select;
+import com.github.rajkowski.database.Update;
 import com.simisinc.platform.application.cms.FormDataJSONCommand;
 import com.simisinc.platform.domain.model.cms.FormData;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlValue;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 import com.simisinc.platform.presentation.controller.DataConstants;
 
 /**
@@ -49,54 +50,64 @@ public class FormDataRepository {
   private static String TABLE_NAME = "form_data";
   private static String[] PRIMARY_KEY = new String[] { "form_data_id" };
 
-  private static DataResult query(FormDataSpecification specification, DataConstraints constraints) {
-    SqlWhere where = null;
+  private static DataResult<FormData> query(FormDataSpecification specification, DataConstraints constraints) {
+    Select select = DB.SELECT("*").FROM(TABLE_NAME).WHERE();
     if (specification != null) {
-      where = DB.WHERE()
-          .andAddIfHasValue("form_data_id = ?", specification.getId(), -1)
-          .andAddIfHasValue("form_unique_id = ?", specification.getFormUniqueId())
-          .andAddIfHasValue("session_id = ?", specification.getSessionId())
-          .andAddIfHasValue("claimed_by = ?", specification.getClaimedBy(), -1L);
+      if (specification.getId() != -1) {
+        select.AND("form_data_id = ?", specification.getId());
+      }
+      if (StringUtils.isNotBlank(specification.getFormUniqueId())) {
+        select.AND("form_unique_id = ?", specification.getFormUniqueId());
+      }
+      if (specification.getSessionId() != null) {
+        select.AND("session_id = ?", specification.getSessionId());
+      }
+      if (specification.getClaimedBy() != -1L) {
+        select.AND("claimed_by = ?", specification.getClaimedBy());
+      }
       if (specification.getFlaggedAsSpam() != DataConstants.UNDEFINED) {
         if (specification.getFlaggedAsSpam() == DataConstants.TRUE) {
-          where.AND("flagged_as_spam = true");
+          select.AND("flagged_as_spam = true");
         } else {
-          where.AND("flagged_as_spam = false");
+          select.AND("flagged_as_spam = false");
         }
       }
       if (specification.getClaimed() != DataConstants.UNDEFINED) {
         if (specification.getClaimed() == DataConstants.TRUE) {
-          where.AND("claimed IS NOT NULL");
+          select.AND("claimed IS NOT NULL");
         } else {
-          where.AND("claimed IS NULL");
+          select.AND("claimed IS NULL");
         }
       }
       if (specification.getDismissed() != DataConstants.UNDEFINED) {
         if (specification.getDismissed() == DataConstants.TRUE) {
-          where.AND("dismissed IS NOT NULL");
+          select.AND("dismissed IS NOT NULL");
         } else {
-          where.AND("dismissed IS NULL");
+          select.AND("dismissed IS NULL");
         }
       }
       if (specification.getProcessed() != DataConstants.UNDEFINED) {
         if (specification.getProcessed() == DataConstants.TRUE) {
-          where.AND("processed IS NOT NULL");
+          select.AND("processed IS NOT NULL");
         } else {
-          where.AND("processed IS NULL");
+          select.AND("processed IS NULL");
         }
       }
     }
-    return DB.selectAllFrom(TABLE_NAME, where, constraints, FormDataRepository::buildRecord);
+    if (constraints != null) {
+      select.WITH(constraints);
+    }
+    return select.returnDataResult(FormDataRepository::buildRecord);
   }
 
   public static FormData findById(long formDataId) {
     if (formDataId == -1) {
       return null;
     }
-    return (FormData) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("form_data_id = ?", formDataId),
-        FormDataRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("form_data_id = ?", formDataId)
+        .returnRecord(FormDataRepository::buildRecord);
   }
 
   public static List<FormData> findAll(FormDataSpecification specification, DataConstraints constraints) {
@@ -104,8 +115,7 @@ public class FormDataRepository {
       constraints = new DataConstraints();
     }
     constraints.setDefaultColumnToSortBy("form_data_id desc");
-    DataResult result = query(specification, constraints);
-    return (List<FormData>) result.getRecords();
+    return query(specification, constraints).getRecords();
   }
 
   public static FormData save(FormData record) {
@@ -116,23 +126,22 @@ public class FormDataRepository {
   }
 
   public static FormData add(FormData record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("form_unique_id", StringUtils.trimToNull(record.getFormUniqueId()))
-        .add("ip_address", record.getIpAddress())
-        .add("session_id", record.getSessionId())
-        .add("url", record.getUrl())
-        .add("flagged_as_spam", record.getFlaggedAsSpam())
-        .add("created_by", record.getCreatedBy(), -1)
-        .add("modified_by", record.getModifiedBy(), -1);
+    Insert insert = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("form_unique_id", StringUtils.trimToNull(record.getFormUniqueId()))
+        .FIELD("ip_address", record.getIpAddress())
+        .FIELD("session_id", record.getSessionId())
+        .FIELD("url", record.getUrl())
+        .FIELD("flagged_as_spam", record.getFlaggedAsSpam())
+        .FIELD("created_by", record.getCreatedBy() == -1 ? null : record.getCreatedBy())
+        .FIELD("modified_by", record.getModifiedBy() == -1 ? null : record.getModifiedBy());
     if (StringUtils.isNotBlank(record.getQueryParameters())) {
-      // Convert from URL encoded to plain text
       String queryString = record.getQueryParameters();
       queryString = Strings.CS.replace(queryString, "%20", " ");
-      insertValues.add("query_params", queryString);
+      insert.FIELD("query_params", queryString);
       record.setQueryParameters(queryString);
     }
-    insertValues.add(new SqlValue("field_values", SqlValue.JSONB_TYPE, FormDataJSONCommand.createJSONString(record)));
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    insert.FIELD("field_values", FormDataJSONCommand.createJSONString(record), com.github.rajkowski.database.CastType.JSONB);
+    record.setId(insert.execute());
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -141,10 +150,11 @@ public class FormDataRepository {
   }
 
   public static FormData update(FormData record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("modified_by", record.getModifiedBy())
-        .add("modified", new Timestamp(System.currentTimeMillis()));
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("form_data_id = ?", record.getId()))) {
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("modified_by", record.getModifiedBy())
+        .SET("modified", new Timestamp(System.currentTimeMillis()))
+        .WHERE("form_data_id = ?", record.getId());
+    if (update.execute().booleanValue()) {
       return record;
     }
     LOG.error("The update failed!");
@@ -153,12 +163,11 @@ public class FormDataRepository {
 
   public static boolean markAsArchived(FormData record, long userId) {
     Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-    SqlUtils updateValues = new SqlUtils()
-        .add("dismissed", timestamp)
-        .add("dismissed_by", userId);
-    boolean updated = DB.update(TABLE_NAME, updateValues, DB.WHERE("form_data_id = ?", record.getId()));
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("dismissed", timestamp)
+        .SET("dismissed_by", userId);
+    boolean updated = update.WHERE("form_data_id = ?", record.getId()).execute();
     if (updated) {
-      // Update the record for additional workflows
       record.setDismissed(timestamp);
       record.setDismissedBy(userId);
     }
@@ -167,14 +176,11 @@ public class FormDataRepository {
 
   public static boolean tryToMarkAsClaimed(FormData record, long userId) {
     Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-    SqlUtils updateValues = new SqlUtils()
-        .add("claimed", timestamp)
-        .add("claimed_by", userId);
-    boolean updated = DB.update(TABLE_NAME, updateValues,
-        DB.WHERE("form_data_id = ?", record.getId())
-            .AND("claimed IS NULL"));
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("claimed", timestamp)
+        .SET("claimed_by", userId);
+    boolean updated = update.WHERE("form_data_id = ?", record.getId()).AND("claimed IS NULL").execute();
     if (updated) {
-      // Update the record for additional workflows
       record.setClaimed(timestamp);
       record.setClaimedBy(userId);
     }
@@ -187,13 +193,14 @@ public class FormDataRepository {
 
   public static boolean markAsProcessed(FormData record, long userId, String system) {
     Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-    SqlUtils updateValues = new SqlUtils()
-        .add("processed", timestamp)
-        .add("processed_by", userId)
-        .addIfExists("processed_system", system);
-    boolean updated = DB.update(TABLE_NAME, updateValues, DB.WHERE("form_data_id = ?", record.getId()));
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("processed", timestamp)
+        .SET("processed_by", userId);
+    if (system != null) {
+      update.SET("processed_system", system);
+    }
+    boolean updated = update.WHERE("form_data_id = ?", record.getId()).execute();
     if (updated) {
-      // Update the record for additional workflows
       record.setProcessed(timestamp);
       record.setProcessedBy(userId);
     }

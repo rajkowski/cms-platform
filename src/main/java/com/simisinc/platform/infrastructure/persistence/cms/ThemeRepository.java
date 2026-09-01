@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,15 +26,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.CastType;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.application.cms.ThemeJSONCommand;
 import com.simisinc.platform.domain.model.SiteProperty;
 import com.simisinc.platform.domain.model.cms.Theme;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlValue;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves theme objects
@@ -49,26 +47,25 @@ public class ThemeRepository {
   private static String[] PRIMARY_KEY = new String[] { "theme_id" };
 
   public static Theme findByName(String name) {
-    return (Theme) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("LOWER(name) = ?", name.toLowerCase()),
-        ThemeRepository::buildRecord);
+    return DB.SELECT("themes.*")
+        .FROM(TABLE_NAME)
+        .WHERE("LOWER(name) = ?", name.toLowerCase())
+        .returnRecord(ThemeRepository::buildRecord);
   }
 
   public static Theme findById(long id) {
-    return (Theme) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("theme_id = ?", id),
-        ThemeRepository::buildRecord);
+    return DB.SELECT("themes.*")
+        .FROM(TABLE_NAME)
+        .WHERE("theme_id = ?", id)
+        .returnRecord(ThemeRepository::buildRecord);
   }
 
   public static List<Theme> findAll() {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        null,
-        new DataConstraints().setDefaultColumnToSortBy("theme_id"),
-        ThemeRepository::buildRecord);
-    return (List<Theme>) result.getRecords();
+    return DB.SELECT("themes.*")
+        .FROM(TABLE_NAME)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("theme_id"))
+        .returnDataResult(ThemeRepository::buildRecord)
+        .getRecords();
   }
 
   public static Theme save(Theme record) {
@@ -85,10 +82,10 @@ public class ThemeRepository {
   }
 
   public static Theme add(Theme record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("name", StringUtils.trimToNull(record.getName()));
-    insertValues.add(new SqlValue("entries", SqlValue.JSONB_TYPE, ThemeJSONCommand.createJSONString(record)));
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    record.setId(DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("name", StringUtils.trimToNull(record.getName()))
+        .FIELD("entries", ThemeJSONCommand.createJSONString(record), CastType.JSONB)
+        .execute());
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -97,11 +94,12 @@ public class ThemeRepository {
   }
 
   public static Theme update(Theme record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("name", record.getName())
-        .add("modified", new Timestamp(System.currentTimeMillis()));
-    updateValues.add(new SqlValue("entries", SqlValue.JSONB_TYPE, ThemeJSONCommand.createJSONString(record)));
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("theme_id = ?", record.getId()))) {
+    if (DB.UPDATE(TABLE_NAME)
+        .SET("name", StringUtils.trimToNull(record.getName()))
+        .SET("modified", new Timestamp(System.currentTimeMillis()))
+        .SET("entries", ThemeJSONCommand.createJSONString(record), CastType.JSONB)
+        .WHERE("theme_id = ?", record.getId())
+        .execute()) {
       return record;
     }
     LOG.error("The update failed!");
@@ -109,7 +107,7 @@ public class ThemeRepository {
   }
 
   public static void remove(Theme record) {
-    DB.deleteFrom(TABLE_NAME, DB.WHERE("theme_id = ?", record.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("theme_id = ?", record.getId()).execute();
   }
 
   private static Theme buildRecord(ResultSet rs) {

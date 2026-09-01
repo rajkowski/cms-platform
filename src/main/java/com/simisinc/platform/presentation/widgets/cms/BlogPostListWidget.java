@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,19 +17,20 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.application.cms.LoadBlogCommand;
 import com.simisinc.platform.application.cms.UrlCommand;
 import com.simisinc.platform.domain.model.cms.Blog;
 import com.simisinc.platform.domain.model.cms.BlogPost;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.cms.BlogPostRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.BlogPostSpecification;
 import com.simisinc.platform.presentation.controller.RequestConstants;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
-import org.apache.commons.lang3.StringUtils;
-
-import java.util.List;
 
 /**
  * Displays a list of blog entries
@@ -103,9 +105,8 @@ public class BlogPostListWidget extends GenericWidget {
     String sortOrderValue = context.getParameter("sortOrder", "newest");
     String pagingUri = "";
     if (!"date".equals(sortByValue) || !"newest".equals(sortOrderValue)) {
-      pagingUri =
-          "&sortBy=" + UrlCommand.encodeUri(sortByValue) +
-              "&sortOrder=" + UrlCommand.encodeUri(sortOrderValue);
+      pagingUri = "&sortBy=" + UrlCommand.encodeUri(sortByValue) +
+          "&sortOrder=" + UrlCommand.encodeUri(sortOrderValue);
     }
     context.getRequest().setAttribute(RequestConstants.RECORD_PAGING_URI, pagingUri);
     context.getRequest().setAttribute(RequestConstants.RECORD_SORT_BY, sortByValue);
@@ -137,7 +138,7 @@ public class BlogPostListWidget extends GenericWidget {
     // Load the blog posts
     List<BlogPost> blogPostList = BlogPostRepository.findAll(blogPostSpecification, constraints);
     context.getRequest().setAttribute("blogPostList", blogPostList);
-    
+
     // See if an empty widget can be shown
     if (blogPostList.isEmpty()) {
       if (!"true".equals(context.getPreferences().getOrDefault("showWhenEmpty", "true"))) {

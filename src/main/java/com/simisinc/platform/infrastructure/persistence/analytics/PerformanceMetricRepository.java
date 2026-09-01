@@ -23,13 +23,14 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.Insert;
 import com.simisinc.platform.domain.model.analytics.PerformanceMetric;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves performance metric records
@@ -45,14 +46,14 @@ public class PerformanceMetricRepository {
   private static final String[] PRIMARY_KEY = new String[] { "metric_id" };
 
   public static PerformanceMetric save(PerformanceMetric record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("request_type", record.getRequestType(), 10)
-        .add("status_code", record.getStatusCode())
-        .add("duration_ms", record.getDurationMs());
+    Insert insert = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("request_type", StringUtils.left(record.getRequestType(), 10))
+        .FIELD("status_code", record.getStatusCode())
+        .FIELD("duration_ms", record.getDurationMs());
     if (record.getMetricDate() != null) {
-      insertValues.add("metric_date", record.getMetricDate());
+      insert.FIELD("metric_date", record.getMetricDate());
     }
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    record.setId(insert.execute());
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -131,16 +132,10 @@ public class PerformanceMetricRepository {
    * Delete records older than the specified number of days.
    */
   public static void deleteOlderThan(int days) {
-    String SQL = "DELETE FROM " + TABLE_NAME + " WHERE metric_date < NOW() - (? || ' days')::interval";
-    try (Connection connection = DB.getConnection();
-        PreparedStatement pst = connection.prepareStatement(SQL)) {
-      pst.setInt(1, days);
-      int deleted = pst.executeUpdate();
-      if (deleted > 0) {
-        LOG.debug("Deleted " + deleted + " performance metric records older than " + days + " days");
-      }
+    try (Connection connection = DB.getConnection()) {
+      DB.DELETE().FROM(TABLE_NAME).WHERE("metric_date < NOW() - (? || ' days')::interval", days).execute(connection);
     } catch (SQLException se) {
-      LOG.error("deleteOlderThan error: " + se.getMessage());
+      LOG.error("SQLException: " + se.getMessage());
     }
   }
 }
