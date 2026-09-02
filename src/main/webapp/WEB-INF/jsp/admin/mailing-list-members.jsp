@@ -22,7 +22,7 @@
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="mailingList" class="com.simisinc.platform.domain.model.mailinglists.MailingList" scope="request"/>
 <jsp:useBean id="emailList" class="java.util.ArrayList" scope="request"/>
-<jsp:useBean id="recordPaging" class="com.simisinc.platform.infrastructure.database.DataConstraints" scope="request"/>
+<jsp:useBean id="recordPaging" class="com.github.rajkowski.database.DataConstraints" scope="request"/>
 <c:if test="${!empty title}">
   <h4><c:if test="${!empty icon}"><i class="fa ${icon}"></i> </c:if><c:out value="${title}" /></h4>
 </c:if>

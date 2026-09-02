@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,24 +17,25 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
-import com.simisinc.platform.WidgetBase;
-import com.simisinc.platform.application.cms.LoadBlogCommand;
-import com.simisinc.platform.domain.model.cms.Blog;
-import com.simisinc.platform.domain.model.cms.BlogPost;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.persistence.cms.BlogPostRepository;
-import com.simisinc.platform.presentation.controller.RequestConstants;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import static com.simisinc.platform.presentation.widgets.cms.BlogPostListWidget.JSP;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+
+import com.github.rajkowski.database.DataConstraints;
+import com.simisinc.platform.WidgetBase;
+import com.simisinc.platform.application.cms.LoadBlogCommand;
+import com.simisinc.platform.domain.model.cms.Blog;
+import com.simisinc.platform.domain.model.cms.BlogPost;
+import com.simisinc.platform.infrastructure.persistence.cms.BlogPostRepository;
+import com.simisinc.platform.presentation.controller.RequestConstants;
 
 class BlogPostListWidgetTest extends WidgetBase {
 

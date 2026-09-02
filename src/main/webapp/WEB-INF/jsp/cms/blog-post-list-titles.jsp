@@ -25,7 +25,7 @@
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="blog" class="com.simisinc.platform.domain.model.cms.Blog" scope="request"/>
 <jsp:useBean id="blogPostList" class="java.util.ArrayList" scope="request"/>
-<jsp:useBean id="recordPaging" class="com.simisinc.platform.infrastructure.database.DataConstraints" scope="request"/>
+<jsp:useBean id="recordPaging" class="com.github.rajkowski.database.DataConstraints" scope="request"/>
 <jsp:useBean id="showBullets" class="java.lang.String" scope="request"/>
 <c:if test="${!empty title}">
   <h4><c:if test="${!empty icon}"><i class="fa ${icon}"></i> </c:if><c:out value="${title}"/></h4>

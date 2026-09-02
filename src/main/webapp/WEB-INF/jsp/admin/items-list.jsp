@@ -25,7 +25,7 @@
 <jsp:useBean id="collection" class="com.simisinc.platform.domain.model.items.Collection" scope="request"/>
 <jsp:useBean id="categoryMap" class="java.util.HashMap" scope="request"/>
 <jsp:useBean id="itemList" class="java.util.ArrayList" scope="request"/>
-<jsp:useBean id="recordPaging" class="com.simisinc.platform.infrastructure.database.DataConstraints" scope="request"/>
+<jsp:useBean id="recordPaging" class="com.github.rajkowski.database.DataConstraints" scope="request"/>
 <jsp:useBean id="tableColumnsList" class="java.util.LinkedHashMap" scope="request"/>
 <style>
   .admin-item-list .item-image, .admin-item-list .item-icon {

@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,8 +29,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
+import com.github.rajkowski.database.DB;
 import com.simisinc.platform.domain.model.BlockedIP;
-import com.simisinc.platform.infrastructure.database.DB;
 
 /**
  * @author matt rajkowski
