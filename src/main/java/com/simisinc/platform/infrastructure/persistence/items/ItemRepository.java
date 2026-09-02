@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -448,10 +449,10 @@ public class ItemRepository {
             .toArray(String[]::new);
         select.SELECT(
             "ts_headline('english', items.name || ' ' || coalesce(items.keywords,'') || ' ' || coalesce(items.summary,'') || ' ' || coalesce(items.description_text,''), websearch_to_tsquery('title_stem', ?), 'StartSel=${b}, StopSel=${/b}, MaxWords=30, MinWords=15, ShortWord=3, HighlightAll=FALSE, MaxFragments=2, FragmentDelimiter=\" ... \"') AS highlight",
-            term);
+          (Object[]) new Object[] { term });
         select.SELECT("(ts_rank_cd(tsv, websearch_to_tsquery('title_stem', ?)) " + Arrays.stream(titleSearchWords)
             .map(word -> " + CASE WHEN LOWER(items.name) LIKE LOWER(?) ESCAPE '!' THEN 10.0 ELSE 0.0 END")
-            .collect(Collectors.joining()) + ") AS rank", term, titleSearchWords);
+          .collect(Collectors.joining()) + ") AS rank", (Object[]) Stream.concat(Stream.of(term), Arrays.stream(titleSearchWords)).toArray());
         select.AND("tsv @@ websearch_to_tsquery('title_stem', ?)", whereToUse);
         select.ORDER_BY("rank DESC, items.modified DESC");
       }

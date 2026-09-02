@@ -75,19 +75,19 @@ public class WebPageRepository {
         select.AND("LOWER(link) = ?", specification.getLink().trim().toLowerCase());
       }
       if (specification.getEnabled() != DataConstants.UNDEFINED) {
-        select.AND("enabled = ?", specification.getEnabled());
+        select.AND("enabled = ?", specification.getEnabled() == DataConstants.TRUE);
       }
       if (specification.getDraft() != DataConstants.UNDEFINED) {
-        select.AND("draft = ?", specification.getDraft());
+        select.AND("draft = ?", specification.getDraft() == DataConstants.TRUE);
       }
       if (specification.getSearchable() != DataConstants.UNDEFINED) {
-        select.AND("searchable = ?", specification.getSearchable());
+        select.AND("searchable = ?", specification.getSearchable() == DataConstants.TRUE);
       }
       if (specification.getInSitemap() != DataConstants.UNDEFINED) {
-        select.AND("show_in_sitemap = ?", specification.getInSitemap());
+        select.AND("show_in_sitemap = ?", specification.getInSitemap() == DataConstants.TRUE);
       }
       if (specification.getHasRedirect() != DataConstants.UNDEFINED) {
-        select.AND("has_redirect = ?", specification.getHasRedirect());
+        select.AND("has_redirect = ?", specification.getHasRedirect() == DataConstants.TRUE);
       }
       if (specification.getRegionTags() != null && specification.getRegionTags().length > 0) {
         ConditionGroup condition = ConditionGroup.build("web_pages.tags", specification.getRegionTags(), ConditionGroup.ANY);
@@ -132,10 +132,10 @@ public class WebPageRepository {
         String term = specification.getSearchTerm().trim().toLowerCase();
         select.SELECT(
             "ts_headline('english', page_text, websearch_to_tsquery('web_page_stem', ?), 'StartSel=${b}, StopSel=${/b}, MaxWords=40, MinWords=30, ShortWord=3, HighlightAll=FALSE, MaxFragments=2, FragmentDelimiter=\" ... \"') AS highlight",
-            term);
+            (Object[]) new Object[] { term });
         select.SELECT(
             "(ts_rank_cd(web_pages.tsv, websearch_to_tsquery('web_page_stem', ?)) + CASE WHEN LOWER(web_pages.page_title) LIKE LOWER(?) THEN 200.0 ELSE 0.0 END + CASE WHEN LOWER(web_pages.page_title) LIKE LOWER(?) THEN 100.0 ELSE 0.0 END) AS rank",
-            term, term + "%", "%" + term + "%");
+            (Object[]) new Object[] { term, term + "%", "%" + term + "%" });
         select.AND("web_pages.tsv @@ websearch_to_tsquery('web_page_stem', ?)", term);
         select.ORDER_BY("rank DESC, web_pages.modified DESC");
       }

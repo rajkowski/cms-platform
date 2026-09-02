@@ -166,7 +166,7 @@ public class ItemFileItemRepository {
       }
 
       if (StringUtils.isNotBlank(specification.getSearchName())) {
-        select.SELECT("ts_rank_cd(tsv, websearch_to_tsquery('item_file_stem', ?)) AS rank", specification.getSearchName().trim());
+        select.SELECT("ts_rank_cd(tsv, websearch_to_tsquery('item_file_stem', ?)) AS rank", (Object[]) new Object[] { specification.getSearchName().trim() });
         select.AND("tsv @@ websearch_to_tsquery('item_file_stem', ?)", specification.getSearchName().trim());
         select.ORDER_BY("rank DESC, file_id");
       }

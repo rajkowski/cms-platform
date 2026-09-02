@@ -88,7 +88,7 @@ public class CalendarEventRepository {
     appendWhereClause(select, specification);
     if (specification != null && StringUtils.isNotBlank(specification.getSearchTerm())) {
       String searchTerm = specification.getSearchTerm().trim();
-      select.SELECT("ts_rank_cd(tsv, websearch_to_tsquery('title_stem', ?)) AS rank", searchTerm);
+      select.SELECT("ts_rank_cd(tsv, websearch_to_tsquery('title_stem', ?)) AS rank", (Object[]) new Object[] { searchTerm });
       select.AND("tsv @@ websearch_to_tsquery('title_stem', ?)", searchTerm);
       if (specification.getStartingDateRange() != null) {
         select.ORDER_BY("rank DESC, start_date");

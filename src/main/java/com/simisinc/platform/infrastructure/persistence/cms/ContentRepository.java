@@ -67,8 +67,8 @@ public class ContentRepository {
 
         select.SELECT(
             "ts_headline('english', content_text, websearch_to_tsquery('content_stem', ?), 'StartSel=${b}, StopSel=${/b}, MaxWords=30, MinWords=15, ShortWord=3, HighlightAll=FALSE, MaxFragments=2, FragmentDelimiter=\" ... \"') AS highlight",
-            specification.getSearchTerm().trim());
-        select.SELECT("ts_rank_cd(tsv, websearch_to_tsquery('content_stem', ?)) AS rank", searchToUse);
+          (Object[]) new Object[] { specification.getSearchTerm().trim() });
+        select.SELECT("ts_rank_cd(tsv, websearch_to_tsquery('content_stem', ?)) AS rank", (Object[]) new Object[] { searchToUse });
 
         select.AND("(tsv @@ websearch_to_tsquery('content_stem', ?) OR content_unique_id LIKE ?)",
             searchToUse, searchTermPattern);

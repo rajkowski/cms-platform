@@ -84,7 +84,7 @@ public class ProductSkuRepository {
         select.AND("sku_id <> ?", specification.getIsNotId());
       }
       if (specification.getShowOnline() != DataConstants.UNDEFINED) {
-        select.AND("product_skus.enabled = ?", specification.getShowOnline());
+        select.AND("product_skus.enabled = ?", specification.getShowOnline() == DataConstants.TRUE);
       }
       if (specification.getWithProductSkuAttributeList() != null && !specification.getWithProductSkuAttributeList().isEmpty()) {
         StringBuilder sb = new StringBuilder();
