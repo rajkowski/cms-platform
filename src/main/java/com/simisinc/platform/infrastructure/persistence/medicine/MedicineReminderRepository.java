@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -55,7 +56,7 @@ public class MedicineReminderRepository {
   private static String TABLE_NAME = "medicine_reminders";
   private static String[] PRIMARY_KEY = new String[] { "reminder_id" };
 
-  private static DataResult query(MedicineReminderSpecification specification, DataConstraints constraints) {
+  private static DataResult<MedicineReminder> query(MedicineReminderSpecification specification, DataConstraints constraints) {
     Select select = DB.SELECT("*").FROM(TABLE_NAME).WHERE();
     if (specification != null) {
       select.LEFT_JOIN("medicines medicines").ON("medicine_reminders.medicine_id = medicines.medicine_id");

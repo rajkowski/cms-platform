@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,13 +28,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.Update;
 import com.simisinc.platform.domain.model.mailinglists.MailingList;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves mailing list objects
@@ -49,67 +49,52 @@ public class MailingListRepository {
   private static String[] PRIMARY_KEY = new String[] { "list_id" };
 
   public static List<MailingList> findAll() {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        null,
-        new DataConstraints().setDefaultColumnToSortBy("list_order, name"),
-        MailingListRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<MailingList>) result.getRecords();
-    }
-    return null;
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("list_order, name"))
+        .returnDataResult(MailingListRepository::buildRecord).getRecords();
   }
 
   public static List<MailingList> findOnlineLists() {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        DB.WHERE("show_online = true")
-            .AND("enabled = true"),
-        new DataConstraints().setDefaultColumnToSortBy("list_order, name"),
-        MailingListRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<MailingList>) result.getRecords();
-    }
-    return null;
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("show_online = true")
+        .AND("enabled = true")
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("list_order, name"))
+        .returnDataResult(MailingListRepository::buildRecord).getRecords();
   }
 
   public static List<MailingList> findOnlineListsForEmail(long emailId) {
     if (emailId <= 0) {
       return null;
     }
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        DB.WHERE("show_online = true")
-            .AND("enabled = true")
-            .AND(
-                "EXISTS (SELECT 1 FROM mailing_list_members WHERE list_id = mailing_lists.list_id AND email_id = ? AND is_valid = true)",
-                emailId),
-        null,
-        MailingListRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<MailingList>) result.getRecords();
-    }
-    return null;
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("show_online = true")
+        .AND("enabled = true")
+        .AND("EXISTS (SELECT 1 FROM mailing_list_members WHERE list_id = mailing_lists.list_id AND email_id = ? AND is_valid = true)",
+            emailId)
+        .returnDataResult(MailingListRepository::buildRecord).getRecords();
   }
 
   public static MailingList findById(long id) {
     if (id == -1) {
       return null;
     }
-    return (MailingList) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("list_id = ?", id),
-        MailingListRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("list_id = ?", id)
+        .returnRecord(MailingListRepository::buildRecord);
   }
 
   public static MailingList findByName(String name) {
     if (StringUtils.isBlank(name)) {
       return null;
     }
-    return (MailingList) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("LOWER(name) = ?", name.toLowerCase().trim()),
-        MailingListRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("LOWER(name) = ?", name.toLowerCase().trim())
+        .returnRecord(MailingListRepository::buildRecord);
   }
 
   public static long countTotalMembers() {
@@ -136,18 +121,19 @@ public class MailingListRepository {
   }
 
   public static MailingList add(MailingList record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("list_order", record.getOrder())
-        .add("name", record.getName().trim())
-        .add("title", record.getTitle().trim())
-        .addIfExists("description", record.getDescription())
-        .add("member_count", record.getMemberCount())
-        .add("created_by", record.getCreatedBy(), -1)
-        .add("modified_by", record.getModifiedBy(), -1)
-        .add("last_emailed", record.getLastEmailed())
-        .add("show_online", record.getShowOnline())
-        .add("enabled", record.getEnabled());
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    long id = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("list_order", record.getOrder())
+        .FIELD("name", record.getName().trim())
+        .FIELD("title", record.getTitle().trim())
+        .FIELD_UNLESS_NULL("description", record.getDescription())
+        .FIELD("member_count", record.getMemberCount())
+        .FIELD("created_by", record.getCreatedBy() != -1 ? record.getCreatedBy() : null)
+        .FIELD("modified_by", record.getModifiedBy() != -1 ? record.getModifiedBy() : null)
+        .FIELD("last_emailed", record.getLastEmailed())
+        .FIELD("show_online", record.getShowOnline())
+        .FIELD("enabled", record.getEnabled())
+        .execute();
+    record.setId(id);
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -156,16 +142,16 @@ public class MailingListRepository {
   }
 
   public static MailingList update(MailingList record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("list_order", record.getOrder())
-        .add("name", StringUtils.trimToNull(record.getName()))
-        .add("title", StringUtils.trimToNull(record.getTitle()))
-        .add("description", StringUtils.trimToNull(record.getDescription()))
-        .add("show_online", record.getShowOnline())
-        .add("enabled", record.getEnabled())
-        .add("modified_by", record.getModifiedBy())
-        .add("modified", new Timestamp(System.currentTimeMillis()));
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("list_id = ?", record.getId()))) {
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("list_order", record.getOrder())
+        .SET("name", StringUtils.trimToNull(record.getName()))
+        .SET("title", StringUtils.trimToNull(record.getTitle()))
+        .SET("description", StringUtils.trimToNull(record.getDescription()))
+        .SET("show_online", record.getShowOnline())
+        .SET("enabled", record.getEnabled())
+        .SET("modified_by", record.getModifiedBy())
+        .SET("modified", new Timestamp(System.currentTimeMillis()));
+    if (update.WHERE("list_id = ?", record.getId()).execute()) {
       return record;
     }
     LOG.error("The update failed!");
@@ -179,7 +165,7 @@ public class MailingListRepository {
       // Delete the references
       MailingListMemberRepository.removeAll(connection, record);
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("list_id = ?", record.getId()));
+      DB.DELETE().FROM(TABLE_NAME).WHERE("list_id = ?", record.getId()).execute(connection);
       // Finish transaction
       transaction.commit();
       return true;

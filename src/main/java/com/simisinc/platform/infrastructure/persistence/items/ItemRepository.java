@@ -33,6 +33,16 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.CastType;
+import com.github.rajkowski.database.ConditionGroup;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
+import com.github.rajkowski.database.Insert;
+import com.github.rajkowski.database.Select;
+import com.github.rajkowski.database.Update;
 import com.simisinc.platform.application.CustomFieldListJSONCommand;
 import com.simisinc.platform.application.cms.HtmlCommand;
 import com.simisinc.platform.application.filesystem.FileSystemCommand;
@@ -43,15 +53,6 @@ import com.simisinc.platform.domain.model.items.Collection;
 import com.simisinc.platform.domain.model.items.Item;
 import com.simisinc.platform.domain.model.items.ItemCategory;
 import com.simisinc.platform.domain.model.items.ItemFileVersion;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlJoins;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlValue;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 import com.simisinc.platform.infrastructure.persistence.medicine.MedicineRepository;
 import com.simisinc.platform.presentation.controller.DataConstants;
 import com.simisinc.platform.presentation.controller.UserSession;
@@ -78,68 +79,65 @@ public class ItemRepository {
   }
 
   private static Item add(Item record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("collection_id", record.getCollectionId())
-        .add("category_id", record.getCategoryId(), -1)
-        .add("dataset_id", record.getDatasetId(), -1)
-        .add("unique_id", StringUtils.trimToNull(record.getUniqueId()))
-        .add("name", StringUtils.trimToNull(record.getName()))
-        .add("summary", StringUtils.trimToNull(record.getSummary()))
-        .add("description", StringUtils.trimToNull(record.getDescription()))
-        .add("description_text", HtmlCommand.text(StringUtils.trimToNull(record.getDescription())))
-        .add("created_by", record.getCreatedBy())
-        .add("modified_by", record.getModifiedBy())
-        .add("location_name", StringUtils.trimToNull(record.getLocation()))
-        .add("street", StringUtils.trimToNull(record.getStreet()))
-        .add("address_line_2", StringUtils.trimToNull(record.getAddressLine2()))
-        .add("address_line_3", StringUtils.trimToNull(record.getAddressLine3()))
-        .add("city", StringUtils.trimToNull(record.getCity()))
-        .add("state", StringUtils.trimToNull(record.getState()))
-        .add("country", StringUtils.trimToNull(record.getCountry()))
-        .add("postal_code", StringUtils.trimToNull(record.getPostalCode()))
-        .add("county", StringUtils.trimToNull(record.getCounty()))
-        .add("phone_number", StringUtils.trimToNull(record.getPhoneNumber()))
-        .add("email", StringUtils.trimToNull(record.getEmail()))
-        .add("cost", record.getCost())
-        .add("expected_date", record.getExpectedDate())
-        .add("start_date", record.getStartDate())
-        .add("end_date", record.getEndDate())
-        .add("expiration_date", record.getExpirationDate())
-        .add("url", StringUtils.trimToNull(record.getUrl()))
-        .add("url_text", StringUtils.trimToNull(record.getUrlText()))
-        .add("image_url", StringUtils.trimToNull(record.getImageUrl()))
-        .add("barcode", StringUtils.trimToNull(record.getBarcode()))
-        .add("keywords", StringUtils.trimToNull(record.getKeywords()), 255)
-        .add("archived_by", record.getArchivedBy(), -1)
-        .add("archived", record.getArchived())
-        .add("assigned_to", record.getAssignedTo(), -1)
-        .add("assigned", record.getAssigned())
-        .add("approved_by", record.getApprovedBy(), -1)
-        .add("approved", record.getApproved())
-        .add("source", record.getSource())
-        .add("sync_date", record.getDatasetSyncDate())
-        .add("dataset_key_value", record.getDatasetKeyValue())
-        .add(new SqlValue("geojson", SqlValue.JSONB_TYPE, StringUtils.trimToNull(record.getGeoJSON())));
+    Insert insert = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("collection_id", record.getCollectionId())
+        .FIELD("category_id", record.getCategoryId() == -1 ? null : record.getCategoryId())
+        .FIELD("dataset_id", record.getDatasetId() == -1 ? null : record.getDatasetId())
+        .FIELD("unique_id", StringUtils.trimToNull(record.getUniqueId()))
+        .FIELD("name", StringUtils.trimToNull(record.getName()))
+        .FIELD("summary", StringUtils.trimToNull(record.getSummary()))
+        .FIELD("description", StringUtils.trimToNull(record.getDescription()))
+        .FIELD("description_text", HtmlCommand.text(StringUtils.trimToNull(record.getDescription())))
+        .FIELD("created_by", record.getCreatedBy())
+        .FIELD("modified_by", record.getModifiedBy())
+        .FIELD("location_name", StringUtils.trimToNull(record.getLocation()))
+        .FIELD("street", StringUtils.trimToNull(record.getStreet()))
+        .FIELD("address_line_2", StringUtils.trimToNull(record.getAddressLine2()))
+        .FIELD("address_line_3", StringUtils.trimToNull(record.getAddressLine3()))
+        .FIELD("city", StringUtils.trimToNull(record.getCity()))
+        .FIELD("state", StringUtils.trimToNull(record.getState()))
+        .FIELD("country", StringUtils.trimToNull(record.getCountry()))
+        .FIELD("postal_code", StringUtils.trimToNull(record.getPostalCode()))
+        .FIELD("county", StringUtils.trimToNull(record.getCounty()))
+        .FIELD("phone_number", StringUtils.trimToNull(record.getPhoneNumber()))
+        .FIELD("email", StringUtils.trimToNull(record.getEmail()))
+        .FIELD("cost", record.getCost())
+        .FIELD("expected_date", record.getExpectedDate())
+        .FIELD("start_date", record.getStartDate())
+        .FIELD("end_date", record.getEndDate())
+        .FIELD("expiration_date", record.getExpirationDate())
+        .FIELD("url", StringUtils.trimToNull(record.getUrl()))
+        .FIELD("url_text", StringUtils.trimToNull(record.getUrlText()))
+        .FIELD("image_url", StringUtils.trimToNull(record.getImageUrl()))
+        .FIELD("barcode", StringUtils.trimToNull(record.getBarcode()))
+        .FIELD("keywords", StringUtils.truncate(record.getKeywords(), 255))
+        .FIELD("archived_by", record.getArchivedBy() == -1 ? null : record.getArchivedBy())
+        .FIELD("archived", record.getArchived())
+        .FIELD("assigned_to", record.getAssignedTo() == -1 ? null : record.getAssignedTo())
+        .FIELD("assigned", record.getAssigned())
+        .FIELD("approved_by", record.getApprovedBy() == -1 ? null : record.getApprovedBy())
+        .FIELD("approved", record.getApproved())
+        .FIELD("source", record.getSource())
+        .FIELD("sync_date", record.getDatasetSyncDate())
+        .FIELD("dataset_key_value", record.getDatasetKeyValue())
+        .FIELD("geojson", StringUtils.trimToNull(record.getGeoJSON()), CastType.JSONB);
     if (record.getTags() != null && record.getTags().length > 0) {
-      insertValues.add(new SqlValue("tags", SqlValue.JSONB_TYPE, JsonCommand.toJsonArray(record.getTags())));
+      insert.FIELD("tags", JsonCommand.toJsonArray(record.getTags()), CastType.JSONB);
     }
 
     if (record.hasGeoPoint()) {
-      insertValues.add("latitude", record.getLatitude());
-      insertValues.add("longitude", record.getLongitude());
-      insertValues.addGeomPoint("geom", record.getLatitude(), record.getLongitude());
+      insert.FIELD("latitude", record.getLatitude())
+          .FIELD("longitude", record.getLongitude())
+          .FIELD("geom", record.getLatitude(), record.getLongitude(), CastType.GEOM);
     }
     if (record.getCustomFieldList() != null && !record.getCustomFieldList().isEmpty()) {
-      insertValues.add(new SqlValue("field_values", SqlValue.JSONB_TYPE,
-          CustomFieldListJSONCommand.createJSONString(record.getCustomFieldList())));
+      insert.FIELD("field_values", CustomFieldListJSONCommand.createJSONString(record.getCustomFieldList()), CastType.JSONB);
     }
 
-    // Use a transaction
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
-      // In a transaction (use the existing connection)
-      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+      record.setId(insert.execute(connection));
       // Manage the categories
       ItemCategoryRepository.insertItemCategoryList(connection, record);
       // Manage a few related tables
@@ -156,66 +154,64 @@ public class ItemRepository {
   }
 
   private static Item update(Item record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("collection_id", record.getCollectionId())
-        .add("category_id", record.getCategoryId(), -1)
-        //        .add("dataset_id", record.getDatasetId(), -1)
-        .add("unique_id", StringUtils.trimToNull(record.getUniqueId()))
-        .add("name", StringUtils.trimToNull(record.getName()))
-        .add("summary", StringUtils.trimToNull(record.getSummary()))
-        .add("description", StringUtils.trimToNull(record.getDescription()))
-        .add("description_text", HtmlCommand.text(StringUtils.trimToNull(record.getDescription())))
-        .add("modified_by", record.getModifiedBy())
-        .add("modified", new Timestamp(System.currentTimeMillis()))
-        .add("location_name", StringUtils.trimToNull(record.getLocation()))
-        .add("street", StringUtils.trimToNull(record.getStreet()))
-        .add("address_line_2", StringUtils.trimToNull(record.getAddressLine2()))
-        .add("address_line_3", StringUtils.trimToNull(record.getAddressLine3()))
-        .add("city", StringUtils.trimToNull(record.getCity()))
-        .add("state", StringUtils.trimToNull(record.getState()))
-        .add("country", StringUtils.trimToNull(record.getCountry()))
-        .add("postal_code", StringUtils.trimToNull(record.getPostalCode()))
-        .add("county", StringUtils.trimToNull(record.getCounty()))
-        .add("phone_number", StringUtils.trimToNull(record.getPhoneNumber()))
-        .add("email", StringUtils.trimToNull(record.getEmail()))
-        .add("cost", record.getCost())
-        .add("expected_date", record.getExpectedDate())
-        .add("start_date", record.getStartDate())
-        .add("end_date", record.getEndDate())
-        .add("expiration_date", record.getExpirationDate())
-        .add("url", StringUtils.trimToNull(record.getUrl()))
-        .add("url_text", StringUtils.trimToNull(record.getUrlText()))
-        .add("image_url", StringUtils.trimToNull(record.getImageUrl()))
-        .add("barcode", StringUtils.trimToNull(record.getBarcode()))
-        .add("keywords", StringUtils.trimToNull(record.getKeywords()), 255)
-        .add("archived_by", record.getArchivedBy(), -1)
-        .add("archived", record.getArchived())
-        .add("assigned_to", record.getAssignedTo(), -1)
-        .add("assigned", record.getAssigned())
-        .add("approved_by", record.getApprovedBy(), -1)
-        .add("approved", record.getApproved())
-        .addIfExists("sync_date", record.getDatasetSyncDate());
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("collection_id", record.getCollectionId())
+        .SET("category_id", record.getCategoryId() == -1 ? null : record.getCategoryId())
+        .SET("unique_id", StringUtils.trimToNull(record.getUniqueId()))
+        .SET("name", StringUtils.trimToNull(record.getName()))
+        .SET("summary", StringUtils.trimToNull(record.getSummary()))
+        .SET("description", StringUtils.trimToNull(record.getDescription()))
+        .SET("description_text", HtmlCommand.text(StringUtils.trimToNull(record.getDescription())))
+        .SET("modified_by", record.getModifiedBy())
+        .SET("modified", new Timestamp(System.currentTimeMillis()))
+        .SET("location_name", StringUtils.trimToNull(record.getLocation()))
+        .SET("street", StringUtils.trimToNull(record.getStreet()))
+        .SET("address_line_2", StringUtils.trimToNull(record.getAddressLine2()))
+        .SET("address_line_3", StringUtils.trimToNull(record.getAddressLine3()))
+        .SET("city", StringUtils.trimToNull(record.getCity()))
+        .SET("state", StringUtils.trimToNull(record.getState()))
+        .SET("country", StringUtils.trimToNull(record.getCountry()))
+        .SET("postal_code", StringUtils.trimToNull(record.getPostalCode()))
+        .SET("county", StringUtils.trimToNull(record.getCounty()))
+        .SET("phone_number", StringUtils.trimToNull(record.getPhoneNumber()))
+        .SET("email", StringUtils.trimToNull(record.getEmail()))
+        .SET("cost", record.getCost())
+        .SET("expected_date", record.getExpectedDate())
+        .SET("start_date", record.getStartDate())
+        .SET("end_date", record.getEndDate())
+        .SET("expiration_date", record.getExpirationDate())
+        .SET("url", StringUtils.trimToNull(record.getUrl()))
+        .SET("url_text", StringUtils.trimToNull(record.getUrlText()))
+        .SET("image_url", StringUtils.trimToNull(record.getImageUrl()))
+        .SET("barcode", StringUtils.trimToNull(record.getBarcode()))
+        .SET("keywords", StringUtils.truncate(record.getKeywords(), 255))
+        .SET("archived_by", record.getArchivedBy() == -1 ? null : record.getArchivedBy())
+        .SET("archived", record.getArchived())
+        .SET("assigned_to", record.getAssignedTo() == -1 ? null : record.getAssignedTo())
+        .SET("assigned", record.getAssigned())
+        .SET("approved_by", record.getApprovedBy() == -1 ? null : record.getApprovedBy())
+        .SET("approved", record.getApproved())
+        .SET("sync_date", record.getDatasetSyncDate());
     if (record.getTags() != null && record.getTags().length > 0) {
-      updateValues.add(new SqlValue("tags", SqlValue.JSONB_TYPE, JsonCommand.toJsonArray(record.getTags())));
+      update.SET("tags", JsonCommand.toJsonArray(record.getTags()), CastType.JSONB);
     } else {
-      updateValues.add(new SqlValue("tags", SqlValue.JSONB_TYPE, null));
+      update.SET("tags", (String) null, CastType.JSONB);
     }
     if (record.hasGeoPoint()) {
-      updateValues.add("latitude", record.getLatitude());
-      updateValues.add("longitude", record.getLongitude());
-      updateValues.addGeomPoint("geom", record.getLatitude(), record.getLongitude());
+      update.SET("latitude", record.getLatitude())
+          .SET("longitude", record.getLongitude())
+          .SET("geom", record.getLatitude(), record.getLongitude(), CastType.GEOM);
     } else {
-      updateValues.add("latitude", 0L, 0L);
-      updateValues.add("longitude", 0L, 0L);
-      updateValues.addGeomPoint("geom", 0, 0);
+      update.SET("latitude", (Double) null)
+          .SET("longitude", (Double) null)
+          .SET("geom", 0, 0, CastType.GEOM);
     }
-    // Handle custom fields
     if (record.getCustomFieldList() != null && !record.getCustomFieldList().isEmpty()) {
-      updateValues.add(new SqlValue("field_values", SqlValue.JSONB_TYPE,
-          CustomFieldListJSONCommand.createJSONString(record.getCustomFieldList())));
+      update.SET("field_values", CustomFieldListJSONCommand.createJSONString(record.getCustomFieldList()), CastType.JSONB);
     } else {
-      updateValues.add(new SqlValue("field_values", SqlValue.JSONB_TYPE, null));
+      update.SET("field_values", (String) null, CastType.JSONB);
     }
+    update.WHERE("item_id = ?", record.getId());
 
     // Use the previous records for updates
     Item previousRecord = ItemRepository.findById(record.getId());
@@ -226,8 +222,7 @@ public class ItemRepository {
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
-      // In a transaction (use the existing connection)
-      DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("item_id = ?", record.getId()));
+      update.execute(connection);
 
       // If the master categoryId does not match, then update the category id counts
       if (previousRecord.getCategoryId() != record.getCategoryId()) {
@@ -279,14 +274,11 @@ public class ItemRepository {
   }
 
   public static Item updateGeoJSON(Item record) {
-    // If there are no coordinates, then determine the lat/long
-
-    // Overwrite the geoJSON
-    SqlUtils updateValues = new SqlUtils().add("modified", new Timestamp(System.currentTimeMillis()));
-    updateValues.add(new SqlValue("geojson", SqlValue.JSONB_TYPE, StringUtils.trimToNull(record.getGeoJSON())));
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("item_id = ?", record.getId()))) {
-      // Expire the cache
-      //        CacheManager.invalidateKey(CacheManager.ITEM_UNIQUE_ID_CACHE, record.getUniqueId());
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("modified", new Timestamp(System.currentTimeMillis()))
+        .SET("geojson", StringUtils.trimToNull(record.getGeoJSON()), CastType.JSONB)
+        .WHERE("item_id = ?", record.getId());
+    if (update.execute().booleanValue()) {
       return record;
     }
     LOG.error("The update failed!");
@@ -320,7 +312,7 @@ public class ItemRepository {
         CategoryRepository.updateItemCount(connection, record.getCategoryId(), -1);
         MedicineRepository.removeAll(connection, record);
         // Delete the record
-        DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("item_id = ?", record.getId()));
+        DB.DELETE().FROM(TABLE_NAME).WHERE("item_id = ?", record.getId()).execute(connection);
         // Finish transaction
         transaction.commit();
       }
@@ -343,110 +335,92 @@ public class ItemRepository {
   }
 
   public static void approve(Item record, User user) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("approved", new Timestamp(System.currentTimeMillis()))
-        .add("approved_by", user.getId());
-    DB.update(TABLE_NAME, updateValues, DB.WHERE("item_id = ?", record.getId()));
+    DB.UPDATE(TABLE_NAME)
+        .SET("approved", new Timestamp(System.currentTimeMillis()))
+        .SET("approved_by", user.getId())
+        .WHERE("item_id = ?", record.getId())
+        .execute();
   }
 
   public static void removeItemApproval(Item record, User user) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("approved", (Timestamp) null)
-        .add("approved_by", -1, -1);
-    DB.update(TABLE_NAME, updateValues, DB.WHERE("item_id = ?", record.getId()));
+    DB.UPDATE(TABLE_NAME)
+        .SET("approved", (Timestamp) null)
+        .SET("approved_by", (Long) null)
+        .WHERE("item_id = ?", record.getId())
+        .execute();
   }
 
   public static void removeAll(Connection connection, Collection record) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("collection_id = ?", record.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("collection_id = ?", record.getId()).execute(connection);
   }
 
-  private static DataResult query(ItemSpecification specification, DataConstraints constraints) {
-    SqlUtils select = new SqlUtils();
-    SqlJoins joins = new SqlJoins();
-    SqlWhere where = DB.WHERE();
-    SqlUtils orderBy = new SqlUtils();
+  private static DataResult<Item> query(ItemSpecification specification, DataConstraints constraints) {
+    Select select = DB.SELECT("*").FROM(TABLE_NAME).WHERE();
     if (specification != null) {
-
-      joins.add("LEFT JOIN collections ON (items.collection_id = collections.collection_id)");
-
-      where
-          .andAddIfHasValue("item_id = ?", specification.getId(), -1)
-          .andAddIfHasValue("item_id <> ?", specification.getExcludeId(), -1)
-          .andAddIfHasValue("items.unique_id = ?", specification.getUniqueId())
-          .andAddIfHasValue("collections.collection_id = ?", specification.getCollectionId(), -1)
-          .andAddIfHasValue("barcode = ?", specification.getBarcode())
-          .andAddIfHasValue("dataset_id = ?", specification.getDatasetId(), -1)
-          .andAddIfHasValue("sync_date < ?", specification.getDatasetSyncTimestampThreshold());
+      select.LEFT_JOIN("collections")
+          .ON("(items.collection_id = collections.collection_id)");
+      if (specification.getId() != -1) {
+        select.WHERE("item_id = ?", specification.getId());
+      }
+      if (specification.getExcludeId() != -1) {
+        select.AND("item_id <> ?", specification.getExcludeId());
+      }
+      if (StringUtils.isNotBlank(specification.getUniqueId())) {
+        select.AND("items.unique_id = ?", specification.getUniqueId());
+      }
+      if (specification.getCollectionId() != -1) {
+        select.AND("collections.collection_id = ?", specification.getCollectionId());
+      }
+      if (StringUtils.isNotBlank(specification.getBarcode())) {
+        select.AND("barcode = ?", specification.getBarcode());
+      }
+      if (specification.getDatasetId() != -1) {
+        select.AND("dataset_id = ?", specification.getDatasetId());
+      }
+      if (specification.getDatasetSyncTimestampThreshold() != null) {
+        select.AND("sync_date < ?", specification.getDatasetSyncTimestampThreshold());
+      }
 
       if (specification.getApprovedOnly()) {
-        where.AND("approved is not null");
+        select.AND("approved IS NOT NULL");
       } else if (specification.getUnapprovedOnly()) {
-        where.AND("approved is null");
+        select.AND("approved IS NULL");
       }
       if (specification.getName() != null) {
-        where.AND("LOWER(items.name) = ?", specification.getName().trim().toLowerCase());
+        select.AND("LOWER(items.name) = ?", specification.getName().trim().toLowerCase());
       }
       if (specification.getMatchesName() != null) {
         String likeValue = specification.getMatchesName().trim()
             .replace("!", "!!")
             .replace("%", "!%")
             .replace("_", "!_")
-            .replace("[", "![");
-        where.AND("LOWER(items.name) LIKE LOWER(?) ESCAPE '!'", likeValue + "%");
+            .replace("[",
+                "![");
+        select.AND("LOWER(items.name) LIKE LOWER(?) ESCAPE '!'", likeValue + "%");
       }
       if (specification.getCategoryId() > -1) {
-        //where.add("category_id = ?", specification.getCategoryId(), -1);
-        where.AND("EXISTS (SELECT 1 FROM item_categories WHERE item_id = items.item_id AND category_id = ?)",
+        select.AND("EXISTS (SELECT 1 FROM item_categories WHERE item_id = items.item_id AND category_id = ?)",
             specification.getCategoryId());
       }
-
-      // For user id
-      // User must be in a user group with collection access, or be a member of the item
-      // AND (user_id EXISTS in user group for related collection ... OR user_id EXISTS in members...) (item_id) (collection_id...)
       if (specification.getForUserId() != DataConstants.UNDEFINED) {
         if (specification.getForUserId() == UserSession.GUEST_ID) {
-          // For logged out users
-          where.AND("collections.allows_guests = true");
+          select.AND("collections.allows_guests = true");
         } else {
-          // For logged out and logged in users
-          where.AND(
-              "(collections.allows_guests = true " +
-                  "OR (has_allowed_groups = true " +
-                  "AND EXISTS (SELECT 1 FROM collection_groups WHERE collection_groups.collection_id = collections.collection_id AND view_all = true "
-                  +
-                  "AND EXISTS (SELECT 1 FROM user_groups WHERE user_groups.group_id = collection_groups.group_id AND user_id = ?))"
-                  +
-                  ") " +
-                  "OR EXISTS (SELECT 1 FROM members WHERE items.item_id = members.item_id AND user_id = ? AND approved IS NOT NULL)"
-                  +
-                  ")",
-              new Long[] { specification.getForUserId(), specification.getForUserId() });
+          select.AND(
+              "(collections.allows_guests = true OR (has_allowed_groups = true AND EXISTS (SELECT 1 FROM collection_groups WHERE collection_groups.collection_id = collections.collection_id AND view_all = true AND EXISTS (SELECT 1 FROM user_groups WHERE user_groups.group_id = collection_groups.group_id AND user_id = ?)) OR EXISTS (SELECT 1 FROM members WHERE items.item_id = members.item_id AND user_id = ? AND approved IS NOT NULL)))",
+              specification.getForUserId(), specification.getForUserId());
         }
       }
-
-      // User must be a member of the item
       if (specification.getForMemberWithUserId() != DataConstants.UNDEFINED) {
-        // For logged in users
-        where.AND(
-            "EXISTS (SELECT 1 FROM members WHERE items.item_id = members.item_id AND user_id = ? AND approved IS NOT NULL)",
+        select.AND("EXISTS (SELECT 1 FROM members WHERE items.item_id = members.item_id AND user_id = ? AND approved IS NOT NULL)",
             specification.getForMemberWithUserId());
       }
-
-      // Use the location geo data
       if (StringUtils.isNotBlank(specification.getSearchLocation())) {
-        // Skip the SELECT COUNT(*), it causes slowdowns due to coordinate issue
         constraints.setUseCount(false);
-        // Skip items without a location
-        where.AND("geom IS NOT NULL");
-        // Determine if there is a region to search within
+        select.AND("geom IS NOT NULL");
         String value = specification.getSearchLocation();
         if (StringUtils.isNumeric(value) && value.length() == 5) {
-          // This is a zip code
-          if (specification.getWithinMeters() > 0) {
-            //            where.add("ST_DWithin(geom::geography, (SELECT geom::geography FROM zip_codes WHERE code = ?), " + specification.getWithinMeters() + ")", value);
-          }
-          // Override the order by for closest first
-          orderBy.add("geom <-> (SELECT geom FROM zip_codes WHERE code = ?)", value);
+          select.ORDER_BY("geom <-> (SELECT geom FROM zip_codes WHERE code = ?)", value);
         } else {
           // Treat this as a city with a possible region
           String city = null;
@@ -459,153 +433,99 @@ public class ItemRepository {
             city = value.trim().toLowerCase();
           }
           if (ValidateGeoRegion.isValidWorldCitiesRegion(region)) {
-            // Use the region
-            if (specification.getWithinMeters() > 0) {
-              //              where.add("ST_DWithin(geom::geography, (SELECT geom::geography FROM world_cities WHERE city = ? AND region = ? ORDER BY population DESC LIMIT 1), " + specification.getWithinMeters() + ")", new String[]{city, region});
-            }
-            // Override the order by for closest first; city and region are bound parameters, not concatenated into SQL
-            orderBy.add("geom <-> (SELECT geom FROM world_cities WHERE city = ? AND region = ? ORDER BY population DESC LIMIT 1)",
-                new String[] { city, region });
+            select.ORDER_BY("geom <-> (SELECT geom FROM world_cities WHERE city = ? AND region = ? ORDER BY population DESC LIMIT 1)",
+                city, region);
           } else {
-            // Just use the city
-            if (specification.getWithinMeters() > 0) {
-              //              where.add("ST_DWithin(geom::geography, (SELECT geom::geography FROM world_cities WHERE city = ? ORDER BY population DESC LIMIT 1), " + specification.getWithinMeters() + ")", city);
-            }
-            // Override the order by for closest first
-            orderBy.add("geom <-> (SELECT geom FROM world_cities WHERE city = ? ORDER BY population DESC LIMIT 1)",
-                city);
+            select.ORDER_BY("geom <-> (SELECT geom FROM world_cities WHERE city = ? ORDER BY population DESC LIMIT 1)", city);
           }
         }
       }
-
-      // Use the search engine
       if (StringUtils.isNotBlank(specification.getSearchName())) {
-
-        // Ranking involves exact matches, matches at the beginning of the name, matches anywhere in the name, and matches for each word in the name
-        // The best method is to use the websearch_to_tsquery() function, which will handle the stemming and stop words, and then use ts_rank_cd() to rank the results
-
         String term = specification.getSearchName().trim().toLowerCase();
-        // String quotedSearchTerm = "\"" + term + "\"";
-        String searchTermSeparated = term.replaceAll("\\s+", " OR ");
-        // String searchToUse = quotedSearchTerm + " OR " + searchTermSeparated;
-        String whereToUse = term + " OR " + searchTermSeparated;
-
-        // Surround word with "%%" and put into an array for each word in the search term
-        // Escape the values with '!'
+        String whereToUse = term + " OR " + term.replaceAll("\\s+", " OR ");
         String[] titleSearchWords = Arrays.stream(term.split("\\s+"))
             .map(word -> "%" + word.replace("!", "!!").replace("%", "!%").replace("_", "!_").replace("[", "![") + "%")
             .toArray(String[]::new);
-
-        // Combine into an array the searchToUse, titleSearchPattern1, titleSearchPattern2, and each word in titleSearchWords
-        String[] titleSearchPatterns = new String[1 + titleSearchWords.length];
-        titleSearchPatterns[0] = whereToUse;
-        System.arraycopy(titleSearchWords, 0, titleSearchPatterns, 1, titleSearchWords.length);
-
-        // Highlight the term
-        select.add(
-            "ts_headline('english', items.name || ' ' || coalesce(items.keywords,'') || ' ' || coalesce(items.summary,'') || ' ' || coalesce(items.description_text,''), "
-                +
-                "websearch_to_tsquery('title_stem', ?), " +
-                "'StartSel=${b}, StopSel=${/b}, MaxWords=30, MinWords=15, ShortWord=3, HighlightAll=FALSE, MaxFragments=2, FragmentDelimiter=\" ... \"') AS highlight",
+        select.SELECT(
+            "ts_headline('english', items.name || ' ' || coalesce(items.keywords,'') || ' ' || coalesce(items.summary,'') || ' ' || coalesce(items.description_text,''), websearch_to_tsquery('title_stem', ?), 'StartSel=${b}, StopSel=${/b}, MaxWords=30, MinWords=15, ShortWord=3, HighlightAll=FALSE, MaxFragments=2, FragmentDelimiter=\" ... \"') AS highlight",
             term);
-
-        // Rank the term
-        select.add(
-            "(ts_rank_cd(tsv, websearch_to_tsquery('title_stem', ?)) " +
-                Arrays.stream(titleSearchWords)
-                    .map(word -> " + CASE WHEN LOWER(items.name) LIKE LOWER(?) ESCAPE '!' THEN 10.0 ELSE 0.0 END")
-                    .collect(Collectors.joining())
-                + ") AS rank",
-            titleSearchPatterns);
-
-        // Include additional where conditions
-        where.AND("tsv @@ websearch_to_tsquery('title_stem', ?)", whereToUse);
-
-        // Override the order by for rank first
-        orderBy.add("rank DESC, items.modified DESC");
+        select.SELECT("(ts_rank_cd(tsv, websearch_to_tsquery('title_stem', ?)) " + Arrays.stream(titleSearchWords)
+            .map(word -> " + CASE WHEN LOWER(items.name) LIKE LOWER(?) ESCAPE '!' THEN 10.0 ELSE 0.0 END")
+            .collect(Collectors.joining()) + ") AS rank", term, titleSearchWords);
+        select.AND("tsv @@ websearch_to_tsquery('title_stem', ?)", whereToUse);
+        select.ORDER_BY("rank DESC, items.modified DESC");
       }
-
-      // Find items nearby
       if (specification.getNearItemId() > DataConstants.UNDEFINED) {
         constraints.setUseCount(false);
-        where.AND("geom IS NOT NULL");
-        if (specification.getWithinMeters() > 0) {
-          // @note currently slow
-          //          where.add("ST_DWithin(geom::geography, (SELECT geom::geography FROM items WHERE item_id = ?), " + specification.getWithinMeters() + ")", specification.getNearItemId());
-        }
-        // Override the order by for closest first
-        orderBy.add("geom <-> (SELECT geom FROM items WHERE item_id = ?)", specification.getNearItemId());
+        select.AND("geom IS NOT NULL");
+        select.ORDER_BY("geom <-> (SELECT geom FROM items WHERE item_id = ?)", specification.getNearItemId());
       }
-
       if (specification.hasGeoPoint()) {
         constraints.setUseCount(false);
-        where.AND("geom IS NOT NULL");
+        select.AND("geom IS NOT NULL");
         if (specification.getWithinMeters() > 0) {
-          where.AND("ST_DWithin(geom::geography, ST_SetSRID(ST_MakePoint(" + specification.getLatitude() + ","
+          select.AND("ST_DWithin(geom::geography, ST_SetSRID(ST_MakePoint(" + specification.getLatitude() + ","
               + specification.getLongitude() + "), 4326)::geography, " + specification.getWithinMeters() + ")");
         }
-        orderBy.add("geom <-> ST_SetSRID(ST_MakePoint(" + specification.getLatitude() + ","
-            + specification.getLongitude() + "), 4326)");
+        select.ORDER_BY(
+            "geom <-> ST_SetSRID(ST_MakePoint(" + specification.getLatitude() + "," + specification.getLongitude() + "), 4326)");
       }
-
       if (specification.getHasCoordinates() != DataConstants.UNDEFINED) {
         if (specification.getHasCoordinates() == DataConstants.TRUE) {
-          where.AND("latitude <> 0 AND longitude <> 0");
+          select.AND("latitude <> 0 AND longitude <> 0");
         } else {
-          where.AND("latitude = 0 AND longitude = 0");
+          select.AND("latitude = 0 AND longitude = 0");
         }
       }
-
       if (specification.getHasGeoJSON() != DataConstants.UNDEFINED) {
         if (specification.getHasGeoJSON() == DataConstants.TRUE) {
-          where.AND("geojson IS NOT NULL");
+          select.AND("geojson IS NOT NULL");
         } else {
-          where.AND("geojson IS NULL");
+          select.AND("geojson IS NULL");
         }
       }
-
       if (specification.getCustomFieldFilters() != null) {
         for (String[] filter : specification.getCustomFieldFilters()) {
-          where.AND(
-              "EXISTS (SELECT 1 FROM jsonb_array_elements(items.field_values) AS elem WHERE elem->>'name' = ? AND elem->>'value' = ?)",
-              new String[] { filter[0], filter[1] });
+          String clause = "EXISTS (SELECT 1 FROM jsonb_array_elements(items.field_values) AS elem WHERE elem->>'name' = ? AND elem->>'value' = ?)";
+          select.AND(clause, filter[0], filter[1]);
         }
       }
-
       if (specification.getRegionTags() != null && specification.getRegionTags().length > 0) {
-        where.AND("tags", specification.getRegionTags(), SqlWhere.OR_OPERATOR);
+        ConditionGroup condition = ConditionGroup.build("tags", specification.getRegionTags(), ConditionGroup.ANY);
+        if (condition != null) {
+          select.AND(condition.sql(), (Object[]) condition.values());
+        }
       }
-
       if (specification.getFilterTags() != null && specification.getFilterTags().length > 0) {
-        where.AND("tags", specification.getFilterTags(), SqlWhere.AND_OPERATOR);
+        ConditionGroup filterCondition = ConditionGroup.build("tags", specification.getFilterTags(), ConditionGroup.ALL);
+        if (filterCondition != null) {
+          select.AND(filterCondition.sql(), (Object[]) filterCondition.values());
+        }
       }
-
       if (specification.getExcludeTags() != null && specification.getExcludeTags().length > 0) {
-        where.AND("tags", specification.getExcludeTags(), SqlWhere.NOT_OR_OPERATOR);
+        ConditionGroup excludeCondition = ConditionGroup.build("tags", specification.getExcludeTags(),
+            ConditionGroup.NOT_ANY);
+        if (excludeCondition != null) {
+          select.AND(excludeCondition.sql(), (Object[]) excludeCondition.values());
+        }
       }
-
       if (specification.getFieldInFilters() != null) {
         for (Map.Entry<String, List<String>> entry : specification.getFieldInFilters().entrySet()) {
           String fieldName = entry.getKey();
           List<String> values = entry.getValue();
           if ("tags".equals(fieldName) && !values.isEmpty()) {
             String placeholders = String.join(", ", Collections.nCopies(values.size(), "?"));
-            where.AND(
-                "EXISTS (SELECT 1 FROM jsonb_array_elements_text(items.tags) AS t WHERE t IN (" + placeholders + "))",
+            select.AND("EXISTS (SELECT 1 FROM jsonb_array_elements_text(items.tags) AS t WHERE t IN (" + placeholders + "))",
                 values.toArray(new String[0]));
           }
         }
       }
-
-      // Add modified date range filters
       if (specification.getModifiedAfter() != null) {
-        where.AND("items.modified >= ?", specification.getModifiedAfter());
+        select.AND("items.modified >= ?", specification.getModifiedAfter());
       }
       if (specification.getModifiedBefore() != null) {
-        where.AND("items.modified <= ?", specification.getModifiedBefore());
+        select.AND("items.modified <= ?", specification.getModifiedBefore());
       }
-
-      // Add modified by user filter
       if (specification.getModifiedByUserIds() != null && specification.getModifiedByUserIds().length > 0) {
         StringBuilder userCondition = new StringBuilder("items.modified_by IN (");
         Long[] userIdsBoxed = new Long[specification.getModifiedByUserIds().length];
@@ -617,31 +537,33 @@ public class ItemRepository {
           userIdsBoxed[i] = specification.getModifiedByUserIds()[i];
         }
         userCondition.append(")");
-        where.AND(userCondition.toString(), (Object[]) userIdsBoxed);
+        select.AND(userCondition.toString(), (Object[]) userIdsBoxed);
       }
     }
-    return DB.selectAllFrom(
-        TABLE_NAME, select, joins, where, orderBy, constraints, ItemRepository::buildRecord);
+    if (constraints != null) {
+      select.WITH(constraints);
+    }
+    return select.returnDataResult(ItemRepository::buildRecord);
   }
 
   public static Item findById(long id) {
     if (id == -1) {
       return null;
     }
-    return (Item) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("item_id = ?", id),
-        ItemRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("item_id = ?", id)
+        .returnRecord(ItemRepository::buildRecord);
   }
 
   public static Item findByUniqueId(String uniqueId) {
     if (StringUtils.isBlank(uniqueId)) {
       return null;
     }
-    return (Item) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("unique_id = ?", uniqueId),
-        ItemRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("unique_id = ?", uniqueId)
+        .returnRecord(ItemRepository::buildRecord);
   }
 
   public static Item findByIdWithinCollection(long itemId, long collectionId) {
@@ -653,11 +575,11 @@ public class ItemRepository {
       LOG.warn("findByNameWithinCollection collection ID is -1");
       return null;
     }
-    return (Item) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("item_id = ?", itemId)
-            .AND("collection_id = ?", collectionId),
-        ItemRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("item_id = ?", itemId)
+        .AND("collection_id = ?", collectionId)
+        .returnRecord(ItemRepository::buildRecord);
   }
 
   public static Item findByUniqueIdWithinCollection(String uniqueId, long collectionId) {
@@ -668,11 +590,11 @@ public class ItemRepository {
       LOG.warn("findByNameWithinCollection collection ID is -1");
       return null;
     }
-    return (Item) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("unique_id = ?", uniqueId)
-            .AND("collection_id = ?", collectionId),
-        ItemRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("unique_id = ?", uniqueId)
+        .AND("collection_id = ?", collectionId)
+        .returnRecord(ItemRepository::buildRecord);
   }
 
   public static Item findByNameWithinCollection(String name, long collectionId) {
@@ -684,12 +606,11 @@ public class ItemRepository {
       LOG.warn("findByNameWithinCollection collection ID is -1");
       return null;
     }
-    return (Item) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE()
-            .AND("LOWER(name) = ?", name.trim().toLowerCase())
-            .AND("collection_id = ?", collectionId),
-        ItemRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("LOWER(name) = ?", name.trim().toLowerCase())
+        .AND("collection_id = ?", collectionId)
+        .returnRecord(ItemRepository::buildRecord);
   }
 
   public static Item findByDatasetKeyValue(String datasetKeyValue, long datasetId) {
@@ -700,11 +621,11 @@ public class ItemRepository {
       LOG.warn("findByDatasetKeyValue dataset ID is -1");
       return null;
     }
-    return (Item) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("dataset_key_value = ?", datasetKeyValue)
-            .AND("dataset_id = ?", datasetId),
-        ItemRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("dataset_key_value = ?", datasetKeyValue)
+        .AND("dataset_id = ?", datasetId)
+        .returnRecord(ItemRepository::buildRecord);
   }
 
   public static List<Item> findAll(ItemSpecification specification, DataConstraints constraints) {
@@ -712,8 +633,7 @@ public class ItemRepository {
       constraints = new DataConstraints();
     }
     constraints.setDefaultColumnToSortBy("LOWER(items.name)");
-    DataResult result = query(specification, constraints);
-    return (List<Item>) result.getRecords();
+    return query(specification, constraints).getRecords();
   }
 
   private static Item buildRecord(ResultSet rs) {
