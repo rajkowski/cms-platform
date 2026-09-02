@@ -125,6 +125,11 @@
     </dependency>
     <dependency>
       <groupId>com.github.rajkowski</groupId>
+      <artifactId>db</artifactId>
+      <version>1.0.7</version>
+    </dependency>
+    <dependency>
+      <groupId>com.github.rajkowski</groupId>
       <artifactId>easy-flows-playbooks</artifactId>
       <version>1.2.0</version>
     </dependency>
@@ -361,6 +366,12 @@
       <artifactId>tomcat-servlet-api</artifactId>
       <version>9.0.120</version>
       <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <version>2.3.232</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
