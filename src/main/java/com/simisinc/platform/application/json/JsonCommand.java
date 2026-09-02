@@ -179,8 +179,22 @@ public class JsonCommand {
       return new String[0];
     }
     try {
+      String candidate = json.trim();
       ObjectMapper mapper = new ObjectMapper();
-      return mapper.readValue(json, String[].class);
+
+      // Some database drivers return a JSON array as a quoted string literal, such as
+      // "[\"updated\"]" instead of ["updated"]. Handle both forms safely.
+      if (candidate.startsWith("\"") && candidate.endsWith("\"")) {
+        String unwrapped = mapper.readValue(candidate, String.class);
+        if (StringUtils.isNotBlank(unwrapped)) {
+          candidate = unwrapped.trim();
+        }
+      }
+
+      if (StringUtils.isBlank(candidate)) {
+        return new String[0];
+      }
+      return mapper.readValue(candidate, String[].class);
     } catch (Exception e) {
       LOG.error("fromJson", e);
     }
