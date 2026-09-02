@@ -26,14 +26,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
+import com.github.rajkowski.database.Select;
 import com.simisinc.platform.domain.model.xapi.XapiStatement;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves experience api (xAPI) statement objects
@@ -48,32 +47,31 @@ public class XapiStatementRepository {
   private static String TABLE_NAME = "xapi_statements";
   private static String[] PRIMARY_KEY = new String[] { "statement_id" };
 
-  private static SqlWhere createWhereStatement(XapiStatementSpecification specification) {
-    SqlWhere where = null;
+  private static DataResult<XapiStatement> query(XapiStatementSpecification specification, DataConstraints constraints) {
+    Select select = DB.SELECT("*")
+        .FROM(TABLE_NAME);
     if (specification != null) {
-      where = DB.WHERE()
-          .andAddIfHasValue("statement_id = ?", specification.getId(), -1)
-          .andAddIfHasValue("actor_id = ?", specification.getActorId(), -1)
-          .andAddIfHasValue("object_id = ?", specification.getObjectId(), -1)
-          .andAddIfHasValue("verb = ?", specification.getVerb())
-          .andAddIfHasValue("object = ?", specification.getObject());
+      select.WHERE()
+          .AND_SKIP_IF_MATCHES("statement_id = ?", specification.getId(), -1)
+          .AND_SKIP_IF_MATCHES("actor_id = ?", specification.getActorId(), -1)
+          .AND_SKIP_IF_MATCHES("object_id = ?", specification.getObjectId(), -1)
+          .AND_SKIP_IF_NULL("verb = ?", specification.getVerb())
+          .AND_SKIP_IF_NULL("object = ?", specification.getObject());
     }
-    return where;
-  }
-
-  private static DataResult query(XapiStatementSpecification specification, DataConstraints constraints) {
-    SqlWhere where = createWhereStatement(specification);
-    return DB.selectAllFrom(TABLE_NAME, where, constraints, XapiStatementRepository::buildRecord);
+    if (constraints != null) {
+      select.WITH(constraints);
+    }
+    return select.returnDataResult(XapiStatementRepository::buildRecord);
   }
 
   public static XapiStatement findById(long statementId) {
     if (statementId == -1) {
       return null;
     }
-    return (XapiStatement) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("statement_id = ?", statementId),
-        XapiStatementRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("statement_id = ?", statementId)
+        .returnRecord(XapiStatementRepository::buildRecord);
   }
 
   public static List<XapiStatement> findAll() {
@@ -87,8 +85,7 @@ public class XapiStatementRepository {
     constraints.setDefaultColumnToSortBy("statement_id");
     // occurred_at < CURRENT_TIMESTAMP
     // constraints.setColumnToSortBy("occurred_at", "desc");
-    DataResult result = query(specification, constraints);
-    return (List<XapiStatement>) result.getRecords();
+    return query(specification, constraints).getRecords();
   }
 
   public static XapiStatement save(XapiStatement record) {
@@ -99,20 +96,21 @@ public class XapiStatementRepository {
   }
 
   public static XapiStatement add(XapiStatement record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("message", StringUtils.trimToNull(record.getMessage()))
-        .add("message_snapshot", StringUtils.trimToNull(record.getMessageSnapshot()))
-        .addIfExists("actor_id", record.getActorId(), -1)
-        .add("verb", StringUtils.trimToNull(record.getVerb()))
-        .add("object", StringUtils.trimToNull(record.getObject()))
-        .addIfExists("object_id", record.getObjectId(), -1)
-        .addIfExists("occurred_at", record.getOccurredAt())
-        .addIfExists("authority", StringUtils.trimToNull(record.getAuthority()))
-        .addIfExists("user_context", record.getContextUserId(), -1)
-        .addIfExists("item_context", record.getContextItemId(), -1)
-        .addIfExists("project_context", record.getContextProjectId(), -1)
-        .addIfExists("issue_context", record.getContextIssueId(), -1);
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    long generatedId = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("message", StringUtils.trimToNull(record.getMessage()))
+        .FIELD("message_snapshot", StringUtils.trimToNull(record.getMessageSnapshot()))
+        .FIELD_UNLESS_MATCHES("actor_id", record.getActorId(), -1)
+        .FIELD("verb", StringUtils.trimToNull(record.getVerb()))
+        .FIELD("object", StringUtils.trimToNull(record.getObject()))
+        .FIELD_UNLESS_MATCHES("object_id", record.getObjectId(), -1)
+        .FIELD_UNLESS_NULL("occurred_at", record.getOccurredAt())
+        .FIELD_UNLESS_NULL("authority", StringUtils.trimToNull(record.getAuthority()))
+        .FIELD_UNLESS_MATCHES("user_context", record.getContextUserId(), -1)
+        .FIELD_UNLESS_MATCHES("item_context", record.getContextItemId(), -1)
+        .FIELD_UNLESS_MATCHES("project_context", record.getContextProjectId(), -1)
+        .FIELD_UNLESS_MATCHES("issue_context", record.getContextIssueId(), -1)
+        .execute();
+    record.setId(generatedId);
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -121,20 +119,22 @@ public class XapiStatementRepository {
   }
 
   public static XapiStatement update(XapiStatement record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("message", StringUtils.trimToNull(record.getMessage()))
-        .add("message_snapshot", StringUtils.trimToNull(record.getMessageSnapshot()))
-        .add("actor_id", record.getActorId(), -1)
-        .add("verb", StringUtils.trimToNull(record.getVerb()))
-        .add("object", StringUtils.trimToNull(record.getObject()))
-        .add("object_id", record.getObjectId(), -1)
-        .add("occurred_at", record.getOccurredAt())
-        .add("authority", StringUtils.trimToNull(record.getAuthority()))
-        .add("user_context", record.getContextUserId(), -1)
-        .add("item_context", record.getContextItemId(), -1)
-        .add("project_context", record.getContextProjectId(), -1)
-        .add("issue_context", record.getContextIssueId(), -1);
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("statement_id = ?", record.getId()))) {
+    boolean updated = DB.UPDATE(TABLE_NAME)
+        .SET("message", StringUtils.trimToNull(record.getMessage()))
+        .SET("message_snapshot", StringUtils.trimToNull(record.getMessageSnapshot()))
+        .SET("actor_id", record.getActorId() == -1 ? null : record.getActorId())
+        .SET("verb", StringUtils.trimToNull(record.getVerb()))
+        .SET("object", StringUtils.trimToNull(record.getObject()))
+        .SET("object_id", record.getObjectId() == -1 ? null : record.getObjectId())
+        .SET("occurred_at", record.getOccurredAt())
+        .SET("authority", StringUtils.trimToNull(record.getAuthority()))
+        .SET("user_context", record.getContextUserId() == -1 ? null : record.getContextUserId())
+        .SET("item_context", record.getContextItemId() == -1 ? null : record.getContextItemId())
+        .SET("project_context", record.getContextProjectId() == -1 ? null : record.getContextProjectId())
+        .SET("issue_context", record.getContextIssueId() == -1 ? null : record.getContextIssueId())
+        .WHERE("statement_id = ?", record.getId())
+        .execute();
+    if (updated) {
       // CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
     }
@@ -148,7 +148,7 @@ public class XapiStatementRepository {
         AutoRollback transaction = new AutoRollback(connection)) {
       // Delete the references
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("statement_id = ?", record.getId()));
+      DB.DELETE().FROM(TABLE_NAME).WHERE("statement_id = ?", record.getId()).execute(connection);
       // Finish transaction
       transaction.commit();
       return true;

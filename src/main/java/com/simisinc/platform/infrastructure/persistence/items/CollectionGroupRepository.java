@@ -24,14 +24,13 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.Insert;
 import com.simisinc.platform.domain.model.Group;
 import com.simisinc.platform.domain.model.items.Collection;
 import com.simisinc.platform.domain.model.items.CollectionGroup;
 import com.simisinc.platform.domain.model.items.PrivacyType;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves collection group objects
@@ -50,39 +49,30 @@ public class CollectionGroupRepository {
     if (collectionId == -1) {
       return null;
     }
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        DB.WHERE("collection_id = ?", collectionId),
-        new DataConstraints().setDefaultColumnToSortBy("allowed_id").setUseCount(false),
-        CollectionGroupRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<CollectionGroup>) result.getRecords();
-    }
-    return null;
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("collection_id = ?", collectionId)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("allowed_id").setUseCount(false))
+        .returnDataResult(CollectionGroupRepository::buildRecord).getRecords();
   }
 
   public static List<CollectionGroup> findAll() {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        null,
-        new DataConstraints().setDefaultColumnToSortBy("allowed_id"),
-        CollectionGroupRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<CollectionGroup>) result.getRecords();
-    }
-    return null;
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("allowed_id"))
+        .returnDataResult(CollectionGroupRepository::buildRecord).getRecords();
   }
 
   public static CollectionGroup add(CollectionGroup record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("collection_id", record.getCollectionId())
-        .add("group_id", record.getGroupId())
-        .add("privacy_type", record.getPrivacyType())
-        .add("view_all", record.getPrivacyType() != PrivacyType.PRIVATE)
-        .add("add_permission", record.getAddPermission())
-        .add("edit_permission", record.getEditPermission())
-        .add("delete_permission", record.getDeletePermission());
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    Insert insert = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("collection_id", record.getCollectionId())
+        .FIELD("group_id", record.getGroupId())
+        .FIELD("privacy_type", record.getPrivacyType())
+        .FIELD("view_all", record.getPrivacyType() != PrivacyType.PRIVATE)
+        .FIELD("add_permission", record.getAddPermission())
+        .FIELD("edit_permission", record.getEditPermission())
+        .FIELD("delete_permission", record.getDeletePermission());
+    record.setId(insert.execute());
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -95,25 +85,24 @@ public class CollectionGroupRepository {
       return;
     }
     for (CollectionGroup allowedGroup : collection.getCollectionGroupList()) {
-      SqlUtils insertValues = new SqlUtils();
-      insertValues
-          .add("collection_id", collection.getId())
-          .add("group_id", allowedGroup.getGroupId())
-          .add("privacy_type", allowedGroup.getPrivacyType())
-          .add("view_all", allowedGroup.getPrivacyType() != PrivacyType.PRIVATE)
-          .add("add_permission", allowedGroup.getAddPermission())
-          .add("edit_permission", allowedGroup.getEditPermission())
-          .add("delete_permission", allowedGroup.getDeletePermission());
-      DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY);
+      DB.INSERT().INTO(TABLE_NAME)
+          .FIELD("collection_id", collection.getId())
+          .FIELD("group_id", allowedGroup.getGroupId())
+          .FIELD("privacy_type", allowedGroup.getPrivacyType())
+          .FIELD("view_all", allowedGroup.getPrivacyType() != PrivacyType.PRIVATE)
+          .FIELD("add_permission", allowedGroup.getAddPermission())
+          .FIELD("edit_permission", allowedGroup.getEditPermission())
+          .FIELD("delete_permission", allowedGroup.getDeletePermission())
+          .execute(connection);
     }
   }
 
   public static void removeAll(Connection connection, Collection collection) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("collection_id = ?", collection.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("collection_id = ?", collection.getId()).execute(connection);
   }
 
   public static void removeAll(Connection connection, Group group) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("group_id = ?", group.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("group_id = ?", group.getId()).execute(connection);
   }
 
   private static CollectionGroup buildRecord(ResultSet rs) {

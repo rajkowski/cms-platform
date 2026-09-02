@@ -25,14 +25,13 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.Insert;
 import com.simisinc.platform.domain.model.items.Item;
 import com.simisinc.platform.domain.model.items.Member;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves member objects
@@ -51,53 +50,44 @@ public class MemberRepository {
     if (memberId == -1) {
       return null;
     }
-    Member member = (Member) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("member_id = ?", memberId),
-        MemberRepository::buildRecord);
-    return member;
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("member_id = ?", memberId)
+        .returnRecord(MemberRepository::buildRecord);
   }
 
   public static List<Member> findAllForUserId(long userId) {
     if (userId == -1) {
       return null;
     }
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        DB.WHERE("user_id = ?", userId),
-        new DataConstraints().setDefaultColumnToSortBy("member_id"),
-        MemberRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<Member>) result.getRecords();
-    }
-    return null;
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("user_id = ?", userId)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("member_id"))
+        .returnDataResult(MemberRepository::buildRecord).getRecords();
   }
 
   public static List<Member> findAllForItemId(long itemId) {
     if (itemId == -1) {
       return null;
     }
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        DB.WHERE("item_id = ?", itemId),
-        new DataConstraints().setDefaultColumnToSortBy("member_id"),
-        MemberRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<Member>) result.getRecords();
-    }
-    return null;
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("item_id = ?", itemId)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("member_id"))
+        .returnDataResult(MemberRepository::buildRecord).getRecords();
   }
 
   public static boolean isApprovedMember(long itemId, long userId) {
     if (itemId == -1 || userId < 1) {
       return false;
     }
-    long count = DB.selectCountFrom(
-        TABLE_NAME,
-        DB.WHERE("item_id = ?", itemId)
-            .AND("user_id = ?", userId)
-            .AND("approved = ?", true));
-    return (count > 0);
+    return DB.SELECT("COUNT(*)")
+        .FROM(TABLE_NAME)
+        .WHERE("item_id = ?", itemId)
+        .AND("user_id = ?", userId)
+        .AND("approved IS NOT NULL")
+        .returnValue(Long.class) > 0;
   }
 
   public static Member save(Member record) {
@@ -109,22 +99,22 @@ public class MemberRepository {
   }
 
   public static Member add(Member record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("user_id", record.getUserId())
-        .add("item_id", record.getItemId())
-        .add("collection_id", record.getCollectionId())
-        .add("created_by", record.getCreatedBy())
-        .add("modified_by", record.getModifiedBy())
-        .add("requested", record.getRequested())
-        .add("archived", record.getApproved())
-        .addIfExists("archived_by", record.getApprovedBy(), -1)
-        .add("last_viewed", record.getApproved());
+    Insert insert = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("user_id", record.getUserId())
+        .FIELD("item_id", record.getItemId())
+        .FIELD("collection_id", record.getCollectionId())
+        .FIELD("created_by", record.getCreatedBy())
+        .FIELD("modified_by", record.getModifiedBy())
+        .FIELD("requested", record.getRequested())
+        .FIELD("archived", record.getApproved())
+        .FIELD("last_viewed", record.getApproved());
     if (record.getApprovedBy() > -1) {
-      insertValues.add("approved_by", record.getApprovedBy());
+      insert.FIELD("archived_by", record.getApprovedBy());
+      insert.FIELD("approved_by", record.getApprovedBy());
       if (record.getApproved() != null) {
-        insertValues.add("approved", record.getApproved());
+        insert.FIELD("approved", record.getApproved());
       } else {
-        insertValues.add("approved", new Timestamp(System.currentTimeMillis()));
+        insert.FIELD("approved", new Timestamp(System.currentTimeMillis()));
       }
     }
     // Use a transaction
@@ -132,7 +122,7 @@ public class MemberRepository {
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
       // In a transaction (use the existing connection)
-      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+      record.setId(insert.execute(connection));
       // Manage the roles
       MemberRoleRepository.insertMemberRoleList(connection, record);
       // Finish the transaction
@@ -164,11 +154,11 @@ public class MemberRepository {
   }
 
   public static void remove(Connection connection, Member member) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("member_id = ?", member.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("member_id = ?", member.getId()).execute(connection);
   }
 
   public static void removeAll(Connection connection, Item item) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("item_id = ?", item.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("item_id = ?", item.getId()).execute(connection);
   }
 
   private static Member buildRecord(ResultSet rs) {

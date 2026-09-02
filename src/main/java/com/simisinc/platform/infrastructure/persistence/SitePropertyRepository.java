@@ -26,12 +26,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.domain.model.SiteProperty;
 import com.simisinc.platform.infrastructure.cache.CacheManager;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
 
 /**
  * Persists and retrieves site property objects
@@ -50,34 +49,25 @@ public class SitePropertyRepository {
     if (StringUtils.isBlank(name)) {
       return null;
     }
-    return (SiteProperty) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("property_name = ?", name),
-        SitePropertyRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("property_name = ?", name)
+        .returnRecord(SitePropertyRepository::buildRecord);
   }
 
   public static List<SiteProperty> findAllByPrefix(String prefix) {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        DB.WHERE("property_name LIKE ?", prefix + ".%"),
-        new DataConstraints().setDefaultColumnToSortBy("property_order, property_name").setUseCount(false),
-        SitePropertyRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<SiteProperty>) result.getRecords();
-    }
-    return null;
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("property_name LIKE ?", prefix + ".%")
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("property_order, property_name").setUseCount(false))
+        .returnDataResult(SitePropertyRepository::buildRecord).getRecords();
   }
 
   public static List<SiteProperty> findAll() {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        null,
-        new DataConstraints().setDefaultColumnToSortBy("property_id"),
-        SitePropertyRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<SiteProperty>) result.getRecords();
-    }
-    return null;
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("property_id"))
+        .returnDataResult(SitePropertyRepository::buildRecord).getRecords();
   }
 
   private static PreparedStatement createPreparedStatementForUpdate(Connection connection, SiteProperty record) throws SQLException {
@@ -92,13 +82,12 @@ public class SitePropertyRepository {
   }
 
   public static SiteProperty save(SiteProperty record) {
-    try (Connection connection = DB.getConnection();
-        PreparedStatement pst = createPreparedStatementForUpdate(connection, record)) {
-      if (pst.executeUpdate() > 0) {
-        return record;
-      }
-    } catch (SQLException se) {
-      LOG.error("SQLException: " + se.getMessage());
+    boolean updated = DB.UPDATE(TABLE_NAME)
+        .SET("property_value", StringUtils.trimToEmpty(record.getValue()))
+        .WHERE("property_id = ?", record.getId())
+        .execute();
+    if (updated) {
+      return record;
     }
     return null;
   }

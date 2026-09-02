@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +17,6 @@
 
 package com.simisinc.platform.infrastructure.persistence.ecommerce;
 
-import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
@@ -25,12 +25,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataResult;
+import com.github.rajkowski.database.Insert;
+import com.github.rajkowski.database.Update;
 import com.simisinc.platform.domain.model.ecommerce.FulfillmentOption;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves fulfillment option objects
@@ -46,49 +45,35 @@ public class FulfillmentOptionRepository {
   private static String[] PRIMARY_KEY = new String[] { "fulfillment_id" };
 
   public static List<FulfillmentOption> findAll() {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        DB.WHERE("enabled = ?", true),
-        null,
-        FulfillmentOptionRepository::buildRecord);
-    List<FulfillmentOption> recordList = (List<FulfillmentOption>) result.getRecords();
-    return recordList;
+    DataResult<FulfillmentOption> result = DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("enabled = ?", true)
+        .returnDataResult(FulfillmentOptionRepository::buildRecord);
+    return result.getRecords();
   }
 
   public static FulfillmentOption findById(long id) {
     if (id == -1) {
       return null;
     }
-    return (FulfillmentOption) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("fulfillment_id = ?", id),
-        FulfillmentOptionRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("fulfillment_id = ?", id)
+        .returnRecord(FulfillmentOptionRepository::buildRecord);
   }
 
   public static FulfillmentOption findByCode(String code) {
     if (StringUtils.isBlank(code)) {
       return null;
     }
-    return (FulfillmentOption) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("code = ?", code),
-        FulfillmentOptionRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("code = ?", code)
+        .returnRecord(FulfillmentOptionRepository::buildRecord);
   }
 
   public static boolean remove(FulfillmentOption record) {
-    try (Connection connection = DB.getConnection();
-        AutoStartTransaction a = new AutoStartTransaction(connection);
-        AutoRollback transaction = new AutoRollback(connection)) {
-      // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("fulfillment_id = ?", record.getId()));
-      // Finish transaction
-      transaction.commit();
-      return true;
-    } catch (SQLException se) {
-      LOG.error("SQLException: " + se.getMessage());
-    }
-    LOG.error("The delete failed!");
-    return false;
+    return DB.DELETE().FROM(TABLE_NAME).WHERE("fulfillment_id = ?", record.getId()).execute();
   }
 
   public static FulfillmentOption save(FulfillmentOption record) {
@@ -99,44 +84,29 @@ public class FulfillmentOptionRepository {
   }
 
   public static FulfillmentOption add(FulfillmentOption record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("code", StringUtils.trimToNull(record.getCode()))
-        .add("title", StringUtils.trimToNull(record.getTitle()))
-        .add("enabled", record.getEnabled())
-        .add("overrides_others", record.getOverridesOthers());
-    // Use a transaction
-    try (Connection connection = DB.getConnection();
-        AutoStartTransaction a = new AutoStartTransaction(connection);
-        AutoRollback transaction = new AutoRollback(connection)) {
-      // In a transaction (use the existing connection)
-      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
-      // Finish the transaction
-      transaction.commit();
+    Insert insert = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("code", StringUtils.trimToNull(record.getCode()))
+        .FIELD("title", StringUtils.trimToNull(record.getTitle()))
+        .FIELD("enabled", record.getEnabled())
+        .FIELD("overrides_others", record.getOverridesOthers());
+    long generatedId = insert.execute();
+    if (insert.isSuccess()) {
+      record.setId(generatedId);
       return record;
-    } catch (SQLException se) {
-      LOG.error("SQLException: " + se.getMessage());
     }
     LOG.error("An id was not set!");
     return null;
   }
 
   public static FulfillmentOption update(FulfillmentOption record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("code", StringUtils.trimToNull(record.getCode()))
-        .add("title", StringUtils.trimToNull(record.getTitle()))
-        .add("enabled", record.getEnabled())
-        .add("overrides_others", record.getOverridesOthers());
-    // Use a transaction
-    try (Connection connection = DB.getConnection();
-        AutoStartTransaction a = new AutoStartTransaction(connection);
-        AutoRollback transaction = new AutoRollback(connection)) {
-      // In a transaction (use the existing connection)
-      DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("fulfillment_id = ?", record.getId()));
-      // Finish the transaction
-      transaction.commit();
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("code", StringUtils.trimToNull(record.getCode()))
+        .SET("title", StringUtils.trimToNull(record.getTitle()))
+        .SET("enabled", record.getEnabled())
+        .SET("overrides_others", record.getOverridesOthers())
+        .WHERE("fulfillment_id = ?", record.getId());
+    if (update.execute().booleanValue()) {
       return record;
-    } catch (SQLException se) {
-      LOG.error("SQLException: " + se.getMessage(), se);
     }
     return null;
   }

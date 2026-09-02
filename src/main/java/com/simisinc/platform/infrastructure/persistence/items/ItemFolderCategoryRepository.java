@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,13 +25,12 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.Insert;
 import com.simisinc.platform.domain.model.items.Item;
 import com.simisinc.platform.domain.model.items.ItemFolder;
 import com.simisinc.platform.domain.model.items.ItemFolderCategory;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves item folder category objects
@@ -49,46 +49,37 @@ public class ItemFolderCategoryRepository {
     if (id == -1) {
       return null;
     }
-    return (ItemFolderCategory) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("category_id = ?", id),
-        ItemFolderCategoryRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("category_id = ?", id)
+        .returnRecord(ItemFolderCategoryRepository::buildRecord);
   }
 
   public static List<ItemFolderCategory> findAllByFolderId(long folderId) {
     if (folderId == -1) {
       return null;
     }
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        DB.WHERE("folder_id = ?", folderId),
-        new DataConstraints().setDefaultColumnToSortBy("category_id").setUseCount(false),
-        ItemFolderCategoryRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<ItemFolderCategory>) result.getRecords();
-    }
-    return null;
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("folder_id = ?", folderId)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("category_id").setUseCount(false))
+        .returnDataResult(ItemFolderCategoryRepository::buildRecord).getRecords();
   }
 
   public static List<ItemFolderCategory> findAll() {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        null,
-        new DataConstraints().setDefaultColumnToSortBy("category_id"),
-        ItemFolderCategoryRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<ItemFolderCategory>) result.getRecords();
-    }
-    return null;
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("category_id"))
+        .returnDataResult(ItemFolderCategoryRepository::buildRecord).getRecords();
   }
 
   public static ItemFolderCategory add(ItemFolderCategory record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("item_id", record.getItemId())
-        .add("folder_id", record.getFolderId())
-        .add("name", record.getName())
-        .add("enabled", record.getEnabled());
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    Insert insert = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("item_id", record.getItemId())
+        .FIELD("folder_id", record.getFolderId())
+        .FIELD("name", record.getName())
+        .FIELD("enabled", record.getEnabled());
+    record.setId(insert.execute());
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -101,12 +92,11 @@ public class ItemFolderCategoryRepository {
       return;
     }
     for (ItemFolderCategory category : folder.getFolderCategoryList()) {
-      SqlUtils insertValues = new SqlUtils();
-      insertValues
-          .add("folder_id", folder.getId())
-          .add("name", category.getName())
-          .add("enabled", category.getEnabled());
-      DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY);
+      DB.INSERT().INTO(TABLE_NAME)
+          .FIELD("folder_id", folder.getId())
+          .FIELD("name", category.getName())
+          .FIELD("enabled", category.getEnabled())
+          .execute(connection);
     }
   }
 
@@ -118,33 +108,32 @@ public class ItemFolderCategoryRepository {
       // Determine if inserting or updating
       if (category.getId() == -1) {
         // New category
-        SqlUtils insertValues = new SqlUtils();
-        insertValues
-            .add("folder_id", folder.getId())
-            .add("name", category.getName())
-            .add("enabled", category.getEnabled());
-        DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY);
+        DB.INSERT().INTO(TABLE_NAME)
+            .FIELD("folder_id", folder.getId())
+            .FIELD("name", category.getName())
+            .FIELD("enabled", category.getEnabled())
+            .execute(connection);
       } else {
         // Update existing
-        SqlUtils updateValues = new SqlUtils();
-        updateValues
-            .add("name", category.getName())
-            .add("enabled", category.getEnabled());
-        DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("category_id = ?", category.getId()));
+        DB.UPDATE(TABLE_NAME)
+            .SET("name", category.getName())
+            .SET("enabled", category.getEnabled())
+            .WHERE("category_id = ?", category.getId())
+            .execute(connection);
       }
     }
   }
 
   public static void removeAll(Connection connection, Item item) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("item_id = ?", item.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("item_id = ?", item.getId()).execute(connection);
   }
 
   public static void removeAll(Connection connection, ItemFolder folder) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("folder_id = ?", folder.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("folder_id = ?", folder.getId()).execute(connection);
   }
 
   public static void remove(Connection connection, ItemFolderCategory folderCategory) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("category_id = ?", folderCategory.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("category_id = ?", folderCategory.getId()).execute(connection);
   }
 
   private static ItemFolderCategory buildRecord(ResultSet rs) {

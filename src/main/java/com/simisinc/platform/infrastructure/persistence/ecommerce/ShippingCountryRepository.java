@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,13 +25,13 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.Insert;
+import com.github.rajkowski.database.Update;
 import com.simisinc.platform.domain.model.ecommerce.ShippingCountry;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves shipping country objects
@@ -46,30 +47,25 @@ public class ShippingCountryRepository {
   private static String[] PRIMARY_KEY = new String[] { "country_id" };
 
   public static List<ShippingCountry> findAll() {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        null,
-        new DataConstraints().setDefaultColumnToSortBy("level"),
-        ShippingCountryRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<ShippingCountry>) result.getRecords();
-    }
-    return null;
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("level"))
+        .returnDataResult(ShippingCountryRepository::buildRecord).getRecords();
   }
 
   public static ShippingCountry findById(long countryId) {
-    return (ShippingCountry) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("country_id = ?", countryId),
-        ShippingCountryRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("country_id = ?", countryId)
+        .returnRecord(ShippingCountryRepository::buildRecord);
   }
 
   public static ShippingCountry findByEnabledCountry(String name) {
-    return (ShippingCountry) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("LOWER(title) = ?", name.toLowerCase())
-            .AND("enabled = ?", true),
-        ShippingCountryRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("LOWER(title) = ?", name.toLowerCase())
+        .AND("enabled = ?", true)
+        .returnRecord(ShippingCountryRepository::buildRecord);
   }
 
   public static ShippingCountry save(ShippingCountry record) {
@@ -84,16 +80,12 @@ public class ShippingCountryRepository {
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
-      // In a transaction (use the existing connection)
-      SqlUtils insertValues = new SqlUtils()
-          .add("level", record.getLevel())
-          .add("code", record.getCode())
-          .add("title", record.getTitle())
-          .add("enabled", record.getEnabled());
-      //            .addIfExists("created_by", record.getCreatedBy(), -1)
-      //            .addIfExists("modified_by", record.getModifiedBy(), -1);
-      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
-      // Finish the transaction
+      Insert insert = DB.INSERT().INTO(TABLE_NAME)
+          .FIELD("level", record.getLevel())
+          .FIELD("code", record.getCode())
+          .FIELD("title", record.getTitle())
+          .FIELD("enabled", record.getEnabled());
+      record.setId(insert.execute(connection));
       transaction.commit();
       return record;
     } catch (SQLException se) {
@@ -103,15 +95,13 @@ public class ShippingCountryRepository {
   }
 
   public static ShippingCountry update(ShippingCountry record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("level", record.getLevel())
-        .add("code", record.getCode())
-        .add("title", record.getTitle())
-        .add("enabled", record.getEnabled());
-    // .add("modified_by", record.getModifiedBy(), -1)
-    // .add("modified", new Timestamp(System.currentTimeMillis()));
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("country_id = ?", record.getId()))) {
-      // CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("level", record.getLevel())
+        .SET("code", record.getCode())
+        .SET("title", record.getTitle())
+        .SET("enabled", record.getEnabled())
+        .WHERE("country_id = ?", record.getId());
+    if (update.execute().booleanValue()) {
       return record;
     }
     LOG.error("The update failed!");

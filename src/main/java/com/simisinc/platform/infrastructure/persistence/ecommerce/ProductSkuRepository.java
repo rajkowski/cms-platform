@@ -30,6 +30,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.CastType;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
+import com.github.rajkowski.database.Insert;
+import com.github.rajkowski.database.Select;
+import com.github.rajkowski.database.Update;
 import com.simisinc.platform.application.cms.DateCommand;
 import com.simisinc.platform.application.ecommerce.ProductInventoryCommand;
 import com.simisinc.platform.application.ecommerce.ProductSkuJSONCommand;
@@ -37,12 +44,6 @@ import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.ecommerce.Product;
 import com.simisinc.platform.domain.model.ecommerce.ProductSku;
 import com.simisinc.platform.domain.model.ecommerce.ProductSkuAttribute;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlValue;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 import com.simisinc.platform.presentation.controller.DataConstants;
 
 /**
@@ -58,27 +59,34 @@ public class ProductSkuRepository {
   private static String TABLE_NAME = "product_skus";
   private static String ADDITIONAL_SELECT = "products.active_date AS product_active_date," +
       "products.deactivate_on AS product_deactivate_on";
-  private static String JOIN = "LEFT JOIN products ON (product_skus.product_id = products.product_id)";
   private static String[] PRIMARY_KEY = new String[] { "sku_id" };
 
-  private static DataResult query(ProductSkuSpecification specification, DataConstraints constraints) {
-    SqlUtils select = new SqlUtils().add(ADDITIONAL_SELECT);
-    SqlWhere where = null;
+  private static DataResult<ProductSku> query(ProductSkuSpecification specification, DataConstraints constraints) {
+    Select select = DB.SELECT("product_skus.*", ADDITIONAL_SELECT)
+        .FROM(TABLE_NAME)
+        .LEFT_JOIN("products")
+        .ON("product_skus.product_id = products.product_id")
+        .WHERE();
     if (specification != null) {
-      where = DB.WHERE()
-          .andAddIfHasValue("sku_id = ?", specification.getId(), -1)
-          .andAddIfHasValue("sku = ?", specification.getSku())
-          .andAddIfHasValue("product_skus.product_id = ?", specification.getProductId(), -1)
-          .andAddIfHasValue("products.product_unique_id = ?", specification.getProductUniqueId());
+      if (specification.getId() > -1) {
+        select.WHERE("sku_id = ?", specification.getId());
+      }
+      if (StringUtils.isNotBlank(specification.getSku())) {
+        select.AND("sku = ?", specification.getSku());
+      }
+      if (specification.getProductId() > -1) {
+        select.AND("product_skus.product_id = ?", specification.getProductId());
+      }
+      if (StringUtils.isNotBlank(specification.getProductUniqueId())) {
+        select.AND("products.product_unique_id = ?", specification.getProductUniqueId());
+      }
       if (specification.getIsNotId() != -1) {
-        where.AND("sku_id <> ?", specification.getIsNotId());
+        select.AND("sku_id <> ?", specification.getIsNotId());
       }
       if (specification.getShowOnline() != DataConstants.UNDEFINED) {
-        where.AND("product_skus.enabled = " + (specification.getShowOnline() == DataConstants.TRUE ? "true" : "false"));
+        select.AND("product_skus.enabled = ?", specification.getShowOnline());
       }
       if (specification.getWithProductSkuAttributeList() != null && !specification.getWithProductSkuAttributeList().isEmpty()) {
-        // SELECT * FROM product_skus WHERE attributes @> '[{"name":"attribute0", "value":"0.5 oz"}]' AND attributes @> '[{"name":"attribute1", "value":"Jasmine"}]';
-        // SELECT * FROM product_skus WHERE attributes @> '[{"name":"attribute0", "value":"1.7 oz"}, {"name":"attribute1", "value":"Jasmine"}]';
         StringBuilder sb = new StringBuilder();
         int count = 0;
         for (ProductSkuAttribute skuAttribute : specification.getWithProductSkuAttributeList()) {
@@ -93,19 +101,15 @@ public class ProductSkuRepository {
               .append("\"");
           sb.append("}");
         }
-        if (sb.length() > 0) {
-          where.AND("attributes @> ?::jsonb", "[" + sb.toString() + "]");
+        if (!sb.isEmpty()) {
+          select.AND("attributes @> ?::jsonb", "[" + sb + "]");
         }
       }
     }
-    return DB.selectAllFrom(
-        TABLE_NAME,
-        select,
-        DB.JOIN(JOIN),
-        where,
-        null,
-        constraints,
-        ProductSkuRepository::buildRecord);
+    if (constraints != null) {
+      select.WITH(constraints);
+    }
+    return select.returnDataResult(ProductSkuRepository::buildRecord);
   }
 
   public static List<ProductSku> findAll(ProductSkuSpecification specification, DataConstraints constraints) {
@@ -113,38 +117,32 @@ public class ProductSkuRepository {
       constraints = new DataConstraints();
     }
     constraints.setDefaultColumnToSortBy("sku_order, sku");
-    DataResult result = query(specification, constraints);
-    return (List<ProductSku>) result.getRecords();
+    return query(specification, constraints).getRecords();
   }
 
   public static ProductSku findById(long id) {
     if (id == -1) {
       return null;
     }
-    SqlUtils select = new SqlUtils().add(ADDITIONAL_SELECT);
-    return (ProductSku) DB.selectRecordFrom(
-        TABLE_NAME,
-        select,
-        DB.JOIN(JOIN),
-        DB.WHERE("sku_id = ?", id),
-        ProductSkuRepository::buildRecord);
+    return DB.SELECT("product_skus.*", ADDITIONAL_SELECT)
+        .FROM(TABLE_NAME)
+        .LEFT_JOIN("products")
+        .ON("product_skus.product_id = products.product_id")
+        .WHERE("sku_id = ?", id)
+        .returnRecord(ProductSkuRepository::buildRecord);
   }
 
   public static List<ProductSku> findAllByProductId(long productId) {
     if (productId == -1) {
       return null;
     }
-    SqlUtils select = new SqlUtils().add(ADDITIONAL_SELECT);
-
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        select,
-        DB.JOIN(JOIN),
-        DB.WHERE("product_skus.product_id = ?", productId),
-        null,
-        new DataConstraints().setDefaultColumnToSortBy("sku_id").setUseCount(false),
-        ProductSkuRepository::buildRecord);
-    return (List<ProductSku>) result.getRecords();
+    return DB.SELECT("product_skus.*", ADDITIONAL_SELECT)
+        .FROM(TABLE_NAME)
+        .LEFT_JOIN("products")
+        .ON("product_skus.product_id = products.product_id")
+        .WHERE("product_skus.product_id = ?", productId)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("sku_id").setUseCount(false))
+        .returnDataResult(ProductSkuRepository::buildRecord).getRecords();
   }
 
   public static void saveProductSKUList(Connection connection, Product product) throws SQLException {
@@ -169,11 +167,11 @@ public class ProductSkuRepository {
   }
 
   public static void remove(ProductSku record) {
-    DB.deleteFrom(TABLE_NAME, DB.WHERE("sku_id = ?", record.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("sku_id = ?", record.getId()).execute();
   }
 
   public static void removeAll(Connection connection, Product product) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("product_id = ?", product.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("product_id = ?", product.getId()).execute(connection);
   }
 
   public static ProductSku save(Connection connection, ProductSku record) throws SQLException {
@@ -184,33 +182,33 @@ public class ProductSkuRepository {
   }
 
   public static ProductSku add(Connection connection, ProductSku record) throws SQLException {
-    SqlUtils insertValues = new SqlUtils()
-        .add("product_id", record.getProductId())
-        .add("sku", StringUtils.trimToNull(record.getSku()))
-        .add("currency", record.getCurrency())
-        .add("price", record.getPrice())
-        .add("strike_price", record.getStrikePrice())
-        .add("cost_of_good", record.getCostOfGood())
-        .add("barcode", record.getBarcode())
-        .add("active_date", record.getActiveDate())
-        .add("deactivate_on", record.getDeactivateOnDate())
-        .add("available_date", record.getAvailableDate())
-        .add("inventory_qty", record.getInventoryQty())
-        .add("inventory_qty_low", record.getInventoryLow())
-        .add("inventory_qty_incoming", record.getInventoryIncoming())
-        .add("minimum_purchase_qty", record.getMinimumPurchaseQty())
-        .add("maximum_purchase_qty", record.getMaximumPurchaseQty())
-        .add("allow_backorders", record.getAllowBackorders())
-        .add("package_height", record.getPackageHeight())
-        .add("package_length", record.getPackageLength())
-        .add("package_width", record.getPackageWidth())
-        .add("package_weight_lbs", record.getPackageWeightPounds())
-        .add("package_weight_ozs", record.getPackageWeightOunces())
-        .add("enabled", record.getEnabled())
-        .add("created_by", record.getCreatedBy(), -1)
-        .add("modified_by", record.getModifiedBy(), -1);
-    insertValues.add(new SqlValue("attributes", SqlValue.JSONB_TYPE, ProductSkuJSONCommand.createJSONString(record)));
-    record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+    Insert insert = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("product_id", record.getProductId())
+        .FIELD("sku", StringUtils.trimToNull(record.getSku()))
+        .FIELD("currency", record.getCurrency())
+        .FIELD("price", record.getPrice())
+        .FIELD("strike_price", record.getStrikePrice())
+        .FIELD("cost_of_good", record.getCostOfGood())
+        .FIELD("barcode", record.getBarcode())
+        .FIELD("active_date", record.getActiveDate())
+        .FIELD("deactivate_on", record.getDeactivateOnDate())
+        .FIELD("available_date", record.getAvailableDate())
+        .FIELD("inventory_qty", record.getInventoryQty())
+        .FIELD("inventory_qty_low", record.getInventoryLow())
+        .FIELD("inventory_qty_incoming", record.getInventoryIncoming())
+        .FIELD("minimum_purchase_qty", record.getMinimumPurchaseQty())
+        .FIELD("maximum_purchase_qty", record.getMaximumPurchaseQty())
+        .FIELD("allow_backorders", record.getAllowBackorders())
+        .FIELD("package_height", record.getPackageHeight())
+        .FIELD("package_length", record.getPackageLength())
+        .FIELD("package_width", record.getPackageWidth())
+        .FIELD("package_weight_lbs", record.getPackageWeightPounds())
+        .FIELD("package_weight_ozs", record.getPackageWeightOunces())
+        .FIELD("enabled", record.getEnabled())
+        .FIELD("created_by", record.getCreatedBy() != -1 ? record.getCreatedBy() : null)
+        .FIELD("modified_by", record.getModifiedBy() != -1 ? record.getModifiedBy() : null)
+        .FIELD("attributes", ProductSkuJSONCommand.createJSONString(record), CastType.JSONB);
+    record.setId(insert.execute(connection));
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -219,30 +217,30 @@ public class ProductSkuRepository {
   }
 
   public static ProductSku update(Connection connection, ProductSku record) throws SQLException {
-    SqlUtils updateValues = new SqlUtils()
-        .add("sku", StringUtils.trimToNull(record.getSku()))
-        .add("currency", record.getCurrency())
-        .add("price", record.getPrice())
-        .add("strike_price", record.getStrikePrice())
-        .add("cost_of_good", record.getCostOfGood())
-        .add("barcode", record.getBarcode())
-        .add("active_date", record.getActiveDate())
-        .add("deactivate_on", record.getDeactivateOnDate())
-        .add("available_date", record.getAvailableDate())
-        .add("inventory_qty_low", record.getInventoryLow())
-        .add("inventory_qty_incoming", record.getInventoryIncoming())
-        .add("minimum_purchase_qty", record.getMinimumPurchaseQty())
-        .add("maximum_purchase_qty", record.getMaximumPurchaseQty())
-        .add("allow_backorders", record.getAllowBackorders())
-        .add("package_height", record.getPackageHeight())
-        .add("package_length", record.getPackageLength())
-        .add("package_width", record.getPackageWidth())
-        .add("package_weight_lbs", record.getPackageWeightPounds())
-        .add("package_weight_ozs", record.getPackageWeightOunces())
-        .add("enabled", record.getEnabled())
-        .add("modified_by", record.getModifiedBy())
-        .add("modified", new Timestamp(System.currentTimeMillis()));
-    updateValues.add(new SqlValue("attributes", SqlValue.JSONB_TYPE, ProductSkuJSONCommand.createJSONString(record)));
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("sku", StringUtils.trimToNull(record.getSku()))
+        .SET("currency", record.getCurrency())
+        .SET("price", record.getPrice())
+        .SET("strike_price", record.getStrikePrice())
+        .SET("cost_of_good", record.getCostOfGood())
+        .SET("barcode", record.getBarcode())
+        .SET("active_date", record.getActiveDate())
+        .SET("deactivate_on", record.getDeactivateOnDate())
+        .SET("available_date", record.getAvailableDate())
+        .SET("inventory_qty_low", record.getInventoryLow())
+        .SET("inventory_qty_incoming", record.getInventoryIncoming())
+        .SET("minimum_purchase_qty", record.getMinimumPurchaseQty())
+        .SET("maximum_purchase_qty", record.getMaximumPurchaseQty())
+        .SET("allow_backorders", record.getAllowBackorders())
+        .SET("package_height", record.getPackageHeight())
+        .SET("package_length", record.getPackageLength())
+        .SET("package_width", record.getPackageWidth())
+        .SET("package_weight_lbs", record.getPackageWeightPounds())
+        .SET("package_weight_ozs", record.getPackageWeightOunces())
+        .SET("enabled", record.getEnabled())
+        .SET("modified_by", record.getModifiedBy())
+        .SET("modified", new Timestamp(System.currentTimeMillis()))
+        .SET("attributes", ProductSkuJSONCommand.createJSONString(record), CastType.JSONB);
     // Determine if Qty State is being used
     if (record.getInventoryQtyState() > -1) {
       // The update will use an offset, not a setter for the inventory in case an order
@@ -251,9 +249,9 @@ public class ProductSkuRepository {
       updateInventoryCount(connection, record.getId(), difference);
     } else {
       // state is not being used, so set the value
-      updateValues.add("inventory_qty", record.getInventoryQty(), 0);
+      update.SET("inventory_qty", record.getInventoryQty() == 0 ? null : record.getInventoryQty());
     }
-    if (DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("sku_id = ?", record.getId()))) {
+    if (update.WHERE("sku_id = ?", record.getId()).execute(connection).booleanValue()) {
       return record;
     }
     LOG.error("The update failed!");
@@ -283,10 +281,11 @@ public class ProductSkuRepository {
   }
 
   public static boolean updateSquareVariationIdForProductSkuId(long productSkuId, String squareVariationId) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("square_variation_id", squareVariationId)
-        .add("modified", new Timestamp(System.currentTimeMillis()));
-    DB.update(TABLE_NAME, updateValues, DB.WHERE("sku_id = ?", productSkuId));
+    DB.UPDATE(TABLE_NAME)
+        .SET("square_variation_id", squareVariationId)
+        .SET("modified", new Timestamp(System.currentTimeMillis()))
+        .WHERE("sku_id = ?", productSkuId)
+        .execute();
     return true;
   }
 
@@ -356,27 +355,43 @@ public class ProductSkuRepository {
   }
 
   public static void export(DataConstraints constraints, File file) {
-    // Use the specification to filter results
     if (constraints == null) {
       constraints = new DataConstraints();
     }
     constraints.setDefaultColumnToSortBy("sku");
-    DB.exportToCsvAllFrom(
-        TABLE_NAME,
-        DB.SELECT(
-            "sku AS \"SKU\"",
-            "products.name AS \"Name\"",
-            "products.caption AS \"Caption\"",
-            "TRIM(concat_ws(' ', products.name, products.caption)) AS \"ItemName\"",
-            "price AS \"Value\"",
-            "(SELECT JSONB_AGG(t -> 'value') FROM JSONB_ARRAY_ELEMENTS(attributes) AS x(t) WHERE t ->> 'value' <> '') AS \"Attributes\"",
-            "products.description AS \"Description\"",
-            // "short_description AS \"ShortDescription\"",
-            "barcode AS \"UPC\"",
-            "product_skus.enabled AS \"Enabled\""),
-        DB.JOIN(JOIN),
-        DB.WHERE(),
-        null,
-        constraints, file);
+    Select select = DB.SELECT(
+        "sku AS \"SKU\"",
+        "products.name AS \"Name\"",
+        "products.caption AS \"Caption\"",
+        "TRIM(concat_ws(' ', products.name, products.caption)) AS \"ItemName\"",
+        "price AS \"Value\"",
+        "(SELECT JSONB_AGG(t -> 'value') FROM JSONB_ARRAY_ELEMENTS(attributes) AS x(t) WHERE t ->> 'value' <> '') AS \"Attributes\"",
+        "products.description AS \"Description\"",
+        "barcode AS \"UPC\"",
+        "product_skus.enabled AS \"Enabled\"")
+        .FROM(TABLE_NAME)
+        .JOIN("products")
+        .ON("product_skus.product_id = products.product_id")
+        .WITH(constraints);
+    writeCsvExport(select, file);
+  }
+
+  private static void writeCsvExport(Select select, File file) {
+    if (select == null || file == null) {
+      return;
+    }
+    try (Connection connection = DB.getConnection();
+        java.sql.PreparedStatement statement = connection.prepareStatement(select.getSql());
+        java.sql.ResultSet rs = statement.executeQuery()) {
+      java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.FileWriter(file));
+      writer.write("SKU,Name,Caption,ItemName,Value,Attributes,Description,UPC,Enabled\n");
+      while (rs.next()) {
+        writer.write(rs.getString(1) + "," + rs.getString(2) + "," + rs.getString(3) + "," + rs.getString(4) + "," + rs.getString(5)
+            + "," + rs.getString(6) + "," + rs.getString(7) + "," + rs.getString(8) + "," + rs.getString(9) + "\n");
+      }
+      writer.flush();
+    } catch (SQLException | java.io.IOException se) {
+      LOG.error("Export SQLException", se);
+    }
   }
 }

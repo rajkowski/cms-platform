@@ -26,14 +26,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.Insert;
+import com.github.rajkowski.database.Select;
+import com.github.rajkowski.database.Update;
 import com.simisinc.platform.domain.model.Group;
 import com.simisinc.platform.domain.model.User;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 import com.simisinc.platform.infrastructure.persistence.login.UserGroupRepository;
 
 /**
@@ -53,64 +54,58 @@ public class GroupRepository {
     if (id == -1) {
       return null;
     }
-    return (Group) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("group_id = ?", id),
-        GroupRepository::buildRecord);
+    return DB.SELECT("groups.*")
+        .FROM(TABLE_NAME)
+        .WHERE("group_id = ?", id)
+        .returnRecord(GroupRepository::buildRecord);
   }
 
   public static Group findByUniqueId(String uniqueId) {
     if (StringUtils.isBlank(uniqueId)) {
       return null;
     }
-    return (Group) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("unique_id = ?", uniqueId),
-        GroupRepository::buildRecord);
+    return DB.SELECT("groups.*")
+        .FROM(TABLE_NAME)
+        .WHERE("unique_id = ?", uniqueId)
+        .returnRecord(GroupRepository::buildRecord);
   }
 
   public static Group findByOAuthPath(String oAuthPath) {
     if (StringUtils.isBlank(oAuthPath)) {
       return null;
     }
-    return (Group) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("oauth_path = ?", oAuthPath),
-        GroupRepository::buildRecord);
+    return DB.SELECT("groups.*")
+        .FROM(TABLE_NAME)
+        .WHERE("oauth_path = ?", oAuthPath)
+        .returnRecord(GroupRepository::buildRecord);
   }
 
   public static Group findByName(String name) {
     if (StringUtils.isBlank(name)) {
       return null;
     }
-    return (Group) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("LOWER(name) = ?", name.toLowerCase().trim()),
-        GroupRepository::buildRecord);
+    return DB.SELECT("groups.*")
+        .FROM(TABLE_NAME)
+        .WHERE("LOWER(name) = ?", name.toLowerCase().trim())
+        .returnRecord(GroupRepository::buildRecord);
   }
 
   public static List<Group> findAllByUserId(long userId) {
     if (userId == -1) {
       return null;
     }
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        DB.WHERE("EXISTS (SELECT 1 FROM user_groups WHERE group_id = groups.group_id AND user_id = ?)", userId),
-        new DataConstraints().setDefaultColumnToSortBy("group_id").setUseCount(false),
-        GroupRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<Group>) result.getRecords();
-    }
-    return null;
+    Select select = DB.SELECT("groups.*")
+        .FROM(TABLE_NAME)
+        .WHERE("EXISTS (SELECT 1 FROM user_groups WHERE group_id = groups.group_id AND user_id = ?)", userId)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("group_id").setUseCount(false));
+    return select.returnDataResult(GroupRepository::buildRecord).getRecords();
   }
 
   public static List<Group> findAll() {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        null,
-        new DataConstraints().setDefaultColumnToSortBy("name"),
-        GroupRepository::buildRecord);
-    return (List<Group>) result.getRecords();
+    return DB.SELECT("groups.*")
+        .FROM(TABLE_NAME)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("name"))
+        .returnDataResult(GroupRepository::buildRecord).getRecords();
   }
 
   public static Group save(Group record) {
@@ -121,12 +116,14 @@ public class GroupRepository {
   }
 
   private static Group add(Group record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("name", StringUtils.trimToNull(record.getName()))
-        .add("unique_id", StringUtils.trimToNull(record.getUniqueId()))
-        .add("description", StringUtils.trimToNull(record.getDescription()))
-        .addIfExists("oauth_path", record.getOAuthPath());
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    Insert insert = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("name", StringUtils.trimToNull(record.getName()))
+        .FIELD("unique_id", StringUtils.trimToNull(record.getUniqueId()))
+        .FIELD("description", StringUtils.trimToNull(record.getDescription()));
+    if (StringUtils.isNotBlank(record.getOAuthPath())) {
+      insert.FIELD("oauth_path", record.getOAuthPath());
+    }
+    record.setId(insert.execute());
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -135,12 +132,17 @@ public class GroupRepository {
   }
 
   private static Group update(Group record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("name", StringUtils.trimToNull(record.getName()))
-        .add("unique_id", StringUtils.trimToNull(record.getUniqueId()))
-        .add("description", StringUtils.trimToNull(record.getDescription()))
-        .addIfExists("oauth_path", record.getOAuthPath());
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("group_id = ?", record.getId()))) {
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("name", StringUtils.trimToNull(record.getName()))
+        .SET("unique_id", StringUtils.trimToNull(record.getUniqueId()))
+        .SET("description", StringUtils.trimToNull(record.getDescription()));
+    if (StringUtils.isNotBlank(record.getOAuthPath())) {
+      update.SET("oauth_path", record.getOAuthPath());
+    } else {
+      update.SET("oauth_path", (String) null);
+    }
+    update.WHERE("group_id = ?", record.getId());
+    if (update.execute().booleanValue()) {
       return record;
     }
     LOG.error("The update failed!");
@@ -151,11 +153,8 @@ public class GroupRepository {
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
-      // Delete the references
       UserGroupRepository.remove(connection, record);
-      // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("group_id = ?", record.getId()));
-      // Finish transaction
+      DB.DELETE().FROM(TABLE_NAME).WHERE("group_id = ?", record.getId()).execute(connection);
       transaction.commit();
       return true;
     } catch (SQLException se) {

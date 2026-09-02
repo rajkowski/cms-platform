@@ -27,6 +27,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.CastType;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
+import com.github.rajkowski.database.Insert;
+import com.github.rajkowski.database.Select;
+import com.github.rajkowski.database.Update;
 import com.simisinc.platform.application.CollectionTableColumnsJSONCommand;
 import com.simisinc.platform.application.CustomFieldListJSONCommand;
 import com.simisinc.platform.application.items.LoadCollectionCommand;
@@ -34,14 +43,6 @@ import com.simisinc.platform.domain.model.items.Collection;
 import com.simisinc.platform.domain.model.items.CollectionGroup;
 import com.simisinc.platform.domain.model.items.PrivacyType;
 import com.simisinc.platform.infrastructure.cache.CacheManager;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlValue;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 import com.simisinc.platform.presentation.controller.DataConstants;
 import com.simisinc.platform.presentation.controller.UserSession;
 
@@ -66,27 +67,25 @@ public class CollectionRepository {
   }
 
   private static Collection add(Collection record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("name", StringUtils.trimToNull(record.getName()))
-        .add("unique_id", StringUtils.trimToNull(record.getUniqueId()))
-        .add("description", StringUtils.trimToNull(record.getDescription()))
-        .add("created_by", record.getCreatedBy())
-        .add("allows_guests", PrivacyType.isPublic(record.getGuestPrivacyType()))
-        .add("guest_privacy_type", record.getGuestPrivacyType())
-        .add("has_allowed_groups",
+    Insert insert = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("name", StringUtils.trimToNull(record.getName()))
+        .FIELD("unique_id", StringUtils.trimToNull(record.getUniqueId()))
+        .FIELD("description", StringUtils.trimToNull(record.getDescription()))
+        .FIELD("created_by", record.getCreatedBy())
+        .FIELD("allows_guests", PrivacyType.isPublic(record.getGuestPrivacyType()))
+        .FIELD("guest_privacy_type", record.getGuestPrivacyType())
+        .FIELD("has_allowed_groups",
             record.getCollectionGroupList() != null && !record.getCollectionGroupList().isEmpty())
-        .add("listings_link", StringUtils.trimToNull(record.getListingsLink()))
-        .add("icon", StringUtils.trimToNull(record.getIcon()))
-        .add("show_listings_link", record.getShowListingsLink())
-        .add("show_search", record.getShowSearch())
-        .add("item_url_text", StringUtils.trimToNull(record.getItemUrlText()));
+        .FIELD("listings_link", StringUtils.trimToNull(record.getListingsLink()))
+        .FIELD("icon", StringUtils.trimToNull(record.getIcon()))
+        .FIELD("show_listings_link", record.getShowListingsLink())
+        .FIELD("show_search", record.getShowSearch())
+        .FIELD("item_url_text", StringUtils.trimToNull(record.getItemUrlText()));
 
-    // Use a transaction
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
-      // In a transaction (use the existing connection)
-      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+      record.setId(insert.execute(connection));
       // Manage the access groups
       if (record.getCollectionGroupList() != null && !record.getCollectionGroupList().isEmpty()) {
         CollectionGroupRepository.insertCollectionGroupList(connection, record);
@@ -102,26 +101,25 @@ public class CollectionRepository {
   }
 
   private static Collection update(Collection record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("name", StringUtils.trimToNull(record.getName()))
-        .add("unique_id", StringUtils.trimToNull(record.getUniqueId()))
-        .add("description", StringUtils.trimToNull(record.getDescription()))
-        .add("allows_guests", PrivacyType.isPublic(record.getGuestPrivacyType()))
-        .add("guest_privacy_type", record.getGuestPrivacyType())
-        .add("has_allowed_groups",
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("name", StringUtils.trimToNull(record.getName()))
+        .SET("unique_id", StringUtils.trimToNull(record.getUniqueId()))
+        .SET("description", StringUtils.trimToNull(record.getDescription()))
+        .SET("allows_guests", PrivacyType.isPublic(record.getGuestPrivacyType()))
+        .SET("guest_privacy_type", record.getGuestPrivacyType())
+        .SET("has_allowed_groups",
             record.getCollectionGroupList() != null && !record.getCollectionGroupList().isEmpty())
-        .add("listings_link", StringUtils.trimToNull(record.getListingsLink()))
-        .add("icon", StringUtils.trimToNull(record.getIcon()))
-        .add("show_listings_link", record.getShowListingsLink())
-        .add("show_search", record.getShowSearch())
-        .add("item_url_text", StringUtils.trimToNull(record.getItemUrlText()))
-        .add("modified", new Timestamp(System.currentTimeMillis()));
-    // Use a transaction
+        .SET("listings_link", StringUtils.trimToNull(record.getListingsLink()))
+        .SET("icon", StringUtils.trimToNull(record.getIcon()))
+        .SET("show_listings_link", record.getShowListingsLink())
+        .SET("show_search", record.getShowSearch())
+        .SET("item_url_text", StringUtils.trimToNull(record.getItemUrlText()))
+        .SET("modified", new Timestamp(System.currentTimeMillis()))
+        .WHERE("collection_id = ?", record.getId());
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
-      // In a transaction (use the existing connection)
-      DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("collection_id = ?", record.getId()));
+      update.execute(connection);
       // Manage the access groups
       CollectionGroupRepository.removeAll(connection, record);
       CollectionGroupRepository.insertCollectionGroupList(connection, record);
@@ -137,15 +135,15 @@ public class CollectionRepository {
   }
 
   public static Collection updateCustomFields(Collection record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("modified", new Timestamp(System.currentTimeMillis()));
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("modified", new Timestamp(System.currentTimeMillis()));
     if (record.getCustomFieldList() != null && !record.getCustomFieldList().isEmpty()) {
-      updateValues.add(new SqlValue("field_values", SqlValue.JSONB_TYPE,
-          CustomFieldListJSONCommand.createJSONString(record.getCustomFieldList())));
+      update.SET("field_values", CustomFieldListJSONCommand.createJSONString(record.getCustomFieldList()), CastType.JSONB);
     } else {
-      updateValues.add(new SqlValue("field_values", SqlValue.JSONB_TYPE, null));
+      update.SET("field_values", (String) null, CastType.JSONB);
     }
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("collection_id = ?", record.getId()))) {
+    update.WHERE("collection_id = ?", record.getId());
+    if (update.execute().booleanValue()) {
       // Expire the cache
       CacheManager.invalidateKey(CacheManager.COLLECTION_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
@@ -155,15 +153,15 @@ public class CollectionRepository {
   }
 
   public static Collection updateTableColumns(Collection record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("modified", new Timestamp(System.currentTimeMillis()));
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("modified", new Timestamp(System.currentTimeMillis()));
     if (record.getTableColumnsList() != null && !record.getTableColumnsList().isEmpty()) {
-      updateValues.add(new SqlValue("table_columns", SqlValue.JSONB_TYPE,
-          CollectionTableColumnsJSONCommand.createJSONString(record.getTableColumnsList())));
+      update.SET("table_columns", CollectionTableColumnsJSONCommand.createJSONString(record.getTableColumnsList()), CastType.JSONB);
     } else {
-      updateValues.add(new SqlValue("table_columns", SqlValue.JSONB_TYPE, null));
+      update.SET("table_columns", (String) null, CastType.JSONB);
     }
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("collection_id = ?", record.getId()))) {
+    update.WHERE("collection_id = ?", record.getId());
+    if (update.execute().booleanValue()) {
       // Expire the cache
       CacheManager.invalidateKey(CacheManager.COLLECTION_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
@@ -173,20 +171,21 @@ public class CollectionRepository {
   }
 
   public static Collection updateTheme(Collection record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("header_text_color", record.getHeaderTextColor())
-        .add("header_bg_color", record.getHeaderBgColor())
-        .add("menu_text_color", record.getMenuTextColor())
-        .add("menu_bg_color", record.getMenuBgColor())
-        .add("menu_border_color", record.getMenuBorderColor())
-        .add("menu_active_text_color", record.getMenuActiveTextColor())
-        .add("menu_active_bg_color", record.getMenuActiveBgColor())
-        .add("menu_active_border_color", record.getMenuActiveBorderColor())
-        .add("menu_hover_text_color", record.getMenuHoverTextColor())
-        .add("menu_hover_bg_color", record.getMenuHoverBgColor())
-        .add("menu_hover_border_color", record.getMenuHoverBorderColor())
-        .add("modified", new Timestamp(System.currentTimeMillis()));
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("collection_id = ?", record.getId()))) {
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("header_text_color", record.getHeaderTextColor())
+        .SET("header_bg_color", record.getHeaderBgColor())
+        .SET("menu_text_color", record.getMenuTextColor())
+        .SET("menu_bg_color", record.getMenuBgColor())
+        .SET("menu_border_color", record.getMenuBorderColor())
+        .SET("menu_active_text_color", record.getMenuActiveTextColor())
+        .SET("menu_active_bg_color", record.getMenuActiveBgColor())
+        .SET("menu_active_border_color", record.getMenuActiveBorderColor())
+        .SET("menu_hover_text_color", record.getMenuHoverTextColor())
+        .SET("menu_hover_bg_color", record.getMenuHoverBgColor())
+        .SET("menu_hover_border_color", record.getMenuHoverBorderColor())
+        .SET("modified", new Timestamp(System.currentTimeMillis()))
+        .WHERE("collection_id = ?", record.getId());
+    if (update.execute().booleanValue()) {
       // Expire the cache
       CacheManager.invalidateKey(CacheManager.COLLECTION_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
@@ -211,7 +210,7 @@ public class CollectionRepository {
       CategoryRepository.removeAll(connection, record);
       CollectionRelationshipRepository.removeAll(connection, record);
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("collection_id = ?", record.getId()));
+      DB.DELETE().FROM(TABLE_NAME).WHERE("collection_id = ?", record.getId()).execute(connection);
       // Finish transaction
       transaction.commit();
       // Invalidate the cache
@@ -224,21 +223,23 @@ public class CollectionRepository {
     return false;
   }
 
-  private static DataResult query(CollectionSpecification specification, DataConstraints constraints) {
-    SqlWhere where = null;
+  private static DataResult<Collection> query(CollectionSpecification specification, DataConstraints constraints) {
+    Select select = DB.SELECT("*").FROM(TABLE_NAME).WHERE();
     if (specification != null) {
-      where = DB.WHERE()
-          .andAddIfHasValue("collection_id = ?", specification.getId(), -1)
-          .andAddIfHasValue("unique_id = ?", specification.getUniqueId());
+      if (specification.getId() != -1) {
+        select.AND("collection_id = ?", specification.getId());
+      }
+      if (StringUtils.isNotBlank(specification.getUniqueId())) {
+        select.AND("unique_id = ?", specification.getUniqueId());
+      }
       if (specification.getName() != null) {
-        where.AND("LOWER(name) = ?", specification.getName().toLowerCase());
+        select.AND("LOWER(name) = ?", specification.getName().toLowerCase());
       }
       if (specification.getForUserId() != DataConstants.UNDEFINED) {
         if (specification.getForUserId() == UserSession.GUEST_ID) {
-          where.AND("allows_guests = true");
+          select.AND("allows_guests = true");
         } else {
-          // For logged out and logged in users
-          where.AND(
+          select.AND(
               "(allows_guests = true " +
                   "OR (has_allowed_groups = true " +
                   "AND EXISTS (SELECT 1 FROM collection_groups WHERE collection_id = collections.collection_id " +
@@ -247,17 +248,17 @@ public class CollectionRepository {
         }
       }
     }
-    return DB.selectAllFrom(TABLE_NAME, where, constraints, CollectionRepository::buildRecord);
+    return select.WITH(constraints).returnDataResult(CollectionRepository::buildRecord);
   }
 
   public static Collection findById(long id) {
     if (id == -1) {
       return null;
     }
-    Collection collection = (Collection) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("collection_id = ?", id),
-        CollectionRepository::buildRecord);
+    Collection collection = DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("collection_id = ?", id)
+        .returnRecord(CollectionRepository::buildRecord);
     populateRelatedData(collection);
     return collection;
   }
@@ -266,10 +267,10 @@ public class CollectionRepository {
     if (StringUtils.isBlank(uniqueId)) {
       return null;
     }
-    Collection collection = (Collection) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("unique_id = ?", uniqueId),
-        CollectionRepository::buildRecord);
+    Collection collection = DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("unique_id = ?", uniqueId)
+        .returnRecord(CollectionRepository::buildRecord);
     populateRelatedData(collection);
     return collection;
   }
@@ -278,10 +279,10 @@ public class CollectionRepository {
     if (StringUtils.isBlank(name)) {
       return null;
     }
-    Collection collection = (Collection) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("LOWER(name) = ?", name.toLowerCase()),
-        CollectionRepository::buildRecord);
+    Collection collection = DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("LOWER(name) = ?", name.toLowerCase())
+        .returnRecord(CollectionRepository::buildRecord);
     populateRelatedData(collection);
     return collection;
   }
@@ -295,8 +296,7 @@ public class CollectionRepository {
       constraints = new DataConstraints().setUseCount(false);
     }
     constraints.setDefaultColumnToSortBy("name");
-    DataResult result = query(specification, constraints);
-    List<Collection> collectionList = (List<Collection>) result.getRecords();
+    List<Collection> collectionList = query(specification, constraints).getRecords();
     for (Collection collection : collectionList) {
       populateRelatedData(collection);
     }

@@ -24,13 +24,11 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.domain.model.Group;
 import com.simisinc.platform.domain.model.User;
 import com.simisinc.platform.domain.model.login.UserGroup;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 import com.simisinc.platform.infrastructure.persistence.GroupRepository;
 
 /**
@@ -50,34 +48,26 @@ public class UserGroupRepository {
     if (userId == -1) {
       return null;
     }
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        DB.WHERE("user_id = ?", userId),
-        new DataConstraints().setDefaultColumnToSortBy("user_group_id").setUseCount(false),
-        UserGroupRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<UserGroup>) result.getRecords();
-    }
-    return null;
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("user_id = ?", userId)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("user_group_id").setUseCount(false))
+        .returnDataResult(UserGroupRepository::buildRecord).getRecords();
   }
 
   public static List<UserGroup> findAll() {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        null,
-        new DataConstraints().setDefaultColumnToSortBy("user_group_id"),
-        UserGroupRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<UserGroup>) result.getRecords();
-    }
-    return null;
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("user_group_id"))
+        .returnDataResult(UserGroupRepository::buildRecord).getRecords();
   }
 
   public static UserGroup add(UserGroup record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("user_id", record.getUserId())
-        .add("group_id", record.getGroupId());
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    long generatedId = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("user_id", record.getUserId())
+        .FIELD("group_id", record.getGroupId())
+        .execute();
+    record.setId(generatedId);
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -93,13 +83,10 @@ public class UserGroupRepository {
     }
     long count = 0;
     for (Group group : user.getGroupList()) {
-      // Add to the group
-      SqlUtils insertValues = new SqlUtils();
-      insertValues
-          .add("user_id", user.getId())
-          .add("group_id", group.getId());
-      DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY);
-      // Update the group count
+      DB.INSERT().INTO(TABLE_NAME)
+          .FIELD("user_id", user.getId())
+          .FIELD("group_id", group.getId())
+          .execute(connection);
       GroupRepository.updateUserCount(connection, group.getId(), 1);
       ++count;
     }
@@ -107,14 +94,12 @@ public class UserGroupRepository {
   }
 
   public static int removeAll(Connection connection, User user) throws SQLException {
-    // For each group the user is in, adjust the group count
     GroupRepository.removeUserCount(connection, user);
-    // Delete the records
-    return DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("user_id = ?", user.getId()));
+    return DB.DELETE().FROM(TABLE_NAME).WHERE("user_id = ?", user.getId()).execute(connection).booleanValue() ? 1 : 0;
   }
 
   public static void remove(Connection connection, Group group) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("group_id = ?", group.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("group_id = ?", group.getId()).execute(connection);
   }
 
   private static UserGroup buildRecord(ResultSet rs) {

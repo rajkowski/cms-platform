@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,15 +26,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
+import com.github.rajkowski.database.Select;
 import com.simisinc.platform.domain.model.ecommerce.ShippingRate;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlJoins;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves shipping rate objects
@@ -50,53 +49,46 @@ public class ShippingRateRepository {
   private static String JOIN = "LEFT JOIN lookup_shipping_method ON (shipping_rates.shipping_method = lookup_shipping_method.method_id)";
   private static String[] PRIMARY_KEY = new String[] { "rate_id" };
 
-  private static DataResult query(ShippingRateSpecification specification, DataConstraints constraints) {
-    SqlUtils select = new SqlUtils().add(ADDITIONAL_SELECT);
-    SqlJoins joins = new SqlJoins().add(JOIN);
-    SqlWhere where = DB.WHERE();
-    // Use the specification to find the best matching rate for the given address
+  private static DataResult<ShippingRate> query(ShippingRateSpecification specification, DataConstraints constraints) {
+    Select select = DB.SELECT("shipping_rates.*", ADDITIONAL_SELECT).FROM(TABLE_NAME).WHERE();
+    select.LEFT_JOIN("lookup_shipping_method")
+        .ON("shipping_rates.shipping_method = lookup_shipping_method.method_id");
+
     if (specification != null) {
       if (StringUtils.isNotBlank(specification.getCountryCode())) {
-        where.AND("country_code = ?", specification.getCountryCode());
+        select.AND("country_code = ?", specification.getCountryCode());
       }
       if (StringUtils.isNotBlank(specification.getRegion()) && StringUtils.isNotBlank(specification.getPostalCode())) {
         String region = specification.getRegion();
         String postalCode = specification.getPostalCode();
         if ("*".equals(region) && "*".equals(postalCode)) {
-          // Non-specific, fall-back
-          where.AND("postal_code = '*'");
-          where.AND("region = '*'");
+          select.AND("postal_code = '*'");
+          select.AND("region = '*'");
         } else {
-          // Location specific and non-specific
-          if ("US".equals(specification.getCountryCode())) {
-            if (postalCode.length() > 5) {
-              postalCode = postalCode.substring(0, 5);
-            }
+          if ("US".equals(specification.getCountryCode()) && postalCode.length() > 5) {
+            postalCode = postalCode.substring(0, 5);
           }
-          // Determine the region setting
           if (specification.getSpecificRegionOnly()) {
-            // Look for a specific region (like Alaska, Hawaii)
-            where.AND("(postal_code = ? OR (postal_code = '*' AND region = ?))", new String[] { postalCode, region });
+            select.AND("(postal_code = ? OR (postal_code = '*' AND region = ?))", postalCode, region);
           } else {
-            // Use any generic region
-            where.AND("(postal_code = ? OR (postal_code = '*' AND region = ?) OR (postal_code = '*' AND region = '*'))",
-                new String[] { postalCode, region });
+            select.AND("(postal_code = ? OR (postal_code = '*' AND region = ?) OR (postal_code = '*' AND region = '*'))",
+                postalCode, region);
           }
         }
       }
       if (specification.getOrderSubtotal() != null) {
-        where.AND("min_subtotal <= ?", specification.getOrderSubtotal());
+        select.AND("min_subtotal <= ?", specification.getOrderSubtotal());
       }
       if (specification.getPackageTotalWeightOz() >= 0) {
-        where.AND("min_weight_oz <= ?", specification.getPackageTotalWeightOz());
+        select.AND("min_weight_oz <= ?", specification.getPackageTotalWeightOz());
       }
       if (specification.getEnabledOnly()) {
-        where.AND("lookup_shipping_method.enabled = ?", true);
+        select.AND("lookup_shipping_method.enabled = ?", true);
       }
       constraints.setDefaultColumnToSortBy("postal_code, region, shipping_method, shipping_fee");
     }
 
-    return DB.selectAllFrom(TABLE_NAME, select, joins, where, null, constraints, ShippingRateRepository::buildRecord);
+    return select.WITH(constraints).returnDataResult(ShippingRateRepository::buildRecord);
   }
 
   public static List<ShippingRate> findAll(ShippingRateSpecification specification, DataConstraints constraints) {
@@ -104,19 +96,16 @@ public class ShippingRateRepository {
       constraints = new DataConstraints();
     }
     constraints.setDefaultColumnToSortBy("country_code, region, postal_code, shipping_method, shipping_fee");
-    DataResult result = query(specification, constraints);
-    return (List<ShippingRate>) result.getRecords();
+    return query(specification, constraints).getRecords();
   }
 
   public static ShippingRate findById(long shippingRateId) {
-    SqlUtils select = new SqlUtils().add(ADDITIONAL_SELECT);
-    SqlJoins joins = new SqlJoins().add(JOIN);
-    return (ShippingRate) DB.selectRecordFrom(
-        TABLE_NAME,
-        select,
-        joins,
-        DB.WHERE("rate_id = ?", shippingRateId),
-        ShippingRateRepository::buildRecord);
+    return DB.SELECT("shipping_rates.*", ADDITIONAL_SELECT)
+        .FROM(TABLE_NAME)
+        .LEFT_JOIN("lookup_shipping_method")
+        .ON("shipping_rates.shipping_method = lookup_shipping_method.method_id")
+        .WHERE("rate_id = ?", shippingRateId)
+        .returnRecord(ShippingRateRepository::buildRecord);
   }
 
   public static ShippingRate save(ShippingRate record) {
@@ -127,27 +116,23 @@ public class ShippingRateRepository {
   }
 
   public static ShippingRate add(ShippingRate record) {
-    // Use a transaction
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
-      // In a transaction (use the existing connection)
-      SqlUtils insertValues = new SqlUtils()
-          .add("country_code", record.getCountryCode())
-          .add("region", record.getRegion())
-          .add("postal_code", record.getPostalCode())
-          .add("min_subtotal", record.getMinSubTotal())
-          .add("min_weight_oz", record.getMinWeightOz())
-          .add("shipping_fee", record.getShippingFee())
-          .add("handling_fee", record.getHandlingFee())
-          .add("shipping_code", record.getShippingCode())
-          .add("shipping_method", record.getShippingMethodId())
-          .add("display_text", record.getDisplayText())
-          .add("exclude_skus", record.getExcludeSkus());
-      // .addIfExists("created_by", record.getCreatedBy(), -1)
-      // .addIfExists("modified_by", record.getModifiedBy(), -1);
-      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
-      // Finish the transaction
+      long generatedId = DB.INSERT().INTO(TABLE_NAME)
+          .FIELD("country_code", record.getCountryCode())
+          .FIELD("region", record.getRegion())
+          .FIELD("postal_code", record.getPostalCode())
+          .FIELD("min_subtotal", record.getMinSubTotal())
+          .FIELD("min_weight_oz", record.getMinWeightOz())
+          .FIELD("shipping_fee", record.getShippingFee())
+          .FIELD("handling_fee", record.getHandlingFee())
+          .FIELD("shipping_code", record.getShippingCode())
+          .FIELD("shipping_method", record.getShippingMethodId())
+          .FIELD("display_text", record.getDisplayText())
+          .FIELD("exclude_skus", record.getExcludeSkus())
+          .execute(connection);
+      record.setId(generatedId);
       transaction.commit();
       return record;
     } catch (SQLException se) {
@@ -157,22 +142,21 @@ public class ShippingRateRepository {
   }
 
   public static ShippingRate update(ShippingRate record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("country_code", record.getCountryCode())
-        .add("region", record.getRegion())
-        .add("postal_code", record.getPostalCode())
-        .add("min_subtotal", record.getMinSubTotal())
-        .add("min_weight_oz", record.getMinWeightOz())
-        .add("shipping_fee", record.getShippingFee())
-        .add("handling_fee", record.getHandlingFee())
-        .add("shipping_code", record.getShippingCode())
-        .add("shipping_method", record.getShippingMethodId())
-        .add("display_text", record.getDisplayText())
-        .add("exclude_skus", record.getExcludeSkus());
-    // .add("modified_by", record.getModifiedBy(), -1)
-    // .add("modified", new Timestamp(System.currentTimeMillis()));
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("rate_id = ?", record.getId()))) {
-      // CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
+    boolean updated = DB.UPDATE(TABLE_NAME)
+        .SET("country_code", record.getCountryCode())
+        .SET("region", record.getRegion())
+        .SET("postal_code", record.getPostalCode())
+        .SET("min_subtotal", record.getMinSubTotal())
+        .SET("min_weight_oz", record.getMinWeightOz())
+        .SET("shipping_fee", record.getShippingFee())
+        .SET("handling_fee", record.getHandlingFee())
+        .SET("shipping_code", record.getShippingCode())
+        .SET("shipping_method", record.getShippingMethodId())
+        .SET("display_text", record.getDisplayText())
+        .SET("exclude_skus", record.getExcludeSkus())
+        .WHERE("rate_id = ?", record.getId())
+        .execute();
+    if (updated) {
       return record;
     }
     LOG.error("The update failed!");
@@ -180,7 +164,7 @@ public class ShippingRateRepository {
   }
 
   public static boolean remove(ShippingRate record) {
-    return DB.deleteFrom(TABLE_NAME, DB.WHERE("rate_id = ?", record.getId())) > 0;
+    return DB.DELETE().FROM(TABLE_NAME).WHERE("rate_id = ?", record.getId()).execute();
   }
 
   private static ShippingRate buildRecord(ResultSet rs) {

@@ -23,9 +23,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
 import com.simisinc.platform.domain.model.login.OAuthState;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves oauth state objects
@@ -44,18 +43,19 @@ public class OAuthStateRepository {
     if (StringUtils.isBlank(state)) {
       return null;
     }
-    return (OAuthState) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("state = ?", state)
-            .AND("created >= NOW() - INTERVAL '2 MINUTES'"),
-        OAuthStateRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("state = ?", state)
+        .AND("created >= NOW() - INTERVAL '2 MINUTES'")
+        .returnRecord(OAuthStateRepository::buildRecord);
   }
 
   public static OAuthState add(OAuthState record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("state", record.getState())
-        .add("resource", record.getResource());
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    long generatedId = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("state", record.getState())
+        .FIELD("resource", record.getResource())
+        .execute();
+    record.setId(generatedId);
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -64,7 +64,7 @@ public class OAuthStateRepository {
   }
 
   public static void deleteOldStateValues() {
-    DB.deleteFrom(TABLE_NAME, DB.WHERE("created < NOW() - INTERVAL '5 MINUTES'"));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("created < NOW() - INTERVAL '5 MINUTES'").execute();
   }
 
   private static OAuthState buildRecord(ResultSet rs) {

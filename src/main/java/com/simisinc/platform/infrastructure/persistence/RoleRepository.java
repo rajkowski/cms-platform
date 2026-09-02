@@ -24,10 +24,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.domain.model.Role;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
 
 /**
  * Persists and retrieves role objects
@@ -45,57 +44,48 @@ public class RoleRepository {
     if (StringUtils.isBlank(code)) {
       return null;
     }
-    return (Role) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("code = ?", code),
-        RoleRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("code = ?", code)
+        .returnRecord(RoleRepository::buildRecord);
   }
 
   public static Role findByOAuthPath(String oAuthPath) {
     if (StringUtils.isBlank(oAuthPath)) {
       return null;
     }
-    return (Role) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("oauth_path = ?", oAuthPath),
-        RoleRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("oauth_path = ?", oAuthPath)
+        .returnRecord(RoleRepository::buildRecord);
   }
 
   public static Role findById(int id) {
     if (id == -1) {
       return null;
     }
-    return (Role) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("role_id = ?", id),
-        RoleRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("role_id = ?", id)
+        .returnRecord(RoleRepository::buildRecord);
   }
 
   public static List<Role> findAllByUserId(long userId) {
     if (userId == -1) {
       return null;
     }
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        DB.WHERE("EXISTS (SELECT 1 FROM user_roles WHERE role_id = lookup_role.role_id AND user_id = ?)", userId),
-        new DataConstraints().setDefaultColumnToSortBy("role_id").setUseCount(false),
-        RoleRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<Role>) result.getRecords();
-    }
-    return null;
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("EXISTS (SELECT 1 FROM user_roles WHERE role_id = lookup_role.role_id AND user_id = ?)", userId)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("role_id").setUseCount(false))
+        .returnDataResult(RoleRepository::buildRecord).getRecords();
   }
 
   public static List<Role> findAll() {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        null,
-        new DataConstraints().setDefaultColumnToSortBy("level"),
-        RoleRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<Role>) result.getRecords();
-    }
-    return null;
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("level"))
+        .returnDataResult(RoleRepository::buildRecord).getRecords();
   }
 
   /**

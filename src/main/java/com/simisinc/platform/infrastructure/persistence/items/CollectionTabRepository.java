@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,24 +20,23 @@ package com.simisinc.platform.infrastructure.persistence.items;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.Insert;
+import com.github.rajkowski.database.Update;
 import com.simisinc.platform.domain.model.items.Collection;
 import com.simisinc.platform.domain.model.items.CollectionTab;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
- * Persists and retrieves colleciton tab objects
+ * Persists and retrieves collection tab objects
  *
  * @author matt rajkowski
  * @created 4/13/21 12:00 PM
@@ -52,15 +52,11 @@ public class CollectionTabRepository {
     if (collectionId == -1) {
       return null;
     }
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        DB.WHERE("collection_id = ?", collectionId),
-        new DataConstraints().setDefaultColumnToSortBy("tab_order,name").setUseCount(false),
-        CollectionTabRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<CollectionTab>) result.getRecords();
-    }
-    return new ArrayList<>();
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("collection_id = ?", collectionId)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("tab_order,name").setUseCount(false))
+        .returnDataResult(CollectionTabRepository::buildRecord).getRecords();
   }
 
   public static boolean save(List<CollectionTab> collectionTabList) {
@@ -96,20 +92,20 @@ public class CollectionTabRepository {
   }
 
   private static CollectionTab add(Connection connection, CollectionTab record) throws SQLException {
-    SqlUtils insertValues = new SqlUtils()
-        .add("collection_id", record.getCollectionId())
-        .add("tab_order", record.getTabOrder())
-        .add("name", record.getName())
-        .add("link", record.getLink())
-        .add("page_title", record.getPageTitle())
-        .add("page_keywords", record.getPageKeywords())
-        .add("page_description", record.getPageDescription())
-        .add("draft", record.getDraft())
-        .add("enabled", record.getEnabled())
-        .add("page_xml", record.getPageXml())
-        .add("role_id_list", record.getRoleIdList());
+    Insert insert = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("collection_id", record.getCollectionId())
+        .FIELD("tab_order", record.getTabOrder())
+        .FIELD("name", record.getName())
+        .FIELD("link", record.getLink())
+        .FIELD("page_title", record.getPageTitle())
+        .FIELD("page_keywords", record.getPageKeywords())
+        .FIELD("page_description", record.getPageDescription())
+        .FIELD("draft", record.getDraft())
+        .FIELD("enabled", record.getEnabled())
+        .FIELD("page_xml", record.getPageXml())
+        .FIELD("role_id_list", record.getRoleIdList());
     // In a transaction (use the existing connection)
-    record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+    record.setId(insert.execute(connection));
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -118,30 +114,31 @@ public class CollectionTabRepository {
   }
 
   private static CollectionTab update(Connection connection, CollectionTab record) throws SQLException {
-    SqlUtils updateValues = new SqlUtils()
-        .add("tab_order", record.getTabOrder())
-        .add("name", record.getName())
-        .add("link", record.getLink())
-        .add("page_title", record.getPageTitle())
-        .add("page_keywords", record.getPageKeywords())
-        .add("page_description", record.getPageDescription())
-        .add("draft", record.getDraft())
-        .add("enabled", record.getEnabled())
-        .add("page_xml", record.getPageXml())
-        .add("role_id_list", record.getRoleIdList());
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("tab_order", record.getTabOrder())
+        .SET("name", record.getName())
+        .SET("link", record.getLink())
+        .SET("page_title", record.getPageTitle())
+        .SET("page_keywords", record.getPageKeywords())
+        .SET("page_description", record.getPageDescription())
+        .SET("draft", record.getDraft())
+        .SET("enabled", record.getEnabled())
+        .SET("page_xml", record.getPageXml())
+        .SET("role_id_list", record.getRoleIdList())
+        .WHERE("tab_id = ?", record.getId());
     // In a transaction (use the existing connection)
-    if (DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("tab_id = ?", record.getId()))) {
+    if (update.execute(connection).booleanValue()) {
       return record;
     }
     return null;
   }
 
   private static void remove(Connection connection, CollectionTab record) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("tab_id = ?", record.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("tab_id = ?", record.getId()).execute(connection);
   }
 
   public static void removeAll(Connection connection, Collection collection) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("collection_id = ?", collection.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("collection_id = ?", collection.getId()).execute(connection);
   }
 
   private static CollectionTab buildRecord(ResultSet rs) {

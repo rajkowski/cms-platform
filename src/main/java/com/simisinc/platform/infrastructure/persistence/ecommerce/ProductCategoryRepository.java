@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,13 +27,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.Insert;
+import com.github.rajkowski.database.Update;
 import com.simisinc.platform.domain.model.ecommerce.ProductCategory;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves product category objects
@@ -48,35 +49,30 @@ public class ProductCategoryRepository {
   private static String[] PRIMARY_KEY = new String[] { "category_id" };
 
   public static List<ProductCategory> findAll() {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        null,
-        new DataConstraints().setDefaultColumnToSortBy("display_order, name").setUseCount(false),
-        ProductCategoryRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<ProductCategory>) result.getRecords();
-    }
-    return null;
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("display_order, name").setUseCount(false))
+        .returnDataResult(ProductCategoryRepository::buildRecord).getRecords();
   }
 
   public static ProductCategory findById(long categoryId) {
     if (categoryId == -1) {
       return null;
     }
-    return (ProductCategory) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("category_id = ?", categoryId),
-        ProductCategoryRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("category_id = ?", categoryId)
+        .returnRecord(ProductCategoryRepository::buildRecord);
   }
 
   public static ProductCategory findByUniqueId(String uniqueId) {
     if (StringUtils.isBlank(uniqueId)) {
       return null;
     }
-    return (ProductCategory) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("UPPER(category_unique_id) = ?", uniqueId.toUpperCase()),
-        ProductCategoryRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("UPPER(category_unique_id) = ?", uniqueId.toUpperCase())
+        .returnRecord(ProductCategoryRepository::buildRecord);
   }
 
   public static ProductCategory save(ProductCategory record) {
@@ -87,23 +83,20 @@ public class ProductCategoryRepository {
   }
 
   public static ProductCategory add(ProductCategory record) {
-    // Use a transaction
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
-      // In a transaction (use the existing connection)
-      SqlUtils insertValues = new SqlUtils()
-          .add("category_unique_id", record.getUniqueId())
-          .add("name", record.getName())
-          .add("description", record.getDescription())
-          .add("created_by", record.getCreatedBy(), -1)
-          .add("modified_by", record.getModifiedBy(), -1)
-          .add("enabled", record.getEnabled());
+      Insert insert = DB.INSERT().INTO(TABLE_NAME)
+          .FIELD("category_unique_id", record.getUniqueId())
+          .FIELD("name", record.getName())
+          .FIELD("description", record.getDescription())
+          .FIELD("created_by", record.getCreatedBy() == -1 ? null : record.getCreatedBy())
+          .FIELD("modified_by", record.getModifiedBy() == -1 ? null : record.getModifiedBy())
+          .FIELD("enabled", record.getEnabled());
       if (record.getDisplayOrder() > 0) {
-        insertValues.add("display_order", record.getDisplayOrder());
+        insert.FIELD("display_order", record.getDisplayOrder());
       }
-      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
-      // Finish the transaction
+      record.setId(insert.execute(connection));
       transaction.commit();
       return record;
     } catch (SQLException se) {
@@ -113,18 +106,18 @@ public class ProductCategoryRepository {
   }
 
   public static ProductCategory update(ProductCategory record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("category_unique_id", record.getUniqueId())
-        .add("name", record.getName())
-        .add("description", record.getDescription())
-        .add("enabled", record.getEnabled())
-        .add("modified_by", record.getModifiedBy(), -1)
-        .add("modified", new Timestamp(System.currentTimeMillis()));
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("category_unique_id", record.getUniqueId())
+        .SET("name", record.getName())
+        .SET("description", record.getDescription())
+        .SET("enabled", record.getEnabled())
+        .SET("modified_by", record.getModifiedBy() == -1 ? null : record.getModifiedBy())
+        .SET("modified", new Timestamp(System.currentTimeMillis()));
     if (record.getDisplayOrder() > 0) {
-      updateValues.add("display_order", record.getDisplayOrder());
+      update.SET("display_order", record.getDisplayOrder());
     }
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("category_id = ?", record.getId()))) {
-      //      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
+    update.WHERE("category_id = ?", record.getId());
+    if (update.execute().booleanValue()) {
       return record;
     }
     LOG.error("The update failed!");
@@ -132,7 +125,7 @@ public class ProductCategoryRepository {
   }
 
   public static boolean remove(ProductCategory record) {
-    return DB.deleteFrom(TABLE_NAME, DB.WHERE("category_id = ?", record.getId())) > 0;
+    return DB.DELETE().FROM(TABLE_NAME).WHERE("category_id = ?", record.getId()).execute();
   }
 
   private static ProductCategory buildRecord(ResultSet rs) {

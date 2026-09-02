@@ -24,15 +24,15 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
+import com.github.rajkowski.database.Insert;
+import com.github.rajkowski.database.Select;
 import com.simisinc.platform.domain.model.items.Category;
 import com.simisinc.platform.domain.model.items.Collection;
 import com.simisinc.platform.domain.model.items.Item;
 import com.simisinc.platform.domain.model.items.ItemCategory;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves item category objects
@@ -56,12 +56,12 @@ public class ItemCategoryRepository {
   }
 
   private static ItemCategory add(ItemCategory record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("item_id", record.getItemId())
-        .add("category_id", record.getCategoryId(), -1)
-        .add("collection_id", record.getCollectionId())
-        .add("dataset_id", record.getDatasetId(), -1);
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    Insert insert = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("item_id", record.getItemId())
+        .FIELD("category_id", record.getCategoryId() == -1 ? null : record.getCategoryId())
+        .FIELD("collection_id", record.getCollectionId())
+        .FIELD("dataset_id", record.getDatasetId() == -1 ? null : record.getDatasetId());
+    record.setId(insert.execute());
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -74,13 +74,12 @@ public class ItemCategoryRepository {
       return;
     }
     for (Long categoryId : item.getCategoryIdList()) {
-      SqlUtils insertValues = new SqlUtils();
-      // @todo reuse insertValues once values can be replaced
-      insertValues.add("item_id", item.getId())
-          .add("collection_id", item.getCollectionId())
-          .addIfExists("dataset_id", item.getDatasetId(), -1);
-      insertValues.add("category_id", categoryId);
-      DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY);
+      DB.INSERT().INTO(TABLE_NAME)
+          .FIELD("item_id", item.getId())
+          .FIELD("collection_id", item.getCollectionId())
+          .FIELD_UNLESS_MATCHES("dataset_id", item.getDatasetId(), -1)
+          .FIELD("category_id", categoryId)
+          .execute(connection);
     }
   }
 
@@ -88,52 +87,49 @@ public class ItemCategoryRepository {
     if (item == null) {
       return;
     }
-    SqlUtils insertValues = new SqlUtils();
-    insertValues.add("item_id", item.getId())
-        .add("collection_id", item.getCollectionId())
-        .addIfExists("dataset_id", item.getDatasetId(), -1);
-    insertValues.add("category_id", categoryId);
-    DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY);
+    DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("item_id", item.getId())
+        .FIELD("collection_id", item.getCollectionId())
+        .FIELD_UNLESS_MATCHES("dataset_id", item.getDatasetId(), -1)
+        .FIELD("category_id", categoryId)
+        .execute(connection);
   }
 
   public static void removeAll(Connection connection, Item item) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("item_id = ?", item.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("item_id = ?", item.getId()).execute(connection);
   }
 
   public static void removeAll(Connection connection, Category category) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("category_id = ?", category.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("category_id = ?", category.getId()).execute(connection);
   }
 
   public static void removeAll(Connection connection, Collection collection) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("collection_id = ?", collection.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("collection_id = ?", collection.getId()).execute(connection);
   }
 
   public static void removeItemCategoryId(Connection connection, Item item, long categoryId) throws SQLException {
-    DB.deleteFrom(connection,
-        TABLE_NAME,
-        DB.WHERE("item_id = ?", item.getId())
-            .AND("category_id = ?", categoryId));
+    DB.DELETE().FROM(TABLE_NAME)
+        .WHERE("item_id = ?", item.getId())
+        .AND("category_id = ?", categoryId)
+        .execute(connection);
   }
 
-  private static DataResult query(ItemCategorySpecification specification, DataConstraints constraints) {
-    SqlUtils select = new SqlUtils();
-    SqlWhere where = DB.WHERE();
-    SqlUtils orderBy = new SqlUtils();
-    if (specification != null) {
-      where.andAddIfHasValue("item_id = ?", specification.getItemId(), -1);
+  private static DataResult<ItemCategory> query(ItemCategorySpecification specification, DataConstraints constraints) {
+    Select select = DB.SELECT("*").FROM(TABLE_NAME);
+    if (specification != null && specification.getItemId() != -1) {
+      select.WHERE("item_id = ?", specification.getItemId());
     }
-    return DB.selectAllFrom(
-        TABLE_NAME, select, where, orderBy, constraints, ItemCategoryRepository::buildRecord);
+    return select.WITH(constraints).returnDataResult(ItemCategoryRepository::buildRecord);
   }
 
   public static ItemCategory findById(long id) {
     if (id == -1) {
       return null;
     }
-    return (ItemCategory) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("id = ?", id),
-        ItemCategoryRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("id = ?", id)
+        .returnRecord(ItemCategoryRepository::buildRecord);
   }
 
   public static List<ItemCategory> findAll(ItemCategorySpecification specification, DataConstraints constraints) {
@@ -141,23 +137,17 @@ public class ItemCategoryRepository {
       constraints = new DataConstraints();
     }
     constraints.setDefaultColumnToSortBy("id");
-    DataResult result = query(specification, constraints);
-    if (result.hasRecords()) {
-      return (List<ItemCategory>) result.getRecords();
-    }
-    return null;
+    return query(specification, constraints).getRecords();
   }
 
   public static List<ItemCategory> findAllByItemId(long itemId) {
     if (itemId == -1) {
       return null;
     }
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        DB.WHERE("item_id = ?", itemId),
-        null,
-        ItemCategoryRepository::buildRecord);
-    return (List<ItemCategory>) result.getRecords();
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("item_id = ?", itemId)
+        .returnDataResult(ItemCategoryRepository::buildRecord).getRecords();
   }
 
   private static ItemCategory buildRecord(ResultSet rs) {
