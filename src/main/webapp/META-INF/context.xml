@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context>
+  <!--
+    Set SameSite=Lax for session cookies so browsers send them on normal top-level navigation
+    from external sites (for example, when a user clicks a link into the app), but not on
+    cross-site sub-requests. This is a CSRF hardening measure in addition to the existing
+    synchronizer-token validation.
+  -->
+  <CookieProcessor className="org.apache.tomcat.util.http.Rfc6265CookieProcessor" sameSiteCookies="lax" />
+</Context>
