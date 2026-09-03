@@ -26,17 +26,16 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
+import com.github.rajkowski.database.Select;
 import com.simisinc.platform.domain.model.items.Item;
 import com.simisinc.platform.domain.model.medicine.Medicine;
 import com.simisinc.platform.domain.model.medicine.MedicineSchedule;
 import com.simisinc.platform.domain.model.medicine.Prescription;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 import com.simisinc.platform.presentation.controller.DataConstants;
 
 /**
@@ -67,33 +66,33 @@ public class MedicineRepository {
   }
 
   private static Medicine add(Medicine record, MedicineSchedule medicineSchedule, Prescription prescription) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("individual_id", record.getIndividualId(), -1)
-        .add("drug_id", record.getDrugId(), -1)
-        .add("drug_name", record.getDrugName())
-        .add("dosage", StringUtils.trimToNull(record.getDosage()))
-        .add("form_of_medicine", StringUtils.trimToNull(record.getFormOfMedicine()))
-        .add("appearance", StringUtils.trimToNull(record.getAppearance()))
-        .add("cost", record.getCost())
-        .add("pills_left", record.getQuantityOnHand(), 0)
-        .add("barcode", StringUtils.trimToNull(record.getBarcode()))
-        .add("condition", StringUtils.trimToNull(record.getCondition()))
-        .add("comments", StringUtils.trimToNull(record.getComments()))
-        .add("created_by", record.getCreatedBy())
-        .add("modified_by", record.getModifiedBy())
-        .add("assigned_to", record.getAssignedTo(), -1)
-        .add("suspended", record.getSuspended())
-        .add("suspended_by", record.getSuspendedBy(), -1)
-        .add("archived", record.getArchived())
-        .add("archived_by", record.getArchivedBy(), -1)
-        .add("last_taken", record.getLastTaken())
-        .add("last_administered_by", record.getLastAdministeredBy(), -1);
     // Use a transaction
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
-      // In a transaction (use the existing connection)
-      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+      long medicineId = DB.INSERT().INTO(TABLE_NAME)
+          .FIELD("individual_id", record.getIndividualId() == -1 ? null : record.getIndividualId())
+          .FIELD("drug_id", record.getDrugId() == -1 ? null : record.getDrugId())
+          .FIELD("drug_name", record.getDrugName())
+          .FIELD("dosage", StringUtils.trimToNull(record.getDosage()))
+          .FIELD("form_of_medicine", StringUtils.trimToNull(record.getFormOfMedicine()))
+          .FIELD("appearance", StringUtils.trimToNull(record.getAppearance()))
+          .FIELD("cost", record.getCost())
+          .FIELD("pills_left", record.getQuantityOnHand() == 0 ? null : record.getQuantityOnHand())
+          .FIELD("barcode", StringUtils.trimToNull(record.getBarcode()))
+          .FIELD("condition", StringUtils.trimToNull(record.getCondition()))
+          .FIELD("comments", StringUtils.trimToNull(record.getComments()))
+          .FIELD("created_by", record.getCreatedBy())
+          .FIELD("modified_by", record.getModifiedBy())
+          .FIELD("assigned_to", record.getAssignedTo() == -1 ? null : record.getAssignedTo())
+          .FIELD("suspended", record.getSuspended())
+          .FIELD("suspended_by", record.getSuspendedBy() == -1 ? null : record.getSuspendedBy())
+          .FIELD("archived", record.getArchived())
+          .FIELD("archived_by", record.getArchivedBy() == -1 ? null : record.getArchivedBy())
+          .FIELD("last_taken", record.getLastTaken())
+          .FIELD("last_administered_by", record.getLastAdministeredBy() == -1 ? null : record.getLastAdministeredBy())
+          .execute(connection);
+      record.setId(medicineId);
       if (medicineSchedule != null) {
         medicineSchedule.setMedicineId(record.getId());
         MedicineScheduleRepository.save(connection, medicineSchedule);
@@ -115,16 +114,6 @@ public class MedicineRepository {
   }
 
   private static Medicine update(Medicine record, MedicineSchedule medicineSchedule, Prescription prescription) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("dosage", StringUtils.trimToNull(record.getDosage()))
-        .add("form_of_medicine", StringUtils.trimToNull(record.getFormOfMedicine()))
-        .add("appearance", StringUtils.trimToNull(record.getAppearance()))
-        .add("pills_left", record.getQuantityOnHand(), 0)
-        .add("cost", record.getCost())
-        .add("barcode", StringUtils.trimToNull(record.getBarcode()))
-        .add("condition", StringUtils.trimToNull(record.getCondition()))
-        .add("comments", StringUtils.trimToNull(record.getComments()))
-        .add("modified_by", record.getModifiedBy());
     // Use a transaction
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
@@ -148,7 +137,18 @@ public class MedicineRepository {
         }
       }
       // Update this record
-      DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("medicine_id = ?", record.getId()));
+      DB.UPDATE(TABLE_NAME)
+          .SET("dosage", StringUtils.trimToNull(record.getDosage()))
+          .SET("form_of_medicine", StringUtils.trimToNull(record.getFormOfMedicine()))
+          .SET("appearance", StringUtils.trimToNull(record.getAppearance()))
+          .SET("pills_left", record.getQuantityOnHand() == 0 ? null : record.getQuantityOnHand())
+          .SET("cost", record.getCost())
+          .SET("barcode", StringUtils.trimToNull(record.getBarcode()))
+          .SET("condition", StringUtils.trimToNull(record.getCondition()))
+          .SET("comments", StringUtils.trimToNull(record.getComments()))
+          .SET("modified_by", record.getModifiedBy())
+          .WHERE("medicine_id = ?", record.getId())
+          .execute(connection);
       // Finish the transaction
       transaction.commit();
       return record;
@@ -170,7 +170,7 @@ public class MedicineRepository {
       MedicineTimeRepository.removeAll(connection, record);
       MedicineScheduleRepository.removeAll(connection, record);
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("medicine_id = ?", record.getId()));
+      DB.DELETE().FROM(TABLE_NAME).WHERE("medicine_id = ?", record.getId()).execute(connection);
       // Finish transaction
       transaction.commit();
       return true;
@@ -188,7 +188,7 @@ public class MedicineRepository {
     //    MedicineTimeRepository.removeAll(connection, item);
     //    MedicineScheduleRepository.removeAll(connection, item);
     // Delete the records
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("individual_id = ?", item.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("individual_id = ?", item.getId()).execute(connection);
   }
 
   public static boolean markAsSuspended(Medicine record) {
@@ -197,12 +197,13 @@ public class MedicineRepository {
         AutoRollback transaction = new AutoRollback(connection)) {
       // Suspend the medicine
       Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-      SqlUtils updateValues = new SqlUtils()
-          .add("modified_by", record.getModifiedBy())
-          .add("modified", timestamp)
-          .add("suspended_by", record.getModifiedBy())
-          .add("suspended", timestamp);
-      DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("medicine_id = ?", record.getId()));
+      DB.UPDATE(TABLE_NAME)
+          .SET("modified_by", record.getModifiedBy())
+          .SET("modified", timestamp)
+          .SET("suspended_by", record.getModifiedBy())
+          .SET("suspended", timestamp)
+          .WHERE("medicine_id = ?", record.getId())
+          .execute(connection);
       // Finish transaction
       transaction.commit();
       return true;
@@ -218,12 +219,13 @@ public class MedicineRepository {
         AutoRollback transaction = new AutoRollback(connection)) {
       // Suspend the medicine
       Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-      SqlUtils updateValues = new SqlUtils()
-          .add("modified_by", record.getModifiedBy())
-          .add("modified", timestamp)
-          .add("suspended_by", -1L, -1L)
-          .add("suspended", (Timestamp) null);
-      DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("medicine_id = ?", record.getId()));
+      DB.UPDATE(TABLE_NAME)
+          .SET("modified_by", record.getModifiedBy())
+          .SET("modified", timestamp)
+          .SET("suspended_by", (Long) null)
+          .SET("suspended", (Timestamp) null)
+          .WHERE("medicine_id = ?", record.getId())
+          .execute(connection);
       // Finish transaction
       transaction.commit();
       return true;
@@ -239,12 +241,13 @@ public class MedicineRepository {
         AutoRollback transaction = new AutoRollback(connection)) {
       // Archive the medicine
       Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-      SqlUtils updateValues = new SqlUtils()
-          .add("modified_by", record.getModifiedBy())
-          .add("modified", timestamp)
-          .add("archived_by", record.getModifiedBy())
-          .add("archived", timestamp);
-      DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("medicine_id = ?", record.getId()));
+      DB.UPDATE(TABLE_NAME)
+          .SET("modified_by", record.getModifiedBy())
+          .SET("modified", timestamp)
+          .SET("archived_by", record.getModifiedBy())
+          .SET("archived", timestamp)
+          .WHERE("medicine_id = ?", record.getId())
+          .execute(connection);
       // Finish transaction
       transaction.commit();
       return true;
@@ -254,39 +257,43 @@ public class MedicineRepository {
     return false;
   }
 
-  private static DataResult query(MedicineSpecification specification, DataConstraints constraints) {
-    SqlUtils select = new SqlUtils();
-    SqlWhere where = DB.WHERE();
-    SqlUtils orderBy = new SqlUtils();
+  private static DataResult<Medicine> query(MedicineSpecification specification, DataConstraints constraints) {
+    Select select = DB.SELECT("*").FROM(TABLE_NAME).WHERE();
     if (specification != null) {
-      where
-          .andAddIfHasValue("medicine_id >= ?", specification.getMinMedicineId(), -1)
-          .andAddIfHasValue("medicine_id = ?", specification.getId(), -1)
-          .andAddIfHasValue("individual_id = ?", specification.getIndividualId(), -1)
-          .andAddIfHasValue("barcode = ?", specification.getBarcode());
+      if (specification.getMinMedicineId() != -1) {
+        select.AND("medicine_id >= ?", specification.getMinMedicineId());
+      }
+      if (specification.getId() != -1) {
+        select.AND("medicine_id = ?", specification.getId());
+      }
+      if (specification.getIndividualId() != -1) {
+        select.AND("individual_id = ?", specification.getIndividualId());
+      }
+      if (StringUtils.isNotBlank(specification.getBarcode())) {
+        select.AND("barcode = ?", specification.getBarcode());
+      }
       if (specification.getArchivedOnly() == DataConstants.TRUE) {
-        where.AND("archived IS NOT NULL");
+        select.AND("archived IS NOT NULL");
       } else if (specification.getArchivedOnly() == DataConstants.FALSE) {
-        where.AND("archived IS NULL");
+        select.AND("archived IS NULL");
       }
       if (specification.getSuspendedOnly() == DataConstants.TRUE) {
-        where.AND("suspended IS NOT NULL");
+        select.AND("suspended IS NOT NULL");
       } else if (specification.getSuspendedOnly() == DataConstants.FALSE) {
-        where.AND("suspended IS NULL");
+        select.AND("suspended IS NULL");
       }
     }
-    return DB.selectAllFrom(
-        TABLE_NAME, select, where, orderBy, constraints, MedicineRepository::buildRecord);
+    select.WITH(constraints);
+    return select.returnDataResult(MedicineRepository::buildRecord);
   }
 
   public static Medicine findById(long id) {
     if (id == -1) {
       return null;
     }
-    return (Medicine) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("medicine_id = ?", id),
-        MedicineRepository::buildRecord);
+    return DB.SELECT().FROM(TABLE_NAME)
+        .WHERE("medicine_id = ?", id)
+        .returnRecord(MedicineRepository::buildRecord);
   }
 
   public static List<Medicine> findAll(MedicineSpecification specification, DataConstraints constraints) {

@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,12 +25,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
+import com.github.rajkowski.database.Select;
 import com.simisinc.platform.domain.model.ecommerce.USSalesTaxRate;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves US sales tax rates objects
@@ -43,24 +43,24 @@ public class USSalesTaxRatesRepository {
 
   private static String TABLE_NAME = "us_sales_tax_rates";
 
-  private static DataResult query(USSalesTaxRatesSpecification specification, DataConstraints constraints) {
-    SqlUtils select = new SqlUtils();
-    SqlWhere where = DB.WHERE();
-    SqlUtils orderBy = new SqlUtils();
+  private static DataResult<USSalesTaxRate> query(USSalesTaxRatesSpecification specification, DataConstraints constraints) {
+    Select select = DB.SELECT("*").FROM(TABLE_NAME).WHERE();
     if (specification != null) {
       if (specification.getStateAbbreviation() != null) {
-        where.AND("state = ?", specification.getStateAbbreviation().toUpperCase());
+        select.AND("state = ?", specification.getStateAbbreviation().toUpperCase());
       }
       if (specification.getZipCode() != null) {
         String zipCode = specification.getZipCode();
         if (zipCode.length() > 5) {
           zipCode = zipCode.substring(0, 5);
         }
-        where.AND("zip_code = ?", zipCode);
+        select.AND("zip_code = ?", zipCode);
       }
     }
-    return DB.selectAllFrom(
-        TABLE_NAME, select, where, orderBy, constraints, USSalesTaxRatesRepository::buildRecord);
+    if (constraints != null) {
+      select.WITH(constraints);
+    }
+    return select.returnDataResult(USSalesTaxRatesRepository::buildRecord);
   }
 
   public static List<USSalesTaxRate> findAll(USSalesTaxRatesSpecification specification, DataConstraints constraints) {
@@ -82,21 +82,21 @@ public class USSalesTaxRatesRepository {
     if (zipCode.length() > 5) {
       zipCode = zipCode.substring(0, 5);
     }
-    return (USSalesTaxRate) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("state = ?", state.toUpperCase())
-            .AND("zip_code = ?", zipCode),
-        USSalesTaxRatesRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("state = ?", state.toUpperCase())
+        .AND("zip_code = ?", zipCode)
+        .returnRecord(USSalesTaxRatesRepository::buildRecord);
   }
 
   public static USSalesTaxRate findByState(String state) {
     if (StringUtils.isBlank(state)) {
       return null;
     }
-    return (USSalesTaxRate) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("state = ?", state.toUpperCase()),
-        USSalesTaxRatesRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("state = ?", state.toUpperCase())
+        .returnRecord(USSalesTaxRatesRepository::buildRecord);
   }
 
   private static USSalesTaxRate buildRecord(ResultSet rs) {

@@ -26,15 +26,16 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
+import com.github.rajkowski.database.Insert;
+import com.github.rajkowski.database.Select;
+import com.github.rajkowski.database.Update;
 import com.simisinc.platform.domain.model.cms.FileItem;
 import com.simisinc.platform.domain.model.cms.FileVersion;
 import com.simisinc.platform.domain.model.cms.Folder;
 import com.simisinc.platform.domain.model.cms.SubFolder;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves file version objects
@@ -49,26 +50,36 @@ public class FileVersionRepository {
   private static String TABLE_NAME = "file_versions";
   private static String[] PRIMARY_KEY = new String[] { "version_id" };
 
-  private static DataResult query(FileVersionSpecification specification, DataConstraints constraints) {
-    SqlWhere where = null;
+  private static DataResult<FileVersion> query(FileVersionSpecification specification, DataConstraints constraints) {
+    Select select = DB.SELECT("file_versions.*").FROM(TABLE_NAME).WHERE();
     if (specification != null) {
-      where = DB.WHERE()
-          .andAddIfHasValue("version_id = ?", specification.getId(), -1)
-          .andAddIfHasValue("file_id = ?", specification.getFileId(), -1)
-          .andAddIfHasValue("folder_id = ?", specification.getFolderId(), -1)
-          .andAddIfHasValue("sub_folder_id = ?", specification.getSubFolderId(), -1);
+      if (specification.getId() > -1) {
+        select.AND("version_id = ?", specification.getId());
+      }
+      if (specification.getFileId() > -1) {
+        select.AND("file_id = ?", specification.getFileId());
+      }
+      if (specification.getFolderId() > -1) {
+        select.AND("folder_id = ?", specification.getFolderId());
+      }
+      if (specification.getSubFolderId() > -1) {
+        select.AND("sub_folder_id = ?", specification.getSubFolderId());
+      }
     }
-    return DB.selectAllFrom(TABLE_NAME, where, constraints, FileVersionRepository::buildRecord);
+    if (constraints != null) {
+      select.WITH(constraints);
+    }
+    return select.returnDataResult(FileVersionRepository::buildRecord);
   }
 
   public static FileVersion findById(long id) {
     if (id == -1) {
       return null;
     }
-    return (FileVersion) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("version_id = ?", id),
-        FileVersionRepository::buildRecord);
+    return DB.SELECT("file_versions.*")
+        .FROM(TABLE_NAME)
+        .WHERE("version_id = ?", id)
+        .returnRecord(FileVersionRepository::buildRecord);
   }
 
   public static List<FileVersion> findAll(FileVersionSpecification specification, DataConstraints constraints) {
@@ -76,8 +87,7 @@ public class FileVersionRepository {
       constraints = new DataConstraints();
     }
     constraints.setDefaultColumnToSortBy("created DESC");
-    DataResult result = query(specification, constraints);
-    return (List<FileVersion>) result.getRecords();
+    return query(specification, constraints).getRecords();
   }
 
   public static FileVersion save(FileVersion record) {
@@ -88,51 +98,53 @@ public class FileVersionRepository {
   }
 
   public static FileItem add(Connection connection, FileItem record) throws SQLException {
-    SqlUtils insertValues = new SqlUtils()
-        .add("file_id", record.getId())
-        .add("folder_id", record.getFolderId())
-        .addIfExists("sub_folder_id", record.getSubFolderId(), -1L)
-        .addIfExists("category_id", record.getCategoryId(), -1L)
-        .add("filename", StringUtils.trimToNull(record.getFilename()))
-        .add("title", StringUtils.trimToNull(record.getTitle()))
-        .add("version", StringUtils.trimToNull(record.getVersion()))
-        .add("extension", StringUtils.trimToNull(record.getExtension()))
-        .add("path", StringUtils.trimToNull(record.getFileServerPath()))
-        .add("web_path", StringUtils.trimToNull(record.getWebPath()))
-        .add("file_length", record.getFileLength())
-        .add("file_type", record.getFileType())
-        .add("mime_type", record.getMimeType())
-        .add("file_hash", record.getFileHash())
-        .addIfExists("width", record.getWidth(), -1)
-        .addIfExists("height", record.getHeight(), -1)
-        .add("summary", StringUtils.trimToNull(record.getSummary()))
-        .add("created_by", record.getCreatedBy());
-    DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY);
-    // Manage a few related tables
-    // Finish the transaction
+    Insert insert = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("file_id", record.getId())
+        .FIELD("folder_id", record.getFolderId())
+        .FIELD("filename", StringUtils.trimToNull(record.getFilename()))
+        .FIELD("title", StringUtils.trimToNull(record.getTitle()))
+        .FIELD("version", StringUtils.trimToNull(record.getVersion()))
+        .FIELD("extension", StringUtils.trimToNull(record.getExtension()))
+        .FIELD("path", StringUtils.trimToNull(record.getFileServerPath()))
+        .FIELD("web_path", StringUtils.trimToNull(record.getWebPath()))
+        .FIELD("file_length", record.getFileLength())
+        .FIELD("file_type", record.getFileType())
+        .FIELD("mime_type", record.getMimeType())
+        .FIELD("file_hash", record.getFileHash())
+        .FIELD("summary", StringUtils.trimToNull(record.getSummary()))
+        .FIELD("created_by", record.getCreatedBy());
+    if (record.getSubFolderId() != -1) {
+      insert.FIELD("sub_folder_id", record.getSubFolderId());
+    }
+    if (record.getCategoryId() != -1) {
+      insert.FIELD("category_id", record.getCategoryId());
+    }
+    if (record.getWidth() != -1) {
+      insert.FIELD("width", record.getWidth());
+    }
+    if (record.getHeight() != -1) {
+      insert.FIELD("height", record.getHeight());
+    }
+    insert.execute(connection);
     return record;
   }
 
   private static FileVersion update(FileVersion record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("folder_id", record.getFolderId())
-        .add("sub_folder_id", record.getSubFolderId(), -1L)
-        .add("category_id", record.getCategoryId(), -1L)
-        //        .add("filename", StringUtils.trimToNull(record.getFilename()))
-        .add("title", StringUtils.trimToNull(record.getTitle()))
-        .add("version", StringUtils.trimToNull(record.getVersion()))
-        //        .add("extension", StringUtils.trimToNull(record.getExtension()))
-        //        .add("path", StringUtils.trimToNull(record.getFileServerPath()))
-        //        .add("file_length", record.getFileLength())
-        //        .add("file_type", record.getFileType())
-        //        .add("mime_type", record.getMimeType())
-        //        .add("file_hash", record.getFileHash())
-        .addIfExists("width", record.getWidth(), -1)
-        .addIfExists("height", record.getHeight(), -1)
-        .add("summary", StringUtils.trimToNull(record.getSummary()))
-        //        .add("created_by", record.getCreatedBy())
-        .add("modified_by", record.getModifiedBy());
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("version_id = ?", record.getId()))) {
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("folder_id", record.getFolderId())
+        .SET("sub_folder_id", record.getSubFolderId() == -1L ? null : record.getSubFolderId())
+        .SET("category_id", record.getCategoryId() == -1L ? null : record.getCategoryId())
+        .SET("title", StringUtils.trimToNull(record.getTitle()))
+        .SET("version", StringUtils.trimToNull(record.getVersion()))
+        .SET("summary", StringUtils.trimToNull(record.getSummary()))
+        .SET("modified_by", record.getModifiedBy());
+    if (record.getWidth() != -1) {
+      update.SET("width", record.getWidth());
+    }
+    if (record.getHeight() != -1) {
+      update.SET("height", record.getHeight());
+    }
+    if (update.WHERE("version_id = ?", record.getId()).execute().booleanValue()) {
       return record;
     }
     LOG.error("The update failed!");
@@ -140,11 +152,12 @@ public class FileVersionRepository {
   }
 
   public static FileItem update(Connection connection, FileItem record) throws SQLException {
-    SqlUtils updateValues = new SqlUtils()
-        .add("folder_id", record.getFolderId())
-        .add("sub_folder_id", record.getSubFolderId(), -1L)
-        .add("category_id", record.getCategoryId(), -1L);
-    if (DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("file_id = ?", record.getId()))) {
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("folder_id", record.getFolderId())
+        .SET("sub_folder_id", record.getSubFolderId() == -1L ? null : record.getSubFolderId())
+        .SET("category_id", record.getCategoryId() == -1L ? null : record.getCategoryId())
+        .WHERE("file_id = ?", record.getId());
+    if (update.execute(connection).booleanValue()) {
       return record;
     }
     LOG.error("The update fileItem failed!");
@@ -152,23 +165,23 @@ public class FileVersionRepository {
   }
 
   public static void remove(FileVersion record) {
-    DB.deleteFrom(TABLE_NAME, DB.WHERE("version_id = ?", record.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("version_id = ?", record.getId()).execute();
   }
 
   public static void removeAll(Connection connection, Folder record) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("folder_id = ?", record.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("folder_id = ?", record.getId()).execute(connection);
   }
 
   public static void removeAll(Connection connection, SubFolder record) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("sub_folder_id = ?", record.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("sub_folder_id = ?", record.getId()).execute(connection);
   }
 
   public static void removeAll(Connection connection, FileItem record) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("file_id = ?", record.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("file_id = ?", record.getId()).execute(connection);
   }
 
   public static long findTotalFileSize() {
-    return DB.selectFunction("SUM(file_length)", TABLE_NAME, null);
+    return DB.SELECT("SUM(file_length) AS total_file_length").FROM(TABLE_NAME).returnValue(Long.class);
   }
 
   private static FileVersion buildRecord(ResultSet rs) {

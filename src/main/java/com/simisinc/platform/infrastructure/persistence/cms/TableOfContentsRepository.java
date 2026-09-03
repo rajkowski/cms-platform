@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,15 +26,16 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.CastType;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
+import com.github.rajkowski.database.Insert;
+import com.github.rajkowski.database.Select;
+import com.github.rajkowski.database.Update;
 import com.simisinc.platform.application.cms.TableOfContentsJSONCommand;
 import com.simisinc.platform.domain.model.cms.TableOfContents;
 import com.simisinc.platform.infrastructure.cache.CacheManager;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlValue;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves table of contents objects
@@ -48,24 +50,30 @@ public class TableOfContentsRepository {
   private static String TABLE_NAME = "table_of_contents";
   private static String[] PRIMARY_KEY = new String[] { "toc_id" };
 
-  private static DataResult query(TableOfContentsSpecification specification, DataConstraints constraints) {
-    SqlWhere where = null;
+  private static DataResult<TableOfContents> query(TableOfContentsSpecification specification, DataConstraints constraints) {
+    Select select = DB.SELECT("*").FROM(TABLE_NAME).WHERE();
     if (specification != null) {
-      where = DB.WHERE()
-          .andAddIfHasValue("toc_id = ?", specification.getId(), -1)
-          .andAddIfHasValue("toc_unique_id = ?", specification.getTocUniqueId());
+      if (specification.getId() != -1) {
+        select.AND("toc_id = ?", specification.getId());
+      }
+      if (StringUtils.isNotBlank(specification.getTocUniqueId())) {
+        select.AND("toc_unique_id = ?", specification.getTocUniqueId());
+      }
     }
-    return DB.selectAllFrom(TABLE_NAME, where, constraints, TableOfContentsRepository::buildRecord);
+    if (constraints != null) {
+      select.WITH(constraints);
+    }
+    return select.returnDataResult(TableOfContentsRepository::buildRecord);
   }
 
   public static TableOfContents findByUniqueId(String tocUniqueId) {
     if (StringUtils.isBlank(tocUniqueId)) {
       return null;
     }
-    return (TableOfContents) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("toc_unique_id = ?", tocUniqueId),
-        TableOfContentsRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("toc_unique_id = ?", tocUniqueId)
+        .returnRecord(TableOfContentsRepository::buildRecord);
   }
 
   public static List<TableOfContents> findAll(TableOfContentsSpecification specification, DataConstraints constraints) {
@@ -73,8 +81,8 @@ public class TableOfContentsRepository {
       constraints = new DataConstraints();
     }
     constraints.setDefaultColumnToSortBy("toc_unique_id");
-    DataResult result = query(specification, constraints);
-    return (List<TableOfContents>) result.getRecords();
+    DataResult<TableOfContents> result = query(specification, constraints);
+    return result.getRecords();
   }
 
   public static TableOfContents save(TableOfContents record) {
@@ -85,13 +93,13 @@ public class TableOfContentsRepository {
   }
 
   public static TableOfContents add(TableOfContents record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("toc_unique_id", StringUtils.trimToNull(record.getTocUniqueId()))
-        .add("name", StringUtils.trimToNull(record.getName()))
-        .add("created_by", record.getCreatedBy(), -1)
-        .add("modified_by", record.getModifiedBy(), -1);
-    insertValues.add(new SqlValue("entries", SqlValue.JSONB_TYPE, TableOfContentsJSONCommand.createJSONString(record)));
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    Insert insert = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("toc_unique_id", StringUtils.trimToNull(record.getTocUniqueId()))
+        .FIELD("name", StringUtils.trimToNull(record.getName()))
+        .FIELD("created_by", record.getCreatedBy() == -1 ? null : record.getCreatedBy())
+        .FIELD("modified_by", record.getModifiedBy() == -1 ? null : record.getModifiedBy())
+        .FIELD("entries", TableOfContentsJSONCommand.createJSONString(record), CastType.JSONB);
+    record.setId(insert.execute());
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -100,12 +108,12 @@ public class TableOfContentsRepository {
   }
 
   public static TableOfContents update(TableOfContents record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("modified_by", record.getModifiedBy())
-        .add("modified", new Timestamp(System.currentTimeMillis()));
-    updateValues.add(new SqlValue("entries", SqlValue.JSONB_TYPE, TableOfContentsJSONCommand.createJSONString(record)));
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("toc_id = ?", record.getId()))) {
-      // Expire the cache
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("modified_by", record.getModifiedBy())
+        .SET("modified", new Timestamp(System.currentTimeMillis()))
+        .SET("entries", TableOfContentsJSONCommand.createJSONString(record), CastType.JSONB)
+        .WHERE("toc_id = ?", record.getId());
+    if (update.execute().booleanValue()) {
       CacheManager.invalidateKey(CacheManager.TABLE_OF_CONTENTS_UNIQUE_ID_CACHE, record.getTocUniqueId());
       return record;
     }

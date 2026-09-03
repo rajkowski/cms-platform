@@ -29,14 +29,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
+import com.github.rajkowski.database.Select;
 import com.simisinc.platform.domain.model.User;
 import com.simisinc.platform.domain.model.dashboard.StatisticsData;
 import com.simisinc.platform.domain.model.login.UserLogin;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves user login objects
@@ -51,15 +50,16 @@ public class UserLoginRepository {
   private static String TABLE_NAME = "user_logins";
   private static String[] PRIMARY_KEY = new String[] { "login_id" };
 
-  private static DataResult query(UserLoginSpecification specification, DataConstraints constraints) {
-    SqlUtils select = new SqlUtils();
-    SqlWhere where = DB.WHERE();
-    SqlUtils orderBy = new SqlUtils();
-    if (specification != null) {
-      where.andAddIfHasValue("user_id = ?", specification.getUserId(), -1);
+  private static DataResult<UserLogin> query(UserLoginSpecification specification, DataConstraints constraints) {
+    Select select = DB.SELECT("*")
+        .FROM(TABLE_NAME);
+    if (specification != null && specification.getUserId() != -1) {
+      select.WHERE("user_id = ?", specification.getUserId());
     }
-    return DB.selectAllFrom(
-        TABLE_NAME, select, where, orderBy, constraints, UserLoginRepository::buildRecord);
+    if (constraints != null) {
+      select.WITH(constraints);
+    }
+    return select.returnDataResult(UserLoginRepository::buildRecord);
   }
 
   public static List<UserLogin> findAll(UserLoginSpecification specification, DataConstraints constraints) {
@@ -67,8 +67,7 @@ public class UserLoginRepository {
       constraints = new DataConstraints();
     }
     constraints.setDefaultColumnToSortBy("login_id desc");
-    DataResult result = query(specification, constraints);
-    return (List<UserLogin>) result.getRecords();
+    return query(specification, constraints).getRecords();
   }
 
   public static UserLogin queryLastLogin(long userId) {
@@ -77,18 +76,19 @@ public class UserLoginRepository {
     DataConstraints constraints = new DataConstraints();
     constraints.setDefaultColumnToSortBy("created desc");
     constraints.setPageSize(1);
-    DataResult result = query(specification, constraints);
+    DataResult<UserLogin> result = query(specification, constraints);
     if (result.hasRecords()) {
-      return (UserLogin) result.getRecords().get(0);
+      return result.getRecords().get(0);
     }
     return null;
   }
 
   public static long queryTodaysLoginCount(long userId) {
-    return DB.selectCountFrom(
-        TABLE_NAME,
-        DB.WHERE("user_id = ?", userId)
-            .AND("created >= ?", Timestamp.valueOf(LocalDate.now().atStartOfDay())));
+    return DB.SELECT().COUNT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("user_id = ?", userId)
+        .AND("created >= ?", Timestamp.valueOf(LocalDate.now().atStartOfDay()))
+        .returnCount();
   }
 
   public static List<StatisticsData> findUniqueDailyLogins(int daysToLimit) {
@@ -165,13 +165,14 @@ public class UserLoginRepository {
   }
 
   private static UserLogin add(UserLogin record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("user_id", record.getUserId())
-        .add("source", record.getSource())
-        .add("ip_address", record.getIpAddress())
-        .add("session_id", record.getSessionId())
-        .add("user_agent", StringUtils.abbreviate(record.getUserAgent(), 255));
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    long generatedId = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("user_id", record.getUserId())
+        .FIELD("source", record.getSource())
+        .FIELD("ip_address", record.getIpAddress())
+        .FIELD("session_id", record.getSessionId())
+        .FIELD("user_agent", StringUtils.abbreviate(record.getUserAgent(), 255))
+        .execute();
+    record.setId(generatedId);
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -180,7 +181,7 @@ public class UserLoginRepository {
   }
 
   public static int removeAll(Connection connection, User user) throws SQLException {
-    return DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("user_id = ?", user.getId()));
+    return DB.DELETE().FROM(TABLE_NAME).WHERE("user_id = ?", user.getId()).execute(connection).booleanValue() ? 1 : 0;
   }
 
   private static UserLogin buildRecord(ResultSet rs) {

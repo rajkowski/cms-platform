@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2023 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,9 +22,7 @@ import java.util.UUID;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlValue;
+import com.github.rajkowski.database.DB;
 
 /**
  * A distributed lock implementation
@@ -42,21 +41,19 @@ public class LockManager {
     String uuid = UUID.randomUUID().toString();
 
     // INSERT or UPDATE
-    SqlUtils insertValues = new SqlUtils()
-        .add("name", name)
-        .add(new SqlValue("locked_at", SqlValue.AS_IS, "CURRENT_TIMESTAMP"))
-        .add(new SqlValue("lock_until", SqlValue.AS_IS,
-            "CURRENT_TIMESTAMP - INTERVAL '10 SECONDS' + INTERVAL '" + duration.toString() + "'"))
-        .add("uuid", uuid);
+    var insert = (DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("name", name)
+        .FIELD("locked_at = CURRENT_TIMESTAMP")
+        .FIELD("lock_until = CURRENT_TIMESTAMP - INTERVAL '10 SECONDS' + INTERVAL '" + duration.toString() + "'")
+        .FIELD("uuid", uuid)
+        .ON_CONFLICT("name")
+        .DO_UPDATE()
+        .SET("locked_at = EXCLUDED.locked_at")
+        .SET("lock_until = EXCLUDED.lock_until")
+        .SET("uuid = EXCLUDED.uuid")
+        .WHERE("distributed_lock.name = EXCLUDED.name AND CURRENT_TIMESTAMP >= distributed_lock.lock_until"));
 
-    String onConflict = "ON CONFLICT (name) " +
-        "DO UPDATE SET " +
-        "locked_at = EXCLUDED.locked_at, " +
-        "lock_until = EXCLUDED.lock_until, " +
-        "uuid = EXCLUDED.uuid " +
-        "WHERE distributed_lock.name = EXCLUDED.name AND CURRENT_TIMESTAMP >= distributed_lock.lock_until";
-
-    if (DB.insertIntoWithConflict(TABLE_NAME, insertValues, onConflict)) {
+    if (insert.execute() > 0) {
       LOG.debug("Lock succeeded: " + name);
       return uuid;
     }
@@ -64,14 +61,10 @@ public class LockManager {
   }
 
   public static boolean unlock(String name, String uuid) {
-    // Expire right away
-    SqlUtils updateValues = new SqlUtils()
-        .add(new SqlValue("lock_until", SqlValue.AS_IS, "CURRENT_TIMESTAMP"));
-    if (DB.update(TABLE_NAME, updateValues,
-        DB.WHERE("name = ?", name)
-            .AND("uuid = ?", uuid))) {
-      return true;
-    }
-    return false;
+    return DB.UPDATE(TABLE_NAME)
+        .SET("lock_until = CURRENT_TIMESTAMP")
+        .WHERE("name = ?", name)
+        .AND("uuid = ?", uuid)
+        .execute();
   }
 }

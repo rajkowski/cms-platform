@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,9 +21,9 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.github.rajkowski.database.DB;
 import com.simisinc.platform.domain.model.ecommerce.Order;
 import com.simisinc.platform.domain.model.ecommerce.OrderItem;
-import com.simisinc.platform.infrastructure.database.DB;
 import com.simisinc.platform.infrastructure.persistence.ecommerce.OrderItemRepository;
 
 /**
@@ -50,25 +51,34 @@ public class OrderStatusCommand {
     if (StringUtils.isBlank(code)) {
       return -1;
     }
-    return (int) DB.selectFunction("status_id", "lookup_order_status",
-        DB.WHERE("LOWER(code) = ?", code.toLowerCase()));
+    return DB.SELECT("status_id")
+        .FROM("lookup_order_status")
+        .WHERE("LOWER(code) = ?", code.toLowerCase())
+        .returnValue(Long.class).intValue();
   }
 
   public static String status(int statusId) {
     if (statusId == -1) {
       return null;
     }
-    return DB.selectStringValue("title", "lookup_order_status", DB.WHERE("status_id = ?", statusId));
+    return DB.SELECT("title")
+        .FROM("lookup_order_status")
+        .WHERE("status_id = ?", statusId)
+        .returnValue(String.class);
   }
 
   public static String currentStatus(int statusId) {
     if (statusId == -1) {
       return null;
     }
-    String code = DB.selectStringValue(
-        "code",
-        "lookup_order_status",
-        DB.WHERE("status_id = ?", statusId)).toUpperCase();
+    String code = DB.SELECT("code")
+        .FROM("lookup_order_status")
+        .WHERE("status_id = ?", statusId)
+        .returnValue(String.class);
+    if (code == null) {
+      return null;
+    }
+    code = code.toUpperCase();
     if (CREATED.equals(code)) {
       return "New order";
     } else if (PAID.equals(code)) {

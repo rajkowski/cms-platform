@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,16 +30,18 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.CastType;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
+import com.github.rajkowski.database.Insert;
+import com.github.rajkowski.database.Select;
+import com.github.rajkowski.database.Update;
 import com.simisinc.platform.domain.model.Role;
 import com.simisinc.platform.domain.model.User;
 import com.simisinc.platform.domain.model.dashboard.StatisticsData;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 import com.simisinc.platform.infrastructure.persistence.ecommerce.OrderRepository;
 import com.simisinc.platform.infrastructure.persistence.login.UserGroupRepository;
 import com.simisinc.platform.infrastructure.persistence.login.UserLoginRepository;
@@ -59,95 +62,95 @@ public class UserRepository {
   private static String TABLE_NAME = "users";
   private static String[] PRIMARY_KEY = new String[] { "user_id" };
 
-  private static DataResult query(UserSpecification specification, DataConstraints constraints) {
-    SqlUtils select = new SqlUtils();
-    SqlWhere where = DB.WHERE();
-    SqlUtils orderBy = new SqlUtils();
+  private static DataResult<User> query(UserSpecification specification, DataConstraints constraints) {
+    Select select = DB.SELECT("users.*").FROM(TABLE_NAME).WHERE();
     if (specification != null) {
-      where.andAddIfHasValue("user_id = ?", specification.getId(), -1);
+      if (specification.getId() > -1) {
+        select.AND("user_id = ?", specification.getId());
+      }
       if (specification.getRoleId() > -1) {
-        where.AND("EXISTS (SELECT 1 FROM user_roles WHERE user_id = users.user_id AND role_id = ?)", specification.getRoleId());
+        select.AND("EXISTS (SELECT 1 FROM user_roles WHERE user_id = users.user_id AND role_id = ?)", specification.getRoleId());
       }
       if (specification.getGroupId() > -1) {
-        where.AND("EXISTS (SELECT 1 FROM user_groups WHERE user_id = users.user_id AND group_id = ?)", specification.getGroupId());
+        select.AND("EXISTS (SELECT 1 FROM user_groups WHERE user_id = users.user_id AND group_id = ?)", specification.getGroupId());
       }
       if (specification.getIsEnabled() != DataConstants.UNDEFINED) {
-        where.AND("enabled = ?", specification.getIsEnabled() == DataConstants.TRUE);
+        select.AND("enabled = ?", specification.getIsEnabled() == DataConstants.TRUE);
       }
       if (specification.getIsVerified() != DataConstants.UNDEFINED) {
         if (specification.getIsVerified() == DataConstants.TRUE) {
-          where.AND("validated IS NOT NULL");
+          select.AND("validated IS NOT NULL");
         } else {
-          where.AND("validated IS NULL");
+          select.AND("validated IS NULL");
         }
       }
       if (specification.getMatchesName() != null) {
         if (specification.getMatchesName().contains("@")) {
-          // Exact match on an email
-          where.AND("LOWER(email) = LOWER(?)", specification.getMatchesName().trim());
+          select.AND("LOWER(email) = LOWER(?)", specification.getMatchesName().trim());
         } else {
-          // Like matching on a name
           String likeValue = specification.getMatchesName().trim()
               .replace("!", "!!")
               .replace("%", "!%")
               .replace("_", "!_")
               .replace("[", "![");
-          where.AND("LOWER(concat_ws(' ', first_name, last_name, nickname)) LIKE LOWER(?) ESCAPE '!'", "%" + likeValue + "%");
+          select.AND("LOWER(concat_ws(' ', first_name, last_name, nickname)) LIKE LOWER(?) ESCAPE '!'", "%" + likeValue + "%");
         }
       }
     }
-    return DB.selectAllFrom(
-        TABLE_NAME, select, where, orderBy, constraints, UserRepository::buildRecord);
+    if (constraints != null) {
+      select.WITH(constraints);
+    }
+    return select.returnDataResult(UserRepository::buildRecord);
   }
 
   public static User findByUniqueId(String uniqueId) {
     if (StringUtils.isBlank(uniqueId)) {
       return null;
     }
-    return (User) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("unique_id = ?", uniqueId),
-        UserRepository::buildRecord);
+    return DB.SELECT("users.*")
+        .FROM(TABLE_NAME)
+        .WHERE("unique_id = ?", uniqueId)
+        .returnRecord(UserRepository::buildRecord);
   }
 
   public static User findByUsername(String username) {
     if (StringUtils.isBlank(username)) {
       return null;
     }
-    return (User) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("LOWER(username) = ?", username.toLowerCase()),
-        UserRepository::buildRecord);
+    return DB.SELECT("users.*")
+        .FROM(TABLE_NAME)
+        .WHERE("LOWER(username) = ?", username.toLowerCase())
+        .returnRecord(UserRepository::buildRecord);
   }
 
   public static User findByUserId(long userId) {
     if (userId == -1) {
       return null;
     }
-    return (User) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("user_id = ?", userId),
-        UserRepository::buildRecord);
+    return DB.SELECT("users.*")
+        .FROM(TABLE_NAME)
+        .WHERE("user_id = ?", userId)
+        .returnRecord(UserRepository::buildRecord);
   }
 
   public static User findByAccountToken(String token) {
     if (StringUtils.isBlank(token)) {
       return null;
     }
-    return (User) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("account_token = ?", token),
-        UserRepository::buildRecord);
+    return DB.SELECT("users.*")
+        .FROM(TABLE_NAME)
+        .WHERE("account_token = ?", token)
+        .returnRecord(UserRepository::buildRecord);
   }
 
   public static User findByEmailAddress(String email) {
     if (StringUtils.isBlank(email)) {
       return null;
     }
-    return (User) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("LOWER(email) = ?", email.toLowerCase()),
-        UserRepository::buildRecord);
+    return DB.SELECT("users.*")
+        .FROM(TABLE_NAME)
+        .WHERE("LOWER(email) = ?", email.toLowerCase())
+        .returnRecord(UserRepository::buildRecord);
   }
 
   public static List<User> findAllByRole(Role role) {
@@ -266,42 +269,39 @@ public class UserRepository {
     if (record.getUsername() != null) {
       record.setUsername(record.getUsername().trim().toLowerCase());
     }
-    SqlUtils insertValues = new SqlUtils()
-        .add("unique_id", StringUtils.trimToNull(record.getUniqueId()))
-        .add("first_name", StringUtils.trimToNull(record.getFirstName()))
-        .add("last_name", StringUtils.trimToNull(record.getLastName()))
-        .add("organization", StringUtils.trimToNull(record.getOrganization()))
-        .add("nickname", StringUtils.trimToNull(record.getNickname()))
-        .add("email", StringUtils.trimToNull(record.getEmail()))
-        .add("username", StringUtils.trimToNull(record.getUsername()))
-        .add("title", StringUtils.trimToNull(record.getTitle()))
-        .add("department", StringUtils.trimToNull(record.getDepartment()))
-        .add("timezone", StringUtils.trimToNull(record.getTimeZone()))
-        .add("city", StringUtils.trimToNull(record.getCity()))
-        .add("state", StringUtils.trimToNull(record.getState()))
-        .add("country", StringUtils.trimToNull(record.getCountry()))
-        .add("postal_code", StringUtils.trimToNull(record.getPostalCode()))
-        .add("password", record.getPassword())
-        .add("enabled", true)
-        .add("account_token", record.getAccountToken())
-        .addIfExists("created", record.getCreated())
-        .add("created_by", record.getCreatedBy(), -1);
-    if (record.hasGeoPoint()) {
-      insertValues.add("latitude", record.getLatitude());
-      insertValues.add("longitude", record.getLongitude());
-      insertValues.addGeomPoint("geom", record.getLatitude(), record.getLongitude());
+    Insert insert = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("unique_id", StringUtils.trimToNull(record.getUniqueId()))
+        .FIELD("first_name", StringUtils.trimToNull(record.getFirstName()))
+        .FIELD("last_name", StringUtils.trimToNull(record.getLastName()))
+        .FIELD("organization", StringUtils.trimToNull(record.getOrganization()))
+        .FIELD("nickname", StringUtils.trimToNull(record.getNickname()))
+        .FIELD("email", StringUtils.trimToNull(record.getEmail()))
+        .FIELD("username", StringUtils.trimToNull(record.getUsername()))
+        .FIELD("title", StringUtils.trimToNull(record.getTitle()))
+        .FIELD("department", StringUtils.trimToNull(record.getDepartment()))
+        .FIELD("timezone", StringUtils.trimToNull(record.getTimeZone()))
+        .FIELD("city", StringUtils.trimToNull(record.getCity()))
+        .FIELD("state", StringUtils.trimToNull(record.getState()))
+        .FIELD("country", StringUtils.trimToNull(record.getCountry()))
+        .FIELD("postal_code", StringUtils.trimToNull(record.getPostalCode()))
+        .FIELD("password", record.getPassword())
+        .FIELD("enabled", true)
+        .FIELD("account_token", record.getAccountToken())
+        .FIELD("created_by", record.getCreatedBy() == -1 ? null : record.getCreatedBy());
+    if (record.getCreated() != null) {
+      insert.FIELD("created", record.getCreated());
     }
-    // Use a transaction
+    if (record.hasGeoPoint()) {
+      insert.FIELD("latitude", record.getLatitude())
+          .FIELD("longitude", record.getLongitude())
+          .FIELD("geom", record.getLatitude(), record.getLongitude(), CastType.GEOM);
+    }
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
-      // In a transaction (use the existing connection)
-      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
-      // Manage the access groups
+      record.setId(insert.execute(connection));
       UserGroupRepository.insertUserGroupList(connection, record);
-      // Manage the roles
       UserRoleRepository.insertUserRoleList(connection, record);
-      // Finish the transaction
       transaction.commit();
       LOG.info("Inserted userId: " + record.getId() + " - " + record.getEmail());
       return record;
@@ -319,47 +319,44 @@ public class UserRepository {
     if (record.getUsername() != null) {
       record.setUsername(record.getUsername().trim().toLowerCase());
     }
-    SqlUtils updateValues = new SqlUtils()
-        .add("unique_id", StringUtils.trimToNull(record.getUniqueId()))
-        .add("first_name", StringUtils.trimToNull(record.getFirstName()))
-        .add("last_name", StringUtils.trimToNull(record.getLastName()))
-        .add("organization", StringUtils.trimToNull(record.getOrganization()))
-        .add("nickname", StringUtils.trimToNull(record.getNickname()))
-        .add("email", StringUtils.trimToNull(record.getEmail()))
-        .add("username", StringUtils.trimToNull(record.getUsername()))
-        .add("title", StringUtils.trimToNull(record.getTitle()))
-        .add("department", StringUtils.trimToNull(record.getDepartment()))
-        .add("timezone", StringUtils.trimToNull(record.getTimeZone()))
-        .add("city", StringUtils.trimToNull(record.getCity()))
-        .add("state", StringUtils.trimToNull(record.getState()))
-        .add("country", StringUtils.trimToNull(record.getCountry()))
-        .add("postal_code", StringUtils.trimToNull(record.getPostalCode()))
-        .add("modified_by", record.getModifiedBy(), -1)
-        .add("modified", new Timestamp(System.currentTimeMillis()));
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("unique_id", StringUtils.trimToNull(record.getUniqueId()))
+        .SET("first_name", StringUtils.trimToNull(record.getFirstName()))
+        .SET("last_name", StringUtils.trimToNull(record.getLastName()))
+        .SET("organization", StringUtils.trimToNull(record.getOrganization()))
+        .SET("nickname", StringUtils.trimToNull(record.getNickname()))
+        .SET("email", StringUtils.trimToNull(record.getEmail()))
+        .SET("username", StringUtils.trimToNull(record.getUsername()))
+        .SET("title", StringUtils.trimToNull(record.getTitle()))
+        .SET("department", StringUtils.trimToNull(record.getDepartment()))
+        .SET("timezone", StringUtils.trimToNull(record.getTimeZone()))
+        .SET("city", StringUtils.trimToNull(record.getCity()))
+        .SET("state", StringUtils.trimToNull(record.getState()))
+        .SET("country", StringUtils.trimToNull(record.getCountry()))
+        .SET("postal_code", StringUtils.trimToNull(record.getPostalCode()))
+        .SET("modified_by", record.getModifiedBy() == -1 ? null : record.getModifiedBy())
+        .SET("modified", new Timestamp(System.currentTimeMillis()));
     if (record.hasGeoPoint()) {
-      updateValues.add("latitude", record.getLatitude());
-      updateValues.add("longitude", record.getLongitude());
-      updateValues.addGeomPoint("geom", record.getLatitude(), record.getLongitude());
+      update.SET("latitude", record.getLatitude())
+          .SET("longitude", record.getLongitude())
+          .SET("geom", record.getLatitude(), record.getLongitude(), CastType.GEOM);
     } else {
-      updateValues.add("latitude", 0L, 0L);
-      updateValues.add("longitude", 0L, 0L);
-      updateValues.addGeomPoint("geom", 0, 0);
+      update.SET("latitude", (Double) null)
+          .SET("longitude", (Double) null)
+          .SET("geom", (String) null);
     }
-    // Use a transaction
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
-      // In a transaction (use the existing connection)
-      DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("user_id = ?", record.getId()));
-      // Manage the access groups
-      UserGroupRepository.removeAll(connection, record);
-      UserGroupRepository.insertUserGroupList(connection, record);
-      // Manage the roles
-      UserRoleRepository.removeAll(connection, record);
-      UserRoleRepository.insertUserRoleList(connection, record);
-      // Finish the transaction
-      transaction.commit();
-      return record;
+      update.WHERE("user_id = ?", record.getId());
+      if (update.execute(connection) != null) {
+        UserGroupRepository.removeAll(connection, record);
+        UserGroupRepository.insertUserGroupList(connection, record);
+        UserRoleRepository.removeAll(connection, record);
+        UserRoleRepository.insertUserRoleList(connection, record);
+        transaction.commit();
+        return record;
+      }
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage(), se);
     }
@@ -368,12 +365,12 @@ public class UserRepository {
 
   public static User updateValidated(User record) {
     Timestamp occurred = new Timestamp(System.currentTimeMillis());
-    SqlUtils updateValues = new SqlUtils()
-        .add("validated", occurred)
-        .add("account_token", (String) null)
-        .add("modified", occurred);
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("user_id = ?", record.getId()))) {
-      // Updated related records
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("validated", occurred)
+        .SET("account_token", (String) null)
+        .SET("modified", occurred)
+        .WHERE("user_id = ?", record.getId());
+    if (update.execute().booleanValue()) {
       OrderRepository.updateUserOrders(record);
       return record;
     }
@@ -382,12 +379,12 @@ public class UserRepository {
   }
 
   public static User updatePassword(User record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("password", record.getPassword())
-        .add("account_token", (String) null)
-        .add("modified", new Timestamp(System.currentTimeMillis()));
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("user_id = ?", record.getId()))) {
-      // Invalidate user_tokens since there is a new password
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("password", record.getPassword())
+        .SET("account_token", (String) null)
+        .SET("modified", new Timestamp(System.currentTimeMillis()))
+        .WHERE("user_id = ?", record.getId());
+    if (update.execute().booleanValue()) {
       UserTokenRepository.removeAll(record.getId());
       return record;
     }
@@ -397,10 +394,11 @@ public class UserRepository {
 
   public static User createAccountToken(User record) {
     String newToken = UUID.randomUUID().toString();
-    SqlUtils updateValues = new SqlUtils()
-        .add("account_token", newToken)
-        .add("modified", new Timestamp(System.currentTimeMillis()));
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("user_id = ?", record.getId()))) {
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("account_token", newToken)
+        .SET("modified", new Timestamp(System.currentTimeMillis()))
+        .WHERE("user_id = ?", record.getId());
+    if (update.execute().booleanValue()) {
       record.setAccountToken(newToken);
       return record;
     }
@@ -409,10 +407,11 @@ public class UserRepository {
   }
 
   public static User suspendAccount(User record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("enabled", false)
-        .add("modified", new Timestamp(System.currentTimeMillis()));
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("user_id = ?", record.getId()))) {
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("enabled", false)
+        .SET("modified", new Timestamp(System.currentTimeMillis()))
+        .WHERE("user_id = ?", record.getId());
+    if (update.execute().booleanValue()) {
       return record;
     }
     LOG.error("suspendAccount failed!");
@@ -420,10 +419,11 @@ public class UserRepository {
   }
 
   public static User restoreAccount(User record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("enabled", true)
-        .add("modified", new Timestamp(System.currentTimeMillis()));
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("user_id = ?", record.getId()))) {
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("enabled", true)
+        .SET("modified", new Timestamp(System.currentTimeMillis()))
+        .WHERE("user_id = ?", record.getId());
+    if (update.execute().booleanValue()) {
       return record;
     }
     LOG.error("restoreAccount failed!");
@@ -435,16 +435,11 @@ public class UserRepository {
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
-      // Delete the references
-      // @note the User is currently not cleaned up from all tables
-      // until a business decision is made
       UserGroupRepository.removeAll(connection, record);
       UserRoleRepository.removeAll(connection, record);
       UserTokenRepository.removeAll(connection, record);
       UserLoginRepository.removeAll(connection, record);
-      // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("user_id = ?", record.getId()));
-      // Finish transaction
+      DB.DELETE().FROM(TABLE_NAME).WHERE("user_id = ?", record.getId()).execute(connection);
       transaction.commit();
       return true;
     } catch (SQLException se) {

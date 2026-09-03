@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,11 +24,11 @@ import java.sql.SQLException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.Insert;
 import com.simisinc.platform.domain.model.User;
 import com.simisinc.platform.domain.model.login.OAuthToken;
 import com.simisinc.platform.domain.model.login.UserToken;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves oauth token objects
@@ -49,11 +50,11 @@ public class OAuthTokenRepository {
     if (userTokenId < 1) {
       return null;
     }
-    return (OAuthToken) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("user_id = ?", userId)
-            .AND("user_token_id = ?", userTokenId),
-        OAuthTokenRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("user_id = ?", userId)
+        .AND("user_token_id = ?", userTokenId)
+        .returnRecord(OAuthTokenRepository::buildRecord);
   }
 
   public static OAuthToken save(OAuthToken record) {
@@ -64,19 +65,29 @@ public class OAuthTokenRepository {
   }
 
   public static OAuthToken add(OAuthToken record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("user_id", record.getUserId())
-        .add("user_token_id", record.getUserTokenId())
-        .add("provider", record.getProvider())
-        .add("access_token", record.getAccessToken())
-        .add("token_type", record.getTokenType())
-        .add("expires_in", record.getExpiresIn())
-        .addIfExists("refresh_token", record.getRefreshToken())
-        .add("refresh_expires_in", record.getRefreshExpiresIn())
-        .addIfExists("scope", record.getScope())
-        .addIfExists("expires", record.getExpires())
-        .addIfExists("refresh_expires", record.getRefreshExpires());
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    Insert insert = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("user_id", record.getUserId())
+        .FIELD("user_token_id", record.getUserTokenId())
+        .FIELD("provider", record.getProvider())
+        .FIELD("access_token", record.getAccessToken())
+        .FIELD("token_type", record.getTokenType())
+        .FIELD("expires_in", record.getExpiresIn())
+        .FIELD("refresh_expires_in", record.getRefreshExpiresIn());
+    if (record.getRefreshToken() != null) {
+      insert.FIELD("refresh_token", record.getRefreshToken());
+    }
+    if (record.getScope() != null) {
+      insert.FIELD("scope", record.getScope());
+    }
+    if (record.getExpires() != null) {
+      insert.FIELD("expires", record.getExpires());
+    }
+    if (record.getRefreshExpires() != null) {
+      insert.FIELD("refresh_expires", record.getRefreshExpires());
+    }
+
+    long generatedId = insert.execute();
+    record.setId(generatedId);
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -85,15 +96,17 @@ public class OAuthTokenRepository {
   }
 
   public static OAuthToken update(OAuthToken record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("access_token", record.getAccessToken())
-        .add("token_type", record.getTokenType())
-        .add("expires_in", record.getExpiresIn())
-        .add("refresh_token", record.getRefreshToken())
-        .add("refresh_expires_in", record.getRefreshExpiresIn())
-        .add("expires", record.getExpires())
-        .add("refresh_expires", record.getRefreshExpires());
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("token_id = ?", record.getId()))) {
+    boolean updated = DB.UPDATE(TABLE_NAME)
+        .SET("access_token", record.getAccessToken())
+        .SET("token_type", record.getTokenType())
+        .SET("expires_in", record.getExpiresIn())
+        .SET("refresh_token", record.getRefreshToken())
+        .SET("refresh_expires_in", record.getRefreshExpiresIn())
+        .SET("expires", record.getExpires())
+        .SET("refresh_expires", record.getRefreshExpires())
+        .WHERE("token_id = ?", record.getId())
+        .execute();
+    if (updated) {
       return record;
     }
     LOG.error("The update failed!");
@@ -101,21 +114,21 @@ public class OAuthTokenRepository {
   }
 
   public static int remove(UserToken userToken) {
-    return DB.deleteFrom(TABLE_NAME, DB.WHERE("user_token_id = ?", userToken.getId()));
+    return DB.DELETE().FROM(TABLE_NAME).WHERE("user_token_id = ?", userToken.getId()).execute().booleanValue() ? 1 : 0;
   }
 
   public static int removeAll(long userId) {
-    return DB.deleteFrom(TABLE_NAME, DB.WHERE("user_id = ?", userId));
+    return DB.DELETE().FROM(TABLE_NAME).WHERE("user_id = ?", userId).execute().booleanValue() ? 1 : 0;
   }
 
   public static int removeAll(Connection connection, User user) throws SQLException {
-    return DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("user_id = ?", user.getId()));
+    return DB.DELETE().FROM(TABLE_NAME).WHERE("user_id = ?", user.getId()).execute(connection).booleanValue() ? 1 : 0;
   }
 
   public static void deleteOldTokens() {
-    DB.deleteFrom(
-        TABLE_NAME,
-        DB.WHERE("refresh_expires IS NOT NULL AND refresh_expires < NOW() - INTERVAL '1 day'"));
+    DB.DELETE().FROM(TABLE_NAME)
+        .WHERE("refresh_expires IS NOT NULL AND refresh_expires < NOW() - INTERVAL '1 day'")
+        .execute();
   }
 
   private static OAuthToken buildRecord(ResultSet rs) {

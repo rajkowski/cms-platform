@@ -28,10 +28,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.Insert;
+import com.github.rajkowski.database.Update;
 import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.domain.model.cms.WebPageHierarchy;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves web page hierarchy objects
@@ -65,10 +66,10 @@ public class WebPageHierarchyRepository {
     if (pageId == -1) {
       return null;
     }
-    return (WebPageHierarchy) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE(WHERE_WEB_PAGE_ID, pageId),
-        WebPageHierarchyRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE(WHERE_WEB_PAGE_ID, pageId)
+        .returnRecord(WebPageHierarchyRepository::buildRecord);
   }
 
   /**
@@ -157,15 +158,15 @@ public class WebPageHierarchyRepository {
    * @return the inserted record
    */
   private static WebPageHierarchy add(WebPageHierarchy record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add(COL_WEB_PAGE_ID, record.getWebPageId())
-        .add(COL_PARENT_PAGE_ID, record.getParentPageId() != null ? record.getParentPageId() : -1, -1)
-        .add(COL_SORT_ORDER, record.getSortOrder())
-        .add(COL_DEPTH, record.getDepth())
-        .add(COL_PATH, StringUtils.trimToNull(record.getPath()))
-        .add(COL_CREATED, record.getCreated() != null ? record.getCreated() : new Timestamp(System.currentTimeMillis()))
-        .add(COL_MODIFIED, record.getModified() != null ? record.getModified() : new Timestamp(System.currentTimeMillis()));
-    DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY);
+    Insert insert = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD(COL_WEB_PAGE_ID, record.getWebPageId())
+        .FIELD(COL_PARENT_PAGE_ID, record.getParentPageId() != null ? record.getParentPageId() : -1L)
+        .FIELD(COL_SORT_ORDER, record.getSortOrder())
+        .FIELD(COL_DEPTH, record.getDepth())
+        .FIELD(COL_PATH, StringUtils.trimToNull(record.getPath()))
+        .FIELD(COL_CREATED, record.getCreated() != null ? record.getCreated() : new Timestamp(System.currentTimeMillis()))
+        .FIELD(COL_MODIFIED, record.getModified() != null ? record.getModified() : new Timestamp(System.currentTimeMillis()));
+    insert.execute();
     return record;
   }
 
@@ -177,20 +178,15 @@ public class WebPageHierarchyRepository {
    * @return the inserted record
    */
   private static WebPageHierarchy add(Connection connection, WebPageHierarchy record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add(COL_WEB_PAGE_ID, record.getWebPageId())
-        .add(COL_PARENT_PAGE_ID, record.getParentPageId() != null ? record.getParentPageId() : -1, -1)
-        .add(COL_SORT_ORDER, record.getSortOrder())
-        .add(COL_DEPTH, record.getDepth())
-        .add(COL_PATH, StringUtils.trimToNull(record.getPath()))
-        .add(COL_CREATED, record.getCreated() != null ? record.getCreated() : new Timestamp(System.currentTimeMillis()))
-        .add(COL_MODIFIED, record.getModified() != null ? record.getModified() : new Timestamp(System.currentTimeMillis()));
-    try {
-      DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY);
-    } catch (SQLException se) {
-      LOG.error(SQL_EXCEPTION + se.getMessage());
-      return null;
-    }
+    DB.INSERT().INTO(TABLE_NAME)
+        .FIELD(COL_WEB_PAGE_ID, record.getWebPageId())
+        .FIELD(COL_PARENT_PAGE_ID, record.getParentPageId() != null ? record.getParentPageId() : -1L)
+        .FIELD(COL_SORT_ORDER, record.getSortOrder())
+        .FIELD(COL_DEPTH, record.getDepth())
+        .FIELD(COL_PATH, StringUtils.trimToNull(record.getPath()))
+        .FIELD(COL_CREATED, record.getCreated() != null ? record.getCreated() : new Timestamp(System.currentTimeMillis()))
+        .FIELD(COL_MODIFIED, record.getModified() != null ? record.getModified() : new Timestamp(System.currentTimeMillis()))
+        .execute(connection);
     return record;
   }
 
@@ -201,13 +197,13 @@ public class WebPageHierarchyRepository {
    * @return the updated record or null if update failed
    */
   private static WebPageHierarchy update(WebPageHierarchy record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add(COL_PARENT_PAGE_ID, record.getParentPageId() != null ? record.getParentPageId() : -1, -1)
-        .add(COL_SORT_ORDER, record.getSortOrder())
-        .add(COL_DEPTH, record.getDepth())
-        .add(COL_PATH, StringUtils.trimToNull(record.getPath()))
-        .add(COL_MODIFIED, new Timestamp(System.currentTimeMillis()));
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE(WHERE_WEB_PAGE_ID, record.getWebPageId()))) {
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET(COL_PARENT_PAGE_ID, record.getParentPageId() != null ? record.getParentPageId() : -1L)
+        .SET(COL_SORT_ORDER, record.getSortOrder())
+        .SET(COL_DEPTH, record.getDepth())
+        .SET(COL_PATH, StringUtils.trimToNull(record.getPath()))
+        .SET(COL_MODIFIED, new Timestamp(System.currentTimeMillis()));
+    if (update.WHERE(WHERE_WEB_PAGE_ID, record.getWebPageId()).execute()) {
       return record;
     }
     LOG.error("The update failed!");
@@ -222,14 +218,14 @@ public class WebPageHierarchyRepository {
    * @return the updated record or null if update failed
    */
   private static WebPageHierarchy update(Connection connection, WebPageHierarchy record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add(COL_PARENT_PAGE_ID, record.getParentPageId() != null ? record.getParentPageId() : -1, -1)
-        .add(COL_SORT_ORDER, record.getSortOrder())
-        .add(COL_DEPTH, record.getDepth())
-        .add(COL_PATH, StringUtils.trimToNull(record.getPath()))
-        .add(COL_MODIFIED, new Timestamp(System.currentTimeMillis()));
     try {
-      if (DB.update(connection, TABLE_NAME, updateValues, DB.WHERE(WHERE_WEB_PAGE_ID, record.getWebPageId()))) {
+      Update update = DB.UPDATE(TABLE_NAME)
+          .SET(COL_PARENT_PAGE_ID, record.getParentPageId() != null ? record.getParentPageId() : -1L)
+          .SET(COL_SORT_ORDER, record.getSortOrder())
+          .SET(COL_DEPTH, record.getDepth())
+          .SET(COL_PATH, StringUtils.trimToNull(record.getPath()))
+          .SET(COL_MODIFIED, new Timestamp(System.currentTimeMillis()));
+      if (update.WHERE(WHERE_WEB_PAGE_ID, record.getWebPageId()).execute(connection)) {
         return record;
       }
     } catch (SQLException se) {
@@ -348,7 +344,7 @@ public class WebPageHierarchyRepository {
       return false;
     }
     try {
-      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("path LIKE ?", path + "%"));
+      DB.DELETE().FROM(TABLE_NAME).WHERE("path LIKE ?", path + "%").execute(connection);
       return true;
     } catch (Exception e) {
       LOG.error("Error removing by path: " + e.getMessage());

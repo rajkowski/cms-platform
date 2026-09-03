@@ -24,14 +24,12 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.domain.model.items.CollectionRole;
 import com.simisinc.platform.domain.model.items.Item;
 import com.simisinc.platform.domain.model.items.Member;
 import com.simisinc.platform.domain.model.items.MemberRole;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Properties for querying objects from the member role repository
@@ -50,35 +48,30 @@ public class MemberRoleRepository {
     if (userId == -1) {
       return null;
     }
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        DB.WHERE("user_id = ?", userId)
-            .AND("item_id = ?", itemId),
-        new DataConstraints().setDefaultColumnToSortBy("member_role_id"),
-        MemberRoleRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<MemberRole>) result.getRecords();
-    }
-    return null;
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("user_id = ?", userId)
+        .WHERE("item_id = ?", itemId)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("member_role_id"))
+        .returnDataResult(MemberRoleRepository::buildRecord).getRecords();
   }
 
   public static List<MemberRole> findAll() {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        null,
-        new DataConstraints().setDefaultColumnToSortBy("member_role_id"),
-        MemberRoleRepository::buildRecord);
-    return (List<MemberRole>) result.getRecords();
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("member_role_id"))
+        .returnDataResult(MemberRoleRepository::buildRecord).getRecords();
   }
 
   public static MemberRole add(MemberRole record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("member_id", record.getId())
-        .add("role_id", record.getItemRoleId())
-        .add("item_id", record.getItemId())
-        .add("user_id", record.getUserId())
-        .add("created_by", record.getCreatedBy());
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    long generatedId = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("member_id", record.getId())
+        .FIELD("role_id", record.getItemRoleId())
+        .FIELD("item_id", record.getItemId())
+        .FIELD("user_id", record.getUserId())
+        .FIELD("created_by", record.getCreatedBy())
+        .execute();
+    record.setId(generatedId);
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -92,14 +85,13 @@ public class MemberRoleRepository {
     }
     long count = 0;
     for (CollectionRole collectionRole : member.getRoleList()) {
-      SqlUtils insertValues = new SqlUtils();
-      insertValues
-          .add("member_id", member.getId())
-          .add("role_id", collectionRole.getId())
-          .add("item_id", member.getItemId())
-          .add("user_id", member.getUserId())
-          .add("created_by", member.getCreatedBy());
-      DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY);
+      DB.INSERT().INTO(TABLE_NAME)
+          .FIELD("member_id", member.getId())
+          .FIELD("role_id", collectionRole.getId())
+          .FIELD("item_id", member.getItemId())
+          .FIELD("user_id", member.getUserId())
+          .FIELD("created_by", member.getCreatedBy())
+          .execute(connection);
       ++count;
     }
     return count;
@@ -107,11 +99,13 @@ public class MemberRoleRepository {
 
   public static int removeAll(Connection connection, Member member) throws SQLException {
     // Delete the records
-    return DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("member_id = ?", member.getId()));
+    return DB.DELETE().FROM(TABLE_NAME)
+        .WHERE("member_id = ?", member.getId())
+        .execute(connection).booleanValue() ? 1 : 0;
   }
 
   public static void removeAll(Connection connection, Item item) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("item_id = ?", item.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("item_id = ?", item.getId()).execute(connection);
   }
 
   private static MemberRole buildRecord(ResultSet rs) {

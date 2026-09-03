@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +31,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
 import com.sanctionco.jmail.JMail;
 import com.simisinc.platform.application.DataException;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
@@ -41,7 +43,6 @@ import com.simisinc.platform.domain.model.ecommerce.Order;
 import com.simisinc.platform.domain.model.ecommerce.PricingRule;
 import com.simisinc.platform.domain.model.ecommerce.ProductSku;
 import com.simisinc.platform.domain.model.ecommerce.ShippingRate;
-import com.simisinc.platform.infrastructure.database.DB;
 import com.simisinc.platform.infrastructure.persistence.SitePropertyRepository;
 import com.simisinc.platform.infrastructure.persistence.ecommerce.CartItemRepository;
 import com.simisinc.platform.infrastructure.persistence.ecommerce.CartRepository;

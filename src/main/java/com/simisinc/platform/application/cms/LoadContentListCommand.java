@@ -17,7 +17,7 @@
 package com.simisinc.platform.application.cms;
 
 import com.simisinc.platform.domain.model.cms.Content;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.cms.ContentRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.ContentSpecification;
 import org.apache.commons.lang3.StringUtils;
@@ -85,13 +85,11 @@ public class LoadContentListCommand {
 
     // Query repository
     List<Content> contentList = ContentRepository.findAll(specification, constraints);
-
-    if (contentList == null) {
+    if (contentList == null || contentList.isEmpty()) {
       LOG.debug("No content found for search term: " + searchTerm);
     } else {
       LOG.debug("Found " + contentList.size() + " content blocks");
     }
-
     return contentList;
   }
 }

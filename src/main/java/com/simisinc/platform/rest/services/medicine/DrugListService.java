@@ -16,10 +16,19 @@
 
 package com.simisinc.platform.rest.services.medicine;
 
+import static com.simisinc.platform.application.medicine.MedicineConstants.COLLECTION_DRUG_LIST_UNIQUE_ID;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.application.items.LoadCollectionCommand;
 import com.simisinc.platform.domain.model.items.Collection;
 import com.simisinc.platform.domain.model.items.Item;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.items.ItemRepository;
 import com.simisinc.platform.infrastructure.persistence.items.ItemSpecification;
 import com.simisinc.platform.rest.controller.GenericRestService;
@@ -27,14 +36,6 @@ import com.simisinc.platform.rest.controller.ServiceContext;
 import com.simisinc.platform.rest.controller.ServiceResponse;
 import com.simisinc.platform.rest.controller.ServiceResponseCommand;
 import com.simisinc.platform.rest.services.items.ItemResponse;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static com.simisinc.platform.application.medicine.MedicineConstants.COLLECTION_DRUG_LIST_UNIQUE_ID;
 
 /**
  * Returns a list of drugs based on the query

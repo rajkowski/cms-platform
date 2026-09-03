@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,14 +27,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
+import com.github.rajkowski.database.Select;
 import com.simisinc.platform.domain.model.cms.Wiki;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves wiki objects
@@ -48,34 +48,40 @@ public class WikiRepository {
   private static String TABLE_NAME = "wikis";
   private static String[] PRIMARY_KEY = new String[] { "wiki_id" };
 
-  private static DataResult query(WikiSpecification specification, DataConstraints constraints) {
-    SqlWhere where = null;
+  private static DataResult<Wiki> query(WikiSpecification specification, DataConstraints constraints) {
+    Select select = DB.SELECT("*").FROM(TABLE_NAME).WHERE();
     if (specification != null) {
-      where = DB.WHERE()
-          .andAddIfHasValue("wiki_id = ?", specification.getId(), -1)
-          .andAddIfHasValue("wiki_unique_id = ?", specification.getUniqueId());
+      if (specification.getId() > -1) {
+        select.AND("wiki_id = ?", specification.getId());
+      }
+      if (StringUtils.isNotBlank(specification.getUniqueId())) {
+        select.AND("wiki_unique_id = ?", specification.getUniqueId());
+      }
     }
-    return DB.selectAllFrom(TABLE_NAME, where, constraints, WikiRepository::buildRecord);
+    if (constraints != null) {
+      select.WITH(constraints);
+    }
+    return select.returnDataResult(WikiRepository::buildRecord);
   }
 
   public static Wiki findById(long wikiId) {
     if (wikiId == -1) {
       return null;
     }
-    return (Wiki) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("wiki_id = ?", wikiId),
-        WikiRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("wiki_id = ?", wikiId)
+        .returnRecord(WikiRepository::buildRecord);
   }
 
   public static Wiki findByUniqueId(String wikiUniqueId) {
     if (StringUtils.isBlank(wikiUniqueId)) {
       return null;
     }
-    return (Wiki) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("wiki_unique_id = ?", wikiUniqueId),
-        WikiRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("wiki_unique_id = ?", wikiUniqueId)
+        .returnRecord(WikiRepository::buildRecord);
   }
 
   public static List<Wiki> findAll() {
@@ -87,8 +93,7 @@ public class WikiRepository {
       constraints = new DataConstraints();
     }
     constraints.setDefaultColumnToSortBy("wiki_id");
-    DataResult result = query(specification, constraints);
-    return (List<Wiki>) result.getRecords();
+    return query(specification, constraints).getRecords();
   }
 
   public static Wiki save(Wiki record) {
@@ -99,29 +104,25 @@ public class WikiRepository {
   }
 
   public static Wiki add(Wiki record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("wiki_unique_id", StringUtils.trimToNull(record.getUniqueId()))
-        .add("name", StringUtils.trimToNull(record.getName()))
-        .add("description", StringUtils.trimToNull(record.getDescription()))
-        .add("created_by", record.getCreatedBy())
-        .add("modified_by", record.getModifiedBy())
-        .add("enabled", record.getEnabled())
-        .add("starting_page", record.getStartingPage());
-    // Use a transaction
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
-      // In a transaction (use the existing connection)
-      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+      record.setId(DB.INSERT().INTO(TABLE_NAME)
+          .FIELD("wiki_unique_id", StringUtils.trimToNull(record.getUniqueId()))
+          .FIELD("name", StringUtils.trimToNull(record.getName()))
+          .FIELD("description", StringUtils.trimToNull(record.getDescription()))
+          .FIELD("created_by", record.getCreatedBy())
+          .FIELD("modified_by", record.getModifiedBy())
+          .FIELD("enabled", record.getEnabled())
+          .FIELD("starting_page", record.getStartingPage())
+          .execute(connection));
       if (record.getStartingPage() == -1L) {
-        // Create the default page
         long wikiPageId = WikiPageRepository.addDefaultPage(connection, record);
-        // @todo Create the first revision entry
-        // Update the reference
-        SqlUtils update = new SqlUtils().add("starting_page", wikiPageId);
-        DB.update(connection, TABLE_NAME, update, DB.WHERE("wiki_id = ?", record.getId()));
+        DB.UPDATE(TABLE_NAME)
+            .SET("starting_page", wikiPageId)
+            .WHERE("wiki_id = ?", record.getId())
+            .execute(connection);
       }
-      // Finish the transaction
       transaction.commit();
       return record;
     } catch (SQLException se) {
@@ -132,16 +133,17 @@ public class WikiRepository {
   }
 
   public static Wiki update(Wiki record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("wiki_unique_id", StringUtils.trimToNull(record.getUniqueId()))
-        .add("name", StringUtils.trimToNull(record.getName()))
-        .add("description", StringUtils.trimToNull(record.getDescription()))
-        .add("enabled", record.getEnabled())
-        .add("starting_page", record.getStartingPage())
-        .add("modified_by", record.getModifiedBy())
-        .add("modified", new Timestamp(System.currentTimeMillis()));
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("wiki_id = ?", record.getId()))) {
-      //      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
+    boolean updated = DB.UPDATE(TABLE_NAME)
+        .SET("wiki_unique_id", StringUtils.trimToNull(record.getUniqueId()))
+        .SET("name", StringUtils.trimToNull(record.getName()))
+        .SET("description", StringUtils.trimToNull(record.getDescription()))
+        .SET("enabled", record.getEnabled())
+        .SET("starting_page", record.getStartingPage())
+        .SET("modified_by", record.getModifiedBy())
+        .SET("modified", new Timestamp(System.currentTimeMillis()))
+        .WHERE("wiki_id = ?", record.getId())
+        .execute();
+    if (updated) {
       return record;
     }
     LOG.error("The update failed!");
@@ -152,11 +154,8 @@ public class WikiRepository {
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
-      // Delete the references
       WikiPageRepository.removeAll(connection, record);
-      // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("wiki_id = ?", record.getId()));
-      // Finish transaction
+      DB.DELETE().FROM(TABLE_NAME).WHERE("wiki_id = ?", record.getId()).execute(connection);
       transaction.commit();
       return true;
     } catch (SQLException se) {

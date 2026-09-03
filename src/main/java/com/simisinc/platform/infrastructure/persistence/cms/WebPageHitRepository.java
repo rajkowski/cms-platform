@@ -33,11 +33,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.Insert;
+import com.github.rajkowski.database.Select;
 import com.simisinc.platform.domain.model.cms.WebPageHit;
 import com.simisinc.platform.domain.model.dashboard.StatisticsData;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 import com.simisinc.platform.infrastructure.persistence.SessionRepository;
 
 /**
@@ -58,17 +58,17 @@ public class WebPageHitRepository {
   }
 
   private static WebPageHit add(WebPageHit record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("method", record.getMethod(), 6)
-        .add("page_path", record.getPagePath(), 255)
-        .add("web_page_id", record.getWebPageId(), -1)
-        .add("ip_address", record.getIpAddress())
-        .add("session_id", record.getSessionId())
-        .add("is_logged_in", record.isLoggedIn());
+    Insert insert = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("method", StringUtils.truncate(record.getMethod(), 6))
+        .FIELD("page_path", StringUtils.truncate(record.getPagePath(), 255))
+        .FIELD("web_page_id", record.getWebPageId() == -1 ? null : record.getWebPageId())
+        .FIELD("ip_address", record.getIpAddress())
+        .FIELD("session_id", record.getSessionId())
+        .FIELD("is_logged_in", record.isLoggedIn());
     if (record.getHitDate() != null) {
-      insertValues.add("hit_date", record.getHitDate());
+      insert.FIELD("hit_date", record.getHitDate());
     }
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    record.setId(insert.execute());
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -102,35 +102,33 @@ public class WebPageHitRepository {
     String startDateValue = new SimpleDateFormat("yyyy-MM-dd").format(startDate);
 
     // Query the data, skip some things
-    SqlWhere where = DB.WHERE()
-        .AND("hit_date >= ?", startDate)
+    Select select = DB.SELECT("COUNT(*)").FROM(TABLE_NAME)
+        .WHERE("hit_date >= ?", startDate)
         .AND("hit_date < ?", endDate)
         .AND("page_path NOT LIKE ?", "/admin%")
         .AND("page_path NOT LIKE ?", "/assets%")
         .AND("page_path NOT LIKE ?", "/json%")
         .AND("page_path NOT LIKE ?", "%/*")
         .AND("NOT EXISTS (SELECT 1 FROM sessions WHERE session_id = web_page_hits.session_id AND is_bot = TRUE)");
-    long webPageHitCount = DB.selectCountFrom(TABLE_NAME, where);
+    long webPageHitCount = select.returnCount();
 
     long uniqueSessionCount = SessionRepository.countDistinctSessions(startDate, endDate);
 
     // INSERT or UPDATE
-    SqlUtils insertValues = new SqlUtils()
-        .add("snapshot_date", startDate)
-        .add("date_value", startDateValue)
-        .add("web_page_hits", webPageHitCount)
-        .add("unique_sessions", uniqueSessionCount);
-
-    String onConflict = "ON CONFLICT (date_value) " +
-        "DO UPDATE SET " +
-        "web_page_hits = EXCLUDED.web_page_hits, " +
-        "unique_sessions = EXCLUDED.unique_sessions";
-
-    DB.insertIntoWithConflict("web_page_hit_snapshots", insertValues, onConflict);
+    Insert insert = DB.INSERT().INTO("web_page_hit_snapshots")
+        .FIELD("snapshot_date", startDate)
+        .FIELD("date_value", startDateValue)
+        .FIELD("web_page_hits", webPageHitCount)
+        .FIELD("unique_sessions", uniqueSessionCount)
+        .ON_CONFLICT("date_value")
+        .DO_UPDATE()
+        .SET("web_page_hits = EXCLUDED.web_page_hits")
+        .SET("unique_sessions = EXCLUDED.unique_sessions");
+    insert.execute();
   }
 
   public static void deleteOldWebHits() {
-    DB.deleteFrom(TABLE_NAME, DB.WHERE("hit_date < NOW() - INTERVAL '365 days'"));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("hit_date < NOW() - INTERVAL '365 days'").execute();
   }
 
   public static List<StatisticsData> findDailyWebHits(int daysToLimit) {

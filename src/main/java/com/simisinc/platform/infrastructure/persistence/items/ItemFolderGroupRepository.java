@@ -24,15 +24,14 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.Insert;
 import com.simisinc.platform.domain.model.Group;
 import com.simisinc.platform.domain.model.items.Item;
 import com.simisinc.platform.domain.model.items.ItemFolder;
 import com.simisinc.platform.domain.model.items.ItemFolderGroup;
 import com.simisinc.platform.domain.model.items.PrivacyType;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves item folder group objects
@@ -51,40 +50,31 @@ public class ItemFolderGroupRepository {
     if (folderId == -1) {
       return null;
     }
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        DB.WHERE("folder_id = ?", folderId),
-        new DataConstraints().setDefaultColumnToSortBy("allowed_id").setUseCount(false),
-        ItemFolderGroupRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<ItemFolderGroup>) result.getRecords();
-    }
-    return null;
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("folder_id = ?", folderId)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("allowed_id").setUseCount(false))
+        .returnDataResult(ItemFolderGroupRepository::buildRecord).getRecords();
   }
 
   public static List<ItemFolderGroup> findAll() {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        null,
-        new DataConstraints().setDefaultColumnToSortBy("allowed_id"),
-        ItemFolderGroupRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<ItemFolderGroup>) result.getRecords();
-    }
-    return null;
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("allowed_id"))
+        .returnDataResult(ItemFolderGroupRepository::buildRecord).getRecords();
   }
 
   public static ItemFolderGroup add(ItemFolderGroup record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("item_id", record.getItemId())
-        .add("folder_id", record.getFolderId())
-        .add("group_id", record.getGroupId())
-        .add("privacy_type", record.getPrivacyType())
-        .add("view_all", (record.getPrivacyType() == PrivacyType.PUBLIC || record.getPrivacyType() == PrivacyType.PUBLIC_READ_ONLY))
-        .add("add_permission", record.getAddPermission())
-        .add("edit_permission", record.getEditPermission())
-        .add("delete_permission", record.getDeletePermission());
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    Insert insert = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("item_id", record.getItemId())
+        .FIELD("folder_id", record.getFolderId())
+        .FIELD("group_id", record.getGroupId())
+        .FIELD("privacy_type", record.getPrivacyType())
+        .FIELD("view_all", (record.getPrivacyType() == PrivacyType.PUBLIC || record.getPrivacyType() == PrivacyType.PUBLIC_READ_ONLY))
+        .FIELD("add_permission", record.getAddPermission())
+        .FIELD("edit_permission", record.getEditPermission())
+        .FIELD("delete_permission", record.getDeletePermission());
+    record.setId(insert.execute());
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -97,31 +87,30 @@ public class ItemFolderGroupRepository {
       return;
     }
     for (ItemFolderGroup allowedGroup : folder.getFolderGroupList()) {
-      SqlUtils insertValues = new SqlUtils();
-      insertValues
-          .add("item_id", folder.getItemId())
-          .add("folder_id", folder.getId())
-          .add("group_id", allowedGroup.getGroupId())
-          .add("privacy_type", allowedGroup.getPrivacyType())
-          .add("view_all",
+      DB.INSERT().INTO(TABLE_NAME)
+          .FIELD("item_id", folder.getItemId())
+          .FIELD("folder_id", folder.getId())
+          .FIELD("group_id", allowedGroup.getGroupId())
+          .FIELD("privacy_type", allowedGroup.getPrivacyType())
+          .FIELD("view_all",
               (allowedGroup.getPrivacyType() == PrivacyType.PUBLIC || allowedGroup.getPrivacyType() == PrivacyType.PUBLIC_READ_ONLY))
-          .add("add_permission", allowedGroup.getAddPermission())
-          .add("edit_permission", allowedGroup.getEditPermission())
-          .add("delete_permission", allowedGroup.getDeletePermission());
-      DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY);
+          .FIELD("add_permission", allowedGroup.getAddPermission())
+          .FIELD("edit_permission", allowedGroup.getEditPermission())
+          .FIELD("delete_permission", allowedGroup.getDeletePermission())
+          .execute(connection);
     }
   }
 
   public static void removeAll(Connection connection, Item item) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("item_id = ?", item.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("item_id = ?", item.getId()).execute(connection);
   }
 
   public static void removeAll(Connection connection, ItemFolder folder) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("folder_id = ?", folder.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("folder_id = ?", folder.getId()).execute(connection);
   }
 
   public static void removeAll(Connection connection, Group group) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("group_id = ?", group.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("group_id = ?", group.getId()).execute(connection);
   }
 
   private static ItemFolderGroup buildRecord(ResultSet rs) {

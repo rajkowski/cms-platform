@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,13 +26,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.Insert;
+import com.github.rajkowski.database.Update;
 import com.simisinc.platform.domain.model.ecommerce.TrackingNumber;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves tracking number objects
@@ -47,25 +48,26 @@ public class TrackingNumberRepository {
   private static String[] PRIMARY_KEY = new String[] { "tracking_id" };
 
   public static TrackingNumber findById(long trackingId) {
-    return (TrackingNumber) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("tracking_id = ?", trackingId),
-        TrackingNumberRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("tracking_id = ?", trackingId)
+        .returnRecord(TrackingNumberRepository::buildRecord);
   }
 
   public static List<TrackingNumber> findAllForOrderId(long orderId) {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        DB.WHERE("order_id = ?", orderId),
-        new DataConstraints().setDefaultColumnToSortBy("created").setUseCount(false),
-        TrackingNumberRepository::buildRecord);
-    return (List<TrackingNumber>) result.getRecords();
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("order_id = ?", orderId)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("created").setUseCount(false))
+        .returnDataResult(TrackingNumberRepository::buildRecord).getRecords();
   }
 
   public static boolean exists(TrackingNumber record) {
-    return DB.selectCountFrom(TABLE_NAME,
-        DB.WHERE("order_id = ?", record.getOrderId())
-            .AND("tracking_number = ?", StringUtils.trimToNull(record.getTrackingNumber()))) > 0;
+    return DB.SELECT().COUNT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("order_id = ?", record.getOrderId())
+        .AND("tracking_number = ?", StringUtils.trimToNull(record.getTrackingNumber()))
+        .returnCount() > 0;
   }
 
   public static TrackingNumber save(TrackingNumber record) {
@@ -81,20 +83,17 @@ public class TrackingNumberRepository {
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
-      // Add the record
-      SqlUtils insertValues = new SqlUtils()
-          .add("order_id", record.getOrderId())
-          .add("tracking_number", StringUtils.trimToNull(record.getTrackingNumber()))
-          .addIfExists("shipping_carrier", record.getShippingCarrierId(), -1)
-          .addIfExists("created_by", record.getCreatedBy(), -1)
-          .addIfExists("ship_date", record.getShipDate())
-          .addIfExists("delivery_date", record.getDeliveryDate())
-          .add("cart_item_id_list", StringUtils.trimToNull(record.getCartItemIdList()))
-          .add("order_item_id_list", StringUtils.trimToNull(record.getOrderItemIdList()));
-      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
-      // Maintain an updated field in the order table
+      Insert insert = DB.INSERT().INTO(TABLE_NAME)
+          .FIELD("order_id", record.getOrderId())
+          .FIELD("tracking_number", StringUtils.trimToNull(record.getTrackingNumber()))
+          .FIELD_UNLESS_MATCHES("shipping_carrier", record.getShippingCarrierId(), -1)
+          .FIELD_UNLESS_MATCHES("created_by", record.getCreatedBy(), -1)
+          .FIELD_UNLESS_NULL("ship_date", record.getShipDate())
+          .FIELD_UNLESS_NULL("delivery_date", record.getDeliveryDate())
+          .FIELD("cart_item_id_list", StringUtils.trimToNull(record.getCartItemIdList()))
+          .FIELD("order_item_id_list", StringUtils.trimToNull(record.getOrderItemIdList()));
+      record.setId(insert.execute(connection));
       updateOrderField(connection, record);
-      // Finish the transaction
       transaction.commit();
       return record;
     } catch (SQLException se) {
@@ -109,18 +108,16 @@ public class TrackingNumberRepository {
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
-      // Update the record
-      SqlUtils updateValues = new SqlUtils()
-          .add("tracking_number", StringUtils.trimToNull(record.getTrackingNumber()))
-          .addIfExists("shipping_carrier", record.getShippingCarrierId(), -1)
-          .addIfExists("ship_date", record.getShipDate())
-          .addIfExists("delivery_date", record.getDeliveryDate())
-          .add("cart_item_id_list", StringUtils.trimToNull(record.getCartItemIdList()))
-          .add("order_item_id_list", StringUtils.trimToNull(record.getOrderItemIdList()));
-      if (DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("tracking_id = ?", record.getId()))) {
-        // Maintain an updated field in the order table
+      Update update = DB.UPDATE(TABLE_NAME)
+          .SET("tracking_number", StringUtils.trimToNull(record.getTrackingNumber()))
+          .SET_UNLESS_MATCHES("shipping_carrier", record.getShippingCarrierId(), -1)
+          .SET_UNLESS_NULL("ship_date", record.getShipDate())
+          .SET_UNLESS_NULL("delivery_date", record.getDeliveryDate())
+          .SET("cart_item_id_list", StringUtils.trimToNull(record.getCartItemIdList()))
+          .SET("order_item_id_list", StringUtils.trimToNull(record.getOrderItemIdList()))
+          .WHERE("tracking_id = ?", record.getId());
+      if (update.execute(connection).booleanValue()) {
         updateOrderField(connection, record);
-        // Finish the transaction
         transaction.commit();
         return record;
       }
@@ -132,15 +129,13 @@ public class TrackingNumberRepository {
 
   /** Update the order field */
   private static void updateOrderField(Connection connection, TrackingNumber record) throws SQLException {
-    SqlUtils update = new SqlUtils()
-        .add("tracking_numbers = sub_q.agg_value " +
-            "FROM " +
-            "(" +
-            "SELECT string_agg(tracking_number, ',') AS agg_value " +
-            "FROM order_tracking_numbers AS tn " +
-            "WHERE tn.order_id = ?" +
-            ") AS sub_q", record.getOrderId());
-    DB.update(connection, "orders", update, DB.WHERE("orders.order_id = ?", record.getOrderId()));
+    DB.UPDATE("orders")
+        .SET(
+            "tracking_numbers = sub_q.agg_value FROM (SELECT string_agg(tracking_number, ',') AS agg_value " +
+                "FROM order_tracking_numbers AS tn WHERE tn.order_id = ?) AS sub_q",
+            record.getOrderId())
+        .WHERE("orders.order_id = ?", record.getOrderId())
+        .execute(connection);
   }
 
   private static TrackingNumber buildRecord(ResultSet rs) {

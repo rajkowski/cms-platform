@@ -16,6 +16,19 @@
 
 package com.simisinc.platform.rest.services.medicine;
 
+import static com.simisinc.platform.application.medicine.MedicineConstants.COLLECTION_CAREGIVERS_UNIQUE_ID;
+import static com.simisinc.platform.application.medicine.MedicineConstants.COLLECTION_INDIVIDUALS_UNIQUE_ID;
+import static com.simisinc.platform.application.medicine.MedicineConstants.USER_GROUP_CAREGIVER_UNIQUE_ID;
+
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.application.items.LoadCollectionCommand;
 import com.simisinc.platform.application.items.LoadItemCommand;
 import com.simisinc.platform.application.medicine.IndividualRelationshipCommand;
@@ -24,22 +37,16 @@ import com.simisinc.platform.domain.model.items.Item;
 import com.simisinc.platform.domain.model.medicine.Medicine;
 import com.simisinc.platform.domain.model.medicine.MedicineSchedule;
 import com.simisinc.platform.domain.model.medicine.Prescription;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.persistence.medicine.*;
+import com.simisinc.platform.infrastructure.persistence.medicine.MedicineRepository;
+import com.simisinc.platform.infrastructure.persistence.medicine.MedicineScheduleRepository;
+import com.simisinc.platform.infrastructure.persistence.medicine.MedicineSpecification;
+import com.simisinc.platform.infrastructure.persistence.medicine.MedicineTimeRepository;
+import com.simisinc.platform.infrastructure.persistence.medicine.PrescriptionRepository;
 import com.simisinc.platform.presentation.controller.DataConstants;
 import com.simisinc.platform.rest.controller.GenericRestService;
 import com.simisinc.platform.rest.controller.ServiceContext;
 import com.simisinc.platform.rest.controller.ServiceResponse;
 import com.simisinc.platform.rest.controller.ServiceResponseCommand;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.List;
-
-import static com.simisinc.platform.application.medicine.MedicineConstants.*;
 
 /**
  * Returns a list of medicines being tracked for an individual

@@ -23,10 +23,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataResult;
 import com.zeroio.platform.domain.model.cms.ContentVersion;
 
 /**
@@ -52,13 +50,11 @@ public class ContentVersionRepository {
     if (contentId <= 0) {
       return null;
     }
-    DataConstraints constraints = new DataConstraints();
-    constraints.setDefaultColumnToSortBy("created DESC");
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        DB.WHERE("content_id = ?", contentId),
-        constraints,
-        ContentVersionRepository::buildRecord);
+    DataResult<ContentVersion> result = DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("content_id = ?", contentId)
+        .ORDER_BY("created DESC")
+        .returnDataResult(ContentVersionRepository::buildRecord);
     if (result.hasRecords()) {
       return (List<ContentVersion>) result.getRecords();
     }
@@ -89,13 +85,14 @@ public class ContentVersionRepository {
     int nextVersionNumber = getNextVersionNumber(record.getContentId());
     record.setVersionNumber(nextVersionNumber);
 
-    SqlUtils insertValues = new SqlUtils()
-        .add("content_id", record.getContentId())
-        .add("version_number", record.getVersionNumber())
-        .add("content", StringUtils.trimToNull(record.getContent()))
-        .add("created_by", record.getCreatedBy())
-        .add("notes", StringUtils.trimToNull(record.getNotes()));
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    long generatedId = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("content_id", record.getContentId())
+        .FIELD("version_number", record.getVersionNumber())
+        .FIELD("content", StringUtils.trimToNull(record.getContent()))
+        .FIELD("created_by", record.getCreatedBy())
+        .FIELD("notes", StringUtils.trimToNull(record.getNotes()))
+        .execute();
+    record.setId(generatedId);
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -110,12 +107,12 @@ public class ContentVersionRepository {
    * @return the updated content version
    */
   public static ContentVersion update(ContentVersion record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("content", StringUtils.trimToNull(record.getContent()))
-        .add("notes", StringUtils.trimToNull(record.getNotes()));
-    if (DB.update(TABLE_NAME,
-        updateValues,
-        DB.WHERE("version_id = ?", record.getId()))) {
+    boolean updated = DB.UPDATE(TABLE_NAME)
+        .SET("content", StringUtils.trimToNull(record.getContent()))
+        .SET("notes", StringUtils.trimToNull(record.getNotes()))
+        .WHERE("version_id = ?", record.getId())
+        .execute();
+    if (updated) {
       return record;
     }
     LOG.error("The update failed!");
@@ -132,7 +129,11 @@ public class ContentVersionRepository {
     if (contentId <= 0) {
       return 1;
     }
-    long maxVersion = DB.selectFunction("MAX(version_number)", TABLE_NAME, DB.WHERE("content_id = ?", contentId));
+
+    long maxVersion = DB.SELECT("MAX(version_number)")
+        .FROM(TABLE_NAME)
+        .WHERE("content_id = ?", contentId)
+        .returnValue(Long.class);
     return (maxVersion > 0) ? (int) (maxVersion + 1) : 1;
   }
 
@@ -146,7 +147,10 @@ public class ContentVersionRepository {
     if (contentId <= 0) {
       return 0;
     }
-    long maxVersion = DB.selectFunction("MAX(version_number)", TABLE_NAME, DB.WHERE("content_id = ?", contentId));
+    long maxVersion = DB.SELECT("MAX(version_number)")
+        .FROM(TABLE_NAME)
+        .WHERE("content_id = ?", contentId)
+        .returnValue(Long.class);
     return (int) maxVersion;
   }
 

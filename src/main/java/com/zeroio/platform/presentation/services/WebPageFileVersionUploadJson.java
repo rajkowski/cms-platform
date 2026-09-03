@@ -20,14 +20,14 @@ import java.sql.Connection;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.DB;
 import com.simisinc.platform.application.cms.SaveFileCommand;
 import com.simisinc.platform.application.cms.SaveFilePartCommand;
 import com.simisinc.platform.application.cms.ValidateFileCommand;
 import com.simisinc.platform.domain.model.User;
 import com.simisinc.platform.domain.model.cms.FileItem;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
 import com.simisinc.platform.infrastructure.persistence.UserRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.FileItemRepository;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;

@@ -26,16 +26,17 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.CastType;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
+import com.github.rajkowski.database.Select;
+import com.github.rajkowski.database.Update;
 import com.simisinc.platform.application.CustomFieldListJSONCommand;
 import com.simisinc.platform.application.cms.HtmlCommand;
 import com.simisinc.platform.domain.model.UserProfile;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlValue;
 
 /**
  * Persists and retrieves user profile objects
@@ -50,36 +51,32 @@ public class UserProfileRepository {
   private static String TABLE_NAME = "users";
   private static String[] PRIMARY_KEY = new String[] { "user_id" };
 
-  private static DataResult query(UserSpecification specification, DataConstraints constraints) {
-    SqlUtils select = new SqlUtils();
-    SqlUtils orderBy = new SqlUtils();
-    return DB.selectAllFrom(
-        TABLE_NAME,
-        select,
-        DB.WHERE(),
-        orderBy,
-        constraints,
-        UserProfileRepository::buildRecord);
+  private static DataResult<UserProfile> query(UserSpecification specification, DataConstraints constraints) {
+    Select select = DB.SELECT("users.*").FROM(TABLE_NAME);
+    if (constraints != null) {
+      select.WITH(constraints);
+    }
+    return select.returnDataResult(UserProfileRepository::buildRecord);
   }
 
   public static UserProfile findByUniqueId(String uniqueId) {
     if (StringUtils.isBlank(uniqueId)) {
       return null;
     }
-    return (UserProfile) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("unique_id = ?", uniqueId),
-        UserProfileRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("unique_id = ?", uniqueId)
+        .returnRecord(UserProfileRepository::buildRecord);
   }
 
   public static UserProfile findByUserId(long userId) {
     if (userId == -1) {
       return null;
     }
-    return (UserProfile) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("user_id = ?", userId),
-        UserProfileRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("user_id = ?", userId)
+        .returnRecord(UserProfileRepository::buildRecord);
   }
 
   public static List<UserProfile> findAll(UserSpecification specification, DataConstraints constraints) {
@@ -87,8 +84,7 @@ public class UserProfileRepository {
       constraints = new DataConstraints();
     }
     constraints.setDefaultColumnToSortBy("first_name, last_name");
-    DataResult result = query(specification, constraints);
-    return (List<UserProfile>) result.getRecords();
+    return query(specification, constraints).getRecords();
   }
 
   public static UserProfile save(UserProfile record) {
@@ -99,52 +95,45 @@ public class UserProfileRepository {
   }
 
   private static UserProfile update(UserProfile record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("unique_id", StringUtils.trimToNull(record.getUniqueId()))
-        .add("first_name", StringUtils.trimToNull(record.getFirstName()))
-        .add("last_name", StringUtils.trimToNull(record.getLastName()))
-        .add("organization", StringUtils.trimToNull(record.getOrganization()))
-        .add("nickname", StringUtils.trimToNull(record.getNickname()))
-        .add("description", StringUtils.trimToNull(record.getDescription()))
-        .add("description_text", HtmlCommand.text(StringUtils.trimToNull(record.getDescription())))
-        .add("email", StringUtils.trimToNull(record.getEmail()))
-        .add("title", StringUtils.trimToNull(record.getTitle()))
-        .add("department", StringUtils.trimToNull(record.getDepartment()))
-        .add("timezone", StringUtils.trimToNull(record.getTimeZone()))
-        .add("city", StringUtils.trimToNull(record.getCity()))
-        .add("state", StringUtils.trimToNull(record.getState()))
-        .add("country", StringUtils.trimToNull(record.getCountry()))
-        .add("postal_code", StringUtils.trimToNull(record.getPostalCode()))
-        .add("image_url", StringUtils.trimToNull(record.getImageUrl()))
-        .add("video_url", StringUtils.trimToNull(record.getVideoUrl()))
-        .add("modified_by", record.getModifiedBy(), -1)
-        .add("modified", new Timestamp(System.currentTimeMillis()));
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("unique_id", StringUtils.trimToNull(record.getUniqueId()))
+        .SET("first_name", StringUtils.trimToNull(record.getFirstName()))
+        .SET("last_name", StringUtils.trimToNull(record.getLastName()))
+        .SET("organization", StringUtils.trimToNull(record.getOrganization()))
+        .SET("nickname", StringUtils.trimToNull(record.getNickname()))
+        .SET("description", StringUtils.trimToNull(record.getDescription()))
+        .SET("description_text", HtmlCommand.text(StringUtils.trimToNull(record.getDescription())))
+        .SET("email", StringUtils.trimToNull(record.getEmail()))
+        .SET("title", StringUtils.trimToNull(record.getTitle()))
+        .SET("department", StringUtils.trimToNull(record.getDepartment()))
+        .SET("timezone", StringUtils.trimToNull(record.getTimeZone()))
+        .SET("city", StringUtils.trimToNull(record.getCity()))
+        .SET("state", StringUtils.trimToNull(record.getState()))
+        .SET("country", StringUtils.trimToNull(record.getCountry()))
+        .SET("postal_code", StringUtils.trimToNull(record.getPostalCode()))
+        .SET("image_url", StringUtils.trimToNull(record.getImageUrl()))
+        .SET("video_url", StringUtils.trimToNull(record.getVideoUrl()))
+        .SET("modified_by", record.getModifiedBy())
+        .SET("modified", new Timestamp(System.currentTimeMillis()));
     if (record.hasGeoPoint()) {
-      updateValues.add("latitude", record.getLatitude());
-      updateValues.add("longitude", record.getLongitude());
-      updateValues.addGeomPoint("geom", record.getLatitude(), record.getLongitude());
+      update.SET("latitude", record.getLatitude())
+          .SET("longitude", record.getLongitude())
+          .SET("geom", record.getLatitude(), record.getLongitude(), CastType.GEOM);
     } else {
-      updateValues.add("latitude", 0L, 0L);
-      updateValues.add("longitude", 0L, 0L);
-      updateValues.addGeomPoint("geom", 0, 0);
+      update.SET("latitude", (Double) null)
+          .SET("longitude", (Double) null)
+          .SET("geom", 0, 0, CastType.GEOM);
     }
-    // Handle custom fields
     if (record.getCustomFieldList() != null && !record.getCustomFieldList().isEmpty()) {
-      updateValues.add(
-          new SqlValue("field_values", SqlValue.JSONB_TYPE, CustomFieldListJSONCommand.createJSONString(record.getCustomFieldList())));
+      update.SET("field_values", CustomFieldListJSONCommand.createJSONString(record.getCustomFieldList()), CastType.JSONB);
     } else {
-      updateValues.add(new SqlValue("field_values", SqlValue.JSONB_TYPE, null));
+      update.SET("field_values", (String) null, CastType.JSONB);
     }
-    // Use a transaction
+    update.WHERE("user_id = ?", record.getId());
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
-      // In a transaction (use the existing connection)
-      DB.update(connection,
-          TABLE_NAME,
-          updateValues,
-          DB.WHERE("user_id = ?", record.getId()));
-      // Finish the transaction
+      update.execute(connection);
       transaction.commit();
       return record;
     } catch (SQLException se) {

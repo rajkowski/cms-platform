@@ -18,18 +18,18 @@ package com.simisinc.platform.presentation.widgets.admin.ecommerce;
 
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.domain.model.ecommerce.Customer;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.ecommerce.CustomerRepository;
 import com.simisinc.platform.infrastructure.persistence.ecommerce.CustomerSpecification;
 import com.simisinc.platform.presentation.controller.RequestConstants;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
 import com.simisinc.platform.presentation.controller.WidgetContext;
-
-import org.apache.commons.lang3.StringUtils;
+import com.simisinc.platform.presentation.widgets.GenericWidget;
 
 /**
- * Description
+ * Displays a list of customers
  *
  * @author matt rajkowski
  * @created 3/17/19 7:23 PM

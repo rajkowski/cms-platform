@@ -17,22 +17,28 @@
 
 package com.simisinc.platform.presentation.widgets.items;
 
-import com.simisinc.platform.application.items.*;
-import com.simisinc.platform.domain.model.items.Collection;
-import com.simisinc.platform.domain.model.items.Item;
-import com.simisinc.platform.domain.model.items.ItemFileItem;
-import com.simisinc.platform.domain.model.items.ItemFolder;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.persistence.items.ItemFileItemRepository;
-import com.simisinc.platform.infrastructure.persistence.items.ItemFileSpecification;
-import com.simisinc.platform.infrastructure.persistence.items.ItemFolderRepository;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
-import com.simisinc.platform.presentation.controller.WidgetContext;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.util.List;
+import com.github.rajkowski.database.DataConstraints;
+import com.simisinc.platform.application.items.CheckCollectionPermissionCommand;
+import com.simisinc.platform.application.items.CheckItemFolderPermissionCommand;
+import com.simisinc.platform.application.items.DeleteItemFileCommand;
+import com.simisinc.platform.application.items.LoadCollectionCommand;
+import com.simisinc.platform.application.items.LoadItemCommand;
+import com.simisinc.platform.application.items.LoadItemFileCommand;
+import com.simisinc.platform.domain.model.items.Collection;
+import com.simisinc.platform.domain.model.items.Item;
+import com.simisinc.platform.domain.model.items.ItemFileItem;
+import com.simisinc.platform.domain.model.items.ItemFolder;
+import com.simisinc.platform.infrastructure.persistence.items.ItemFileItemRepository;
+import com.simisinc.platform.infrastructure.persistence.items.ItemFileSpecification;
+import com.simisinc.platform.infrastructure.persistence.items.ItemFolderRepository;
+import com.simisinc.platform.presentation.controller.WidgetContext;
+import com.simisinc.platform.presentation.widgets.GenericWidget;
 
 /**
  * Description

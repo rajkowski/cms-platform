@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,12 +21,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.application.items.CollectionTableColumnsCommand;
 import com.simisinc.platform.domain.model.CustomField;
 import com.simisinc.platform.domain.model.items.Category;
 import com.simisinc.platform.domain.model.items.Collection;
 import com.simisinc.platform.domain.model.items.Item;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.items.CategoryRepository;
 import com.simisinc.platform.infrastructure.persistence.items.CollectionRepository;
 import com.simisinc.platform.infrastructure.persistence.items.ItemRepository;
@@ -35,7 +36,7 @@ import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
 
 /**
- * Description
+ * Displays a list of items in a collection
  *
  * @author matt rajkowski
  * @created 1/2/19 1:31 PM

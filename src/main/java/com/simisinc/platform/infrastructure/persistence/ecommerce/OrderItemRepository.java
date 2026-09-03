@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,15 +32,13 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.application.ecommerce.OrderStatusCommand;
 import com.simisinc.platform.domain.model.ecommerce.Order;
 import com.simisinc.platform.domain.model.ecommerce.OrderItem;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves order item objects
@@ -55,19 +54,18 @@ public class OrderItemRepository {
   private static String[] PRIMARY_KEY = new String[] { "item_id" };
 
   public static List<OrderItem> findItemsByOrderId(long orderId) {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        DB.WHERE("order_id = ?", orderId),
-        new DataConstraints().setDefaultColumnToSortBy("item_id").setUseCount(false),
-        OrderItemRepository::buildRecord);
-    return (List<OrderItem>) result.getRecords();
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("order_id = ?", orderId)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("item_id").setUseCount(false))
+        .returnDataResult(OrderItemRepository::buildRecord).getRecords();
   }
 
   public static OrderItem findById(long itemId) {
-    return (OrderItem) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("item_id = ?", itemId),
-        OrderItemRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("item_id = ?", itemId)
+        .returnRecord(OrderItemRepository::buildRecord);
   }
 
   public static OrderItem add(OrderItem record) throws SQLException {
@@ -86,37 +84,37 @@ public class OrderItemRepository {
   }
 
   public static OrderItem add(Connection connection, OrderItem record) throws SQLException {
-    SqlUtils insertValues = new SqlUtils()
-        .add("order_id", record.getOrderId(), -1)
-        .addIfExists("customer_id", record.getCustomerId(), -1)
-        .addIfExists("product_id", record.getProductId(), -1)
-        .addIfExists("sku_id", record.getSkuId(), -1)
-        .addIfExists("quantity", record.getQuantity())
-        .addIfExists("currency", record.getCurrency())
-        .addIfExists("each_amount", record.getEachAmount())
-        .addIfExists("total_amount", record.getTotalAmount())
-        .addIfExists("product_name", record.getProductName())
-        .addIfExists("product_type", record.getProductType())
-        .addIfExists("product_sku", record.getProductSku())
-        .add("is_preorder", record.getPreorder())
-        .add("is_backordered", record.getBackordered())
-        .add("paid", record.getPaid())
-        .add("processed", record.getProcessed())
-        .add("shipped", record.getShipped())
-        .add("canceled", record.getCanceled())
-        .add("refunded", record.getRefunded())
-        .addIfExists("created", record.getCreated())
-        .addIfExists("created_by", record.getCreatedBy(), -1)
-        .addIfExists("modified_by", record.getModifiedBy(), -1)
-        .addIfExists("product_barcode", record.getProductBarcode())
-        .add("payment_date", record.getPaymentDate())
-        .add("processing_date", record.getProcessingDate())
-        .add("fulfillment_date", record.getFulfillmentDate())
-        .add("shipped_date", record.getShippedDate())
-        .add("canceled_date", record.getCanceledDate())
-        .add("refunded_date", record.getRefundedDate())
-        .add("status", record.getStatusId(), -1);
-    record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+    record.setId(DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("order_id", record.getOrderId() == -1 ? null : record.getOrderId())
+        .FIELD_UNLESS_MATCHES("customer_id", record.getCustomerId(), -1)
+        .FIELD_UNLESS_MATCHES("product_id", record.getProductId(), -1)
+        .FIELD_UNLESS_MATCHES("sku_id", record.getSkuId(), -1)
+        .FIELD_UNLESS_NULL("quantity", record.getQuantity())
+        .FIELD_UNLESS_NULL("currency", record.getCurrency())
+        .FIELD_UNLESS_NULL("each_amount", record.getEachAmount())
+        .FIELD_UNLESS_NULL("total_amount", record.getTotalAmount())
+        .FIELD_UNLESS_NULL("product_name", record.getProductName())
+        .FIELD_UNLESS_NULL("product_type", record.getProductType())
+        .FIELD_UNLESS_NULL("product_sku", record.getProductSku())
+        .FIELD("is_preorder", record.getPreorder())
+        .FIELD("is_backordered", record.getBackordered())
+        .FIELD("paid", record.getPaid())
+        .FIELD("processed", record.getProcessed())
+        .FIELD("shipped", record.getShipped())
+        .FIELD("canceled", record.getCanceled())
+        .FIELD("refunded", record.getRefunded())
+        .FIELD("created", record.getCreated())
+        .FIELD("created_by", record.getCreatedBy() == -1 ? null : record.getCreatedBy())
+        .FIELD("modified_by", record.getModifiedBy() == -1 ? null : record.getModifiedBy())
+        .FIELD_UNLESS_NULL("product_barcode", record.getProductBarcode())
+        .FIELD("payment_date", record.getPaymentDate())
+        .FIELD("processing_date", record.getProcessingDate())
+        .FIELD("fulfillment_date", record.getFulfillmentDate())
+        .FIELD("shipped_date", record.getShippedDate())
+        .FIELD("canceled_date", record.getCanceledDate())
+        .FIELD("refunded_date", record.getRefundedDate())
+        .FIELD("status", record.getStatusId() == -1 ? null : record.getStatusId())
+        .execute(connection));
     return record;
   }
 
@@ -166,12 +164,13 @@ public class OrderItemRepository {
     int statusId = OrderStatusCommand.retrieveStatusId(PAID);
     Timestamp now = new Timestamp(System.currentTimeMillis());
     // Update the order item status
-    SqlUtils updateValues = new SqlUtils()
-        .add("paid", true)
-        .add("payment_date", paymentDate)
-        .add("status", statusId)
-        .add("modified", now);
-    DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("item_id = ?", orderItem.getId()));
+    DB.UPDATE(TABLE_NAME)
+        .SET("paid", true)
+        .SET("payment_date", paymentDate)
+        .SET("status", statusId)
+        .SET("modified", now)
+        .WHERE("item_id = ?", orderItem.getId())
+        .execute(connection);
     // @todo Append to the order_history (PAID)
     // Update the object
     orderItem.setModified(now);
@@ -185,12 +184,13 @@ public class OrderItemRepository {
     int statusId = OrderStatusCommand.retrieveStatusId(PREPARING);
     Timestamp now = new Timestamp(System.currentTimeMillis());
     // Update the order item status
-    SqlUtils updateValues = new SqlUtils()
-        .add("processed", true)
-        .add("processing_date", now)
-        .add("status", statusId)
-        .add("modified", now);
-    DB.update(TABLE_NAME, updateValues, DB.WHERE("item_id = ?", orderItem.getId()));
+    DB.UPDATE(TABLE_NAME)
+        .SET("processed", true)
+        .SET("processing_date", now)
+        .SET("status", statusId)
+        .SET("modified", now)
+        .WHERE("item_id = ?", orderItem.getId())
+        .execute();
     // @todo Append to the order_history (PREPARING)
     // Update the object
     orderItem.setModified(now);
@@ -204,12 +204,13 @@ public class OrderItemRepository {
     int statusId = OrderStatusCommand.retrieveStatusId(SHIPPED);
     Timestamp now = new Timestamp(System.currentTimeMillis());
     // Update the order item status
-    SqlUtils updateValues = new SqlUtils()
-        .add("shipped", true)
-        .add("shipped_date", now)
-        .add("status", statusId)
-        .add("modified", now);
-    DB.update(TABLE_NAME, updateValues, DB.WHERE("item_id = ?", orderItem.getId()));
+    DB.UPDATE(TABLE_NAME)
+        .SET("shipped", true)
+        .SET("shipped_date", now)
+        .SET("status", statusId)
+        .SET("modified", now)
+        .WHERE("item_id = ?", orderItem.getId())
+        .execute();
     // @todo Append to the order_history (SHIPPED)
     // Update the object
     orderItem.setModified(now);
@@ -223,12 +224,13 @@ public class OrderItemRepository {
     int statusId = OrderStatusCommand.retrieveStatusId(CANCELED);
     Timestamp now = new Timestamp(System.currentTimeMillis());
     // Update the order item status
-    SqlUtils updateValues = new SqlUtils()
-        .add("canceled", true)
-        .add("canceled_date", now)
-        .add("status", statusId)
-        .add("modified", now);
-    DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("order_id = ?", order.getId()));
+    DB.UPDATE(TABLE_NAME)
+        .SET("canceled", true)
+        .SET("canceled_date", now)
+        .SET("status", statusId)
+        .SET("modified", now)
+        .WHERE("order_id = ?", order.getId())
+        .execute(connection);
   }
 
   public static void markStatusAsRefunded(Connection connection, Order order) throws SQLException {
@@ -236,11 +238,12 @@ public class OrderItemRepository {
     int statusId = OrderStatusCommand.retrieveStatusId(REFUNDED);
     Timestamp now = new Timestamp(System.currentTimeMillis());
     // Update the order item status
-    SqlUtils updateValues = new SqlUtils()
-        .add("refunded", true)
-        .add("refunded_date", now)
-        .add("status", statusId)
-        .add("modified", now);
-    DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("order_id = ?", order.getId()));
+    DB.UPDATE(TABLE_NAME)
+        .SET("refunded", true)
+        .SET("refunded_date", now)
+        .SET("status", statusId)
+        .SET("modified", now)
+        .WHERE("order_id = ?", order.getId())
+        .execute(connection);
   }
 }

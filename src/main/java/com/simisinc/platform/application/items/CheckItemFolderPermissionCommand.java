@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +17,7 @@
 
 package com.simisinc.platform.application.items;
 
-import com.simisinc.platform.infrastructure.database.DB;
+import com.github.rajkowski.database.DB;
 
 /**
  * Methods to check item folder object permissions
@@ -27,34 +28,38 @@ import com.simisinc.platform.infrastructure.database.DB;
 public class CheckItemFolderPermissionCommand {
 
   public static boolean userHasAddPermission(long folderId, long userId) {
-    // SELECT COUNT(*) FROM user_groups WHERE user_id = 2 AND group_id IN (SELECT group_id FROM folder_groups WHERE folder_id = 9 AND add_permission = true);
-    long count = DB.selectCountFrom("user_groups",
-        DB.WHERE("user_id = ?", userId)
-            .AND("group_id IN (SELECT group_id FROM item_folder_groups WHERE folder_id = ? AND add_permission = true)", folderId));
-    return (count > 0);
+    long count = DB.SELECT("COUNT(*)")
+        .FROM("user_groups")
+        .WHERE("user_id = ?", userId)
+        .AND("group_id IN (SELECT group_id FROM item_folder_groups WHERE folder_id = ? AND add_permission = ?)", folderId, true)
+        .returnCount();
+    return count > 0;
   }
 
   public static boolean userHasViewPermission(long folderId, long userId) {
-    // SELECT COUNT(*) FROM user_groups WHERE user_id = 2 AND group_id IN (SELECT group_id FROM folder_groups WHERE folder_id = 9 AND view_permission = true);
-    long count = DB.selectCountFrom("user_groups",
-        DB.WHERE("user_id = ?", userId)
-            .AND("group_id IN (SELECT group_id FROM item_folder_groups WHERE folder_id = ? AND view_permission = true)", folderId));
-    return (count > 0);
+    long count = DB.SELECT("COUNT(*)")
+        .FROM("user_groups")
+        .WHERE("user_id = ?", userId)
+        .AND("group_id IN (SELECT group_id FROM item_folder_groups WHERE folder_id = ? AND view_permission = ?)", folderId, true)
+        .returnCount();
+    return count > 0;
   }
 
   public static boolean userHasEditPermission(long folderId, long userId) {
-    // SELECT COUNT(*) FROM user_groups WHERE user_id = 2 AND group_id IN (SELECT group_id FROM folder_groups WHERE folder_id = 9 AND edit_permission = true);
-    long count = DB.selectCountFrom("user_groups",
-        DB.WHERE("user_id = ?", userId)
-            .AND("group_id IN (SELECT group_id FROM item_folder_groups WHERE folder_id = ? AND edit_permission = true)", folderId));
-    return (count > 0);
+    long count = DB.SELECT("COUNT(*)")
+        .FROM("user_groups")
+        .WHERE("user_id = ?", userId)
+        .AND("group_id IN (SELECT group_id FROM item_folder_groups WHERE folder_id = ? AND edit_permission = ?)", folderId, true)
+        .returnCount();
+    return count > 0;
   }
 
   public static boolean userHasDeletePermission(long folderId, long userId) {
-    // SELECT COUNT(*) FROM user_groups WHERE user_id = 2 AND group_id IN (SELECT group_id FROM folder_groups WHERE folder_id = 9 AND delete_permission = true);
-    long count = DB.selectCountFrom("user_groups",
-        DB.WHERE("user_id = ?", userId)
-            .AND("group_id IN (SELECT group_id FROM item_folder_groups WHERE folder_id = ? AND delete_permission = true)", folderId));
-    return (count > 0);
+    long count = DB.SELECT("COUNT(*)")
+        .FROM("user_groups")
+        .WHERE("user_id = ?", userId)
+        .AND("group_id IN (SELECT group_id FROM item_folder_groups WHERE folder_id = ? AND delete_permission = ?)", folderId, true)
+        .returnCount();
+    return count > 0;
   }
 }

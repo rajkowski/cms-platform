@@ -23,11 +23,11 @@ import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.application.items.LoadItemCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.User;
 import com.simisinc.platform.domain.model.items.Item;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.UserRepository;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;

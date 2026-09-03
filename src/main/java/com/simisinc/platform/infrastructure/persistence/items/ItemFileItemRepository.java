@@ -22,7 +22,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.sql.Types;
 import java.util.Arrays;
 import java.util.List;
 
@@ -30,20 +29,20 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.CastType;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
+import com.github.rajkowski.database.Insert;
+import com.github.rajkowski.database.Select;
+import com.github.rajkowski.database.Update;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.items.Item;
 import com.simisinc.platform.domain.model.items.ItemFileItem;
 import com.simisinc.platform.domain.model.items.ItemFolder;
 import com.simisinc.platform.domain.model.items.ItemSubFolder;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlJoins;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlValue;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 import com.simisinc.platform.presentation.controller.DataConstants;
 import com.simisinc.platform.presentation.controller.UserSession;
 
@@ -60,9 +59,8 @@ public class ItemFileItemRepository {
   private static String TABLE_NAME = "item_files";
   private static String[] PRIMARY_KEY = new String[] { "file_id" };
 
-  private static DataResult query(ItemFileSpecification specification, DataConstraints constraints) {
-
-    SqlUtils select = DB.SELECT(
+  private static DataResult<ItemFileItem> query(ItemFileSpecification specification, DataConstraints constraints) {
+    Select select = DB.SELECT(
         TABLE_NAME + ".file_id",
         TABLE_NAME + ".item_id",
         TABLE_NAME + ".folder_id",
@@ -92,43 +90,46 @@ public class ItemFileItemRepository {
         TABLE_NAME + ".sub_folder_id",
         TABLE_NAME + ".category_id",
         TABLE_NAME + ".web_path",
-        TABLE_NAME + ".tags");
-
-    SqlJoins joins = new SqlJoins();
-    SqlWhere where = DB.WHERE();
-    SqlUtils orderBy = new SqlUtils();
-
+        TABLE_NAME + ".tags")
+        .FROM(TABLE_NAME);
     final boolean includeDocumentText = specification != null && specification.getIncludeDocumentText();
 
     if (specification != null) {
-
-      // Only include this potentially-large field when requested
       if (includeDocumentText) {
-        select.add("item_files.document_text");
+        select.SELECT("item_files.document_text");
       }
-
-      joins.add("LEFT JOIN item_folders ON (item_files.folder_id = item_folders.folder_id)");
+      select.LEFT_JOIN("item_folders").ON("item_files.folder_id = item_folders.folder_id");
       if (specification.getCollectionId() > -1) {
-        joins.add("LEFT JOIN items ON (item_files.item_id = items.item_id)");
+        select.LEFT_JOIN("items").ON("item_files.item_id = items.item_id");
       }
-
-      where
-          .andAddIfHasValue("file_id = ?", specification.getId(), -1)
-          .andAddIfHasValue("item_files.item_id = ?", specification.getItemId(), -1)
-          .andAddIfHasValue("items.collection_id = ?", specification.getCollectionId(), -1)
-          .andAddIfHasValue("item_folders.folder_id = ?", specification.getFolderId(), -1)
-          .andAddIfHasValue("sub_folder_id = ?", specification.getSubFolderId(), -1)
-          .andAddIfHasValue("barcode = ?", specification.getBarcode());
+      if (specification.getId() > -1) {
+        select.AND("file_id = ?", specification.getId());
+      }
+      if (specification.getItemId() > -1) {
+        select.AND("item_files.item_id = ?", specification.getItemId());
+      }
+      if (specification.getCollectionId() > -1) {
+        select.AND("items.collection_id = ?", specification.getCollectionId());
+      }
+      if (specification.getFolderId() > -1) {
+        select.AND("item_folders.folder_id = ?", specification.getFolderId());
+      }
+      if (specification.getSubFolderId() > -1) {
+        select.AND("sub_folder_id = ?", specification.getSubFolderId());
+      }
+      if (StringUtils.isNotBlank(specification.getBarcode())) {
+        select.AND("barcode = ?", specification.getBarcode());
+      }
       if (specification.getFilename() != null) {
-        where.AND("LOWER(item_files.filename) = ?", specification.getFilename().trim().toLowerCase());
+        select.AND("LOWER(item_files.filename) = ?", specification.getFilename().trim().toLowerCase());
       }
       if (specification.getFileType() != null) {
-        where.AND("LOWER(item_files.file_type) = ANY(?)",
-            Arrays.stream(specification.getFileType()).map(String::toLowerCase).toArray(String[]::new), Types.ARRAY);
+        select.AND("LOWER(item_files.file_type) = ANY(?)",
+            Arrays.stream(specification.getFileType()).map(String::toLowerCase).toArray(String[]::new));
       }
       if (specification.getFileExtension() != null) {
-        where.AND("LOWER(item_files.extension) = ANY(?)",
-            Arrays.stream(specification.getFileExtension()).map(String::toLowerCase).toArray(String[]::new), Types.ARRAY);
+        select.AND("LOWER(item_files.extension) = ANY(?)",
+            Arrays.stream(specification.getFileExtension()).map(String::toLowerCase).toArray(String[]::new));
       }
       if (specification.getMatchesName() != null) {
         String likeValue = specification.getMatchesName().trim()
@@ -136,70 +137,55 @@ public class ItemFileItemRepository {
             .replace("%", "!%")
             .replace("_", "!_")
             .replace("[", "![");
-        where.AND("LOWER(item_files.title) LIKE LOWER(?) ESCAPE '!'", likeValue + "%");
+        select.AND("LOWER(item_files.title) LIKE LOWER(?) ESCAPE '!'", likeValue + "%");
       }
       if (specification.getWithinLastDays() > 0) {
-        where.AND("item_files.created > NOW() - INTERVAL '" + specification.getWithinLastDays() + " days'");
+        select.AND("item_files.created > NOW() - INTERVAL '" + specification.getWithinLastDays() + " days'");
       }
       if (specification.getInASubFolder() != DataConstants.UNDEFINED) {
-        if (specification.getInASubFolder() == DataConstants.TRUE) {
-          where.AND("sub_folder_id IS NOT NULL");
-        } else {
-          where.AND("sub_folder_id IS NULL");
-        }
+        select.AND(specification.getInASubFolder() == DataConstants.TRUE ? "sub_folder_id IS NOT NULL" : "sub_folder_id IS NULL");
       }
       if (specification.getIsProcessed() != DataConstants.UNDEFINED) {
-        if (specification.getIsProcessed() == DataConstants.TRUE) {
-          where.AND("processed IS NOT NULL");
-        } else {
-          where.AND("processed IS NULL");
-        }
+        select.AND(specification.getIsProcessed() == DataConstants.TRUE ? "processed IS NOT NULL" : "processed IS NULL");
       }
 
-      // For user id
       // User must be in a user group with folder access
       if (specification.getForUserId() != DataConstants.UNDEFINED) {
         if (specification.getForUserId() == UserSession.GUEST_ID) {
-          where.AND("item_folders.allows_guests = true");
+          select.AND("item_folders.allows_guests = true");
         } else {
           // For logged out and logged in users
-          where.AND(
+          select.AND(
               "(allows_guests = true " +
                   "OR (has_allowed_groups = true " +
                   "AND EXISTS (SELECT 1 FROM item_folder_groups WHERE item_folder_groups.folder_id = item_folders.folder_id AND view_all = true "
-                  +
-                  "AND EXISTS (SELECT 1 FROM user_groups WHERE user_groups.group_id = item_folder_groups.group_id AND user_id = ?))"
-                  +
-                  ")" +
-                  ")",
+                  + "AND EXISTS (SELECT 1 FROM user_groups WHERE user_groups.group_id = item_folder_groups.group_id AND user_id = ?)))"
+                  + ")",
               specification.getForUserId());
         }
       }
 
-      // Use the search engine
       if (StringUtils.isNotBlank(specification.getSearchName())) {
-        select.add("ts_rank_cd(tsv, websearch_to_tsquery('item_file_stem', ?)) AS rank",
-            specification.getSearchName().trim());
-        where.AND("tsv @@ websearch_to_tsquery('item_file_stem', ?)", specification.getSearchName().trim());
-        // Override the order by for rank first
-        orderBy.add("rank DESC, file_id");
+        select.SELECT("ts_rank_cd(tsv, websearch_to_tsquery('item_file_stem', ?)) AS rank", (Object[]) new Object[] { specification.getSearchName().trim() });
+        select.AND("tsv @@ websearch_to_tsquery('item_file_stem', ?)", specification.getSearchName().trim());
+        select.ORDER_BY("rank DESC, file_id");
       }
     }
 
-    return DB.selectFrom(
-        TABLE_NAME, select, joins, where, orderBy, constraints,
-        rs -> buildRecord(rs, includeDocumentText));
-
+    if (constraints != null) {
+      select.WITH(constraints);
+    }
+    return select.returnDataResult(rs -> buildRecord(rs, includeDocumentText));
   }
 
   public static ItemFileItem findById(long id) {
     if (id == -1) {
       return null;
     }
-    return (ItemFileItem) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("file_id = ?", id),
-        ItemFileItemRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("file_id = ?", id)
+        .returnRecord(ItemFileItemRepository::buildRecord);
   }
 
   public static ItemFileItem findByWebPath(String webPath) {
@@ -207,28 +193,22 @@ public class ItemFileItemRepository {
       return null;
     }
 
-    return (ItemFileItem) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("web_path = ?", webPath),
-        ItemFileItemRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("web_path = ?", webPath)
+        .returnRecord(ItemFileItemRepository::buildRecord);
   }
 
   public static ItemFileItem findByWebPathAndFileId(String webPath, long fileId) {
-    if (StringUtils.isBlank(webPath)) {
-      return null;
-    }
-    if (fileId <= -1) {
+    if (StringUtils.isBlank(webPath) || fileId <= -1) {
       return null;
     }
 
-    SqlWhere where = DB.WHERE();
-    where.AND("web_path = ?", webPath);
-    where.AND("file_id = ?", fileId);
-
-    return (ItemFileItem) DB.selectRecordFrom(
-        TABLE_NAME,
-        where,
-        ItemFileItemRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("web_path = ?", webPath)
+        .AND("file_id = ?", fileId)
+        .returnRecord(ItemFileItemRepository::buildRecord);
   }
 
   public static ItemFileItem findByWebPath(long itemId, String webPath) {
@@ -236,14 +216,11 @@ public class ItemFileItemRepository {
       return null;
     }
 
-    SqlWhere where = DB.WHERE();
-    where.AND("item_id = ?", itemId);
-    where.AND("web_path = ?", webPath);
-
-    return (ItemFileItem) DB.selectRecordFrom(
-        TABLE_NAME,
-        where,
-        ItemFileItemRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("item_id = ?", itemId)
+        .AND("web_path = ?", webPath)
+        .returnRecord(ItemFileItemRepository::buildRecord);
   }
 
   public static List<ItemFileItem> findAll() {
@@ -255,14 +232,14 @@ public class ItemFileItemRepository {
       constraints = new DataConstraints();
     }
     constraints.setDefaultColumnToSortBy("created DESC");
-    DataResult result = query(specification, constraints);
-    return (List<ItemFileItem>) result.getRecords();
+    return query(specification, constraints).getRecords();
   }
 
   public static long fileCount(long itemId) {
-    SqlWhere where = DB.WHERE();
-    where.AND("item_id = ?", itemId);
-    return DB.selectCountFrom(TABLE_NAME, where);
+    return DB.SELECT().COUNT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("item_id = ?", itemId)
+        .returnCount();
   }
 
   public static ItemFileItem save(ItemFileItem record) {
@@ -273,47 +250,42 @@ public class ItemFileItemRepository {
   }
 
   private static ItemFileItem add(ItemFileItem record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("item_id", record.getItemId())
-        .add("folder_id", record.getFolderId())
-        .addIfExists("sub_folder_id", record.getSubFolderId(), -1L)
-        .addIfExists("category_id", record.getCategoryId(), -1L)
-        .add("filename", StringUtils.trimToNull(record.getFilename()))
-        .add("title", StringUtils.trimToNull(record.getTitle()))
-        .add("barcode", StringUtils.trimToNull(record.getBarcode()))
-        .add("version", StringUtils.trimToNull(record.getVersion()))
-        .add("extension", StringUtils.trimToNull(record.getExtension()))
-        .add("path", StringUtils.trimToNull(record.getFileServerPath()))
-        .add("web_path", StringUtils.trimToNull(record.getWebPath()))
-        .add("file_length", record.getFileLength())
-        .add("file_type", record.getFileType())
-        .add("mime_type", record.getMimeType())
-        .add("file_hash", record.getFileHash())
-        .add("width", record.getWidth(), -1)
-        .add("height", record.getHeight(), -1)
-        .add("summary", StringUtils.trimToNull(record.getSummary()))
-        .add("created_by", record.getCreatedBy())
-        .add("modified_by", record.getModifiedBy())
-        .add("processed", record.getProcessed())
-        .add("expiration_date", record.getExpirationDate())
-        .add("privacy_type", record.getPrivacyType())
-        .add("default_token", StringUtils.trimToNull(record.getDefaultToken()));
+    Insert insert = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("item_id", record.getItemId())
+        .FIELD("folder_id", record.getFolderId())
+        .FIELD_UNLESS_MATCHES("sub_folder_id", record.getSubFolderId(), -1L)
+        .FIELD_UNLESS_MATCHES("category_id", record.getCategoryId(), -1L)
+        .FIELD("filename", StringUtils.trimToNull(record.getFilename()))
+        .FIELD("title", StringUtils.trimToNull(record.getTitle()))
+        .FIELD("barcode", StringUtils.trimToNull(record.getBarcode()))
+        .FIELD("version", StringUtils.trimToNull(record.getVersion()))
+        .FIELD("extension", StringUtils.trimToNull(record.getExtension()))
+        .FIELD("path", StringUtils.trimToNull(record.getFileServerPath()))
+        .FIELD("web_path", StringUtils.trimToNull(record.getWebPath()))
+        .FIELD("file_length", record.getFileLength())
+        .FIELD("file_type", record.getFileType())
+        .FIELD("mime_type", record.getMimeType())
+        .FIELD("file_hash", record.getFileHash())
+        .FIELD("width", record.getWidth() == -1 ? null : record.getWidth())
+        .FIELD("height", record.getHeight() == -1 ? null : record.getHeight())
+        .FIELD("summary", StringUtils.trimToNull(record.getSummary()))
+        .FIELD("created_by", record.getCreatedBy())
+        .FIELD("modified_by", record.getModifiedBy())
+        .FIELD("processed", record.getProcessed())
+        .FIELD("expiration_date", record.getExpirationDate())
+        .FIELD("privacy_type", record.getPrivacyType())
+        .FIELD("default_token", StringUtils.trimToNull(record.getDefaultToken()));
     if (record.getTags() != null && record.getTags().length > 0) {
-      insertValues.add(new SqlValue("tags", SqlValue.JSONB_TYPE, JsonCommand.toJsonArray(record.getTags())));
+      insert.FIELD("tags", JsonCommand.toJsonArray(record.getTags()), com.github.rajkowski.database.CastType.JSONB);
     }
 
-    // Use a transaction
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
-      // In a transaction (use the existing connection)
-      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
-      // Create a version record
+      record.setId(insert.execute(connection));
       ItemFileVersionRepository.add(connection, record);
-      // Update the file counts
       ItemFolderRepository.updateFileCount(connection, record.getFolderId(), 1);
       ItemSubFolderRepository.updateFileCount(connection, record.getSubFolderId(), 1);
-      // Finish the transaction
       transaction.commit();
       return record;
     } catch (SQLException se) {
@@ -327,38 +299,34 @@ public class ItemFileItemRepository {
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
-      // Update the counts in case the folder changed
       ItemFolderRepository.updateFileCountForFileId(connection, record.getId(), -1);
       ItemSubFolderRepository.updateFileCountForFileId(connection, record.getId(), -1);
-      // Update the record
-      SqlUtils updateValues = new SqlUtils()
-          .add("folder_id", record.getFolderId())
-          .add("sub_folder_id", record.getSubFolderId(), -1L)
-          .add("category_id", record.getCategoryId(), -1L)
-          .addIfExists("filename", StringUtils.trimToNull(record.getFilename()))
-          .add("title", StringUtils.trimToNull(record.getTitle()))
-          .add("barcode", StringUtils.trimToNull(record.getBarcode()))
-          .add("version", StringUtils.trimToNull(record.getVersion()))
-          .addIfExists("width", record.getWidth(), -1)
-          .addIfExists("height", record.getHeight(), -1)
-          .add("summary", StringUtils.trimToNull(record.getSummary()))
-          .add("modified_by", record.getModifiedBy())
-          .add("processed", record.getProcessed())
-          .add("expiration_date", record.getExpirationDate())
-          .add("privacy_type", record.getPrivacyType());
+
+      Update update = DB.UPDATE(TABLE_NAME)
+          .SET("folder_id", record.getFolderId())
+          .SET("sub_folder_id", record.getSubFolderId() == -1 ? null : record.getSubFolderId())
+          .SET("category_id", record.getCategoryId() == -1 ? null : record.getCategoryId())
+          .SET_UNLESS_NULL("filename", StringUtils.trimToNull(record.getFilename()))
+          .SET("title", StringUtils.trimToNull(record.getTitle()))
+          .SET("barcode", StringUtils.trimToNull(record.getBarcode()))
+          .SET("version", StringUtils.trimToNull(record.getVersion()))
+          .SET_UNLESS_MATCHES("width", record.getWidth(), -1)
+          .SET_UNLESS_MATCHES("height", record.getHeight(), -1)
+          .SET("summary", StringUtils.trimToNull(record.getSummary()))
+          .SET("modified_by", record.getModifiedBy())
+          .SET("processed", record.getProcessed())
+          .SET("expiration_date", record.getExpirationDate())
+          .SET("privacy_type", record.getPrivacyType());
       if (record.getTags() != null && record.getTags().length > 0) {
-        updateValues.add(new SqlValue("tags", SqlValue.JSONB_TYPE, JsonCommand.toJsonArray(record.getTags())));
+        update.SET("tags", JsonCommand.toJsonArray(record.getTags()), CastType.JSONB);
       } else if (record.getTags() != null) {
-        updateValues.add(new SqlValue("tags", SqlValue.JSONB_TYPE, null));
+        update.SET("tags", (String) null, CastType.JSONB);
       }
-      //        .add("default_token", StringUtils.trimToNull(record.getDefaultToken()));
-      if (DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("file_id = ?", record.getId()))) {
-        // Update related records
+      update.WHERE("file_id = ?", record.getId());
+      if (update.execute(connection).booleanValue()) {
         ItemFileVersionRepository.update(connection, record);
-        // Update the folder count
         ItemFolderRepository.updateFileCountForFileId(connection, record.getId(), 1);
         ItemSubFolderRepository.updateFileCountForFileId(connection, record.getId(), 1);
-        // Finish transaction
         transaction.commit();
         return record;
       }
@@ -373,48 +341,43 @@ public class ItemFileItemRepository {
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
-      // Update the counts in case the folder changed
       ItemFolderRepository.updateFileCountForFileId(connection, record.getId(), -1);
       ItemSubFolderRepository.updateFileCountForFileId(connection, record.getId(), -1);
-      // Update the record, retaining the web_path
-      SqlUtils updateValues = new SqlUtils()
-          .add("item_id", record.getItemId())
-          .add("folder_id", record.getFolderId())
-          .add("sub_folder_id", record.getSubFolderId(), -1L)
-          .add("category_id", record.getCategoryId(), -1L)
-          .add("filename", StringUtils.trimToNull(record.getFilename()))
-          .add("title", StringUtils.trimToNull(record.getTitle()))
-          .add("barcode", StringUtils.trimToNull(record.getBarcode()))
-          .add("version", StringUtils.trimToNull(record.getVersion()))
-          .add("extension", StringUtils.trimToNull(record.getExtension()))
-          .add("path", StringUtils.trimToNull(record.getFileServerPath()))
-          .add("file_length", record.getFileLength())
-          .add("file_type", record.getFileType())
-          .add("mime_type", record.getMimeType())
-          .add("file_hash", record.getFileHash())
-          .add("width", record.getWidth(), -1)
-          .add("height", record.getHeight(), -1)
-          .add("summary", StringUtils.trimToNull(record.getSummary()))
-          .add("modified_by", record.getModifiedBy())
-          .add("modified", new Timestamp(System.currentTimeMillis()))
-          .add("processed", record.getProcessed())
-          .add("expiration_date", record.getExpirationDate())
-          .add("privacy_type", record.getPrivacyType())
-          .add("default_token", StringUtils.trimToNull(record.getDefaultToken()));
+      Update update = DB.UPDATE(TABLE_NAME)
+          .SET("item_id", record.getItemId())
+          .SET("folder_id", record.getFolderId())
+          .SET("sub_folder_id", record.getSubFolderId() == -1L ? null : record.getSubFolderId())
+          .SET("category_id", record.getCategoryId() == -1L ? null : record.getCategoryId())
+          .SET("filename", StringUtils.trimToNull(record.getFilename()))
+          .SET("title", StringUtils.trimToNull(record.getTitle()))
+          .SET("barcode", StringUtils.trimToNull(record.getBarcode()))
+          .SET("version", StringUtils.trimToNull(record.getVersion()))
+          .SET("extension", StringUtils.trimToNull(record.getExtension()))
+          .SET("path", StringUtils.trimToNull(record.getFileServerPath()))
+          .SET("file_length", record.getFileLength())
+          .SET("file_type", record.getFileType())
+          .SET("mime_type", record.getMimeType())
+          .SET("file_hash", record.getFileHash())
+          .SET("width", record.getWidth() == -1 ? null : record.getWidth())
+          .SET("height", record.getHeight() == -1 ? null : record.getHeight())
+          .SET("summary", StringUtils.trimToNull(record.getSummary()))
+          .SET("modified_by", record.getModifiedBy())
+          .SET("modified", new Timestamp(System.currentTimeMillis()))
+          .SET("processed", record.getProcessed())
+          .SET("expiration_date", record.getExpirationDate())
+          .SET("privacy_type", record.getPrivacyType())
+          .SET("default_token", StringUtils.trimToNull(record.getDefaultToken()));
       if (record.getTags() != null && record.getTags().length > 0) {
-        updateValues.add(new SqlValue("tags", SqlValue.JSONB_TYPE, JsonCommand.toJsonArray(record.getTags())));
+        update.SET("tags", JsonCommand.toJsonArray(record.getTags()), CastType.JSONB);
       } else if (record.getTags() != null) {
-        updateValues.add(new SqlValue("tags", SqlValue.JSONB_TYPE, null));
+        update.SET("tags", (String) null, CastType.JSONB);
       }
-      if (DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("file_id = ?", record.getId()))) {
-        // Update related records
+      update.WHERE("file_id = ?", record.getId());
+      if (update.execute(connection).booleanValue()) {
         ItemFileVersionRepository.update(connection, record);
-        // Update the folder counts
         ItemFolderRepository.updateFileCountForFileId(connection, record.getId(), 1);
         ItemSubFolderRepository.updateFileCountForFileId(connection, record.getId(), 1);
-        // Create a version record
         ItemFileVersionRepository.add(connection, record);
-        // Finish transaction
         transaction.commit();
         return record;
       }
@@ -426,33 +389,22 @@ public class ItemFileItemRepository {
   }
 
   public static boolean updateDocumentText(ItemFileItem record, String documentText) {
-    try (Connection connection = DB.getConnection()) {
-      SqlUtils updateValues = new SqlUtils()
-          .add("document_text", documentText)
-          .add("processed", new Timestamp(System.currentTimeMillis()));
-      if (DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("file_id = ?", record.getId()))) {
-        return true;
-      }
-    } catch (SQLException se) {
-      LOG.error("SQLException: " + se.getMessage());
-    }
-    LOG.error("The document text update failed!");
-    return false;
+    return DB.UPDATE(TABLE_NAME)
+        .SET("document_text", documentText)
+        .SET("processed", new Timestamp(System.currentTimeMillis()))
+        .WHERE("file_id = ?", record.getId())
+        .execute();
   }
 
   public static boolean remove(ItemFileItem record) {
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
-      // Delete the references
       ItemFileVersionRepository.removeAll(connection, record);
       ItemFolderRepository.updateFileCount(connection, record.getFolderId(), -1);
       ItemSubFolderRepository.updateFileCount(connection, record.getSubFolderId(), -1);
-      // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("file_id = ?", record.getId()));
-      // Finish transaction
+      DB.DELETE().FROM(TABLE_NAME).WHERE("file_id = ?", record.getId()).execute(connection);
       transaction.commit();
-      // @note file cleanup is done in the command, consider moving here
       return true;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
@@ -461,15 +413,15 @@ public class ItemFileItemRepository {
   }
 
   public static void removeAll(Connection connection, Item record) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("item_id = ?", record.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("item_id = ?", record.getId()).execute(connection);
   }
 
   public static void removeAll(Connection connection, ItemFolder record) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("folder_id = ?", record.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("folder_id = ?", record.getId()).execute(connection);
   }
 
   public static int removeAll(Connection connection, ItemSubFolder record) throws SQLException {
-    return DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("sub_folder_id = ?", record.getId()));
+    return DB.DELETE().FROM(TABLE_NAME).WHERE("sub_folder_id = ?", record.getId()).execute(connection) ? 1 : 0;
   }
 
   private static PreparedStatement createPreparedStatementForUpdateDownloadCount(Connection connection,
@@ -497,7 +449,9 @@ public class ItemFileItemRepository {
   }
 
   public static long findTotalFileSize() {
-    return DB.selectFunction("SUM(file_length)", TABLE_NAME, null);
+    return DB.SELECT("SUM(file_length)")
+        .FROM(TABLE_NAME)
+        .returnValue(Long.class);
   }
 
   private static ItemFileItem buildRecord(ResultSet rs) {

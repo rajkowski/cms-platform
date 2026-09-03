@@ -24,11 +24,11 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
+import com.github.rajkowski.database.Select;
 import com.simisinc.platform.domain.model.items.Item;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 import com.zeroio.platform.domain.model.items.ItemVersion;
 
 /**
@@ -44,25 +44,33 @@ public class ItemVersionRepository {
   private static String TABLE_NAME = "item_versions";
   private static String[] PRIMARY_KEY = new String[] { "item_version_id" };
 
-  private static DataResult query(ItemVersionSpecification specification, DataConstraints constraints) {
-    SqlWhere where = null;
+  private static DataResult<ItemVersion> query(ItemVersionSpecification specification, DataConstraints constraints) {
+    Select select = DB.SELECT("*").FROM(TABLE_NAME).WHERE();
     if (specification != null) {
-      where = DB.WHERE()
-          .andAddIfHasValue("item_version_id = ?", specification.getId(), -1)
-          .andAddIfHasValue("item_id = ?", specification.getItemId(), -1)
-          .andAddIfHasValue("collection_id = ?", specification.getCollectionId(), -1);
+      if (specification.getId() > -1) {
+        select.AND("item_version_id = ?", specification.getId());
+      }
+      if (specification.getItemId() > -1) {
+        select.AND("item_id = ?", specification.getItemId());
+      }
+      if (specification.getCollectionId() > -1) {
+        select.AND("collection_id = ?", specification.getCollectionId());
+      }
     }
-    return DB.selectAllFrom(TABLE_NAME, where, constraints, ItemVersionRepository::buildRecord);
+    if (constraints != null) {
+      select.WITH(constraints);
+    }
+    return select.returnDataResult(ItemVersionRepository::buildRecord);
   }
 
   public static ItemVersion findById(long id) {
     if (id == -1) {
       return null;
     }
-    return (ItemVersion) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("item_version_id = ?", id),
-        ItemVersionRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("item_version_id = ?", id)
+        .returnRecord(ItemVersionRepository::buildRecord);
   }
 
   public static List<ItemVersion> findAll(ItemVersionSpecification specification, DataConstraints constraints) {
@@ -70,8 +78,7 @@ public class ItemVersionRepository {
       constraints = new DataConstraints();
     }
     constraints.setDefaultColumnToSortBy("created DESC");
-    DataResult result = query(specification, constraints);
-    return (List<ItemVersion>) result.getRecords();
+    return query(specification, constraints).getRecords();
   }
 
   /**
@@ -102,7 +109,7 @@ public class ItemVersionRepository {
   }
 
   public static void removeAll(Connection connection, Item item) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("item_id = ?", item.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("item_id = ?", item.getId()).execute(connection);
   }
 
   private static ItemVersion buildRecord(ResultSet rs) {

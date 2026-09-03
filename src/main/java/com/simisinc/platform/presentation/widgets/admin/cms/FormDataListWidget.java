@@ -16,18 +16,18 @@
 
 package com.simisinc.platform.presentation.widgets.admin.cms;
 
+import java.util.List;
+
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.domain.model.cms.FormData;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.cms.FormDataRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.FormDataSpecification;
 import com.simisinc.platform.presentation.controller.RequestConstants;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
 
-import java.util.List;
-
 /**
- * Description
+ * Displays a list of form data records
  *
  * @author matt rajkowski
  * @created 4/24/18 7:33 PM

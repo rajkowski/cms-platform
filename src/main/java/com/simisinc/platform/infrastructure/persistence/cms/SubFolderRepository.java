@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,16 +26,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
+import com.github.rajkowski.database.Insert;
+import com.github.rajkowski.database.Select;
 import com.simisinc.platform.domain.model.cms.Folder;
 import com.simisinc.platform.domain.model.cms.SubFolder;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlJoins;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 import com.simisinc.platform.presentation.controller.DataConstants;
 import com.simisinc.platform.presentation.controller.UserSession;
 
@@ -51,62 +51,50 @@ public class SubFolderRepository {
   private static String TABLE_NAME = "sub_folders";
   private static String[] PRIMARY_KEY = new String[] { "sub_folder_id" };
 
-  private static DataResult query(SubFolderSpecification specification, DataConstraints constraints) {
-    SqlUtils select = new SqlUtils();
-    SqlJoins joins = new SqlJoins();
-    SqlWhere where = DB.WHERE();
-    SqlUtils orderBy = new SqlUtils();
+  private static DataResult<SubFolder> query(SubFolderSpecification specification, DataConstraints constraints) {
+    Select select = DB.SELECT("sub_folders.*").FROM(TABLE_NAME);
     if (specification != null) {
-
-      joins.add("LEFT JOIN folders ON (sub_folders.folder_id = folders.folder_id)");
-
-      where
-          .andAddIfHasValue("sub_folder_id = ?", specification.getId(), -1)
-          .andAddIfHasValue("folders.folder_id = ?", specification.getFolderId(), -1);
-
-      // For user id
-      // User must be in a user group with folder access
+      select.LEFT_JOIN("folders").ON("sub_folders.folder_id = folders.folder_id");
+      if (specification.getId() != -1) {
+        select.AND("sub_folder_id = ?", specification.getId());
+      }
+      if (specification.getFolderId() != -1) {
+        select.AND("folders.folder_id = ?", specification.getFolderId());
+      }
       if (specification.getForUserId() != DataConstants.UNDEFINED) {
         if (specification.getForUserId() == UserSession.GUEST_ID) {
-          where.AND("folders.allows_guests = true");
+          select.AND("folders.allows_guests = true");
         } else {
-          // For logged out and logged in users
-          where.AND(
-              "(allows_guests = true " +
-                  "OR (has_allowed_groups = true " +
-                  "AND EXISTS (SELECT 1 FROM folder_groups WHERE folder_groups.folder_id = folders.folder_id AND view_all = true " +
-                  "AND EXISTS (SELECT 1 FROM user_groups WHERE user_groups.group_id = folder_groups.group_id AND user_id = ?))" +
-                  ")" +
-                  ")",
+          select.AND(
+              "(allows_guests = true OR (has_allowed_groups = true AND EXISTS (SELECT 1 FROM folder_groups WHERE folder_groups.folder_id = folders.folder_id AND view_all = true AND EXISTS (SELECT 1 FROM user_groups WHERE user_groups.group_id = folder_groups.group_id AND user_id = ?))))",
               specification.getForUserId());
         }
       }
-
       if (specification.getHasFiles() != DataConstants.UNDEFINED) {
         if (specification.getHasFiles() == DataConstants.TRUE) {
-          where.AND("sub_folders.file_count > 0");
+          select.AND("sub_folders.file_count > 0");
         } else {
-          where.AND("sub_folders.file_count = 0");
+          select.AND("sub_folders.file_count = 0");
         }
       }
-
       if (specification.getYear() > 0) {
-        where.AND("EXTRACT(YEAR FROM start_date) = ?", specification.getYear());
+        select.AND("EXTRACT(YEAR FROM start_date) = ?", specification.getYear());
       }
-
     }
-    return DB.selectAllFrom(
-        TABLE_NAME, select, joins, where, orderBy, constraints, SubFolderRepository::buildRecord);
+    if (constraints != null) {
+      select.WITH(constraints);
+    }
+    return select.returnDataResult(SubFolderRepository::buildRecord);
   }
 
   public static SubFolder findById(long id) {
     if (id == -1) {
       return null;
     }
-    return (SubFolder) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("sub_folder_id = ?", id),
-        SubFolderRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("sub_folder_id = ?", id)
+        .returnRecord(SubFolderRepository::buildRecord);
   }
 
   public static List<SubFolder> findAll() {
@@ -118,18 +106,16 @@ public class SubFolderRepository {
       constraints = new DataConstraints();
     }
     constraints.setDefaultColumnToSortBy("start_date DESC");
-    DataResult result = query(specification, constraints);
-    return (List<SubFolder>) result.getRecords();
+    DataResult<SubFolder> result = query(specification, constraints);
+    return result.getRecords();
   }
 
   public static List<Long> queryDistinctStartDateAsYearForFolder(Folder folder) {
-    String SQL_FIELDS = "DISTINCT(EXTRACT(YEAR FROM start_date)) AS year";
-    SqlUtils orderBy = new SqlUtils().add("year DESC");
-    return DB.selectFunctionAsLongList(
-        SQL_FIELDS,
-        TABLE_NAME,
-        DB.WHERE("folder_id = ?", folder.getId()),
-        orderBy);
+    return DB.SELECT("DISTINCT(EXTRACT(YEAR FROM start_date)) AS year")
+        .FROM(TABLE_NAME)
+        .WHERE("folder_id = ?", folder.getId())
+        .ORDER_BY("year DESC")
+        .returnList(rs -> rs.getLong(1));
   }
 
   public static SubFolder save(SubFolder record) {
@@ -140,24 +126,21 @@ public class SubFolderRepository {
   }
 
   private static SubFolder add(SubFolder record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("folder_id", record.getFolderId())
-        .add("name", StringUtils.trimToNull(record.getName()))
-        .add("summary", StringUtils.trimToNull(record.getSummary()))
-        .add("created_by", record.getCreatedBy())
-        .add("modified_by", record.getModifiedBy())
-        .add("end_date", record.getEndDate());
-    if (record.getStartDate() != null) {
-      insertValues.add("start_date", record.getStartDate());
-    }
-
     // Use a transaction
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
-      // In a transaction (use the existing connection)
-      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
-      // Finish the transaction
+      Insert insert = DB.INSERT().INTO(TABLE_NAME)
+          .FIELD("folder_id", record.getFolderId())
+          .FIELD("name", StringUtils.trimToNull(record.getName()))
+          .FIELD("summary", StringUtils.trimToNull(record.getSummary()))
+          .FIELD("created_by", record.getCreatedBy())
+          .FIELD("modified_by", record.getModifiedBy())
+          .FIELD("end_date", record.getEndDate());
+      if (record.getStartDate() != null) {
+        insert.FIELD("start_date", record.getStartDate());
+      }
+      record.setId(insert.execute(connection));
       transaction.commit();
       return record;
     } catch (SQLException se) {
@@ -171,17 +154,15 @@ public class SubFolderRepository {
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
-      // Update the count in case the folder changed
       FolderRepository.updateFileCountForFileId(connection, record.getId(), -1);
-      // Update the record
-      SqlUtils updateValues = new SqlUtils()
-          .add("name", StringUtils.trimToNull(record.getName()))
-          .add("summary", StringUtils.trimToNull(record.getSummary()))
-          .add("modified_by", record.getModifiedBy())
-          .add("start_date", record.getStartDate())
-          .add("end_date", record.getEndDate());
-      if (DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("sub_folder_id = ?", record.getId()))) {
-        // Finish transaction
+      if (DB.UPDATE(TABLE_NAME)
+          .SET("name", StringUtils.trimToNull(record.getName()))
+          .SET("summary", StringUtils.trimToNull(record.getSummary()))
+          .SET("modified_by", record.getModifiedBy())
+          .SET("start_date", record.getStartDate())
+          .SET("end_date", record.getEndDate())
+          .WHERE("sub_folder_id = ?", record.getId())
+          .execute(connection)) {
         transaction.commit();
         return record;
       }
@@ -202,7 +183,7 @@ public class SubFolderRepository {
       // Update the folder count
       FolderRepository.updateFileCount(connection, record.getFolderId(), -deleteCount);
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("sub_folder_id = ?", record.getId()));
+      DB.DELETE().FROM(TABLE_NAME).WHERE("sub_folder_id = ?", record.getId()).execute(connection);
       // Finish transaction
       transaction.commit();
       return true;
@@ -213,25 +194,23 @@ public class SubFolderRepository {
   }
 
   public static void removeAll(Connection connection, Folder record) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("folder_id = ?", record.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("folder_id = ?", record.getId()).execute(connection);
   }
 
   public static boolean updateFileCount(Connection connection, long subFolderId, int value) throws SQLException {
     // Update the totals
-    SqlUtils update = new SqlUtils()
-        .add("file_count = file_count + " + value);
-    return DB.update(connection, TABLE_NAME, update, DB.WHERE("sub_folder_id = ?", subFolderId));
+    return DB.UPDATE(TABLE_NAME)
+        .SET("file_count = file_count + " + value)
+        .WHERE("sub_folder_id = ?", subFolderId)
+        .execute(connection);
   }
 
   public static boolean updateFileCountForFileId(Connection connection, long fileId, int value) throws SQLException {
     // Update the totals
-    SqlUtils update = new SqlUtils()
-        .add("file_count = file_count + " + value);
-    return DB.update(
-        connection,
-        TABLE_NAME,
-        update,
-        DB.WHERE("sub_folder_id IN (SELECT sub_folder_id FROM files WHERE file_id = ?)", fileId));
+    return DB.UPDATE(TABLE_NAME)
+        .SET("file_count = file_count + " + value)
+        .WHERE("sub_folder_id IN (SELECT sub_folder_id FROM files WHERE file_id = ?)", fileId)
+        .execute(connection);
   }
 
   private static SubFolder buildRecord(ResultSet rs) {

@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,13 +26,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.Insert;
+import com.github.rajkowski.database.Update;
 import com.simisinc.platform.domain.model.ecommerce.ShippingCarrier;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves shipping carrier objects
@@ -47,35 +48,30 @@ public class ShippingCarrierRepository {
   private static String[] PRIMARY_KEY = new String[] { "carrier_id" };
 
   public static List<ShippingCarrier> findAll() {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        null,
-        new DataConstraints().setDefaultColumnToSortBy("level"),
-        ShippingCarrierRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<ShippingCarrier>) result.getRecords();
-    }
-    return null;
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("level"))
+        .returnDataResult(ShippingCarrierRepository::buildRecord).getRecords();
   }
 
   public static ShippingCarrier findById(long carrierId) {
     if (carrierId == -1) {
       return null;
     }
-    return (ShippingCarrier) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("carrier_id = ?", carrierId),
-        ShippingCarrierRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("carrier_id = ?", carrierId)
+        .returnRecord(ShippingCarrierRepository::buildRecord);
   }
 
   public static ShippingCarrier findByCode(String code) {
     if (StringUtils.isBlank(code)) {
       return null;
     }
-    return (ShippingCarrier) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("UPPER(code) = ?", code.toUpperCase()),
-        ShippingCarrierRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("UPPER(code) = ?", code.toUpperCase())
+        .returnRecord(ShippingCarrierRepository::buildRecord);
   }
 
   public static ShippingCarrier save(ShippingCarrier record) {
@@ -90,16 +86,12 @@ public class ShippingCarrierRepository {
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
-      // In a transaction (use the existing connection)
-      SqlUtils insertValues = new SqlUtils()
-          .add("level", record.getLevel())
-          .add("code", record.getCode())
-          .add("title", record.getTitle())
-          .add("enabled", record.getEnabled());
-      //            .addIfExists("created_by", record.getCreatedBy(), -1)
-      //            .addIfExists("modified_by", record.getModifiedBy(), -1);
-      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
-      // Finish the transaction
+      Insert insert = DB.INSERT().INTO(TABLE_NAME)
+          .FIELD("level", record.getLevel())
+          .FIELD("code", record.getCode())
+          .FIELD("title", record.getTitle())
+          .FIELD("enabled", record.getEnabled());
+      record.setId(insert.execute(connection));
       transaction.commit();
       return record;
     } catch (SQLException se) {
@@ -109,15 +101,13 @@ public class ShippingCarrierRepository {
   }
 
   public static ShippingCarrier update(ShippingCarrier record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("level", record.getLevel())
-        .add("code", record.getCode())
-        .add("title", record.getTitle())
-        .add("enabled", record.getEnabled());
-    // .add("modified_by", record.getModifiedBy(), -1)
-    // .add("modified", new Timestamp(System.currentTimeMillis()));
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("carrier_id = ?", record.getId()))) {
-      // CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("level", record.getLevel())
+        .SET("code", record.getCode())
+        .SET("title", record.getTitle())
+        .SET("enabled", record.getEnabled())
+        .WHERE("carrier_id = ?", record.getId());
+    if (update.execute().booleanValue()) {
       return record;
     }
     LOG.error("The update failed!");

@@ -16,25 +16,30 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.application.cms.LoadFolderCommand;
 import com.simisinc.platform.application.cms.UrlCommand;
 import com.simisinc.platform.domain.model.cms.FileItem;
 import com.simisinc.platform.domain.model.cms.Folder;
 import com.simisinc.platform.domain.model.cms.FolderCategory;
 import com.simisinc.platform.domain.model.cms.SubFolder;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.persistence.cms.*;
+import com.simisinc.platform.infrastructure.persistence.cms.FileItemRepository;
+import com.simisinc.platform.infrastructure.persistence.cms.FileSpecification;
+import com.simisinc.platform.infrastructure.persistence.cms.FolderCategoryRepository;
+import com.simisinc.platform.infrastructure.persistence.cms.SubFolderRepository;
+import com.simisinc.platform.infrastructure.persistence.cms.SubFolderSpecification;
 import com.simisinc.platform.presentation.controller.RequestConstants;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import java.util.List;
 
 /**
- * Description
+ * Displays a list of files by folder
  *
  * @author matt rajkowski
  * @created 9/18/19 9:20 AM

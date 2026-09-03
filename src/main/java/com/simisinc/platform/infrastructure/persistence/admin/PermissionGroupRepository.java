@@ -27,10 +27,10 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
 import com.simisinc.platform.domain.model.admin.PermissionGroup;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
 
 /**
  * Loads permission groups and their members from the database.
@@ -55,15 +55,15 @@ public class PermissionGroupRepository {
    */
   @SuppressWarnings("unchecked")
   public static List<PermissionGroup> findAllPolicies() {
-    DataResult result = DB.selectAllFrom(
-        POLICIES_TABLE,
-        DB.WHERE("enabled = ?", true),
-        new DataConstraints().setDefaultColumnToSortBy("group_code"),
-        PermissionGroupRepository::buildPolicy);
+    DataResult<PermissionGroup> result = DB.SELECT("permission_policies.*")
+        .FROM(POLICIES_TABLE)
+        .WHERE("enabled = ?", true)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("group_code"))
+        .returnDataResult(PermissionGroupRepository::buildPolicy);
     if (result == null) {
       return new ArrayList<>();
     }
-    return (List<PermissionGroup>) result.getRecords();
+    return result.getRecords();
   }
 
   /**
@@ -75,13 +75,13 @@ public class PermissionGroupRepository {
     Map<String, List<String[]>> memberMap = new LinkedHashMap<>();
     String sql = "SELECT group_code, action_name, member_type FROM " + MEMBERS_TABLE + " ORDER BY group_code";
     try (Connection conn = DB.getConnection();
-         PreparedStatement pst = conn.prepareStatement(sql);
-         ResultSet rs = pst.executeQuery()) {
+        PreparedStatement pst = conn.prepareStatement(sql);
+        ResultSet rs = pst.executeQuery()) {
       while (rs.next()) {
         String groupCode = rs.getString("group_code");
         String actionName = rs.getString("action_name");
         String memberType = rs.getString("member_type");
-        memberMap.computeIfAbsent(groupCode, k -> new ArrayList<>()).add(new String[]{actionName, memberType});
+        memberMap.computeIfAbsent(groupCode, k -> new ArrayList<>()).add(new String[] { actionName, memberType });
       }
     } catch (SQLException e) {
       LOG.error("PermissionGroupRepository.findAllMembers error", e);

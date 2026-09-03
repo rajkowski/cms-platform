@@ -46,10 +46,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.Strings;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hc.core5.net.InetAddressUtils;
 
 import com.simisinc.platform.application.CreateSessionCommand;
 import com.simisinc.platform.application.DataException;
@@ -58,7 +56,6 @@ import com.simisinc.platform.application.RateLimitCommand;
 import com.simisinc.platform.application.SaveSessionCommand;
 import com.simisinc.platform.application.UserCommand;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
-import com.simisinc.platform.application.cms.HostnameCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.application.login.AuthenticateLoginCommand;
 import com.simisinc.platform.domain.model.App;
@@ -83,19 +80,12 @@ public class RestRequestFilter implements Filter {
 
   private static Log LOG = LogFactory.getLog(RestRequestFilter.class);
 
-  private boolean requireSSL = false;
-
   @Override
   public void init(FilterConfig config) throws ServletException {
     LOG.info("RestRequestFilter starting up...");
     String startupSuccessful = (String) config.getServletContext().getAttribute(ContextConstants.STARTUP_SUCCESSFUL);
     if (!"true".equals(startupSuccessful)) {
       throw new ServletException("Startup failed due to previous error");
-    }
-    String ssl = LoadSitePropertyCommand.loadByName("system.ssl");
-    if ("true".equals(ssl)) {
-      LOG.info("SSL is required by system.ssl");
-      requireSSL = true;
     }
   }
 
@@ -105,9 +95,22 @@ public class RestRequestFilter implements Filter {
 
   public void doFilter(ServletRequest request, ServletResponse servletResponse, FilterChain chain)
       throws ServletException, IOException {
+
+    try {
+      LOG.debug("RestRequestFilter.doFilter()");
+      doFilterInternal(request, servletResponse, chain);
+    } finally {
+      LOG.debug("RestRequestFilter.doFilter() complete");
+    }
+  }
+
+  private void doFilterInternal(ServletRequest request, ServletResponse servletResponse, FilterChain chain)
+      throws ServletException, IOException {
+
+    LOG.debug("RestRequestFilter.doFilterInternal()");
+
     HttpServletRequest httpServletRequest = (HttpServletRequest) request;
     String requestMethod = ((HttpServletRequest) request).getMethod().toLowerCase();
-    String scheme = request.getScheme();
     String contextPath = request.getServletContext().getContextPath();
     String requestURI = httpServletRequest.getRequestURI();
     String resource = requestURI.substring(contextPath.length());
@@ -131,31 +134,13 @@ public class RestRequestFilter implements Filter {
       }
     }
 
-    // Check allowed hostnames
-    if (!HostnameCommand.passesCheck(request.getServerName())) {
-      do404(servletResponse);
-      return;
-    }
-
+    // Determine if the request is for a valid hostname
     boolean isLocal = "localhost".equals(request.getServerName()) || "127.0.0.1".equals(request.getServerName());
 
     // Check if IP is rate limited
     if (!isLocal && !RateLimitCommand.isIpAllowedRightNow(ipAddress, false)) {
       do429(servletResponse);
       return;
-    }
-
-    // Redirect to SSL
-    if (!isLocal && requireSSL && !"https".equalsIgnoreCase(scheme)) {
-      // Only redirect if a hostname was used (skip for local dev and proxy servers)
-      CharSequence ipAddressValue = request.getServerName();
-      if (!InetAddressUtils.isIPv4(ipAddressValue) && !InetAddressUtils.isIPv6(ipAddressValue)) {
-        String requestURL = ((HttpServletRequest) request).getRequestURL().toString();
-        requestURL = Strings.CS.replace(requestURL, "http://", "https://");
-        LOG.debug("Redirecting to: " + requestURL);
-        do301(servletResponse, requestURL);
-        return;
-      }
     }
 
     boolean isAPIOnline = LoadSitePropertyCommand.loadByNameAsBoolean("site.api");
@@ -331,6 +316,8 @@ public class RestRequestFilter implements Filter {
 
     // User is invalid
     doExpiredToken(servletResponse);
+
+    LOG.debug("RestRequestFilter.doFilterInternal() complete");
   }
 
   private void doRecordSession(App app, HttpServletRequest httpServletRequest, ServletResponse response)

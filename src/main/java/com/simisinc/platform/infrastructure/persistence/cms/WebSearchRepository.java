@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,15 +17,15 @@
 
 package com.simisinc.platform.infrastructure.persistence.cms;
 
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.domain.model.cms.WebSearch;
+import java.sql.Connection;
+import java.sql.SQLException;
+
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import com.github.rajkowski.database.DB;
+import com.simisinc.platform.domain.model.cms.WebSearch;
 
 /**
  * Persists and retrieves web search objects
@@ -37,20 +38,19 @@ public class WebSearchRepository {
   private static Log LOG = LogFactory.getLog(WebSearchRepository.class);
 
   private static String TABLE_NAME = "web_searches";
-  private static String[] PRIMARY_KEY = new String[] { "search_id" };
 
   public static WebSearch save(WebSearch record) {
     return add(record);
   }
 
   private static WebSearch add(WebSearch record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("page_path", record.getPagePath(), 255)
-        .add("query", record.getQuery(), 255)
-        .add("ip_address", record.getIpAddress())
-        .add("session_id", record.getSessionId())
-        .add("is_logged_in", record.getIsLoggedIn());
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    record.setId(DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("page_path", StringUtils.truncate(record.getPagePath(), 255))
+        .FIELD("query", StringUtils.truncate(record.getQuery(), 255))
+        .FIELD("ip_address", record.getIpAddress())
+        .FIELD("session_id", record.getSessionId())
+        .FIELD("is_logged_in", record.getIsLoggedIn())
+        .execute());
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -59,22 +59,12 @@ public class WebSearchRepository {
   }
 
   public static boolean remove(WebSearch record) {
-    try (Connection connection = DB.getConnection();
-        PreparedStatement pst = createPreparedStatementForDelete(connection, record)) {
-      pst.execute();
+    try (Connection connection = DB.getConnection()) {
+      return DB.DELETE().FROM(TABLE_NAME).WHERE("search_id = ?", record.getId()).execute(connection);
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
     LOG.error("The delete failed!");
     return false;
-  }
-
-  private static PreparedStatement createPreparedStatementForDelete(Connection connection, WebSearch record) throws SQLException {
-    String SQL_QUERY = "DELETE FROM web_searches " +
-        "WHERE search_id = ?";
-    int i = 0;
-    PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
-    pst.setLong(++i, record.getId());
-    return pst;
   }
 }

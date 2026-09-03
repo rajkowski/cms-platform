@@ -26,14 +26,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
+import com.github.rajkowski.database.Insert;
+import com.github.rajkowski.database.Select;
+import com.github.rajkowski.database.Update;
 import com.simisinc.platform.domain.model.cms.Image;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves image objects
@@ -48,56 +49,62 @@ public class ImageRepository {
   private static String TABLE_NAME = "images";
   private static String[] PRIMARY_KEY = new String[] { "image_id" };
 
-  private static DataResult query(ImageSpecification specification, DataConstraints constraints) {
-    SqlWhere where = null;
+  private static DataResult<Image> query(ImageSpecification specification, DataConstraints constraints) {
+    Select select = DB.SELECT("*").FROM(TABLE_NAME).WHERE();
     if (specification != null) {
-      where = DB.WHERE()
-          .andAddIfHasValue("image_id = ?", specification.getId(), -1)
-          .andAddIfHasValue("created_by = ?", specification.getCreatedBy(), -1);
+      if (specification.getId() != -1) {
+        select.AND("image_id = ?", specification.getId());
+      }
+      if (specification.getCreatedBy() != -1) {
+        select.AND("created_by = ?", specification.getCreatedBy());
+      }
       if (specification.getFilename() != null) {
-        where.AND("LOWER(filename) = ?", specification.getFilename().toLowerCase());
+        select.AND("LOWER(filename) = ?", specification.getFilename().toLowerCase());
       }
       if (specification.getFileType() != null) {
-        where.AND("LOWER(file_type) = ?", specification.getFileType().toLowerCase());
+        select.AND("LOWER(file_type) = ?", specification.getFileType().toLowerCase());
       }
       if (specification.getSearchTerm() != null) {
         String searchValue = "%" + specification.getSearchTerm().toLowerCase() + "%";
-        where.AND("(LOWER(filename) LIKE ? OR LOWER(title) LIKE ? OR LOWER(alt_text) LIKE ? OR LOWER(description) LIKE ?)",
+        select.AND("(LOWER(filename) LIKE ? OR LOWER(title) LIKE ? OR LOWER(alt_text) LIKE ? OR LOWER(description) LIKE ?)",
             new String[] { searchValue, searchValue, searchValue, searchValue });
       }
     }
-    return DB.selectAllFrom(TABLE_NAME, where, constraints, ImageRepository::buildRecord);
+    if (constraints != null) {
+      select.WITH(constraints);
+    }
+    return select.returnDataResult(ImageRepository::buildRecord);
   }
 
   public static Image findById(long id) {
     if (id == -1) {
       return null;
     }
-    return (Image) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("image_id = ?", id),
-        ImageRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("image_id = ?", id)
+        .returnRecord(ImageRepository::buildRecord);
   }
 
   public static Image findByWebPathAndId(String versionWebPath, long id) {
     if (StringUtils.isBlank(versionWebPath) || id == -1) {
       return null;
     }
-    return (Image) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("web_path = ?", versionWebPath)
-            .AND("image_id = ?", id),
-        ImageRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("web_path = ?", versionWebPath)
+        .AND("image_id = ?", id)
+        .returnRecord(ImageRepository::buildRecord);
   }
 
   public static Image findByWebPath(String versionWebPath) {
     if (StringUtils.isBlank(versionWebPath)) {
       return null;
     }
-    return (Image) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("web_path = ?", versionWebPath),
-        ImageRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("web_path = ?", versionWebPath)
+        .returnRecord(ImageRepository::buildRecord);
   }
 
   public static List<Image> findAll() {
@@ -109,8 +116,7 @@ public class ImageRepository {
       constraints = new DataConstraints();
     }
     constraints.setDefaultColumnToSortBy("created DESC");
-    DataResult result = query(specification, constraints);
-    return (List<Image>) result.getRecords();
+    return query(specification, constraints).getRecords();
   }
 
   public static Image save(Image record) {
@@ -121,17 +127,17 @@ public class ImageRepository {
   }
 
   private static Image add(Image record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("filename", StringUtils.trimToNull(record.getFilename()))
-        .add("path", StringUtils.trimToNull(record.getFileServerPath()))
-        .add("web_path", StringUtils.trimToNull(record.getWebPath()))
-        .add("created_by", record.getCreatedBy())
-        .add("modified_by", record.getModifiedBy())
-        .add("file_length", record.getFileLength())
-        .add("file_type", record.getFileType())
-        .add("width", record.getWidth())
-        .add("height", record.getHeight());
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    Insert insert = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("filename", StringUtils.trimToNull(record.getFilename()))
+        .FIELD("path", StringUtils.trimToNull(record.getFileServerPath()))
+        .FIELD("web_path", StringUtils.trimToNull(record.getWebPath()))
+        .FIELD("created_by", record.getCreatedBy())
+        .FIELD("modified_by", record.getModifiedBy())
+        .FIELD("file_length", record.getFileLength())
+        .FIELD("file_type", record.getFileType())
+        .FIELD("width", record.getWidth())
+        .FIELD("height", record.getHeight());
+    record.setId(insert.execute());
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -140,26 +146,27 @@ public class ImageRepository {
   }
 
   private static Image update(Image record) {
-    SqlUtils updateValues = new SqlUtils()
-        .addIfExists("modified_by", record.getModifiedBy(), -1)
-        .add("modified", new java.sql.Timestamp(System.currentTimeMillis()))
-        .add("processed", record.getProcessed())
-        .add("processed_path", StringUtils.trimToNull(record.getProcessedPath()))
-        .add("processed_file_length", record.getProcessedFileLength())
-        .add("processed_file_type", StringUtils.trimToNull(record.getProcessedFileType()))
-        .add("processed_width", record.getProcessedWidth())
-        .add("processed_height", record.getProcessedHeight())
-        .add("title", StringUtils.trimToNull(record.getTitle()))
-        .add("alt_text", StringUtils.trimToNull(record.getAltText()))
-        .add("description", StringUtils.trimToNull(record.getDescription()))
-        .add("version_number", record.getVersionNumber())
-        .add("filename", StringUtils.trimToNull(record.getFilename()))
-        .add("path", StringUtils.trimToNull(record.getFileServerPath()))
-        .add("file_length", record.getFileLength())
-        .add("file_type", StringUtils.trimToNull(record.getFileType()))
-        .add("width", record.getWidth())
-        .add("height", record.getHeight());
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("image_id = ?", record.getId()))) {
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("modified_by", record.getModifiedBy() == -1 ? null : record.getModifiedBy())
+        .SET("modified", new java.sql.Timestamp(System.currentTimeMillis()))
+        .SET("processed", record.getProcessed())
+        .SET("processed_path", StringUtils.trimToNull(record.getProcessedPath()))
+        .SET("processed_file_length", record.getProcessedFileLength())
+        .SET("processed_file_type", StringUtils.trimToNull(record.getProcessedFileType()))
+        .SET("processed_width", record.getProcessedWidth())
+        .SET("processed_height", record.getProcessedHeight())
+        .SET("title", StringUtils.trimToNull(record.getTitle()))
+        .SET("alt_text", StringUtils.trimToNull(record.getAltText()))
+        .SET("description", StringUtils.trimToNull(record.getDescription()))
+        .SET("version_number", record.getVersionNumber())
+        .SET("filename", StringUtils.trimToNull(record.getFilename()))
+        .SET("path", StringUtils.trimToNull(record.getFileServerPath()))
+        .SET("file_length", record.getFileLength())
+        .SET("file_type", StringUtils.trimToNull(record.getFileType()))
+        .SET("width", record.getWidth())
+        .SET("height", record.getHeight())
+        .WHERE("image_id = ?", record.getId());
+    if (update.execute().booleanValue()) {
       return record;
     }
     LOG.error("The update failed!");
@@ -173,7 +180,7 @@ public class ImageRepository {
       // Delete the references
       ImageVersionRepository.removeAll(connection, record);
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("image_id = ?", record.getId()));
+      DB.DELETE().FROM(TABLE_NAME).WHERE("image_id = ?", record.getId()).execute(connection);
       // Finish transaction
       transaction.commit();
       return true;
@@ -184,7 +191,7 @@ public class ImageRepository {
   }
 
   public static long findTotalFileSize() {
-    return DB.selectFunction("SUM(file_length)", TABLE_NAME, null);
+    return DB.SELECT("SUM(file_length)").FROM(TABLE_NAME).returnValue(Long.class);
   }
 
   private static Image buildRecord(ResultSet rs) {

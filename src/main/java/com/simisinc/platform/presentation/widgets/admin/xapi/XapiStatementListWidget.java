@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,18 +17,18 @@
 
 package com.simisinc.platform.presentation.widgets.admin.xapi;
 
+import java.util.List;
+
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.domain.model.xapi.XapiStatement;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.xapi.XapiStatementRepository;
 import com.simisinc.platform.infrastructure.persistence.xapi.XapiStatementSpecification;
 import com.simisinc.platform.presentation.controller.RequestConstants;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
 import com.simisinc.platform.presentation.controller.WidgetContext;
-
-import java.util.List;
+import com.simisinc.platform.presentation.widgets.GenericWidget;
 
 /**
- * Description
+ * Displays a list of xAPI statements
  *
  * @author matt rajkowski
  * @created 12/21/21 3:13 PM
@@ -57,7 +58,7 @@ public class XapiStatementListWidget extends GenericWidget {
     XapiStatementSpecification specification = new XapiStatementSpecification();
 
     // Load the list
-    List<XapiStatement> xapiStatementList =  XapiStatementRepository.findAll(specification, constraints);
+    List<XapiStatement> xapiStatementList = XapiStatementRepository.findAll(specification, constraints);
     context.getRequest().setAttribute("xapiStatementList", xapiStatementList);
 
     // Standard request items

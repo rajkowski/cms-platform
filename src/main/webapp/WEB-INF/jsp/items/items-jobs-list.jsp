@@ -27,7 +27,7 @@
 <jsp:useBean id="collection" class="com.simisinc.platform.domain.model.items.Collection" scope="request"/>
 <jsp:useBean id="itemList" class="java.util.ArrayList" scope="request"/>
 <jsp:useBean id="category" class="com.simisinc.platform.domain.model.items.Category" scope="request"/>
-<jsp:useBean id="recordPaging" class="com.simisinc.platform.infrastructure.database.DataConstraints" scope="request"/>
+<jsp:useBean id="recordPaging" class="com.github.rajkowski.database.DataConstraints" scope="request"/>
 <c:if test="${!empty title}">
   <h4><c:if test="${!empty icon}"><i class="${font:fas()} ${icon}"></i> </c:if><c:out value="${title}" /></h4>
 </c:if>

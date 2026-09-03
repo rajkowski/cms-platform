@@ -30,15 +30,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.domain.model.Session;
 import com.simisinc.platform.domain.model.Visitor;
 import com.simisinc.platform.domain.model.dashboard.ActiveSessionData;
 import com.simisinc.platform.domain.model.dashboard.StatisticsData;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 import com.simisinc.platform.presentation.controller.UserSession;
 
 /**
@@ -58,22 +56,17 @@ public class SessionRepository {
     if (sessionId == -1) {
       return null;
     }
-    return (Session) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("session_id = ?", sessionId),
-        SessionRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("session_id = ?", sessionId)
+        .returnRecord(SessionRepository::buildRecord);
   }
 
   public static List<Session> findAll() {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        null,
-        new DataConstraints().setDefaultColumnToSortBy("id"),
-        SessionRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<Session>) result.getRecords();
-    }
-    return null;
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("id"))
+        .returnDataResult(SessionRepository::buildRecord).getRecords();
   }
 
   public static List<Session> findDailyUniqueLocations(int daysToLimit) {
@@ -106,12 +99,12 @@ public class SessionRepository {
   }
 
   public static long countDistinctSessions(Timestamp startDate, Timestamp endDate) {
-    // Query the data, skip some things
-    return DB.selectCountFrom(
-        TABLE_NAME,
-        DB.WHERE("created >= ?", startDate)
-            .AND("created < ?", endDate)
-            .AND("is_bot = ?", false));
+    return DB.SELECT().COUNT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("created >= ?", startDate)
+        .AND("created < ?", endDate)
+        .AND("is_bot = ?", false)
+        .returnCount();
   }
 
   public static long countSessionsToday() {
@@ -308,32 +301,31 @@ public class SessionRepository {
   }
 
   public static Session add(Session record) {
-    // remove tailing slash on referer
     String referer = record.getReferer();
     if (referer != null && referer.length() > 1 && referer.endsWith("/")) {
       referer = referer.substring(0, referer.length() - 1);
     }
-    // Insert the record
-    SqlUtils insertValues = new SqlUtils()
-        .add("session_id", record.getSessionId())
-        .add("source", record.getSource())
-        .add("ip_address", record.getIpAddress())
-        .add("user_agent", StringUtils.abbreviate(record.getUserAgent(), 255))
-        .add("referer", StringUtils.abbreviate(referer, 255))
-        .add("continent", record.getContinent())
-        .add("country_iso", record.getCountryIso())
-        .add("country", record.getCountry())
-        .add("city", record.getCity())
-        .add("state_iso", record.getStateIso())
-        .add("state", record.getState())
-        .add("postal_code", record.getPostalCode())
-        .add("timezone", record.getTimezone())
-        .add("is_bot", record.getIsBot())
-        .addIfExists("latitude", record.getLatitude(), 0)
-        .addIfExists("longitude", record.getLongitude(), 0)
-        .addIfExists("metro_code", record.getMetroCode(), -1)
-        .addIfExists("app_id", record.getAppId(), -1L);
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    long id = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("session_id", record.getSessionId())
+        .FIELD("source", record.getSource())
+        .FIELD("ip_address", record.getIpAddress())
+        .FIELD("user_agent", StringUtils.abbreviate(record.getUserAgent(), 255))
+        .FIELD("referer", StringUtils.abbreviate(referer, 255))
+        .FIELD("continent", record.getContinent())
+        .FIELD("country_iso", record.getCountryIso())
+        .FIELD("country", record.getCountry())
+        .FIELD("city", record.getCity())
+        .FIELD("state_iso", record.getStateIso())
+        .FIELD("state", record.getState())
+        .FIELD("postal_code", record.getPostalCode())
+        .FIELD("timezone", record.getTimezone())
+        .FIELD("is_bot", record.getIsBot())
+        .FIELD_UNLESS_MATCHES("latitude", record.getLatitude(), 0)
+        .FIELD_UNLESS_MATCHES("longitude", record.getLongitude(), 0)
+        .FIELD_UNLESS_MATCHES("metro_code", record.getMetroCode(), -1)
+        .FIELD_UNLESS_MATCHES("app_id", record.getAppId(), -1L)
+        .execute();
+    record.setId(id);
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -345,19 +337,20 @@ public class SessionRepository {
     if (record.getId() == -1 || record.getSessionId() == null) {
       return;
     }
-    SqlUtils setValues = new SqlUtils().add("visitor_id", record.getId());
-    DB.update(connection,
-        TABLE_NAME,
-        setValues,
-        DB.WHERE("session_id = ?", record.getSessionId()));
+    DB.UPDATE(TABLE_NAME)
+        .SET("visitor_id", record.getId())
+        .WHERE("session_id = ?", record.getSessionId())
+        .execute(connection);
   }
 
   public static void updateVisitorId(UserSession userSession, Visitor visitor) {
     if (userSession == null || userSession.getSessionId() == null || visitor == null || visitor.getId() == -1) {
       return;
     }
-    SqlUtils setValues = new SqlUtils().add("visitor_id", visitor.getId());
-    DB.update(TABLE_NAME, setValues, DB.WHERE("session_id = ?", userSession.getSessionId()));
+    DB.UPDATE(TABLE_NAME)
+        .SET("visitor_id", visitor.getId())
+        .WHERE("session_id = ?", userSession.getSessionId())
+        .execute();
   }
 
   /**
@@ -478,7 +471,8 @@ public class SessionRepository {
    */
   public static List<StatisticsData> findDailyBounceRate(int daysToLimit) {
     String SQL_QUERY = "WITH daily_session_counts AS ( " +
-        "  SELECT DATE_TRUNC('day', wph.hit_date)::VARCHAR(10) AS date_column, wph.session_id, COUNT(DISTINCT wph.hit_id) AS page_count " +
+        "  SELECT DATE_TRUNC('day', wph.hit_date)::VARCHAR(10) AS date_column, wph.session_id, COUNT(DISTINCT wph.hit_id) AS page_count "
+        +
         "  FROM web_page_hits wph " +
         "  WHERE wph.hit_date > NOW() - INTERVAL '" + daysToLimit + " days' " +
         "  AND NOT EXISTS (SELECT 1 FROM sessions WHERE session_id = wph.session_id AND is_bot = TRUE) " +
@@ -496,10 +490,12 @@ public class SessionRepository {
         "  GROUP BY date_column " +
         "), " +
         "date_series AS ( " +
-        "  SELECT generate_series(NOW() - INTERVAL '" + daysToLimit + " days', NOW(), INTERVAL '1 day')::date::VARCHAR(10) AS date_column " +
+        "  SELECT generate_series(NOW() - INTERVAL '" + daysToLimit
+        + " days', NOW(), INTERVAL '1 day')::date::VARCHAR(10) AS date_column " +
         ") " +
         "SELECT ds.date_column, " +
-        "  COALESCE(CASE WHEN dts.total_count > 0 THEN (dbs.bounce_count::float / dts.total_count) * 100 ELSE 0 END, 0) AS bounce_rate " +
+        "  COALESCE(CASE WHEN dts.total_count > 0 THEN (dbs.bounce_count::float / dts.total_count) * 100 ELSE 0 END, 0) AS bounce_rate "
+        +
         "FROM date_series ds " +
         "LEFT JOIN daily_total_sessions dts ON ds.date_column = dts.date_column " +
         "LEFT JOIN daily_bounce_sessions dbs ON ds.date_column = dbs.date_column " +

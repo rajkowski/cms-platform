@@ -27,18 +27,19 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
+import com.github.rajkowski.database.Insert;
+import com.github.rajkowski.database.Select;
+import com.github.rajkowski.database.Update;
 import com.simisinc.platform.domain.model.items.Item;
 import com.simisinc.platform.domain.model.items.ItemFolder;
 import com.simisinc.platform.domain.model.items.ItemFolderCategory;
 import com.simisinc.platform.domain.model.items.ItemFolderGroup;
 import com.simisinc.platform.domain.model.items.PrivacyType;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 import com.simisinc.platform.presentation.controller.DataConstants;
 import com.simisinc.platform.presentation.controller.UserSession;
 
@@ -63,26 +64,26 @@ public class ItemFolderRepository {
   }
 
   private static ItemFolder add(ItemFolder record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("folder_unique_id", StringUtils.trimToNull(record.getUniqueId()))
-        .add("item_id", record.getItemId(), -1)
-        .add("name", StringUtils.trimToNull(record.getName()))
-        .add("summary", StringUtils.trimToNull(record.getSummary()))
-        .add("created_by", record.getCreatedBy())
-        .add("modified_by", record.getModifiedBy())
-        .add("allows_guests", record.getGuestPrivacyType() != PrivacyType.UNDEFINED)
-        .add("guest_privacy_type", record.getGuestPrivacyType());
+    Insert insert = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("folder_unique_id", StringUtils.trimToNull(record.getUniqueId()))
+        .FIELD("item_id", record.getItemId() == -1 ? null : record.getItemId())
+        .FIELD("name", StringUtils.trimToNull(record.getName()))
+        .FIELD("summary", StringUtils.trimToNull(record.getSummary()))
+        .FIELD("created_by", record.getCreatedBy())
+        .FIELD("modified_by", record.getModifiedBy())
+        .FIELD("allows_guests", record.getGuestPrivacyType() != PrivacyType.UNDEFINED)
+        .FIELD("guest_privacy_type", record.getGuestPrivacyType());
     if (record.getPrivacyTypes() != null) {
-      insertValues.add("privacy_types", String.join(", ", record.getPrivacyTypes()));
+      insert.FIELD("privacy_types", String.join(", ", record.getPrivacyTypes()));
     }
-    insertValues.add("has_allowed_groups", record.getFolderGroupList() != null && !record.getFolderGroupList().isEmpty());
-    insertValues.add("has_categories", record.getFolderCategoryList() != null && !record.getFolderCategoryList().isEmpty());
+    insert.FIELD("has_allowed_groups", record.getFolderGroupList() != null && !record.getFolderGroupList().isEmpty())
+        .FIELD("has_categories", record.getFolderCategoryList() != null && !record.getFolderCategoryList().isEmpty());
     // Use a transaction
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
       // In a transaction (use the existing connection)
-      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+      record.setId(insert.execute(connection));
       // Manage the access groups
       if (record.getFolderGroupList() != null && !record.getFolderGroupList().isEmpty()) {
         ItemFolderGroupRepository.insertFolderGroupList(connection, record);
@@ -101,27 +102,27 @@ public class ItemFolderRepository {
   }
 
   private static ItemFolder update(ItemFolder record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("name", StringUtils.trimToNull(record.getName()))
-        .add("folder_unique_id", StringUtils.trimToNull(record.getUniqueId()))
-        .add("summary", StringUtils.trimToNull(record.getSummary()))
-        .add("allows_guests", record.getGuestPrivacyType() != PrivacyType.UNDEFINED)
-        .add("guest_privacy_type", record.getGuestPrivacyType())
-        .add("modified_by", record.getModifiedBy())
-        .add("modified", new Timestamp(System.currentTimeMillis()));
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("name", StringUtils.trimToNull(record.getName()))
+        .SET("folder_unique_id", StringUtils.trimToNull(record.getUniqueId()))
+        .SET("summary", StringUtils.trimToNull(record.getSummary()))
+        .SET("allows_guests", record.getGuestPrivacyType() != PrivacyType.UNDEFINED)
+        .SET("guest_privacy_type", record.getGuestPrivacyType())
+        .SET("modified_by", record.getModifiedBy())
+        .SET("modified", new Timestamp(System.currentTimeMillis()));
     if (record.getPrivacyTypes() != null) {
-      updateValues.add("privacy_types", String.join(", ", record.getPrivacyTypes()));
+      update.SET("privacy_types", String.join(", ", record.getPrivacyTypes()));
     } else {
-      updateValues.add("privacy_types", (String) null);
+      update.SET("privacy_types", (String) null);
     }
-    updateValues.add("has_allowed_groups", record.getFolderGroupList() != null && !record.getFolderGroupList().isEmpty());
-    updateValues.add("has_categories", record.getFolderCategoryList() != null && !record.getFolderCategoryList().isEmpty());
+    update.SET("has_allowed_groups", record.getFolderGroupList() != null && !record.getFolderGroupList().isEmpty())
+        .SET("has_categories", record.getFolderCategoryList() != null && !record.getFolderCategoryList().isEmpty());
     // Use a transaction
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
       // In a transaction (use the existing connection)
-      DB.update(connection, TABLE_NAME, updateValues, DB.WHERE("folder_id = ?", record.getId()));
+      update.WHERE("folder_id = ?", record.getId()).execute(connection);
       // Manage the access groups
       ItemFolderGroupRepository.removeAll(connection, record);
       ItemFolderGroupRepository.insertFolderGroupList(connection, record);
@@ -139,7 +140,7 @@ public class ItemFolderRepository {
   }
 
   public static void removeAll(Connection connection, Item item) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("item_id = ?", item.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("item_id = ?", item.getId()).execute(connection);
   }
 
   // Remove
@@ -154,7 +155,7 @@ public class ItemFolderRepository {
       ItemFolderGroupRepository.removeAll(connection, record);
       ItemFolderCategoryRepository.removeAll(connection, record);
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("folder_id = ?", record.getId()));
+      DB.DELETE().FROM(TABLE_NAME).WHERE("folder_id = ?", record.getId()).execute(connection);
       // Finish transaction
       transaction.commit();
       // Invalidate the cache
@@ -167,22 +168,27 @@ public class ItemFolderRepository {
     return false;
   }
 
-  private static DataResult query(ItemFolderSpecification specification, DataConstraints constraints) {
-    SqlWhere where = null;
+  private static DataResult<ItemFolder> query(ItemFolderSpecification specification, DataConstraints constraints) {
+    Select select = DB.SELECT("*").FROM(TABLE_NAME).WHERE();
     if (specification != null) {
-      where = DB.WHERE()
-          .andAddIfHasValue("item_id = ?", specification.getItemId(), -1)
-          .andAddIfHasValue("folder_id = ?", specification.getId(), -1)
-          .andAddIfHasValue("folder_unique_id = ?", specification.getUniqueId());
+      if (specification.getItemId() != -1) {
+        select.AND("item_id = ?", specification.getItemId());
+      }
+      if (specification.getId() != -1) {
+        select.AND("folder_id = ?", specification.getId());
+      }
+      if (StringUtils.isNotBlank(specification.getUniqueId())) {
+        select.AND("folder_unique_id = ?", specification.getUniqueId());
+      }
       if (specification.getName() != null) {
-        where.AND("LOWER(name) = ?", specification.getName().toLowerCase());
+        select.AND("LOWER(name) = ?", specification.getName().toLowerCase());
       }
       if (specification.getForUserId() != DataConstants.UNDEFINED) {
         if (specification.getForUserId() == UserSession.GUEST_ID) {
-          where.AND("allows_guests = true");
+          select.AND("allows_guests = true");
         } else {
           // For logged out and logged in users
-          where.AND(
+          select.AND(
               "(allows_guests = true " +
                   "OR (has_allowed_groups = true " +
                   "AND EXISTS (SELECT 1 FROM item_folder_groups WHERE folder_id = item_folders.folder_id " +
@@ -191,17 +197,17 @@ public class ItemFolderRepository {
         }
       }
     }
-    return DB.selectAllFrom(TABLE_NAME, where, constraints, ItemFolderRepository::buildRecord);
+    return select.WITH(constraints).returnDataResult(ItemFolderRepository::buildRecord);
   }
 
   public static ItemFolder findById(long id) {
     if (id == -1) {
       return null;
     }
-    ItemFolder folder = (ItemFolder) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("folder_id = ?", id),
-        ItemFolderRepository::buildRecord);
+    ItemFolder folder = DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("folder_id = ?", id)
+        .returnRecord(ItemFolderRepository::buildRecord);
     populateRelatedData(folder);
     return folder;
   }
@@ -213,11 +219,11 @@ public class ItemFolderRepository {
     if (itemId == -1) {
       return null;
     }
-    ItemFolder folder = (ItemFolder) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("folder_unique_id = ?", uniqueId)
-            .AND("item_id", itemId),
-        ItemFolderRepository::buildRecord);
+    ItemFolder folder = DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("folder_unique_id = ?", uniqueId)
+        .AND("item_id = ?", itemId)
+        .returnRecord(ItemFolderRepository::buildRecord);
     populateRelatedData(folder);
     return folder;
   }
@@ -229,11 +235,11 @@ public class ItemFolderRepository {
     if (itemId == -1) {
       return null;
     }
-    ItemFolder folder = (ItemFolder) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("LOWER(name) = ?", name.toLowerCase())
-            .AND("item_id = ?", itemId),
-        ItemFolderRepository::buildRecord);
+    ItemFolder folder = DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("LOWER(name) = ?", name.toLowerCase())
+        .AND("item_id = ?", itemId)
+        .returnRecord(ItemFolderRepository::buildRecord);
     populateRelatedData(folder);
     return folder;
   }
@@ -247,8 +253,8 @@ public class ItemFolderRepository {
       constraints = new DataConstraints().setUseCount(false);
     }
     constraints.setDefaultColumnToSortBy("name");
-    DataResult result = query(specification, constraints);
-    List<ItemFolder> folderList = (List<ItemFolder>) result.getRecords();
+    DataResult<ItemFolder> result = query(specification, constraints);
+    List<ItemFolder> folderList = result.getRecords();
     for (ItemFolder folder : folderList) {
       populateRelatedData(folder);
     }

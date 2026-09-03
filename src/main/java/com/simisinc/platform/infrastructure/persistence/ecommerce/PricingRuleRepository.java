@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,14 +32,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
+import com.github.rajkowski.database.Select;
 import com.simisinc.platform.domain.model.ecommerce.PricingRule;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 import com.simisinc.platform.presentation.controller.DataConstants;
 
 /**
@@ -54,32 +54,33 @@ public class PricingRuleRepository {
   private static String TABLE_NAME = "pricing_rules";
   private static String[] PRIMARY_KEY = new String[] { "rule_id" };
 
-  private static DataResult query(PricingRuleSpecification specification, DataConstraints constraints) {
-    SqlWhere where = null;
+  private static DataResult<PricingRule> query(PricingRuleSpecification specification, DataConstraints constraints) {
+    Select select = DB.SELECT("*").FROM(TABLE_NAME).WHERE();
     if (specification != null) {
-      where = DB.WHERE();
       if (StringUtils.isNotBlank(specification.getCountryCode())) {
-        where.AND("valid_country_code IS NULL OR valid_country_code = ?", specification.getCountryCode());
+        select.AND("valid_country_code IS NULL OR valid_country_code = ?", specification.getCountryCode());
       }
       if (StringUtils.isNotBlank(specification.getPromoCode())) {
-        where.AND("upper(promo_code) = ?", specification.getPromoCode().toUpperCase());
+        select.AND("upper(promo_code) = ?", specification.getPromoCode().toUpperCase());
       }
       if (specification.getEnabled() != DataConstants.UNDEFINED) {
-        where.AND("enabled = ?", specification.getEnabled() == DataConstants.TRUE);
+        select.AND("enabled = ?", specification.getEnabled() == DataConstants.TRUE);
       }
       if (specification.getIsValidToday() == DataConstants.TRUE) {
-        where.AND("(from_date IS NULL OR from_date <= CURRENT_TIMESTAMP)");
-        where.AND("(to_date IS NULL OR to_date > CURRENT_TIMESTAMP)");
+        select.AND("(from_date IS NULL OR from_date <= CURRENT_TIMESTAMP)");
+        select.AND("(to_date IS NULL OR to_date > CURRENT_TIMESTAMP)");
       }
       if (specification.getHasPromoCode() != DataConstants.UNDEFINED) {
-        where.AND("promo_code IS NULL OR promo_code = ''");
+        select.AND("promo_code IS NULL OR promo_code = ''");
       }
       if (StringUtils.isNotBlank(specification.getIncludesSku())) {
-        // @todo use a JSON field type to improve accuracy
-        where.AND("LOWER(valid_skus) LIKE LOWER(?) ESCAPE '!'", "%" + specification.getIncludesSku().toLowerCase() + "%");
+        select.AND("LOWER(valid_skus) LIKE LOWER(?) ESCAPE '!'", "%" + specification.getIncludesSku().toLowerCase() + "%");
       }
     }
-    return DB.selectAllFrom(TABLE_NAME, where, constraints, PricingRuleRepository::buildRecord);
+    if (constraints != null) {
+      select.WITH(constraints);
+    }
+    return select.returnDataResult(PricingRuleRepository::buildRecord);
   }
 
   public static List<PricingRule> findAll(PricingRuleSpecification specification, DataConstraints constraints) {
@@ -87,8 +88,7 @@ public class PricingRuleRepository {
       constraints = new DataConstraints();
     }
     constraints.setDefaultColumnToSortBy("to_date desc, created");
-    DataResult result = query(specification, constraints);
-    return (List<PricingRule>) result.getRecords();
+    return query(specification, constraints).getRecords();
   }
 
   public static List<PricingRule> findAllRulesByValidSku(String sku) {
@@ -96,9 +96,7 @@ public class PricingRuleRepository {
     specification.setEnabled(true);
     specification.setHasPromoCode(false);
     specification.setIncludesSku(sku);
-    DataResult result = query(specification, null);
-    List<PricingRule> recordList = (List<PricingRule>) result.getRecords();
-    // The query is currently not precise, so fish out the matches
+    List<PricingRule> recordList = query(specification, null).getRecords();
     List<PricingRule> pricingRuleList = new ArrayList<>();
     for (PricingRule record : recordList) {
       List<String> validSkuList = Stream.of(record.getValidSkus().toUpperCase().split(Pattern.quote(",")))
@@ -112,10 +110,10 @@ public class PricingRuleRepository {
   }
 
   public static PricingRule findById(long ruleId) {
-    return (PricingRule) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("rule_id = ?", ruleId),
-        PricingRuleRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("rule_id = ?", ruleId)
+        .returnRecord(PricingRuleRepository::buildRecord);
   }
 
   public static PricingRule save(PricingRule record) {
@@ -126,40 +124,37 @@ public class PricingRuleRepository {
   }
 
   public static PricingRule add(PricingRule record) {
-    // Use a transaction
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
-      // In a transaction (use the existing connection)
-      SqlUtils insertValues = new SqlUtils()
-          .add("name", record.getName())
-          .add("description", record.getDescription())
-          .add("error_message", record.getErrorMessage())
-          .add("from_date", record.getFromDate())
-          .add("to_date", record.getToDate())
-          .add("promo_code", record.getPromoCode())
-          .add("uses_per_code", record.getUsesPerCode())
-          .add("uses_per_customer", record.getUsesPerCustomer())
-          .add("times_used", record.getTimesUsed())
-          .add("created_by", record.getCreatedBy())
-          .add("modified_by", record.getModifiedBy())
-          .add("enabled", record.getEnabled())
-          .add("minimum_subtotal", record.getMinimumSubtotal())
-          .add("minimum_order_qty", record.getMinimumOrderQuantity())
-          .add("maximum_order_qty", record.getMaximumOrderQuantity())
-          .add("item_limit", record.getItemLimit())
-          .add("valid_skus", record.getValidSkus())
-          .add("invalid_skus", record.getInvalidSkus())
-          .add("subtotal_percent", record.getSubtotalPercent())
-          .add("subtract_amount", record.getSubtractAmount())
-          .add("buy_x_items", record.getBuyXItems())
-          .add("get_y_free", record.getGetYItemsFree())
-          .add("free_shipping", record.getFreeShipping())
-          .add("free_product_sku", record.getFreeProductSku())
-          .add("free_shipping_code", record.getFreeShippingCode())
-          .add("valid_country_code", record.getCountryCode());
-      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
-      // Finish the transaction
+      record.setId(DB.INSERT().INTO(TABLE_NAME)
+          .FIELD("name", record.getName())
+          .FIELD("description", record.getDescription())
+          .FIELD("error_message", record.getErrorMessage())
+          .FIELD("from_date", record.getFromDate())
+          .FIELD("to_date", record.getToDate())
+          .FIELD("promo_code", record.getPromoCode())
+          .FIELD("uses_per_code", record.getUsesPerCode())
+          .FIELD("uses_per_customer", record.getUsesPerCustomer())
+          .FIELD("times_used", record.getTimesUsed())
+          .FIELD("created_by", record.getCreatedBy())
+          .FIELD("modified_by", record.getModifiedBy())
+          .FIELD("enabled", record.getEnabled())
+          .FIELD("minimum_subtotal", record.getMinimumSubtotal())
+          .FIELD("minimum_order_qty", record.getMinimumOrderQuantity())
+          .FIELD("maximum_order_qty", record.getMaximumOrderQuantity())
+          .FIELD("item_limit", record.getItemLimit())
+          .FIELD("valid_skus", record.getValidSkus())
+          .FIELD("invalid_skus", record.getInvalidSkus())
+          .FIELD("subtotal_percent", record.getSubtotalPercent())
+          .FIELD("subtract_amount", record.getSubtractAmount())
+          .FIELD("buy_x_items", record.getBuyXItems())
+          .FIELD("get_y_free", record.getGetYItemsFree())
+          .FIELD("free_shipping", record.getFreeShipping())
+          .FIELD("free_product_sku", record.getFreeProductSku())
+          .FIELD("free_shipping_code", record.getFreeShippingCode())
+          .FIELD("valid_country_code", record.getCountryCode())
+          .execute(connection));
       transaction.commit();
       return record;
     } catch (SQLException se) {
@@ -169,35 +164,35 @@ public class PricingRuleRepository {
   }
 
   public static PricingRule update(PricingRule record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("name", record.getName())
-        .add("description", record.getDescription())
-        .add("error_message", record.getErrorMessage())
-        .add("from_date", record.getFromDate())
-        .add("to_date", record.getToDate())
-        .add("promo_code", record.getPromoCode())
-        .add("uses_per_code", record.getUsesPerCode())
-        .add("uses_per_customer", record.getUsesPerCustomer())
-        //        .add("times_used", record.getTimesUsed())
-        .add("enabled", record.getEnabled())
-        .add("minimum_subtotal", record.getMinimumSubtotal())
-        .add("minimum_order_qty", record.getMinimumOrderQuantity())
-        .add("maximum_order_qty", record.getMaximumOrderQuantity())
-        .add("item_limit", record.getItemLimit())
-        .add("valid_skus", record.getValidSkus())
-        .add("invalid_skus", record.getInvalidSkus())
-        .add("subtotal_percent", record.getSubtotalPercent())
-        .add("subtract_amount", record.getSubtractAmount())
-        .add("buy_x_items", record.getBuyXItems())
-        .add("get_y_free", record.getGetYItemsFree())
-        .add("free_shipping", record.getFreeShipping())
-        .add("free_product_sku", record.getFreeProductSku())
-        .add("free_shipping_code", record.getFreeShippingCode())
-        .add("valid_country_code", record.getCountryCode())
-        .add("modified_by", record.getModifiedBy(), -1)
-        .add("modified", new Timestamp(System.currentTimeMillis()));
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("rule_id = ?", record.getId()))) {
-      //      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
+    boolean updated = DB.UPDATE(TABLE_NAME)
+        .SET("name", record.getName())
+        .SET("description", record.getDescription())
+        .SET("error_message", record.getErrorMessage())
+        .SET("from_date", record.getFromDate())
+        .SET("to_date", record.getToDate())
+        .SET("promo_code", record.getPromoCode())
+        .SET("uses_per_code", record.getUsesPerCode())
+        .SET("uses_per_customer", record.getUsesPerCustomer())
+        .SET("enabled", record.getEnabled())
+        .SET("minimum_subtotal", record.getMinimumSubtotal())
+        .SET("minimum_order_qty", record.getMinimumOrderQuantity())
+        .SET("maximum_order_qty", record.getMaximumOrderQuantity())
+        .SET("item_limit", record.getItemLimit())
+        .SET("valid_skus", record.getValidSkus())
+        .SET("invalid_skus", record.getInvalidSkus())
+        .SET("subtotal_percent", record.getSubtotalPercent())
+        .SET("subtract_amount", record.getSubtractAmount())
+        .SET("buy_x_items", record.getBuyXItems())
+        .SET("get_y_free", record.getGetYItemsFree())
+        .SET("free_shipping", record.getFreeShipping())
+        .SET("free_product_sku", record.getFreeProductSku())
+        .SET("free_shipping_code", record.getFreeShippingCode())
+        .SET("valid_country_code", record.getCountryCode())
+        .SET("modified_by", record.getModifiedBy() == -1 ? null : record.getModifiedBy())
+        .SET("modified", new Timestamp(System.currentTimeMillis()))
+        .WHERE("rule_id = ?", record.getId())
+        .execute();
+    if (updated) {
       return record;
     }
     LOG.error("The update failed!");

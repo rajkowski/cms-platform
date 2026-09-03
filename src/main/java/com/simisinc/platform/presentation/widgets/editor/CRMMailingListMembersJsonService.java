@@ -22,10 +22,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.mailinglists.Email;
 import com.simisinc.platform.domain.model.mailinglists.MailingList;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.mailinglists.EmailRepository;
 import com.simisinc.platform.infrastructure.persistence.mailinglists.EmailSpecification;
 import com.simisinc.platform.infrastructure.persistence.mailinglists.MailingListRepository;

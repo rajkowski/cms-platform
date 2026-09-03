@@ -25,13 +25,13 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.Insert;
+import com.github.rajkowski.database.Update;
 import com.simisinc.platform.domain.model.items.Collection;
 import com.simisinc.platform.domain.model.items.Item;
 import com.simisinc.platform.domain.model.items.ItemRelationship;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves item relationship objects
@@ -50,58 +50,47 @@ public class ItemRelationshipRepository {
     if (relationshipId == -1) {
       return null;
     }
-    ItemRelationship relationship = (ItemRelationship) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("relationship_id = ?", relationshipId),
-        ItemRelationshipRepository::buildRecord);
-    return relationship;
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("relationship_id = ?", relationshipId)
+        .returnRecord(ItemRelationshipRepository::buildRecord);
   }
 
   public static List<ItemRelationship> findRelatedItemsForItemId(long itemId) {
     if (itemId == -1) {
       return null;
     }
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        DB.WHERE("item_id = ?", itemId),
-        new DataConstraints().setDefaultColumnToSortBy("relationship_id").setUseCount(false),
-        ItemRelationshipRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<ItemRelationship>) result.getRecords();
-    }
-    return null;
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("item_id = ?", itemId)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("relationship_id").setUseCount(false))
+        .returnDataResult(ItemRelationshipRepository::buildRecord).getRecords();
   }
 
   public static List<ItemRelationship> findRelatedItemsForItemIdInCollection(Item item, Collection collection) {
     if (item == null || collection == null) {
       return null;
     }
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        DB.WHERE("((item_id = ? AND related_collection_id = ?) OR (related_item_id = ? AND collection_id = ?))",
-            new Long[] { item.getId(), collection.getId(), item.getId(), collection.getId() }),
-        new DataConstraints().setDefaultColumnToSortBy("relationship_id"),
-        ItemRelationshipRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<ItemRelationship>) result.getRecords();
-    }
-    return null;
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("((item_id = ? AND related_collection_id = ?) OR (related_item_id = ? AND collection_id = ?))",
+            item.getId(), collection.getId(), item.getId(), collection.getId())
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("relationship_id"))
+        .returnDataResult(ItemRelationshipRepository::buildRecord).getRecords();
   }
 
   public static boolean isAuthorizedForUser(Item item, Collection relatedCollection, long userId) {
     if (item == null || relatedCollection == null || userId < 1) {
       return false;
     }
-    long count = DB.selectCountFrom(TABLE_NAME,
-        DB.WHERE("item_id = ?", item.getId())
-            .AND("related_collection_id = ?", relatedCollection.getId())
-            .AND(
-                "EXISTS (SELECT 1 FROM members WHERE members.item_id = item_relationships.related_item_id AND members.user_id = ? AND members.approved IS NOT NULL AND archived IS NULL)",
-                userId));
-    if (count > 0) {
-      return true;
-    }
-    return false;
+    return DB.SELECT().COUNT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("item_id = ?", item.getId())
+        .AND("related_collection_id = ?", relatedCollection.getId())
+        .AND(
+            "EXISTS (SELECT 1 FROM members WHERE members.item_id = item_relationships.related_item_id AND members.user_id = ? AND members.approved IS NOT NULL AND archived IS NULL)",
+            userId)
+        .returnCount() > 0;
   }
 
   public static boolean isAuthorizedForUser(Item item, Collection relatedCollection, long userId,
@@ -109,19 +98,15 @@ public class ItemRelationshipRepository {
     if (item == null || relatedCollection == null || userId < 1) {
       return false;
     }
-    long count = DB.selectCountFrom(TABLE_NAME,
-        DB.WHERE("item_id = ?", item.getId())
-            .AND("related_collection_id = ?", relatedCollection.getId())
-            .AND("EXISTS (" +
-                "SELECT 1 FROM members WHERE members.item_id = item_relationships.related_item_id AND members.user_id = ? AND members.approved IS NOT NULL AND archived IS NULL "
-                +
-                "AND EXISTS (SELECT 1 FROM member_roles WHERE members.member_id = member_roles.member_id AND role_id = ?)"
-                +
-                ")", new Long[] { userId, collectionRoleId }));
-    if (count > 0) {
-      return true;
-    }
-    return false;
+    return DB.SELECT().COUNT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("item_id = ?", item.getId())
+        .AND("related_collection_id = ?", relatedCollection.getId())
+        .AND(
+            "EXISTS (SELECT 1 FROM members WHERE members.item_id = item_relationships.related_item_id AND members.user_id = ? AND members.approved IS NOT NULL AND archived IS NULL "
+                + "AND EXISTS (SELECT 1 FROM member_roles WHERE members.member_id = member_roles.member_id AND role_id = ?))",
+            userId, collectionRoleId)
+        .returnCount() > 0;
   }
 
   public static ItemRelationship save(ItemRelationship record) {
@@ -137,18 +122,17 @@ public class ItemRelationshipRepository {
 
   public static ItemRelationship add(ItemRelationship record, boolean saveReciprocalRelationships) {
     // Save First Relationship record
-    SqlUtils insertValues = new SqlUtils()
-        .add("item_id", record.getItemId())
-        .add("collection_id", record.getCollectionId())
-        .add("related_item_id", record.getRelatedItemId())
-        .add("related_collection_id", record.getRelatedCollectionId())
-        //        .add("relationship_type", record.getRelationshipTypeId())
-        .add("is_active", record.getIsActive())
-        .add("created_by", record.getCreatedBy())
-        .add("modified_by", record.getModifiedBy())
-        .add("start_date", record.getStartDate())
-        .add("end_date", record.getEndDate());
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    Insert insert = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("item_id", record.getItemId())
+        .FIELD("collection_id", record.getCollectionId())
+        .FIELD("related_item_id", record.getRelatedItemId())
+        .FIELD("related_collection_id", record.getRelatedCollectionId())
+        .FIELD("is_active", record.getIsActive())
+        .FIELD("created_by", record.getCreatedBy())
+        .FIELD("modified_by", record.getModifiedBy())
+        .FIELD("start_date", record.getStartDate())
+        .FIELD("end_date", record.getEndDate());
+    record.setId(insert.execute());
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -156,28 +140,27 @@ public class ItemRelationshipRepository {
 
     // Save Second Relationship record
     if (saveReciprocalRelationships) {
-      SqlUtils reciprocalInsertValues = new SqlUtils()
-          .add("item_id", record.getRelatedItemId())
-          .add("collection_id", record.getRelatedCollectionId())
-          .add("related_item_id", record.getItemId())
-          .add("related_collection_id", record.getCollectionId())
-          //        .add("relationship_type", record.getRelationshipTypeId())
-          .add("is_active", record.getIsActive())
-          .add("created_by", record.getCreatedBy())
-          .add("modified_by", record.getModifiedBy())
-          .add("start_date", record.getStartDate())
-          .add("end_date", record.getEndDate());
-      DB.insertInto(TABLE_NAME, reciprocalInsertValues, PRIMARY_KEY);
+      DB.INSERT().INTO(TABLE_NAME)
+          .FIELD("item_id", record.getRelatedItemId())
+          .FIELD("collection_id", record.getRelatedCollectionId())
+          .FIELD("related_item_id", record.getItemId())
+          .FIELD("related_collection_id", record.getCollectionId())
+          .FIELD("is_active", record.getIsActive())
+          .FIELD("created_by", record.getCreatedBy())
+          .FIELD("modified_by", record.getModifiedBy())
+          .FIELD("start_date", record.getStartDate())
+          .FIELD("end_date", record.getEndDate())
+          .execute();
     }
 
     return record;
   }
 
   private static ItemRelationship update(ItemRelationship record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("is_active", record.getIsActive())
-        .add("modified_by", record.getModifiedBy());
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("relationship_id = ?", record.getId()))) {
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("is_active", record.getIsActive())
+        .SET("modified_by", record.getModifiedBy());
+    if (update.WHERE("relationship_id = ?", record.getId()).execute()) {
       return record;
     }
     LOG.error("The update failed!");
@@ -185,22 +168,23 @@ public class ItemRelationshipRepository {
   }
 
   public static void remove(ItemRelationship itemRelationship) {
-    DB.deleteFrom(TABLE_NAME, DB.WHERE("relationship_id = ?", itemRelationship.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("relationship_id = ?", itemRelationship.getId()).execute();
   }
 
   public static void remove(Connection connection, ItemRelationship itemRelationship) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("relationship_id = ?", itemRelationship.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("relationship_id = ?", itemRelationship.getId()).execute(connection);
   }
 
   public static void removeAll(Connection connection, Item item) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("item_id = ?", item.getId()));
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("related_item_id = ?", item.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("item_id = ?", item.getId()).execute(connection);
+    DB.DELETE().FROM(TABLE_NAME).WHERE("related_item_id = ?", item.getId()).execute(connection);
   }
 
   public static void removeRelationship(Item item, Item relatedItem) {
-    DB.deleteFrom(TABLE_NAME,
-        DB.WHERE("((item_id = ? AND related_item_id = ?) OR (item_id = ? AND related_item_id = ?))",
-            new Long[] { item.getId(), relatedItem.getId(), relatedItem.getId(), item.getId() }));
+    DB.DELETE().FROM(TABLE_NAME)
+        .WHERE("((item_id = ? AND related_item_id = ?) OR (item_id = ? AND related_item_id = ?))",
+            item.getId(), relatedItem.getId(), relatedItem.getId(), item.getId())
+        .execute();
   }
 
   private static ItemRelationship buildRecord(ResultSet rs) {

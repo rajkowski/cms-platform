@@ -23,10 +23,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.Folder;
 import com.simisinc.platform.domain.model.items.Collection;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.cms.FolderRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.FolderSpecification;
 import com.simisinc.platform.infrastructure.persistence.items.CollectionRepository;

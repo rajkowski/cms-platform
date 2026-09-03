@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,14 +25,13 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
 import com.simisinc.platform.domain.model.Group;
 import com.simisinc.platform.domain.model.cms.Folder;
 import com.simisinc.platform.domain.model.cms.FolderGroup;
 import com.simisinc.platform.domain.model.items.PrivacyType;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Properties for querying objects from the repository
@@ -50,27 +50,20 @@ public class FolderGroupRepository {
     if (folderId == -1) {
       return null;
     }
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        DB.WHERE("folder_id = ?", folderId),
-        new DataConstraints().setDefaultColumnToSortBy("allowed_id").setUseCount(false),
-        FolderGroupRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<FolderGroup>) result.getRecords();
-    }
-    return null;
+    DataResult<FolderGroup> result = DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("folder_id = ?", folderId)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("allowed_id").setUseCount(false))
+        .returnDataResult(FolderGroupRepository::buildRecord);
+    return result.getRecords();
   }
 
   public static List<FolderGroup> findAll() {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        null,
-        new DataConstraints().setDefaultColumnToSortBy("allowed_id"),
-        FolderGroupRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<FolderGroup>) result.getRecords();
-    }
-    return null;
+    DataResult<FolderGroup> result = DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("allowed_id"))
+        .returnDataResult(FolderGroupRepository::buildRecord);
+    return result.getRecords();
   }
 
   public static void insertFolderGroupList(Connection connection, Folder folder) throws SQLException {
@@ -78,30 +71,30 @@ public class FolderGroupRepository {
       return;
     }
     for (FolderGroup allowedGroup : folder.getFolderGroupList()) {
-      SqlUtils insertValues = new SqlUtils();
-      insertValues
-          .add("folder_id", folder.getId())
-          .add("group_id", allowedGroup.getGroupId())
-          .add("privacy_type", allowedGroup.getPrivacyType())
-          .add("view_all",
+      DB.INSERT().INTO(TABLE_NAME)
+          .FIELD("folder_id", folder.getId())
+          .FIELD("group_id", allowedGroup.getGroupId())
+          .FIELD("privacy_type", allowedGroup.getPrivacyType())
+          .FIELD("view_all",
               (allowedGroup.getPrivacyType() == PrivacyType.PUBLIC || allowedGroup.getPrivacyType() == PrivacyType.PUBLIC_READ_ONLY))
-          .add("add_permission", allowedGroup.getAddPermission())
-          .add("edit_permission", allowedGroup.getEditPermission())
-          .add("delete_permission", allowedGroup.getDeletePermission());
-      DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY);
+          .FIELD("add_permission", allowedGroup.getAddPermission())
+          .FIELD("edit_permission", allowedGroup.getEditPermission())
+          .FIELD("delete_permission", allowedGroup.getDeletePermission())
+          .execute(connection);
     }
   }
 
   public static FolderGroup add(FolderGroup record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("folder_id", record.getFolderId())
-        .add("group_id", record.getGroupId())
-        .add("privacy_type", record.getPrivacyType())
-        .add("view_all", (record.getPrivacyType() == PrivacyType.PUBLIC || record.getPrivacyType() == PrivacyType.PUBLIC_READ_ONLY))
-        .add("add_permission", record.getAddPermission())
-        .add("edit_permission", record.getEditPermission())
-        .add("delete_permission", record.getDeletePermission());
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    long id = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("folder_id", record.getFolderId())
+        .FIELD("group_id", record.getGroupId())
+        .FIELD("privacy_type", record.getPrivacyType())
+        .FIELD("view_all", (record.getPrivacyType() == PrivacyType.PUBLIC || record.getPrivacyType() == PrivacyType.PUBLIC_READ_ONLY))
+        .FIELD("add_permission", record.getAddPermission())
+        .FIELD("edit_permission", record.getEditPermission())
+        .FIELD("delete_permission", record.getDeletePermission())
+        .execute();
+    record.setId(id);
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -112,13 +105,14 @@ public class FolderGroupRepository {
   }
 
   public static boolean update(FolderGroup record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("privacy_type", record.getPrivacyType())
-        .add("view_all", (record.getPrivacyType() == PrivacyType.PUBLIC || record.getPrivacyType() == PrivacyType.PUBLIC_READ_ONLY))
-        .add("add_permission", record.getAddPermission())
-        .add("edit_permission", record.getEditPermission())
-        .add("delete_permission", record.getDeletePermission());
-    boolean result = DB.update(TABLE_NAME, updateValues, DB.WHERE("allowed_id = ?", record.getId()));
+    boolean result = DB.UPDATE(TABLE_NAME)
+        .SET("privacy_type", record.getPrivacyType())
+        .SET("view_all", (record.getPrivacyType() == PrivacyType.PUBLIC || record.getPrivacyType() == PrivacyType.PUBLIC_READ_ONLY))
+        .SET("add_permission", record.getAddPermission())
+        .SET("edit_permission", record.getEditPermission())
+        .SET("delete_permission", record.getDeletePermission())
+        .WHERE("allowed_id = ?", record.getId())
+        .execute();
     if (result) {
       // Keep the folder's pointer fields in sync after updating a group's privacy type
       FolderRepository.updateGroupPointers(record.getFolderId());
@@ -128,11 +122,11 @@ public class FolderGroupRepository {
 
   public static boolean remove(long id) {
     // Determine folder before deleting to update has_allowed_groups pointer
-    FolderGroup existing = (FolderGroup) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("allowed_id = ?", id),
-        FolderGroupRepository::buildRecord);
-    boolean deleted = DB.deleteFrom(TABLE_NAME, DB.WHERE("allowed_id = ?", id)) > 0;
+    FolderGroup existing = DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("allowed_id = ?", id)
+        .returnRecord(FolderGroupRepository::buildRecord);
+    boolean deleted = DB.DELETE().FROM(TABLE_NAME).WHERE("allowed_id = ?", id).execute();
     if (deleted && existing != null) {
       // Keep the folder's pointer fields in sync after removing a group
       FolderRepository.updateGroupPointers(existing.getFolderId());
@@ -141,11 +135,11 @@ public class FolderGroupRepository {
   }
 
   public static void removeAll(Connection connection, Folder folder) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("folder_id = ?", folder.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("folder_id = ?", folder.getId()).execute(connection);
   }
 
   public static void removeAll(Connection connection, Group group) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("group_id = ?", group.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("group_id = ?", group.getId()).execute(connection);
   }
 
   private static FolderGroup buildRecord(ResultSet rs) {

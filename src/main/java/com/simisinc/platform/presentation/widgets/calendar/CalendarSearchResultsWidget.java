@@ -26,9 +26,9 @@ import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.domain.model.cms.CalendarEvent;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.cms.CalendarEventRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.CalendarEventSpecification;
 import com.simisinc.platform.presentation.controller.RequestConstants;

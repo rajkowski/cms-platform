@@ -21,9 +21,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.domain.model.User;
 import com.simisinc.platform.domain.model.xapi.XapiStatement;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.xapi.XapiStatementRepository;
 import com.simisinc.platform.infrastructure.persistence.xapi.XapiStatementSpecification;
 import com.simisinc.platform.presentation.controller.WidgetContext;

@@ -23,7 +23,7 @@
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="blog" class="com.simisinc.platform.domain.model.cms.Blog" scope="request"/>
 <jsp:useBean id="blogPost" class="com.simisinc.platform.domain.model.cms.BlogPost" scope="request"/>
-<jsp:useBean id="recordPaging" class="com.simisinc.platform.infrastructure.database.DataConstraints" scope="request"/>
+<jsp:useBean id="recordPaging" class="com.github.rajkowski.database.DataConstraints" scope="request"/>
 <div class="platform-blog-container">
   <div class="platform-blog-title">
     <h1>${html:toHtml(blogPost.title)}</h1>

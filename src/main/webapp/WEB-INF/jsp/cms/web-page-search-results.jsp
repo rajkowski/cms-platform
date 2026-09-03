@@ -25,7 +25,7 @@
 <%@ taglib prefix="user" uri="/WEB-INF/tlds/user-functions.tld" %>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="sitePropertyMap" class="java.util.HashMap" scope="request"/>
-<jsp:useBean id="recordPaging" class="com.simisinc.platform.infrastructure.database.DataConstraints" scope="request"/>
+<jsp:useBean id="recordPaging" class="com.github.rajkowski.database.DataConstraints" scope="request"/>
 <jsp:useBean id="searchCriteria" class="com.zeroio.platform.domain.model.cms.SearchCriteria" scope="request"/>
 <jsp:useBean id="viewMoreType" class="java.lang.String" scope="request"/>
 <c:if test="${!empty title}">

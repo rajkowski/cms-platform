@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,13 +26,12 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.Update;
 import com.simisinc.platform.domain.model.ecommerce.SalesTaxNexusAddress;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves sales tax nexus address objects
@@ -47,22 +47,17 @@ public class SalesTaxNexusAddressRepository {
   private static String[] PRIMARY_KEY = new String[] { "address_id" };
 
   public static List<SalesTaxNexusAddress> findAll() {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        null,
-        new DataConstraints().setDefaultColumnToSortBy("address_id"),
-        SalesTaxNexusAddressRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<SalesTaxNexusAddress>) result.getRecords();
-    }
-    return null;
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("address_id"))
+        .returnDataResult(SalesTaxNexusAddressRepository::buildRecord).getRecords();
   }
 
   public static SalesTaxNexusAddress findById(long addressId) {
-    return (SalesTaxNexusAddress) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("address_id = ?", addressId),
-        SalesTaxNexusAddressRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("address_id = ?", addressId)
+        .returnRecord(SalesTaxNexusAddressRepository::buildRecord);
   }
 
   public static SalesTaxNexusAddress save(SalesTaxNexusAddress record) {
@@ -76,9 +71,7 @@ public class SalesTaxNexusAddressRepository {
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
-      // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("address_id = ?", record.getId()));
-      // Finish transaction
+      DB.DELETE().FROM(TABLE_NAME).WHERE("address_id = ?", record.getId()).execute(connection);
       transaction.commit();
       return true;
     } catch (SQLException se) {
@@ -93,20 +86,19 @@ public class SalesTaxNexusAddressRepository {
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
-      // In a transaction (use the existing connection)
-      SqlUtils insertValues = new SqlUtils()
-          .add("street_address", record.getStreet())
-          .add("address_line_2", record.getAddressLine2())
-          .add("city", record.getCity())
-          .add("state", record.getState())
-          .add("country", record.getCountry())
-          .add("postal_code", record.getPostalCode())
-          .add("latitude", record.getLatitude())
-          .add("longitude", record.getLongitude())
-          .add("created_by", record.getCreatedBy())
-          .add("modified_by", record.getModifiedBy());
-      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
-      // Finish the transaction
+      long generatedId = DB.INSERT().INTO(TABLE_NAME)
+          .FIELD("street_address", record.getStreet())
+          .FIELD("address_line_2", record.getAddressLine2())
+          .FIELD("city", record.getCity())
+          .FIELD("state", record.getState())
+          .FIELD("country", record.getCountry())
+          .FIELD("postal_code", record.getPostalCode())
+          .FIELD("latitude", record.getLatitude())
+          .FIELD("longitude", record.getLongitude())
+          .FIELD("created_by", record.getCreatedBy())
+          .FIELD("modified_by", record.getModifiedBy())
+          .execute(connection);
+      record.setId(generatedId);
       transaction.commit();
       return record;
     } catch (SQLException se) {
@@ -116,19 +108,19 @@ public class SalesTaxNexusAddressRepository {
   }
 
   public static SalesTaxNexusAddress update(SalesTaxNexusAddress record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("street_address", record.getStreet())
-        .add("address_line_2", record.getAddressLine2())
-        .add("city", record.getCity())
-        .add("state", record.getState())
-        .add("country", record.getCountry())
-        .add("postal_code", record.getPostalCode())
-        .add("latitude", record.getLatitude())
-        .add("longitude", record.getLongitude())
-        .add("modified_by", record.getModifiedBy())
-        .add("modified", new Timestamp(System.currentTimeMillis()));
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("address_id = ?", record.getId()))) {
-      // CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("street_address", record.getStreet())
+        .SET("address_line_2", record.getAddressLine2())
+        .SET("city", record.getCity())
+        .SET("state", record.getState())
+        .SET("country", record.getCountry())
+        .SET("postal_code", record.getPostalCode())
+        .SET("latitude", record.getLatitude())
+        .SET("longitude", record.getLongitude())
+        .SET("modified_by", record.getModifiedBy())
+        .SET("modified", new Timestamp(System.currentTimeMillis()))
+        .WHERE("address_id = ?", record.getId());
+    if (update.execute().booleanValue()) {
       return record;
     }
     LOG.error("The update failed!");

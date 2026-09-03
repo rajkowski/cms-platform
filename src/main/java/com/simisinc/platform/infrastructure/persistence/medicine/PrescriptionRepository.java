@@ -24,14 +24,12 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.domain.model.medicine.Medicine;
 import com.simisinc.platform.domain.model.medicine.Prescription;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves prescription objects
@@ -79,34 +77,37 @@ public class PrescriptionRepository {
   }
 
   private static Prescription add(Connection connection, Prescription record) throws SQLException {
-    SqlUtils insertValues = new SqlUtils()
-        .add("medicine_id", record.getMedicineId(), -1)
-        .add("pharmacy", record.getPharmacyName())
-        .add("pharmacy_location", record.getPharmacyLocation())
-        .add("pharmacy_phone", record.getPharmacyPhone())
-        .add("rx_number", record.getRxNumber())
-        .add("refills_left", record.getRefillsLeft())
-        .add("pill_total", record.getDosagesPerRefill())
-        .add("barcode", record.getBarcode())
-        .add("comments", record.getComments())
-        .add("created_by", record.getCreatedBy())
-        .add("modified_by", record.getModifiedBy());
-    record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+    long generatedId = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("medicine_id", record.getMedicineId() == -1 ? null : record.getMedicineId())
+        .FIELD("pharmacy", record.getPharmacyName())
+        .FIELD("pharmacy_location", record.getPharmacyLocation())
+        .FIELD("pharmacy_phone", record.getPharmacyPhone())
+        .FIELD("rx_number", record.getRxNumber())
+        .FIELD("refills_left", record.getRefillsLeft())
+        .FIELD("pill_total", record.getDosagesPerRefill())
+        .FIELD("barcode", record.getBarcode())
+        .FIELD("comments", record.getComments())
+        .FIELD("created_by", record.getCreatedBy())
+        .FIELD("modified_by", record.getModifiedBy())
+        .execute(connection);
+    record.setId(generatedId);
     return record;
   }
 
   private static Prescription update(Prescription record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("pharmacy", record.getPharmacyName())
-        .add("pharmacy_location", record.getPharmacyLocation())
-        .add("pharmacy_phone", record.getPharmacyPhone())
-        .add("rx_number", record.getRxNumber())
-        .add("refills_left", record.getRefillsLeft())
-        .add("pill_total", record.getDosagesPerRefill())
-        .add("barcode", record.getBarcode())
-        .add("comments", record.getComments())
-        .add("modified_by", record.getModifiedBy());
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("prescription_id = ?", record.getId()))) {
+    boolean updated = DB.UPDATE(TABLE_NAME)
+        .SET("pharmacy", record.getPharmacyName())
+        .SET("pharmacy_location", record.getPharmacyLocation())
+        .SET("pharmacy_phone", record.getPharmacyPhone())
+        .SET("rx_number", record.getRxNumber())
+        .SET("refills_left", record.getRefillsLeft())
+        .SET("pill_total", record.getDosagesPerRefill())
+        .SET("barcode", record.getBarcode())
+        .SET("comments", record.getComments())
+        .SET("modified_by", record.getModifiedBy())
+        .WHERE("prescription_id = ?", record.getId())
+        .execute();
+    if (updated) {
       return record;
     }
     LOG.error("The update failed!");
@@ -118,7 +119,7 @@ public class PrescriptionRepository {
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
       // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("prescription_id = ?", record.getId()));
+      DB.DELETE().FROM(TABLE_NAME).WHERE("prescription_id = ?", record.getId()).execute(connection);
       // Finish transaction
       transaction.commit();
       return true;
@@ -129,46 +130,42 @@ public class PrescriptionRepository {
   }
 
   public static void remove(Connection connection, Medicine record) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("medicine_id = ?", record.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("medicine_id = ?", record.getId()).execute(connection);
   }
 
   public static void removeAll(Connection connection, Medicine record) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("medicine_id = ?", record.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("medicine_id = ?", record.getId()).execute(connection);
   }
 
   public static Prescription findById(long id) {
     if (id == -1) {
       return null;
     }
-    return (Prescription) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("prescription_id = ?", id),
-        PrescriptionRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("prescription_id = ?", id)
+        .returnRecord(PrescriptionRepository::buildRecord);
   }
 
   public static Prescription findByMedicineId(long medicineId) {
     if (medicineId == -1) {
       return null;
     }
-    return (Prescription) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("medicine_id = ?", medicineId),
-        PrescriptionRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("medicine_id = ?", medicineId)
+        .returnRecord(PrescriptionRepository::buildRecord);
   }
 
   public static List<Prescription> findAllByMedicineId(long medicineId) {
     if (medicineId == -1) {
       return null;
     }
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        DB.WHERE("medicine_id = ?", medicineId),
-        new DataConstraints().setDefaultColumnToSortBy("prescription_id").setUseCount(false),
-        PrescriptionRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<Prescription>) result.getRecords();
-    }
-    return null;
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("medicine_id = ?", medicineId)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("prescription_id").setUseCount(false))
+        .returnDataResult(PrescriptionRepository::buildRecord).getRecords();
   }
 
   private static Prescription buildRecord(ResultSet rs) {

@@ -24,11 +24,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.domain.model.DatabaseVersion;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves database version objects
@@ -44,26 +42,26 @@ public class DatabaseVersionRepository {
   private static String[] PRIMARY_KEY = new String[] { "version_id" };
 
   public static long count() {
-    return DB.selectCountFrom(TABLE_NAME);
+    return DB.SELECT("COUNT(*)")
+        .FROM(TABLE_NAME)
+        .returnCount();
   }
 
   public static DatabaseVersion findByVersion(String version) {
     if (StringUtils.isBlank(version)) {
       return null;
     }
-    return (DatabaseVersion) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("version = ?", version),
-        DatabaseVersionRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("version = ?", version)
+        .returnRecord(DatabaseVersionRepository::buildRecord);
   }
 
   public static List<DatabaseVersion> findAll() {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        null,
-        new DataConstraints().setDefaultColumnToSortBy(PRIMARY_KEY[0]),
-        DatabaseVersionRepository::buildRecord);
-    return (List<DatabaseVersion>) result.getRecords();
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy(PRIMARY_KEY[0]))
+        .returnDataResult(DatabaseVersionRepository::buildRecord).getRecords();
   }
 
   public static DatabaseVersion save(DatabaseVersion record) {
@@ -71,10 +69,11 @@ public class DatabaseVersionRepository {
   }
 
   private static DatabaseVersion add(DatabaseVersion record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("file", StringUtils.trimToNull(record.getFile()))
-        .add("version", StringUtils.trimToNull(record.getVersion()));
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    long insertedId = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("file", StringUtils.trimToNull(record.getFile()))
+        .FIELD("version", StringUtils.trimToNull(record.getVersion()))
+        .execute();
+    record.setId(insertedId);
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;

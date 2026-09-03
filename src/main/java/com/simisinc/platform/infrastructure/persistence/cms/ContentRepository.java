@@ -26,15 +26,16 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
+import com.github.rajkowski.database.Insert;
+import com.github.rajkowski.database.Select;
+import com.github.rajkowski.database.Update;
 import com.simisinc.platform.application.cms.HtmlCommand;
 import com.simisinc.platform.application.cms.ResolveContentDirectivesCommand;
 import com.simisinc.platform.domain.model.cms.Content;
 import com.simisinc.platform.infrastructure.cache.CacheManager;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves content objects
@@ -49,45 +50,45 @@ public class ContentRepository {
   private static String TABLE_NAME = "content";
   private static String[] PRIMARY_KEY = new String[] { "content_id" };
 
-  private static DataResult query(ContentSpecification specification, DataConstraints constraints) {
-    SqlUtils select = new SqlUtils();
-    SqlWhere where = null;
-    SqlUtils orderBy = null;
+  private static DataResult<Content> query(ContentSpecification specification, DataConstraints constraints) {
+    Select select = DB.SELECT("content.*").FROM(TABLE_NAME).WHERE();
     if (specification != null) {
-      where = DB.WHERE()
-          .andAddIfHasValue("content_id = ?", specification.getId(), -1)
-          .andAddIfHasValue("content_unique_id = ?", specification.getUniqueId());
+      if (specification.getId() > -1) {
+        select.AND("content_id = ?", specification.getId());
+      }
+      if (StringUtils.isNotBlank(specification.getUniqueId())) {
+        select.AND("content_unique_id = ?", specification.getUniqueId());
+      }
       if (StringUtils.isNotBlank(specification.getSearchTerm())) {
-
         String quotedSearchTerm = "\"" + specification.getSearchTerm().trim() + "\"";
         String searchTermSeparated = specification.getSearchTerm().trim().replaceAll("\\s+", " OR ");
         String searchToUse = quotedSearchTerm + " OR " + searchTermSeparated;
         String searchTermPattern = "%" + specification.getSearchTerm().trim() + "%";
 
-        select.add(
+        select.SELECT(
             "ts_headline('english', content_text, websearch_to_tsquery('content_stem', ?), 'StartSel=${b}, StopSel=${/b}, MaxWords=30, MinWords=15, ShortWord=3, HighlightAll=FALSE, MaxFragments=2, FragmentDelimiter=\" ... \"') AS highlight",
-            specification.getSearchTerm().trim());
-        select.add("ts_rank_cd(tsv, websearch_to_tsquery('content_stem', ?)) AS rank", searchToUse);
+          (Object[]) new Object[] { specification.getSearchTerm().trim() });
+        select.SELECT("ts_rank_cd(tsv, websearch_to_tsquery('content_stem', ?)) AS rank", (Object[]) new Object[] { searchToUse });
 
-        where.AND("(tsv @@ websearch_to_tsquery('content_stem', ?) OR content_unique_id LIKE ?)",
-            new String[] { searchToUse, searchTermPattern });
-
-        // Override the order by for rank first
-        orderBy = new SqlUtils();
-        orderBy.add("rank DESC, content.modified DESC");
+        select.AND("(tsv @@ websearch_to_tsquery('content_stem', ?) OR content_unique_id LIKE ?)",
+            searchToUse, searchTermPattern);
+        select.ORDER_BY("rank DESC, content.modified DESC");
       }
     }
-    return DB.selectAllFrom(TABLE_NAME, select, where, orderBy, constraints, ContentRepository::buildRecord);
+    if (constraints != null) {
+      select.WITH(constraints);
+    }
+    return select.returnDataResult(ContentRepository::buildRecord);
   }
 
   public static Content findByUniqueId(String contentUniqueId) {
     if (StringUtils.isBlank(contentUniqueId)) {
       return null;
     }
-    return (Content) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("content_unique_id = ?", contentUniqueId),
-        ContentRepository::buildRecord);
+    return DB.SELECT("content.*")
+        .FROM(TABLE_NAME)
+        .WHERE("content_unique_id = ?", contentUniqueId)
+        .returnRecord(ContentRepository::buildRecord);
   }
 
   public static List<Content> findAll() {
@@ -99,11 +100,7 @@ public class ContentRepository {
       constraints = new DataConstraints();
     }
     constraints.setDefaultColumnToSortBy("content_unique_id");
-    DataResult result = query(specification, constraints);
-    if (result.hasRecords()) {
-      return (List<Content>) result.getRecords();
-    }
-    return null;
+    return query(specification, constraints).getRecords();
   }
 
   public static Content save(Content record) {
@@ -114,16 +111,15 @@ public class ContentRepository {
   }
 
   public static Content add(Content record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("content_unique_id", StringUtils.trimToNull(record.getUniqueId()))
-        .add("content", StringUtils.trimToNull(record.getContent()))
-        .add("content_text",
-            HtmlCommand
-                .text(ResolveContentDirectivesCommand.resolveDirectives(StringUtils.trimToNull(record.getContent()))))
-        .add("draft_content", StringUtils.trimToNull(record.getDraftContent()))
-        .add("created_by", record.getCreatedBy())
-        .add("modified_by", record.getModifiedBy());
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    Insert insert = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("content_unique_id", StringUtils.trimToNull(record.getUniqueId()))
+        .FIELD("content", StringUtils.trimToNull(record.getContent()))
+        .FIELD("content_text",
+            HtmlCommand.text(ResolveContentDirectivesCommand.resolveDirectives(StringUtils.trimToNull(record.getContent()))))
+        .FIELD("draft_content", StringUtils.trimToNull(record.getDraftContent()))
+        .FIELD("created_by", record.getCreatedBy())
+        .FIELD("modified_by", record.getModifiedBy());
+    record.setId(insert.execute());
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -132,17 +128,14 @@ public class ContentRepository {
   }
 
   public static Content update(Content record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("content", StringUtils.trimToNull(record.getContent()))
-        .add("content_text",
-            HtmlCommand
-                .text(ResolveContentDirectivesCommand.resolveDirectives(StringUtils.trimToNull(record.getContent()))))
-        .add("draft_content", StringUtils.trimToNull(record.getDraftContent()))
-        .add("modified_by", record.getModifiedBy())
-        .add("modified", new Timestamp(System.currentTimeMillis()));
-    if (DB.update(TABLE_NAME,
-        updateValues,
-        DB.WHERE("content_unique_id = ?", StringUtils.trimToNull(record.getUniqueId())))) {
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("content", StringUtils.trimToNull(record.getContent()))
+        .SET("content_text",
+            HtmlCommand.text(ResolveContentDirectivesCommand.resolveDirectives(StringUtils.trimToNull(record.getContent()))))
+        .SET("draft_content", StringUtils.trimToNull(record.getDraftContent()))
+        .SET("modified_by", record.getModifiedBy())
+        .SET("modified", new Timestamp(System.currentTimeMillis()));
+    if (update.WHERE("content_unique_id = ?", StringUtils.trimToNull(record.getUniqueId())).execute()) {
       CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
       return record;
     }
@@ -154,16 +147,13 @@ public class ContentRepository {
     if (StringUtils.isBlank(record.getUniqueId())) {
       return;
     }
-    // Handle publishing and making sure there is content to publish
-    SqlUtils updateValues = new SqlUtils();
-    updateValues.add("content = draft_content");
-    updateValues.add("draft_content = null");
-    updateValues.add("content_text", HtmlCommand
-        .text(ResolveContentDirectivesCommand.resolveDirectives(StringUtils.trimToNull(record.getContent()))));
-    if (DB.update(
-        TABLE_NAME,
-        updateValues,
-        DB.WHERE("draft_content IS NOT NULL AND content_unique_id = ?", record.getUniqueId()))) {
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("content", "draft_content")
+        .SET("draft_content", (String) null)
+        .SET("content_text", HtmlCommand
+            .text(ResolveContentDirectivesCommand.resolveDirectives(StringUtils.trimToNull(record.getContent()))))
+        .WHERE("draft_content IS NOT NULL AND content_unique_id = ?", record.getUniqueId());
+    if (update.execute()) {
       CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
     }
   }
@@ -175,17 +165,11 @@ public class ContentRepository {
     if (StringUtils.isBlank(uniqueId)) {
       return null;
     }
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        new SqlUtils(),
-        DB.WHERE("content LIKE ?", "%${uniqueId:" + uniqueId + "}%"),
-        null,
-        null,
-        ContentRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<Content>) result.getRecords();
-    }
-    return null;
+    DataResult<Content> result = DB.SELECT("content.*")
+        .FROM(TABLE_NAME)
+        .WHERE("content LIKE ?", "%${uniqueId:" + uniqueId + "}%")
+        .returnDataResult(ContentRepository::buildRecord);
+    return result.getRecords();
   }
 
   /**
@@ -193,16 +177,17 @@ public class ContentRepository {
    */
   public static void updateEmbeddingContentText(String uniqueId) {
     List<Content> embeddingRecords = findAllEmbeddingReferences(uniqueId);
-    if (embeddingRecords == null) {
+    if (embeddingRecords == null || embeddingRecords.isEmpty()) {
       return;
     }
     for (Content embedding : embeddingRecords) {
-      SqlUtils updateValues = new SqlUtils()
-          .add("content_text",
+      Update update = DB.UPDATE(TABLE_NAME)
+          .SET("content_text",
               HtmlCommand.text(
                   ResolveContentDirectivesCommand.resolveDirectives(StringUtils.trimToNull(embedding.getContent()))))
-          .add("modified", new Timestamp(System.currentTimeMillis()));
-      if (DB.update(TABLE_NAME, updateValues, DB.WHERE("content_unique_id = ?", embedding.getUniqueId()))) {
+          .SET("modified", new Timestamp(System.currentTimeMillis()))
+          .WHERE("content_unique_id = ?", embedding.getUniqueId());
+      if (update.execute()) {
         CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, embedding.getUniqueId());
         LOG.debug("Updated content_text for embedding content: " + embedding.getUniqueId());
       }
@@ -213,11 +198,10 @@ public class ContentRepository {
     if (record == null || StringUtils.isBlank(record.getUniqueId())) {
       return;
     }
-    String updateValues = "draft_content = null";
-    if (DB.update(
-        TABLE_NAME,
-        updateValues,
-        DB.WHERE("content_unique_id = ?", record.getUniqueId()))) {
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("draft_content", (String) null)
+        .WHERE("content_unique_id = ?", record.getUniqueId());
+    if (update.execute()) {
       CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
     }
   }

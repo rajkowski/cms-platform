@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,15 +27,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
+import com.github.rajkowski.database.Select;
 import com.simisinc.platform.domain.model.cms.Wiki;
 import com.simisinc.platform.domain.model.cms.WikiPage;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves wiki page objects
@@ -49,47 +49,54 @@ public class WikiPageRepository {
   private static String TABLE_NAME = "wiki_pages";
   private static String[] PRIMARY_KEY = new String[] { "wiki_page_id" };
 
-  private static SqlWhere createWhereStatement(WikiPageSpecification specification) {
-    SqlWhere where = null;
+  private static Select createSelect(WikiPageSpecification specification) {
+    Select select = DB.SELECT("*").FROM(TABLE_NAME).WHERE();
     if (specification != null) {
-      where = DB.WHERE()
-          .andAddIfHasValue("wiki_page_id = ?", specification.getId(), -1)
-          .andAddIfHasValue("wiki_id = ?", specification.getWikiId(), -1)
-          .andAddIfHasValue("page_unique_id = ?", specification.getUniqueId());
+      if (specification.getId() > -1) {
+        select.AND("wiki_page_id = ?", specification.getId());
+      }
+      if (specification.getWikiId() > -1) {
+        select.AND("wiki_id = ?", specification.getWikiId());
+      }
+      if (StringUtils.isNotBlank(specification.getUniqueId())) {
+        select.AND("page_unique_id = ?", specification.getUniqueId());
+      }
       if (specification.getStartingDateRange() != null && specification.getEndingDateRange() != null) {
-        where.AND("((start_date >= ? AND start_date < ?) OR (end_date >= ? AND end_date < ?))",
-            new Timestamp[] { specification.getStartingDateRange(), specification.getEndingDateRange(),
-                specification.getStartingDateRange(), specification.getEndingDateRange() });
+        select.AND("((start_date >= ? AND start_date < ?) OR (end_date >= ? AND end_date < ?))",
+            specification.getStartingDateRange(), specification.getEndingDateRange(),
+            specification.getStartingDateRange(), specification.getEndingDateRange());
       }
     }
-    return where;
+    return select;
   }
 
-  private static DataResult query(WikiPageSpecification specification, DataConstraints constraints) {
-    SqlWhere where = createWhereStatement(specification);
-    return DB.selectAllFrom(TABLE_NAME, where, constraints, WikiPageRepository::buildRecord);
+  private static DataResult<WikiPage> query(WikiPageSpecification specification, DataConstraints constraints) {
+    Select select = createSelect(specification);
+    if (constraints != null) {
+      select.WITH(constraints);
+    }
+    return select.returnDataResult(WikiPageRepository::buildRecord);
   }
 
   public static WikiPage findByUniqueId(Long wikiId, String pageUniqueId) {
     if (StringUtils.isBlank(pageUniqueId)) {
       return null;
     }
-    return (WikiPage) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE()
-            .AND("wiki_id = ?", wikiId)
-            .AND("page_unique_id = ?", pageUniqueId.toLowerCase()),
-        WikiPageRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("wiki_id = ?", wikiId)
+        .AND("page_unique_id = ?", pageUniqueId.toLowerCase())
+        .returnRecord(WikiPageRepository::buildRecord);
   }
 
   public static WikiPage findById(Long wikiPageId) {
     if (wikiPageId == -1) {
       return null;
     }
-    return (WikiPage) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("wiki_page_id = ?", wikiPageId),
-        WikiPageRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("wiki_page_id = ?", wikiPageId)
+        .returnRecord(WikiPageRepository::buildRecord);
   }
 
   public static List<WikiPage> findAll() {
@@ -106,8 +113,7 @@ public class WikiPageRepository {
   }
 
   public static long findCount(WikiPageSpecification specification) {
-    SqlWhere where = createWhereStatement(specification);
-    return DB.selectCountFrom(TABLE_NAME, where);
+    return createSelect(specification).returnCount();
   }
 
   public static WikiPage save(WikiPage record) {
@@ -117,27 +123,27 @@ public class WikiPageRepository {
     return add(record);
   }
 
-  public static long addDefaultPage(Connection connection, Wiki wiki) throws SQLException {
-    SqlUtils insertValues = new SqlUtils()
-        .add("wiki_id", wiki.getId())
-        .add("page_unique_id", "home")
-        .add("title", "Home")
-        .add("body", "Welcome to the " + wiki.getName() + " wiki!")
-        .add("created_by", wiki.getCreatedBy())
-        .add("modified_by", wiki.getModifiedBy());
-    return DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY);
+  public static long addDefaultPage(Connection connection, Wiki wiki) {
+    return DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("wiki_id", wiki.getId())
+        .FIELD("page_unique_id", "home")
+        .FIELD("title", "Home")
+        .FIELD("body", "Welcome to the " + wiki.getName() + " wiki!")
+        .FIELD("created_by", wiki.getCreatedBy())
+        .FIELD("modified_by", wiki.getModifiedBy())
+        .execute(connection);
   }
 
   public static WikiPage add(WikiPage record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("wiki_id", record.getWikiId())
-        .add("page_unique_id", StringUtils.trimToNull(record.getUniqueId()).toLowerCase())
-        .add("title", StringUtils.trimToNull(record.getTitle()))
-        .add("body", StringUtils.trimToNull(record.getBody()))
-        .add("summary", StringUtils.trimToNull(record.getSummary()))
-        .add("created_by", record.getCreatedBy())
-        .add("modified_by", record.getModifiedBy());
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    record.setId(DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("wiki_id", record.getWikiId())
+        .FIELD("page_unique_id", StringUtils.trim(record.getUniqueId()).toLowerCase())
+        .FIELD("title", StringUtils.trimToNull(record.getTitle()))
+        .FIELD("body", StringUtils.trimToNull(record.getBody()))
+        .FIELD("summary", StringUtils.trimToNull(record.getSummary()))
+        .FIELD("created_by", record.getCreatedBy())
+        .FIELD("modified_by", record.getModifiedBy())
+        .execute());
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -146,16 +152,17 @@ public class WikiPageRepository {
   }
 
   public static WikiPage update(WikiPage record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("wiki_id", record.getWikiId())
-        .add("page_unique_id", StringUtils.trimToNull(record.getUniqueId()).toLowerCase())
-        .add("title", StringUtils.trimToNull(record.getTitle()))
-        .add("body", StringUtils.trimToNull(record.getBody()))
-        .add("summary", StringUtils.trimToNull(record.getSummary()))
-        .add("modified_by", record.getModifiedBy())
-        .add("modified", new Timestamp(System.currentTimeMillis()));
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("wiki_page_id = ?", record.getId()))) {
-      //      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
+    boolean updated = DB.UPDATE(TABLE_NAME)
+        .SET("wiki_id", record.getWikiId())
+        .SET("page_unique_id", StringUtils.trim(record.getUniqueId()).toLowerCase())
+        .SET("title", StringUtils.trimToNull(record.getTitle()))
+        .SET("body", StringUtils.trimToNull(record.getBody()))
+        .SET("summary", StringUtils.trimToNull(record.getSummary()))
+        .SET("modified_by", record.getModifiedBy())
+        .SET("modified", new Timestamp(System.currentTimeMillis()))
+        .WHERE("wiki_page_id = ?", record.getId())
+        .execute();
+    if (updated) {
       return record;
     }
     LOG.error("The update failed!");
@@ -166,13 +173,7 @@ public class WikiPageRepository {
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
-      // Delete the references
-      // ItemCategoryRepository.removeAll(connection, record);
-      // CollectionRepository.updateItemCount(connection, record.getCollectionId(), -1);
-      // CategoryRepository.updateItemCount(connection, record.getCategoryId(), -1);
-      // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("wiki_page_id = ?", record.getId()));
-      // Finish transaction
+      DB.DELETE().FROM(TABLE_NAME).WHERE("wiki_page_id = ?", record.getId()).execute(connection);
       transaction.commit();
       return true;
     } catch (SQLException se) {
@@ -182,7 +183,7 @@ public class WikiPageRepository {
   }
 
   public static void removeAll(Connection connection, Wiki wiki) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("wiki_id = ?", wiki.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("wiki_id = ?", wiki.getId()).execute(connection);
   }
 
   private static WikiPage buildRecord(ResultSet rs) {

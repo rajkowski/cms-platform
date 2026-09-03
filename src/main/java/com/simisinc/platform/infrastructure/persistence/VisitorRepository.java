@@ -25,13 +25,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.Insert;
 import com.simisinc.platform.domain.model.Visitor;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves visitor objects
@@ -47,37 +46,33 @@ public class VisitorRepository {
   private static String[] PRIMARY_KEY = new String[] { "visitor_id" };
 
   public static List<Visitor> findAll() {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        null,
-        new DataConstraints().setDefaultColumnToSortBy("visitor_id"),
-        VisitorRepository::buildRecord);
-    if (result.hasRecords()) {
-      return (List<Visitor>) result.getRecords();
-    }
-    return null;
+    return DB.SELECT("visitors.*")
+        .FROM(TABLE_NAME)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("visitor_id"))
+        .returnDataResult(VisitorRepository::buildRecord).getRecords();
   }
 
   public static Visitor findByToken(String visitorUniqueId) {
     if (StringUtils.isBlank(visitorUniqueId)) {
       return null;
     }
-    return (Visitor) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("token = ?", visitorUniqueId),
-        VisitorRepository::buildRecord);
+    return DB.SELECT("visitors.*")
+        .FROM(TABLE_NAME)
+        .WHERE("token = ?", visitorUniqueId)
+        .returnRecord(VisitorRepository::buildRecord);
   }
 
   public static Visitor add(Visitor record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("token", record.getToken())
-        .add("session_id", record.getSessionId());
+    Insert insert = DB.INSERT()
+        .INTO(TABLE_NAME)
+        .FIELD("token", record.getToken())
+        .FIELD("session_id", record.getSessionId());
     // Use a transaction
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
       // In a transaction (use the existing connection)
-      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
+      record.setId(insert.execute(connection));
       // Manage the related session
       SessionRepository.updateVisitorId(connection, record);
       // Finish the transaction

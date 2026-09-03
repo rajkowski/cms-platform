@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,17 +17,17 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.application.cms.HtmlCommand;
 import com.simisinc.platform.domain.model.socialmedia.InstagramMedia;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.socialmedia.InstagramMediaRepository;
 import com.simisinc.platform.infrastructure.persistence.socialmedia.InstagramMediaSpecification;
 import com.simisinc.platform.presentation.controller.RequestConstants;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Description

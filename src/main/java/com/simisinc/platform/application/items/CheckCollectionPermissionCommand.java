@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +17,7 @@
 
 package com.simisinc.platform.application.items;
 
-import com.simisinc.platform.infrastructure.database.DB;
+import com.github.rajkowski.database.DB;
 
 /**
  * Methods to check collection object permissions
@@ -27,38 +28,38 @@ import com.simisinc.platform.infrastructure.database.DB;
 public class CheckCollectionPermissionCommand {
 
   public static boolean userHasAddPermission(long collectionId, long userId) {
-    // SELECT COUNT(*) FROM user_groups WHERE user_id = 2 AND group_id IN (SELECT group_id FROM collection_groups WHERE collection_id = 14 AND add_permission = true);
-    long count = DB.selectCountFrom("user_groups",
-        DB.WHERE("user_id = ?", userId)
-            .AND("group_id IN (SELECT group_id FROM collection_groups WHERE collection_id = ? AND add_permission = true)",
-                collectionId));
-    return (count > 0);
+    long count = DB.SELECT("COUNT(*)")
+        .FROM("user_groups")
+        .WHERE("user_id = ?", userId)
+        .AND("group_id IN (SELECT group_id FROM collection_groups WHERE collection_id = ? AND add_permission = ?)", collectionId, true)
+        .returnCount();
+    return count > 0;
   }
 
   public static boolean userHasViewPermission(long collectionId, long userId) {
-    // SELECT COUNT(*) FROM user_groups WHERE user_id = 2 AND group_id IN (SELECT group_id FROM collection_groups WHERE collection_id = 14 AND view_permission = true);
-    long count = DB.selectCountFrom("user_groups",
-        DB.WHERE("user_id = ?", userId)
-            .AND("group_id IN (SELECT group_id FROM collection_groups WHERE collection_id = ? AND view_permission = true)",
-                collectionId));
-    return (count > 0);
+    long count = DB.SELECT("COUNT(*)")
+        .FROM("user_groups")
+        .WHERE("user_id = ?", userId)
+        .AND("group_id IN (SELECT group_id FROM collection_groups WHERE collection_id = ? AND view_permission = ?)", collectionId, true)
+        .returnCount();
+    return count > 0;
   }
 
   public static boolean userHasEditPermission(long collectionId, long userId) {
-    // SELECT COUNT(*) FROM user_groups WHERE user_id = 2 AND group_id IN (SELECT group_id FROM collection_groups WHERE collection_id = 14 AND edit_permission = true);
-    long count = DB.selectCountFrom("user_groups",
-        DB.WHERE("user_id = ?", userId)
-            .AND("group_id IN (SELECT group_id FROM collection_groups WHERE collection_id = ? AND edit_permission = true)",
-                collectionId));
-    return (count > 0);
+    long count = DB.SELECT("COUNT(*)")
+        .FROM("user_groups")
+        .WHERE("user_id = ?", userId)
+        .AND("group_id IN (SELECT group_id FROM collection_groups WHERE collection_id = ? AND edit_permission = ?)", collectionId, true)
+        .returnCount();
+    return count > 0;
   }
 
   public static boolean userHasDeletePermission(long collectionId, long userId) {
-    // SELECT COUNT(*) FROM user_groups WHERE user_id = 2 AND group_id IN (SELECT group_id FROM collection_groups WHERE collection_id = 14 AND delete_permission = true);
-    long count = DB.selectCountFrom("user_groups",
-        DB.WHERE("user_id = ?", userId)
-            .AND("group_id IN (SELECT group_id FROM collection_groups WHERE collection_id = ? AND delete_permission = true)",
-                collectionId));
-    return (count > 0);
+    long count = DB.SELECT("COUNT(*)")
+        .FROM("user_groups")
+        .WHERE("user_id = ?", userId)
+        .AND("group_id IN (SELECT group_id FROM collection_groups WHERE collection_id = ? AND delete_permission = ?)", collectionId, true)
+        .returnCount();
+    return count > 0;
   }
 }

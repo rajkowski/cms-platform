@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,12 +28,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
 import com.simisinc.platform.domain.model.cms.MenuItem;
 import com.simisinc.platform.domain.model.cms.MenuTab;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves menu item objects
@@ -51,38 +51,37 @@ public class MenuItemRepository {
     if (id == -1) {
       return null;
     }
-    return (MenuItem) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("menu_item_id = ?", id),
-        MenuItemRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("menu_item_id = ?", id)
+        .returnRecord(MenuItemRepository::buildRecord);
   }
 
   public static MenuItem findByLink(String link) {
     if (link == null) {
       return null;
     }
-    return (MenuItem) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("link = ?", link),
-        MenuItemRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("link = ?", link)
+        .returnRecord(MenuItemRepository::buildRecord);
   }
 
   public static List<MenuItem> findAll() {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        null,
-        new DataConstraints().setDefaultColumnToSortBy("menu_tab_id, item_order, menu_item_id"),
-        MenuItemRepository::buildRecord);
-    return (List<MenuItem>) result.getRecords();
+    DataResult<MenuItem> result = DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("menu_tab_id, item_order, menu_item_id"))
+        .returnDataResult(MenuItemRepository::buildRecord);
+    return result.getRecords();
   }
 
   public static List<MenuItem> findAllByMenuTab(MenuTab menuTab) {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        DB.WHERE("menu_tab_id = ?", menuTab.getId()),
-        new DataConstraints().setDefaultColumnToSortBy("item_order, menu_item_id").setUseCount(false),
-        MenuItemRepository::buildRecord);
-    return (List<MenuItem>) result.getRecords();
+    DataResult<MenuItem> result = DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("menu_tab_id = ?", menuTab.getId())
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("item_order, menu_item_id").setUseCount(false))
+        .returnDataResult(MenuItemRepository::buildRecord);
+    return result.getRecords();
   }
 
   private static PreparedStatement createPreparedStatementAllActiveByMenuTab(Connection connection, MenuTab menuTab)
@@ -122,18 +121,19 @@ public class MenuItemRepository {
   }
 
   public static MenuItem add(MenuItem record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("menu_tab_id", record.getMenuTabId())
-        .add("item_order", record.getItemOrder())
-        .add("name", StringUtils.trimToNull(record.getName()))
-        .add("link", StringUtils.trimToNull(record.getLink()))
-        .add("page_title", StringUtils.trimToNull(record.getPageTitle()))
-        .add("page_keywords", StringUtils.trimToNull(record.getPageKeywords()))
-        .add("page_description", StringUtils.trimToNull(record.getPageDescription()))
-        .add("draft", record.isDraft())
-        .add("enabled", record.isEnabled())
-        .add("comments", StringUtils.trimToNull(record.getComments()));
-    record.setId(DB.insertInto(TABLE_NAME, insertValues, PRIMARY_KEY));
+    long id = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("menu_tab_id", record.getMenuTabId())
+        .FIELD("item_order", record.getItemOrder())
+        .FIELD("name", StringUtils.trimToNull(record.getName()))
+        .FIELD("link", StringUtils.trimToNull(record.getLink()))
+        .FIELD("page_title", StringUtils.trimToNull(record.getPageTitle()))
+        .FIELD("page_keywords", StringUtils.trimToNull(record.getPageKeywords()))
+        .FIELD("page_description", StringUtils.trimToNull(record.getPageDescription()))
+        .FIELD("draft", record.isDraft())
+        .FIELD("enabled", record.isEnabled())
+        .FIELD("comments", StringUtils.trimToNull(record.getComments()))
+        .execute();
+    record.setId(id);
     if (record.getId() == -1) {
       LOG.error("An id was not set!");
       return null;
@@ -142,18 +142,20 @@ public class MenuItemRepository {
   }
 
   public static MenuItem update(MenuItem record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("menu_tab_id", record.getMenuTabId())
-        .add("item_order", record.getItemOrder())
-        .add("name", StringUtils.trimToNull(record.getName()))
-        .add("link", StringUtils.trimToNull(record.getLink()))
-        .add("page_title", StringUtils.trimToNull(record.getPageTitle()))
-        .add("page_keywords", StringUtils.trimToNull(record.getPageKeywords()))
-        .add("page_description", StringUtils.trimToNull(record.getPageDescription()))
-        .add("draft", record.isDraft())
-        .add("enabled", record.isEnabled())
-        .add("comments", StringUtils.trimToNull(record.getComments()));
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("menu_item_id = ?", record.getId()))) {
+    boolean updated = DB.UPDATE(TABLE_NAME)
+        .SET("menu_tab_id", record.getMenuTabId())
+        .SET("item_order", record.getItemOrder())
+        .SET("name", StringUtils.trimToNull(record.getName()))
+        .SET("link", StringUtils.trimToNull(record.getLink()))
+        .SET("page_title", StringUtils.trimToNull(record.getPageTitle()))
+        .SET("page_keywords", StringUtils.trimToNull(record.getPageKeywords()))
+        .SET("page_description", StringUtils.trimToNull(record.getPageDescription()))
+        .SET("draft", record.isDraft())
+        .SET("enabled", record.isEnabled())
+        .SET("comments", StringUtils.trimToNull(record.getComments()))
+        .WHERE("menu_item_id = ?", record.getId())
+        .execute();
+    if (updated) {
       return record;
     }
     LOG.error("The update failed!");
@@ -161,11 +163,11 @@ public class MenuItemRepository {
   }
 
   public static boolean remove(MenuItem record) {
-    return (DB.deleteFrom(TABLE_NAME, DB.WHERE("menu_item_id = ?", record.getId())) > 0);
+    return DB.DELETE().FROM(TABLE_NAME).WHERE("menu_item_id = ?", record.getId()).execute();
   }
 
   public static void removeAll(Connection connection, MenuTab record) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("menu_tab_id = ?", record.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("menu_tab_id = ?", record.getId()).execute(connection);
   }
 
   private static PreparedStatement createPreparedStatementNextTabOrder(Connection connection, MenuTab menuTab) throws SQLException {

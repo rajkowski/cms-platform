@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,16 +27,17 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
+import com.github.rajkowski.database.DataResult;
+import com.github.rajkowski.database.Insert;
+import com.github.rajkowski.database.Select;
+import com.github.rajkowski.database.Update;
 import com.simisinc.platform.domain.model.items.Activity;
 import com.simisinc.platform.domain.model.items.Collection;
 import com.simisinc.platform.domain.model.items.Item;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
-import com.simisinc.platform.infrastructure.database.SqlWhere;
 
 /**
  * Persists and retrieves activity objects
@@ -58,20 +60,17 @@ public class ActivityRepository {
   }
 
   private static Activity add(Activity record) {
-    SqlUtils insertValues = new SqlUtils()
-        .add("item_id", record.getItemId())
-        .add("collection_id", record.getCollectionId())
-        .add("activity_type", record.getActivityType())
-        .add("message_text", StringUtils.trimToNull(record.getMessageText()))
-        .add("created_by", record.getCreatedBy())
-        .add("modified_by", record.getModifiedBy());
-    // Use a transaction for related data
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
-      // In a transaction (use the existing connection)
-      record.setId(DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY));
-      // Finish the transaction
+      Insert insert = DB.INSERT().INTO(TABLE_NAME)
+          .FIELD("item_id", record.getItemId())
+          .FIELD("collection_id", record.getCollectionId())
+          .FIELD("activity_type", record.getActivityType())
+          .FIELD("message_text", StringUtils.trimToNull(record.getMessageText()))
+          .FIELD("created_by", record.getCreatedBy())
+          .FIELD("modified_by", record.getModifiedBy());
+      record.setId(insert.execute(connection));
       transaction.commit();
       return record;
     } catch (SQLException se) {
@@ -82,11 +81,12 @@ public class ActivityRepository {
   }
 
   private static Activity update(Activity record) {
-    SqlUtils updateValues = new SqlUtils()
-        .add("message_text", StringUtils.trimToNull(record.getMessageText()))
-        .add("modified_by", record.getModifiedBy())
-        .add("modified", new Timestamp(System.currentTimeMillis()));
-    if (DB.update(TABLE_NAME, updateValues, DB.WHERE("activity_id = ?", record.getId()))) {
+    Update update = DB.UPDATE(TABLE_NAME)
+        .SET("message_text", StringUtils.trimToNull(record.getMessageText()))
+        .SET("modified_by", record.getModifiedBy())
+        .SET("modified", new Timestamp(System.currentTimeMillis()))
+        .WHERE("activity_id = ?", record.getId());
+    if (update.execute().booleanValue()) {
       return record;
     }
     LOG.error("The update failed!");
@@ -97,10 +97,7 @@ public class ActivityRepository {
     try (Connection connection = DB.getConnection();
         AutoStartTransaction a = new AutoStartTransaction(connection);
         AutoRollback transaction = new AutoRollback(connection)) {
-      // Delete the references
-      // Delete the record
-      DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("activity_id = ?", record.getId()));
-      // Finish transaction
+      DB.DELETE().FROM(TABLE_NAME).WHERE("activity_id = ?", record.getId()).execute(connection);
       transaction.commit();
       return true;
     } catch (SQLException se) {
@@ -110,44 +107,49 @@ public class ActivityRepository {
   }
 
   public static void removeAll(Connection connection, Item record) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("item_id = ?", record.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("item_id = ?", record.getId()).execute(connection);
   }
 
   public static void removeAll(Connection connection, Collection record) throws SQLException {
-    DB.deleteFrom(connection, TABLE_NAME, DB.WHERE("collection_id = ?", record.getId()));
+    DB.DELETE().FROM(TABLE_NAME).WHERE("collection_id = ?", record.getId()).execute(connection);
   }
 
   private static DataResult query(ActivitySpecification specification, DataConstraints constraints) {
-    SqlUtils select = new SqlUtils();
-    SqlWhere where = DB.WHERE();
-    SqlUtils orderBy = new SqlUtils();
+    Select select = DB.SELECT("*").FROM(TABLE_NAME).WHERE();
     if (specification != null) {
-      where
-          .andAddIfHasValue("item_id = ?", specification.getItemId(), -1)
-          .andAddIfHasValue("collection_id = ?", specification.getCollectionId(), -1)
-          .andAddIfHasValue("created_by = ?", specification.getCreatedBy(), -1);
+      if (specification.getItemId() != -1) {
+        select.AND("item_id = ?", specification.getItemId());
+      }
+      if (specification.getCollectionId() != -1) {
+        select.AND("collection_id = ?", specification.getCollectionId());
+      }
+      if (specification.getCreatedBy() != -1) {
+        select.AND("created_by = ?", specification.getCreatedBy());
+      }
       if (specification.getActivityType() != null) {
-        where.AND("upper(activity_type) = ?", specification.getActivityType().trim().toUpperCase());
+        select.AND("upper(activity_type) = ?", specification.getActivityType().trim().toUpperCase());
       }
       if (specification.getMinTimestamp() > 0) {
-        where.AND("created >= ?", new Timestamp(specification.getMinTimestamp()));
+        select.AND("created >= ?", new Timestamp(specification.getMinTimestamp()));
       }
       if (specification.getMaxTimestamp() > 0) {
-        where.AND("created <= ?", new Timestamp(specification.getMaxTimestamp()));
+        select.AND("created <= ?", new Timestamp(specification.getMaxTimestamp()));
       }
     }
-    return DB.selectAllFrom(
-        TABLE_NAME, select, where, orderBy, constraints, ActivityRepository::buildRecord);
+    if (constraints != null) {
+      select.WITH(constraints);
+    }
+    return select.returnDataResult(ActivityRepository::buildRecord);
   }
 
   public static Activity findById(long id) {
     if (id == -1) {
       return null;
     }
-    return (Activity) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("activity_id = ?", id),
-        ActivityRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("activity_id = ?", id)
+        .returnRecord(ActivityRepository::buildRecord);
   }
 
   public static List<Activity> findAll(ActivitySpecification specification, DataConstraints constraints) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Matt Rajkowski
+ * Copyright 2025-2026 Matt Rajkowski
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,9 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.WebPage;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageSpecification;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;

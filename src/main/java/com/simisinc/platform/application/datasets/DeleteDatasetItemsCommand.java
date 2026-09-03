@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +19,7 @@ package com.simisinc.platform.application.datasets;
 
 import com.simisinc.platform.domain.model.datasets.Dataset;
 import com.simisinc.platform.domain.model.items.Item;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.items.ItemRepository;
 import com.simisinc.platform.infrastructure.persistence.items.ItemSpecification;
 import org.apache.commons.logging.Log;

@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,16 +27,14 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.AutoRollback;
+import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.domain.model.ecommerce.Cart;
 import com.simisinc.platform.domain.model.ecommerce.CartItem;
 import com.simisinc.platform.domain.model.ecommerce.Product;
 import com.simisinc.platform.domain.model.ecommerce.ProductSku;
-import com.simisinc.platform.infrastructure.database.AutoRollback;
-import com.simisinc.platform.infrastructure.database.AutoStartTransaction;
-import com.simisinc.platform.infrastructure.database.DB;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
-import com.simisinc.platform.infrastructure.database.DataResult;
-import com.simisinc.platform.infrastructure.database.SqlUtils;
 
 /**
  * Persists and retrieves cart item objects
@@ -51,20 +50,19 @@ public class CartItemRepository {
   private static String[] PRIMARY_KEY = new String[] { "item_id" };
 
   public static List<CartItem> findValidItemsByCartId(long cartId) {
-    DataResult result = DB.selectAllFrom(
-        TABLE_NAME,
-        DB.WHERE("is_removed = ?", false)
-            .AND("cart_id = ?", cartId),
-        new DataConstraints().setDefaultColumnToSortBy("item_id").setUseCount(false),
-        CartItemRepository::buildRecord);
-    return (List<CartItem>) result.getRecords();
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("is_removed = ?", false)
+        .AND("cart_id = ?", cartId)
+        .WITH(new DataConstraints().setDefaultColumnToSortBy("item_id").setUseCount(false))
+        .returnDataResult(CartItemRepository::buildRecord).getRecords();
   }
 
   public static CartItem findById(long itemId) {
-    return (CartItem) DB.selectRecordFrom(
-        TABLE_NAME,
-        DB.WHERE("item_id = ?", itemId),
-        CartItemRepository::buildRecord);
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("item_id = ?", itemId)
+        .returnRecord(CartItemRepository::buildRecord);
   }
 
   public static void addProductToCart(Connection connection, Cart cart, Product product, ProductSku productSku, BigDecimal quantity)
@@ -72,25 +70,20 @@ public class CartItemRepository {
     if (cart == null || productSku == null) {
       throw new SQLException("Invalid request");
     }
-    SqlUtils insertValues = new SqlUtils();
-    insertValues
-        .add("cart_id", cart.getId())
-        .add("product_id", productSku.getProductId())
-        .add("sku_id", productSku.getId())
-        .add("quantity", quantity)
-        .add("each_amount", productSku.getPrice())
-        .add("total_amount", productSku.getPrice().multiply(quantity))
-        .add("product_name", product.getNameWithCaption())
-        //    .add("product_type", product.get)
-        .add("product_sku", productSku.getSku())
-        .add("product_barcode", productSku.getBarcode())
-        .add("is_preorder", false)
-        .add("is_backordered", false)
-        .add("is_removed", false)
-    //    .add("created_by", )
-    //    .add("modified_by", )
-    ;
-    DB.insertInto(connection, TABLE_NAME, insertValues, PRIMARY_KEY);
+    DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("cart_id", cart.getId())
+        .FIELD("product_id", productSku.getProductId())
+        .FIELD("sku_id", productSku.getId())
+        .FIELD("quantity", quantity)
+        .FIELD("each_amount", productSku.getPrice())
+        .FIELD("total_amount", productSku.getPrice().multiply(quantity))
+        .FIELD("product_name", product.getNameWithCaption())
+        .FIELD("product_sku", productSku.getSku())
+        .FIELD("product_barcode", productSku.getBarcode())
+        .FIELD("is_preorder", false)
+        .FIELD("is_backordered", false)
+        .FIELD("is_removed", false)
+        .execute(connection);
   }
 
   public static void updateCartItemList(Connection connection, List<CartItem> cartItemList) throws SQLException {
@@ -98,13 +91,13 @@ public class CartItemRepository {
       throw new SQLException("List is null");
     }
     for (CartItem cartItem : cartItemList) {
-      SqlUtils setValues = new SqlUtils();
-      setValues
-          .add("quantity", cartItem.getQuantity())
-          .add("each_amount", cartItem.getEachAmount())
-          .add("total_amount", cartItem.getTotalAmount())
-          .add("is_removed", cartItem.getRemoved());
-      DB.update(connection, TABLE_NAME, setValues, DB.WHERE("item_id = ?", cartItem.getId()));
+      DB.UPDATE(TABLE_NAME)
+          .SET("quantity", cartItem.getQuantity())
+          .SET("each_amount", cartItem.getEachAmount())
+          .SET("total_amount", cartItem.getTotalAmount())
+          .SET("is_removed", cartItem.getRemoved())
+          .WHERE("item_id = ?", cartItem.getId())
+          .execute(connection);
     }
   }
 
@@ -115,21 +108,20 @@ public class CartItemRepository {
         AutoRollback transaction = new AutoRollback(connection)) {
       // In a transaction (use the existing connection)
       {
-        // Set as removed
-        SqlUtils update = new SqlUtils()
-            .add("is_removed", true)
-            .add("modified", new Timestamp(System.currentTimeMillis()));
-        DB.update(connection, TABLE_NAME, update, DB.WHERE("item_id = ?", cartItem.getId()));
-        //          DataSource.deleteFrom(connection, TABLE_NAME, where);
+        DB.UPDATE(TABLE_NAME)
+            .SET("is_removed", true)
+            .SET("modified", new Timestamp(System.currentTimeMillis()))
+            .WHERE("item_id = ?", cartItem.getId())
+            .execute(connection);
       }
       {
-        // Update the cart's total_items, total_qty, subtotal_amount, modified
-        SqlUtils updateValues = new SqlUtils()
-            .add("total_items = total_items - 1")
-            .add("total_qty = total_qty - " + cartItem.getQuantity())
-            .add("subtotal_amount = subtotal_amount - " + cartItem.getQuantity().multiply(cartItem.getEachAmount()))
-            .add("modified", new Timestamp(System.currentTimeMillis()));
-        DB.update(connection, "carts", updateValues, DB.WHERE("cart_id = ?", cartItem.getCartId()));
+        DB.UPDATE("carts")
+            .SET("total_items = total_items - 1")
+            .SET("total_qty = total_qty - " + cartItem.getQuantity())
+            .SET("subtotal_amount = subtotal_amount - " + cartItem.getQuantity().multiply(cartItem.getEachAmount()))
+            .SET("modified", new Timestamp(System.currentTimeMillis()))
+            .WHERE("cart_id = ?", cartItem.getCartId())
+            .execute(connection);
       }
       // Finish the transaction
       transaction.commit();
@@ -141,20 +133,20 @@ public class CartItemRepository {
   }
 
   public static void updateQuantityFree(CartItem cartItem) {
-    SqlUtils setValues = new SqlUtils();
-    setValues
-        .add("quantity_free", cartItem.getQuantityFree());
-    DB.update(TABLE_NAME, setValues, DB.WHERE("item_id = ?", cartItem.getId()));
+    DB.UPDATE(TABLE_NAME)
+        .SET("quantity_free", cartItem.getQuantityFree())
+        .WHERE("item_id = ?", cartItem.getId())
+        .execute();
   }
 
   public static void resetQuantityFree(Cart cart) {
     if (cart == null) {
       return;
     }
-    SqlUtils setValues = new SqlUtils();
-    setValues
-        .add("quantity_free", new BigDecimal(0));
-    DB.update(TABLE_NAME, setValues, DB.WHERE("cart_id = ?", cart.getId()));
+    DB.UPDATE(TABLE_NAME)
+        .SET("quantity_free", new BigDecimal(0))
+        .WHERE("cart_id = ?", cart.getId())
+        .execute();
   }
 
   private static CartItem buildRecord(ResultSet rs) {

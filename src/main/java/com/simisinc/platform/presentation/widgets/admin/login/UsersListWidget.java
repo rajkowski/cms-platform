@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +17,16 @@
 
 package com.simisinc.platform.presentation.widgets.admin.login;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.security.auth.login.AccountException;
+
+import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.lang3.StringUtils;
+
+import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.application.DataException;
 import com.simisinc.platform.application.LoadUserCommand;
 import com.simisinc.platform.application.admin.ProcessUserCSVFileCommand;
@@ -25,7 +36,6 @@ import com.simisinc.platform.domain.events.cms.UserInvitedEvent;
 import com.simisinc.platform.domain.model.Group;
 import com.simisinc.platform.domain.model.Role;
 import com.simisinc.platform.domain.model.User;
-import com.simisinc.platform.infrastructure.database.DataConstraints;
 import com.simisinc.platform.infrastructure.persistence.GroupRepository;
 import com.simisinc.platform.infrastructure.persistence.RoleRepository;
 import com.simisinc.platform.infrastructure.persistence.UserRepository;
@@ -33,18 +43,11 @@ import com.simisinc.platform.infrastructure.persistence.UserSpecification;
 import com.simisinc.platform.infrastructure.persistence.login.UserLoginRepository;
 import com.simisinc.platform.infrastructure.workflow.WorkflowManager;
 import com.simisinc.platform.presentation.controller.RequestConstants;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
 import com.simisinc.platform.presentation.controller.WidgetContext;
-import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.lang3.StringUtils;
-
-import javax.security.auth.login.AccountException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.List;
+import com.simisinc.platform.presentation.widgets.GenericWidget;
 
 /**
- * Description
+ * Displays a list of users
  *
  * @author matt rajkowski
  * @created 4/24/18 10:06 AM
@@ -69,10 +72,10 @@ public class UsersListWidget extends GenericWidget {
     context.getRequest().setAttribute(RequestConstants.RECORD_PAGING, constraints);
 
     // Determine the sorting
-//    String sortByValue = context.getParameter("sortBy", "date");
-//    String sortOrderValue = context.getParameter("sortOrder", "newest");
-//    context.getRequest().setAttribute(RequestConstants.RECORD_SORT_BY, sortByValue);
-//    context.getRequest().setAttribute(RequestConstants.RECORD_SORT_ORDER, sortOrderValue);
+    //    String sortByValue = context.getParameter("sortBy", "date");
+    //    String sortOrderValue = context.getParameter("sortOrder", "newest");
+    //    context.getRequest().setAttribute(RequestConstants.RECORD_SORT_BY, sortByValue);
+    //    context.getRequest().setAttribute(RequestConstants.RECORD_SORT_ORDER, sortOrderValue);
 
     // Determine the search
     String query = context.getParameter("query");
