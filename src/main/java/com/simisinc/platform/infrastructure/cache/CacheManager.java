@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +21,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
@@ -192,6 +192,38 @@ public class CacheManager {
         MessagingCommand.sendNotification(cacheName, key);
       }
     }
+  }
+
+  public static void putTenantValue(String cacheName, String workspaceId, Object key, Object value) {
+    Cache cache = cacheManager.get(cacheName);
+    if (cache != null) {
+      cache.put(tenantCacheKey(workspaceId, key), value);
+    }
+  }
+
+  public static Object getTenantValue(String cacheName, String workspaceId, Object key) {
+    Cache cache = cacheManager.get(cacheName);
+    return cache != null ? cache.getIfPresent(tenantCacheKey(workspaceId, key)) : null;
+  }
+
+  public static void invalidateTenantKey(String cacheName, String workspaceId, Object key, boolean distributeInvalidation) {
+    if (workspaceId == null || workspaceId.isBlank()) {
+      return;
+    }
+    Cache cache = cacheManager.get(cacheName);
+    if (cache != null) {
+      cache.invalidate(tenantCacheKey(workspaceId, key));
+      if (distributeInvalidation) {
+        MessagingCommand.sendNotification(cacheName, workspaceId, key);
+      }
+    }
+  }
+
+  private static String tenantCacheKey(String workspaceId, Object key) {
+    if (workspaceId == null || workspaceId.isBlank()) {
+      throw new IllegalArgumentException("Workspace id cannot be null or blank");
+    }
+    return workspaceId + ":" + String.valueOf(key);
   }
 
   public static void addToObjectCache(String key, Object value) {

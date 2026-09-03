@@ -1,0 +1,2 @@
+ALTER TABLE workspaces
+  ADD COLUMN IF NOT EXISTS file_root VARCHAR(1024);

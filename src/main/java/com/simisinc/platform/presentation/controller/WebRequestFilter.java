@@ -68,9 +68,9 @@ import com.simisinc.platform.domain.model.login.UserLogin;
 import com.simisinc.platform.infrastructure.database.ConnectionPool;
 import com.simisinc.platform.infrastructure.persistence.SessionRepository;
 import com.simisinc.platform.infrastructure.persistence.login.UserLoginRepository;
-// import com.zeroio.platform.application.cms.WorkspaceResolutionCommand;
-// import com.zeroio.platform.domain.model.tenant.Workspace;
-// import com.zeroio.platform.infrastructure.database.WorkspaceContextManager;
+import com.zeroio.platform.application.cms.WorkspaceResolutionCommand;
+import com.zeroio.platform.domain.model.tenant.Workspace;
+import com.zeroio.platform.infrastructure.database.WorkspaceContextManager;
 
 /**
  * Sets up the framework for the visitor
@@ -142,18 +142,21 @@ public class WebRequestFilter implements Filter {
       return;
     }
 
+    // Check for tenant routing using the application data source, then switch to the tenant data source if applicable
     DataSource previousDataSource = DB.getTenantDataSource();
     DB.setTenantDataSource(ConnectionPool.getApplicationDataSource());
-    // boolean tenantRoutingEnabled = WorkspaceResolutionCommand.isTenantRoutingEnabled();
-    // if (tenantRoutingEnabled && !resource.startsWith(PageServlet.WORKSPACE_SELECTOR_PATH) && !isStaticResource(resource)) {
-    //   Workspace workspace = WorkspaceResolutionCommand.resolveWorkspace(request.getServerName());
-    //   if (workspace == null) {
-    //     do302(servletResponse, PageServlet.WORKSPACE_SELECTOR_PATH);
-    //     return;
-    //   }
-    //   WorkspaceContextManager.activate(workspace.getId(), request.getServerName(), workspace.getFileRoot());
-    //   LOG.debug("Resolved workspace " + workspace.getId() + " for host " + request.getServerName());
-    // }
+    
+    // Check for tenant routing
+    boolean tenantRoutingEnabled = WorkspaceResolutionCommand.isTenantRoutingEnabled();
+    if (tenantRoutingEnabled && !resource.startsWith(PageServlet.WORKSPACE_SELECTOR_PATH) && !isStaticResource(resource)) {
+      Workspace workspace = WorkspaceResolutionCommand.resolveWorkspace(request.getServerName());
+      if (workspace == null) {
+        do302(servletResponse, PageServlet.WORKSPACE_SELECTOR_PATH);
+        return;
+      }
+      WorkspaceContextManager.activate(workspace.getId(), request.getServerName(), workspace.getFileRoot());
+      LOG.debug("Resolved workspace " + workspace.getId() + " for host " + request.getServerName());
+    }
 
     try {
       // Block and log certain requests
@@ -232,14 +235,7 @@ public class WebRequestFilter implements Filter {
       }
 
       // Allow some browser resources
-      if (resource.startsWith("/favicon") ||
-        resource.startsWith("/css") ||
-        resource.startsWith("/fonts") ||
-        resource.startsWith("/html") ||
-        resource.startsWith("/images") ||
-        resource.startsWith("/javascript") ||
-        resource.startsWith("/combined.css") ||
-        resource.startsWith("/combined.js")) {
+      if (isStaticResource(resource)) {
         chain.doFilter(request, servletResponse);
         return;
       }
@@ -566,9 +562,9 @@ public class WebRequestFilter implements Filter {
       }
       chain.doFilter(request, servletResponse);
     } finally {
-      // if (tenantRoutingEnabled) {
-      //   WorkspaceContextManager.clear();
-      // }
+      if (tenantRoutingEnabled) {
+        WorkspaceContextManager.clear();
+      }
       if (previousDataSource == null) {
         DB.clearTenantDataSource();
       } else {
@@ -577,11 +573,11 @@ public class WebRequestFilter implements Filter {
     }
   }
 
-  // private static boolean isStaticResource(String resource) {
-  //   return resource.startsWith("/favicon") || resource.startsWith("/css") || resource.startsWith("/fonts")
-  //       || resource.startsWith("/html") || resource.startsWith("/images") || resource.startsWith("/javascript")
-  //       || resource.startsWith("/combined.css") || resource.startsWith("/combined.js");
-  // }
+  private static boolean isStaticResource(String resource) {
+    return resource.startsWith("/favicon") || resource.startsWith("/css") || resource.startsWith("/fonts")
+        || resource.startsWith("/html") || resource.startsWith("/images") || resource.startsWith("/javascript")
+        || resource.startsWith("/combined.css") || resource.startsWith("/combined.js");
+  }
 
   /**
    * Restricts a request path so it can only ever be appended to the configured site URL as an absolute path on that

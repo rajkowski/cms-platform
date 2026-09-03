@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2026 Matt Rajkowski (https://www.github.com/rajkowski)
+ * Copyright 2024-2026 Matt Rajkowski (https://github.com/rajkowski)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,27 @@
 package com.simisinc.platform.application.filesystem;
 
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
-
 import java.io.File;
 import java.lang.reflect.Field;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-
+import javax.sql.DataSource;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.MockedStatic;
-
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.TenantRegistry;
 import com.simisinc.platform.domain.model.SiteProperty;
 import com.simisinc.platform.infrastructure.cache.CacheManager;
+import com.zeroio.platform.infrastructure.database.WorkspaceContextManager;
 
 /**
  * @author matt rajkowski
@@ -62,6 +67,9 @@ public class FileSystemCommandTest {
 
   private LoadingCache<String, List<SiteProperty>> sitePropertyListCache;
 
+  @TempDir
+  Path temporaryDirectory;
+
   /**
    * FileSystemCommand memoizes its resolved paths in private static fields, and also prefers a
    * CMS_PATH environment variable over the (mocked) site property cache. Force the cached fields
@@ -76,6 +84,10 @@ public class FileSystemCommandTest {
 
   @BeforeEach
   public void init() throws Exception {
+    WorkspaceContextManager.clear();
+    TenantRegistry tenantRegistry = new TenantRegistry();
+    tenantRegistry.register("1", mock(DataSource.class));
+    DB.setTenantRegistry(tenantRegistry);
     sitePropertyListCache = Caffeine.newBuilder().build(FileSystemCommandTest::findByPrefix);
     setStaticField("configPath", "." + File.separator);
     setStaticField("filesPath", "." + File.separator);
@@ -159,6 +171,24 @@ public class FileSystemCommandTest {
       Assertions.assertTrue(path.isDirectory());
       Assertions.assertTrue(path.exists());
     }
+  }
+
+  @Test
+  void workspaceContextUsesItsConfiguredFileRoot() throws Exception {
+    Path workspaceRoot = Files.createDirectory(temporaryDirectory.resolve("workspace-one"));
+    WorkspaceContextManager.activate(1, "one.example.com", workspaceRoot.toString());
+
+    Assertions.assertEquals(workspaceRoot.toAbsolutePath() + File.separator, FileSystemCommand.getFileServerRootPathValue());
+    Assertions.assertEquals(workspaceRoot.resolve("uploads").toFile(), FileSystemCommand.getFileServerRootPath("uploads"));
+  }
+
+  @Test
+  void workspaceContextRejectsMissingOrEscapingFileRoots() {
+    WorkspaceContextManager.activate(1, "one.example.com", temporaryDirectory.resolve("missing").toString());
+    Assertions.assertNull(FileSystemCommand.getFileServerRootPath());
+
+    WorkspaceContextManager.activate(1, "one.example.com", temporaryDirectory.toString());
+    Assertions.assertNull(FileSystemCommand.getFileServerRootPath("..", "other-workspace"));
   }
 
   @Test

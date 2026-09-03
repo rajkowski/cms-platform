@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +24,7 @@ import org.jobrunr.jobs.annotations.Job;
 import com.simisinc.platform.infrastructure.distributedlock.LockManager;
 import com.simisinc.platform.infrastructure.persistence.login.UserTokenRepository;
 import com.simisinc.platform.infrastructure.scheduler.SchedulerManager;
+import com.simisinc.platform.infrastructure.scheduler.TenantAwareJobRunner;
 
 /**
  * Deletes expired tokens
@@ -40,6 +42,6 @@ public class UserTokensCleanupJob {
       return;
     }
 
-    UserTokenRepository.deleteOldTokens();
+    TenantAwareJobRunner.runAllActive(workspace -> UserTokenRepository.deleteOldTokens());
   }
 }

@@ -79,6 +79,8 @@ import com.simisinc.platform.presentation.widgets.cms.WebContainerContext;
 import com.zeroio.platform.application.cms.RenderMainMenuCommand;
 import com.zeroio.platform.domain.model.Region;
 import com.zeroio.platform.infrastructure.persistence.RegionRepository;
+import com.zeroio.platform.application.login.WorkspaceAccessCommand;
+import com.zeroio.platform.domain.model.tenant.Workspace;
 
 /**
  * Handles all web browser page requests
@@ -92,6 +94,7 @@ import com.zeroio.platform.infrastructure.persistence.RegionRepository;
 public class PageServlet extends HttpServlet {
 
   private static Log LOG = LogFactory.getLog(PageServlet.class);
+  public static final String WORKSPACE_SELECTOR_PATH = "/workspace-selector";
 
   // Widget Cache (read-only after init; ConcurrentHashMap for safe concurrent access)
   private Map<String, Object> widgetInstances = new ConcurrentHashMap<>();
@@ -333,6 +336,16 @@ public class PageServlet extends HttpServlet {
       PageRequest pageRequest = new PageRequest(request);
       if (LOG.isDebugEnabled()) {
         LOG.debug("Using resource: " + pageRequest.getPagePath());
+      }
+
+      if (WORKSPACE_SELECTOR_PATH.equals(pageRequest.getPagePath())) {
+        UserSession selectorUserSession = (UserSession) request.getSession().getAttribute(SessionConstants.USER);
+        if (selectorUserSession != null && selectorUserSession.isLoggedIn()) {
+          List<Workspace> workspaces = WorkspaceAccessCommand.findAuthorizedWorkspaces(selectorUserSession.getUserId());
+          request.setAttribute("workspaceList", workspaces);
+        }
+        request.getServletContext().getRequestDispatcher("/WEB-INF/jsp/cms/workspace-selector.jsp").forward(request, response);
+        return;
       }
 
       // Use the session data (created in WebRequestFilter)

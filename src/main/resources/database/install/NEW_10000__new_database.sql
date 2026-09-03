@@ -21,6 +21,48 @@ CREATE TABLE database_version (
   installed TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Workspaces
+
+CREATE TABLE IF NOT EXISTS workspaces (
+  workspace_id BIGSERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  canonical_domain VARCHAR(255) NOT NULL UNIQUE,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  file_root VARCHAR(1024)
+);
+
+CREATE TABLE IF NOT EXISTS workspace_domains (
+  workspace_domain_id BIGSERIAL PRIMARY KEY,
+  workspace_id BIGINT NOT NULL REFERENCES workspaces(workspace_id) ON DELETE CASCADE,
+  host_pattern VARCHAR(255) NOT NULL,
+  wildcard BOOLEAN NOT NULL DEFAULT FALSE,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  UNIQUE (host_pattern, wildcard)
+);
+
+CREATE TABLE IF NOT EXISTS workspace_data_sources (
+  workspace_id BIGINT PRIMARY KEY REFERENCES workspaces(workspace_id) ON DELETE CASCADE,
+  jdbc_url VARCHAR(2048) NOT NULL,
+  username VARCHAR(255) NOT NULL,
+  password VARCHAR(2048),
+  driver_class_name VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS workspace_access_grants (
+  workspace_id BIGINT NOT NULL REFERENCES workspaces(workspace_id) ON DELETE CASCADE,
+  user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  PRIMARY KEY (workspace_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS workspace_domains_active_idx ON workspace_domains (host_pattern, wildcard) WHERE active;
+CREATE INDEX IF NOT EXISTS workspace_access_grants_user_idx ON workspace_access_grants (user_id) WHERE active;
+
+
+
+
+-- Site Properties
+
 CREATE TABLE site_properties (
   property_id SERIAL PRIMARY KEY,
   property_order INTEGER DEFAULT 100,
@@ -501,7 +543,9 @@ CREATE TABLE oauth_state_values (
   state_id BIGSERIAL PRIMARY KEY,
   state VARCHAR(50) NOT NULL,
   resource VARCHAR(512) NOT NULL,
-  created TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP
+  created TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+  workspace_id BIGINT,
+  destination_domain VARCHAR(255)
 );
 CREATE INDEX oauth_state_sta_idx ON oauth_state_values(state);
 CREATE INDEX oauth_state_cre_idx ON oauth_state_values(created);

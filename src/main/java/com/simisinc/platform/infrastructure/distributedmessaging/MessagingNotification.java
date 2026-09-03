@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Matt Rajkowski (https://github.com/rajkowski)
+ * Copyright 2025-2026 Matt Rajkowski (https://github.com/rajkowski)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,14 +68,17 @@ public class MessagingNotification {
     }
 
     // Invalidate the specified cache key
-    String cacheName = json.get("cache").asText();
-    String key = json.get("key").asText();
-    String type = json.get("type").asText();
-    LOG.debug("Invalidating " + cacheName + " for " + key + " of type " + type);
-    if ("java.lang.Long".equals(type)) {
-      CacheManager.invalidateKey(cacheName, Long.parseLong(key), false);
-    } else {
-      CacheManager.invalidateKey(cacheName, key, false);
+    JsonNode workspaceIdNode = json.get("workspaceId");
+    JsonNode cacheNameNode = json.get("cache");
+    JsonNode keyNode = json.get("key");
+    if (workspaceIdNode == null || workspaceIdNode.isNull() || StringUtils.isBlank(workspaceIdNode.asText()) || cacheNameNode == null || keyNode == null) {
+      LOG.warn("Ignoring cache notification without a workspace identity and cache key");
+      return;
     }
+    String workspaceId = workspaceIdNode.asText();
+    String cacheName = cacheNameNode.asText();
+    String key = keyNode.asText();
+    LOG.debug("Invalidating " + cacheName + " for workspace " + workspaceId);
+    CacheManager.invalidateTenantKey(cacheName, workspaceId, key, false);
   }
 }

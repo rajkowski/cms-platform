@@ -20,6 +20,10 @@ package com.simisinc.platform.application.filesystem;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -35,6 +39,8 @@ import org.apache.commons.logging.LogFactory;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.univocity.parsers.csv.CsvParser;
 import com.univocity.parsers.csv.CsvParserSettings;
+import com.zeroio.platform.domain.model.tenant.WorkspaceContext;
+import com.zeroio.platform.infrastructure.database.WorkspaceContextManager;
 
 /**
  * Commands for working with the file system
@@ -102,6 +108,10 @@ public class FileSystemCommand {
    * @return
    */
   public static String getFileServerRootPathValue() {
+    WorkspaceContext workspaceContext = WorkspaceContextManager.getCurrentContext();
+    if (workspaceContext != null) {
+      return getWorkspaceFileRootPathValue(workspaceContext);
+    }
     // Check for the cached path
     if (filesPath != null) {
       return filesPath;
@@ -134,12 +144,46 @@ public class FileSystemCommand {
     if (StringUtils.isBlank(serverRootPath)) {
       return null;
     }
-    if (subdirectories != null && subdirectories.length > 0) {
-      for (String subdirectory : subdirectories) {
-        serverRootPath += subdirectory + File.separator;
-      }
+    return resolveFileServerPath(serverRootPath, subdirectories);
+  }
+
+  private static String getWorkspaceFileRootPathValue(WorkspaceContext workspaceContext) {
+    if (StringUtils.isBlank(workspaceContext.fileRoot())) {
+      LOG.error("Workspace " + workspaceContext.workspaceId() + " has no configured file root");
+      return null;
     }
-    return new File(serverRootPath);
+    try {
+      Path rootPath = Paths.get(workspaceContext.fileRoot()).toAbsolutePath().normalize();
+      if (!Files.isDirectory(rootPath)) {
+        LOG.error("Workspace " + workspaceContext.workspaceId() + " file root is unavailable");
+        return null;
+      }
+      return rootPath + File.separator;
+    } catch (InvalidPathException e) {
+      LOG.error("Workspace " + workspaceContext.workspaceId() + " file root is invalid", e);
+      return null;
+    }
+  }
+
+  private static File resolveFileServerPath(String serverRootPath, String... subdirectories) {
+    try {
+      Path rootPath = Paths.get(serverRootPath).toAbsolutePath().normalize();
+      Path resolvedPath = rootPath;
+      if (subdirectories != null) {
+        for (String subdirectory : subdirectories) {
+          resolvedPath = resolvedPath.resolve(subdirectory);
+        }
+      }
+      resolvedPath = resolvedPath.normalize();
+      if (!resolvedPath.startsWith(rootPath)) {
+        LOG.error("Requested file path escapes the configured file root");
+        return null;
+      }
+      return resolvedPath.toFile();
+    } catch (InvalidPathException e) {
+      LOG.error("Requested file path is invalid", e);
+      return null;
+    }
   }
 
   /**
