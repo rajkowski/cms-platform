@@ -145,18 +145,25 @@ public class WebRequestFilter implements Filter {
     // Check for tenant routing using the application data source, then switch to the tenant data source if applicable
     DataSource previousDataSource = DB.getTenantDataSource();
     DB.setTenantDataSource(ConnectionPool.getApplicationDataSource());
-    
+
     // Check for tenant routing
     boolean tenantRoutingEnabled = WorkspaceResolutionCommand.isTenantRoutingEnabled();
-    if (tenantRoutingEnabled && !resource.startsWith(PageServlet.WORKSPACE_SELECTOR_PATH) && !isStaticResource(resource)) {
+    if (tenantRoutingEnabled && !resource.startsWith(PageServlet.WORKSPACE_SELECTOR_PATH)) {
       Workspace workspace = WorkspaceResolutionCommand.resolveWorkspace(request.getServerName());
       if (workspace == null) {
+        // No workspace could be resolved for this host, so redirect to the workspace selector
         if (OAuthConfigurationCommand.isEnabled()) {
           do302(servletResponse, PageServlet.WORKSPACE_SELECTOR_PATH);
           return;
+        } else {
+          // If it is the default site.url then allow the request to continue, otherwise return a 404
+          String defaultSiteUrl = LoadSitePropertyCommand.loadByName("site.url");
+          if (defaultSiteUrl == null || !defaultSiteUrl.startsWith(scheme + "://" + request.getServerName())) {
+            LOG.warn("Unable to resolve workspace for host " + request.getServerName());
+            do404(servletResponse);
+            return;
+          }
         }
-        WorkspaceContextManager.clear();
-        DB.setTenantDataSource(ConnectionPool.getApplicationDataSource());
       } else {
         WorkspaceContextManager.activate(workspace.getId(), request.getServerName(), workspace.getFileRoot());
         LOG.debug("Resolved workspace " + workspace.getId() + " for host " + request.getServerName());
@@ -206,8 +213,9 @@ public class WebRequestFilter implements Filter {
       // Redirect to SSL
       if (requireSSL && !"https".equalsIgnoreCase(scheme)) {
         CharSequence serverName = request.getServerName();
-        // @todo or ends in .localhost or .localdomain or .local
-        if (!"localhost".equals(serverName) && !InetAddressUtils.isIPv4(serverName) && !InetAddressUtils.isIPv6(serverName)) {
+        if (!"localhost".equals(serverName) && !serverName.toString().endsWith(".localhost")
+            && !serverName.toString().endsWith(".localdomain") && !serverName.toString().endsWith(".local")
+            && !InetAddressUtils.isIPv4(serverName) && !InetAddressUtils.isIPv6(serverName)) {
           // Check protocol, server name, port number, and server path
           if (StringUtils.isBlank(httpServletRequest.getRequestURL())) {
             LOG.error("No request URL found, cannot redirect to SSL");
@@ -247,8 +255,8 @@ public class WebRequestFilter implements Filter {
       }
 
       // If OAuth is required, and the user is not verified, redirect to provider
-      String oauthRedirect =
-          OAuthRequestCommand.handleRequest((HttpServletRequest) request, (HttpServletResponse) servletResponse, resource);
+      String oauthRedirect = OAuthRequestCommand.handleRequest((HttpServletRequest) request, (HttpServletResponse) servletResponse,
+          resource);
       if (OAuthConfigurationCommand.hasInvalidConfiguration()) {
         LOG.error("OAUTH: OAUTH is enabled but configuration is incomplete");
         do500(servletResponse);
@@ -351,8 +359,8 @@ public class WebRequestFilter implements Filter {
           if (userSession == null) {
             LOG.debug("Creating user session...");
             // Start a new session
-            userSession =
-                CreateSessionCommand.createSession(WEB_SOURCE, httpServletRequest.getSession().getId(), ipAddress, referer, userAgent);
+            userSession = CreateSessionCommand.createSession(WEB_SOURCE, httpServletRequest.getSession().getId(), ipAddress, referer,
+                userAgent);
             httpServletRequest.getSession().setAttribute(SessionConstants.USER, userSession);
             // Determine if this is a monitoring app
             if (httpServletRequest.getHeader("X-Monitor") == null) {
