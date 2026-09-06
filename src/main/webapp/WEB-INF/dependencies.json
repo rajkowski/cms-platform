@@ -204,7 +204,7 @@
       ]
     },
     "hugerte": {
-      "version": "1.0.13",
+      "version": "1.0.14",
       "paths": [
         "node_modules/hugerte/hugerte.js",
         "node_modules/hugerte/hugerte.min.js",
