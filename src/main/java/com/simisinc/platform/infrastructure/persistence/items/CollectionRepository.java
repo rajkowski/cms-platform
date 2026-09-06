@@ -126,7 +126,7 @@ public class CollectionRepository {
       // Finish the transaction
       transaction.commit();
       // Expire the cache
-      CacheManager.invalidateKey(CacheManager.COLLECTION_UNIQUE_ID_CACHE, record.getUniqueId());
+      CacheManager.invalidateCurrentWorkspaceKey(CacheManager.COLLECTION_UNIQUE_ID_CACHE, record.getUniqueId(), true);
       return record;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage(), se);
@@ -145,7 +145,7 @@ public class CollectionRepository {
     update.WHERE("collection_id = ?", record.getId());
     if (update.execute().booleanValue()) {
       // Expire the cache
-      CacheManager.invalidateKey(CacheManager.COLLECTION_UNIQUE_ID_CACHE, record.getUniqueId());
+      CacheManager.invalidateCurrentWorkspaceKey(CacheManager.COLLECTION_UNIQUE_ID_CACHE, record.getUniqueId(), true);
       return record;
     }
     LOG.error("The update failed!");
@@ -163,7 +163,7 @@ public class CollectionRepository {
     update.WHERE("collection_id = ?", record.getId());
     if (update.execute().booleanValue()) {
       // Expire the cache
-      CacheManager.invalidateKey(CacheManager.COLLECTION_UNIQUE_ID_CACHE, record.getUniqueId());
+      CacheManager.invalidateCurrentWorkspaceKey(CacheManager.COLLECTION_UNIQUE_ID_CACHE, record.getUniqueId(), true);
       return record;
     }
     LOG.error("The update failed!");
@@ -187,7 +187,7 @@ public class CollectionRepository {
         .WHERE("collection_id = ?", record.getId());
     if (update.execute().booleanValue()) {
       // Expire the cache
-      CacheManager.invalidateKey(CacheManager.COLLECTION_UNIQUE_ID_CACHE, record.getUniqueId());
+      CacheManager.invalidateCurrentWorkspaceKey(CacheManager.COLLECTION_UNIQUE_ID_CACHE, record.getUniqueId(), true);
       return record;
     }
     LOG.error("The update failed!");
@@ -214,7 +214,7 @@ public class CollectionRepository {
       // Finish transaction
       transaction.commit();
       // Invalidate the cache
-      CacheManager.invalidateKey(CacheManager.COLLECTION_UNIQUE_ID_CACHE, record.getUniqueId());
+      CacheManager.invalidateCurrentWorkspaceKey(CacheManager.COLLECTION_UNIQUE_ID_CACHE, record.getUniqueId(), true);
       return true;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
@@ -340,8 +340,8 @@ public class CollectionRepository {
       LOG.error("SQLException: " + se.getMessage());
     } finally {
       // Expire the cache
-      CacheManager.invalidateKey(CacheManager.COLLECTION_UNIQUE_ID_CACHE,
-          LoadCollectionCommand.loadCollectionById(collectionId).getUniqueId());
+        CacheManager.invalidateCurrentWorkspaceKey(CacheManager.COLLECTION_UNIQUE_ID_CACHE,
+          LoadCollectionCommand.loadCollectionById(collectionId).getUniqueId(), true);
     }
     LOG.error("The update failed!");
     return false;

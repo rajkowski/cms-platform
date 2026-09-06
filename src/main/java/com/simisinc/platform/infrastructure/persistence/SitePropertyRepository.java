@@ -114,7 +114,7 @@ public class SitePropertyRepository {
         thisPrefix = thisPrefix.substring(0, thisPrefix.indexOf("."));
       }
       LOG.debug("Resetting prefix: " + thisPrefix);
-      CacheManager.invalidateKey(CacheManager.SYSTEM_PROPERTY_PREFIX_CACHE, thisPrefix);
+      CacheManager.invalidateCurrentWorkspaceKey(CacheManager.SYSTEM_PROPERTY_PREFIX_CACHE, thisPrefix, true);
     }
     return true;
   }

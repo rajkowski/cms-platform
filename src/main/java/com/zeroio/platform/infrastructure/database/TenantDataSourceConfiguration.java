@@ -25,6 +25,11 @@ public class TenantDataSourceConfiguration {
   private String username;
   private String password;
   private String driverClassName;
+  private String poolGroup;
+  private String authMethod;
+  private String azureTenantId;
+  private String azureClientId;
+  private String azureClientSecret;
 
   public long getWorkspaceId() {
     return workspaceId;
@@ -64,5 +69,45 @@ public class TenantDataSourceConfiguration {
 
   public void setDriverClassName(String driverClassName) {
     this.driverClassName = driverClassName;
+  }
+
+  public String getPoolGroup() {
+    return poolGroup;
+  }
+
+  public void setPoolGroup(String poolGroup) {
+    this.poolGroup = poolGroup;
+  }
+
+  public String getAuthMethod() {
+    return authMethod;
+  }
+
+  public void setAuthMethod(String authMethod) {
+    this.authMethod = authMethod;
+  }
+
+  public String getAzureTenantId() {
+    return azureTenantId;
+  }
+
+  public void setAzureTenantId(String azureTenantId) {
+    this.azureTenantId = azureTenantId;
+  }
+
+  public String getAzureClientId() {
+    return azureClientId;
+  }
+
+  public void setAzureClientId(String azureClientId) {
+    this.azureClientId = azureClientId;
+  }
+
+  public String getAzureClientSecret() {
+    return azureClientSecret;
+  }
+
+  public void setAzureClientSecret(String azureClientSecret) {
+    this.azureClientSecret = azureClientSecret;
   }
 }

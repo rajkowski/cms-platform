@@ -34,10 +34,14 @@ import javax.servlet.http.HttpSession;
 import org.junit.jupiter.api.Test;
 
 import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.TenantRegistry;
 import com.simisinc.platform.application.cms.BlockedIPListCommand;
 import com.simisinc.platform.application.cms.HostnameCommand;
 import com.simisinc.platform.application.cms.LoadBlockedIPListCommand;
+import com.simisinc.platform.application.oauth.OAuthConfigurationCommand;
 import com.zaxxer.hikari.HikariDataSource;
+import com.zeroio.platform.application.cms.WorkspaceResolutionCommand;
+import com.zeroio.platform.infrastructure.database.WorkspaceContextManager;
 
 class WebRequestFilterTest {
 
@@ -96,6 +100,52 @@ class WebRequestFilterTest {
         }
         DB.clearTenantDataSource();
       }
+    }
+  }
+
+  @Test
+  void unresolvedWorkspaceUsesApplicationDataSourceWithoutWorkspaceContext() throws Exception {
+    HikariDataSource appDataSource = mock(HikariDataSource.class);
+    setApplicationDataSource(appDataSource);
+    DB.setTenantRegistry(new TenantRegistry());
+    DB.registerTenantDataSource("1", mock(javax.sql.DataSource.class));
+    WorkspaceContextManager.activate(1L, "workspace.example.com");
+
+    HostnameCommand.setList("hostname-allow-list.csv", Collections.singletonList("localhost"));
+    BlockedIPListCommand.setList("ip-allow-list.csv", Collections.emptyList());
+    BlockedIPListCommand.setList("ip-deny-list.csv", Collections.emptyList());
+    BlockedIPListCommand.setList("url-block-list.csv", Collections.emptyList());
+
+    try (var loadBlockedIPListCommand = mockStatic(LoadBlockedIPListCommand.class);
+        var workspaceResolutionCommand = mockStatic(WorkspaceResolutionCommand.class);
+        var oAuthConfigurationCommand = mockStatic(OAuthConfigurationCommand.class)) {
+      loadBlockedIPListCommand.when(LoadBlockedIPListCommand::retrieveCachedIpAddressList).thenReturn(Collections.emptyList());
+      workspaceResolutionCommand.when(WorkspaceResolutionCommand::isTenantRoutingEnabled).thenReturn(true);
+      workspaceResolutionCommand.when(() -> WorkspaceResolutionCommand.resolveWorkspace("localhost")).thenReturn(null);
+      oAuthConfigurationCommand.when(OAuthConfigurationCommand::isEnabled).thenReturn(false);
+
+      HttpServletRequest request = mock(HttpServletRequest.class);
+      HttpServletResponse response = mock(HttpServletResponse.class);
+      ServletContext servletContext = mock(ServletContext.class);
+      when(request.getServletContext()).thenReturn(servletContext);
+      when(servletContext.getContextPath()).thenReturn("");
+      when(request.getScheme()).thenReturn("http");
+      when(request.getServerName()).thenReturn("localhost");
+      when(request.getRemoteAddr()).thenReturn("127.0.0.1");
+      when(request.getRequestURI()).thenReturn("/api");
+      when(request.getHeader("Referer")).thenReturn(null);
+      when(request.getHeader("USER-AGENT")).thenReturn("test-agent");
+      when(request.getHeaderNames()).thenReturn(Collections.emptyEnumeration());
+
+      FilterChain chain = (servletRequest, servletResponse) -> {
+        assertNull(WorkspaceContextManager.getCurrentContext());
+        assertSame(appDataSource, DB.getDataSource());
+      };
+
+      new WebRequestFilter().doFilter(request, response, chain);
+    } finally {
+      WorkspaceContextManager.clear();
+      DB.setTenantRegistry(new TenantRegistry());
     }
   }
 

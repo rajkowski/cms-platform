@@ -25,14 +25,43 @@ public class DomainMapping extends Entity {
   private boolean wildcard;
   private boolean active;
 
-  public long getId() { return id; }
-  public void setId(long id) { this.id = id; }
-  public long getWorkspaceId() { return workspaceId; }
-  public void setWorkspaceId(long workspaceId) { this.workspaceId = workspaceId; }
-  public String getHostPattern() { return hostPattern; }
-  public void setHostPattern(String hostPattern) { this.hostPattern = hostPattern; }
-  public boolean isWildcard() { return wildcard; }
-  public void setWildcard(boolean wildcard) { this.wildcard = wildcard; }
-  public boolean isActive() { return active; }
-  public void setActive(boolean active) { this.active = active; }
+  public long getId() {
+    return id;
+  }
+
+  public void setId(long id) {
+    this.id = id;
+  }
+
+  public long getWorkspaceId() {
+    return workspaceId;
+  }
+
+  public void setWorkspaceId(long workspaceId) {
+    this.workspaceId = workspaceId;
+  }
+
+  public String getHostPattern() {
+    return hostPattern;
+  }
+
+  public void setHostPattern(String hostPattern) {
+    this.hostPattern = hostPattern;
+  }
+
+  public boolean isWildcard() {
+    return wildcard;
+  }
+
+  public void setWildcard(boolean wildcard) {
+    this.wildcard = wildcard;
+  }
+
+  public boolean isActive() {
+    return active;
+  }
+
+  public void setActive(boolean active) {
+    this.active = active;
+  }
 }

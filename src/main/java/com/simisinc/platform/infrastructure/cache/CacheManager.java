@@ -37,6 +37,7 @@ import com.simisinc.platform.infrastructure.persistence.cms.ContentRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.StylesheetRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.TableOfContentsRepository;
 import com.simisinc.platform.infrastructure.persistence.items.CollectionRepository;
+import com.zeroio.platform.infrastructure.database.WorkspaceContextManager;
 
 /**
  * Manages the available caches
@@ -46,6 +47,7 @@ import com.simisinc.platform.infrastructure.persistence.items.CollectionReposito
  */
 public class CacheManager {
 
+  public static final String DEFAULT_SITE_SCOPE = "default-site";
   public static String SYSTEM_PROPERTY_PREFIX_CACHE = "SystemPropertyPrefixCache";
   public static String APP_CACHE = "AppCache";
   public static String USER_CREDENTIALS_CACHE = "UserCredentialsCache";
@@ -80,7 +82,7 @@ public class CacheManager {
         .maximumSize(10_000)
         //        .expireAfterWrite(5, TimeUnit.MINUTES)
         //        .refreshAfterWrite(1, TimeUnit.MINUTES)
-        .build(SitePropertyRepository::findAllByPrefix);
+      .build(cacheKey -> SitePropertyRepository.findAllByPrefix(cacheValue(cacheKey)));
     cacheManager.put(SYSTEM_PROPERTY_PREFIX_CACHE, sitePropertyListCache);
 
     // App Cache (publicKey = app)
@@ -88,7 +90,7 @@ public class CacheManager {
         .maximumSize(1_000)
         //        .expireAfterWrite(5, TimeUnit.MINUTES)
         //        .refreshAfterWrite(1, TimeUnit.MINUTES)
-        .build(AppRepository::findByPublicKey);
+        .build(cacheKey -> AppRepository.findByPublicKey(cacheValue(cacheKey)));
     cacheManager.put(APP_CACHE, appCache);
 
     // User Credentials Cache (credentials = user id)
@@ -99,11 +101,11 @@ public class CacheManager {
     cacheManager.put(USER_CREDENTIALS_CACHE, userCredentialsCache);
 
     // Stylesheet Cache (webPageId = stylesheet)
-    LoadingCache<Long, Stylesheet> stylesheetCache = Caffeine.newBuilder()
+    LoadingCache<String, Stylesheet> stylesheetCache = Caffeine.newBuilder()
         .maximumSize(100)
         //        .expireAfterWrite(5, TimeUnit.MINUTES)
         //        .refreshAfterWrite(1, TimeUnit.MINUTES)
-        .build(StylesheetRepository::findByWebPageId);
+        .build(cacheKey -> StylesheetRepository.findByWebPageId(Long.parseLong(cacheValue(cacheKey))));
     cacheManager.put(STYLESHEET_WEB_PAGE_ID_CACHE, stylesheetCache);
 
     // Content Cache (contentUniqueId = content)
@@ -111,7 +113,7 @@ public class CacheManager {
         .maximumSize(10_000)
         //        .expireAfterWrite(5, TimeUnit.MINUTES)
         //        .refreshAfterWrite(1, TimeUnit.MINUTES)
-        .build(ContentRepository::findByUniqueId);
+      .build(cacheKey -> ContentRepository.findByUniqueId(cacheValue(cacheKey)));
     cacheManager.put(CONTENT_UNIQUE_ID_CACHE, contentCache);
 
     // Remote Content Cache (contentRemoteUrl = remote content)
@@ -126,7 +128,7 @@ public class CacheManager {
         .maximumSize(100)
         //        .expireAfterWrite(5, TimeUnit.MINUTES)
         //        .refreshAfterWrite(1, TimeUnit.MINUTES)
-        .build(CollectionRepository::findByUniqueId);
+        .build(cacheKey -> CollectionRepository.findByUniqueId(cacheValue(cacheKey)));
     cacheManager.put(COLLECTION_UNIQUE_ID_CACHE, collectionCache);
 
     // Collection Unique Id Cache (collectionUniqueId = collection)
@@ -134,7 +136,7 @@ public class CacheManager {
         .maximumSize(100)
         //        .expireAfterWrite(5, TimeUnit.MINUTES)
         //        .refreshAfterWrite(1, TimeUnit.MINUTES)
-        .build(TableOfContentsRepository::findByUniqueId);
+        .build(cacheKey -> TableOfContentsRepository.findByUniqueId(cacheValue(cacheKey)));
     cacheManager.put(TABLE_OF_CONTENTS_UNIQUE_ID_CACHE, tableOfContentsCache);
 
     // Login attempt by username cache
@@ -219,6 +221,29 @@ public class CacheManager {
     }
   }
 
+  public static void putCurrentWorkspaceValue(String cacheName, Object key, Object value) {
+    putTenantValue(cacheName, getCurrentWorkspaceScope(), key, value);
+  }
+
+  public static Object getCurrentWorkspaceValue(String cacheName, Object key) {
+    return getTenantValue(cacheName, getCurrentWorkspaceScope(), key);
+  }
+
+  public static Object getCurrentWorkspaceLoadingValue(String cacheName, Object key) {
+    return getLoadingCache(cacheName).get(tenantCacheKey(getCurrentWorkspaceScope(), key));
+  }
+
+  public static void invalidateCurrentWorkspaceKey(String cacheName, Object key, boolean distributeInvalidation) {
+    invalidateTenantKey(cacheName, getCurrentWorkspaceScope(), key, distributeInvalidation);
+  }
+
+  public static String getCurrentWorkspaceScope() {
+    if (WorkspaceContextManager.getCurrentContext() == null) {
+      return DEFAULT_SITE_SCOPE;
+    }
+    return String.valueOf(WorkspaceContextManager.getCurrentContext().workspaceId());
+  }
+
   private static String tenantCacheKey(String workspaceId, Object key) {
     if (workspaceId == null || workspaceId.isBlank()) {
       throw new IllegalArgumentException("Workspace id cannot be null or blank");
@@ -226,20 +251,19 @@ public class CacheManager {
     return workspaceId + ":" + String.valueOf(key);
   }
 
+  private static String cacheValue(String cacheKey) {
+    return cacheKey.substring(cacheKey.indexOf(":") + 1);
+  }
+
   public static void addToObjectCache(String key, Object value) {
-    if (value == null) {
-      return;
-    }
-    Cache cache = cacheManager.get(OBJECT_CACHE);
-    cache.put(key, value);
+      putCurrentWorkspaceValue(OBJECT_CACHE, key, value);
   }
 
   public static Object getFromObjectCache(String key) {
-    Cache cache = cacheManager.get(OBJECT_CACHE);
-    return cache.getIfPresent(key);
+      return getCurrentWorkspaceValue(OBJECT_CACHE, key);
   }
 
   public static void invalidateObjectCacheKey(String key) {
-    invalidateKey(OBJECT_CACHE, key);
+      invalidateCurrentWorkspaceKey(OBJECT_CACHE, key, true);
   }
 }

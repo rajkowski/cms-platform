@@ -151,11 +151,16 @@ public class WebRequestFilter implements Filter {
     if (tenantRoutingEnabled && !resource.startsWith(PageServlet.WORKSPACE_SELECTOR_PATH) && !isStaticResource(resource)) {
       Workspace workspace = WorkspaceResolutionCommand.resolveWorkspace(request.getServerName());
       if (workspace == null) {
-        do302(servletResponse, PageServlet.WORKSPACE_SELECTOR_PATH);
-        return;
+        if (OAuthConfigurationCommand.isEnabled()) {
+          do302(servletResponse, PageServlet.WORKSPACE_SELECTOR_PATH);
+          return;
+        }
+        WorkspaceContextManager.clear();
+        DB.setTenantDataSource(ConnectionPool.getApplicationDataSource());
+      } else {
+        WorkspaceContextManager.activate(workspace.getId(), request.getServerName(), workspace.getFileRoot());
+        LOG.debug("Resolved workspace " + workspace.getId() + " for host " + request.getServerName());
       }
-      WorkspaceContextManager.activate(workspace.getId(), request.getServerName(), workspace.getFileRoot());
-      LOG.debug("Resolved workspace " + workspace.getId() + " for host " + request.getServerName());
     }
 
     try {
@@ -201,6 +206,7 @@ public class WebRequestFilter implements Filter {
       // Redirect to SSL
       if (requireSSL && !"https".equalsIgnoreCase(scheme)) {
         CharSequence serverName = request.getServerName();
+        // @todo or ends in .localhost or .localdomain or .local
         if (!"localhost".equals(serverName) && !InetAddressUtils.isIPv4(serverName) && !InetAddressUtils.isIPv6(serverName)) {
           // Check protocol, server name, port number, and server path
           if (StringUtils.isBlank(httpServletRequest.getRequestURL())) {

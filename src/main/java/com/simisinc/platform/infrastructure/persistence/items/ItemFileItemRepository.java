@@ -166,7 +166,8 @@ public class ItemFileItemRepository {
       }
 
       if (StringUtils.isNotBlank(specification.getSearchName())) {
-        select.SELECT("ts_rank_cd(tsv, websearch_to_tsquery('item_file_stem', ?)) AS rank", (Object[]) new Object[] { specification.getSearchName().trim() });
+        select.SELECT("ts_rank_cd(tsv, websearch_to_tsquery('item_file_stem', ?)) AS rank",
+            (Object[]) new Object[] { specification.getSearchName().trim() });
         select.AND("tsv @@ websearch_to_tsquery('item_file_stem', ?)", specification.getSearchName().trim());
         select.ORDER_BY("rank DESC, file_id");
       }
@@ -449,7 +450,7 @@ public class ItemFileItemRepository {
   }
 
   public static long findTotalFileSize() {
-    return DB.SELECT("SUM(file_length)")
+    return DB.SELECT("COALESCE(SUM(file_length), 0)")
         .FROM(TABLE_NAME)
         .returnValue(Long.class);
   }

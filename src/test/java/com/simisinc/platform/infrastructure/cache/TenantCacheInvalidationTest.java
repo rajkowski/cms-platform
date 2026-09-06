@@ -17,14 +17,29 @@ package com.simisinc.platform.infrastructure.cache;
 
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.mockito.Mockito.mock;
+import javax.sql.DataSource;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.TenantRegistry;
+import com.zeroio.platform.infrastructure.database.WorkspaceContextManager;
 
 class TenantCacheInvalidationTest {
 
   @BeforeEach
   void setUp() {
     CacheManager.startup();
+    DB.setTenantRegistry(new TenantRegistry());
+    DB.registerTenantDataSource("1", mock(DataSource.class));
+    DB.registerTenantDataSource("2", mock(DataSource.class));
+  }
+
+  @AfterEach
+  void tearDown() {
+    WorkspaceContextManager.clear();
+    DB.setTenantRegistry(new TenantRegistry());
   }
 
   @Test
@@ -38,5 +53,30 @@ class TenantCacheInvalidationTest {
 
     assertNull(CacheManager.getTenantValue(CacheManager.OBJECT_CACHE, "1", "header"));
     assertSame(second, CacheManager.getTenantValue(CacheManager.OBJECT_CACHE, "2", "header"));
+  }
+
+  @Test
+  void currentWorkspaceValueDoesNotLeakToAnotherWorkspaceOrDefaultSite() {
+    Object firstWorkspaceValue = new Object();
+    Object secondWorkspaceValue = new Object();
+    Object defaultSiteValue = new Object();
+
+    WorkspaceContextManager.activate(1L, "one.example.com");
+    CacheManager.putCurrentWorkspaceValue(CacheManager.OBJECT_CACHE, "content", firstWorkspaceValue);
+
+    WorkspaceContextManager.activate(2L, "two.example.com");
+    CacheManager.putCurrentWorkspaceValue(CacheManager.OBJECT_CACHE, "content", secondWorkspaceValue);
+
+    WorkspaceContextManager.clear();
+    CacheManager.putCurrentWorkspaceValue(CacheManager.OBJECT_CACHE, "content", defaultSiteValue);
+
+    WorkspaceContextManager.activate(1L, "one.example.com");
+    assertSame(firstWorkspaceValue, CacheManager.getCurrentWorkspaceValue(CacheManager.OBJECT_CACHE, "content"));
+
+    WorkspaceContextManager.activate(2L, "two.example.com");
+    assertSame(secondWorkspaceValue, CacheManager.getCurrentWorkspaceValue(CacheManager.OBJECT_CACHE, "content"));
+
+    WorkspaceContextManager.clear();
+    assertSame(defaultSiteValue, CacheManager.getCurrentWorkspaceValue(CacheManager.OBJECT_CACHE, "content"));
   }
 }

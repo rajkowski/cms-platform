@@ -32,6 +32,6 @@ public class LoadAppCommand {
   private static Log LOG = LogFactory.getLog(LoadAppCommand.class);
 
   public static App loadAppByPublicKey(String publicKey) {
-    return (App) CacheManager.getLoadingCache(CacheManager.APP_CACHE).get(publicKey);
+    return (App) CacheManager.getCurrentWorkspaceLoadingValue(CacheManager.APP_CACHE, publicKey);
   }
 }

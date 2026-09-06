@@ -70,7 +70,7 @@ public class StreamImageWidget extends GenericWidget {
 
     File file = FileSystemCommand.getFileServerRootPath(filePath);
     if (!file.isFile()) {
-      LOG.warn("Server file does not exist: " + filePath);
+      LOG.warn("Server file does not exist: " + file.getAbsolutePath());
       // If thumbnail doesn't exist, fall back to original
       if (isThumbnail && !record.getFileServerPath().equals(filePath)) {
         file = FileSystemCommand.getFileServerRootPath(record.getFileServerPath());

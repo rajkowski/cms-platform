@@ -62,18 +62,23 @@ class LogoWidgetTest extends WidgetBase {
     sitePropertyListCache = Caffeine.newBuilder().build(LogoWidgetTest::findByPrefix);
   }
 
+  private void mockSitePropertyCache(MockedStatic<CacheManager> cacheManager) {
+    cacheManager.when(() -> CacheManager.getCurrentWorkspaceLoadingValue(anyString(), anyString()))
+        .thenAnswer(invocation -> sitePropertyListCache.get(invocation.getArgument(1)));
+  }
+
   @Test
   void executeColorLogoDisplay() {
     // Set widget preferences
     addPreferencesFromWidgetXml(widgetContext,
         "<widget name=\"logo\" style=\"margin-top:3px\" class=\"float-left margin-right-25\">" +
-        "  <view>color</view>" +
-        "  <maxHeight>23px</maxHeight>" +
-        "</widget>");
+            "  <view>color</view>" +
+            "  <maxHeight>23px</maxHeight>" +
+            "</widget>");
     Assertions.assertEquals(2, widgetContext.getPreferences().size());
 
     try (MockedStatic<CacheManager> cacheManager = mockStatic(CacheManager.class)) {
-      cacheManager.when(() -> CacheManager.getLoadingCache(anyString())).thenReturn(sitePropertyListCache);
+      mockSitePropertyCache(cacheManager);
 
       LogoWidget widget = new LogoWidget();
       widget.execute(widgetContext);
@@ -99,7 +104,7 @@ class LogoWidgetTest extends WidgetBase {
     Assertions.assertEquals(1, widgetContext.getPreferences().size());
 
     try (MockedStatic<CacheManager> cacheManager = mockStatic(CacheManager.class)) {
-      cacheManager.when(() -> CacheManager.getLoadingCache(anyString())).thenReturn(sitePropertyListCache);
+      mockSitePropertyCache(cacheManager);
 
       LogoWidget widget = new LogoWidget();
       widget.execute(widgetContext);
@@ -125,7 +130,7 @@ class LogoWidgetTest extends WidgetBase {
     Assertions.assertEquals(1, widgetContext.getPreferences().size());
 
     try (MockedStatic<CacheManager> cacheManager = mockStatic(CacheManager.class)) {
-      cacheManager.when(() -> CacheManager.getLoadingCache(anyString())).thenReturn(sitePropertyListCache);
+      mockSitePropertyCache(cacheManager);
 
       LogoWidget widget = new LogoWidget();
       widget.execute(widgetContext);

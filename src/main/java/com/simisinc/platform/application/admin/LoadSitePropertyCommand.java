@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,8 +50,8 @@ public class LoadSitePropertyCommand {
 
   private static Map<String, String> loadAsMap(String prefix, boolean includeEmptyValues) {
     // Use the cache
-    List<SiteProperty> sitePropertyList = (List<SiteProperty>) CacheManager.getLoadingCache(CacheManager.SYSTEM_PROPERTY_PREFIX_CACHE)
-        .get(prefix);
+    List<SiteProperty> sitePropertyList = (List<SiteProperty>) CacheManager
+        .getCurrentWorkspaceLoadingValue(CacheManager.SYSTEM_PROPERTY_PREFIX_CACHE, prefix);
     // Return the requested map
     Map<String, String> sitePropertyMap = new HashMap<>();
     for (SiteProperty siteProperty : sitePropertyList) {
@@ -72,8 +73,8 @@ public class LoadSitePropertyCommand {
 
   public static String loadByName(String name) {
     String prefix = name.substring(0, name.indexOf("."));
-    List<SiteProperty> sitePropertyList = (List<SiteProperty>) CacheManager.getLoadingCache(CacheManager.SYSTEM_PROPERTY_PREFIX_CACHE)
-        .get(prefix);
+    List<SiteProperty> sitePropertyList = (List<SiteProperty>) CacheManager
+        .getCurrentWorkspaceLoadingValue(CacheManager.SYSTEM_PROPERTY_PREFIX_CACHE, prefix);
     if (sitePropertyList == null) {
       return null;
     }

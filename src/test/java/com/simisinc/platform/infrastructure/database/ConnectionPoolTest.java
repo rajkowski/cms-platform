@@ -23,6 +23,7 @@ import java.util.Properties;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+
 class ConnectionPoolTest {
 
   @AfterEach
@@ -51,4 +52,5 @@ class ConnectionPoolTest {
       }
     });
   }
+
 }

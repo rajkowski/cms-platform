@@ -83,10 +83,15 @@ class LoadSitePropertyCommandTest {
     sitePropertyListCache = Caffeine.newBuilder().build(LoadSitePropertyCommandTest::findByPrefix);
   }
 
+  private void mockSitePropertyCache(MockedStatic<CacheManager> cacheManager) {
+    cacheManager.when(() -> CacheManager.getCurrentWorkspaceLoadingValue(anyString(), anyString()))
+        .thenAnswer(invocation -> sitePropertyListCache.get(invocation.getArgument(1)));
+  }
+
   @Test
   void loadAsMap() {
     try (MockedStatic<CacheManager> cacheManager = mockStatic(CacheManager.class)) {
-      cacheManager.when(() -> CacheManager.getLoadingCache(anyString())).thenReturn(sitePropertyListCache);
+      mockSitePropertyCache(cacheManager);
 
       Map<String, String> sitePropertyMap = LoadSitePropertyCommand.loadAsMap("site");
 
@@ -100,7 +105,7 @@ class LoadSitePropertyCommandTest {
   @Test
   void loadAsMapSkipEmpty() {
     try (MockedStatic<CacheManager> cacheManager = mockStatic(CacheManager.class)) {
-      cacheManager.when(() -> CacheManager.getLoadingCache(anyString())).thenReturn(sitePropertyListCache);
+      mockSitePropertyCache(cacheManager);
 
       Map<String, String> sitePropertyMap = LoadSitePropertyCommand.loadNonEmptyAsMap("site");
 
@@ -114,7 +119,7 @@ class LoadSitePropertyCommandTest {
   @Test
   void loadByName() {
     try (MockedStatic<CacheManager> cacheManager = mockStatic(CacheManager.class)) {
-      cacheManager.when(() -> CacheManager.getLoadingCache(anyString())).thenReturn(sitePropertyListCache);
+      mockSitePropertyCache(cacheManager);
 
       String value = LoadSitePropertyCommand.loadByName("site.url");
       Assertions.assertNotNull(value);
@@ -125,7 +130,7 @@ class LoadSitePropertyCommandTest {
   @Test
   void loadByNameWithDefaultValue() {
     try (MockedStatic<CacheManager> cacheManager = mockStatic(CacheManager.class)) {
-      cacheManager.when(() -> CacheManager.getLoadingCache(anyString())).thenReturn(sitePropertyListCache);
+      mockSitePropertyCache(cacheManager);
 
       String value = LoadSitePropertyCommand.loadByName("site.url", "https://example.com");
       Assertions.assertNotNull(value);
@@ -140,7 +145,7 @@ class LoadSitePropertyCommandTest {
   @Test
   void loadByNameAsList() {
     try (MockedStatic<CacheManager> cacheManager = mockStatic(CacheManager.class)) {
-      cacheManager.when(() -> CacheManager.getLoadingCache(anyString())).thenReturn(sitePropertyListCache);
+      mockSitePropertyCache(cacheManager);
 
       List<String> valueList = LoadSitePropertyCommand.loadByNameAsList("oauth.group.list");
       Assertions.assertNotNull(valueList);

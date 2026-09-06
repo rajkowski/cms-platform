@@ -42,7 +42,7 @@ public class LoadTableOfContentsCommand {
       return null;
     }
     TableOfContents cachedTableOfContents = (TableOfContents) CacheManager
-        .getLoadingCache(CacheManager.TABLE_OF_CONTENTS_UNIQUE_ID_CACHE).get(tableOfContentsUniqueId);
+      .getCurrentWorkspaceLoadingValue(CacheManager.TABLE_OF_CONTENTS_UNIQUE_ID_CACHE, tableOfContentsUniqueId);
     if (!clone || cachedTableOfContents == null) {
       return cachedTableOfContents;
     }

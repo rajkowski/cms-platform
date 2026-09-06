@@ -116,10 +116,10 @@ public class WebContainerRepository {
         .execute()) {
       // Invalidate the cache
       if (record.getName().startsWith("header")) {
-        CacheManager.invalidateObjectCacheKey(CacheManager.WEBSITE_HEADER);
-        CacheManager.invalidateObjectCacheKey(CacheManager.WEBSITE_PLAIN_HEADER);
+        CacheManager.invalidateCurrentWorkspaceKey(CacheManager.OBJECT_CACHE, CacheManager.WEBSITE_HEADER, true);
+        CacheManager.invalidateCurrentWorkspaceKey(CacheManager.OBJECT_CACHE, CacheManager.WEBSITE_PLAIN_HEADER, true);
       } else if (record.getName().startsWith("footer")) {
-        CacheManager.invalidateObjectCacheKey(CacheManager.WEBSITE_FOOTER);
+        CacheManager.invalidateCurrentWorkspaceKey(CacheManager.OBJECT_CACHE, CacheManager.WEBSITE_FOOTER, true);
       }
       return record;
     }

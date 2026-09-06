@@ -56,8 +56,11 @@ import com.simisinc.platform.infrastructure.scheduler.cms.LoadSystemFilesJob;
 import com.simisinc.platform.infrastructure.web.WebApp;
 import com.simisinc.platform.infrastructure.workflow.WorkflowManager;
 import com.zeroio.platform.ApplicationInfo;
+import com.zeroio.platform.domain.model.tenant.Workspace;
+import com.zeroio.platform.infrastructure.database.WorkspaceContextManager;
 import com.zeroio.platform.infrastructure.permission.Permission;
 import com.zeroio.platform.infrastructure.permission.PermissionLoader;
+import com.zeroio.platform.infrastructure.persistence.tenant.WorkspaceRepository;
 
 /**
  * Description
@@ -121,6 +124,11 @@ public class ContextListener implements ServletContextListener {
 
     LOG.info("Registering configured workspace datasources...");
     ConnectionPool.registerConfiguredTenantDataSources();
+    if (!DatabaseCommand.checkWorkspaceDatabases()) {
+      isSuccessful = false;
+      LOG.error("Could not check workspace databases");
+      servletContextEvent.getServletContext().setAttribute(ContextConstants.STARTUP_FAILED, "workspace database");
+    }
 
     // Startup the distributed messaging manager
     LOG.info("Startup the distributed messaging manager...");
@@ -172,16 +180,8 @@ public class ContextListener implements ServletContextListener {
     // Determine if the global stylesheet file exists
     LoadStylesheetCommand.init();
 
-    // Preload all the content
-    List<Content> contentList = ContentRepository.findAll();
-    if (contentList != null) {
-      ArrayList<String> contentUniqueIdList = new ArrayList<>();
-      for (Content content : contentList) {
-        contentUniqueIdList.add(content.getUniqueId());
-      }
-      LOG.info("Load the content cache: " + contentUniqueIdList.size() + " entries");
-      CacheManager.getLoadingCache(CONTENT_UNIQUE_ID_CACHE).getAll(contentUniqueIdList);
-    }
+    // Preload default-site content and content for each active workspace
+    preloadContentForActiveWorkspaces();
 
     // Initialize the workflow engine
     LOG.info("Add the workflows...");
@@ -218,5 +218,28 @@ public class ContextListener implements ServletContextListener {
 
     LOG.info("Removing webapp references...");
     WebApp.shutdown();
+  }
+
+  static void preloadContentForActiveWorkspaces() {
+    preloadContent();
+    for (Workspace workspace : WorkspaceRepository.findAllActive()) {
+      WorkspaceContextManager.withWorkspace(workspace.getId(), workspace.getCanonicalDomain(), workspace.getFileRoot(),
+          ContextListener::preloadContent);
+    }
+  }
+
+  private static void preloadContent() {
+    List<Content> contentList = ContentRepository.findAll();
+    if (contentList == null) {
+      return;
+    }
+    ArrayList<String> contentUniqueIdList = new ArrayList<>();
+    for (Content content : contentList) {
+      contentUniqueIdList.add(content.getUniqueId());
+    }
+    LOG.info("Load the content cache: " + contentUniqueIdList.size() + " entries");
+    for (String contentUniqueId : contentUniqueIdList) {
+      CacheManager.getCurrentWorkspaceLoadingValue(CONTENT_UNIQUE_ID_CACHE, contentUniqueId);
+    }
   }
 }

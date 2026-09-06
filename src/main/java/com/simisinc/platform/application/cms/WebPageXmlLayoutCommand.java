@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.servlet.ServletContext;
 
@@ -33,6 +34,7 @@ import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
 import com.simisinc.platform.presentation.controller.Page;
 import com.simisinc.platform.presentation.controller.XMLPageLoader;
+import com.zeroio.platform.infrastructure.database.WorkspaceContextManager;
 
 /**
  * Handles loading and retrieving page layouts for different page types (pages, collections, etc.)
@@ -45,11 +47,12 @@ public class WebPageXmlLayoutCommand {
   private static Log LOG = LogFactory.getLog(WebPageXmlLayoutCommand.class);
 
   private static XMLPageLoader pages = new XMLPageLoader(new HashMap<>());
-  private static XMLPageLoader customPages = new XMLPageLoader(new HashMap<>());
+  private static Map<String, XMLPageLoader> customPagesByWorkspace = new ConcurrentHashMap<>();
 
   public static Map<String, String> init(File webAppPath) throws MalformedURLException {
     // Load the widget library, the XML validates against it
     pages.loadWidgetLibrary(new File(webAppPath, "/WEB-INF/widgets/widget-library.xml").toURI().toURL());
+    XMLPageLoader customPages = getCustomPages();
     customPages.setWidgetLibrary(pages.getWidgetLibrary());
 
     // Load the page layouts and json services
@@ -78,6 +81,7 @@ public class WebPageXmlLayoutCommand {
   public static Map<String, String> init(ServletContext servletContext) throws MalformedURLException {
     // Load the widget library, the XML validates against it
     pages.loadWidgetLibrary(servletContext.getResource("/WEB-INF/widgets/widget-library.xml"));
+    XMLPageLoader customPages = getCustomPages();
     customPages.setWidgetLibrary(pages.getWidgetLibrary());
 
     // Load the page layouts and json services
@@ -135,7 +139,7 @@ public class WebPageXmlLayoutCommand {
   }
 
   public static void removeCustomPage(String name) {
-    customPages.remove(name);
+    getCustomPages().remove(name);
   }
 
   public static Map<String, String> getWidgetLibrary() {
@@ -143,6 +147,7 @@ public class WebPageXmlLayoutCommand {
   }
 
   public static Page retrievePageForRequest(WebPage webPage, String pagePath) {
+    XMLPageLoader customPages = getCustomPages();
     // Check the system cache for this page (or link?)
     Page pageRef = pages.get(pagePath);
     if (pageRef != null) {
@@ -219,6 +224,16 @@ public class WebPageXmlLayoutCommand {
       }
     }
     return pageRef;
+  }
+
+  private static XMLPageLoader getCustomPages() {
+    String workspaceScope = WorkspaceContextManager.getCurrentContext() == null ? "default-site"
+        : String.valueOf(WorkspaceContextManager.getCurrentContext().workspaceId());
+    return customPagesByWorkspace.computeIfAbsent(workspaceScope, ignored -> {
+      XMLPageLoader customPages = new XMLPageLoader(new HashMap<>());
+      customPages.setWidgetLibrary(pages.getWidgetLibrary());
+      return customPages;
+    });
   }
 
   private static Page locatePage(String pagePath) {

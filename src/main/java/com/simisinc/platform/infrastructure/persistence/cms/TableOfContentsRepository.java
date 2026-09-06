@@ -114,7 +114,7 @@ public class TableOfContentsRepository {
         .SET("entries", TableOfContentsJSONCommand.createJSONString(record), CastType.JSONB)
         .WHERE("toc_id = ?", record.getId());
     if (update.execute().booleanValue()) {
-      CacheManager.invalidateKey(CacheManager.TABLE_OF_CONTENTS_UNIQUE_ID_CACHE, record.getTocUniqueId());
+      CacheManager.invalidateCurrentWorkspaceKey(CacheManager.TABLE_OF_CONTENTS_UNIQUE_ID_CACHE, record.getTocUniqueId(), true);
       return record;
     }
     LOG.error("The update failed!");

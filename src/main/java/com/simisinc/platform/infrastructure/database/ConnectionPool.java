@@ -53,7 +53,9 @@ public class ConnectionPool {
     applicationDS = initApplicationCP(properties);
     DB.setDataSource(applicationDS);
     DB.setTenantRegistry(TENANT_REGISTRY);
-    tenantDataSourceRegistrar = new TenantDataSourceRegistrar(new SitePropertyTenantDataSourceConfigurationStore());
+    TENANT_REGISTRY.setMaximumConnections(getTenantConnectionBudget(properties));
+    tenantDataSourceRegistrar = new TenantDataSourceRegistrar(new SitePropertyTenantDataSourceConfigurationStore(),
+      getTenantConnectionBudget(properties));
     LOG.info("Max pool size (applicationDS): " + applicationDS.getMaximumPoolSize());
     backgroundJobsDS = initBackgroundJobsCP(properties);
     LOG.info("Max pool size (backgroundJobsDS): " + backgroundJobsDS.getMaximumPoolSize());
@@ -86,6 +88,22 @@ public class ConnectionPool {
     config.setMaxLifetime(600_000);
     config.setPoolName("Distributed-Messaging-Pool");
     return new HikariDataSource(config);
+  }
+
+  private static int getTenantConnectionBudget(Properties properties) {
+    String configuredBudget = properties.getProperty("tenant.maximumPoolSize");
+    if (configuredBudget == null) {
+      configuredBudget = properties.getProperty("application.maximumPoolSize", "8");
+    }
+    try {
+      int budget = Integer.parseInt(configuredBudget);
+      if (budget < 1) {
+        throw new NumberFormatException("must be positive");
+      }
+      return budget;
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException("tenant.maximumPoolSize must be a positive integer", e);
+    }
   }
 
   public static void shutdown() {
@@ -138,6 +156,14 @@ public class ConnectionPool {
 
   public static void registerTenantDataSource(String tenantId, javax.sql.DataSource dataSource) {
     TENANT_REGISTRY.register(tenantId, dataSource);
+  }
+
+  public static void registerTenantDataSource(String tenantId, javax.sql.DataSource dataSource, String poolGroup) {
+    TENANT_REGISTRY.register(tenantId, dataSource, poolGroup);
+  }
+
+  public static void setTenantMaximumConnections(String poolGroup, int maximumConnections) {
+    TENANT_REGISTRY.setMaximumConnections(poolGroup, maximumConnections);
   }
 
   public static void unregisterTenantDataSource(String tenantId) {

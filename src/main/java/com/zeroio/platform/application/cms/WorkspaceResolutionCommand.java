@@ -29,7 +29,7 @@ import com.zeroio.platform.infrastructure.persistence.tenant.WorkspaceRepository
 public class WorkspaceResolutionCommand {
 
   private static final Log LOG = LogFactory.getLog(WorkspaceResolutionCommand.class);
-  private static final String TENANT_ROUTING_ENABLED = "cms.tenant-routing.enabled";
+  private static final String TENANT_ROUTING_ENABLED = "CMS_TENANT_ROUTING_ENABLED";
 
   private WorkspaceResolutionCommand() {
   }
@@ -51,7 +51,8 @@ public class WorkspaceResolutionCommand {
   }
 
   public static boolean isTenantRoutingEnabled() {
-    return Boolean.parseBoolean(System.getProperty(TENANT_ROUTING_ENABLED, "false"));
+    String value = System.getenv(TENANT_ROUTING_ENABLED);
+    return value != null ? Boolean.parseBoolean(value) : false;
   }
 
   public static String normalizeHost(String host) {

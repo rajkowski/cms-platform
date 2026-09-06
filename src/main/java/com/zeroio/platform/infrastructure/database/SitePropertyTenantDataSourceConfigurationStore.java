@@ -51,14 +51,27 @@ public class SitePropertyTenantDataSourceConfigurationStore implements TenantDat
           .SET("username", configuration.getUsername())
           .SET("password", SecretCryptoCommand.encrypt(configuration.getPassword()))
           .SET("driver_class_name", configuration.getDriverClassName())
+          .SET("pool_group", configuration.getPoolGroup())
+          .SET("auth_method", configuration.getAuthMethod())
+          .SET("azure_tenant_id", configuration.getAzureTenantId())
+          .SET("azure_client_id", configuration.getAzureClientId())
+          .SET("azure_client_secret", SecretCryptoCommand.encrypt(configuration.getAzureClientSecret()))
           .WHERE("workspace_id = ?", configuration.getWorkspaceId())
           .execute();
       return updated ? configuration : null;
     }
     long generatedId = DB.INSERT().INTO(TABLE_NAME)
-        .FIELDS(new Field("workspace_id", configuration.getWorkspaceId()), new Field("jdbc_url", configuration.getJdbcUrl()),
+        .FIELDS(
+            new Field("workspace_id", configuration.getWorkspaceId()),
+            new Field("jdbc_url", configuration.getJdbcUrl()),
+            new Field("username", configuration.getUsername()),
             new Field("password", SecretCryptoCommand.encrypt(configuration.getPassword())),
-            new Field("driver_class_name", configuration.getDriverClassName()))
+            new Field("driver_class_name", configuration.getDriverClassName()),
+            new Field("pool_group", configuration.getPoolGroup()),
+            new Field("auth_method", configuration.getAuthMethod()),
+            new Field("azure_tenant_id", configuration.getAzureTenantId()),
+            new Field("azure_client_id", configuration.getAzureClientId()),
+            new Field("azure_client_secret", SecretCryptoCommand.encrypt(configuration.getAzureClientSecret())))
         .execute();
     return generatedId > -1 ? configuration : null;
   }
@@ -71,6 +84,11 @@ public class SitePropertyTenantDataSourceConfigurationStore implements TenantDat
       configuration.setUsername(resultSet.getString("username"));
       configuration.setPassword(SecretCryptoCommand.decrypt(resultSet.getString("password")));
       configuration.setDriverClassName(resultSet.getString("driver_class_name"));
+      configuration.setPoolGroup(resultSet.getString("pool_group"));
+      configuration.setAuthMethod(resultSet.getString("auth_method"));
+      configuration.setAzureTenantId(resultSet.getString("azure_tenant_id"));
+      configuration.setAzureClientId(resultSet.getString("azure_client_id"));
+      configuration.setAzureClientSecret(SecretCryptoCommand.decrypt(resultSet.getString("azure_client_secret")));
       return configuration;
     } catch (SQLException e) {
       LOG.error("Unable to read workspace datasource configuration", e);
@@ -91,5 +109,18 @@ public class SitePropertyTenantDataSourceConfigurationStore implements TenantDat
     if (configuration.getDriverClassName() == null || configuration.getDriverClassName().isBlank()) {
       throw new IllegalArgumentException("Driver class name cannot be null or blank");
     }
+    if (configuration.getAuthMethod() != null && !configuration.getAuthMethod().isBlank()
+        && !"azure-sql-spn".equals(configuration.getAuthMethod())) {
+      throw new IllegalArgumentException("Unsupported authentication method");
+    }
+    if ("azure-sql-spn".equals(configuration.getAuthMethod())
+        && (isBlank(configuration.getAzureTenantId()) || isBlank(configuration.getAzureClientId())
+        || isBlank(configuration.getAzureClientSecret()))) {
+      throw new IllegalArgumentException("Azure SPN authentication requires tenant, client, and secret values");
+    }
+  }
+
+  private static boolean isBlank(String value) {
+    return value == null || value.isBlank();
   }
 }

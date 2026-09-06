@@ -47,7 +47,8 @@ class TenantDataSourceRegistrarTest {
     DB.setDataSource(dataSource);
     try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
       statement.execute("CREATE TABLE workspaces (workspace_id BIGINT PRIMARY KEY)");
-      statement.execute("CREATE TABLE workspace_data_sources (workspace_id BIGINT PRIMARY KEY, jdbc_url VARCHAR(2048), username VARCHAR(255), password VARCHAR(2048), driver_class_name VARCHAR(255))");
+      statement.execute(
+          "CREATE TABLE workspace_data_sources (workspace_id BIGINT PRIMARY KEY, jdbc_url VARCHAR(2048), username VARCHAR(255), password VARCHAR(2048), driver_class_name VARCHAR(255), pool_group VARCHAR(255), auth_method VARCHAR(50), azure_tenant_id VARCHAR(255), azure_client_id VARCHAR(255), azure_client_secret VARCHAR(2048))");
       statement.execute("INSERT INTO workspaces VALUES (1)");
     }
 
@@ -66,7 +67,9 @@ class TenantDataSourceRegistrarTest {
   @Test
   void startupRegistersValidConfigurationsAndSkipsInvalidConfigurations() {
     List<TenantDataSourceConfiguration> configurations = new ArrayList<>();
-    configurations.add(configuration(1, "jdbc:h2:mem:workspace_valid;DB_CLOSE_DELAY=-1"));
+    TenantDataSourceConfiguration validConfiguration = configuration(1, "jdbc:h2:mem:workspace_valid;DB_CLOSE_DELAY=-1");
+    validConfiguration.setPoolGroup("shared-server");
+    configurations.add(validConfiguration);
     configurations.add(configuration(2, ""));
     TenantDataSourceRegistrar registrar = new TenantDataSourceRegistrar(new InMemoryStore(configurations));
 
@@ -89,7 +92,10 @@ class TenantDataSourceRegistrarTest {
       assertFalse(previous.isClosed());
     }
 
-    registrar.retireIdleDataSources();
+    long deadline = System.nanoTime() + 2_000_000_000L;
+    while (!previous.isClosed() && System.nanoTime() < deadline) {
+      Thread.onSpinWait();
+    }
     assertTrue(previous.isClosed());
     registrar.shutdown();
   }

@@ -104,7 +104,7 @@ public class StylesheetRepository {
       LOG.error("An id was not set!");
       return null;
     }
-    CacheManager.invalidateKey(CacheManager.STYLESHEET_WEB_PAGE_ID_CACHE, record.getWebPageId());
+    CacheManager.invalidateCurrentWorkspaceKey(CacheManager.STYLESHEET_WEB_PAGE_ID_CACHE, record.getWebPageId(), true);
     LoadStylesheetCommand.markStylesheetExists(record.getWebPageId(), true);
     record.setModified(modified);
     return record;
@@ -118,7 +118,7 @@ public class StylesheetRepository {
         .WHERE("stylesheet_id = ?", record.getId())
         .execute();
     if (updated) {
-      CacheManager.invalidateKey(CacheManager.STYLESHEET_WEB_PAGE_ID_CACHE, record.getWebPageId());
+      CacheManager.invalidateCurrentWorkspaceKey(CacheManager.STYLESHEET_WEB_PAGE_ID_CACHE, record.getWebPageId(), true);
       LoadStylesheetCommand.markStylesheetExists(record.getWebPageId(), true);
       record.setModified(modified);
       return record;
@@ -139,7 +139,7 @@ public class StylesheetRepository {
       DB.DELETE().FROM(TABLE_NAME).WHERE("stylesheet_id = ?", record.getId()).execute(connection);
       // Finish transaction
       transaction.commit();
-      CacheManager.invalidateKey(CacheManager.STYLESHEET_WEB_PAGE_ID_CACHE, record.getWebPageId());
+      CacheManager.invalidateCurrentWorkspaceKey(CacheManager.STYLESHEET_WEB_PAGE_ID_CACHE, record.getWebPageId(), true);
       LoadStylesheetCommand.markStylesheetExists(record.getWebPageId(), false);
       return true;
     } catch (SQLException se) {

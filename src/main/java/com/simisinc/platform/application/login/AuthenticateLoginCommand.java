@@ -16,7 +16,6 @@
 
 package com.simisinc.platform.application.login;
 
-import com.github.benmanes.caffeine.cache.Cache;
 import com.simisinc.platform.application.DataException;
 import com.simisinc.platform.application.LoadUserCommand;
 import com.simisinc.platform.application.RateLimitCommand;
@@ -83,8 +82,7 @@ public class AuthenticateLoginCommand {
     }
 
     // Check the credentials cache
-    Cache cache = CacheManager.getCache(CacheManager.USER_CREDENTIALS_CACHE);
-    String comparison = (String) cache.getIfPresent(user.getId());
+    String comparison = (String) CacheManager.getCurrentWorkspaceValue(CacheManager.USER_CREDENTIALS_CACHE, user.getId());
     if (comparison != null && comparison.equals(username + ":" + password)) {
       return user;
     }
@@ -94,7 +92,7 @@ public class AuthenticateLoginCommand {
     if (verified) {
       // Hash matches password
       LOG.debug("User validated");
-      cache.put(user.getId(), username + ":" + password);
+      CacheManager.putCurrentWorkspaceValue(CacheManager.USER_CREDENTIALS_CACHE, user.getId(), username + ":" + password);
       return user;
     }
 

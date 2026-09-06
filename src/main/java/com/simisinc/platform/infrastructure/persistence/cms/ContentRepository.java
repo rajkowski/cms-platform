@@ -136,7 +136,7 @@ public class ContentRepository {
         .SET("modified_by", record.getModifiedBy())
         .SET("modified", new Timestamp(System.currentTimeMillis()));
     if (update.WHERE("content_unique_id = ?", StringUtils.trimToNull(record.getUniqueId())).execute()) {
-      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
+      CacheManager.invalidateCurrentWorkspaceKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId(), true);
       return record;
     }
     LOG.error("The update failed!");
@@ -154,7 +154,7 @@ public class ContentRepository {
             .text(ResolveContentDirectivesCommand.resolveDirectives(StringUtils.trimToNull(record.getContent()))))
         .WHERE("draft_content IS NOT NULL AND content_unique_id = ?", record.getUniqueId());
     if (update.execute()) {
-      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
+      CacheManager.invalidateCurrentWorkspaceKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId(), true);
     }
   }
 
@@ -188,7 +188,7 @@ public class ContentRepository {
           .SET("modified", new Timestamp(System.currentTimeMillis()))
           .WHERE("content_unique_id = ?", embedding.getUniqueId());
       if (update.execute()) {
-        CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, embedding.getUniqueId());
+        CacheManager.invalidateCurrentWorkspaceKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, embedding.getUniqueId(), true);
         LOG.debug("Updated content_text for embedding content: " + embedding.getUniqueId());
       }
     }
@@ -202,7 +202,7 @@ public class ContentRepository {
         .SET("draft_content", (String) null)
         .WHERE("content_unique_id = ?", record.getUniqueId());
     if (update.execute()) {
-      CacheManager.invalidateKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId());
+      CacheManager.invalidateCurrentWorkspaceKey(CacheManager.CONTENT_UNIQUE_ID_CACHE, record.getUniqueId(), true);
     }
   }
 

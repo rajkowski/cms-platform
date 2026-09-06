@@ -28,7 +28,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.github.benmanes.caffeine.cache.Cache;
 import com.simisinc.platform.domain.model.cms.Stylesheet;
 import com.simisinc.platform.infrastructure.cache.CacheManager;
 import com.simisinc.platform.infrastructure.web.WebApp;
@@ -45,7 +44,7 @@ public class LoadStylesheetCommand {
   private static long GLOBAL_CSS_PAGE = -1L;
   private static String GLOBAL_CSS_FILE = "/css/global.css";
 
-  private static List<Long> webPageIdNotFoundList = new ArrayList<>();
+  private static List<String> webPageIdNotFoundList = new ArrayList<>();
   private static Boolean hasGlobalStylesheetFile;
 
   /** Tracks whether the web application was bundled with a global stylesheet */
@@ -63,20 +62,21 @@ public class LoadStylesheetCommand {
     // Before any processing see if function can fail-fast if stylesheet doesn't exist
     if (webPageId == GLOBAL_CSS_PAGE) {
       // Global stylesheet might have a file
-      if (!hasGlobalStylesheetFile.booleanValue() && webPageIdNotFoundList.contains(GLOBAL_CSS_PAGE)) {
+      if (!hasGlobalStylesheetFile.booleanValue() && webPageIdNotFoundList.contains(stylesheetScopeKey(webPageId))) {
         LOG.debug("Avoided global stylesheet hit");
         return null;
       }
     } else {
       // Page stylesheet
-      if (webPageIdNotFoundList.contains(webPageId)) {
+      if (webPageIdNotFoundList.contains(stylesheetScopeKey(webPageId))) {
         LOG.debug("Avoided stylesheet hit for webPageId: " + webPageId);
         return null;
       }
     }
 
     // Use the cache loader to find the stylesheet
-    Stylesheet thisStylesheet = (Stylesheet) CacheManager.getLoadingCache(CacheManager.STYLESHEET_WEB_PAGE_ID_CACHE).get(webPageId);
+    Stylesheet thisStylesheet = (Stylesheet) CacheManager
+      .getCurrentWorkspaceLoadingValue(CacheManager.STYLESHEET_WEB_PAGE_ID_CACHE, webPageId);
     if (thisStylesheet != null && !StringUtils.isBlank(thisStylesheet.getCss())) {
       LOG.debug("Stylesheet cache found for webPageId: " + webPageId);
       return thisStylesheet;
@@ -100,12 +100,12 @@ public class LoadStylesheetCommand {
   public static void markStylesheetExists(long webPageId, boolean exists) {
     if (exists) {
       // it will come from cache
-      webPageIdNotFoundList.remove(webPageId);
+      webPageIdNotFoundList.remove(stylesheetScopeKey(webPageId));
     } else {
       // determine if cache hit should be avoided
       if (webPageId != GLOBAL_CSS_PAGE || !hasGlobalStylesheetFile.booleanValue()) {
         // avoid cache hit
-        webPageIdNotFoundList.add(webPageId);
+        webPageIdNotFoundList.add(stylesheetScopeKey(webPageId));
       }
     }
   }
@@ -130,8 +130,7 @@ public class LoadStylesheetCommand {
         stylesheet.setModified(new Timestamp(System.currentTimeMillis()));
         stylesheet.setCss(css);
         // Cache it
-        Cache cache = CacheManager.getCache(CacheManager.STYLESHEET_WEB_PAGE_ID_CACHE);
-        cache.put(GLOBAL_CSS_PAGE, stylesheet);
+        CacheManager.putCurrentWorkspaceValue(CacheManager.STYLESHEET_WEB_PAGE_ID_CACHE, GLOBAL_CSS_PAGE, stylesheet);
         return stylesheet;
       } catch (Exception e) {
         LOG.error("Could not read globalCssFile: " + GLOBAL_CSS_FILE);
@@ -143,6 +142,10 @@ public class LoadStylesheetCommand {
 
   public static boolean hasGlobalStylesheet() {
     return hasGlobalStylesheetFile.booleanValue();
+  }
+
+  private static String stylesheetScopeKey(long webPageId) {
+    return CacheManager.getCurrentWorkspaceScope() + ":" + webPageId;
   }
 
 }

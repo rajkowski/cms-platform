@@ -341,8 +341,11 @@ public class PageServlet extends HttpServlet {
       if (WORKSPACE_SELECTOR_PATH.equals(pageRequest.getPagePath())) {
         UserSession selectorUserSession = (UserSession) request.getSession().getAttribute(SessionConstants.USER);
         if (selectorUserSession != null && selectorUserSession.isLoggedIn()) {
+          LOG.debug("Finding authorized workspaces for user: " + selectorUserSession.getUserId());
           List<Workspace> workspaces = WorkspaceAccessCommand.findAuthorizedWorkspaces(selectorUserSession.getUserId());
           request.setAttribute("workspaceList", workspaces);
+        } else {
+          LOG.debug("No user session found for workspace selector");
         }
         request.getServletContext().getRequestDispatcher("/WEB-INF/jsp/cms/workspace-selector.jsp").forward(request, response);
         return;
