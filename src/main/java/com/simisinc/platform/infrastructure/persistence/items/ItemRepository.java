@@ -473,9 +473,9 @@ public class ItemRepository {
       }
       if (specification.getHasCoordinates() != DataConstants.UNDEFINED) {
         if (specification.getHasCoordinates() == DataConstants.TRUE) {
-          select.AND("latitude <> 0 AND longitude <> 0");
+          select.AND("latitude <> ? AND longitude <> ?", 0, 0);
         } else {
-          select.AND("latitude = 0 AND longitude = 0");
+          select.AND("latitude = ? AND longitude = ?", 0, 0);
         }
       }
       if (specification.getHasGeoJSON() != DataConstants.UNDEFINED) {

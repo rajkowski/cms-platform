@@ -69,10 +69,10 @@ public class ShippingRateRepository {
             postalCode = postalCode.substring(0, 5);
           }
           if (specification.getSpecificRegionOnly()) {
-            select.AND("(postal_code = ? OR (postal_code = '*' AND region = ?))", postalCode, region);
+            select.AND("(postal_code = ? OR (postal_code = ? AND region = ?))", postalCode, "*", region);
           } else {
-            select.AND("(postal_code = ? OR (postal_code = '*' AND region = ?) OR (postal_code = '*' AND region = '*'))",
-                postalCode, region);
+            select.AND("(postal_code = ? OR (postal_code = ? AND region = ?) OR (postal_code = ? AND region = ?))",
+                postalCode, "*", region, "*", "*");
           }
         }
       }
