@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +31,7 @@ import com.simisinc.platform.domain.model.socialmedia.InstagramMedia;
 import com.simisinc.platform.infrastructure.distributedlock.LockManager;
 import com.simisinc.platform.infrastructure.persistence.socialmedia.InstagramMediaRepository;
 import com.simisinc.platform.infrastructure.scheduler.SchedulerManager;
+import com.simisinc.platform.infrastructure.scheduler.TenantAwareJobRunner;
 
 /**
  * Retrieves the latest Instagram posts
@@ -43,7 +45,10 @@ public class InstagramMediaSnapshotJob {
 
   @Job(name = "Retrieve the latest instagram posts")
   public static void execute() {
+    TenantAwareJobRunner.runDefaultAndAllActive(InstagramMediaSnapshotJob::executeForTenant);
+  }
 
+  private static void executeForTenant() {
     // Distributed lock
     String lock = LockManager.lock(SchedulerManager.INSTAGRAM_MEDIA_SNAPSHOT_JOB, Duration.ofMinutes(60));
     if (lock == null) {

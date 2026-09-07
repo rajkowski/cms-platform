@@ -18,8 +18,11 @@
 package com.simisinc.platform.application.cms;
 
 import java.sql.Timestamp;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentMap;
 
+import com.github.rajkowski.database.DB;
 import com.simisinc.platform.domain.model.User;
 import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.domain.model.cms.WebPageHit;
@@ -34,8 +37,16 @@ import com.simisinc.platform.presentation.controller.UserSession;
  */
 public class SaveWebPageHitCommand {
 
-  // Use a queue, so a single job can store the hits
-  public static ConcurrentLinkedQueue<WebPageHit> queue = new ConcurrentLinkedQueue<>();
+  // Key used for the default/non-tenant scoped queue since ConcurrentHashMap disallows null keys
+  private static final String DEFAULT_TENANT_KEY = "__default__";
+
+  // One queue per tenant, so hits are attributed to the tenant that recorded them
+  private static final ConcurrentMap<String, ConcurrentLinkedQueue<WebPageHit>> QUEUES_BY_TENANT = new ConcurrentHashMap<>();
+
+  private static ConcurrentLinkedQueue<WebPageHit> queueForCurrentTenant() {
+    String tenantId = DB.getTenantId();
+    return QUEUES_BY_TENANT.computeIfAbsent(tenantId != null ? tenantId : DEFAULT_TENANT_KEY, key -> new ConcurrentLinkedQueue<>());
+  }
 
   public static void saveHit(PageRequest pageRequest, WebPage webPage, UserSession userSession) {
     WebPageHit webPageHit = new WebPageHit();
@@ -52,7 +63,7 @@ public class SaveWebPageHitCommand {
       }
     }
     webPageHit.setHitDate(new Timestamp(System.currentTimeMillis()));
-    queue.offer(webPageHit);
+    queueForCurrentTenant().offer(webPageHit);
   }
 
   public static void saveHit(String ipAddress, String method, String pagePath, User user, String sessionId) {
@@ -65,10 +76,10 @@ public class SaveWebPageHitCommand {
       webPageHit.setLoggedIn(true);
     }
     webPageHit.setHitDate(new Timestamp(System.currentTimeMillis()));
-    queue.offer(webPageHit);
+    queueForCurrentTenant().offer(webPageHit);
   }
 
   public static WebPageHit getHitFromQueue() {
-    return queue.poll();
+    return queueForCurrentTenant().poll();
   }
 }

@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +22,7 @@ import org.jobrunr.jobs.lambdas.JobRequest;
 import org.jobrunr.jobs.lambdas.JobRequestHandler;
 import org.jobrunr.server.runner.ThreadLocalJobContext;
 
+import com.github.rajkowski.database.DB;
 import com.simisinc.platform.domain.events.Event;
 import com.simisinc.platform.infrastructure.workflow.WorkflowManager;
 
@@ -41,8 +43,17 @@ public class WorkflowEngineJob implements JobRequest {
   @Setter
   private Event event = null;
 
+  @Getter
+  @Setter
+  private String tenantId = null;
+
   public WorkflowEngineJob(Event event) {
     this.event = event;
+  }
+
+  public WorkflowEngineJob(Event event, String tenantId) {
+    this.event = event;
+    this.tenantId = tenantId;
   }
 
   @Override
@@ -55,7 +66,16 @@ public class WorkflowEngineJob implements JobRequest {
     @Job(name = "Run a workflow", retries = 1)
     public void run(WorkflowEngineJob jobRequest) {
       ThreadLocalJobContext.getJobContext().saveMetadata("name", jobRequest.getEvent().getDomainEventType());
-      WorkflowManager.findAndRunWorkflow(jobRequest.getEvent());
+      try {
+        if (jobRequest.getTenantId() == null) {
+          DB.clearTenant();
+          WorkflowManager.findAndRunWorkflow(jobRequest.getEvent());
+        } else {
+          DB.withTenant(jobRequest.getTenantId(), () -> WorkflowManager.findAndRunWorkflow(jobRequest.getEvent()));
+        }
+      } finally {
+        DB.clearTenant();
+      }
     }
   }
 }

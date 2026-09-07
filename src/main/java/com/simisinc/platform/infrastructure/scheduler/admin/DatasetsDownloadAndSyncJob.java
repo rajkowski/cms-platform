@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,6 +27,7 @@ import com.simisinc.platform.application.datasets.DatasetDownloadRemoteFileComma
 import com.simisinc.platform.application.datasets.ProcessDatasetCommand;
 import com.simisinc.platform.domain.model.datasets.Dataset;
 import com.simisinc.platform.infrastructure.persistence.datasets.DatasetRepository;
+import com.simisinc.platform.infrastructure.scheduler.TenantAwareJobRunner;
 
 import lombok.NoArgsConstructor;
 
@@ -42,7 +44,10 @@ public class DatasetsDownloadAndSyncJob {
 
   @Job(name = "Download scheduled datasets")
   public static void execute() {
+    TenantAwareJobRunner.runDefaultAndAllActive(DatasetsDownloadAndSyncJob::executeForTenant);
+  }
 
+  private static void executeForTenant() {
     // Retrieve a list of datasets that are ready and enabled to be downloaded
     List<Dataset> datasetList = DatasetRepository.findAllScheduledForDownload();
     for (Dataset dataset : datasetList) {

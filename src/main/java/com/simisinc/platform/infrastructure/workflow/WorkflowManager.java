@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,9 +17,17 @@
 
 package com.simisinc.platform.infrastructure.workflow;
 
-import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
-import com.simisinc.platform.domain.events.Event;
-import com.simisinc.platform.infrastructure.scheduler.WorkflowEngineJob;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
+import javax.servlet.ServletContext;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -31,11 +40,10 @@ import org.jeasy.flows.work.WorkContext;
 import org.jobrunr.jobs.JobId;
 import org.jobrunr.scheduling.BackgroundJobRequest;
 
-import javax.servlet.ServletContext;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
+import com.github.rajkowski.database.DB;
+import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
+import com.simisinc.platform.domain.events.Event;
+import com.simisinc.platform.infrastructure.scheduler.WorkflowEngineJob;
 
 /**
  * Manager used for running synchronous and asynchronous workflows
@@ -96,9 +104,10 @@ public class WorkflowManager {
 
   public static void triggerWorkflowForEvent(Event domainEvent) {
     // Start the background job
-    JobId jobId = BackgroundJobRequest.enqueue(new WorkflowEngineJob(domainEvent));
+    JobId jobId = BackgroundJobRequest.enqueue(new WorkflowEngineJob(domainEvent, DB.getTenantId()));
     if (LOG.isDebugEnabled()) {
-      LOG.debug("WorkflowEngineJob Enqueue jobId: " + jobId.toString() + " at " + domainEvent.getOccurred() + ": " + domainEvent.getDomainEventType());
+      LOG.debug("WorkflowEngineJob Enqueue jobId: " + jobId.toString() + " at " + domainEvent.getOccurred() + ": "
+          + domainEvent.getDomainEventType());
     }
   }
 

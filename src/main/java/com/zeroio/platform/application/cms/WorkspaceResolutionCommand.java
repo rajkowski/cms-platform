@@ -56,15 +56,25 @@ public class WorkspaceResolutionCommand {
     return value != null ? Boolean.parseBoolean(value) : false;
   }
 
-  public static boolean isDefaultWorkspace(String url) {
-    if (url == null) {
+  public static boolean isDefaultWorkspace(String hostname) {
+    if (hostname == null) {
       return false;
     }
     String defaultUrl = System.getenv(TENANT_DEFAULT_URL);
     if (defaultUrl == null || defaultUrl.isBlank()) {
       return false;
     }
-    return defaultUrl.equalsIgnoreCase(url);
+    // Remove scheme and port from the hostname for comparison
+    String defaultHostname = defaultUrl.trim().toLowerCase(Locale.ROOT);
+    int schemeIndex = defaultHostname.indexOf("://");
+    if (schemeIndex > -1) {
+      defaultHostname = defaultHostname.substring(schemeIndex + 3);
+    }
+    int portIndex = defaultHostname.indexOf(':');
+    if (portIndex > -1) {
+      defaultHostname = defaultHostname.substring(0, portIndex);
+    }
+    return defaultHostname.equalsIgnoreCase(hostname.trim().toLowerCase(Locale.ROOT));
   }
 
   public static String normalizeHost(String host) {

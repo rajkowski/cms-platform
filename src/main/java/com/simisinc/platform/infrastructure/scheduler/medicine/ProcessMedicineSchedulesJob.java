@@ -31,6 +31,7 @@ import com.simisinc.platform.infrastructure.persistence.medicine.MedicineReminde
 import com.simisinc.platform.infrastructure.persistence.medicine.MedicineRepository;
 import com.simisinc.platform.infrastructure.persistence.medicine.MedicineSpecification;
 import com.simisinc.platform.infrastructure.scheduler.SchedulerManager;
+import com.simisinc.platform.infrastructure.scheduler.TenantAwareJobRunner;
 
 /**
  * This job uses the medicine schedules to extend and create a list of daily reminders
@@ -42,7 +43,10 @@ public class ProcessMedicineSchedulesJob {
 
   @Job(name = "Update medicine reminders based on schedules, approx 20 days out")
   public static void execute() {
+    TenantAwareJobRunner.runDefaultAndAllActive(ProcessMedicineSchedulesJob::executeForTenant);
+  }
 
+  private static void executeForTenant() {
     // Distributed lock
     String lock = LockManager.lock(SchedulerManager.PROCESS_MEDICINE_SCHEDULES_JOB, Duration.ofHours(1));
     if (lock == null) {

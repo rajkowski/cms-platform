@@ -21,6 +21,7 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.zeroio.platform.application.cms.WorkspaceResolutionCommand;
 import com.zeroio.platform.domain.model.tenant.Workspace;
 import com.zeroio.platform.infrastructure.database.WorkspaceContextManager;
 import com.zeroio.platform.infrastructure.persistence.tenant.WorkspaceRepository;
@@ -39,6 +40,36 @@ public class TenantAwareJobRunner {
     return run(WorkspaceRepository.findAllActive(), workspaceWork);
   }
 
+  public static List<Outcome> runDefaultAndAllActive(WorkspaceWork workspaceWork) {
+    WorkspaceContextManager.clear();
+    List<Outcome> outcomes = runDefaultAndAllActive(List.of(), workspaceWork);
+    boolean tenantRoutingEnabled = WorkspaceResolutionCommand.isTenantRoutingEnabled();
+    if (tenantRoutingEnabled) {
+      outcomes.addAll(run(WorkspaceRepository.findAllActive(), workspaceWork));
+    }
+    return outcomes;
+  }
+
+  public static List<Outcome> runDefaultAndAllActive(List<Workspace> workspaces, WorkspaceWork workspaceWork) {
+    List<Outcome> outcomes = new ArrayList<>();
+    try {
+      WorkspaceContextManager.clear();
+      workspaceWork.execute(null);
+      outcomes.add(new Outcome(0, true, null));
+    } catch (Exception e) {
+      outcomes.add(new Outcome(0, false, e.getMessage()));
+      LOG.error("Background work failed for the default workspace", e);
+    } finally {
+      WorkspaceContextManager.clear();
+    }
+    outcomes.addAll(run(workspaces, workspaceWork));
+    return outcomes;
+  }
+
+  public static List<Outcome> runDefaultAndAllActive(Runnable runnable) {
+    return runDefaultAndAllActive(workspace -> runnable.run());
+  }
+
   public static List<Outcome> run(List<Workspace> workspaces, WorkspaceWork workspaceWork) {
     List<Outcome> outcomes = new ArrayList<>();
     for (Workspace workspace : workspaces) {
@@ -46,9 +77,10 @@ public class TenantAwareJobRunner {
         continue;
       }
       try {
-        WorkspaceContextManager.withWorkspace(workspace.getId(), workspace.getCanonicalDomain(), () -> workspaceWork.execute(workspace));
+        WorkspaceContextManager.withWorkspace(workspace.getId(), workspace.getCanonicalDomain(),
+            () -> workspaceWork.execute(workspace));
         outcomes.add(new Outcome(workspace.getId(), true, null));
-        LOG.debug("Completed background work for workspace " + workspace.getId());
+        LOG.trace("Completed background work for workspace " + workspace.getId());
       } catch (Exception e) {
         outcomes.add(new Outcome(workspace.getId(), false, e.getMessage()));
         LOG.error("Background work failed for workspace " + workspace.getId(), e);

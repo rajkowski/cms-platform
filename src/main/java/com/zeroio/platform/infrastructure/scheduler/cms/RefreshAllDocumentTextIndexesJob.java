@@ -31,6 +31,7 @@ import com.simisinc.platform.infrastructure.persistence.cms.FileSpecification;
 import com.simisinc.platform.infrastructure.persistence.items.ItemFileItemRepository;
 import com.simisinc.platform.infrastructure.persistence.items.ItemFileSpecification;
 import com.simisinc.platform.infrastructure.scheduler.SchedulerManager;
+import com.simisinc.platform.infrastructure.scheduler.TenantAwareJobRunner;
 import com.zeroio.platform.application.cms.FileItemDocumentContentCommand;
 import com.zeroio.platform.application.cms.ItemFileItemDocumentContentCommand;
 
@@ -49,6 +50,10 @@ public class RefreshAllDocumentTextIndexesJob {
 
   @Job(name = "Refresh all document text indexes for content")
   public static void execute() {
+    TenantAwareJobRunner.runDefaultAndAllActive(RefreshAllDocumentTextIndexesJob::executeForTenant);
+  }
+
+  private static void executeForTenant() {
     // Distributed lock
     String lock = LockManager.lock(SchedulerManager.REFRESH_ALL_DOCUMENT_TEXT_INDEXES_JOB, Duration.ofMinutes(30));
     if (lock == null) {

@@ -18,6 +18,7 @@ package com.simisinc.platform.infrastructure.scheduler;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.mock;
 import java.util.List;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.AfterEach;
@@ -37,7 +38,7 @@ class TenantAwareJobRunnerTest {
 
   @Test
   void continuesAfterFailureAndClearsContextForEachWorkspace() {
-    DataSource dataSource = org.mockito.Mockito.mock(DataSource.class);
+    DataSource dataSource = mock(DataSource.class);
     TenantRegistry registry = new TenantRegistry();
     registry.register("1", dataSource);
     registry.register("2", dataSource);
@@ -53,6 +54,25 @@ class TenantAwareJobRunnerTest {
     assertFalse(outcomes.get(0).completed());
     assertEquals(2, outcomes.get(1).workspaceId());
     assertNull(WorkspaceContextManager.getCurrentContext());
+    assertNull(DB.getTenantId());
+  }
+
+  @Test
+  void runsDefaultDatabaseBeforeActiveWorkspaces() {
+    DataSource dataSource = mock(DataSource.class);
+    TenantRegistry registry = new TenantRegistry();
+    registry.register("1", dataSource);
+    DB.setTenantRegistry(registry);
+    List<Long> workspaceIds = new java.util.ArrayList<>();
+
+    List<TenantAwareJobRunner.Outcome> outcomes = TenantAwareJobRunner.runDefaultAndAllActive(List.of(workspace(1)), workspace -> {
+      workspaceIds.add(workspace == null ? 0L : workspace.getId());
+      assertEquals(workspace == null ? null : String.valueOf(workspace.getId()), DB.getTenantId());
+    });
+
+    assertEquals(List.of(0L, 1L), workspaceIds);
+    assertEquals(0, outcomes.get(0).workspaceId());
+    assertEquals(1, outcomes.get(1).workspaceId());
     assertNull(DB.getTenantId());
   }
 

@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +26,7 @@ import org.jobrunr.jobs.annotations.Job;
 import com.simisinc.platform.application.cms.WebPageHitSnapshotCommand;
 import com.simisinc.platform.infrastructure.distributedlock.LockManager;
 import com.simisinc.platform.infrastructure.scheduler.SchedulerManager;
+import com.simisinc.platform.infrastructure.scheduler.TenantAwareJobRunner;
 
 /**
  * Makes a summary snapshot of web page hits
@@ -38,6 +40,10 @@ public class WebPageHitSnapshotJob {
 
   @Job(name = "Make a snapshot of web page hits")
   public static void execute() {
+    TenantAwareJobRunner.runDefaultAndAllActive(WebPageHitSnapshotJob::executeForTenant);
+  }
+
+  private static void executeForTenant() {
     // Distributed lock
     String lock = LockManager.lock(SchedulerManager.WEB_PAGE_HIT_SNAPSHOT_JOB, Duration.ofMinutes(5));
     if (lock == null) {

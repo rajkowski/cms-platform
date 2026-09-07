@@ -163,7 +163,7 @@ public class WebRequestFilter implements Filter {
           // If it is the default CMS_TENANT_DEFAULT_URL then allow the request to continue, otherwise return a 404
           boolean isDefaultWorkspace = WorkspaceResolutionCommand.isDefaultWorkspace(request.getServerName());
           if (!isDefaultWorkspace) {
-            LOG.warn("Unable to resolve workspace for host " + request.getServerName());
+            LOG.warn("Unable to resolve workspace for host " + scheme + "://" + request.getServerName());
             do404(servletResponse);
             return;
           }

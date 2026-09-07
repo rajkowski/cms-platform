@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,17 +17,20 @@
 
 package com.simisinc.platform.infrastructure.scheduler.cms;
 
-import com.simisinc.platform.application.cms.SaveWebPageHitCommand;
-import com.simisinc.platform.infrastructure.persistence.cms.WebPageHitRepository;
-import com.simisinc.platform.domain.model.cms.WebPageHit;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jobrunr.jobs.annotations.Job;
 import org.jobrunr.jobs.lambdas.JobRequest;
 import org.jobrunr.jobs.lambdas.JobRequestHandler;
+
+import com.simisinc.platform.application.cms.SaveWebPageHitCommand;
+import com.simisinc.platform.domain.model.cms.WebPageHit;
+import com.simisinc.platform.infrastructure.persistence.cms.WebPageHitRepository;
+import com.simisinc.platform.infrastructure.scheduler.TenantAwareJobRunner;
+
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * Saves a web page hit
@@ -64,6 +68,10 @@ public class RecordWebPageHitJob implements JobRequest {
   @Job(name = "Record web page hits")
   // @Job(runOnServerWithTag =  "%CURRENT_SERVER")
   public static void execute() {
+    TenantAwareJobRunner.runDefaultAndAllActive(RecordWebPageHitJob::executeForTenant);
+  }
+
+  private static void executeForTenant() {
     WebPageHit webPageHit = null;
     int count = 0;
     while ((webPageHit = SaveWebPageHitCommand.getHitFromQueue()) != null) {

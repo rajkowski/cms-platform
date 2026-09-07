@@ -35,6 +35,7 @@ import com.simisinc.platform.infrastructure.distributedlock.LockManager;
 import com.simisinc.platform.infrastructure.persistence.ecommerce.OrderRepository;
 import com.simisinc.platform.infrastructure.persistence.ecommerce.OrderSpecification;
 import com.simisinc.platform.infrastructure.scheduler.SchedulerManager;
+import com.simisinc.platform.infrastructure.scheduler.TenantAwareJobRunner;
 
 /**
  * Retrieves shipping status updates for orders
@@ -48,7 +49,10 @@ public class OrderManagementProcessShippingUpdates {
 
   @Job(name = "Check on the shipping status of orders and send notifications")
   public static void execute() {
+    TenantAwareJobRunner.runDefaultAndAllActive(OrderManagementProcessShippingUpdates::executeForTenant);
+  }
 
+  private static void executeForTenant() {
     // Distributed lock
     String lock = LockManager.lock(SchedulerManager.ORDER_MANAGEMENT_PROCESS_SHIPPING_UPDATES_JOB, Duration.ofHours(1));
     if (lock == null) {

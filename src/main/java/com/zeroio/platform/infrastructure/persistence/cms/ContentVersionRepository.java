@@ -130,7 +130,7 @@ public class ContentVersionRepository {
       return 1;
     }
 
-    long maxVersion = DB.SELECT("MAX(version_number)")
+    long maxVersion = DB.SELECT("COALESCE(MAX(version_number), 0)")
         .FROM(TABLE_NAME)
         .WHERE("content_id = ?", contentId)
         .returnValue(Long.class);
@@ -147,7 +147,7 @@ public class ContentVersionRepository {
     if (contentId <= 0) {
       return 0;
     }
-    long maxVersion = DB.SELECT("MAX(version_number)")
+    long maxVersion = DB.SELECT("COALESCE(MAX(version_number), 0)")
         .FROM(TABLE_NAME)
         .WHERE("content_id = ?", contentId)
         .returnValue(Long.class);

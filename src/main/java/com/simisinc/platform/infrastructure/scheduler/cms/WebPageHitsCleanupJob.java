@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,6 +27,7 @@ import com.simisinc.platform.infrastructure.distributedlock.LockManager;
 import com.simisinc.platform.infrastructure.persistence.analytics.PerformanceMetricRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageHitRepository;
 import com.simisinc.platform.infrastructure.scheduler.SchedulerManager;
+import com.simisinc.platform.infrastructure.scheduler.TenantAwareJobRunner;
 
 /**
  * Deletes old web hits data
@@ -39,6 +41,10 @@ public class WebPageHitsCleanupJob {
 
   @Job(name = "Delete old web hits data")
   public static void execute() {
+    TenantAwareJobRunner.runDefaultAndAllActive(WebPageHitsCleanupJob::executeForTenant);
+  }
+
+  private static void executeForTenant() {
     // Distributed lock
     String lock = LockManager.lock(SchedulerManager.WEB_PAGE_HITS_CLEANUP_JOB, Duration.ofHours(4));
     if (lock == null) {

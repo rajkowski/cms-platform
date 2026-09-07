@@ -36,12 +36,16 @@ public class UserTokensCleanupJob {
 
   @Job(name = "Delete expired tokens")
   public static void execute() {
+    TenantAwareJobRunner.runDefaultAndAllActive(UserTokensCleanupJob::executeForTenant);
+  }
+
+  private static void executeForTenant() {
     // Distributed lock
     String lock = LockManager.lock(SchedulerManager.USER_TOKENS_CLEANUP_JOB, Duration.ofHours(1));
     if (lock == null) {
       return;
     }
 
-    TenantAwareJobRunner.runAllActive(workspace -> UserTokenRepository.deleteOldTokens());
+    UserTokenRepository.deleteOldTokens();
   }
 }
