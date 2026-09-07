@@ -23,7 +23,7 @@
         <h1>Choose a workspace</h1>
         <ul>
           <c:forEach items="${workspaceList}" var="workspace">
-            <li><a href="https://<c:out value='${workspace.canonicalDomain}'/>"><c:out value="${workspace.name}" /></a></li>
+            <li><a target="_blank" href="${workspace.siteUrl}"><c:out value="${workspace.name}" /></a></li>
           </c:forEach>
         </ul>
       </c:otherwise>

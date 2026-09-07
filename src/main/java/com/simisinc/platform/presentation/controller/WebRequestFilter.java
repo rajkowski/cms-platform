@@ -23,9 +23,11 @@ import static javax.servlet.http.HttpServletResponse.SC_MOVED_PERMANENTLY;
 import static javax.servlet.http.HttpServletResponse.SC_MOVED_TEMPORARILY;
 import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
 import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
+
 import java.io.IOException;
 import java.util.Enumeration;
 import java.util.Map;
+
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -38,11 +40,13 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.servlet.jsp.jstl.core.Config;
 import javax.sql.DataSource;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hc.core5.net.InetAddressUtils;
+
 import com.github.rajkowski.database.DB;
 import com.simisinc.platform.application.CreateSessionCommand;
 import com.simisinc.platform.application.LoadVisitorCommand;
@@ -156,9 +160,9 @@ public class WebRequestFilter implements Filter {
           do302(servletResponse, PageServlet.WORKSPACE_SELECTOR_PATH);
           return;
         } else {
-          // If it is the default site.url then allow the request to continue, otherwise return a 404
-          String defaultSiteUrl = LoadSitePropertyCommand.loadByName("site.url");
-          if (defaultSiteUrl == null || !defaultSiteUrl.startsWith(scheme + "://" + request.getServerName())) {
+          // If it is the default CMS_TENANT_DEFAULT_URL then allow the request to continue, otherwise return a 404
+          boolean isDefaultWorkspace = WorkspaceResolutionCommand.isDefaultWorkspace(request.getServerName());
+          if (!isDefaultWorkspace) {
             LOG.warn("Unable to resolve workspace for host " + request.getServerName());
             do404(servletResponse);
             return;

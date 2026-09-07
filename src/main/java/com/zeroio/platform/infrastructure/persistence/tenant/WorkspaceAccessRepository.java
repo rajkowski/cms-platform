@@ -29,7 +29,8 @@ public class WorkspaceAccessRepository {
 
   private static final Log LOG = LogFactory.getLog(WorkspaceAccessRepository.class);
 
-  private WorkspaceAccessRepository() {}
+  private WorkspaceAccessRepository() {
+  }
 
   public static boolean hasActiveAccess(long userId, long workspaceId) {
     return DB.SELECT("workspace_id").FROM("workspace_access_grants").WHERE("user_id = ?", userId).AND("workspace_id = ?", workspaceId)
@@ -44,8 +45,13 @@ public class WorkspaceAccessRepository {
   }
 
   public static List<Workspace> findActiveWorkspacesByUserId(long userId) {
-    Select select = DB.SELECT("w.*").FROM("workspaces").AS("w").JOIN("workspace_access_grants g").ON("w.workspace_id = g.workspace_id")
-        .WHERE("g.user_id = ?", userId).AND("g.active = ?", true).AND("w.active = ?", true).ORDER_BY("w.name");
+    Select select = DB.SELECT("w.*")
+        .FROM("workspaces").AS("w")
+        .JOIN("workspace_access_grants g")
+        .ON("w.workspace_id = g.workspace_id")
+        .WHERE("g.user_id = ?", userId)
+        .AND("g.active = ?", true)
+        .AND("w.active = ?", true).ORDER_BY("w.name");
     DataResult<Workspace> result = select.returnDataResult(WorkspaceAccessRepository::buildWorkspace);
     return result.getRecords();
   }
@@ -55,6 +61,7 @@ public class WorkspaceAccessRepository {
       Workspace workspace = new Workspace();
       workspace.setId(resultSet.getLong("workspace_id"));
       workspace.setName(resultSet.getString("name"));
+      workspace.setSiteUrl(resultSet.getString("site_url"));
       workspace.setCanonicalDomain(resultSet.getString("canonical_domain"));
       workspace.setActive(resultSet.getBoolean("active"));
       return workspace;

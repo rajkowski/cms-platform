@@ -15,24 +15,83 @@
  */
 package com.zeroio.platform.domain.model.tenant;
 
+import java.sql.Timestamp;
+
 import com.simisinc.platform.domain.model.Entity;
 
 public class Workspace extends Entity {
 
   private long id = -1;
   private String name;
+  private String siteUrl;
   private String canonicalDomain;
   private String fileRoot;
   private boolean active;
+  private Timestamp created;
+  private Timestamp modified;
 
-  public long getId() { return id; }
-  public void setId(long id) { this.id = id; }
-  public String getName() { return name; }
-  public void setName(String name) { this.name = name; }
-  public String getCanonicalDomain() { return canonicalDomain; }
-  public void setCanonicalDomain(String canonicalDomain) { this.canonicalDomain = canonicalDomain; }
-  public String getFileRoot() { return fileRoot; }
-  public void setFileRoot(String fileRoot) { this.fileRoot = fileRoot; }
-  public boolean isActive() { return active; }
-  public void setActive(boolean active) { this.active = active; }
+  public long getId() {
+    return id;
+  }
+
+  public void setId(long id) {
+    this.id = id;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public String getSiteUrl() {
+    return siteUrl;
+  }
+
+  public void setSiteUrl(String siteUrl) {
+    this.siteUrl = siteUrl;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public String getCanonicalDomain() {
+    return canonicalDomain;
+  }
+
+  public void setCanonicalDomain(String canonicalDomain) {
+    this.canonicalDomain = canonicalDomain;
+  }
+
+  public String getFileRoot() {
+    return fileRoot;
+  }
+
+  public void setFileRoot(String fileRoot) {
+    this.fileRoot = fileRoot;
+  }
+
+  public boolean isActive() {
+    return active;
+  }
+
+  public void setActive(boolean active) {
+    this.active = active;
+  }
+
+  public Timestamp getCreated() {
+    return created;
+  }
+
+  public void setCreated(Timestamp created) {
+    this.created = created;
+  }
+
+  public Timestamp getModified() {
+    return modified;
+  }
+
+  public void setModified(Timestamp modified) {
+    this.modified = modified;
+  }
+
 }

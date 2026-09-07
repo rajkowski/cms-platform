@@ -30,6 +30,7 @@ public class WorkspaceResolutionCommand {
 
   private static final Log LOG = LogFactory.getLog(WorkspaceResolutionCommand.class);
   private static final String TENANT_ROUTING_ENABLED = "CMS_TENANT_ROUTING_ENABLED";
+  private static final String TENANT_DEFAULT_URL = "CMS_TENANT_DEFAULT_URL";
 
   private WorkspaceResolutionCommand() {
   }
@@ -53,6 +54,17 @@ public class WorkspaceResolutionCommand {
   public static boolean isTenantRoutingEnabled() {
     String value = System.getenv(TENANT_ROUTING_ENABLED);
     return value != null ? Boolean.parseBoolean(value) : false;
+  }
+
+  public static boolean isDefaultWorkspace(String url) {
+    if (url == null) {
+      return false;
+    }
+    String defaultUrl = System.getenv(TENANT_DEFAULT_URL);
+    if (defaultUrl == null || defaultUrl.isBlank()) {
+      return false;
+    }
+    return defaultUrl.equalsIgnoreCase(url);
   }
 
   public static String normalizeHost(String host) {

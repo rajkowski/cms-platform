@@ -4,6 +4,7 @@
 CREATE TABLE IF NOT EXISTS workspaces (
   workspace_id BIGSERIAL PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
+  site_url VARCHAR(512) NOT NULL,
   canonical_domain VARCHAR(255) NOT NULL UNIQUE,
   file_root VARCHAR(1024) NOT NULL,
   active BOOLEAN NOT NULL DEFAULT TRUE,

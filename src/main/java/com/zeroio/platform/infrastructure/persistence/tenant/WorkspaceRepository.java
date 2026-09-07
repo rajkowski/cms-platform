@@ -29,7 +29,8 @@ public class WorkspaceRepository {
   private static final Log LOG = LogFactory.getLog(WorkspaceRepository.class);
   private static final String TABLE_NAME = "workspaces";
 
-  private WorkspaceRepository() {}
+  private WorkspaceRepository() {
+  }
 
   public static Workspace findById(long workspaceId) {
     if (workspaceId < 1) {
@@ -42,12 +43,18 @@ public class WorkspaceRepository {
     if (canonicalDomain == null || canonicalDomain.isBlank()) {
       return null;
     }
-    return DB.SELECT("*").FROM(TABLE_NAME).WHERE("canonical_domain = ?", canonicalDomain).AND("active = ?", true)
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("canonical_domain = ?", canonicalDomain)
+        .AND("active = ?", true)
         .returnRecord(WorkspaceRepository::buildRecord);
   }
 
   public static List<Workspace> findAllActive() {
-    DataResult<Workspace> result = DB.SELECT("*").FROM(TABLE_NAME).WHERE("active = ?", true).ORDER_BY("workspace_id")
+    DataResult<Workspace> result = DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("active = ?", true)
+        .ORDER_BY("workspace_id")
         .returnDataResult(WorkspaceRepository::buildRecord);
     return result.getRecords();
   }
@@ -57,9 +64,12 @@ public class WorkspaceRepository {
       Workspace workspace = new Workspace();
       workspace.setId(resultSet.getLong("workspace_id"));
       workspace.setName(resultSet.getString("name"));
+      workspace.setSiteUrl(resultSet.getString("site_url"));
       workspace.setCanonicalDomain(resultSet.getString("canonical_domain"));
       workspace.setFileRoot(resultSet.getString("file_root"));
       workspace.setActive(resultSet.getBoolean("active"));
+      workspace.setCreated(resultSet.getTimestamp("created"));
+      workspace.setModified(resultSet.getTimestamp("modified"));
       return workspace;
     } catch (SQLException e) {
       LOG.error("Unable to build workspace record", e);
