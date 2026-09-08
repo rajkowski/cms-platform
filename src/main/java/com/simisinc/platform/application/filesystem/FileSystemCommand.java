@@ -154,6 +154,7 @@ public class FileSystemCommand {
     }
     try {
       Path rootPath = Paths.get(workspaceContext.fileRoot()).toAbsolutePath().normalize();
+      rootPath = rootPath.resolve("files").normalize();
       if (!Files.isDirectory(rootPath)) {
         LOG.error("Workspace " + workspaceContext.workspaceId() + " file root is unavailable");
         return null;
