@@ -54,10 +54,8 @@ public class CaptchaImageWidget extends GenericWidget {
     context.getResponse().setDateHeader("Last-Modified", System.currentTimeMillis());
     context.getResponse().setContentType("image/png");
     // context.getResponse().setContentLength((int) file.length());
-    try {
-      OutputStream out = context.getResponse().getOutputStream();
+    try (OutputStream out = context.getResponse().getOutputStream()) {
       CaptchaCommand.generateImage(text, out);
-      out.close();
     } catch (Exception e) {
       LOG.debug("Stream error: " + e.getMessage());
     }
