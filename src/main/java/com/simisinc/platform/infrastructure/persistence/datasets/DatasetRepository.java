@@ -413,7 +413,7 @@ public class DatasetRepository {
   }
 
   public static long findTotalFileSize() {
-    return DB.SELECT("SUM(file_length) AS total_file_length").FROM(TABLE_NAME).returnValue(Long.class);
+    return DB.SELECT("COALESCE(SUM(file_length), 0) AS total_file_length").FROM(TABLE_NAME).returnValue(Long.class);
   }
 
   private static Dataset buildRecord(ResultSet rs) {

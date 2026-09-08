@@ -37,6 +37,6 @@ public class LoadContentCommand {
       return null;
     }
     // Use the cache
-    return (Content) CacheManager.getLoadingCache(CacheManager.CONTENT_UNIQUE_ID_CACHE).get(contentUniqueId);
+    return (Content) CacheManager.getCurrentWorkspaceLoadingValue(CacheManager.CONTENT_UNIQUE_ID_CACHE, contentUniqueId);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Matt Rajkowski (https://github.com/rajkowski)
+ * Copyright 2025-2026 Matt Rajkowski (https://github.com/rajkowski)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.postgresql.PGConnection;
 
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.infrastructure.database.ConnectionPool;
+import com.github.rajkowski.database.DB;
 
 /**
  * Methods for working with PostgreSQL LISTEN NOTIFY
@@ -40,17 +41,16 @@ public class MessagingCommand {
 
   /* Generate a PostgreSQL notification */
   public static void sendNotification(String cacheName, Object key) {
+    sendNotification(cacheName, DB.getTenantId(), key);
+  }
+
+  public static void sendNotification(String cacheName, String workspaceId, Object key) {
     // Check if messages are being used on this webapp instance
     if (!MessagingManager.hasStarted()) {
       return;
     }
 
-    // Prepare the notification
-    Map<String, Object> params = new LinkedHashMap<>();
-    params.put("cache", cacheName);
-    params.put("key", key);
-    params.put("type", key.getClass().getName());
-    String message = JsonCommand.createJsonNode(params).toString();
+    String message = createPayload(cacheName, workspaceId, key);
     if (LOG.isDebugEnabled()) {
       LOG.debug("Sending notification with payload: " + message);
     }
@@ -64,11 +64,20 @@ public class MessagingCommand {
         pst.setString(2, message);
         pst.execute();
       }
-      LOG.debug("Notification sent with backend PID: " + pgConnection.getBackendPID());
+      LOG.debug("Notification sent for workspace " + workspaceId + " with backend PID: " + pgConnection.getBackendPID());
     } catch (SQLException e) {
       LOG.error("Error in notification listener: " + e.getMessage());
       throw new MessagingException("Failed to send notification", e);
     }
+  }
+
+  static String createPayload(String cacheName, String workspaceId, Object key) {
+    Map<String, Object> params = new LinkedHashMap<>();
+    params.put("workspaceId", workspaceId);
+    params.put("cache", cacheName);
+    params.put("key", key);
+    params.put("type", key.getClass().getName());
+    return JsonCommand.createJsonNode(params).toString();
   }
 
 }

@@ -26,6 +26,7 @@ import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.infrastructure.distributedlock.LockManager;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
 import com.simisinc.platform.infrastructure.scheduler.SchedulerManager;
+import com.simisinc.platform.infrastructure.scheduler.TenantAwareJobRunner;
 
 import lombok.NoArgsConstructor;
 
@@ -40,6 +41,10 @@ public class RefreshAllWebPageTextIndexesJob {
 
   @Job(name = "Refresh all web page text indexes for content")
   public static void execute() {
+    TenantAwareJobRunner.runDefaultAndAllActive(RefreshAllWebPageTextIndexesJob::executeForTenant);
+  }
+
+  private static void executeForTenant() {
     // Distributed lock
     String lock = LockManager.lock(SchedulerManager.REFRESH_ALL_WEB_PAGE_TEXT_INDEXES_JOB, Duration.ofMinutes(10));
     if (lock == null) {

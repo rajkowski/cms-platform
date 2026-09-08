@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -158,8 +159,10 @@ public class SchedulerManager {
       // These background jobs are run by every node
       // BackgroundJob.scheduleRecurrently(SYSTEM_HEALTH_JOB, Cron.every15seconds(), SystemHealthJob::execute);
       BackgroundJob.scheduleRecurrently(LOAD_SYSTEM_FILES_JOB, Cron.every5minutes(), LoadSystemFilesJob::execute);
-      BackgroundJob.scheduleRecurrently(RECORD_WEB_PAGE_HITS_JOB, Cron.every15seconds(), RecordWebPageHitJob::execute);
       BackgroundJob.scheduleRecurrently(RECORD_PERFORMANCE_METRICS_JOB, Cron.every15seconds(), RecordPerformanceMetricJob::execute);
+
+      // These background jobs are run by every node, but they are tenant-aware
+      BackgroundJob.scheduleRecurrently(RECORD_WEB_PAGE_HITS_JOB, Cron.every15seconds(), RecordWebPageHitJob::execute);
 
       // These jobs need to be run by at least 1 node, preferably not the web-only nodes
       if (canRunClusterJobs) {
@@ -177,7 +180,8 @@ public class SchedulerManager {
             OrderManagementProcessNewOrders::execute);
         BackgroundJob.scheduleRecurrently(ORDER_MANAGEMENT_PROCESS_SHIPPING_UPDATES_JOB, Cron.hourly(),
             OrderManagementProcessShippingUpdates::execute);
-        BackgroundJob.scheduleRecurrently(PROCESS_MEDICINE_SCHEDULES_JOB, Cron.daily(23, 43), ProcessMedicineSchedulesJob::execute);
+        BackgroundJob.scheduleRecurrently(PROCESS_MEDICINE_SCHEDULES_JOB, Cron.daily(23, 43),
+            ProcessMedicineSchedulesJob::execute);
       }
     } catch (Exception se) {
       LOG.error("Error starting jobrunr: ", se);

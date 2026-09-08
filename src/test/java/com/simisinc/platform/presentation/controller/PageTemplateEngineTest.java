@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Matt Rajkowski (https://www.github.com/rajkowski)
+ * Copyright 2024-2026 Matt Rajkowski (https://www.github.com/rajkowski)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import javax.sql.DataSource;
+
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -35,6 +38,8 @@ import org.thymeleaf.templateresolver.FileTemplateResolver;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
+import com.github.rajkowski.database.DB;
+import com.github.rajkowski.database.TenantRegistry;
 import com.simisinc.platform.application.cms.ContentHtmlCommand;
 import com.simisinc.platform.application.cms.LoadStylesheetCommand;
 import com.simisinc.platform.application.cms.LoadTableOfContentsCommand;
@@ -48,6 +53,7 @@ import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.infrastructure.cache.CacheManager;
 import com.simisinc.platform.infrastructure.persistence.cms.MenuTabRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
+import com.zeroio.platform.infrastructure.database.WorkspaceContextManager;
 
 class PageTemplateEngineTest {
 
@@ -68,12 +74,20 @@ class PageTemplateEngineTest {
     sitePropertyListCache = Caffeine.newBuilder().build(PageTemplateEngineTest::findByPrefix);
   }
 
+  @AfterEach
+  void clearWorkspaceContext() {
+    WorkspaceContextManager.clear();
+    DB.setTenantRegistry(new TenantRegistry());
+  }
+
   @Test
   void testRender() {
 
     // Mock the cache manager so the FileSystemCommand works
     try (MockedStatic<CacheManager> cacheManager = mockStatic(CacheManager.class)) {
       cacheManager.when(() -> CacheManager.getLoadingCache(anyString())).thenReturn(sitePropertyListCache);
+      cacheManager.when(() -> CacheManager.getCurrentWorkspaceLoadingValue(anyString(), anyString()))
+          .thenReturn(sitePropertyListCache.get("system"));
 
       // The webapp resources need to be found
       File webAppPath = FileSystemCommand.getFileServerRootPath("src", "main", "webapp");
@@ -169,6 +183,34 @@ class PageTemplateEngineTest {
           }
         }
       }
+    }
+  }
+
+  @Test
+  void customPageLayoutsAreScopedByWorkspace() throws Exception {
+    DB.setTenantRegistry(new TenantRegistry());
+    DB.registerTenantDataSource("1", org.mockito.Mockito.mock(DataSource.class));
+    DB.registerTenantDataSource("2", org.mockito.Mockito.mock(DataSource.class));
+    File webAppPath = new File("src/main/webapp");
+    WebPage firstWorkspacePage = new WebPage("/workspace-layout",
+        "<page><section><column><widget name=\"content\"><html><![CDATA[<p>one</p>]]></html></widget></column></section></page>");
+    WebPage secondWorkspacePage = new WebPage("/workspace-layout",
+        "<page><section><column><widget name=\"content\"><html><![CDATA[<p>two</p>]]></html></widget></column></section></page>");
+
+    try (MockedStatic<WebPageRepository> webPageRepository = mockStatic(WebPageRepository.class)) {
+      WorkspaceContextManager.activate(1L, "one.example.com");
+      webPageRepository.when(WebPageRepository::findAll).thenReturn(List.of(firstWorkspacePage));
+      WebPageXmlLayoutCommand.init(webAppPath);
+      Page firstWorkspaceLayout = WebPageXmlLayoutCommand.retrievePageForRequest(firstWorkspacePage, "/workspace-layout");
+
+      WorkspaceContextManager.activate(2L, "two.example.com");
+      webPageRepository.when(WebPageRepository::findAll).thenReturn(List.of(secondWorkspacePage));
+      WebPageXmlLayoutCommand.init(webAppPath);
+      Page secondWorkspaceLayout = WebPageXmlLayoutCommand.retrievePageForRequest(secondWorkspacePage, "/workspace-layout");
+
+      Assertions.assertNotNull(firstWorkspaceLayout);
+      Assertions.assertNotNull(secondWorkspaceLayout);
+      Assertions.assertNotSame(firstWorkspaceLayout, secondWorkspaceLayout);
     }
   }
 }

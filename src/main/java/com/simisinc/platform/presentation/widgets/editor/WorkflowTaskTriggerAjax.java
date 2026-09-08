@@ -21,11 +21,14 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jobrunr.configuration.JobRunr;
 import org.jobrunr.jobs.Job;
+import org.jobrunr.jobs.JobParameter;
 import org.jobrunr.jobs.RecurringJob;
 import org.jobrunr.storage.RecurringJobsResult;
 import org.jobrunr.storage.StorageProvider;
 
+import com.github.rajkowski.database.DB;
 import com.simisinc.platform.application.json.JsonCommand;
+import com.simisinc.platform.infrastructure.scheduler.WorkflowEngineJob;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
 
@@ -90,6 +93,14 @@ public class WorkflowTaskTriggerAjax extends GenericJsonService {
       }
 
       Job enqueuedJob = recurringJob.toEnqueuedJob();
+
+      // Scope the manually triggered job to the current workspace tenant only
+      for (JobParameter jobParameter : enqueuedJob.getJobDetails().getJobParameters()) {
+        if (jobParameter.getObject() instanceof WorkflowEngineJob workflowEngineJob) {
+          workflowEngineJob.setTenantId(DB.getTenantId());
+        }
+      }
+
       storageProvider.save(enqueuedJob);
 
       context.setJson("{\"status\":\"ok\",\"jobId\":\"" + JsonCommand.toJson(jobId) + "\",\"queuedJobId\":\""

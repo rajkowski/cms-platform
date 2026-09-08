@@ -40,7 +40,7 @@ public class LoadCollectionCommand {
     if (StringUtils.isBlank(uniqueId)) {
       return null;
     }
-    return (Collection) CacheManager.getLoadingCache(CacheManager.COLLECTION_UNIQUE_ID_CACHE).get(uniqueId);
+    return (Collection) CacheManager.getCurrentWorkspaceLoadingValue(CacheManager.COLLECTION_UNIQUE_ID_CACHE, uniqueId);
   }
 
   public static Collection loadCollectionById(long collectionId) {

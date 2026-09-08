@@ -20,11 +20,14 @@ package com.simisinc.platform.application.admin;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.sql.DataSource;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.output.MigrateResult;
 
+import com.github.rajkowski.database.DB;
 import com.simisinc.platform.domain.model.DatabaseVersion;
 import com.simisinc.platform.infrastructure.database.ConnectionPool;
 import com.simisinc.platform.infrastructure.persistence.DatabaseVersionRepository;
@@ -48,37 +51,40 @@ public class DatabaseCommand {
   private static final String REPEATABLE_SQL_MIGRATION_PREFIX = "REPEAT_";
 
   public static boolean initialize() {
+    return initialize(ConnectionPool.getApplicationDataSource());
+  }
 
+  private static boolean initialize(DataSource dataSource) {
     // V (One-Time Version files)
     // R (Repeatable every upgrade)
     // Java-based: public class V1_2__Another_user implements JdbcMigration
 
-    if (!isInstalled()) {
+    if (!isInstalled(dataSource)) {
       LOG.info("New system detected, installing the database... " + ApplicationInfo.VERSION);
-      boolean installResult = installDatabase();
+      boolean installResult = installDatabase(dataSource);
       if (!installResult) {
         return false;
       }
       // An entry is required
       DatabaseVersion databaseVersion = new DatabaseVersion("Initial Setup", ApplicationInfo.VERSION);
-      DatabaseVersionRepository.save(databaseVersion);
+      DB.withDataSource(dataSource, () -> DatabaseVersionRepository.save(databaseVersion));
     } else {
-      LOG.info("Checking for database upgrades... " + ConnectionPool.getApplicationDataSource().toString());
-      if (!upgrade()) {
+      LOG.info("Checking for database upgrades... " + dataSource.toString());
+      if (!upgrade(dataSource)) {
         return false;
       }
     }
     return true;
   }
 
-  private static boolean installDatabase() {
+  private static boolean installDatabase(DataSource dataSource) {
     {
       // Install the new database
       Flyway flyway = Flyway.configure()
           .table(INSTALL_HISTORY_TABLE)
           .sqlMigrationPrefix(INSTALL_SQL_MIGRATION_PREFIX)
           .repeatableSqlMigrationPrefix(REPEATABLE_INSTALL_SQL_MIGRATION_PREFIX)
-          .dataSource(ConnectionPool.getApplicationDataSource())
+          .dataSource(dataSource)
           .locations("classpath:database/install", "com/simisinc/platform/infrastructure/database/install")
           .placeholderReplacement(false)
           .cleanDisabled(true)
@@ -95,7 +101,7 @@ public class DatabaseCommand {
           .table(UPGRADE_HISTORY_TABLE)
           .sqlMigrationPrefix(UPGRADE_SQL_MIGRATION_PREFIX)
           .repeatableSqlMigrationPrefix(REPEATABLE_SQL_MIGRATION_PREFIX)
-          .dataSource(ConnectionPool.getApplicationDataSource())
+          .dataSource(dataSource)
           .locations(databaseUpgradeLocations())
           .placeholderReplacement(false)
           .cleanDisabled(true)
@@ -111,14 +117,30 @@ public class DatabaseCommand {
     return true;
   }
 
-  private static boolean upgrade() {
+  /**
+  * Installs or upgrades every configured workspace database.
+   *
+  * @return {@code true} when every workspace database initialized successfully
+   */
+  public static boolean checkWorkspaceDatabases() {
+    boolean successful = true;
+    for (String workspaceId : ConnectionPool.getTenantRegistry().getTenantIds()) {
+      LOG.info("Initializing workspace database: " + workspaceId);
+      if (!initialize(ConnectionPool.getTenantRegistry().getDataSource(workspaceId))) {
+        successful = false;
+      }
+    }
+    return successful;
+  }
+
+  private static boolean upgrade(DataSource dataSource) {
     // Process the versions
     Flyway flyway = Flyway.configure()
         .table(UPGRADE_HISTORY_TABLE)
         .validateOnMigrate(false)
         .sqlMigrationPrefix(UPGRADE_SQL_MIGRATION_PREFIX)
         .repeatableSqlMigrationPrefix(REPEATABLE_SQL_MIGRATION_PREFIX)
-        .dataSource(ConnectionPool.getApplicationDataSource())
+        .dataSource(dataSource)
         .locations(databaseUpgradeLocations())
         .placeholderReplacement(false)
         .outOfOrder(true)
@@ -132,8 +154,14 @@ public class DatabaseCommand {
     return true;
   }
 
-  private static boolean isInstalled() {
-    return (DatabaseVersionRepository.count() > 0);
+  private static boolean isInstalled(DataSource dataSource) {
+    boolean[] installed = { false };
+    try {
+      DB.withDataSource(dataSource, () -> installed[0] = DatabaseVersionRepository.count() > 0);
+    } catch (Exception e) {
+      return false;
+    }
+    return installed[0];
   }
 
   private static String[] databaseUpgradeLocations() {

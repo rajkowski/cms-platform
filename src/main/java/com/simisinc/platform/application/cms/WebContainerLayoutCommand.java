@@ -42,7 +42,7 @@ public class WebContainerLayoutCommand {
   public static Header retrieveHeader(String layout, URL url) {
     String cacheName = ("header.default".equals(layout) ? CacheManager.WEBSITE_HEADER
         : CacheManager.WEBSITE_PLAIN_HEADER);
-    Header header = (Header) CacheManager.getFromObjectCache(cacheName);
+    Header header = (Header) CacheManager.getCurrentWorkspaceValue(CacheManager.OBJECT_CACHE, cacheName);
     if (header == null) {
       header = retrieveHeaderFromDatabase(layout);
       if (header == null) {
@@ -51,7 +51,7 @@ public class WebContainerLayoutCommand {
       if (header == null) {
         return null;
       }
-      CacheManager.addToObjectCache(cacheName, header);
+      CacheManager.putCurrentWorkspaceValue(CacheManager.OBJECT_CACHE, cacheName, header);
     }
     return header;
   }
@@ -72,7 +72,7 @@ public class WebContainerLayoutCommand {
   }
 
   public static Footer retrieveFooter(String layout, URL url) {
-    Footer footer = (Footer) CacheManager.getFromObjectCache(CacheManager.WEBSITE_FOOTER);
+    Footer footer = (Footer) CacheManager.getCurrentWorkspaceValue(CacheManager.OBJECT_CACHE, CacheManager.WEBSITE_FOOTER);
     if (footer == null) {
       footer = retrieveFooterFromDatabase(layout);
       if (footer == null) {
@@ -81,7 +81,7 @@ public class WebContainerLayoutCommand {
       if (footer == null) {
         return null;
       }
-      CacheManager.addToObjectCache(CacheManager.WEBSITE_FOOTER, footer);
+      CacheManager.putCurrentWorkspaceValue(CacheManager.OBJECT_CACHE, CacheManager.WEBSITE_FOOTER, footer);
     }
     return footer;
   }

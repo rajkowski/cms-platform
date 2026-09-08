@@ -72,9 +72,9 @@ public class SubFolderRepository {
       }
       if (specification.getHasFiles() != DataConstants.UNDEFINED) {
         if (specification.getHasFiles() == DataConstants.TRUE) {
-          select.AND("sub_folders.file_count > 0");
+          select.AND("sub_folders.file_count > ?", 0);
         } else {
-          select.AND("sub_folders.file_count = 0");
+          select.AND("sub_folders.file_count = ?", 0);
         }
       }
       if (specification.getYear() > 0) {

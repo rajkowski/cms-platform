@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,6 +25,7 @@ import org.apache.commons.text.RandomStringGenerator;
 import com.simisinc.platform.application.cms.UrlCommand;
 import com.simisinc.platform.domain.model.login.OAuthState;
 import com.simisinc.platform.infrastructure.persistence.login.OAuthStateRepository;
+import com.zeroio.platform.infrastructure.database.WorkspaceContextManager;
 
 /**
  * Configures and verifies OpenAuth2 and OIDC
@@ -59,6 +61,10 @@ public class OAuthAuthorizationCommand {
     OAuthState oAuthState = new OAuthState();
     oAuthState.setState(state);
     oAuthState.setResource(resource);
+    if (WorkspaceContextManager.getCurrentContext() != null) {
+      oAuthState.setWorkspaceId(WorkspaceContextManager.getCurrentContext().workspaceId());
+      oAuthState.setDestinationDomain(WorkspaceContextManager.getCurrentContext().sourceHost());
+    }
     OAuthStateRepository.add(oAuthState);
 
     // Prepare the oauth redirect
@@ -77,5 +83,9 @@ public class OAuthAuthorizationCommand {
   public static String resourceIfStateIsValid(String state) {
     OAuthState oAuthState = OAuthStateRepository.findByStateIfValid(state);
     return oAuthState != null ? oAuthState.getResource() : null;
+  }
+
+  public static OAuthState stateIfValid(String state) {
+    return OAuthStateRepository.findByStateIfValid(state);
   }
 }

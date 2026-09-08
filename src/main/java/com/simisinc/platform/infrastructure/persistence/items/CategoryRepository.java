@@ -111,7 +111,7 @@ public class CategoryRepository {
         .FROM(TABLE_NAME)
         .WHERE("collection_id = ?", collectionId);
     if (basedOnItems) {
-      select.AND("item_count > 0");
+      select.AND("item_count > ?", 0);
     }
     DataResult<Category> result = select
         .WITH(new DataConstraints().setDefaultColumnToSortBy("name").setUseCount(false))

@@ -176,7 +176,8 @@ public class FileItemRepository {
 
       // Use the search engine
       if (StringUtils.isNotBlank(specification.getSearchName())) {
-        select.SELECT("ts_rank_cd(tsv, websearch_to_tsquery('file_stem', ?)) AS rank", (Object[]) new Object[] { specification.getSearchName().trim() });
+        select.SELECT("ts_rank_cd(tsv, websearch_to_tsquery('file_stem', ?)) AS rank",
+            (Object[]) new Object[] { specification.getSearchName().trim() });
         select.AND("tsv @@ websearch_to_tsquery('file_stem', ?)", specification.getSearchName().trim());
         select.ORDER_BY("rank DESC, file_id");
       }
@@ -509,7 +510,7 @@ public class FileItemRepository {
   }
 
   public static long findTotalFileSize() {
-    return DB.SELECT("SUM(file_length)").FROM(TABLE_NAME).returnValue(Long.class);
+    return DB.SELECT("COALESCE(SUM(file_length), 0)").FROM(TABLE_NAME).returnValue(Long.class);
   }
 
   private static FileItem buildRecord(ResultSet rs) {

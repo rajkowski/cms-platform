@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Matt Rajkowski (https://github.com/rajkowski)
+ * Copyright 2025-2026 Matt Rajkowski (https://github.com/rajkowski)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,8 @@ public class OAuthStateRepository {
     long generatedId = DB.INSERT().INTO(TABLE_NAME)
         .FIELD("state", record.getState())
         .FIELD("resource", record.getResource())
+        .FIELD("workspace_id", record.getWorkspaceId())
+        .FIELD("destination_domain", record.getDestinationDomain())
         .execute();
     record.setId(generatedId);
     if (record.getId() == -1) {
@@ -73,6 +75,9 @@ public class OAuthStateRepository {
       record.setId(rs.getLong("state_id"));
       record.setState(rs.getString("state"));
       record.setResource(rs.getString("resource"));
+      long workspaceId = rs.getLong("workspace_id");
+      record.setWorkspaceId(rs.wasNull() ? null : workspaceId);
+      record.setDestinationDomain(rs.getString("destination_domain"));
       record.setCreated(rs.getTimestamp("created"));
       return record;
     } catch (SQLException se) {

@@ -23,10 +23,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.github.rajkowski.database.DB;
-// import com.github.rajkowski.database.TenantRegistry;
-// import com.zeroio.platform.infrastructure.database.SitePropertyTenantDataSourceConfigurationStore;
-// import com.zeroio.platform.infrastructure.database.TenantDataSourceConfiguration;
-// import com.zeroio.platform.infrastructure.database.TenantDataSourceRegistrar;
+import com.github.rajkowski.database.TenantRegistry;
+import com.zeroio.platform.infrastructure.database.SitePropertyTenantDataSourceConfigurationStore;
+import com.zeroio.platform.infrastructure.database.TenantDataSourceConfiguration;
+import com.zeroio.platform.infrastructure.database.TenantDataSourceRegistrar;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
@@ -43,8 +43,8 @@ public class ConnectionPool {
   private static HikariDataSource applicationDS;
   private static HikariDataSource backgroundJobsDS;
   private static HikariDataSource distributedMessagingDS;
-  // private static final TenantRegistry TENANT_REGISTRY = new TenantRegistry();
-  // private static TenantDataSourceRegistrar tenantDataSourceRegistrar;
+  private static final TenantRegistry TENANT_REGISTRY = new TenantRegistry();
+  private static TenantDataSourceRegistrar tenantDataSourceRegistrar;
 
   private ConnectionPool() {
   }
@@ -52,8 +52,10 @@ public class ConnectionPool {
   public static void init(Properties properties) {
     applicationDS = initApplicationCP(properties);
     DB.setDataSource(applicationDS);
-    // DB.setTenantRegistry(TENANT_REGISTRY);
-    // tenantDataSourceRegistrar = new TenantDataSourceRegistrar(new SitePropertyTenantDataSourceConfigurationStore());
+    DB.setTenantRegistry(TENANT_REGISTRY);
+    TENANT_REGISTRY.setMaximumConnections(getTenantConnectionBudget(properties));
+    tenantDataSourceRegistrar = new TenantDataSourceRegistrar(new SitePropertyTenantDataSourceConfigurationStore(),
+      getTenantConnectionBudget(properties));
     LOG.info("Max pool size (applicationDS): " + applicationDS.getMaximumPoolSize());
     backgroundJobsDS = initBackgroundJobsCP(properties);
     LOG.info("Max pool size (backgroundJobsDS): " + backgroundJobsDS.getMaximumPoolSize());
@@ -88,12 +90,28 @@ public class ConnectionPool {
     return new HikariDataSource(config);
   }
 
+  private static int getTenantConnectionBudget(Properties properties) {
+    String configuredBudget = properties.getProperty("tenant.maximumPoolSize");
+    if (configuredBudget == null) {
+      configuredBudget = properties.getProperty("application.maximumPoolSize", "8");
+    }
+    try {
+      int budget = Integer.parseInt(configuredBudget);
+      if (budget < 1) {
+        throw new NumberFormatException("must be positive");
+      }
+      return budget;
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException("tenant.maximumPoolSize must be a positive integer", e);
+    }
+  }
+
   public static void shutdown() {
-    // if (tenantDataSourceRegistrar != null) {
-    //   tenantDataSourceRegistrar.shutdown();
-    //   tenantDataSourceRegistrar = null;
-    //   TENANT_REGISTRY.clear();
-    // }
+    if (tenantDataSourceRegistrar != null) {
+      tenantDataSourceRegistrar.shutdown();
+      tenantDataSourceRegistrar = null;
+      TENANT_REGISTRY.clear();
+    }
     if (applicationDS != null) {
       applicationDS.close();
       applicationDS = null;
@@ -136,37 +154,45 @@ public class ConnectionPool {
     return distributedMessagingDS;
   }
 
-  // public static void registerTenantDataSource(String tenantId, javax.sql.DataSource dataSource) {
-  //   TENANT_REGISTRY.register(tenantId, dataSource);
-  // }
+  public static void registerTenantDataSource(String tenantId, javax.sql.DataSource dataSource) {
+    TENANT_REGISTRY.register(tenantId, dataSource);
+  }
 
-  // public static void unregisterTenantDataSource(String tenantId) {
-  //   TENANT_REGISTRY.unregister(tenantId);
-  // }
+  public static void registerTenantDataSource(String tenantId, javax.sql.DataSource dataSource, String poolGroup) {
+    TENANT_REGISTRY.register(tenantId, dataSource, poolGroup);
+  }
 
-  // public static void registerConfiguredTenantDataSources() {
-  //   if (tenantDataSourceRegistrar == null) {
-  //     throw new IllegalStateException("ConnectionPool has not been initialized");
-  //   }
-  //   tenantDataSourceRegistrar.registerAllAtStartup();
-  // }
+  public static void setTenantMaximumConnections(String poolGroup, int maximumConnections) {
+    TENANT_REGISTRY.setMaximumConnections(poolGroup, maximumConnections);
+  }
 
-  // public static void saveAndRegisterTenantDataSource(TenantDataSourceConfiguration configuration) {
-  //   if (tenantDataSourceRegistrar == null) {
-  //     throw new IllegalStateException("ConnectionPool has not been initialized");
-  //   }
-  //   tenantDataSourceRegistrar.saveAndRegister(configuration);
-  // }
+  public static void unregisterTenantDataSource(String tenantId) {
+    TENANT_REGISTRY.unregister(tenantId);
+  }
 
-  // public static void retireIdleTenantDataSources() {
-  //   if (tenantDataSourceRegistrar != null) {
-  //     tenantDataSourceRegistrar.retireIdleDataSources();
-  //   }
-  // }
+  public static void registerConfiguredTenantDataSources() {
+    if (tenantDataSourceRegistrar == null) {
+      throw new IllegalStateException("ConnectionPool has not been initialized");
+    }
+    tenantDataSourceRegistrar.registerAllAtStartup();
+  }
 
-  // public static TenantRegistry getTenantRegistry() {
-  //   return TENANT_REGISTRY;
-  // }
+  public static void saveAndRegisterTenantDataSource(TenantDataSourceConfiguration configuration) {
+    if (tenantDataSourceRegistrar == null) {
+      throw new IllegalStateException("ConnectionPool has not been initialized");
+    }
+    tenantDataSourceRegistrar.saveAndRegister(configuration);
+  }
+
+  public static void retireIdleTenantDataSources() {
+    if (tenantDataSourceRegistrar != null) {
+      tenantDataSourceRegistrar.retireIdleDataSources();
+    }
+  }
+
+  public static TenantRegistry getTenantRegistry() {
+    return TENANT_REGISTRY;
+  }
 
   public static boolean isLive() {
     // Use the background jobs connection pool to determine if the database is live

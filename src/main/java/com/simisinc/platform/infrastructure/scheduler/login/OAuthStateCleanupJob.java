@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Matt Rajkowski (https://github.com/rajkowski)
+ * Copyright 2025-2026 Matt Rajkowski (https://github.com/rajkowski)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.jobrunr.jobs.annotations.Job;
 import com.simisinc.platform.infrastructure.distributedlock.LockManager;
 import com.simisinc.platform.infrastructure.persistence.login.OAuthStateRepository;
 import com.simisinc.platform.infrastructure.scheduler.SchedulerManager;
+import com.simisinc.platform.infrastructure.scheduler.TenantAwareJobRunner;
 
 /**
  * Deletes expired oauth values
@@ -34,6 +35,10 @@ public class OAuthStateCleanupJob {
 
   @Job(name = "Delete expired oauth values")
   public static void execute() {
+    TenantAwareJobRunner.runDefaultAndAllActive(OAuthStateCleanupJob::executeForTenant);
+  }
+
+  private static void executeForTenant() {
     // Distributed lock
     String lock = LockManager.lock(SchedulerManager.OAUTH_STATE_CLEANUP_JOB, Duration.ofMinutes(5));
     if (lock == null) {

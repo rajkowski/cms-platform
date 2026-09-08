@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,12 +29,17 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.application.login.AuthenticateLoginCommand;
+import com.simisinc.platform.domain.model.login.OAuthState;
 import com.simisinc.platform.domain.model.login.OAuthToken;
 import com.simisinc.platform.domain.model.login.UserToken;
 import com.simisinc.platform.infrastructure.persistence.login.UserTokenRepository;
 import com.simisinc.platform.infrastructure.persistence.oauth.OAuthTokenRepository;
 import com.simisinc.platform.presentation.controller.CookieConstants;
 import com.simisinc.platform.presentation.controller.SessionConstants;
+import com.simisinc.platform.presentation.controller.UserSession;
+import com.zeroio.platform.application.login.WorkspaceAccessCommand;
+import com.zeroio.platform.domain.model.tenant.Workspace;
+import com.zeroio.platform.infrastructure.persistence.tenant.WorkspaceRepository;
 
 /**
  * Configures and verifies OpenAuth2
@@ -65,6 +71,15 @@ public class OAuthRequestCommand {
       }
       // Determine the user's information and log them in
       OAuthLoginCommand.loginTheUser(request, response, oAuthToken);
+      OAuthState oAuthState = OAuthAuthorizationCommand.stateIfValid(state);
+      UserSession userSession = (UserSession) request.getSession().getAttribute(SessionConstants.USER);
+      if (oAuthState != null && oAuthState.getWorkspaceId() != null && userSession != null) {
+        Workspace workspace = WorkspaceRepository.findById(oAuthState.getWorkspaceId());
+        if (WorkspaceAccessCommand.hasAccessToCanonicalDomain(userSession.getUserId(), workspace, oAuthState.getDestinationDomain())) {
+          return "https://" + workspace.getCanonicalDomain() + oAuthState.getResource();
+        }
+        return "/workspace-selector";
+      }
       // Return the user to the site home page (or back to provider)
       if (StringUtils.isNotBlank(oAuthToken.getResource())) {
         return oAuthToken.getResource();

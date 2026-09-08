@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Matt Rajkowski (https://github.com/rajkowski)
+ * Copyright 2025-2026 Matt Rajkowski (https://github.com/rajkowski)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,8 @@ public class OAuthState extends Entity {
   private Long id = -1L;
   private String state = null;
   private String resource = null;
+  private Long workspaceId = null;
+  private String destinationDomain = null;
   private Timestamp created = null;
 
   public OAuthState() {
@@ -59,6 +61,11 @@ public class OAuthState extends Entity {
   public void setResource(String resource) {
     this.resource = resource;
   }
+
+  public Long getWorkspaceId() { return workspaceId; }
+  public void setWorkspaceId(Long workspaceId) { this.workspaceId = workspaceId; }
+  public String getDestinationDomain() { return destinationDomain; }
+  public void setDestinationDomain(String destinationDomain) { this.destinationDomain = destinationDomain; }
 
   public Timestamp getCreated() {
     return created;

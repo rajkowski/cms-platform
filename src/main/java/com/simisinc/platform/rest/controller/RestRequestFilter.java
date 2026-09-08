@@ -135,7 +135,11 @@ public class RestRequestFilter implements Filter {
     }
 
     // Determine if the request is for a valid hostname
-    boolean isLocal = "localhost".equals(request.getServerName()) || "127.0.0.1".equals(request.getServerName());
+    boolean isLocal = "localhost".equals(request.getServerName())
+        || request.getServerName().endsWith(".localhost")
+        || request.getServerName().endsWith(".localdomain")
+        || request.getServerName().endsWith(".local")
+        || "127.0.0.1".equals(request.getServerName());
 
     // Check if IP is rate limited
     if (!isLocal && !RateLimitCommand.isIpAllowedRightNow(ipAddress, false)) {

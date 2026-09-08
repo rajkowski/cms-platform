@@ -122,7 +122,7 @@ public class AppRepository {
         .SET("summary", StringUtils.trimToNull(record.getSummary()))
         .WHERE("app_id = ?", record.getId());
     if (update.execute().booleanValue()) {
-      CacheManager.invalidateKey(CacheManager.APP_CACHE, record.getPublicKey());
+      CacheManager.invalidateCurrentWorkspaceKey(CacheManager.APP_CACHE, record.getPublicKey(), true);
       return record;
     }
     LOG.error("The update failed!");

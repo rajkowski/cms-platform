@@ -23,9 +23,11 @@ import static javax.servlet.http.HttpServletResponse.SC_MOVED_PERMANENTLY;
 import static javax.servlet.http.HttpServletResponse.SC_MOVED_TEMPORARILY;
 import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
 import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
+
 import java.io.IOException;
 import java.util.Enumeration;
 import java.util.Map;
+
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -38,11 +40,13 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.servlet.jsp.jstl.core.Config;
 import javax.sql.DataSource;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hc.core5.net.InetAddressUtils;
+
 import com.github.rajkowski.database.DB;
 import com.simisinc.platform.application.CreateSessionCommand;
 import com.simisinc.platform.application.LoadVisitorCommand;
@@ -68,9 +72,9 @@ import com.simisinc.platform.domain.model.login.UserLogin;
 import com.simisinc.platform.infrastructure.database.ConnectionPool;
 import com.simisinc.platform.infrastructure.persistence.SessionRepository;
 import com.simisinc.platform.infrastructure.persistence.login.UserLoginRepository;
-// import com.zeroio.platform.application.cms.WorkspaceResolutionCommand;
-// import com.zeroio.platform.domain.model.tenant.Workspace;
-// import com.zeroio.platform.infrastructure.database.WorkspaceContextManager;
+import com.zeroio.platform.application.cms.WorkspaceResolutionCommand;
+import com.zeroio.platform.domain.model.tenant.Workspace;
+import com.zeroio.platform.infrastructure.database.WorkspaceContextManager;
 
 /**
  * Sets up the framework for the visitor
@@ -142,25 +146,33 @@ public class WebRequestFilter implements Filter {
       return;
     }
 
+    // Check for tenant routing using the application data source, then switch to the tenant data source if applicable
     DataSource previousDataSource = DB.getTenantDataSource();
     DB.setTenantDataSource(ConnectionPool.getApplicationDataSource());
-    // boolean tenantRoutingEnabled = WorkspaceResolutionCommand.isTenantRoutingEnabled();
-    // if (tenantRoutingEnabled && !resource.startsWith(PageServlet.WORKSPACE_SELECTOR_PATH) && !isStaticResource(resource)) {
-    //   Workspace workspace = WorkspaceResolutionCommand.resolveWorkspace(request.getServerName());
-    //   if (workspace == null) {
-    //     do302(servletResponse, PageServlet.WORKSPACE_SELECTOR_PATH);
-    //     return;
-    //   }
-    //   WorkspaceContextManager.activate(workspace.getId(), request.getServerName(), workspace.getFileRoot());
-    //   LOG.debug("Resolved workspace " + workspace.getId() + " for host " + request.getServerName());
-    // }
+
+    // Block and log certain requests
+    if (!BlockedIPListCommand.passesCheck(resource, ipAddress)) {
+      do404(servletResponse);
+      return;
+    }
+
+    // Check for tenant routing
+    boolean tenantRoutingEnabled = WorkspaceResolutionCommand.isTenantRoutingEnabled();
+    if (tenantRoutingEnabled) {
+      // Check CMS_TENANT_DEFAULT_URL to see if this is the default workspace
+      boolean isDefaultWorkspace = WorkspaceResolutionCommand.isDefaultWorkspace(request.getServerName());
+      if (!isDefaultWorkspace) {
+        Workspace workspace = WorkspaceResolutionCommand.resolveWorkspace(request.getServerName());
+        if (workspace == null) {
+          do404(servletResponse);
+          return;
+        }
+        WorkspaceContextManager.activate(workspace.getId(), request.getServerName(), workspace.getFileRoot());
+        LOG.debug("Resolved workspace " + workspace.getId() + " for host " + request.getServerName());
+      }
+    }
 
     try {
-      // Block and log certain requests
-      if (!BlockedIPListCommand.passesCheck(resource, ipAddress)) {
-        do404(servletResponse);
-        return;
-      }
 
       // Allow if an SSL renewal request
       if (resource.startsWith("/.well-known/acme-challenge")) {
@@ -198,7 +210,9 @@ public class WebRequestFilter implements Filter {
       // Redirect to SSL
       if (requireSSL && !"https".equalsIgnoreCase(scheme)) {
         CharSequence serverName = request.getServerName();
-        if (!"localhost".equals(serverName) && !InetAddressUtils.isIPv4(serverName) && !InetAddressUtils.isIPv6(serverName)) {
+        if (!"localhost".equals(serverName) && !serverName.toString().endsWith(".localhost")
+            && !serverName.toString().endsWith(".localdomain") && !serverName.toString().endsWith(".local")
+            && !InetAddressUtils.isIPv4(serverName) && !InetAddressUtils.isIPv6(serverName)) {
           // Check protocol, server name, port number, and server path
           if (StringUtils.isBlank(httpServletRequest.getRequestURL())) {
             LOG.error("No request URL found, cannot redirect to SSL");
@@ -232,21 +246,14 @@ public class WebRequestFilter implements Filter {
       }
 
       // Allow some browser resources
-      if (resource.startsWith("/favicon") ||
-        resource.startsWith("/css") ||
-        resource.startsWith("/fonts") ||
-        resource.startsWith("/html") ||
-        resource.startsWith("/images") ||
-        resource.startsWith("/javascript") ||
-        resource.startsWith("/combined.css") ||
-        resource.startsWith("/combined.js")) {
+      if (isStaticResource(resource)) {
         chain.doFilter(request, servletResponse);
         return;
       }
 
       // If OAuth is required, and the user is not verified, redirect to provider
-      String oauthRedirect =
-          OAuthRequestCommand.handleRequest((HttpServletRequest) request, (HttpServletResponse) servletResponse, resource);
+      String oauthRedirect = OAuthRequestCommand.handleRequest((HttpServletRequest) request, (HttpServletResponse) servletResponse,
+          resource);
       if (OAuthConfigurationCommand.hasInvalidConfiguration()) {
         LOG.error("OAUTH: OAUTH is enabled but configuration is incomplete");
         do500(servletResponse);
@@ -349,8 +356,8 @@ public class WebRequestFilter implements Filter {
           if (userSession == null) {
             LOG.debug("Creating user session...");
             // Start a new session
-            userSession =
-                CreateSessionCommand.createSession(WEB_SOURCE, httpServletRequest.getSession().getId(), ipAddress, referer, userAgent);
+            userSession = CreateSessionCommand.createSession(WEB_SOURCE, httpServletRequest.getSession().getId(), ipAddress, referer,
+                userAgent);
             httpServletRequest.getSession().setAttribute(SessionConstants.USER, userSession);
             // Determine if this is a monitoring app
             if (httpServletRequest.getHeader("X-Monitor") == null) {
@@ -566,9 +573,9 @@ public class WebRequestFilter implements Filter {
       }
       chain.doFilter(request, servletResponse);
     } finally {
-      // if (tenantRoutingEnabled) {
-      //   WorkspaceContextManager.clear();
-      // }
+      if (tenantRoutingEnabled) {
+        WorkspaceContextManager.clear();
+      }
       if (previousDataSource == null) {
         DB.clearTenantDataSource();
       } else {
@@ -577,11 +584,11 @@ public class WebRequestFilter implements Filter {
     }
   }
 
-  // private static boolean isStaticResource(String resource) {
-  //   return resource.startsWith("/favicon") || resource.startsWith("/css") || resource.startsWith("/fonts")
-  //       || resource.startsWith("/html") || resource.startsWith("/images") || resource.startsWith("/javascript")
-  //       || resource.startsWith("/combined.css") || resource.startsWith("/combined.js");
-  // }
+  private static boolean isStaticResource(String resource) {
+    return resource.startsWith("/favicon") || resource.startsWith("/css") || resource.startsWith("/fonts")
+        || resource.startsWith("/html") || resource.startsWith("/images") || resource.startsWith("/javascript")
+        || resource.startsWith("/combined.css") || resource.startsWith("/combined.js");
+  }
 
   /**
    * Restricts a request path so it can only ever be appended to the configured site URL as an absolute path on that

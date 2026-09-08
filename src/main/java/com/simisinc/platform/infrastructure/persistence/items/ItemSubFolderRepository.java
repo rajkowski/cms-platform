@@ -84,7 +84,7 @@ public class ItemSubFolderRepository {
 
       if (specification.getHasFiles() != DataConstants.UNDEFINED) {
         select.AND(
-            specification.getHasFiles() == DataConstants.TRUE ? "item_sub_folders.file_count > 0" : "item_sub_folders.file_count = 0");
+            specification.getHasFiles() == DataConstants.TRUE ? "item_sub_folders.file_count > ?" : "item_sub_folders.file_count = ?", 0);
       }
 
       if (specification.getYear() > 0) {
