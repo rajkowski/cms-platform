@@ -176,10 +176,11 @@ public class FileSystemCommandTest {
   @Test
   void workspaceContextUsesItsConfiguredFileRoot() throws Exception {
     Path workspaceRoot = Files.createDirectory(temporaryDirectory.resolve("workspace-one"));
+    Path filesRoot = Files.createDirectory(workspaceRoot.resolve("files"));
     WorkspaceContextManager.activate(1, "one.example.com", workspaceRoot.toString());
 
-    Assertions.assertEquals(workspaceRoot.toAbsolutePath() + File.separator, FileSystemCommand.getFileServerRootPathValue());
-    Assertions.assertEquals(workspaceRoot.resolve("uploads").toFile(), FileSystemCommand.getFileServerRootPath("uploads"));
+    Assertions.assertEquals(filesRoot.toAbsolutePath() + File.separator, FileSystemCommand.getFileServerRootPathValue());
+    Assertions.assertEquals(filesRoot.resolve("uploads").toFile(), FileSystemCommand.getFileServerRootPath("uploads"));
   }
 
   @Test

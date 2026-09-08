@@ -47,12 +47,12 @@ class WorkspaceTenantRepositoryTest {
     DB.setTenantRegistry(new TenantRegistry());
     try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
       statement.execute(
-          "CREATE TABLE workspaces (workspace_id BIGINT PRIMARY KEY, name VARCHAR(255), canonical_domain VARCHAR(255), file_root VARCHAR(1024), active BOOLEAN)");
+          "CREATE TABLE workspaces (workspace_id BIGINT PRIMARY KEY, name VARCHAR(255), site_url VARCHAR(512), canonical_domain VARCHAR(255), file_root VARCHAR(1024), active BOOLEAN, created TIMESTAMP, modified TIMESTAMP)");
       statement.execute(
           "CREATE TABLE workspace_domains (workspace_domain_id BIGINT PRIMARY KEY, workspace_id BIGINT, host_pattern VARCHAR(255), wildcard BOOLEAN, active BOOLEAN)");
       statement.execute("CREATE TABLE workspace_access_grants (workspace_id BIGINT, user_id BIGINT, active BOOLEAN)");
       statement.execute(
-          "INSERT INTO workspaces VALUES (1, 'Exact', 'exact.example.com', '/var/cms/exact', TRUE), (2, 'Wildcard', 'wild.example.com', '/var/cms/wildcard', TRUE), (3, 'Inactive', 'inactive.example.com', '/var/cms/inactive', FALSE)");
+          "INSERT INTO workspaces (workspace_id, name, site_url, canonical_domain, file_root, active) VALUES (1, 'Exact', 'https://exact.example.com', 'exact.example.com', '/var/cms/exact', TRUE), (2, 'Wildcard', 'https://wild.example.com', 'wild.example.com', '/var/cms/wildcard', TRUE), (3, 'Inactive', 'https://inactive.example.com', 'inactive.example.com', '/var/cms/inactive', FALSE)");
       statement.execute(
           "INSERT INTO workspace_domains VALUES (1, 1, 'exact.example.com', FALSE, TRUE), (2, 2, '*.example.com', TRUE, TRUE), (3, 3, 'inactive.example.com', FALSE, TRUE)");
       statement.execute("INSERT INTO workspace_access_grants VALUES (1, 10, TRUE), (2, 10, TRUE)");
