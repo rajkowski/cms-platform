@@ -150,36 +150,29 @@ public class WebRequestFilter implements Filter {
     DataSource previousDataSource = DB.getTenantDataSource();
     DB.setTenantDataSource(ConnectionPool.getApplicationDataSource());
 
+    // Block and log certain requests
+    if (!BlockedIPListCommand.passesCheck(resource, ipAddress)) {
+      do404(servletResponse);
+      return;
+    }
+
     // Check for tenant routing
     boolean tenantRoutingEnabled = WorkspaceResolutionCommand.isTenantRoutingEnabled();
-    if (tenantRoutingEnabled && !resource.startsWith(PageServlet.WORKSPACE_SELECTOR_PATH)) {
-      Workspace workspace = WorkspaceResolutionCommand.resolveWorkspace(request.getServerName());
-      if (workspace == null) {
-        // No workspace could be resolved for this host, so redirect to the workspace selector
-        if (OAuthConfigurationCommand.isEnabled()) {
-          do302(servletResponse, PageServlet.WORKSPACE_SELECTOR_PATH);
+    if (tenantRoutingEnabled) {
+      // Check CMS_TENANT_DEFAULT_URL to see if this is the default workspace
+      boolean isDefaultWorkspace = WorkspaceResolutionCommand.isDefaultWorkspace(request.getServerName());
+      if (!isDefaultWorkspace) {
+        Workspace workspace = WorkspaceResolutionCommand.resolveWorkspace(request.getServerName());
+        if (workspace == null) {
+          do404(servletResponse);
           return;
-        } else {
-          // If it is the default CMS_TENANT_DEFAULT_URL then allow the request to continue, otherwise return a 404
-          boolean isDefaultWorkspace = WorkspaceResolutionCommand.isDefaultWorkspace(request.getServerName());
-          if (!isDefaultWorkspace) {
-            LOG.warn("Unable to resolve workspace for host " + scheme + "://" + request.getServerName());
-            do404(servletResponse);
-            return;
-          }
         }
-      } else {
         WorkspaceContextManager.activate(workspace.getId(), request.getServerName(), workspace.getFileRoot());
         LOG.debug("Resolved workspace " + workspace.getId() + " for host " + request.getServerName());
       }
     }
 
     try {
-      // Block and log certain requests
-      if (!BlockedIPListCommand.passesCheck(resource, ipAddress)) {
-        do404(servletResponse);
-        return;
-      }
 
       // Allow if an SSL renewal request
       if (resource.startsWith("/.well-known/acme-challenge")) {
