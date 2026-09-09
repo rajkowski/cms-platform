@@ -498,6 +498,11 @@
         });
         <%-- // Add a smooth scroll for anchors --%>
         $(document).on('click', 'a[href^="#"]', function (event) {
+          if (Array.prototype.some.call(this.attributes, function (attribute) {
+            return attribute.name.indexOf('data-') === 0;
+          })) {
+            return;
+          }
           event.preventDefault();
           if ($("#platform-small-menu").is(":visible")) {
             $('html, body').animate({
@@ -508,6 +513,11 @@
               scrollTop: $($.attr(this, 'href')).offset().top - $("#platform-menu").height() - 20
             }, 500);
           }
+        });
+        <%-- // Refresh the captcha image --%>
+        $(document).on('click', '[data-captcha-refresh]', function (event) {
+          event.preventDefault();
+          $(this).prev('img').attr('src', '/assets/captcha?t=' + Date.now());
         });
         <c:if test="${!empty requestPricingRule.promoCode}">
         var sitePromoOverlay = $('#site-promo-overlay');
