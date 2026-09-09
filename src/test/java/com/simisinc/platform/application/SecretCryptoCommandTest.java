@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2026 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,8 +23,11 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.Base64;
+
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -37,6 +41,12 @@ import org.junit.jupiter.api.Test;
 class SecretCryptoCommandTest {
 
   private static final String PROP = "cms.secret.key";
+
+  @BeforeEach
+  void isolateFromRealEnvironment() {
+    // Ignore a real CMS_SECRET_KEY that may be set in the developer's shell so only PROP controls the key here.
+    SecretCryptoCommand.setEnvSupplierForTesting(() -> null);
+  }
 
   @AfterEach
   void clearKey() {

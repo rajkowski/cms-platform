@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2026 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,9 +22,12 @@ import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.function.Supplier;
+
 import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -55,15 +59,22 @@ public class SecretCryptoCommand {
   private static final int GCM_TAG_BITS = 128;
   private static final SecureRandom RANDOM = new SecureRandom();
 
+  // Test seam: lets tests isolate themselves from a real CMS_SECRET_KEY set in the developer's shell.
+  private static Supplier<String> envSupplier = () -> System.getenv(ENV_KEY);
+
   private SecretCryptoCommand() {
     // Static utility, not instantiated
+  }
+
+  static void setEnvSupplierForTesting(Supplier<String> supplier) {
+    envSupplier = supplier;
   }
 
   /**
    * @return the configured AES key, or null when none is set or the value is invalid (env var wins over the property)
    */
   private static SecretKeySpec key() {
-    String raw = System.getenv(ENV_KEY);
+    String raw = envSupplier.get();
     if (StringUtils.isBlank(raw)) {
       raw = System.getProperty(PROP_KEY);
     }
