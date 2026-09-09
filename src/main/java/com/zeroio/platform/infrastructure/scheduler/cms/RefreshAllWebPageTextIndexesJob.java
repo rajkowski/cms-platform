@@ -26,7 +26,7 @@ import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.infrastructure.distributedlock.LockManager;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
 import com.simisinc.platform.infrastructure.scheduler.SchedulerManager;
-import com.simisinc.platform.infrastructure.scheduler.TenantAwareJobRunner;
+import com.zeroio.platform.infrastructure.scheduler.TenantAwareJobRunner;
 
 import lombok.NoArgsConstructor;
 

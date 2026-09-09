@@ -13,16 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.simisinc.platform.infrastructure.scheduler;
+package com.zeroio.platform.infrastructure.scheduler;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
+
 import java.util.List;
+
 import javax.sql.DataSource;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+
 import com.github.rajkowski.database.DB;
 import com.github.rajkowski.database.TenantRegistry;
 import com.zeroio.platform.domain.model.tenant.Workspace;

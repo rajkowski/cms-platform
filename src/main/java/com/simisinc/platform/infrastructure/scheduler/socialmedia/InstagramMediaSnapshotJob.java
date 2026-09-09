@@ -31,7 +31,7 @@ import com.simisinc.platform.domain.model.socialmedia.InstagramMedia;
 import com.simisinc.platform.infrastructure.distributedlock.LockManager;
 import com.simisinc.platform.infrastructure.persistence.socialmedia.InstagramMediaRepository;
 import com.simisinc.platform.infrastructure.scheduler.SchedulerManager;
-import com.simisinc.platform.infrastructure.scheduler.TenantAwareJobRunner;
+import com.zeroio.platform.infrastructure.scheduler.TenantAwareJobRunner;
 
 /**
  * Retrieves the latest Instagram posts

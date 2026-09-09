@@ -31,7 +31,7 @@ import com.simisinc.platform.infrastructure.persistence.medicine.MedicineReminde
 import com.simisinc.platform.infrastructure.persistence.medicine.MedicineRepository;
 import com.simisinc.platform.infrastructure.persistence.medicine.MedicineSpecification;
 import com.simisinc.platform.infrastructure.scheduler.SchedulerManager;
-import com.simisinc.platform.infrastructure.scheduler.TenantAwareJobRunner;
+import com.zeroio.platform.infrastructure.scheduler.TenantAwareJobRunner;
 
 /**
  * This job uses the medicine schedules to extend and create a list of daily reminders

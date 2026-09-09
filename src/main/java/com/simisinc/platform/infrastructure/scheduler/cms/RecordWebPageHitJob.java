@@ -26,7 +26,7 @@ import org.jobrunr.jobs.lambdas.JobRequestHandler;
 import com.simisinc.platform.application.cms.SaveWebPageHitCommand;
 import com.simisinc.platform.domain.model.cms.WebPageHit;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageHitRepository;
-import com.simisinc.platform.infrastructure.scheduler.TenantAwareJobRunner;
+import com.zeroio.platform.infrastructure.scheduler.TenantAwareJobRunner;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

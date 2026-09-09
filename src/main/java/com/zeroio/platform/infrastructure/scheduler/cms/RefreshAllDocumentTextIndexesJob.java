@@ -31,9 +31,9 @@ import com.simisinc.platform.infrastructure.persistence.cms.FileSpecification;
 import com.simisinc.platform.infrastructure.persistence.items.ItemFileItemRepository;
 import com.simisinc.platform.infrastructure.persistence.items.ItemFileSpecification;
 import com.simisinc.platform.infrastructure.scheduler.SchedulerManager;
-import com.simisinc.platform.infrastructure.scheduler.TenantAwareJobRunner;
 import com.zeroio.platform.application.cms.FileItemDocumentContentCommand;
 import com.zeroio.platform.application.cms.ItemFileItemDocumentContentCommand;
+import com.zeroio.platform.infrastructure.scheduler.TenantAwareJobRunner;
 
 import lombok.NoArgsConstructor;
 

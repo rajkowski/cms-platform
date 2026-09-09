@@ -35,7 +35,7 @@ import com.simisinc.platform.infrastructure.distributedlock.LockManager;
 import com.simisinc.platform.infrastructure.persistence.ecommerce.OrderRepository;
 import com.simisinc.platform.infrastructure.persistence.ecommerce.OrderSpecification;
 import com.simisinc.platform.infrastructure.scheduler.SchedulerManager;
-import com.simisinc.platform.infrastructure.scheduler.TenantAwareJobRunner;
+import com.zeroio.platform.infrastructure.scheduler.TenantAwareJobRunner;
 
 /**
  * Sends new orders to the related fulfillment service

@@ -26,7 +26,7 @@ import org.jobrunr.jobs.annotations.Job;
 import com.simisinc.platform.application.cms.WebPageHitSnapshotCommand;
 import com.simisinc.platform.infrastructure.distributedlock.LockManager;
 import com.simisinc.platform.infrastructure.scheduler.SchedulerManager;
-import com.simisinc.platform.infrastructure.scheduler.TenantAwareJobRunner;
+import com.zeroio.platform.infrastructure.scheduler.TenantAwareJobRunner;
 
 /**
  * Makes a summary snapshot of web page hits

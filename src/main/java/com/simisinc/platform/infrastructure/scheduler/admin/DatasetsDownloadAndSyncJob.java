@@ -27,7 +27,7 @@ import com.simisinc.platform.application.datasets.DatasetDownloadRemoteFileComma
 import com.simisinc.platform.application.datasets.ProcessDatasetCommand;
 import com.simisinc.platform.domain.model.datasets.Dataset;
 import com.simisinc.platform.infrastructure.persistence.datasets.DatasetRepository;
-import com.simisinc.platform.infrastructure.scheduler.TenantAwareJobRunner;
+import com.zeroio.platform.infrastructure.scheduler.TenantAwareJobRunner;
 
 import lombok.NoArgsConstructor;
 
