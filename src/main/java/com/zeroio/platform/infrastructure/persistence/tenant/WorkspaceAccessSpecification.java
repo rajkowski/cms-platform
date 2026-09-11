@@ -17,16 +17,16 @@ package com.zeroio.platform.infrastructure.persistence.tenant;
 
 public class WorkspaceAccessSpecification {
 
-  private long userId = -1;
+  private long mainTenantUserId = -1;
   private long workspaceId = -1;
   private boolean activeOnly = true;
 
   public long getUserId() {
-    return userId;
+    return mainTenantUserId;
   }
 
-  public void setUserId(long userId) {
-    this.userId = userId;
+  public void setUserId(long mainTenantUserId) {
+    this.mainTenantUserId = mainTenantUserId;
   }
 
   public long getWorkspaceId() {

@@ -36,10 +36,6 @@ import com.simisinc.platform.infrastructure.persistence.login.UserTokenRepositor
 import com.simisinc.platform.infrastructure.persistence.oauth.OAuthTokenRepository;
 import com.simisinc.platform.presentation.controller.CookieConstants;
 import com.simisinc.platform.presentation.controller.SessionConstants;
-import com.simisinc.platform.presentation.controller.UserSession;
-import com.zeroio.platform.application.login.WorkspaceAccessCommand;
-import com.zeroio.platform.domain.model.tenant.Workspace;
-import com.zeroio.platform.infrastructure.persistence.tenant.WorkspaceRepository;
 
 /**
  * Configures and verifies OpenAuth2
@@ -51,6 +47,9 @@ public class OAuthRequestCommand {
 
   private static Log LOG = LogFactory.getLog(OAuthRequestCommand.class);
 
+  private OAuthRequestCommand() {
+  }
+
   public static String handleRequest(HttpServletRequest request, HttpServletResponse response, String resource) {
     if (!OAuthConfigurationCommand.isEnabled()) {
       // Skip if not turned on
@@ -60,141 +59,153 @@ public class OAuthRequestCommand {
 
     // Check the URL for a "/oauth/callback"...
     if (OAuthConfigurationCommand.getRedirectUri().equals(resource)) {
-      LOG.debug("Handling OAuth callback, retrieving remote access token...");
-      String state = request.getParameter("state");
-      String code = request.getParameter("code");
-      OAuthToken oAuthToken = OAuthAccessTokenCommand.retrieveAccessToken(state, code);
-      if (oAuthToken == null) {
-        // Failed, return user back to login
-        LOG.error("NO OAUTH TOKEN FOUND... check the SSO client credentials");
-        return "/logout";
-      }
-      // Determine the user's information and log them in
-      OAuthLoginCommand.loginTheUser(request, response, oAuthToken);
-      OAuthState oAuthState = OAuthAuthorizationCommand.stateIfValid(state);
-      UserSession userSession = (UserSession) request.getSession().getAttribute(SessionConstants.USER);
-      if (oAuthState != null && oAuthState.getWorkspaceId() != null && userSession != null) {
-        Workspace workspace = WorkspaceRepository.findById(oAuthState.getWorkspaceId());
-        if (WorkspaceAccessCommand.hasAccessToCanonicalDomain(userSession.getUserId(), workspace, oAuthState.getDestinationDomain())) {
-          return "https://" + workspace.getCanonicalDomain() + oAuthState.getResource();
-        }
-        return "/workspace-selector";
-      }
-      // Return the user to the site home page (or back to provider)
-      if (StringUtils.isNotBlank(oAuthToken.getResource())) {
-        return oAuthToken.getResource();
-      }
+      return handleOAuthCallback(request, response);
+    }
+    if (hasValidSession(request)) {
+      LOG.debug("OAuth check valid");
+      return null;
+    }
+    return handleCookieOrLogin(request, response, resource);
+  }
+
+  private static String handleOAuthCallback(HttpServletRequest request, HttpServletResponse response) {
+    LOG.debug("Handling OAuth callback, retrieving remote access token...");
+    String state = request.getParameter("state");
+    String code = request.getParameter("code");
+    OAuthToken oAuthToken = OAuthAccessTokenCommand.retrieveAccessToken(state, code);
+    if (oAuthToken == null) {
+      // Failed, return user back to login
+      LOG.error("NO OAUTH TOKEN FOUND... check the SSO client credentials");
+      return "/logout";
+    }
+    // Determine the user's information and log them in
+    OAuthLoginCommand.loginTheUser(request, response, oAuthToken);
+    OAuthState oAuthState = OAuthAuthorizationCommand.stateIfValid(state);
+    if (oAuthState == null) {
+      // The state used to track the original destination has expired, is missing, or is invalid
+      LOG.warn("OAUTH: No valid OAuthState found for callback");
       return "/";
     }
+    // Return the user to the site home page (or back to provider) - the default tenant login flow
+    if (StringUtils.isNotBlank(oAuthToken.getResource())) {
+      return oAuthToken.getResource();
+    }
+    return "/";
+  }
 
-    // Every request, check if the user session is known, check the expiration
+  /** The workspace can validate the workspace handoff token */
+  private static boolean hasValidSession(HttpServletRequest request) {
     HttpSession session = request.getSession(false);
-    if (session != null) {
-      String userTokenValue = (String) session.getAttribute(SessionConstants.OAUTH_USER_TOKEN);
-      Object oAuthExpiresValue = session.getAttribute(SessionConstants.OAUTH_USER_EXPIRATION_TIME);
-      boolean oAuthNotExpired = true;
-      if (oAuthExpiresValue != null) {
-        long expiredTime = (Long) oAuthExpiresValue;
-        if (expiredTime < System.currentTimeMillis()) {
-          oAuthNotExpired = false;
-        }
-      }
-      // Check if it is valid
-      if (StringUtils.isNotBlank(userTokenValue) && oAuthNotExpired) {
-        LOG.debug("OAuth check valid");
-        return null;
-      }
+    if (session == null) {
+      return false;
     }
+    String userTokenValue = (String) session.getAttribute(SessionConstants.OAUTH_USER_TOKEN);
+    Object oAuthExpiresValue = session.getAttribute(SessionConstants.OAUTH_USER_EXPIRATION_TIME);
+    if (StringUtils.isBlank(userTokenValue)) {
+      return false;
+    }
+    if (oAuthExpiresValue == null) {
+      return true;
+    }
+    return (Long) oAuthExpiresValue >= System.currentTimeMillis();
+  }
 
-    // User session is not found, check the USER TOKEN cookie, then check OAUTH expiration, refresh if needed
+  private static String handleCookieOrLogin(HttpServletRequest request, HttpServletResponse response, String resource) {
     LOG.debug("Checking cookie value");
+    String cookieToken = findUserTokenCookieValue(request);
+    if (cookieToken == null) {
+      return OAuthAuthorizationCommand.getAuthorizationUrl(resource);
+    }
+    return handleCookieToken(request, response, cookieToken);
+  }
+
+  private static String handleCookieToken(HttpServletRequest request, HttpServletResponse response, String userTokenValue) {
+    UserToken userToken = UserTokenRepository.findByToken(userTokenValue);
+    if (userToken == null) {
+      LOG.debug("Cookie userToken not found");
+      return OAuthAuthorizationCommand.getAuthorizationUrl("/");
+    }
+    OAuthToken oAuthToken = OAuthTokenRepository.findByUserTokenId(userToken.getUserId(), userToken.getId());
+    if (oAuthToken == null) {
+      LOG.debug("Cookie oAuthToken not found");
+      return OAuthAuthorizationCommand.getAuthorizationUrl("/");
+    }
+    Timestamp now = new Timestamp(System.currentTimeMillis());
+    if (userToken.getExpires().before(now)) {
+      UserTokenRepository.remove(userToken);
+      LOG.debug("Token is already expired");
+      return OAuthAuthorizationCommand.getAuthorizationUrl("/");
+    }
+    LOG.debug("User token is not expired");
+    if (oAuthToken.getExpires().after(now)) {
+      LOG.debug("Access token is not expired");
+      setOAuthSession(request, userToken, oAuthToken);
+      return null;
+    }
+    if (oAuthToken.getRefreshExpires() != null && oAuthToken.getRefreshExpires().before(now)) {
+      LOG.debug("Refresh token is expired, force login");
+      return OAuthAuthorizationCommand.getAuthorizationUrl("/");
+    }
+    LOG.debug("Access token is expired, refresh token is not expired (or unknown)");
+    oAuthToken = OAuthAccessTokenCommand.refreshAccessToken(oAuthToken);
+    if (oAuthToken == null) {
+      LOG.debug("Refreshed token not found");
+      return OAuthAuthorizationCommand.getAuthorizationUrl("/");
+    }
+    int oAuthExpirationSeconds = calculateExpirationSeconds(oAuthToken);
+    LOG.debug("Extending the token expiration");
+    AuthenticateLoginCommand.extendTokenExpiration(userTokenValue, oAuthExpirationSeconds);
+    LOG.debug("Updating the OAuthToken record");
+    oAuthToken = OAuthTokenRepository.save(oAuthToken);
+    if (oAuthToken == null) {
+      LOG.debug("Token not updated");
+      return OAuthAuthorizationCommand.getAuthorizationUrl("/");
+    }
+    extendUserTokenCookie(request, response, userTokenValue, oAuthExpirationSeconds);
+    setOAuthSession(request, userToken, oAuthToken);
+    return null;
+  }
+
+  private static int calculateExpirationSeconds(OAuthToken oAuthToken) {
+    int oAuthExpirationSeconds = 14 * 24 * 60 * 60;
+    if (oAuthToken.getRefreshExpiresIn() > 0) {
+      oAuthExpirationSeconds = oAuthToken.getRefreshExpiresIn();
+    } else if (oAuthToken.getExpiresIn() > 0) {
+      oAuthExpirationSeconds = oAuthToken.getExpiresIn();
+    }
+    return oAuthExpirationSeconds;
+  }
+
+  private static void extendUserTokenCookie(HttpServletRequest request, HttpServletResponse response, String userTokenValue,
+      int oAuthExpirationSeconds) {
+    Cookie cookie = new Cookie(CookieConstants.USER_TOKEN, userTokenValue);
+    if (request.isSecure()) {
+      cookie.setSecure(true);
+    }
+    cookie.setHttpOnly(true);
+    cookie.setPath("/");
+    cookie.setMaxAge(oAuthExpirationSeconds);
+    response.addCookie(cookie);
+  }
+
+  private static void setOAuthSession(HttpServletRequest request, UserToken userToken, OAuthToken oAuthToken) {
+    request.getSession().setAttribute(SessionConstants.OAUTH_USER_TOKEN, userToken.getToken());
+    if (oAuthToken.getExpires() != null) {
+      request.getSession().setAttribute(SessionConstants.OAUTH_USER_EXPIRATION_TIME, oAuthToken.getExpires().getTime());
+    }
+  }
+
+  private static String findUserTokenCookieValue(HttpServletRequest request) {
     Cookie[] cookies = request.getCookies();
-    if (cookies != null) {
-      for (Cookie thisCookie : cookies) {
-        if (!thisCookie.getName().equals(CookieConstants.USER_TOKEN)) {
-          continue;
-        }
-        String userTokenValue = thisCookie.getValue();
-        UserToken userToken = UserTokenRepository.findByToken(userTokenValue);
-        if (userToken == null) {
-          LOG.debug("Cookie userToken not found");
-          break;
-        }
-        OAuthToken oAuthToken = OAuthTokenRepository.findByUserTokenId(userToken.getUserId(), userToken.getId());
-        if (oAuthToken == null) {
-          LOG.debug("Cookie oAuthToken not found");
-          break;
-        }
-        // If the token is not expired, but the aToken is, then use the rToken to get a new aToken
-        Timestamp now = new Timestamp(System.currentTimeMillis());
-        if (userToken.getExpires().before(now)) {
-          // Remove it and logout
-          UserTokenRepository.remove(userToken);
-          LOG.debug("Token is already expired");
-          break;
-        }
-        LOG.debug("User token is not expired");
-
-        // Check if the access token is expired
-        if (oAuthToken.getExpires().after(now)) {
-          LOG.debug("Access token is not expired");
-          // Continue to use it
-          request.getSession().setAttribute(SessionConstants.OAUTH_USER_TOKEN, userToken.getToken());
-          if (oAuthToken.getExpires() != null) {
-            request.getSession().setAttribute(SessionConstants.OAUTH_USER_EXPIRATION_TIME,
-                oAuthToken.getExpires().getTime());
-          }
-          return null;
-        }
-
-        // Determine if the expiration can be extended
-        if (oAuthToken.getRefreshExpires() != null && oAuthToken.getRefreshExpires().before(now)) {
-          LOG.debug("Refresh token is expired, force login");
-          break;
-        }
-
-        LOG.debug("Access token is expired, refresh token is not expired (or unknown)");
-        oAuthToken = OAuthAccessTokenCommand.refreshAccessToken(oAuthToken);
-        if (oAuthToken == null) {
-          LOG.debug("Refreshed token not found");
-          break;
-        }
-        // Extend the token expiration date
-        int oAuthExpirationSeconds = 14 * 24 * 60 * 60;
-        if (oAuthToken.getRefreshExpiresIn() > 0) {
-          oAuthExpirationSeconds = oAuthToken.getRefreshExpiresIn();
-        } else if (oAuthToken.getExpiresIn() > 0) {
-          oAuthExpirationSeconds = oAuthToken.getExpiresIn();
-        }
-        LOG.debug("Extending the token expiration");
-        AuthenticateLoginCommand.extendTokenExpiration(userTokenValue, oAuthExpirationSeconds);
-        LOG.debug("Updating the OAuthToken record");
-        oAuthToken = OAuthTokenRepository.save(oAuthToken);
-        if (oAuthToken == null) {
-          LOG.debug("Token not updated");
-          break;
-        }
-        // Extend the cookie
-        LOG.debug("Extending the cookie");
-        Cookie cookie = new Cookie(CookieConstants.USER_TOKEN, userTokenValue);
-        if (request.isSecure()) {
-          cookie.setSecure(true);
-        }
-        cookie.setHttpOnly(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(oAuthExpirationSeconds);
-        response.addCookie(cookie);
-        // Continue to use it
-        request.getSession().setAttribute(SessionConstants.OAUTH_USER_TOKEN, userToken.getToken());
-        if (oAuthToken.getExpires() != null) {
-          request.getSession().setAttribute(SessionConstants.OAUTH_USER_EXPIRATION_TIME,
-              oAuthToken.getExpires().getTime());
-        }
-        return null;
+    if (cookies == null) {
+      return null;
+    }
+    String userTokenValue = null;
+    for (Cookie cookie : cookies) {
+      if (CookieConstants.USER_TOKEN.equals(cookie.getName())) {
+        userTokenValue = cookie.getValue();
       }
     }
-
-    // Otherwise, the user must log in
-    return OAuthAuthorizationCommand.getAuthorizationUrl(resource);
+    return userTokenValue;
   }
 }

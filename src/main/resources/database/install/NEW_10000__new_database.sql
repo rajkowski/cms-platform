@@ -398,7 +398,12 @@ CREATE TABLE IF NOT EXISTS workspaces (
   active BOOLEAN NOT NULL DEFAULT TRUE,
   show_in_catalog BOOLEAN NOT NULL DEFAULT TRUE,
   created TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
-  modified TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP
+  modified TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+  created_by BIGINT REFERENCES users(user_id),
+  modified_by BIGINT REFERENCES users(user_id),
+  owner BIGINT REFERENCES users(user_id),
+  department VARCHAR(255),
+  description TEXT
 );
 
 CREATE TABLE IF NOT EXISTS workspace_domains (
@@ -429,10 +434,27 @@ CREATE TABLE IF NOT EXISTS workspace_access_grants (
   workspace_id BIGINT NOT NULL REFERENCES workspaces(workspace_id) ON DELETE CASCADE,
   user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
   active BOOLEAN NOT NULL DEFAULT TRUE,
+  created TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+  modified TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+  roles JSONB,
+  groups JSONB,
   PRIMARY KEY (workspace_id, user_id)
 );
 
 CREATE INDEX IF NOT EXISTS workspace_access_grants_user_idx ON workspace_access_grants (user_id) WHERE active;
+
+CREATE TABLE IF NOT EXISTS workspace_session_handoff_tokens (
+  workspace_session_handoff_token_id BIGSERIAL PRIMARY KEY,
+  user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+  workspace_id BIGINT NOT NULL REFERENCES workspaces(workspace_id) ON DELETE CASCADE,
+  resource VARCHAR(512) NOT NULL,
+  token VARCHAR(100) NOT NULL UNIQUE,
+  created TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+  consumed_at TIMESTAMP(3)
+);
+
+CREATE INDEX IF NOT EXISTS workspace_handoff_tok_idx ON workspace_session_handoff_tokens (token);
+CREATE INDEX IF NOT EXISTS workspace_handoff_cre_idx ON workspace_session_handoff_tokens (created);
 
 -- Regions
 

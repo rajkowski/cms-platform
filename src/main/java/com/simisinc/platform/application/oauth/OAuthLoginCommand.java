@@ -51,17 +51,20 @@ public class OAuthLoginCommand {
 
   private static Log LOG = LogFactory.getLog(OAuthLoginCommand.class);
 
-  public static void loginTheUser(HttpServletRequest request, HttpServletResponse response, OAuthToken oAuthToken) {
+  private OAuthLoginCommand() {
+  }
+
+  public static String loginTheUser(HttpServletRequest request, HttpServletResponse response, OAuthToken oAuthToken) {
     LOG.debug("Logging the user in using OAUTH request...");
     if (oAuthToken == null || StringUtils.isBlank(oAuthToken.getAccessToken())) {
       LOG.warn("An accessToken is required");
-      return;
+      return null;
     }
     // Create or update the user record
     User user = OAuthUserInfoCommand.createUser(oAuthToken);
     if (user == null) {
       LOG.warn("The user was not found");
-      return;
+      return null;      
     }
 
     // Track the login
@@ -123,5 +126,6 @@ public class OAuthLoginCommand {
     SaveSessionCommand.saveSession(userSession);
     request.getSession().setAttribute(SessionConstants.USER, userSession);
     LOG.info("OAuth user has been signed in: " + user.getEmail());
+    return loginToken;
   }
 }

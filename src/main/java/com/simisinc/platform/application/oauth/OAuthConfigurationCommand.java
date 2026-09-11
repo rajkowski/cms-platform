@@ -26,6 +26,7 @@ import com.simisinc.platform.application.cms.UrlCommand;
 import com.simisinc.platform.application.http.HttpGetCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.infrastructure.cache.CacheManager;
+import com.zeroio.platform.infrastructure.database.WorkspaceContextManager;
 
 /**
  * Configures and verifies configuration using openid-configuration
@@ -41,7 +42,8 @@ public class OAuthConfigurationCommand {
   public static boolean isEnabled() {
     String enabled = System.getenv("OAUTH_ENABLED");
     if (StringUtils.isBlank(enabled)) {
-      enabled = LoadSitePropertyCommand.loadByName("oauth.enabled");
+      // SSO is a single, shared, platform-wide configuration - never read it from a tenant workspace's own database
+      enabled = WorkspaceContextManager.withoutWorkspace(() -> LoadSitePropertyCommand.loadByName("oauth.enabled"));
     }
     if (!"true".equals(enabled)) {
       return false;
@@ -52,7 +54,7 @@ public class OAuthConfigurationCommand {
   public static String getConfigurationUrl() {
     String configurationUrl = System.getenv("OAUTH_SERVER_URL");
     if (StringUtils.isBlank(configurationUrl)) {
-      configurationUrl = LoadSitePropertyCommand.loadByName("oauth.serverUrl");
+      configurationUrl = WorkspaceContextManager.withoutWorkspace(() -> LoadSitePropertyCommand.loadByName("oauth.serverUrl"));
     }
     if (StringUtils.isNotBlank(configurationUrl)) {
       return configurationUrl + (configurationUrl.endsWith("/") ? "" : "/") + ".well-known/openid-configuration";
@@ -63,7 +65,7 @@ public class OAuthConfigurationCommand {
   public static String getClientId() {
     String clientId = System.getenv("OAUTH_CLIENT_ID");
     if (StringUtils.isBlank(clientId)) {
-      clientId = LoadSitePropertyCommand.loadByName("oauth.clientId");
+      clientId = WorkspaceContextManager.withoutWorkspace(() -> LoadSitePropertyCommand.loadByName("oauth.clientId"));
     }
     return clientId;
   }
@@ -71,7 +73,7 @@ public class OAuthConfigurationCommand {
   public static String getClientSecret() {
     String clientSecret = System.getenv("OAUTH_CLIENT_SECRET");
     if (StringUtils.isBlank(clientSecret)) {
-      clientSecret = LoadSitePropertyCommand.loadByName("oauth.clientSecret");
+      clientSecret = WorkspaceContextManager.withoutWorkspace(() -> LoadSitePropertyCommand.loadByName("oauth.clientSecret"));
     }
     return clientSecret;
   }
@@ -89,7 +91,8 @@ public class OAuthConfigurationCommand {
     if (uri.startsWith("http://") || uri.startsWith("https://")) {
       return uri;
     }
-    String siteUrl = LoadSitePropertyCommand.loadByName("site.url");
+    // The identity provider is only ever registered with the default tenant's callback URL
+    String siteUrl = WorkspaceContextManager.withoutWorkspace(() -> LoadSitePropertyCommand.loadByName("site.url"));
     if (StringUtils.isBlank(siteUrl)) {
       siteUrl = "http://localhost:8080";
     }

@@ -17,7 +17,7 @@ package com.zeroio.platform.domain.model.tenant;
 
 import com.simisinc.platform.domain.model.Entity;
 
-public class DomainMapping extends Entity {
+public class WorkspaceDomainMapping extends Entity {
 
   private long id = -1;
   private long workspaceId = -1;

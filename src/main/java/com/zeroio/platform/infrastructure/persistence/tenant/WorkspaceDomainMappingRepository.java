@@ -23,30 +23,37 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.github.rajkowski.database.DB;
-import com.github.rajkowski.database.DataResult;
-import com.zeroio.platform.domain.model.tenant.DomainMapping;
+import com.zeroio.platform.domain.model.tenant.WorkspaceDomainMapping;
+import com.zeroio.platform.infrastructure.database.WorkspaceContextManager;
 
-public class DomainMappingRepository {
+public class WorkspaceDomainMappingRepository {
 
-  private static final Log LOG = LogFactory.getLog(DomainMappingRepository.class);
+  private static final Log LOG = LogFactory.getLog(WorkspaceDomainMappingRepository.class);
   private static final String TABLE_NAME = "workspace_domains";
 
-  private DomainMappingRepository() {
+  private WorkspaceDomainMappingRepository() {
   }
 
-  public static List<DomainMapping> findActiveByPattern(String hostPattern, boolean wildcard) {
-    DataResult<DomainMapping> result = DB.SELECT("*").FROM(TABLE_NAME).WHERE("host_pattern = ?", hostPattern).AND("wildcard = ?", wildcard).AND("active = ?", true).returnDataResult(DomainMappingRepository::buildRecord);
-    return result.getRecords();
+  public static List<WorkspaceDomainMapping> findActiveByPattern(String hostPattern, boolean wildcard) {
+    return WorkspaceContextManager.withoutWorkspace(
+        () -> DB.SELECT("*")
+            .FROM(TABLE_NAME)
+            .WHERE("host_pattern = ?", hostPattern)
+            .AND("wildcard = ?", wildcard).AND("active = ?", true).returnDataResult(WorkspaceDomainMappingRepository::buildRecord)
+            .getRecords());
   }
 
-  public static List<DomainMapping> findByPattern(String hostPattern, boolean wildcard) {
-    DataResult<DomainMapping> result = DB.SELECT("*").FROM(TABLE_NAME).WHERE("host_pattern = ?", hostPattern).AND("wildcard = ?", wildcard).returnDataResult(DomainMappingRepository::buildRecord);
-    return result.getRecords();
+  public static List<WorkspaceDomainMapping> findByPattern(String hostPattern, boolean wildcard) {
+    return WorkspaceContextManager.withoutWorkspace(
+        () -> DB.SELECT("*")
+            .FROM(TABLE_NAME)
+            .WHERE("host_pattern = ?", hostPattern)
+            .AND("wildcard = ?", wildcard).returnDataResult(WorkspaceDomainMappingRepository::buildRecord).getRecords());
   }
 
-  private static DomainMapping buildRecord(ResultSet resultSet) {
+  private static WorkspaceDomainMapping buildRecord(ResultSet resultSet) {
     try {
-      DomainMapping mapping = new DomainMapping();
+      WorkspaceDomainMapping mapping = new WorkspaceDomainMapping();
       mapping.setId(resultSet.getLong("workspace_domain_id"));
       mapping.setWorkspaceId(resultSet.getLong("workspace_id"));
       mapping.setHostPattern(resultSet.getString("host_pattern"));

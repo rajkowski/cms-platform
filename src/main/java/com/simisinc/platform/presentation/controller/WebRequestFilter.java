@@ -73,6 +73,7 @@ import com.simisinc.platform.infrastructure.database.ConnectionPool;
 import com.simisinc.platform.infrastructure.persistence.SessionRepository;
 import com.simisinc.platform.infrastructure.persistence.login.UserLoginRepository;
 import com.zeroio.platform.application.cms.WorkspaceResolutionCommand;
+import com.zeroio.platform.application.login.WorkspaceCoordinatorCommand;
 import com.zeroio.platform.domain.model.tenant.Workspace;
 import com.zeroio.platform.infrastructure.database.WorkspaceContextManager;
 
@@ -119,6 +120,12 @@ public class WebRequestFilter implements Filter {
       throws ServletException, IOException {
 
     HttpServletRequest httpServletRequest = (HttpServletRequest) request;
+
+    // Reset to the application datasource at the start of each request; tenant routing below may override it.
+    // This also prevents a tenant datasource from leaking into a request on a reused thread.
+    DB.setDataSource(ConnectionPool.getApplicationDataSource());
+    DB.clearTenantDataSource();
+
     String scheme = request.getScheme();
     String contextPath = request.getServletContext().getContextPath();
     String requestURI = httpServletRequest.getRequestURI();
@@ -142,37 +149,61 @@ public class WebRequestFilter implements Filter {
 
     // Check allowed host names
     if (!HostnameCommand.passesCheck(request.getServerName())) {
+      LOG.debug("Host name check failed for server name: " + request.getServerName());
       do404(servletResponse);
       return;
     }
 
-    // Check for tenant routing using the application data source, then switch to the tenant data source if applicable
-    DataSource previousDataSource = DB.getTenantDataSource();
-    DB.setTenantDataSource(ConnectionPool.getApplicationDataSource());
-
-    // Block and log certain requests
+    // Block and log certain requests across all app resources
     if (!BlockedIPListCommand.passesCheck(resource, ipAddress)) {
+      LOG.debug("Blocked IP address: " + ipAddress + " for resource: " + resource);
       do404(servletResponse);
       return;
     }
 
-    // Check for tenant routing
+    // Check for tenant routing feature
     boolean tenantRoutingEnabled = WorkspaceResolutionCommand.isTenantRoutingEnabled();
-    if (tenantRoutingEnabled) {
-      // Check CMS_TENANT_DEFAULT_URL to see if this is the default workspace
-      boolean isDefaultWorkspace = WorkspaceResolutionCommand.isDefaultWorkspace(request.getServerName());
-      if (!isDefaultWorkspace) {
-        Workspace workspace = WorkspaceResolutionCommand.resolveWorkspace(request.getServerName());
-        if (workspace == null) {
-          do404(servletResponse);
-          return;
-        }
-        WorkspaceContextManager.activate(workspace.getId(), request.getServerName(), workspace.getFileRoot());
-        LOG.debug("Resolved workspace " + workspace.getId() + " for host " + request.getServerName());
-      }
-    }
+    boolean isDefaultTenant = !tenantRoutingEnabled || WorkspaceResolutionCommand.isDefaultWorkspace(request.getServerName());
 
     try {
+      // Determine the tenant context for this request
+      if (tenantRoutingEnabled) {
+        // Check CMS_TENANT_DEFAULT_URL to see if this is the default workspace
+        if (isDefaultTenant) {
+          LOG.debug("Default tenant detected for host " + request.getServerName());
+        } else {
+          // Resolve the workspace for the non-default tenant
+          Workspace workspace = WorkspaceResolutionCommand.resolveWorkspace(request.getServerName());
+          if (workspace == null) {
+            LOG.debug("Workspace could not be resolved for host " + request.getServerName());
+            do404(servletResponse);
+            return;
+          }
+          // Activate the workspace context and data source
+          WorkspaceContextManager.activate(workspace.getId(), request.getServerName(), workspace.getFileRoot());
+          LOG.debug("Resolved workspace " + workspace.getId() + " for host " + request.getServerName());
+          // Users on a workspace are authenticated via the workspace-handoff mechanism
+          if (resource.equals(PageServlet.WORKSPACE_HANDOFF_RESOURCE)) {
+            // Handle the workspace handoff (instantiate user for this workspace)
+            String redirect = WorkspaceCoordinatorCommand.handleWorkspaceHandoff(httpServletRequest,
+                (HttpServletResponse) servletResponse);
+            if (redirect == null) {
+              // redirect to the default site
+              do302(servletResponse, WorkspaceResolutionCommand.getDefaultWorkspaceUrl());
+              return;
+            }
+            do302(servletResponse, redirect);
+            return;
+          }
+
+          // Make sure there is a user session, otherwise redirect to default tenant
+          if (httpServletRequest.getSession().getAttribute(SessionConstants.USER) == null) {
+            // @todo use the referring URL to redirect back after login (Header: referer)
+            do302(servletResponse, WorkspaceResolutionCommand.getDefaultWorkspaceUrl() + PageServlet.WORKSPACE_SELECTOR_PATH);
+            return;
+          }
+        }
+      }
 
       // Allow if an SSL renewal request
       if (resource.startsWith("/.well-known/acme-challenge")) {
@@ -251,23 +282,26 @@ public class WebRequestFilter implements Filter {
         return;
       }
 
-      // If OAuth is required, and the user is not verified, redirect to provider
-      String oauthRedirect = OAuthRequestCommand.handleRequest((HttpServletRequest) request, (HttpServletResponse) servletResponse,
-          resource);
-      if (OAuthConfigurationCommand.hasInvalidConfiguration()) {
-        LOG.error("OAUTH: OAUTH is enabled but configuration is incomplete");
-        do500(servletResponse);
-        return;
-      }
-      if (oauthRedirect != null) {
-        if (StringUtils.isBlank(oauthRedirect)) {
-          LOG.error("OAUTH: A redirect url could not be created");
+      // Users on the default tenant are authenticated via the standard login mechanism
+      if (isDefaultTenant) {
+        // If OAuth is required, and the user is not verified, redirect to provider
+        String oauthRedirect = OAuthRequestCommand.handleRequest((HttpServletRequest) request, (HttpServletResponse) servletResponse,
+            resource);
+        if (OAuthConfigurationCommand.hasInvalidConfiguration()) {
+          LOG.error("OAUTH: OAUTH is enabled but configuration is incomplete");
           do500(servletResponse);
           return;
         }
-        LOG.debug("OAUTH: Redirecting to " + oauthRedirect);
-        do302(servletResponse, oauthRedirect);
-        return;
+        if (oauthRedirect != null) {
+          if (StringUtils.isBlank(oauthRedirect)) {
+            LOG.error("OAUTH: A redirect url could not be created");
+            do500(servletResponse);
+            return;
+          }
+          LOG.debug("OAUTH: Redirecting to " + oauthRedirect);
+          do302(servletResponse, oauthRedirect);
+          return;
+        }
       }
 
       // A method to retain controller data between GET requests
@@ -543,26 +577,6 @@ public class WebRequestFilter implements Filter {
         }
       }
 
-      // Default states coordinated by cookies
-      /* changed to main.jsp
-      userSession.setShowSiteConfirmation(!userSession.isLoggedIn());
-      userSession.setShowSiteNewsletterSignup(true);
-      // Check the request cookies
-      Cookie[] cookies = httpServletRequest.getCookies();
-      if (cookies != null) {
-      // User values
-      for (Cookie thisCookie : cookies) {
-        if (thisCookie.getName().equals(CookieConstants.SHOW_SITE_CONFIRMATION)) {
-          // Found a saved value
-          userSession.setShowSiteConfirmation(false);
-        } else if (thisCookie.getName().equals(CookieConstants.SHOW_SITE_NEWSLETTER)) {
-          // Found a saved value
-          userSession.setShowSiteNewsletterSignup(false);
-        }
-      }
-      }
-      */
-
       // Set region preferences from cookies
       if (cookieRegionCode == null || "null".equals(cookieRegionCode)) {
         userSession.setSelectedRegionCode(null);
@@ -571,15 +585,25 @@ public class WebRequestFilter implements Filter {
         userSession.setSelectedRegionCode(cookieRegionCode);
         userSession.setShowRegionSelection(false);
       }
+
+      // Handle workspace launch requests
+      if (isDefaultTenant && resource.equals(PageServlet.WORKSPACE_LAUNCH_RESOURCE)) {
+        // Handle workspace launch specific logic here (create handoff token, and redirect)
+        LOG.debug("Handling workspace launch for user: " + userSession.getUserId());
+        long targetWorkspaceId = Long.parseLong(request.getParameter("workspaceId"));
+        String redirect = WorkspaceCoordinatorCommand.prepareForLaunch(userSession, targetWorkspaceId);
+        if (StringUtils.isNotBlank(redirect)) {
+          do302(servletResponse, redirect);
+          return;
+        }
+      }
+
+      // The user is fully initialized at this point
+      // Continue to page rendering
       chain.doFilter(request, servletResponse);
     } finally {
-      if (tenantRoutingEnabled) {
+      if (tenantRoutingEnabled && !isDefaultTenant) {
         WorkspaceContextManager.clear();
-      }
-      if (previousDataSource == null) {
-        DB.clearTenantDataSource();
-      } else {
-        DB.setTenantDataSource(previousDataSource);
       }
     }
   }

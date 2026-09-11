@@ -21,8 +21,8 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import com.github.rajkowski.database.DB;
-import com.github.rajkowski.database.DataResult;
 import com.zeroio.platform.domain.model.tenant.Workspace;
+import com.zeroio.platform.infrastructure.database.WorkspaceContextManager;
 
 public class WorkspaceRepository {
 
@@ -36,27 +36,44 @@ public class WorkspaceRepository {
     if (workspaceId < 1) {
       return null;
     }
-    return DB.SELECT("*").FROM(TABLE_NAME).WHERE("workspace_id = ?", workspaceId).returnRecord(WorkspaceRepository::buildRecord);
+    return WorkspaceContextManager.withoutWorkspace(
+        () -> DB.SELECT("*")
+            .FROM(TABLE_NAME)
+            .WHERE("workspace_id = ?", workspaceId).returnRecord(WorkspaceRepository::buildRecord));
   }
 
   public static Workspace findActiveByCanonicalDomain(String canonicalDomain) {
     if (canonicalDomain == null || canonicalDomain.isBlank()) {
       return null;
     }
-    return DB.SELECT("*")
-        .FROM(TABLE_NAME)
-        .WHERE("canonical_domain = ?", canonicalDomain)
-        .AND("active = ?", true)
-        .returnRecord(WorkspaceRepository::buildRecord);
+    return WorkspaceContextManager.withoutWorkspace(
+        () -> DB.SELECT("*")
+            .FROM(TABLE_NAME)
+            .WHERE("canonical_domain = ?", canonicalDomain)
+            .AND("active = ?", true)
+            .returnRecord(WorkspaceRepository::buildRecord));
   }
 
   public static List<Workspace> findAllActive() {
-    DataResult<Workspace> result = DB.SELECT("*")
-        .FROM(TABLE_NAME)
-        .WHERE("active = ?", true)
-        .ORDER_BY("workspace_id")
-        .returnDataResult(WorkspaceRepository::buildRecord);
-    return result.getRecords();
+    return WorkspaceContextManager.withoutWorkspace(
+        () -> DB.SELECT("*")
+            .FROM(TABLE_NAME)
+            .WHERE("active = ?", true)
+            .ORDER_BY("workspace_id")
+            .returnDataResult(WorkspaceRepository::buildRecord).getRecords());
+  }
+
+  public static List<Workspace> findActiveWorkspacesByUserId(long mainTenantUserId) {
+    return WorkspaceContextManager.withoutWorkspace(
+        () -> DB.SELECT("w.*")
+            .FROM("workspaces").AS("w")
+            .JOIN("workspace_access_grants g")
+            .ON("w.workspace_id = g.workspace_id")
+            .WHERE("g.user_id = ?", mainTenantUserId)
+            .AND("g.active = ?", true)
+            .AND("w.active = ?", true)
+            .ORDER_BY("w.name")
+            .returnDataResult(WorkspaceRepository::buildRecord).getRecords());
   }
 
   private static Workspace buildRecord(ResultSet resultSet) {

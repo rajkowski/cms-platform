@@ -21,9 +21,12 @@
       </c:when>
       <c:otherwise>
         <h1>Choose a workspace</h1>
+        <c:if test="${!empty errorMessage}">
+          <p><c:out value="${errorMessage}" /></p>
+        </c:if>
         <ul>
           <c:forEach items="${workspaceList}" var="workspace">
-            <li><a target="_blank" href="${workspace.siteUrl}"><c:out value="${workspace.name}" /></a></li>
+            <li><a target="_blank" href="/workspace-launch?workspaceId=${workspace.id}"><c:out value="${workspace.name}" /></a></li>
           </c:forEach>
         </ul>
       </c:otherwise>

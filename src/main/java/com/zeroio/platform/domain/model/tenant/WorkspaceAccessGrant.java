@@ -19,14 +19,49 @@ import com.simisinc.platform.domain.model.Entity;
 
 public class WorkspaceAccessGrant extends Entity {
 
-  private long userId = -1;
+  private long mainTenantUserId = -1;
   private long workspaceId = -1;
-  private boolean active;
+  private boolean active = false;
+  private String[] roles = null;
+  private String[] groups = null;
 
-  public long getUserId() { return userId; }
-  public void setUserId(long userId) { this.userId = userId; }
-  public long getWorkspaceId() { return workspaceId; }
-  public void setWorkspaceId(long workspaceId) { this.workspaceId = workspaceId; }
-  public boolean isActive() { return active; }
-  public void setActive(boolean active) { this.active = active; }
+  public long getMainTenantUserId() {
+    return mainTenantUserId;
+  }
+
+  public void setMainTenantUserId(long mainTenantUserId) {
+    this.mainTenantUserId = mainTenantUserId;
+  }
+
+  public long getWorkspaceId() {
+    return workspaceId;
+  }
+
+  public void setWorkspaceId(long workspaceId) {
+    this.workspaceId = workspaceId;
+  }
+
+  public boolean isActive() {
+    return active;
+  }
+
+  public void setActive(boolean active) {
+    this.active = active;
+  }
+
+  public String[] getRoles() {
+    return roles;
+  }
+
+  public void setRoles(String[] roles) {
+    this.roles = roles;
+  }
+
+  public String[] getGroups() {
+    return groups;
+  }
+
+  public void setGroups(String[] groups) {
+    this.groups = groups;
+  }
 }

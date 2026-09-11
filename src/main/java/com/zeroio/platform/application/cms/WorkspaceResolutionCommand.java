@@ -21,9 +21,9 @@ import java.util.Locale;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.zeroio.platform.domain.model.tenant.DomainMapping;
+import com.zeroio.platform.domain.model.tenant.WorkspaceDomainMapping;
 import com.zeroio.platform.domain.model.tenant.Workspace;
-import com.zeroio.platform.infrastructure.persistence.tenant.DomainMappingRepository;
+import com.zeroio.platform.infrastructure.persistence.tenant.WorkspaceDomainMappingRepository;
 import com.zeroio.platform.infrastructure.persistence.tenant.WorkspaceRepository;
 
 public class WorkspaceResolutionCommand {
@@ -38,9 +38,10 @@ public class WorkspaceResolutionCommand {
   public static Workspace resolveWorkspace(String host) {
     String normalizedHost = normalizeHost(host);
     if (normalizedHost == null) {
+      LOG.debug("Normalized host is null for input host: " + host);
       return null;
     }
-    List<DomainMapping> exactMappings = DomainMappingRepository.findByPattern(normalizedHost, false);
+    List<WorkspaceDomainMapping> exactMappings = WorkspaceDomainMappingRepository.findByPattern(normalizedHost, false);
     if (exactMappings != null && !exactMappings.isEmpty()) {
       return resolveUnique(exactMappings);
     }
@@ -48,7 +49,7 @@ public class WorkspaceResolutionCommand {
     if (firstDot < 1 || firstDot == normalizedHost.length() - 1) {
       return null;
     }
-    return resolveUnique(DomainMappingRepository.findActiveByPattern("*." + normalizedHost.substring(firstDot + 1), true));
+    return resolveUnique(WorkspaceDomainMappingRepository.findActiveByPattern("*." + normalizedHost.substring(firstDot + 1), true));
   }
 
   public static boolean isTenantRoutingEnabled() {
@@ -56,11 +57,16 @@ public class WorkspaceResolutionCommand {
     return value != null ? Boolean.parseBoolean(value) : false;
   }
 
+  public static String getDefaultWorkspaceUrl() {
+    String defaultUrl = System.getenv(TENANT_DEFAULT_URL);
+    return defaultUrl != null ? defaultUrl.trim() : null;
+  }
+
   public static boolean isDefaultWorkspace(String hostname) {
     if (hostname == null) {
       return false;
     }
-    String defaultUrl = System.getenv(TENANT_DEFAULT_URL);
+    String defaultUrl = getDefaultWorkspaceUrl();
     if (defaultUrl == null || defaultUrl.isBlank()) {
       return false;
     }
@@ -89,19 +95,19 @@ public class WorkspaceResolutionCommand {
     return normalizedHost.isBlank() || normalizedHost.contains("/") ? null : normalizedHost;
   }
 
-  private static Workspace resolveUnique(List<DomainMapping> mappings) {
+  private static Workspace resolveUnique(List<WorkspaceDomainMapping> mappings) {
     if (mappings == null || mappings.size() != 1) {
       return null;
     }
-    DomainMapping mapping = mappings.get(0);
+    WorkspaceDomainMapping mapping = mappings.get(0);
     if (!mapping.isActive()) {
       return null;
     }
     Workspace workspace = WorkspaceRepository.findById(mapping.getWorkspaceId());
     if (workspace != null && workspace.isActive()) {
-      LOG.debug("Resolved workspace " + workspace.getId() + " for domain mapping");
       return workspace;
     }
+    LOG.warn("Failed to resolve unique workspace for domain mapping " + mapping.getId());
     return null;
   }
 }

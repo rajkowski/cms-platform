@@ -77,10 +77,11 @@ import com.simisinc.platform.domain.model.items.Collection;
 import com.simisinc.platform.domain.model.items.Item;
 import com.simisinc.platform.presentation.widgets.cms.WebContainerContext;
 import com.zeroio.platform.application.cms.RenderMainMenuCommand;
-import com.zeroio.platform.domain.model.Region;
-import com.zeroio.platform.infrastructure.persistence.RegionRepository;
+import com.zeroio.platform.application.cms.WorkspaceResolutionCommand;
 import com.zeroio.platform.application.login.WorkspaceAccessCommand;
+import com.zeroio.platform.domain.model.Region;
 import com.zeroio.platform.domain.model.tenant.Workspace;
+import com.zeroio.platform.infrastructure.persistence.RegionRepository;
 
 /**
  * Handles all web browser page requests
@@ -95,6 +96,8 @@ public class PageServlet extends HttpServlet {
 
   private static Log LOG = LogFactory.getLog(PageServlet.class);
   public static final String WORKSPACE_SELECTOR_PATH = "/workspace-selector";
+  public static final String WORKSPACE_LAUNCH_RESOURCE = "/workspace-launch";
+  public static final String WORKSPACE_HANDOFF_RESOURCE = "/workspace-handoff";
 
   // Widget Cache (read-only after init; ConcurrentHashMap for safe concurrent access)
   private Map<String, Object> widgetInstances = new ConcurrentHashMap<>();
@@ -338,7 +341,9 @@ public class PageServlet extends HttpServlet {
         LOG.debug("Using resource: " + pageRequest.getPagePath());
       }
 
-      if (WORKSPACE_SELECTOR_PATH.equals(pageRequest.getPagePath())) {
+      // If this is the main tenant, and user requests workspace selection, handle it here
+      if (WORKSPACE_SELECTOR_PATH.equals(pageRequest.getPagePath())
+          && WorkspaceResolutionCommand.isDefaultWorkspace(request.getServerName())) {
         UserSession selectorUserSession = (UserSession) request.getSession().getAttribute(SessionConstants.USER);
         if (selectorUserSession != null && selectorUserSession.isLoggedIn()) {
           LOG.debug("Finding authorized workspaces for user: " + selectorUserSession.getUserId());
@@ -459,7 +464,7 @@ public class PageServlet extends HttpServlet {
           "false".equals(sitePropertyMap.getOrDefault("site.online", "false"))) {
         if ("/".equals(pageRequest.getPagePath())) {
           pageRef = WebPageXmlLayoutCommand.retrievePage("_new_install_");
-          //        } else if (!"/login".equals(pagePath)) {
+          // } else if (!"/login".equals(pagePath)) {
           // @todo implement and test this...
           // Redirect to /, except for login page
         }
@@ -806,7 +811,7 @@ public class PageServlet extends HttpServlet {
           // For embedded mobile and API content
           request.setAttribute(PAGE_BODY, "/WEB-INF/jsp/container-layout.jsp");
         } else {
-          // For web content with a header and 
+          // For web content with a header and
           if (LOG.isDebugEnabled()) {
             LOG.debug("Setting header and footer render info... " + (headerRenderInfo != null) + " " + (footerRenderInfo != null));
           }

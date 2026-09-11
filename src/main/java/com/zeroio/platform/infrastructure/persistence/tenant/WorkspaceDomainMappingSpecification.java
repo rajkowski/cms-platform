@@ -15,7 +15,7 @@
  */
 package com.zeroio.platform.infrastructure.persistence.tenant;
 
-public class DomainMappingSpecification {
+public class WorkspaceDomainMappingSpecification {
 
   private String hostPattern;
   private boolean wildcard;

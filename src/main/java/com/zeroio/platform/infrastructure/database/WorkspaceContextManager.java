@@ -15,6 +15,8 @@
  */
 package com.zeroio.platform.infrastructure.database;
 
+import java.util.function.Supplier;
+
 import com.github.rajkowski.database.DB;
 import com.zeroio.platform.domain.model.tenant.WorkspaceContext;
 
@@ -58,6 +60,36 @@ public class WorkspaceContextManager {
         WORKSPACE_CONTEXT.remove();
       } else {
         WORKSPACE_CONTEXT.set(previousContext);
+      }
+    }
+  }
+
+  /**
+   * Runs code as the default tenant, regardless of any workspace currently active on this thread. Use this for
+   * platform-wide configuration (e.g. shared SSO settings) that must never be read from a tenant's own database.
+   */
+  public static void withoutWorkspace(Runnable runnable) {
+    withoutWorkspace(() -> {
+      runnable.run();
+      return null;
+    });
+  }
+
+  /**
+   * Supplier variant of {@link #withoutWorkspace(Runnable)} for code that needs to return a value.
+   */
+  public static <T> T withoutWorkspace(Supplier<T> supplier) {
+    WorkspaceContext previousContext = WORKSPACE_CONTEXT.get();
+    try {
+      WORKSPACE_CONTEXT.remove();
+      DB.clearTenant();
+      return supplier.get();
+    } finally {
+      if (previousContext == null) {
+        WORKSPACE_CONTEXT.remove();
+      } else {
+        WORKSPACE_CONTEXT.set(previousContext);
+        DB.setTenant(String.valueOf(previousContext.workspaceId()));
       }
     }
   }
