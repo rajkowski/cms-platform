@@ -16,7 +16,7 @@
   -->
 <template name="Blog Post Article Page" image="Blog Post Article.png">
   <page>
-    <section>
+    <section class="margin-bottom-20">
       <column class="small-12 medium-8 cell">
         <widget name="blogPost">
           <blogUniqueId>${webPageName}</blogUniqueId>
