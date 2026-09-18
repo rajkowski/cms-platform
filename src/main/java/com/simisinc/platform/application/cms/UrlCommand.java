@@ -46,10 +46,9 @@ public class UrlCommand {
   private static final Pattern SAFE_RETURN_PAGE = Pattern.compile("^/[A-Za-z0-9/?&=#%._~+,;-]*$");
 
   public static String encode(String url) {
-    // Sanitize the URL first
     String sanitizedUrl = sanitizeUrl(url);
     if (StringUtils.isBlank(sanitizedUrl)) {
-      LOG.debug("URL is not safe");
+      LOG.debug("URL is not acceptable");
       return "#";
     }
     return sanitizedUrl;
@@ -128,6 +127,6 @@ public class UrlCommand {
       return null;
     }
     // No scheme: a site-relative path, anchor, or query
-    return value;
+    return null;
   }
 }

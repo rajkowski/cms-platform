@@ -1,5 +1,6 @@
 /*
  * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
+ * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +33,7 @@ class UrlCommandTest {
     Assertions.assertEquals("http://example.com?name=value", UrlCommand.encode("http://example.com?name=value"));
     Assertions.assertEquals("http://example.com?name=value&name1=value1",
         UrlCommand.encode("http://example.com?name=value&name1=value1"));
-    Assertions.assertEquals("#", UrlCommand.encode("http://example.com "));
+    Assertions.assertEquals("http://example.com", UrlCommand.encode("http://example.com "));
     Assertions.assertEquals("#", UrlCommand.encode("something"));
   }
 
