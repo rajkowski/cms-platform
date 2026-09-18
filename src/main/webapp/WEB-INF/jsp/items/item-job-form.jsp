@@ -135,7 +135,7 @@
       </div>
       <div class="input-group">
         <span class="input-group-label">Optional Website for details and/or apply</span>
-        <input class="input-group-field" type="text" placeholder="http://" name="url" value="<c:out value="${item.url}"/>">
+        <input class="input-group-field" type="text" placeholder="https://" name="url" value="<c:out value="${item.url}"/>">
       </div>
       <div class="input-group">
         <span class="input-group-label">Optional Phone Number To Call</span>

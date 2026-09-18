@@ -147,7 +147,7 @@
     <div id="item-form-info-5" class="small-12 medium-5 cell">
       <div class="input-group">
         <span class="input-group-label">Website  <span class="required">*</span></span>
-        <input class="input-group-field" type="text" placeholder="http://" name="url" value="<c:out value="${item.url}"/>" required="true">
+        <input class="input-group-field" type="text" placeholder="https://" name="url" value="<c:out value="${item.url}"/>" required="true">
       </div>
       <div class="input-group">
         <span class="input-group-label">Phone  <span class="required">*</span></span>
