@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,12 +17,13 @@
 
 package com.simisinc.platform.application.mailinglists;
 
-import com.simisinc.platform.application.DataException;
-import com.simisinc.platform.domain.model.mailinglists.MailingList;
-import com.simisinc.platform.infrastructure.persistence.mailinglists.MailingListRepository;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.application.DataException;
+import com.simisinc.platform.domain.model.mailinglists.MailingList;
+import com.simisinc.platform.infrastructure.persistence.mailinglists.MailingListRepository;
 
 /**
  * Validates and saves a mailing list object
@@ -33,6 +35,9 @@ public class SaveMailingListCommand {
 
   private static Log LOG = LogFactory.getLog(SaveMailingListCommand.class);
 
+  private static final int MAX_NAME_LENGTH = 200;
+  private static final int MAX_TITLE_LENGTH = 200;
+
   public static MailingList saveMailingList(MailingList mailingListBean) throws DataException {
 
     // Validate the required fields
@@ -41,7 +46,19 @@ public class SaveMailingListCommand {
       errorMessages.append("A name is required");
     }
 
-    if (errorMessages.length() > 0) {
+    if (StringUtils.isBlank(mailingListBean.getTitle())) {
+      errorMessages.append("A title is required");
+    }
+
+    if (StringUtils.trimToEmpty(mailingListBean.getName()).length() > MAX_NAME_LENGTH) {
+      errorMessages.append("The name cannot exceed " + MAX_NAME_LENGTH + " characters");
+    }
+
+    if (StringUtils.trimToEmpty(mailingListBean.getTitle()).length() > MAX_TITLE_LENGTH) {
+      errorMessages.append("The title cannot exceed " + MAX_TITLE_LENGTH + " characters");
+    }
+
+    if (!errorMessages.isEmpty()) {
       throw new DataException("Please check the form and try again:\n" + errorMessages.toString());
     }
 
@@ -60,6 +77,8 @@ public class SaveMailingListCommand {
     }
     mailingList.setCreatedBy(mailingListBean.getCreatedBy());
     mailingList.setModifiedBy(mailingListBean.getCreatedBy());
+    // @note set the uniqueId before setting the name
+    mailingList.setUniqueId(GenerateMailingListUniqueIdCommand.generateUniqueId(mailingList, mailingListBean));
     mailingList.setName(mailingListBean.getName());
     mailingList.setTitle(mailingListBean.getTitle());
     mailingList.setDescription(mailingListBean.getDescription());
