@@ -132,7 +132,7 @@
             <c:when test="${siteProperty.type eq 'url'}">
               <div class="input-group">
                 <span class="input-group-label"><i class="fa fa-link"></i></span>
-                <input class="input-group-field" id="${siteProperty.id}" type="text" name="${siteProperty.name}" placeholder="http://..." value="<c:out value="${siteProperty.value}"/>">
+                <input class="input-group-field" id="${siteProperty.id}" type="text" name="${siteProperty.name}" placeholder="https://..." value="<c:out value="${siteProperty.value}"/>">
               </div>
             </c:when>
             <c:when test="${siteProperty.type eq 'image'}">
