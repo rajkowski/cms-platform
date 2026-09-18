@@ -20,6 +20,7 @@ package com.simisinc.platform.application.cms;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -36,22 +37,22 @@ public class UrlCommand {
 
   private static Log LOG = LogFactory.getLog(UrlCommand.class);
 
+  // URL characters that cannot break out of an href/src attribute: no quotes, angle brackets,
+  // backslash, backtick, or whitespace.
+  private static final Pattern SAFE_URL = Pattern.compile("^[A-Za-z0-9/?&=#%._~:@!$()*+,;-]*$");
+
+  // Site-relative path + optional query/fragment built from URL-safe
+  // characters only: no quotes, angle brackets, backslash, colon, or whitespace
+  private static final Pattern SAFE_RETURN_PAGE = Pattern.compile("^/[A-Za-z0-9/?&=#%._~+,;-]*$");
+
   public static String encode(String url) {
-    if (StringUtils.isBlank(url)) {
-      LOG.debug("URL is blank");
+    // Sanitize the URL first
+    String sanitizedUrl = sanitizeUrl(url);
+    if (StringUtils.isBlank(sanitizedUrl)) {
+      LOG.debug("URL is not safe");
       return "#";
     }
-
-    // Validate first
-    String[] schemes = { "http", "https" };
-    UrlValidator urlValidator = new UrlValidator(schemes);
-    if (!urlValidator.isValid(url)) {
-      return "#";
-    }
-
-    // @todo handle invalid urls
-
-    return url;
+    return sanitizedUrl;
   }
 
   public static String encodeUri(String uri) {
@@ -94,12 +95,39 @@ public class UrlCommand {
     if (StringUtils.isBlank(returnPage)) {
       return null;
     }
-    if (returnPage.contains(":")) {
+    if (returnPage.startsWith("//")) {
       return null;
     }
-    if (returnPage.startsWith("/")) {
-      return returnPage;
+    if (!SAFE_RETURN_PAGE.matcher(returnPage).matches()) {
+      return null;
     }
     return returnPage;
+  }
+
+  /**
+   * Returns the url when it is safe to place in an href/src attribute -- a site-relative path,
+   * anchor, or an http(s)/mailto/tel absolute url with no attribute-breakout characters -- otherwise
+   * null. Active schemes such as javascript: and data: are rejected, as are protocol-relative "//"
+   * targets.
+   */
+  public static String sanitizeUrl(String url) {
+    if (StringUtils.isBlank(url)) {
+      return null;
+    }
+    String value = url.trim();
+    if (value.startsWith("//") || !SAFE_URL.matcher(value).matches()) {
+      return null;
+    }
+    // If the value carries a scheme, allow only the safe ones
+    String lower = value.toLowerCase();
+    if (lower.matches("^[a-z][a-z0-9+.-]*:.*")) {
+      if (lower.startsWith("http://") || lower.startsWith("https://")
+          || lower.startsWith("mailto:") || lower.startsWith("tel:")) {
+        return value;
+      }
+      return null;
+    }
+    // No scheme: a site-relative path, anchor, or query
+    return value;
   }
 }

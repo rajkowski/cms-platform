@@ -36,10 +36,23 @@ import org.apache.commons.validator.routines.UrlValidator;
  */
 public class HttpGetCommand {
 
-  private static Log LOG = LogFactory.getLog(HttpDownloadFileCommand.class);
+  private static Log LOG = LogFactory.getLog(HttpGetCommand.class);
 
   public static final int GET = 1;
   public static final int DELETE = 2;
+
+  /**
+   * Validates that {@code url} is SSRF-safe, then fetches it. Returns null and logs a
+   * warning if the guard rejects the URL. Use this for any URL derived from untrusted input.
+   */
+  public static String executeUserUrl(String url) {
+    RemoteUrlValidationCommand.ValidationResult validation = RemoteUrlValidationCommand.validate(url);
+    if (!validation.isAllowed()) {
+      LOG.warn("Blocked an SSRF-unsafe user-supplied url: " + url);
+      return null;
+    }
+    return execute(url, GET);
+  }
 
   public static String execute(String url) {
     return execute(url, GET);
