@@ -291,7 +291,7 @@ public class MedicineRepository {
     if (id == -1) {
       return null;
     }
-    return DB.SELECT().FROM(TABLE_NAME)
+    return DB.SELECT("*").FROM(TABLE_NAME)
         .WHERE("medicine_id = ?", id)
         .returnRecord(MedicineRepository::buildRecord);
   }

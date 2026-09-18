@@ -91,7 +91,7 @@ public class BlogPostRepository {
   }
 
   private static DataResult<BlogPost> query(BlogPostSpecification specification, DataConstraints constraints) {
-    Select select = DB.SELECT().FROM(TABLE_NAME);
+    Select select = DB.SELECT("*").FROM(TABLE_NAME);
     appendWhereClause(select, specification);
     if (specification != null && StringUtils.isNotBlank(specification.getSearchTerm())) {
       String searchTerm = specification.getSearchTerm().trim();

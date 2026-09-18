@@ -361,7 +361,7 @@ public class ItemRepository {
       select.LEFT_JOIN("collections")
           .ON("(items.collection_id = collections.collection_id)");
       if (specification.getId() != -1) {
-        select.WHERE("item_id = ?", specification.getId());
+        select.AND("item_id = ?", specification.getId());
       }
       if (specification.getExcludeId() != -1) {
         select.AND("item_id <> ?", specification.getExcludeId());
