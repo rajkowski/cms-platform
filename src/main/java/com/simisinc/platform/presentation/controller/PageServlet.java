@@ -475,6 +475,11 @@ public class PageServlet extends HttpServlet {
         pageRef = WebPageXmlLayoutCommand.retrievePage("_new_install_");
       }
 
+      // Set the X-Robots-Tag header if the page is not found or it's marked as noindex for html or other content types
+      if (pageRef == null || pageRef.isNoIndex() || (webPage != null && !webPage.getSearchable())) {
+        response.setHeader("X-Robots-Tag", "noindex");
+      }
+
       // Still no page? show an error
       if (pageRef == null) {
         LOG.error("PAGE NOT FOUND: " + pageRequest.getPagePath() + " " + pageRequest.getRemoteAddr());

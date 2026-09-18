@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <pages>
   <!-- Default Template -->
-  <page name="_page_content_not_ready_" role="admin,content-manager">
+  <page name="_page_content_not_ready_" role="admin,content-manager" noindex="true">
     <section>
       <column>
         <widget name="content">
@@ -36,7 +36,7 @@
   </page>
 
   <!-- Default Template -->
-  <page name="_new_install_" role="guest">
+  <page name="_new_install_" role="guest" noindex="true">
     <section class="align-center align-middle">
       <column class="small-9 medium-5 large-4 cell margin-top-100 small-margin-top-0">
         <widget name="content" class="text-center">
@@ -73,7 +73,7 @@
   </page>
 
   <!-- Login -->
-  <page name="/login" role="guest,admin,content-manager" title="Login" class="platform-dialog">
+  <page name="/login" role="guest,admin,content-manager" title="Login" class="platform-dialog" noindex="true">
     <section id="platform-login" class="align-center margin-top-40 align-middle">
       <column class="small-12 medium-8 large-5 small-order-2 medium-order-1 cell">
         <widget name="login" style="background: white; border-radius: 12px; padding: 2.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 10px 20px rgba(0, 0, 0, 0.06); border: 1px solid #e2e8f0;">
@@ -107,7 +107,7 @@
     </section>
   </page>
 
-  <page name="/logout" title="Logout">
+  <page name="/logout" title="Logout" noindex="true">
     <section>
       <column>
         <widget name="logout">
@@ -117,7 +117,7 @@
     </section>
   </page>
 
-  <page name="/register" role="guest,admin,content-manager" title="Create Your Account" class="platform-dialog">
+  <page name="/register" role="guest,admin,content-manager" title="Create Your Account" class="platform-dialog" noindex="true">
     <section id="platform-register" class="align-center margin-top-40">
       <column class="small-12 medium-8 large-5 small-order-2 medium-order-1 cell">
         <widget name="register" style="background: white; border-radius: 12px; padding: 2.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 10px 20px rgba(0, 0, 0, 0.06); border: 1px solid #e2e8f0;">
@@ -160,7 +160,7 @@
     </section>
   </page>
 
-  <page name="/validation-sent" role="guest,admin,content-manager" title="Validate Account">
+  <page name="/validation-sent" role="guest,admin,content-manager" title="Validate Account" noindex="true">
     <section class="align-center margin-top-30">
       <column class="small-12 medium-8 large-6 text-center cell margin-50">
         <widget name="content">
@@ -178,7 +178,7 @@
     </section>
   </page>
 
-  <page name="/validate-account" title="Validate Account">
+  <page name="/validate-account" title="Validate Account" noindex="true">
     <section class="align-center">
       <column class="small-12 medium-6 cell">
         <widget name="content" class="text-center margin-50">
@@ -190,7 +190,7 @@
     </section>
   </page>
 
-  <page name="/forgot-password" role="guest,admin,content-manager" title="Forgot Password" class="platform-dialog">
+  <page name="/forgot-password" role="guest,admin,content-manager" title="Forgot Password" class="platform-dialog" noindex="true">
     <section id="platform-forgot-password" class="align-center align-middle margin-top-50">
       <column class="small-12 medium-8 large-5 small-order-2 medium-order-1 cell">
         <widget name="forgotPassword" style="background: white; border-radius: 12px; padding: 2.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 10px 20px rgba(0, 0, 0, 0.06); border: 1px solid #e2e8f0;">
@@ -220,28 +220,28 @@
   </page>
 
   <!-- Content Editing -->
-  <page name="/content-editor" role="admin,content-manager" title="Content Editor" class="full-page">
+  <page name="/content-editor" role="admin,content-manager" title="Content Editor" class="full-page" noindex="true">
     <section>
       <column class="small-12 cell">
         <widget name="contentEditor" />
       </column>
     </section>
   </page>
-  <page name="/blog-editor" role="admin,content-manager" title="Blog Editor">
+  <page name="/blog-editor" role="admin,content-manager" title="Blog Editor" noindex="true">
     <section>
       <column class="small-12 cell">
         <widget name="blogEditor" />
       </column>
     </section>
   </page>
-  <page name="/table-of-contents-editor" role="admin,content-manager" title="Table of Contents Editor" class="full-page">
+  <page name="/table-of-contents-editor" role="admin,content-manager" title="Table of Contents Editor" class="full-page" noindex="true">
     <section>
       <column class="small-12 cell">
         <widget name="tableOfContentsEditor" />
       </column>
     </section>
   </page>
-  <page name="/wiki-editor" role="admin,content-manager,community-manager" title="Wiki Editor" class="full-page">
+  <page name="/wiki-editor" role="admin,content-manager,community-manager" title="Wiki Editor" class="full-page" noindex="true">
     <section>
       <column class="small-12 cell">
         <widget name="wikiEditor" />
@@ -250,19 +250,19 @@
   </page>
 
   <!-- Editing Features -->
-  <page name="/image-browser" role="admin,content-manager" title="Image Browser">
+  <page name="/image-browser" role="admin,content-manager" title="Image Browser" noindex="true">
     <widget name="imageBrowser" />
   </page>
-  <page name="/video-browser" role="admin,content-manager" title="Video Browser">
+  <page name="/video-browser" role="admin,content-manager" title="Video Browser" noindex="true">
     <widget name="videoBrowser" />
   </page>
-  <page name="/file-browser" role="admin,content-manager" title="File Browser">
+  <page name="/file-browser" role="admin,content-manager" title="File Browser" noindex="true">
     <widget name="fileBrowser" />
   </page>
-  <page name="/content-browser" role="admin,content-manager" title="Content Browser">
+  <page name="/content-browser" role="admin,content-manager" title="Content Browser" noindex="true">
     <widget name="contentBrowser" />
   </page>
-  <page name="/diagram-browser" role="admin,content-manager" title="Diagram Browser">
+  <page name="/diagram-browser" role="admin,content-manager" title="Diagram Browser" noindex="true">
     <widget name="diagramBrowser" />
   </page>
   <page name="/image-upload" role="admin,content-manager">
