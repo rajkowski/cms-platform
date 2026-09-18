@@ -87,6 +87,7 @@ public class ItemRepository {
         .FIELD("unique_id", StringUtils.trimToNull(record.getUniqueId()))
         .FIELD("name", StringUtils.trimToNull(record.getName()))
         .FIELD("summary", StringUtils.trimToNull(record.getSummary()))
+        .FIELD("summary_text", HtmlCommand.text(StringUtils.trimToNull(record.getSummary())))
         .FIELD("description", StringUtils.trimToNull(record.getDescription()))
         .FIELD("description_text", HtmlCommand.text(StringUtils.trimToNull(record.getDescription())))
         .FIELD("created_by", record.getCreatedBy())
@@ -161,6 +162,7 @@ public class ItemRepository {
         .SET("unique_id", StringUtils.trimToNull(record.getUniqueId()))
         .SET("name", StringUtils.trimToNull(record.getName()))
         .SET("summary", StringUtils.trimToNull(record.getSummary()))
+        .SET("summary_text", HtmlCommand.text(StringUtils.trimToNull(record.getSummary())))
         .SET("description", StringUtils.trimToNull(record.getDescription()))
         .SET("description_text", HtmlCommand.text(StringUtils.trimToNull(record.getDescription())))
         .SET("modified_by", record.getModifiedBy())
@@ -448,7 +450,7 @@ public class ItemRepository {
             .map(word -> "%" + word.replace("!", "!!").replace("%", "!%").replace("_", "!_").replace("[", "![") + "%")
             .toArray(String[]::new);
         select.SELECT(
-            "ts_headline('english', items.name || ' ' || coalesce(items.keywords,'') || ' ' || coalesce(items.summary,'') || ' ' || coalesce(items.description_text,''), websearch_to_tsquery('title_stem', ?), 'StartSel=${b}, StopSel=${/b}, MaxWords=30, MinWords=15, ShortWord=3, HighlightAll=FALSE, MaxFragments=2, FragmentDelimiter=\" ... \"') AS highlight",
+            "ts_headline('english', items.name || ' ' || coalesce(items.keywords,'') || ' ' || coalesce(items.summary_text,'') || ' ' || coalesce(items.description_text,''), websearch_to_tsquery('title_stem', ?), 'StartSel=${b}, StopSel=${/b}, MaxWords=30, MinWords=15, ShortWord=3, HighlightAll=FALSE, MaxFragments=2, FragmentDelimiter=\" ... \"') AS highlight",
           (Object[]) new Object[] { term });
         select.SELECT("(ts_rank_cd(tsv, websearch_to_tsquery('title_stem', ?)) " + Arrays.stream(titleSearchWords)
             .map(word -> " + CASE WHEN LOWER(items.name) LIKE LOWER(?) ESCAPE '!' THEN 10.0 ELSE 0.0 END")

@@ -160,6 +160,7 @@ public class SaveItemCommand {
     itemBean = CheckGeoPointCommand.updateGeoPoint(itemBean);
 
     // Clean the content
+    String cleanedSummary = HtmlCommand.cleanContent(itemBean.getSummary());
     String cleanedContent = HtmlCommand.cleanContent(itemBean.getDescription());
 
     // Transform the fields and store...
@@ -196,7 +197,7 @@ public class SaveItemCommand {
     item.setCategoryId(itemBean.getCategoryId());
     item.setCategoryIdList(itemBean.getCategoryIdList());
     item.setName(itemBean.getName());
-    item.setSummary(itemBean.getSummary());
+    item.setSummary(cleanedSummary);
     item.setDescription(cleanedContent);
     item.setLatitude(itemBean.getLatitude());
     item.setLongitude(itemBean.getLongitude());

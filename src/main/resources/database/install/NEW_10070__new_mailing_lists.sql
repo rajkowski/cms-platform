@@ -41,7 +41,10 @@ CREATE TABLE emails (
   number_of_orders INTEGER DEFAULT 0,
   total_spent NUMERIC(15,6) DEFAULT 0,
   tags JSONB,
-  sync_date TIMESTAMP(3)
+  sync_date TIMESTAMP(3),
+  title VARCHAR(150),
+  phone VARCHAR(50),
+  validated_at TIMESTAMP(3)
 );
 
 CREATE INDEX emails_created_idx ON emails(created);
@@ -66,7 +69,8 @@ CREATE TABLE mailing_lists (
   modified_by BIGINT REFERENCES users(user_id),
   last_emailed TIMESTAMP(3),
   show_online BOOLEAN DEFAULT false,
-  enabled BOOLEAN DEFAULT true
+  enabled BOOLEAN DEFAULT true,
+  unique_id VARCHAR(255) UNIQUE NOT NULL
 );
 CREATE INDEX mail_list_ord_idx ON mailing_lists(list_order);
 CREATE INDEX mail_list_cre_idx ON mailing_lists(created);
@@ -86,12 +90,18 @@ CREATE TABLE mailing_list_members (
   unsubscribed TIMESTAMP(3),
   unsubscribed_by BIGINT REFERENCES users(user_id),
   unsubscribe_reason VARCHAR(100),
-  is_valid BOOLEAN DEFAULT true
+  is_valid BOOLEAN DEFAULT true,
+  unsubscribe_token VARCHAR(255),
+  confirmed TIMESTAMP(3),
+  confirm_token VARCHAR(255),
+  confirm_token_expires TIMESTAMP(3)
 );
 CREATE UNIQUE INDEX mail_lis_mem_uniq_idx ON mailing_list_members(list_id, email_id);
 CREATE INDEX mail_lis_mem_lid_idx ON mailing_list_members(list_id);
 CREATE INDEX mail_lis_mem_eid_idx ON mailing_list_members(email_id);
 CREATE INDEX mail_lis_mem_val_idx ON mailing_list_members(is_valid);
+CREATE UNIQUE INDEX mail_lis_mem_unsub_tok_idx ON mailing_list_members(unsubscribe_token);
+CREATE UNIQUE INDEX mail_lis_mem_confirm_tok_idx ON mailing_list_members(confirm_token);
 
 CREATE TABLE mailing_list_history (
   history_id BIGSERIAL PRIMARY KEY,
@@ -99,7 +109,10 @@ CREATE TABLE mailing_list_history (
   created TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
   created_by BIGINT REFERENCES users(user_id),
   service VARCHAR(20),
-  email_count INTEGER DEFAULT 0
+  email_count INTEGER DEFAULT 0,
+  subject VARCHAR(255),
+  blog_post_id BIGINT REFERENCES blog_posts(post_id),
+  mailchimp_campaign_id VARCHAR(50)
 );
 CREATE INDEX mail_lis_his_lid_idx ON mailing_list_history(list_id);
 CREATE INDEX mail_lis_his_cre_idx ON mailing_list_history(created);

@@ -36,7 +36,7 @@
           </fields>
         </widget>
         <widget name="content">
-          <html><![CDATA[<p><strong>Job Description:</p></strong><p>${item.summary:toHtml}</p>]]></html>
+          <html><![CDATA[<p><strong>Job Description:</p></strong>${item.summary}]]></html>
         </widget>
       </column>
     </section>
