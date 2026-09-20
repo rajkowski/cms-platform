@@ -41,7 +41,7 @@
           <uniqueId>${item.uniqueId}</uniqueId>
           <fields>
             <field value="name" type="text" />
-            <field value="summary" type="text" />
+            <field value="summary" type="html" />
           </fields>
         </widget>
         <widget name="itemFields" hr="true">

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Matt Rajkowski (https://www.github.com/rajkowski)
+ * Copyright 2024-2026 Matt Rajkowski (https://www.github.com/rajkowski)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ public class ApplicationInfo {
   // Use: Change the date, increment the decimal on same day updates
   // then reset back to 10000
   //                         VERSION = "--------.10000";
-  public static final String VERSION = "20260911.10000";
+  public static final String VERSION = "20260918.10000";
 
   /**
    * Outputs the version from the command line

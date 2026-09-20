@@ -51,18 +51,27 @@
       <c:if test="${!empty includeStylesheet}">,'${ctx}/css/custom/stylesheet${includeStylesheet}.css?v=${includeStylesheetLastModified}'</c:if>
     ],
     browser_spellcheck: true,
+    content_style: "body.platform-content { overflow: auto !important; }",
+    body_class: 'web-content platform-content',
     noneditable_class: 'mceNonEditable',
-    plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code insertdatetime media table wordcount contentblock diagram templates fullscreen',
+    plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code insertdatetime media table wordcount fontawesome contentblock diagram cards notes panels templates imageversion fullscreen',
+    contextmenu: 'notesContext link',
+    contextmenu_never_use_native: true,
     toolbar: 
     [
-      'link image media diagram table fontawesome | contentblock templatesMenu | visualblocks  code | undo redo | fullscreen',
-      'blocks | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | hr | anchor | removeformat'
+      'link image media diagram table fontawesome | notesMenu cardsMenu panelsMenu | contentblock templatesMenu | visualblocks  code | fullscreen',
+      'blocks | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | hr | anchor | removeformat | undo redo'
     ],
     toolbar_mode: 'wrap',
     external_plugins: {
        "contentblock": "${ctx}/javascript/tinymce-plugins/contentblock/plugin.js?v=${VERSION}",
+       "fontawesome": "${ctx}/javascript/tinymce-plugins/fontawesome/plugin.js?v=${VERSION}",
        "diagram": "${ctx}/javascript/tinymce-plugins/diagram/plugin.js?v=${VERSION}",
-       "templates": "${ctx}/javascript/tinymce-plugins/templates/plugin.js?v=${VERSION}"
+       "cards": "${ctx}/javascript/tinymce-plugins/cards/plugin.js?v=${VERSION}",
+       "notes": "${ctx}/javascript/tinymce-plugins/notes/plugin.js?v=${VERSION}",
+       "panels": "${ctx}/javascript/tinymce-plugins/panels/plugin.js?v=${VERSION}",
+       "templates": "${ctx}/javascript/tinymce-plugins/templates/plugin.js?v=${VERSION}",
+       "imageversion": "${ctx}/javascript/tinymce-plugins/imageversion/plugin.js?v=${VERSION}"
     },
     image_class_list: [
       {title: 'None', value: ''},
@@ -91,9 +100,10 @@
         callback(fileUrl);
       });
     },
-    images_upload_url: '${ctx}/image-upload?widget=imageUpload1&token=${userSession.formToken}',
-    image_uploadtab: true,
-    paste_data_images: true,
+    images_upload_handler: function (blobInfo, progress) {
+      return hugerte.activeEditor.plugins.imageversion.uploadImageFromEditor(blobInfo, progress);
+    },
+    image_version_upload_url: '${ctx}/image-upload?widget=imageUpload1&token=${userSession.formToken}',
     automatic_uploads: true
   });
 
@@ -180,14 +190,14 @@
           <c:if test="${showAll or allowedFields.contains('summary')}">
           <label class="margin-top-20">
             ${not empty fieldLabels['summary'] ? fieldLabels['summary'] : 'Summary'}
-            <textarea placeholder="optional description" name="summary" style="height:180px"><c:out value="${item.summary}"/></textarea>
+            <textarea placeholder="Write an optional summary..." id="summary" name="summary" class="html-field" style="height:180px"><c:out value="${item.summary}"/></textarea>
           </label>
           </c:if>
           <c:if test="${showAll or allowedFields.contains('description')}">
           <p>
             <label class="margin-top-20">
               ${not empty fieldLabels['description'] ? fieldLabels['description'] : 'Description'}
-              <textarea id="description" name="description" class="html-field"><c:out value="${item.description}"/></textarea>
+              <textarea placeholder="Write an optional description..." id="description" name="description" class="html-field"><c:out value="${item.description}"/></textarea>
             </label>
           </p>
           </c:if>

@@ -37,6 +37,7 @@ public class Page implements Serializable {
   private String collectionUniqueId;
   private String itemUniqueId;
   private String cssClass = null;
+  private boolean noindex = false;
 
   private List<Section> sections = new ArrayList<Section>();
   private List<String> roles = new ArrayList<String>();
@@ -137,5 +138,13 @@ public class Page implements Serializable {
 
   public void setCssClass(String cssClass) {
     this.cssClass = cssClass;
+  }
+
+  public boolean isNoIndex() {
+    return noindex;
+  }
+
+  public void setNoIndex(boolean noindex) {
+    this.noindex = noindex;
   }
 }

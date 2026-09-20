@@ -1,4 +1,5 @@
 <%--
+  ~ Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
   ~ Copyright 2022 SimIS Inc.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -114,12 +115,17 @@
           </c:when>
           <c:when test="${tableColumn.value.name eq 'summary'}">
             <td>
-              <c:out value="${item.summary}" />
+              <c:out value="${item.summary}" escapeXml="false" />     
+            </td>
+          </c:when>
+          <c:when test="${tableColumn.value.name eq 'textSummary'}">
+            <td>
+              <c:out value="${html:text(item.summary)}" />
             </td>
           </c:when>
           <c:when test="${tableColumn.value.name eq 'description'}">
             <td>
-              <c:out value="${item.description}" />
+              <c:out value="${item.description}" escapeXml="false" />
             </td>
           </c:when>
           <c:when test="${tableColumn.value.name eq 'textDescription'}">

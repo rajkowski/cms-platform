@@ -87,6 +87,16 @@ public class MailingListRepository {
         .returnRecord(MailingListRepository::buildRecord);
   }
 
+  public static MailingList findByUniqueId(String uniqueId) {
+    if (StringUtils.isBlank(uniqueId)) {
+      return null;
+    }
+    return DB.SELECT("*")
+        .FROM(TABLE_NAME)
+        .WHERE("unique_id = ?", uniqueId)
+        .returnRecord(MailingListRepository::buildRecord);
+  }
+
   public static MailingList findByName(String name) {
     if (StringUtils.isBlank(name)) {
       return null;
@@ -123,6 +133,7 @@ public class MailingListRepository {
   public static MailingList add(MailingList record) {
     long id = DB.INSERT().INTO(TABLE_NAME)
         .FIELD("list_order", record.getOrder())
+        .FIELD("unique_id", StringUtils.trimToNull(record.getUniqueId()))
         .FIELD("name", record.getName().trim())
         .FIELD("title", record.getTitle().trim())
         .FIELD_UNLESS_NULL("description", record.getDescription())
@@ -144,14 +155,16 @@ public class MailingListRepository {
   public static MailingList update(MailingList record) {
     Update update = DB.UPDATE(TABLE_NAME)
         .SET("list_order", record.getOrder())
+        .SET("unique_id", StringUtils.trimToNull(record.getUniqueId()))
         .SET("name", StringUtils.trimToNull(record.getName()))
         .SET("title", StringUtils.trimToNull(record.getTitle()))
         .SET("description", StringUtils.trimToNull(record.getDescription()))
         .SET("show_online", record.getShowOnline())
         .SET("enabled", record.getEnabled())
         .SET("modified_by", record.getModifiedBy())
-        .SET("modified", new Timestamp(System.currentTimeMillis()));
-    if (update.WHERE("list_id = ?", record.getId()).execute()) {
+        .SET("modified", new Timestamp(System.currentTimeMillis()))
+        .WHERE("list_id = ?", record.getId());
+    if (update.execute().booleanValue()) {
       return record;
     }
     LOG.error("The update failed!");
@@ -191,6 +204,7 @@ public class MailingListRepository {
       record.setLastEmailed(rs.getTimestamp("last_emailed"));
       record.setShowOnline(rs.getBoolean("show_online"));
       record.setEnabled(rs.getBoolean("enabled"));
+      record.setUniqueId(rs.getString("unique_id"));
       return record;
     } catch (SQLException se) {
       LOG.error("buildRecord", se);

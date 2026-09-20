@@ -157,6 +157,15 @@ public class UserLoginRepository {
     return count;
   }
 
+  /** Count unique users in the time period */
+  public static long countUniqueLogins(Timestamp startDate, Timestamp endDate) {
+    return DB.SELECT("COUNT(DISTINCT user_id) AS unique_user_count")
+        .FROM("user_logins")
+        .WHERE("created >= ?", startDate)
+        .AND("created < ?", endDate)
+        .returnValue(Long.class);
+  }
+
   public static UserLogin save(UserLogin record) {
     //    if (record.getId() > -1) {
     //      return update(record);

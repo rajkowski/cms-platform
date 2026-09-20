@@ -46,7 +46,7 @@
           <title>Details</title>
           <uniqueId>${item.uniqueId}</uniqueId>
           <fields>
-            <field value="summary" type="textarea" />
+            <field value="summary" type="html" />
           </fields>
         </widget>
         <widget name="itemFields" class="callout box">

@@ -322,7 +322,7 @@
 
 .type-checkbox-item input[type="checkbox"]:checked + span::before {
   content: '\f00c';
-  font-family: 'Font Awesome 5 Free';
+  font-family: 'Font Awesome 7 Free';
   font-weight: 900;
   margin-right: 8px;
   color: #000000;
@@ -551,7 +551,7 @@
 
 .contributor-checkbox-item input[type="checkbox"]:checked + span .contributor-name::before {
   content: '\f00c';
-  font-family: 'Font Awesome 5 Free';
+  font-family: 'Font Awesome 7 Free';
   font-weight: 900;
   margin-right: 8px;
   color: #000000;

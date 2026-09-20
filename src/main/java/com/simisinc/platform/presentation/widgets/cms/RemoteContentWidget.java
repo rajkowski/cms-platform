@@ -1,4 +1,5 @@
 /*
+ * Copyright 2025-2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +30,7 @@ import org.jsoup.safety.Safelist;
 import org.jsoup.select.Elements;
 
 import com.github.benmanes.caffeine.cache.Cache;
+import com.simisinc.platform.application.cms.UrlCommand;
 import com.simisinc.platform.application.http.HttpGetCommand;
 import com.simisinc.platform.infrastructure.cache.CacheManager;
 import com.simisinc.platform.presentation.controller.WidgetContext;
@@ -66,7 +68,11 @@ public class RemoteContentWidget extends GenericWidget {
 
     // Create a wrapper for images
     if (url.endsWith(".gif") || url.endsWith(".png") || url.endsWith(".jpg")) {
-      content = "<img src=\"" + url + "\" />";
+      String safeUrl = UrlCommand.sanitizeUrl(url);
+      if (safeUrl == null) {
+        return null;
+      }
+      content = "<img src=\"" + safeUrl + "\" />";
       cache.put(url, content);
       return useReturnType(context, content);
     }
@@ -75,7 +81,7 @@ public class RemoteContentWidget extends GenericWidget {
     // @todo if this fails we don't want many more requests...
     try {
       long startRequestTime = System.currentTimeMillis();
-      String remoteContent = HttpGetCommand.execute(url);
+      String remoteContent = HttpGetCommand.executeUserUrl(url);
       if (StringUtils.isBlank(remoteContent)) {
         return null;
       }

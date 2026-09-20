@@ -51,7 +51,8 @@ CREATE TABLE items (
   sync_date TIMESTAMP(3),
   dataset_key_value VARCHAR(255),
   geojson JSONB,
-  tags JSONB
+  tags JSONB,
+  summary_text TEXT
 );
 CREATE INDEX items_col_id_idx ON items(collection_id);
 CREATE INDEX items_uni_id_idx ON items(unique_id);
@@ -82,7 +83,7 @@ begin
   new.tsv :=
           setweight(to_tsvector('title_stem', new.name), 'A') ||
           setweight(to_tsvector(coalesce(new.keywords,'')), 'B') ||
-          setweight(to_tsvector('title_stem', coalesce(new.summary,'')), 'C') ||
+          setweight(to_tsvector('title_stem', coalesce(new.summary_text,'')), 'C') ||
           setweight(to_tsvector('title_stem', coalesce(new.description_text,'')), 'D');
   return new;
 end

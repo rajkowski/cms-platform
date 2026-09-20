@@ -40,7 +40,8 @@ public class CollectionTableColumnsCommand {
     addToList(list, new CustomField("uniqueId", "Unique Id"));
     addToList(list, new CustomField("category", "Category"));
     addToList(list, new CustomField("summary", "Summary"));
-    addToList(list, new CustomField("description", "HTML Description"));
+    addToList(list, new CustomField("textSummary", "Text Summary"));
+    addToList(list, new CustomField("description", "Description"));
     addToList(list, new CustomField("textDescription", "Text Description"));
     addToList(list, new CustomField("keywords", "Keywords"));
     addToList(list, new CustomField("tags", "Tags"));

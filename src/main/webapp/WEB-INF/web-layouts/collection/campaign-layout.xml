@@ -33,7 +33,7 @@
           <title>Campaign Information</title>
           <uniqueId>${item.uniqueId}</uniqueId>
           <fields>
-            <field name="About" value="summary" />
+            <field name="About" value="summary" type="html" />
             <field name="Scheduled" value="expectedDate" type="date" />
             <field name="Started" value="startDate" type="date" />
             <field name="Expires" value="expirationDate" type="date" />

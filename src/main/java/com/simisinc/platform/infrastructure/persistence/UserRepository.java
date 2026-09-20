@@ -165,8 +165,7 @@ public class UserRepository {
       constraints = new DataConstraints();
     }
     constraints.setDefaultColumnToSortBy("user_id desc");
-    DataResult result = query(specification, constraints);
-    return (List<User>) result.getRecords();
+    return query(specification, constraints).getRecords();
   }
 
   public static List<StatisticsData> findMonthlyUserRegistrations(int monthsLimit) {
@@ -215,43 +214,22 @@ public class UserRepository {
     return records;
   }
 
+  /** Count total users of the system */
   public static long countTotalUsers() {
-    long count = -1;
-    String SQL_QUERY = "SELECT COUNT(user_id) AS user_count " +
-        "FROM users ";
-    try (Connection connection = DB.getConnection();
-        PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
-        ResultSet rs = pst.executeQuery()) {
-      if (rs.next()) {
-        count = rs.getLong("user_count");
-      }
-    } catch (SQLException se) {
-      LOG.error("SQLException: " + se.getMessage());
-    }
-    return count;
+    return DB.SELECT("COUNT(user_id) AS user_count")
+        .FROM("users")
+        .returnValue(Long.class);
   }
 
   /**
    * Count users created within a date range
    */
   public static long countNewUsers(Timestamp startDate, Timestamp endDate) {
-    long count = 0;
-    String sqlQuery = "SELECT COUNT(user_id) AS new_user_count " +
-        "FROM users " +
-        "WHERE created >= ? " +
-        "AND created < ?";
-    try (Connection connection = DB.getConnection();
-        PreparedStatement pst = connection.prepareStatement(sqlQuery)) {
-      pst.setTimestamp(1, startDate);
-      pst.setTimestamp(2, endDate);
-      ResultSet rs = pst.executeQuery();
-      if (rs.next()) {
-        count = rs.getLong("new_user_count");
-      }
-    } catch (SQLException se) {
-      LOG.error("SQLException: " + se.getMessage());
-    }
-    return count;
+    return DB.SELECT("COUNT(user_id) AS new_user_count")
+        .FROM("users")
+        .WHERE("created >= ?", startDate)
+        .AND("created < ?", endDate)
+        .returnValue(Long.class);
   }
 
   public static User save(User record) {

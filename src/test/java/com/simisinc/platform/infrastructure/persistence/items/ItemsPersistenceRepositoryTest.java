@@ -137,6 +137,7 @@ class ItemsPersistenceRepositoryTest {
                         + "unique_id VARCHAR(255),"
                         + "name VARCHAR(255),"
                         + "summary TEXT,"
+                        + "summary_text TEXT,"
                         + "description TEXT,"
                         + "description_text TEXT,"
                         + "created_by BIGINT NOT NULL,"

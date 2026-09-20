@@ -62,7 +62,7 @@ public class OrderManagementProcessNewOrders {
     // Determine the processor
     String service = LoadSitePropertyCommand.loadByName("ecommerce.orderFulfillment");
     if (StringUtils.isBlank(service) || "None".equalsIgnoreCase(service)) {
-      LOG.debug("Order fulfillment is not configured");
+      LOG.trace("Order fulfillment is not configured");
       return;
     }
 

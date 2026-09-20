@@ -322,7 +322,14 @@ CREATE TABLE users (
   description_text TEXT,
   image_url VARCHAR(512),
   video_url VARCHAR(512),
-  field_values JSONB
+  field_values JSONB,
+  account_token_expires TIMESTAMP(3),
+  mfa_secret VARCHAR(64),
+  mfa_enabled BOOLEAN DEFAULT false,
+  failed_attempt_count INTEGER DEFAULT 0,
+  locked_until TIMESTAMP(3),
+  last_password_changed_at TIMESTAMP(3),
+  suspension_reason VARCHAR(255)
 );
 CREATE UNIQUE INDEX users_lc_email ON users (LOWER(email));
 CREATE UNIQUE INDEX users_lc_username ON users (LOWER(username));
@@ -509,7 +516,8 @@ CREATE TABLE sessions (
   source VARCHAR(50),
   app_id BIGINT REFERENCES apps(app_id),
   visitor_id BIGINT REFERENCES visitors(visitor_id),
-  is_bot BOOLEAN DEFAULT false
+  is_bot BOOLEAN DEFAULT false,
+  host VARCHAR(255)
 );
 
 CREATE INDEX sessions_created_idx ON sessions(created);
@@ -552,6 +560,72 @@ CREATE TABLE user_tokens (
 );
 CREATE INDEX user_tokens_token_idx ON user_tokens(token);
 
+-- Append-only; no foreign key on actor_user_id so a record survives the deletion of the user it
+-- references; the full source IP is retained for forensics. previous_hash/record_hash form a tamper-evident
+-- SHA-256 hash chain: record_hash = SHA-256(previous_hash || canonical(row)), previous_hash is the
+-- record_hash of the row inserted just before. Any edit, delete, reorder, or mid-chain insert breaks the
+-- chain (see AuditLogIntegrityCommand). They are populated by the application, not the database.
+CREATE TABLE audit_log (
+  audit_id BIGSERIAL PRIMARY KEY,
+  occurred TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  event_category VARCHAR(50) NOT NULL,
+  event_type VARCHAR(100) NOT NULL,
+  outcome VARCHAR(20) NOT NULL,
+  actor_user_id BIGINT,
+  actor_username VARCHAR(255),
+  source_ip VARCHAR(200),
+  target_type VARCHAR(50),
+  target_id VARCHAR(255),
+  target_label VARCHAR(255),
+  details TEXT,
+  session_id VARCHAR(255),
+  schema_version INTEGER DEFAULT 1 NOT NULL,
+  previous_hash VARCHAR(64),
+  record_hash VARCHAR(64)
+);
+CREATE INDEX audit_log_occurred_idx ON audit_log(occurred);
+CREATE INDEX audit_log_actor_idx ON audit_log(actor_user_id);
+CREATE INDEX audit_log_category_type_idx ON audit_log(event_category, event_type);
+CREATE INDEX audit_log_target_idx ON audit_log(target_type, target_label);
+
+-- Strictly cold storage: never read by AuditLogIntegrityCommand or the audit log viewer.
+-- Values are always copied from the live table, never generated.
+CREATE TABLE audit_log_archive (
+  audit_id BIGINT PRIMARY KEY,
+  occurred TIMESTAMP(3) NOT NULL,
+  event_category VARCHAR(50) NOT NULL,
+  event_type VARCHAR(100) NOT NULL,
+  outcome VARCHAR(20) NOT NULL,
+  actor_user_id BIGINT,
+  actor_username VARCHAR(255),
+  source_ip VARCHAR(200),
+  target_type VARCHAR(50),
+  target_id VARCHAR(255),
+  target_label VARCHAR(255),
+  details TEXT,
+  session_id VARCHAR(255),
+  schema_version INTEGER NOT NULL,
+  previous_hash VARCHAR(64),
+  record_hash VARCHAR(64),
+  archived TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+-- Check AuditLogIntegrityCommand for how the watermark is used to detect oldest-prefix deletion.
+CREATE TABLE audit_log_watermark (
+  id                     INTEGER PRIMARY KEY DEFAULT 1,
+  lowest_hashed_audit_id BIGINT  NOT NULL DEFAULT 0
+);
+
+-- Multi-factor authentication recovery codes: one-time backup codes, stored as SHA-256 hashes
+CREATE TABLE user_mfa_recovery_codes (
+  recovery_code_id BIGSERIAL PRIMARY KEY,
+  user_id BIGINT REFERENCES users(user_id) NOT NULL,
+  code_hash VARCHAR(64) NOT NULL,
+  used BOOLEAN DEFAULT false,
+  created TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX user_mfa_recovery_codes_user_idx ON user_mfa_recovery_codes(user_id);
+
 CREATE TABLE oauth_tokens (
   token_id BIGSERIAL PRIMARY KEY,
   user_id BIGINT REFERENCES users(user_id) NOT NULL,
@@ -588,6 +662,21 @@ CREATE TABLE block_list (
   created TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
   reason VARCHAR(255)
 );
+
+CREATE TABLE redirects (
+  redirect_id BIGSERIAL PRIMARY KEY,
+  redirect_from VARCHAR(500) NOT NULL,
+  redirect_to VARCHAR(2000) NOT NULL,
+  status_code INTEGER NOT NULL DEFAULT 301,
+  enabled BOOLEAN DEFAULT true,
+  created TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+  created_by BIGINT REFERENCES users(user_id),
+  modified TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+  modified_by BIGINT REFERENCES users(user_id),
+  CONSTRAINT redirects_status_code_check CHECK (status_code IN (301, 302))
+);
+CREATE UNIQUE INDEX redirects_from_idx ON redirects(redirect_from);
+CREATE INDEX redirects_enabled_idx ON redirects(enabled);
 
 CREATE TABLE world_cities (
   country VARCHAR(2),

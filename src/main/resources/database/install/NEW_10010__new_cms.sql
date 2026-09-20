@@ -123,7 +123,12 @@ CREATE TABLE web_pages (
   sitemap_changefreq VARCHAR(20),
   tags JSONB,
   page_text TEXT,
-  tsv TSVECTOR
+  tsv TSVECTOR,
+  submitted_by BIGINT REFERENCES users(user_id),
+  approved_by BIGINT REFERENCES users(user_id),
+  publish_at TIMESTAMP(3),
+  expires_at TIMESTAMP(3),
+  locale VARCHAR(35) NOT NULL DEFAULT 'en'
 );
 CREATE INDEX web_pages_link_idx ON web_pages(link);
 CREATE INDEX web_pages_search_idx ON web_pages(searchable);
@@ -194,7 +199,12 @@ CREATE TABLE content (
   draft_content TEXT,
   content_text TEXT,
   tsv TSVECTOR,
-  tags JSONB
+  tags JSONB,
+  content_format INTEGER NOT NULL DEFAULT 0,
+  draft_content_format INTEGER NOT NULL DEFAULT 0,
+  submitted_by BIGINT REFERENCES users(user_id),
+  approved_by BIGINT REFERENCES users(user_id),
+  locale VARCHAR(35) NOT NULL DEFAULT 'en'
 );
 CREATE INDEX content_uni_idx ON content(content_unique_id);
 CREATE INDEX content_tsv_idx ON content USING gin(tsv);
@@ -290,6 +300,58 @@ CREATE INDEX image_versions_img_idx ON image_versions(image_id);
 CREATE INDEX image_versions_current_idx ON image_versions(image_id, is_current);
 CREATE INDEX image_versions_created_idx ON image_versions(created);
 
+-- database-backed field configuration for FormWidget, as an alternative to
+-- the XML <fields> preference. submissions are matched to a form by form_unique_id (a plain string), never by a foreign key to
+-- form_definitions, so deleting a form definition never blocks on or orphans prior submissions.
+CREATE TABLE form_definitions (
+  form_definition_id BIGSERIAL PRIMARY KEY,
+  unique_id VARCHAR(255) UNIQUE NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  title VARCHAR(255),
+  subtitle VARCHAR(255),
+  button_name VARCHAR(100),
+  success_title VARCHAR(255),
+  success_message TEXT,
+  email_to VARCHAR(512),
+  use_captcha BOOLEAN DEFAULT FALSE,
+  check_for_spam BOOLEAN DEFAULT TRUE,
+  enabled BOOLEAN DEFAULT TRUE,
+  show_privacy_notice BOOLEAN DEFAULT FALSE,
+  send_confirmation_to_submitter BOOLEAN DEFAULT FALSE,
+  notification_subject VARCHAR(255),
+  confirmation_subject VARCHAR(255),
+  confirmation_message TEXT,
+  created_by BIGINT REFERENCES users(user_id),
+  modified_by BIGINT REFERENCES users(user_id),
+  created TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+  modified TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP
+);
+CREATE UNIQUE INDEX form_definitions_unique_id_idx ON form_definitions(unique_id);
+CREATE INDEX form_definitions_enabled_idx ON form_definitions(enabled);
+
+-- field_type is one of: text, email, textarea, select, checkbox, date -- validated in application code,
+-- not a DB CHECK constraint (matching how this file leaves other small admin-defined enums, e.g.
+-- form_submission_failures.reason, unconstrained at the DB level). options stores select/checkbox
+-- choices using the same comma-separated "key=value,key2=value2" string the XML <field list="..."/>
+-- preference already produces (see FormFieldCommand#parseFieldContent), so both configuration sources
+-- share one options format.
+CREATE TABLE form_fields (
+  form_field_id BIGSERIAL PRIMARY KEY,
+  form_definition_id BIGINT NOT NULL REFERENCES form_definitions(form_definition_id),
+  field_order INTEGER DEFAULT 100,
+  name VARCHAR(255) NOT NULL,
+  label VARCHAR(255) NOT NULL,
+  field_type VARCHAR(30) DEFAULT 'text',
+  required BOOLEAN DEFAULT FALSE,
+  placeholder VARCHAR(255),
+  default_value VARCHAR(255),
+  options TEXT,
+  created TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+  modified TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX form_fields_form_definition_idx ON form_fields(form_definition_id);
+CREATE INDEX form_fields_order_idx ON form_fields(field_order);
+
 CREATE TABLE form_data (
   form_data_id BIGSERIAL PRIMARY KEY,
   form_unique_id VARCHAR(255),
@@ -318,6 +380,18 @@ CREATE INDEX form_data_claimed_by_idx ON form_data(claimed_by);
 CREATE INDEX form_data_dismissed_idx ON form_data(dismissed);
 CREATE INDEX form_data_processed_idx ON form_data(processed);
 
+CREATE TABLE form_submission_failures (
+  failure_id BIGSERIAL PRIMARY KEY,
+  form_unique_id VARCHAR(255),
+  occurred TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  reason VARCHAR(30) NOT NULL,
+  ip_address VARCHAR(200),
+  url VARCHAR(512)
+);
+CREATE INDEX form_sub_fail_form_idx ON form_submission_failures(form_unique_id);
+CREATE INDEX form_sub_fail_occurred_idx ON form_submission_failures(occurred);
+CREATE INDEX form_sub_fail_reason_idx ON form_submission_failures(reason);
+
 CREATE TABLE performance_metrics (
     metric_id BIGSERIAL NOT NULL,
     request_type VARCHAR(10) NOT NULL,
@@ -345,6 +419,7 @@ CREATE TABLE web_page_hits (
   is_logged_in BOOLEAN DEFAULT FALSE
 );
 
+CREATE INDEX web_pg_hits_wpid_idx ON web_page_hits(web_page_id);
 CREATE INDEX web_pg_hits_dt_idx ON web_page_hits(hit_date);
 CREATE INDEX web_pg_hits_ss_idx ON web_page_hits(session_id);
 -- CREATE INDEX web_page_hits_session_bot_idx ON web_page_hits(session_id, is_bot);
@@ -372,8 +447,22 @@ CREATE TABLE web_searches (
   ip_address VARCHAR(200),
   search_date TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
   session_id VARCHAR(255),
-  is_logged_in BOOLEAN DEFAULT FALSE
+  is_logged_in BOOLEAN DEFAULT FALSE,
+  created_by BIGINT REFERENCES users(user_id)
 );
+
+CREATE TABLE search_analytics (
+  search_analytics_id BIGSERIAL PRIMARY KEY,
+  query VARCHAR(255) NOT NULL,
+  search_type VARCHAR(50) NOT NULL,
+  result_count INTEGER NOT NULL DEFAULT 0,
+  page_path VARCHAR(255),
+  facet_key VARCHAR(100),
+  created TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX search_analytics_created_idx ON search_analytics(created);
+CREATE INDEX search_analytics_query_idx ON search_analytics(query);
+
 
 --
 -- CREATE TABLE content_hits (
@@ -464,7 +553,11 @@ CREATE TABLE blog_posts (
   script_embed VARCHAR(512),
   tags_list VARCHAR(255),
   keywords VARCHAR(255),
-  body_text TEXT
+  body_text TEXT,
+  source_url VARCHAR(512),
+  submitted_by BIGINT REFERENCES users(user_id),
+  approved_by BIGINT REFERENCES users(user_id),
+  locale VARCHAR(35) NOT NULL DEFAULT 'en'
 );
 CREATE UNIQUE INDEX blog_posts_unique_idx ON blog_posts(blog_id, post_unique_id);
 CREATE INDEX blog_posts_geom_gix ON blog_posts USING GIST (geom);
@@ -544,7 +637,11 @@ CREATE TABLE calendar_events (
   video_url VARCHAR(512),
   video_embed VARCHAR(512),
   script_embed VARCHAR(512),
-  tags_list VARCHAR(255)
+  tags_list VARCHAR(255),
+  organizer_name VARCHAR(255),
+  organizer_url VARCHAR(255),
+  performer_name VARCHAR(255),
+  performer_url VARCHAR(255)
 );
 CREATE UNIQUE INDEX cal_events_unique_idx ON calendar_events(calendar_id, event_unique_id);
 CREATE INDEX cal_events_geom_gix ON calendar_events USING GIST (geom);
@@ -724,31 +821,28 @@ CREATE INDEX file_ver_created_idx ON file_versions(created);
 CREATE INDEX file_ver_sub_fold_idx ON file_versions(sub_folder_id);
 CREATE INDEX file_ver_web_path_idx ON file_versions(web_path);
 
--- We want to know popular files
--- We want to know geolocation of ip_address
--- We want to know if this is a user or not
--- CREATE TABLE file_downloads (
---   id BIGSERIAL PRIMARY KEY,
---   file_id BIGINT,
---   version_id BIGINT,
---   download_by BIGINT REFERENCES users(user_id),
---   download_date TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
---   ip_address VARCHAR(200),
---   session_id VARCHAR(255),
---   is_logged_in BOOLEAN DEFAULT FALSE
--- );
--- CREATE INDEX file_downloads_dt_idx ON file_downloads(download_date);
+CREATE TABLE file_downloads (
+  id BIGSERIAL PRIMARY KEY,
+  file_id BIGINT NOT NULL,
+  version_id BIGINT,
+  download_by BIGINT REFERENCES users(user_id),
+  download_date TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+  ip_address VARCHAR(200),
+  session_id VARCHAR(255),
+  is_logged_in BOOLEAN DEFAULT FALSE
+);
+CREATE INDEX file_downloads_fid_idx ON file_downloads(file_id);
+CREATE INDEX file_downloads_dt_idx ON file_downloads(download_date);
 
--- We want to see a time-series graph of file downloads
--- CREATE TABLE file_download_snapshots (
---   snapshot_id BIGSERIAL PRIMARY KEY,
---   snapshot_date TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
---   date_value VARCHAR(10) NOT NULL,
---   file_id BIGINT,
---   downloads BIGINT DEFAULT 0
--- );
--- CREATE INDEX file_dl_snp_dt_idx ON file_download_snapshots(snapshot_date);
--- CREATE INDEX file_dl_snp_fid_idx ON file_download_snapshots(file_id);
+CREATE TABLE file_download_snapshots (
+  snapshot_id BIGSERIAL PRIMARY KEY,
+  snapshot_date TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+  date_value VARCHAR(10) NOT NULL,
+  file_id BIGINT,
+  downloads BIGINT DEFAULT 0
+);
+CREATE INDEX file_dl_snp_dt_idx ON file_download_snapshots(snapshot_date);
+CREATE INDEX file_dl_snp_fid_idx ON file_download_snapshots(file_id);
 
 -- Image Categories/Images
 -- Video Categories/Videos

@@ -1,4 +1,5 @@
 <%--
+  ~ Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
   ~ Copyright 2022 SimIS Inc.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +20,8 @@
 <%@ taglib prefix="font" uri="/WEB-INF/tlds/font-functions.tld" %>
 <%@ taglib prefix="collection" uri="/WEB-INF/tlds/collection-functions.tld" %>
 <%@ taglib prefix="category" uri="/WEB-INF/tlds/category-functions.tld" %>
+<%@ taglib prefix="html" uri="/WEB-INF/tlds/html-functions.tld" %>
+<%@ taglib prefix="text" uri="/WEB-INF/tlds/text-functions.tld" %>
 <%@ taglib prefix="url" uri="/WEB-INF/tlds/url-functions.tld" %>
 <jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
@@ -176,7 +179,7 @@
                   <c:out value="${item.name}" />
                 </c:otherwise>
               </c:choose>
-              <c:if test="${showSummary eq 'true' && !empty item.summary}"><div class="item-summary"><c:out value="${item.summary}" /></div></c:if>
+              <c:if test="${showSummary eq 'true' && !empty item.summary}"><div class="item-summary"><c:out value="${text:trim(html:text(item.summary), 100, true)}" /></div></c:if>
             </div>
             <c:if test="${showAddress eq 'true' && !empty item.address}"><div class="item-city"><small><c:out value="${item.address}" /></small></div></c:if>
             <c:if test="${showKeywords eq 'true' && !empty item.keywords}"><div class="item-keywords"><small><c:out value="${item.keywords}" /></small></div></c:if>

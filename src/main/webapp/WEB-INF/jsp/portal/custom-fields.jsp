@@ -51,6 +51,9 @@
       <c:when test="${'url' eq field.type && (fn:startsWith(field.value, 'http://') || fn:startsWith(field.value, 'https://'))}">
         <p><a class="button small no-gap" href="${url:encode(field.value)}" target="_blank" rel="nofollow">${field.label} <i class="fa fa-external-link"></i></a></p>
       </c:when>
+      <c:when test="${'url' eq field.type && fn:startsWith(field.value, '/')}">
+        <p><a class="button small no-gap" href="${url:encode(field.value)}" target="_blank" rel="nofollow"><c:out value="${field.label}" /> <i class="fa fa-external-link"></i></a></p>
+      </c:when>
       <c:otherwise>
         <c:if test="${!empty field.label}">
           <p class="no-gap"><strong><c:out value="${field.label}"/>:</strong></p>

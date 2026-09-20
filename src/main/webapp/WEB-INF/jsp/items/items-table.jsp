@@ -144,7 +144,12 @@
               </c:when>
               <c:when test="${tableColumn.value.name eq 'summary'}">
                 <td>
-                  <c:out value="${item.summary}" />
+                  <c:out value="${item.summary}" escapeXml="false" />                  
+                </td>
+              </c:when>
+              <c:when test="${tableColumn.value.name eq 'textSummary'}">
+                <td>
+                  <c:out value="${html:text(item.summary)}" />
                 </td>
               </c:when>
               <c:when test="${tableColumn.value.name eq 'description'}">

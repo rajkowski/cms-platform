@@ -78,7 +78,8 @@
             <option value=""></option>
             <option value="name"<c:if test="${fieldMappingsList[status.index] eq 'name'}"> selected</c:if>>Name</option>
             <option value="category"<c:if test="${fieldMappingsList[status.index] eq 'category'}"> selected</c:if>>Category</option>
-            <option value="summary"<c:if test="${fieldMappingsList[status.index] eq 'summary'}"> selected</c:if>>Summary</option>
+            <option value="summary"<c:if test="${fieldMappingsList[status.index] eq 'summary'}"> selected</c:if>>HTML Summary</option>
+            <option value="textSummary"<c:if test="${fieldMappingsList[status.index] eq 'textSummary'}"> selected</c:if>>Text Summary</option>
             <option value="description"<c:if test="${fieldMappingsList[status.index] eq 'description'}"> selected</c:if>>HTML Description</option>
             <option value="textDescription"<c:if test="${fieldMappingsList[status.index] eq 'textDescription'}"> selected</c:if>>Text Description</option>
             <option value="keywords"<c:if test="${fieldMappingsList[status.index] eq 'keywords'}"> selected</c:if>>Keywords</option>

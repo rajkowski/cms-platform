@@ -30,6 +30,7 @@
   <thead>
     <tr>
       <th>Name</th>
+      <th width="180" nowrap>Unique Id</th>
       <th width="100" class="text-center">Members</th>
       <th width="150" class="text-center">Last Sent</th>
       <th width="100" class="text-center">Visible?</th>
@@ -48,6 +49,7 @@
         </c:if>
         --%>
       </td>
+      <td><small><c:out value="${mailingList.uniqueId}" /></small></td>
       <td class="text-center"><fmt:formatNumber value="${mailingList.memberCount}" /></td>
       <td class="text-center"><fmt:formatDate pattern="yyyy-MM-dd hh:mm a" value="${mailingList.lastEmailed}" /></td>
       <td class="text-center">
@@ -56,7 +58,7 @@
           <c:otherwise><span class="label warning">No</span></c:otherwise>
         </c:choose>
       </td>
-      <td>
+      <td class="text-center">
         <c:choose>
           <c:when test="${empty service}">
             <span class="label secondary">Not configured</span>
@@ -76,7 +78,7 @@
     </c:forEach>
     <c:if test="${empty mailingLists}">
       <tr>
-        <td colspan="6">No mailing lists were found</td>
+        <td colspan="7">No mailing lists were found</td>
       </tr>
     </c:if>
   </tbody>

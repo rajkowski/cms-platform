@@ -143,6 +143,9 @@ public class XMLPageFactory implements Serializable {
         page.setCssClass(e.getAttribute("class"));
       }
     }
+    if (e.hasAttribute("noindex")) {
+      page.setNoIndex("true".equals(e.getAttribute("noindex")));
+    }
     // Create a shared context for the page to track the overall row/column/widget sequences
     PageRenderContext pageRenderContext = new PageRenderContext();  
     // Process the sections

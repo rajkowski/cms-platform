@@ -366,14 +366,18 @@ public class CreateAnItemWidget extends GenericWidget {
     // Determine the page to return to
     String returnPage = context.getPreferences().getOrDefault("returnPage",
         UrlCommand.getValidReturnPage(context.getParameter("returnPage")));
-    if (StringUtils.isBlank(returnPage)) {
-      returnPage = collection.createListingsLink();
-    }
+
     if (requiresApproval) {
+      if (StringUtils.isBlank(returnPage)) {
+        returnPage = collection.createListingsLink();
+      }
       context.setSuccessMessage(
           "Thanks, the record was saved! We've notified an administrator to review your listing for approval.");
     } else {
-      context.setSuccessMessage("Thanks, the record was saved!");
+      if (StringUtils.isBlank(returnPage)) {
+        returnPage = "/show/" + item.getUniqueId();
+      }
+      context.setSuccessMessage("The record was saved!");
     }
     context.setRedirect(returnPage);
     return context;

@@ -33,6 +33,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.simisinc.platform.domain.model.analytics.PerformanceMetric;
 import com.simisinc.platform.domain.model.dashboard.ActiveSessionData;
 import com.simisinc.platform.domain.model.dashboard.StatisticsData;
+import com.simisinc.platform.infrastructure.persistence.SessionRepository;
+import com.simisinc.platform.infrastructure.persistence.UserRepository;
 import com.simisinc.platform.infrastructure.persistence.analytics.PerformanceMetricRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.FileItemRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.FileVersionRepository;
@@ -41,8 +43,6 @@ import com.simisinc.platform.infrastructure.persistence.cms.WebPageHitRepository
 import com.simisinc.platform.infrastructure.persistence.datasets.DatasetRepository;
 import com.simisinc.platform.infrastructure.persistence.items.ItemFileItemRepository;
 import com.simisinc.platform.infrastructure.persistence.login.UserLoginRepository;
-import com.simisinc.platform.infrastructure.persistence.SessionRepository;
-import com.simisinc.platform.infrastructure.persistence.UserRepository;
 
 /**
  * Service for aggregating and providing analytics data
@@ -65,25 +65,26 @@ public class AnalyticsDataService {
     LocalDate end = LocalDate.parse(rangeEnd);
 
     // The queries will need to be updated to handle different date ranges
-    
+
     // This method currently assumes daily data from based on date amounts
     int days = (int) ChronoUnit.DAYS.between(start, end) + 1;
 
     // Get data from repositories for current period
     List<StatisticsData> dailySessions = WebPageHitRepository.findDailySessions(days);
-    List<StatisticsData> dailyLogins = UserLoginRepository.findUniqueDailyLogins(days);
     List<StatisticsData> dailyHits = WebPageHitRepository.findDailyWebHits(days);
 
     // Calculate KPIs for current period
     long totalSessions = dailySessions.stream().mapToLong(d -> Long.parseLong(d.getValue())).sum();
     long totalHits = dailyHits.stream().mapToLong(d -> Long.parseLong(d.getValue())).sum();
-    long totalUsers = dailyLogins.stream().mapToLong(d -> Long.parseLong(d.getValue())).sum();
+
+    long totalUniqueLogins = UserLoginRepository.countUniqueLogins(
+        Timestamp.valueOf(start.atStartOfDay()),
+        Timestamp.valueOf(end.plusDays(1).atStartOfDay()));
 
     // Calculate new users based on user creation dates within range
     long newUsersCount = UserRepository.countNewUsers(
         Timestamp.valueOf(start.atStartOfDay()),
-        Timestamp.valueOf(end.plusDays(1).atStartOfDay())
-    );
+        Timestamp.valueOf(end.plusDays(1).atStartOfDay()));
 
     // Calculate bounce rate based on single-page sessions
     double bounceRate = SessionRepository.findBounceRate(days) / 100.0;
@@ -94,14 +95,12 @@ public class AnalyticsDataService {
     // Get data for previous period to calculate trends
     // Query the previous equivalent period
     List<StatisticsData> prevDailySessions = WebPageHitRepository.findDailySessions(days * 2);
-    List<StatisticsData> prevDailyLogins = UserLoginRepository.findUniqueDailyLogins(days * 2);
     List<StatisticsData> prevDailyHits = WebPageHitRepository.findDailyWebHits(days * 2);
 
     // Extract previous period data (older half of the data)
     long prevTotalSessions = 0;
     long prevTotalHits = 0;
-    long prevTotalUsers = 0;
-    
+
     if (prevDailySessions != null && prevDailySessions.size() > days) {
       prevTotalSessions = prevDailySessions.stream()
           .skip(Math.max(0, prevDailySessions.size() - days * 2))
@@ -116,13 +115,6 @@ public class AnalyticsDataService {
           .mapToLong(d -> Long.parseLong(d.getValue()))
           .sum();
     }
-    if (prevDailyLogins != null && prevDailyLogins.size() > days) {
-      prevTotalUsers = prevDailyLogins.stream()
-          .skip(Math.max(0, prevDailyLogins.size() - days * 2))
-          .limit(days)
-          .mapToLong(d -> Long.parseLong(d.getValue()))
-          .sum();
-    }
 
     double prevAvgSessionDuration = SessionRepository.findAverageSessionDuration(days * 2);
 
@@ -132,13 +124,17 @@ public class AnalyticsDataService {
     // Calculate previous period new users
     LocalDate prevStart = start.minusDays(days);
     LocalDate prevEnd = end.minusDays(days);
+
     long prevNewUsersCount = UserRepository.countNewUsers(
         Timestamp.valueOf(prevStart.atStartOfDay()),
-        Timestamp.valueOf(prevEnd.plusDays(1).atStartOfDay())
-    );
+        Timestamp.valueOf(prevEnd.plusDays(1).atStartOfDay()));
+
+    long prevUniqueLogins = UserLoginRepository.countUniqueLogins(
+        Timestamp.valueOf(prevStart.atStartOfDay()),
+        Timestamp.valueOf(prevEnd.plusDays(1).atStartOfDay()));
 
     // Calculate trend percentages
-    double usersTrend = calculateTrendPercentage(prevTotalUsers, totalUsers);
+    double usersTrend = calculateTrendPercentage(prevUniqueLogins, totalUniqueLogins);
     double sessionsTrend = calculateTrendPercentage(prevTotalSessions, totalSessions);
     double pageViewsTrend = calculateTrendPercentage(prevTotalHits, totalHits);
     double avgDurationTrend = calculateTrendPercentage(prevAvgSessionDuration, avgSessionDuration);
@@ -153,7 +149,7 @@ public class AnalyticsDataService {
 
     // KPIs with trend values
     ObjectNode kpis = response.putObject("kpis");
-    kpis.put("activeUsers", totalUsers);
+    kpis.put("activeUsers", totalUniqueLogins);
     kpis.put("activeUsersTrend", Math.round(usersTrend * 10.0) / 10.0);
     kpis.put("sessions", totalSessions);
     kpis.put("sessionsTrend", Math.round(sessionsTrend * 10.0) / 10.0);
@@ -240,7 +236,7 @@ public class AnalyticsDataService {
 
     // @todo additional data
     response.putArray("searchQueries");
-    
+
     response.putArray("referrers");
 
     return response;
@@ -270,7 +266,7 @@ public class AnalyticsDataService {
     // Get devices and browsers data from sessions
     List<StatisticsData> devices = SessionRepository.findTopDevices(days);
     List<StatisticsData> browsers = SessionRepository.findTopBrowsers(days);
-    
+
     // Get average session duration
     double avgSessionDuration = SessionRepository.findAverageSessionDuration(days);
 

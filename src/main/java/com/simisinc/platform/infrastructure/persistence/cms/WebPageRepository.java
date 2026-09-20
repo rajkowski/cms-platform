@@ -466,7 +466,7 @@ public class WebPageRepository {
       return new ArrayList<>();
     }
     // Query for pages where pageXml contains the uniqueId reference
-    return DB.SELECT().FROM(TABLE_NAME)
+    return DB.SELECT("*").FROM(TABLE_NAME)
         .WHERE("(page_xml LIKE ? OR draft_page_xml LIKE ?)", "%" + contentUniqueId + "%", "%" + contentUniqueId + "%")
         .returnList(WebPageRepository::buildRecord);
   }

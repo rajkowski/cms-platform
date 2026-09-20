@@ -16,9 +16,9 @@
 
 package com.simisinc.platform.domain.model.mailinglists;
 
-import com.simisinc.platform.domain.model.Entity;
-
 import java.sql.Timestamp;
+
+import com.simisinc.platform.domain.model.Entity;
 
 /**
  * Mailing Lists
@@ -31,6 +31,7 @@ public class MailingList extends Entity {
   private Long id = -1L;
   private int order = 100;
 
+  private String uniqueId = null;
   private String name = null;
   private String title = null;
   private String description = null;
@@ -60,6 +61,14 @@ public class MailingList extends Entity {
 
   public void setOrder(int order) {
     this.order = order;
+  }
+
+  public String getUniqueId() {
+    return uniqueId;
+  }
+
+  public void setUniqueId(String uniqueId) {
+    this.uniqueId = uniqueId;
   }
 
   public String getName() {

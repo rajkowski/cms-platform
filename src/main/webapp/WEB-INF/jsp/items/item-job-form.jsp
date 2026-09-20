@@ -1,4 +1,5 @@
 <%--
+  ~ Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
   ~ Copyright 2022 SimIS Inc.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +17,9 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="font" uri="/WEB-INF/tlds/font-functions.tld" %>
+<%@ taglib prefix="g" uri="http://granule.com/tags" %>
+<%@ taglib prefix="web" uri="/WEB-INF/tlds/web.tld" %>
 <jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="collection" class="com.simisinc.platform.domain.model.items.Collection" scope="request"/>
@@ -23,6 +27,10 @@
 <jsp:useBean id="categoryList" class="java.util.ArrayList" scope="request"/>
 <jsp:useBean id="cancelUrl" class="java.lang.String" scope="request"/>
 <jsp:useBean id="useCaptcha" class="java.lang.String" scope="request"/>
+<g:compress>
+  <link rel="stylesheet" type="text/css" href="${ctx}/css/platform-editor.css" />
+</g:compress>
+<web:script package="hugerte" file="hugerte.min.js" />
 <c:if test="${useCaptcha eq 'true' && !empty googleSiteKey}">
   <script src='https://www.google.com/recaptcha/api.js'></script>
   <script>
@@ -32,6 +40,68 @@
     }
   </script>
 </c:if>
+<script>
+  hugerte.init({
+    selector: '.html-field',
+    branding: false,
+    width: '100%',
+    height: 300,
+    resize: true,
+    menubar: false,
+    relative_urls: false,
+    convert_urls: true,
+    convert_unsafe_embeds: true,
+    sandbox_iframes: true,
+    content_css: [
+      '${ctx}/css/${font:fontawesome()}/css/all.min.css',
+      '${ctx}/css/${font:fontawesome()}/css/v4-shims.min.css',
+      '${ctx}/css/platform.css?v=${VERSION}'
+      <c:if test="${!empty includeGlobalStylesheet}">,'${ctx}/css/custom/stylesheet.css?v=${includeGlobalStylesheetLastModified}'</c:if>
+      <c:if test="${!empty includeStylesheet}">,'${ctx}/css/custom/stylesheet${includeStylesheet}.css?v=${includeStylesheetLastModified}'</c:if>
+    ],
+    browser_spellcheck: true,
+    noneditable_class: 'mceNonEditable',
+    plugins: 'advlist autolink lists link charmap preview anchor searchreplace visualblocks code insertdatetime media table wordcount templates fullscreen',
+    toolbar: 
+    [
+      'link table | visualblocks | undo redo | fullscreen',
+      'blocks | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | hr | anchor | removeformat'
+    ],
+    toolbar_mode: 'wrap',
+    external_plugins: {
+       "templates": "${ctx}/javascript/tinymce-plugins/templates/plugin.js?v=${VERSION}"
+    },
+    extended_valid_elements: 'span[*]',
+    file_picker_types: 'file',
+    file_picker_callback: function (callback, value, meta) {
+      FileBrowser(value, meta.filetype, function (fileUrl) {
+        callback(fileUrl);
+      });
+    }
+  });
+
+  function FileBrowser(value, type, callback) {
+    // type will be: file, image, media
+    var cmsType = 'image';
+    if (type === 'media') {
+      cmsType = 'video';
+    } else if (type === 'file') {
+      cmsType = 'file';
+    }
+    var cmsURL = '${ctx}/' + cmsType + '-browser';
+    const instanceApi = hugerte.activeEditor.windowManager.openUrl({
+      title: 'Browser',
+      url: cmsURL,
+      width: 850,
+      height: 650,
+      onMessage: function(dialogApi, details) {
+        callback(details.content);
+        instanceApi.close();
+      }
+    });
+    return false;
+  }
+</script>
 <form id="form${widgetContext.uniqueId}" method="post" autocomplete="off">
   <%-- Required by controller --%>
   <input type="hidden" name="widget" value="${widgetContext.uniqueId}"/>
@@ -135,7 +205,7 @@
       </div>
       <div class="input-group">
         <span class="input-group-label">Optional Website for details and/or apply</span>
-        <input class="input-group-field" type="text" placeholder="http://" name="url" value="<c:out value="${item.url}"/>">
+        <input class="input-group-field" type="text" placeholder="https://" name="url" value="<c:out value="${item.url}"/>">
       </div>
       <div class="input-group">
         <span class="input-group-label">Optional Phone Number To Call</span>
@@ -152,7 +222,7 @@
     <div id="item-form-info-7" class="small-12 cell">
       <div class="input-container">
         <label>Job Description  <span class="required">*</span>
-          <textarea placeholder="" name="summary" required="true" style="height:300px"><c:out value="${item.summary}"/></textarea>
+          <textarea placeholder="" id="summary" name="summary" class="html-field" style="height:300px"><c:out value="${item.summary}"/></textarea>
         </label>
       </div>
     </div>
