@@ -190,14 +190,14 @@
           <c:if test="${showAll or allowedFields.contains('summary')}">
           <label class="margin-top-20">
             ${not empty fieldLabels['summary'] ? fieldLabels['summary'] : 'Summary'}
-            <textarea placeholder="Optional summary" id="summary" name="summary" class="html-field" style="height:180px"><c:out value="${item.summary}"/></textarea>
+            <textarea placeholder="Write an optional summary..." id="summary" name="summary" class="html-field" style="height:180px"><c:out value="${item.summary}"/></textarea>
           </label>
           </c:if>
           <c:if test="${showAll or allowedFields.contains('description')}">
           <p>
             <label class="margin-top-20">
               ${not empty fieldLabels['description'] ? fieldLabels['description'] : 'Description'}
-              <textarea placeholder="Optional description" id="description" name="description" class="html-field"><c:out value="${item.description}"/></textarea>
+              <textarea placeholder="Write an optional description..." id="description" name="description" class="html-field"><c:out value="${item.description}"/></textarea>
             </label>
           </p>
           </c:if>
