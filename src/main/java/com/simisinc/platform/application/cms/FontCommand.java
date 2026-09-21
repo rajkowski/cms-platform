@@ -69,9 +69,6 @@ public class FontCommand {
     }
 
     // Font Awesome Free
-    if (REGULAR.equals(type)) {
-      return "fa-regular";
-    }
     if (BRANDS.equals(type)) {
       return "fa-brands";
     }
@@ -79,26 +76,29 @@ public class FontCommand {
   }
 
   public static String far() {
+    if ("free".equals(version)) {
+      return fa(SOLID);
+    }
     return fa(REGULAR);
   }
 
   public static String fal() {
     if ("free".equals(version)) {
-      return fa(REGULAR);
+      return fa(SOLID);
     }
     return fa(LIGHT);
   }
 
   public static String fad() {
     if ("free".equals(version)) {
-      return fa(REGULAR);
+      return fa(SOLID);
     }
     return fa(DUOTONE);
   }
 
   public static String fat() {
     if ("free".equals(version)) {
-      return fa(REGULAR);
+      return fa(SOLID);
     }
     return fa(THIN);
   }
