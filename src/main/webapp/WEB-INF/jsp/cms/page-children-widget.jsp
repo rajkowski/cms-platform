@@ -72,19 +72,6 @@
     color: var(--text);
   }
 
-  .tree-indicator {
-    width: 1rem;
-    height: 1rem;
-    text-align: center;
-    color: var(--surface-strong);
-    flex: 0 0 auto;
-    font-size: 0.72rem;
-    line-height: 1rem;
-    border-radius: 999px;
-    background: linear-gradient(135deg, var(--accent-1) 0%, var(--accent-3) 100%);
-    margin-top: 0.18rem;
-  }
-
   .tree-text-wrapper {
     display: flex;
     align-items: baseline;
@@ -186,9 +173,6 @@
         <li class="tree-item level-${level}">
           <div class="tree-content">
             <div class="tree-text-wrapper" style="--level:<c:out value='${level}'/>;">
-              <c:if test="${level ge 5}">
-                <span class="tree-indicator">&bull;</span>
-              </c:if>
               <a href="<c:out value="${child.link}" />" class="tree-link"><c:out value="${child.title}" /></a>
               <c:if test="${not empty child.description}">
                 <p class="tree-description">- <c:out value="${child.description}" /></p>
