@@ -179,7 +179,12 @@
 .children-pages-panel .overlay-tree-item.level-2 .overlay-tree-link,
 .children-pages-panel .overlay-tree-item.level-3 .overlay-tree-link,
 .children-pages-panel .overlay-tree-item.level-4 .overlay-tree-link,
-.children-pages-panel .overlay-tree-item.level-5 .overlay-tree-link {
+.children-pages-panel .overlay-tree-item.level-5 .overlay-tree-link,
+.children-pages-panel .overlay-tree-item.level-6 .overlay-tree-link,
+.children-pages-panel .overlay-tree-item.level-7 .overlay-tree-link,
+.children-pages-panel .overlay-tree-item.level-8 .overlay-tree-link,
+.children-pages-panel .overlay-tree-item.level-9 .overlay-tree-link,
+.children-pages-panel .overlay-tree-item.level-10 .overlay-tree-link {
   font-weight: 400;
   font-size: 0.9rem;
   color: #3d70b2;

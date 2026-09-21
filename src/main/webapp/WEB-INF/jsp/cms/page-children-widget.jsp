@@ -64,7 +64,11 @@
 
   .tree-item.level-4 .tree-link,
   .tree-item.level-5 .tree-link,
-  .tree-item.level-6 .tree-link {
+  .tree-item.level-6 .tree-link,
+  .tree-item.level-7 .tree-link,
+  .tree-item.level-8 .tree-link,
+  .tree-item.level-9 .tree-link,
+  .tree-item.level-10 .tree-link {
     color: var(--text);
   }
 
@@ -94,15 +98,6 @@
 
   .tree-item.level-1 .tree-text-wrapper::before {
     display: none;
-  }
-
-  .tree-item.level-5 .tree-indicator,
-  .tree-item.level-6 .tree-indicator,
-  .tree-item.level-7 .tree-indicator,
-  .tree-item.level-8 .tree-indicator,
-  .tree-item.level-9 .tree-indicator,
-  .tree-item.level-10 .tree-indicator {
-    background: linear-gradient(135deg, #607086 0%, #314257 100%);
   }
 
   .tree-link {

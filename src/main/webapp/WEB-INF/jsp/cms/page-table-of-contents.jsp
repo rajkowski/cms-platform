@@ -115,7 +115,11 @@
 
   .page-toc-level-4 a,
   .page-toc-level-5 a,
-  .page-toc-level-6 a {
+  .page-toc-level-6 a,
+  .page-toc-level-7 a,
+  .page-toc-level-8 a,
+  .page-toc-level-9 a,
+  .page-toc-level-10 a {
     font-size: 0.75rem;
     font-weight: 400;
   }
