@@ -517,8 +517,7 @@ public class ItemRepository {
           String fieldName = entry.getKey();
           List<String> values = entry.getValue();
           if ("tags".equals(fieldName) && !values.isEmpty()) {
-            String placeholders = String.join(", ", Collections.nCopies(values.size(), "?"));
-            select.AND("EXISTS (SELECT 1 FROM jsonb_array_elements_text(items.tags) AS t WHERE t IN (" + placeholders + "))",
+            select.AND("EXISTS (SELECT 1 FROM jsonb_array_elements_text(items.tags) AS t(value) WHERE t.value = ANY(?::text[]))",
                 values.toArray(new String[0]));
           }
         }
