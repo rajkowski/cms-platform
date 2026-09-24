@@ -399,7 +399,7 @@ public class ItemRepository {
             .replace("_", "!_")
             .replace("[",
                 "![");
-        select.AND("LOWER(items.name) LIKE LOWER(?) ESCAPE '!'", likeValue + "%");
+        select.AND("LOWER(items.name) LIKE LOWER(?) ESCAPE '!'", "%" + likeValue + "%");
       }
       if (specification.getCategoryId() > -1) {
         select.AND("EXISTS (SELECT 1 FROM item_categories WHERE item_id = items.item_id AND category_id = ?)",
