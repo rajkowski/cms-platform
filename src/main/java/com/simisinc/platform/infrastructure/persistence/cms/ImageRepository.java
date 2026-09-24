@@ -67,7 +67,7 @@ public class ImageRepository {
       if (specification.getSearchTerm() != null) {
         String searchValue = "%" + specification.getSearchTerm().toLowerCase() + "%";
         select.AND("(LOWER(filename) LIKE ? OR LOWER(title) LIKE ? OR LOWER(alt_text) LIKE ? OR LOWER(description) LIKE ?)",
-            new String[] { searchValue, searchValue, searchValue, searchValue });
+            searchValue, searchValue, searchValue, searchValue);
       }
     }
     if (constraints != null) {
