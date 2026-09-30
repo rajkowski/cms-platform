@@ -54,7 +54,7 @@
         {
             "label": "deploy",
             "type": "shell",
-            "command": "ant webapp",
+            "command": "ant deploy",
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -81,7 +81,7 @@
         {
             "label": "clean deploy",
             "type": "shell",
-            "command": "ant clean webapp",
+            "command": "ant clean deploy",
             "group": {
                 "kind": "build",
                 "isDefault": false
