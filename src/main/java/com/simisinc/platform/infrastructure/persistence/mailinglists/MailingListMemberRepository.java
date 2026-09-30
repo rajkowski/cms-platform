@@ -122,6 +122,10 @@ public class MailingListMemberRepository {
     }
     constraints.setDefaultColumnToSortBy("mailing_list_members.created");
     select.WITH(constraints);
-    DB.writeCsv(select, file);
+    try {
+      DB.writeCsv(select, file);
+    } catch (Exception e) {
+      LOG.error("Error exporting mailing list members to CSV", e);
+    }
   }
 }

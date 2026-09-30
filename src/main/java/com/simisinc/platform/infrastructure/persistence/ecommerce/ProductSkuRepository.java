@@ -373,7 +373,11 @@ public class ProductSkuRepository {
         .JOIN("products")
         .ON("product_skus.product_id = products.product_id")
         .WITH(constraints);
-    DB.writeCsv(select, file);
+    try {
+      DB.writeCsv(select, file);
+    } catch (Exception e) {
+      LOG.error("Error exporting product SKUs to CSV", e);
+    }
   }
 
 }

@@ -944,7 +944,11 @@ public class OrderRepository {
         .AND("canceled = ?", false)
         .AND("(refunded = false OR (refunded = true and shipped = true))")
         .WITH(constraints);
-    DB.writeCsv(select, file);
+    try {
+      DB.writeCsv(select, file);
+    } catch (Exception e) {
+      LOG.error("Error exporting orders to CSV", e);
+    }
   }
 
   public static void exportForTaxJar(DataConstraints constraints, File file) {
@@ -988,7 +992,12 @@ public class OrderRepository {
         .AND("canceled = ?", false)
         .AND("(refunded = false OR (refunded = true and shipped = true))")
         .WITH(constraints);
-    DB.writeCsv(select, file);
+    try {
+      DB.writeCsv(select, file);
+    } catch (Exception e) {
+      LOG.error("Error exporting taxjar orders to CSV", e);
+    }
+
   }
 
 }
