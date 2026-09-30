@@ -272,6 +272,7 @@ INSERT INTO site_properties (property_order, property_label, property_name, prop
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (16, 'OpenAuth Server URL', 'oauth.serverUrl', '', 'url');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (18, 'OpenAuth Redirect Guests', 'oauth.redirectGuests', 'true', 'boolean');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (20, 'OpenAuth Enabled', 'oauth.enabled', 'false', 'boolean');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (21, 'OpenAuth Allow Public Access?', 'oauth.allowPublicAccess', 'false', 'boolean');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (22, 'OpenAuth Role Attribute', 'oauth.role.attribute', 'roles', 'text');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (24, 'OpenAuth Group Attribute', 'oauth.group.attribute', 'groups', 'text');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (26, 'OpenAuth Role Admin', 'oauth.role.admin', '', 'disabled');
@@ -285,8 +286,10 @@ CREATE TABLE lookup_role (
   oauth_path VARCHAR(255)
 );
 
+INSERT INTO lookup_role (level, code, title) VALUES (70, 'content-editor', 'Content Editor');
 INSERT INTO lookup_role (level, code, title) VALUES (80, 'content-manager', 'Content Manager');
 INSERT INTO lookup_role (level, code, title) VALUES (90, 'community-manager', 'Community Manager');
+INSERT INTO lookup_role (level, code, title) VALUES (92, 'data-editor', 'Data Editor');
 INSERT INTO lookup_role (level, code, title) VALUES (93, 'data-manager', 'Data Manager');
 INSERT INTO lookup_role (level, code, title) VALUES (95, 'ecommerce-manager', 'E-commerce Manager');
 INSERT INTO lookup_role (level, code, title) VALUES (100, 'admin', 'System Administrator');
