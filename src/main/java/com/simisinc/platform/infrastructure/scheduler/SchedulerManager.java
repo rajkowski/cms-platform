@@ -170,9 +170,9 @@ public class SchedulerManager {
         BackgroundJob.scheduleRecurrently(WEB_PAGE_HITS_CLEANUP_JOB, Cron.daily(4), WebPageHitsCleanupJob::execute);
         BackgroundJob.scheduleRecurrently(USER_TOKENS_CLEANUP_JOB, Cron.hourly(), UserTokensCleanupJob::execute);
         BackgroundJob.scheduleRecurrently(OAUTH_STATE_CLEANUP_JOB, Cron.every5minutes(), OAuthStateCleanupJob::execute);
-        BackgroundJob.scheduleRecurrently(REFRESH_ALL_WEB_PAGE_TEXT_INDEXES_JOB, Cron.yearly(month, day),
+        BackgroundJob.scheduleRecurrently(REFRESH_ALL_WEB_PAGE_TEXT_INDEXES_JOB, Cron.hourly(),
             RefreshAllWebPageTextIndexesJob::execute);
-        BackgroundJob.scheduleRecurrently(REFRESH_ALL_DOCUMENT_TEXT_INDEXES_JOB, Cron.yearly(month, day),
+        BackgroundJob.scheduleRecurrently(REFRESH_ALL_DOCUMENT_TEXT_INDEXES_JOB, Cron.hourly(),
             RefreshAllDocumentTextIndexesJob::execute);
         BackgroundJob.scheduleRecurrently(INSTAGRAM_MEDIA_SNAPSHOT_JOB, Cron.hourly(), InstagramMediaSnapshotJob::execute);
         BackgroundJob.scheduleRecurrently(DATASETS_DOWNLOAD_AND_SYNC_JOB, Cron.minutely(), DatasetsDownloadAndSyncJob::execute);
