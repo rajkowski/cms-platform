@@ -30,7 +30,8 @@ services:
 
   db:
     container_name: postgresdb
-    image: postgres:18
+    build: 
+      context: ./docker/db
     restart: unless-stopped
     volumes:
       - postgres-data:/var/lib/postgresql/data
