@@ -944,7 +944,7 @@ public class OrderRepository {
         .AND("canceled = ?", false)
         .AND("(refunded = false OR (refunded = true and shipped = true))")
         .WITH(constraints);
-    writeCsvExport(select, file);
+    DB.writeCsv(select, file);
   }
 
   public static void exportForTaxJar(DataConstraints constraints, File file) {
@@ -988,36 +988,7 @@ public class OrderRepository {
         .AND("canceled = ?", false)
         .AND("(refunded = false OR (refunded = true and shipped = true))")
         .WITH(constraints);
-    writeCsvExport(select, file);
+    DB.writeCsv(select, file);
   }
 
-  // @todo move this to a utility class
-  
-  private static void writeCsvExport(Select select, File file) {
-    if (select == null || file == null) {
-      return;
-    }
-    try (Connection connection = DB.getConnection();
-        java.sql.PreparedStatement statement = connection.prepareStatement(select.getSql())) {
-      int index = 0;
-      for (Object value : select.getParameters()) {
-        statement.setObject(++index, value);
-      }
-      try (java.sql.ResultSet rs = statement.executeQuery();
-          java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.FileWriter(file))) {
-        writer.write(
-            "Order Number,Live Mode,Date Ordered,Date Processed,Date Shipped,Status,Customer Name,City,State,Country,Postal Code,Currency,Subtotal,Discount,Shipping,Sales Total,Sales Tax,Sales Tax Rate,Total,Refunded,Promo Code,Processor\n");
-        while (rs.next()) {
-          writer.write(rs.getString(1) + "," + rs.getString(2) + "," + rs.getString(3) + "," + rs.getString(4) + "," + rs.getString(5)
-              + "," + rs.getString(6) + "," + rs.getString(7) + "," + rs.getString(8) + "," + rs.getString(9) + "," + rs.getString(10)
-              + "," + rs.getString(11) + "," + rs.getString(12) + "," + rs.getString(13) + "," + rs.getString(14) + ","
-              + rs.getString(15) + "," + rs.getString(16) + "," + rs.getString(17) + "," + rs.getString(18) + "," + rs.getString(19)
-              + "," + rs.getString(20) + "," + rs.getString(21) + "," + rs.getString(22) + "\n");
-        }
-        writer.flush();
-      }
-    } catch (Exception e) {
-      LOG.error("Order export failed", e);
-    }
-  }
 }

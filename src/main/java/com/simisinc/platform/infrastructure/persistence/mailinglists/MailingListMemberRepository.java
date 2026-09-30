@@ -122,32 +122,6 @@ public class MailingListMemberRepository {
     }
     constraints.setDefaultColumnToSortBy("mailing_list_members.created");
     select.WITH(constraints);
-    exportCsv(select, file);
-  }
-
-  private static void exportCsv(Select select, File file) {
-    if (select == null || file == null) {
-      return;
-    }
-    try (Connection connection = DB.getConnection();
-        java.sql.PreparedStatement statement = connection.prepareStatement(select.getSql())) {
-      int index = 0;
-      for (Object value : select.getParameters()) {
-        statement.setObject(++index, value);
-      }
-      try (java.sql.ResultSet rs = statement.executeQuery()) {
-        try (java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.FileWriter(file))) {
-          writer.write("list,email,first_name,last_name,organization,subscribed,unsubscribed,ref_unsubscribed,is_valid\n");
-          while (rs.next()) {
-            writer
-                .write(rs.getString(1) + "," + rs.getString(2) + "," + rs.getString(3) + "," + rs.getString(4) + "," + rs.getString(5)
-                    + "," + rs.getString(6) + "," + rs.getString(7) + "," + rs.getString(8) + "," + rs.getString(9) + "\n");
-          }
-          writer.flush();
-        }
-      }
-    } catch (Exception e) {
-      throw new RuntimeException("Unable to export mailing list members", e);
-    }
+    DB.writeCsv(select, file);
   }
 }

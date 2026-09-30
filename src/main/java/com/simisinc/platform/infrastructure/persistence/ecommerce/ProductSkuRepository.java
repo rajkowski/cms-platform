@@ -373,25 +373,7 @@ public class ProductSkuRepository {
         .JOIN("products")
         .ON("product_skus.product_id = products.product_id")
         .WITH(constraints);
-    writeCsvExport(select, file);
+    DB.writeCsv(select, file);
   }
 
-  private static void writeCsvExport(Select select, File file) {
-    if (select == null || file == null) {
-      return;
-    }
-    try (Connection connection = DB.getConnection();
-        java.sql.PreparedStatement statement = connection.prepareStatement(select.getSql());
-        java.sql.ResultSet rs = statement.executeQuery()) {
-      java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.FileWriter(file));
-      writer.write("SKU,Name,Caption,ItemName,Value,Attributes,Description,UPC,Enabled\n");
-      while (rs.next()) {
-        writer.write(rs.getString(1) + "," + rs.getString(2) + "," + rs.getString(3) + "," + rs.getString(4) + "," + rs.getString(5)
-            + "," + rs.getString(6) + "," + rs.getString(7) + "," + rs.getString(8) + "," + rs.getString(9) + "\n");
-      }
-      writer.flush();
-    } catch (SQLException | java.io.IOException se) {
-      LOG.error("Export SQLException", se);
-    }
-  }
 }
