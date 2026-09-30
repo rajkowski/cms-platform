@@ -145,7 +145,7 @@
       ]
     },
     "moment": {
-      "version": "2.30.1",
+      "version": "2.31.0",
       "paths": [
         "node_modules/moment/min/moment.min.js",
         "node_modules/moment/min/moment.min.js.map",
@@ -191,7 +191,7 @@
       ]
     },
     "swiper": {
-      "version": "14.2.0",
+      "version": "14.3.0",
       "paths": [
         "node_modules/swiper/swiper-bundle.css",
         "node_modules/swiper/swiper-bundle.js",
