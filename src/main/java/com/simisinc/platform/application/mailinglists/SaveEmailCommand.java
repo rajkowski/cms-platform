@@ -55,6 +55,7 @@ public class SaveEmailCommand {
       mailingList.setName(mailingListName);
       mailingList.setTitle(mailingListName);
       mailingList.setEnabled(true);
+      mailingList.setUniqueId(GenerateMailingListUniqueIdCommand.generateUniqueId(null, mailingList));
       mailingList = MailingListRepository.save(mailingList);
     }
     return saveEmail(emailBean, mailingList);
