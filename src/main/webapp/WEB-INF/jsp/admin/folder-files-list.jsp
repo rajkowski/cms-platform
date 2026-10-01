@@ -152,7 +152,7 @@
     // Reset form
     document.getElementById("fileForm").reset();
     // Get the data and populate the form
-    $.getJSON("${ctx}/json/file?id=" + fileId, function( data ) {
+    $.getJSON("${ctx}/json/file", "id=" + fileId, function( data ) {
       if (data.id === undefined) {
         alert('You do not have access to modify this item');
         return;

@@ -37,7 +37,7 @@
             document.getElementById('emailHelpText${widgetContext.uniqueId}').innerHTML = "Please re-enter your email address using a proper format.";
             return false;
         }
-        $.getJSON("${ctx}/json/emailSubscribe?token=${userSession.formToken}&email=" + encodeURIComponent(email), function(data) {
+        $.getJSON("${ctx}/json/emailSubscribe", "token=${userSession.formToken}&email=" + encodeURIComponent(email), function(data) {
             if (data.status === undefined || data.status !== '0') {
                 document.getElementById('emailHelpText${widgetContext.uniqueId}').innerHTML = "Please re-enter your email address using a proper format.";
                 return false;

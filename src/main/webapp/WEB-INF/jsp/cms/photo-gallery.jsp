@@ -112,7 +112,7 @@
   });
 
   function showAlbum${controlId}(subFolderId) {
-    $.getJSON("${ctx}/json/photoList?subFolderId=" + subFolderId, function( data ) {
+    $.getJSON("${ctx}/json/photoList", "subFolderId=" + subFolderId, function( data ) {
       if (data.photoList === undefined) {
         alert('The album could not be loaded');
         return;

@@ -166,7 +166,7 @@
             }
 
             // Get the data and populate the form
-            $.getJSON("${ctx}/json/calendarEvent?id=" + info.event.id, function(data) {
+            $.getJSON("${ctx}/json/calendarEvent", "id=" + info.event.id, function(data) {
               document.getElementById('formTitle').innerHTML = "Update an Event";
               document.getElementById('id').value = data.id;
               document.getElementById('eventLinkInput').value = info.event.extendedProps.uniqueId || '';

@@ -58,14 +58,14 @@
         $('[id^=mailingListCheck]').click(function () {
           var mailingListId = $(this).val();
           if ($(this).prop("checked") === true) {
-            $.getJSON("${ctx}/json/mailingList?token=${userSession.formToken}&command=subscribe&id=" + encodeURIComponent(mailingListId), function(data) {
+            $.getJSON("${ctx}/json/mailingList", "token=${userSession.formToken}&command=subscribe&id=" + encodeURIComponent(mailingListId), function(data) {
               if (data.status !== undefined && data.status === '0') {
                 $('#mailingListRemoved' + mailingListId).hide();
                 $('#mailingListAdded' + mailingListId).show();
               }
             });
           } else if ($(this).prop("checked") === false) {
-            $.getJSON("${ctx}/json/mailingList?token=${userSession.formToken}&command=unsubscribe&id=" + encodeURIComponent(mailingListId), function(data) {
+            $.getJSON("${ctx}/json/mailingList", "token=${userSession.formToken}&command=unsubscribe&id=" + encodeURIComponent(mailingListId), function(data) {
               if (data.status !== undefined && data.status === '0') {
                 $('#mailingListAdded' + mailingListId).hide();
                 $('#mailingListRemoved' + mailingListId).show();
