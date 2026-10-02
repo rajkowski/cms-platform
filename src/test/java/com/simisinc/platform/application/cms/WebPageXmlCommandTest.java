@@ -62,4 +62,33 @@ class WebPageXmlCommandTest {
 
     Assertions.assertTrue(xml.contains("<mapZoomLevel>12.5</mapZoomLevel>"));
   }
+
+  @Test
+  void publishingLayoutPreservesRolesAtEveryLevel() throws Exception {
+    String json = """
+        {"role":["A&B","Admin"],"rows":[{"role":["Editor"],"columns":[{"role":["Admin"],"widgets":[{"type":"content","role":["Editor"]}]}]}]}
+        """;
+
+    String xml = WebPageJsonToXMLCommand.convertDesignerJsonToXml(json);
+
+    Assertions.assertTrue(xml.contains("<page role=\"A&amp;B,Admin\">"));
+    Assertions.assertTrue(xml.contains("<section role=\"Editor\">"));
+    Assertions.assertTrue(xml.contains("<column role=\"Admin\">"));
+    Assertions.assertTrue(xml.contains("<widget name=\"content\" role=\"Editor\">"));
+  }
+
+  @Test
+  void publishingLayoutPreservesExplicitlyEmptyRolesButOmitsMissingRoles() throws Exception {
+    String json = """
+        {"role":[],"rolePresent":true,"rows":[{"role":[],"rolePresent":true,"columns":[{"role":[],"rolePresent":true,"widgets":[{"type":"content","role":[],"rolePresent":true}]}]}]}
+        """;
+
+    String xml = WebPageJsonToXMLCommand.convertDesignerJsonToXml(json);
+
+    Assertions.assertTrue(xml.contains("<page role=\"\">"));
+    Assertions.assertTrue(xml.contains("<section role=\"\">"));
+    Assertions.assertTrue(xml.contains("<column role=\"\">"));
+    Assertions.assertTrue(xml.contains("<widget name=\"content\" role=\"\">"));
+    Assertions.assertFalse(WebPageJsonToXMLCommand.convertDesignerJsonToXml("{\"rows\":[]}").contains("role="));
+  }
 }

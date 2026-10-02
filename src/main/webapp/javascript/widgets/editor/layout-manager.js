@@ -395,7 +395,11 @@ class LayoutManager {
    * Convert structure to XML
    */
   toXML(forPreview = false) {
-    let xml = '<page>\n';
+    let xml = '<page';
+    if (this.structure.role?.length || this.structure.rolePresent) {
+      xml += ` role="${this.escapeXml(this.structure.role.join(','))}"`;
+    }
+    xml += '>\n';
 
     for (const row of this.structure.rows) {
       xml += '  <section';
@@ -404,6 +408,9 @@ class LayoutManager {
       }
       if (row.cssClass) {
         xml += ` class="${this.escapeXml(row.cssClass)}"`;
+      }
+      if (row.role?.length || row.rolePresent) {
+        xml += ` role="${this.escapeXml(row.role.join(','))}"`;
       }
       if (row.hr) {
         xml += ' hr="true"';
@@ -417,6 +424,9 @@ class LayoutManager {
         }
         if (column.cssClass) {
           xml += ` class="${this.escapeXml(column.cssClass)}"`;
+        }
+        if (column.role?.length || column.rolePresent) {
+          xml += ` role="${this.escapeXml(column.role.join(','))}"`;
         }
         if (column.hr) {
           xml += ' hr="true"';
@@ -456,6 +466,9 @@ class LayoutManager {
     }
     if (widget.cssClass && widget.cssClass.trim()) {
       xml += ` class="${this.escapeXml(widget.cssClass)}"`;
+    }
+    if (widget.role?.length || widget.rolePresent) {
+      xml += ` role="${this.escapeXml(widget.role.join(','))}"`;
     }
     if (widget.hr) {
       xml += ' hr="true"';
@@ -522,6 +535,8 @@ class LayoutManager {
     if (!pageElement) {
       throw new Error('No <page> element found');
     }
+    this.structure.role = this.parseRoles(pageElement);
+    this.structure.rolePresent = pageElement.hasAttribute('role');
 
     // Parse sections (rows)
     const sections = pageElement.getElementsByTagName('section');
@@ -532,6 +547,8 @@ class LayoutManager {
         id: rowId,
         num: rowNum,
         cssClass: section.getAttribute('class') || '',
+        role: this.parseRoles(section),
+        rolePresent: section.hasAttribute('role'),
         hr: section.getAttribute('hr') === 'true',
         columns: []
       };
@@ -550,6 +567,8 @@ class LayoutManager {
           id: columnId,
           num: colNum,
           cssClass: cssClass,
+          role: this.parseRoles(column),
+          rolePresent: column.hasAttribute('role'),
           hr: column.getAttribute('hr') === 'true',
           sticky: column.getAttribute('sticky') === 'true',
           widgets: []
@@ -565,6 +584,8 @@ class LayoutManager {
             num: widgetNum,
             type: widget.getAttribute('name') || '',
             cssClass: widget.getAttribute('class') || '',
+            role: this.parseRoles(widget),
+            rolePresent: widget.hasAttribute('role'),
             hr: widget.getAttribute('hr') === 'true',
             sticky: widget.getAttribute('sticky') === 'true',
             properties: this.parseWidgetProperties(widget)
@@ -578,6 +599,10 @@ class LayoutManager {
 
       this.structure.rows.push(row);
     }
+  }
+
+  parseRoles(element) {
+    return (element.getAttribute('role') || '').split(',').map(role => role.trim()).filter(Boolean);
   }
 
   /**

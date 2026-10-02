@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,19 +17,20 @@
 
 package com.simisinc.platform.application.cms;
 
-import com.simisinc.platform.domain.model.cms.WebPage;
-import com.simisinc.platform.presentation.controller.Column;
-import com.simisinc.platform.presentation.controller.Page;
-import com.simisinc.platform.presentation.controller.Section;
-import com.simisinc.platform.presentation.controller.Widget;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import org.apache.commons.lang3.RegExUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import com.simisinc.platform.domain.model.cms.WebPage;
+import com.simisinc.platform.presentation.controller.Column;
+import com.simisinc.platform.presentation.controller.Page;
+import com.simisinc.platform.presentation.controller.Section;
+import com.simisinc.platform.presentation.controller.Widget;
 
 /**
  * Generates XML from the web page designer object
@@ -146,7 +148,7 @@ public class WebPageDesignerToXmlCommand {
         widget.getPreferences().put("html", cleanContent);
       }
     }
-//          widget.setCssClass();
+    //          widget.setCssClass();
     return widget;
   }
 
@@ -188,9 +190,9 @@ public class WebPageDesignerToXmlCommand {
     }
 
     // Add margin and padding
-    for (String value: cssList) {
+    for (String value : cssList) {
       if (value.startsWith("margin-") || value.startsWith("padding-")) {
-        appendWithSpace(sb,value);
+        appendWithSpace(sb, value);
       }
     }
     return sb.toString();
@@ -243,12 +245,19 @@ public class WebPageDesignerToXmlCommand {
 
   public static String toXml(Page page) {
     StringBuilder sb = new StringBuilder();
-    sb.append("<page>").append("\n");
+    sb.append("<page");
+    if (!page.getRoles().isEmpty()) {
+      sb.append(" role=\"").append(String.join(",", page.getRoles())).append("\"");
+    }
+    sb.append(">").append("\n");
     for (Section section : page.getSections()) {
       sb.append("\n");
       sb.append("  <section");
       if (StringUtils.isNotBlank(section.getCssClass())) {
         sb.append(" class=\"").append(section.getCssClass()).append("\"");
+      }
+      if (!section.getRoles().isEmpty()) {
+        sb.append(" role=\"").append(String.join(",", section.getRoles())).append("\"");
       }
       sb.append(">").append("\n");
       for (Column column : section.getColumns()) {
@@ -256,12 +265,18 @@ public class WebPageDesignerToXmlCommand {
         if (StringUtils.isNotBlank(column.getCssClass())) {
           sb.append(" class=\"").append(column.getCssClass()).append("\"");
         }
+        if (!column.getRoles().isEmpty()) {
+          sb.append(" role=\"").append(String.join(",", column.getRoles())).append("\"");
+        }
         sb.append(">").append("\n");
         for (Widget widget : column.getWidgets()) {
           sb.append("      <widget");
           sb.append(" name=\"").append(widget.getWidgetName()).append("\"");
           if (StringUtils.isNotBlank(widget.getCssClass())) {
             sb.append(" class=\"").append(widget.getCssClass()).append("\"");
+          }
+          if (!widget.getRoles().isEmpty()) {
+            sb.append(" role=\"").append(String.join(",", widget.getRoles())).append("\"");
           }
           sb.append(">").append("\n");
           for (String key : widget.getPreferences().keySet()) {

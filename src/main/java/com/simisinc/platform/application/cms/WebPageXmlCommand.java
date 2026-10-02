@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Matt Rajkowski (https://github.com/rajkowski)
+ * Copyright 2025-2026 Matt Rajkowski (https://github.com/rajkowski)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,22 @@ public class WebPageXmlCommand {
       String cssClass = widgetNode.get("cssClass").asText();
       if (StringUtils.isNotBlank(cssClass)) {
         xml.append(" class=\"").append(escapeXml(cssClass)).append("\"");
+      }
+    }
+
+    // Add role attribute if present
+    if (widgetNode.has("role") && widgetNode.get("role").isArray()) {
+      StringBuilder roles = new StringBuilder();
+      for (JsonNode roleNode : widgetNode.get("role")) {
+        if (roleNode.isTextual() && StringUtils.isNotBlank(roleNode.asText())) {
+          if (roles.length() > 0) {
+            roles.append(",");
+          }
+          roles.append(roleNode.asText());
+        }
+      }
+      if (roles.length() > 0 || widgetNode.path("rolePresent").asBoolean()) {
+        xml.append(" role=\"").append(escapeXml(roles.toString())).append("\"");
       }
     }
 

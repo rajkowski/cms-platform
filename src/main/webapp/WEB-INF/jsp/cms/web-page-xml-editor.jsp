@@ -1,4 +1,5 @@
 <%--
+  ~ Copyright 2026 Matt Rajkowski (https://www.github.com/rajkowski)
   ~ Copyright 2022 SimIS Inc.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -773,9 +774,9 @@
                   <div class="accordion-content" data-tab-content>
                     <dl>
                       <dd><strong>page</strong> class="full-page"</dd>
-                      <dd><strong>section</strong> id="" class="grid-x grid-margin-x platform-no-margin align-middle align-center" hr="true"</dd>
-                      <dd><strong>column</strong> id="" class="small-12 cell text-center callout radius round" hr="true"</dd>
-                      <dd><strong>widget</strong> id="" name="" hr="true"</dd>
+                      <dd><strong>section</strong> id="" class="grid-x grid-margin-x platform-no-margin align-middle align-center" hr="true" role="guest,users"</dd>
+                      <dd><strong>column</strong> id="" class="small-12 cell text-center callout radius round" hr="true" role="guest,users"</dd>
+                      <dd><strong>widget</strong> id="" name="" hr="true" role="guest,users"</dd>
                     </dl>
                   </div>
                 </li>
@@ -784,9 +785,9 @@
                   <div class="accordion-content" data-tab-content>
                     <dl>
                       <dd><strong>page</strong> class="full-page"</dd>
-                      <dd><strong>section</strong> id="" class="grid-x grid-margin-x platform-no-margin align-middle align-center" hr="true"</dd>
-                      <dd><strong>column</strong> id="" class="small-12 cell text-center callout radius round" hr="true"</dd>
-                      <dd><strong>widget</strong> id="" name="" hr="true"</dd>
+                      <dd><strong>section</strong> id="" class="grid-x grid-margin-x platform-no-margin align-middle align-center" hr="true" role="guest,users"</dd>
+                      <dd><strong>column</strong> id="" class="small-12 cell text-center callout radius round" hr="true" role="guest,users"</dd>
+                      <dd><strong>widget</strong> id="" name="" hr="true" role="guest,users"</dd>
                     </dl>
                   </div>
                 </li>
