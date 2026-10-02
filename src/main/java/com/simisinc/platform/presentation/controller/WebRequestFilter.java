@@ -39,7 +39,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.servlet.jsp.jstl.core.Config;
-import javax.sql.DataSource;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
@@ -284,23 +283,26 @@ public class WebRequestFilter implements Filter {
 
       // Users on the default tenant are authenticated via the standard login mechanism
       if (isDefaultTenant) {
-        // If OAuth is required, and the user is not verified, redirect to provider
-        String oauthRedirect = OAuthRequestCommand.handleRequest((HttpServletRequest) request, (HttpServletResponse) servletResponse,
-            resource);
-        if (OAuthConfigurationCommand.hasInvalidConfiguration()) {
-          LOG.error("OAUTH: OAUTH is enabled but configuration is incomplete");
-          do500(servletResponse);
-          return;
-        }
-        if (oauthRedirect != null) {
-          if (StringUtils.isBlank(oauthRedirect)) {
-            LOG.error("OAUTH: A redirect url could not be created");
+        // Unless the user is visiting the home page and public access is allowed, require OAuth authentication
+        if (!(resource.equals("/") && OAuthConfigurationCommand.allowsPublicAccess())) {
+          // If OAuth is required, and the user is not verified, redirect to provider
+          String oauthRedirect = OAuthRequestCommand.handleRequest((HttpServletRequest) request, (HttpServletResponse) servletResponse,
+              resource);
+          if (OAuthConfigurationCommand.hasInvalidConfiguration()) {
+            LOG.error("OAUTH: OAUTH is enabled but configuration is incomplete");
             do500(servletResponse);
             return;
           }
-          LOG.debug("OAUTH: Redirecting to " + oauthRedirect);
-          do302(servletResponse, oauthRedirect);
-          return;
+          if (oauthRedirect != null) {
+            if (StringUtils.isBlank(oauthRedirect)) {
+              LOG.error("OAUTH: A redirect url could not be created");
+              do500(servletResponse);
+              return;
+            }
+            LOG.debug("OAUTH: Redirecting to " + oauthRedirect);
+            do302(servletResponse, oauthRedirect);
+            return;
+          }
         }
       }
 

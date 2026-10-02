@@ -51,6 +51,14 @@ public class OAuthConfigurationCommand {
     return true;
   }
 
+  public static boolean allowsPublicAccess() {
+    String allows = System.getenv("OAUTH_ALLOW_PUBLIC_ACCESS");
+    if (StringUtils.isBlank(allows)) {
+      allows = WorkspaceContextManager.withoutWorkspace(() -> LoadSitePropertyCommand.loadByName("oauth.allowPublicAccess"));
+    }
+    return "true".equals(allows);
+  }
+
   public static String getConfigurationUrl() {
     String configurationUrl = System.getenv("OAUTH_SERVER_URL");
     if (StringUtils.isBlank(configurationUrl)) {
