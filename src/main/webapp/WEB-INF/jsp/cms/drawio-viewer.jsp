@@ -16,6 +16,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="web" uri="/WEB-INF/tlds/web.tld" %>
 <jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="highlight" class="java.lang.String" scope="request"/>
@@ -52,12 +53,10 @@
     }
     </c:if>
 </style>
-<script src="${ctx}/javascript/drawio-29.3.6/viewer.min.js"></script>
-
+<web:script package="drawio" file="viewer.min.js" />
 <div style="width: 100%; overflow-x: auto;">
     <div id="drawio-diagram"></div>
 </div>
-
 <script>
     (function () {
         // Escape HTML
