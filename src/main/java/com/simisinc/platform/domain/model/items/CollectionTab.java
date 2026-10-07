@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,7 +40,8 @@ public class CollectionTab extends Entity {
   private boolean draft = true;
   private boolean enabled = true;
   private String pageXml = null;
-  private String roleIdList = null;
+  private String[] roles = null;
+  private String[] groups = null;
 
   public CollectionTab() {
   }
@@ -152,12 +154,20 @@ public class CollectionTab extends Entity {
     this.pageXml = pageXml;
   }
 
-  public String getRoleIdList() {
-    return roleIdList;
+  public String[] getRoles() {
+    return roles;
   }
 
-  public void setRoleIdList(String roleIdList) {
-    this.roleIdList = roleIdList;
+  public void setRoles(String[] roles) {
+    this.roles = roles;
+  }
+
+  public String[] getGroups() {
+    return groups;
+  }
+
+  public void setGroups(String[] groups) {
+    this.groups = groups;
   }
 
 }

@@ -28,9 +28,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.github.rajkowski.database.CastType;
 import com.github.rajkowski.database.DB;
 import com.github.rajkowski.database.DataConstraints;
 import com.github.rajkowski.database.DataResult;
+import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.MenuItem;
 import com.simisinc.platform.domain.model.cms.MenuTab;
 
@@ -132,6 +134,8 @@ public class MenuItemRepository {
         .FIELD("draft", record.isDraft())
         .FIELD("enabled", record.isEnabled())
         .FIELD("comments", StringUtils.trimToNull(record.getComments()))
+        .FIELD_UNLESS_NULL("roles", JsonCommand.toJsonArray(record.getRoles()), CastType.JSONB)
+        .FIELD_UNLESS_NULL("groups", JsonCommand.toJsonArray(record.getGroups()), CastType.JSONB)
         .execute();
     record.setId(id);
     if (record.getId() == -1) {
@@ -153,6 +157,8 @@ public class MenuItemRepository {
         .SET("draft", record.isDraft())
         .SET("enabled", record.isEnabled())
         .SET("comments", StringUtils.trimToNull(record.getComments()))
+        .SET("roles", JsonCommand.toJsonArray(record.getRoles()), CastType.JSONB)
+        .SET("groups", JsonCommand.toJsonArray(record.getGroups()), CastType.JSONB)
         .WHERE("menu_item_id = ?", record.getId())
         .execute();
     if (updated) {
@@ -206,8 +212,9 @@ public class MenuItemRepository {
       record.setPageDescription(rs.getString("page_description"));
       record.setDraft(rs.getBoolean("draft"));
       record.setEnabled(rs.getBoolean("enabled"));
-      //    record.setRoleIdList(rs.getString("role_id_list"));
       record.setComments(rs.getString("comments"));
+      record.setRoles(JsonCommand.fromJsonArray(rs.getString("roles")));
+      record.setGroups(JsonCommand.fromJsonArray(rs.getString("groups")));
       return record;
     } catch (SQLException se) {
       LOG.error("buildRecord", se);

@@ -110,7 +110,8 @@ class ItemsPersistenceRepositoryTest {
                         + "draft BOOLEAN DEFAULT TRUE,"
                         + "enabled BOOLEAN DEFAULT TRUE,"
                         + "page_xml TEXT,"
-                        + "role_id_list VARCHAR(255)"
+                        + "roles JSONB,"
+                        + "groups JSONB"
                         + ")");
         RepositoryDatabaseTestSupport.executeSql(
                 "CREATE TABLE categories ("

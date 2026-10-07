@@ -62,6 +62,7 @@ import com.simisinc.platform.application.cms.LoadStylesheetCommand;
 import com.simisinc.platform.application.cms.LoadTableOfContentsCommand;
 import com.simisinc.platform.application.cms.LoadWebPageCommand;
 import com.simisinc.platform.application.cms.SaveWebPageHitCommand;
+import com.simisinc.platform.application.cms.ValidateUserAccessToWebPageCommand;
 import com.simisinc.platform.application.cms.WebContainerLayoutCommand;
 import com.simisinc.platform.application.cms.WebPackageCommand;
 import com.simisinc.platform.application.cms.WebPageXmlLayoutCommand;
@@ -402,14 +403,12 @@ public class PageServlet extends HttpServlet {
           return;
         }
 
-        // Determine if this is a draft page (and unavailable to general users)
-        if (webPage.getDraft()) {
-          if (!userSession.hasRole("admin") && !userSession.hasRole("content-manager")) {
-            LOG.debug("DRAFT FOUND, no access: " + pageRequest.getPagePath());
-            controllerSession.clearAllWidgetData();
-            response.sendError(HttpServletResponse.SC_NOT_FOUND);
-            return;
-          }
+        // Check if the user has access to draft or restricted content
+        if (!ValidateUserAccessToWebPageCommand.passesWebPageChecks(webPage, userSession)) {
+          LOG.debug("WEB PAGE CHECKS FAILED, no access: " + pageRequest.getPagePath());
+          controllerSession.clearAllWidgetData();
+          response.sendError(HttpServletResponse.SC_NOT_FOUND);
+          return;
         }
 
         // Determine if this page is archived

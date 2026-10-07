@@ -29,9 +29,11 @@ import org.apache.commons.logging.LogFactory;
 
 import com.github.rajkowski.database.AutoRollback;
 import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.CastType;
 import com.github.rajkowski.database.DB;
 import com.github.rajkowski.database.DataConstraints;
 import com.github.rajkowski.database.DataResult;
+import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.MenuTab;
 
 /**
@@ -104,6 +106,8 @@ public class MenuTabRepository {
         .FIELD("draft", record.isDraft())
         .FIELD("enabled", record.isEnabled())
         .FIELD("comments", StringUtils.trimToNull(record.getComments()))
+        .FIELD_UNLESS_NULL("roles", JsonCommand.toJsonArray(record.getRoles()))
+        .FIELD_UNLESS_NULL("groups", JsonCommand.toJsonArray(record.getGroups()))
         .execute();
     record.setId(id);
     if (record.getId() == -1) {
@@ -125,6 +129,8 @@ public class MenuTabRepository {
         .SET("draft", record.isDraft())
         .SET("enabled", record.isEnabled())
         .SET("comments", StringUtils.trimToNull(record.getComments()))
+        .SET("roles", JsonCommand.toJsonArray(record.getRoles()), CastType.JSONB)
+        .SET("groups", JsonCommand.toJsonArray(record.getGroups()), CastType.JSONB)
         .WHERE("menu_tab_id = ?", record.getId())
         .execute();
     if (updated) {
@@ -181,6 +187,8 @@ public class MenuTabRepository {
       record.setEnabled(rs.getBoolean("enabled"));
       record.setComments(rs.getString("comments"));
       record.setIcon(rs.getString("icon"));
+      record.setRoles(JsonCommand.fromJsonArray(rs.getString("roles")));
+      record.setGroups(JsonCommand.fromJsonArray(rs.getString("groups")));
       return record;
     } catch (SQLException se) {
       LOG.error("buildRecord", se);

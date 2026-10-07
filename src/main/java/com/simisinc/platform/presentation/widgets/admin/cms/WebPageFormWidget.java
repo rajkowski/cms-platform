@@ -17,21 +17,25 @@
 
 package com.simisinc.platform.presentation.widgets.admin.cms;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
+
+import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.simisinc.platform.application.DataException;
 import com.simisinc.platform.application.cms.SaveWebPageCommand;
 import com.simisinc.platform.application.cms.UrlCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.SitemapChangeFrequencyOptions;
 import com.simisinc.platform.domain.model.cms.WebPage;
+import com.simisinc.platform.infrastructure.persistence.GroupRepository;
+import com.simisinc.platform.infrastructure.persistence.RoleRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
-import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import java.lang.reflect.InvocationTargetException;
 
 /**
  * Widget for displaying a system administration form to add/update web pages
@@ -92,6 +96,8 @@ public class WebPageFormWidget extends GenericWidget {
     }
 
     context.getRequest().setAttribute("sitemapChangeFrequencyMap", SitemapChangeFrequencyOptions.map);
+    context.getRequest().setAttribute("roleList", RoleRepository.findAll());
+    context.getRequest().setAttribute("groupList", GroupRepository.findAll());
 
     // Show the editor
     context.setJsp(JSP);
@@ -118,6 +124,10 @@ public class WebPageFormWidget extends GenericWidget {
     } else {
       webPageBean.setTags(null);
     }
+
+    // Handle roles and groups (role code, group uniqueId)
+    webPageBean.setRoles(getSelectedValues(context, "roles"));
+    webPageBean.setGroups(getSelectedValues(context, "groups"));
 
     // Handle publish/draft choice
     String publish = context.getParameter("publish");
@@ -163,6 +173,15 @@ public class WebPageFormWidget extends GenericWidget {
     }
     context.setRedirect(returnPage);
     return context;
+  }
+
+  private static String[] getSelectedValues(WidgetContext context, String name) {
+    String[] values = context.getParameterMap().get(name);
+    if (values == null) {
+      return null;
+    }
+    String[] selected = Arrays.stream(values).filter(StringUtils::isNotBlank).map(String::trim).distinct().toArray(String[]::new);
+    return selected.length > 0 ? selected : null;
   }
 
   public WidgetContext action(WidgetContext context) {

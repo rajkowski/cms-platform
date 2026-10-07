@@ -50,6 +50,13 @@ public class ValidateUserAccessToWebPageCommand {
       if (webPage.getDraft()) {
         return false;
       }
+      // The page specifies roles or groups that are allowed to access it
+      if ((webPage.getRoles() != null && webPage.getRoles().length > 0)
+          || (webPage.getGroups() != null && webPage.getGroups().length > 0)) {
+        if (WebComponentCommand.allowsUser(webPage.getRoles(), webPage.getGroups(), userSession)) {
+          return true;
+        }
+      }
     }
 
     // Check the page layout (from repository or application files)
@@ -79,5 +86,30 @@ public class ValidateUserAccessToWebPageCommand {
       }
     }
     return false;
+  }
+
+  public static boolean passesWebPageChecks(WebPage webPage, UserSession userSession) {
+    if (userSession.hasRole("admin") || userSession.hasRole("content-manager")) {
+      return true;
+    }
+
+    if (webPage != null) {
+      // The page is a draft
+      if (webPage.getDraft()) {
+        LOG.debug("DRAFT FOUND, no access: " + webPage.getLink());
+        return false;
+      }
+
+      // If the page has a setting, check for access to the page
+      if ((webPage.getRoles() != null && webPage.getRoles().length > 0)
+          || (webPage.getGroups() != null && webPage.getGroups().length > 0)) {
+        if (!WebComponentCommand.allowsUser(webPage.getRoles(), webPage.getGroups(), userSession)) {
+          LOG.debug("USER NOT ALLOWED, no access: " + webPage.getLink());
+          return false;
+        }
+      }
+    }
+
+    return true;
   }
 }

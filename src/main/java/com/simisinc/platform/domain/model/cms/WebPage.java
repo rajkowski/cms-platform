@@ -43,21 +43,22 @@ public class WebPage extends Entity {
   private boolean showInSitemap = false;
   private String sitemapChangeFrequency = null;
   private BigDecimal sitemapPriority = new BigDecimal(0);
-  //  private boolean showPageHeader = false;
-  //  private boolean showPageFooter = false;
-  //  private long popupId = -1;
-  //  private String abTestingRedirectLink = null;
+  // private boolean showPageHeader = false;
+  // private boolean showPageFooter = false;
+  // private long popupId = -1;
+  // private String abTestingRedirectLink = null;
   private long createdBy = -1;
   private Timestamp created = null;
   private Timestamp modified = null;
   private long modifiedBy = -1;
-  private String roleIdList = null;
   private String pageXml = null;
   private String draftPageXml = null;
   private String template = null;
   private String comments = null;
   private String highlight = null;
   private String[] tags = null;
+  private String[] roles = null;
+  private String[] groups = null;
 
   public WebPage() {
   }
@@ -199,14 +200,6 @@ public class WebPage extends Entity {
     this.modifiedBy = modifiedBy;
   }
 
-  public String getRoleIdList() {
-    return roleIdList;
-  }
-
-  public void setRoleIdList(String roleIdList) {
-    this.roleIdList = roleIdList;
-  }
-
   public String getTemplate() {
     return template;
   }
@@ -271,4 +264,19 @@ public class WebPage extends Entity {
     this.tags = tags;
   }
 
+  public String[] getRoles() {
+    return roles;
+  }
+
+  public void setRoles(String[] roles) {
+    this.roles = roles;
+  }
+
+  public String[] getGroups() {
+    return groups;
+  }
+
+  public void setGroups(String[] groups) {
+    this.groups = groups;
+  }
 }

@@ -197,7 +197,9 @@ class CmsPersistenceRepositoryTest {
                         + "page_description TEXT,"
                         + "draft BOOLEAN DEFAULT FALSE,"
                         + "enabled BOOLEAN DEFAULT TRUE,"
-                        + "comments TEXT"
+                        + "comments TEXT,"
+                        + "roles JSONB,"
+                        + "groups JSONB"
                         + ")");
         RepositoryDatabaseTestSupport.executeSql(
                 "CREATE TABLE menu_items ("
@@ -211,7 +213,9 @@ class CmsPersistenceRepositoryTest {
                         + "page_description TEXT,"
                         + "draft BOOLEAN DEFAULT FALSE,"
                         + "enabled BOOLEAN DEFAULT TRUE,"
-                        + "comments TEXT"
+                        + "comments TEXT,"
+                        + "roles JSONB,"
+                        + "groups JSONB"
                         + ")");
         RepositoryDatabaseTestSupport.executeSql(
                 "CREATE TABLE themes ("
@@ -258,7 +262,6 @@ class CmsPersistenceRepositoryTest {
                         + "created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                         + "modified TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
                         + "modified_by BIGINT NOT NULL,"
-                        + "role_id_list VARCHAR(255),"
                         + "page_xml TEXT,"
                         + "draft_page_xml TEXT,"
                         + "comments TEXT,"
@@ -266,6 +269,8 @@ class CmsPersistenceRepositoryTest {
                         + "has_redirect BOOLEAN DEFAULT FALSE,"
                         + "sitemap_priority DECIMAL(10, 3),"
                         + "sitemap_changefreq VARCHAR(50),"
+                        + "roles JSONB,"
+                        + "groups JSONB,"
                         + "tags VARCHAR(2048),"
                         + "page_text TEXT,"
                         + "tsv OTHER"

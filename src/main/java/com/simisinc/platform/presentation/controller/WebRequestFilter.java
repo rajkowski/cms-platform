@@ -56,6 +56,7 @@ import com.simisinc.platform.application.cms.BlockedIPListCommand;
 import com.simisinc.platform.application.cms.HostnameCommand;
 import com.simisinc.platform.application.cms.LoadBlockedIPListCommand;
 import com.simisinc.platform.application.cms.LoadRedirectsCommand;
+import com.simisinc.platform.application.cms.LoadWebPageCommand;
 import com.simisinc.platform.application.ecommerce.CartCommand;
 import com.simisinc.platform.application.ecommerce.LoadCartCommand;
 import com.simisinc.platform.application.ecommerce.PricingRuleCommand;
@@ -65,6 +66,7 @@ import com.simisinc.platform.application.oauth.OAuthConfigurationCommand;
 import com.simisinc.platform.application.oauth.OAuthRequestCommand;
 import com.simisinc.platform.domain.model.User;
 import com.simisinc.platform.domain.model.Visitor;
+import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.domain.model.ecommerce.Cart;
 import com.simisinc.platform.domain.model.ecommerce.PricingRule;
 import com.simisinc.platform.domain.model.login.UserLogin;
@@ -75,6 +77,7 @@ import com.zeroio.platform.application.cms.WorkspaceResolutionCommand;
 import com.zeroio.platform.application.login.WorkspaceCoordinatorCommand;
 import com.zeroio.platform.domain.model.tenant.Workspace;
 import com.zeroio.platform.infrastructure.database.WorkspaceContextManager;
+import com.zeroio.platform.presentation.controller.RoleConstants;
 
 /**
  * Sets up the framework for the visitor
@@ -283,8 +286,19 @@ public class WebRequestFilter implements Filter {
 
       // Users on the default tenant are authenticated via the standard login mechanism
       if (isDefaultTenant) {
-        // Unless the user is visiting the home page and public access is allowed, require OAuth authentication
-        if (!(resource.equals("/") && OAuthConfigurationCommand.allowsPublicAccess())) {
+        // Unless the user is visiting a page with guest access that's allowed, require OAuth authentication
+        boolean allowsGuestAccess = false;
+        if (OAuthConfigurationCommand.allowsPublicAccess()) {
+          if (resource.equals("/")) {
+            allowsGuestAccess = true;
+          } else {
+            WebPage webPage = LoadWebPageCommand.loadByLink(resource);
+            if (webPage != null && webPage.getRoles() != null && Strings.CI.containsAny(RoleConstants.GUEST, webPage.getRoles())) {
+              allowsGuestAccess = true;
+            }
+          }
+        }
+        if (!allowsGuestAccess) {
           // If OAuth is required, and the user is not verified, redirect to provider
           String oauthRedirect = OAuthRequestCommand.handleRequest((HttpServletRequest) request, (HttpServletResponse) servletResponse,
               resource);

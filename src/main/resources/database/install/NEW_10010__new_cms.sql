@@ -30,9 +30,10 @@ CREATE TABLE menu_tabs (
   page_description VARCHAR(255),
   draft BOOLEAN DEFAULT false,
   enabled BOOLEAN DEFAULT true,
-  role_id_list VARCHAR(50) DEFAULT NULL,
   comments TEXT,
-  icon VARCHAR(20)
+  icon VARCHAR(20),
+  roles JSONB,
+  groups JSONB
 );
 CREATE INDEX menu_tabs_order_idx ON menu_tabs(tab_order);
 CREATE INDEX menu_tabs_active_idx ON menu_tabs(draft, enabled);
@@ -55,8 +56,9 @@ CREATE TABLE menu_items (
   page_description VARCHAR(255),
   draft BOOLEAN DEFAULT false,
   enabled BOOLEAN DEFAULT true,
-  role_id_list VARCHAR(50) DEFAULT NULL,
-  comments TEXT
+  comments TEXT,
+  roles JSONB,
+  groups JSONB
 );
 CREATE INDEX menu_items_ord_idx ON menu_items(item_order);
 CREATE INDEX menu_items_act_idx ON menu_items(draft, enabled);
@@ -110,7 +112,6 @@ CREATE TABLE web_pages (
   created TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
   modified TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
   modified_by BIGINT REFERENCES users(user_id),
-  role_id_list VARCHAR(100) DEFAULT NULL,
   template VARCHAR(255),
   page_xml TEXT,
   comments TEXT,
@@ -128,7 +129,9 @@ CREATE TABLE web_pages (
   approved_by BIGINT REFERENCES users(user_id),
   publish_at TIMESTAMP(3),
   expires_at TIMESTAMP(3),
-  locale VARCHAR(35) NOT NULL DEFAULT 'en'
+  locale VARCHAR(35) NOT NULL DEFAULT 'en',
+  roles JSONB,
+  groups JSONB
 );
 CREATE INDEX web_pages_link_idx ON web_pages(link);
 CREATE INDEX web_pages_search_idx ON web_pages(searchable);

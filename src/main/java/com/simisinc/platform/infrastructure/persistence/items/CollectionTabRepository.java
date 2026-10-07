@@ -28,10 +28,12 @@ import org.apache.commons.logging.LogFactory;
 
 import com.github.rajkowski.database.AutoRollback;
 import com.github.rajkowski.database.AutoStartTransaction;
+import com.github.rajkowski.database.CastType;
 import com.github.rajkowski.database.DB;
 import com.github.rajkowski.database.DataConstraints;
 import com.github.rajkowski.database.Insert;
 import com.github.rajkowski.database.Update;
+import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.items.Collection;
 import com.simisinc.platform.domain.model.items.CollectionTab;
 
@@ -103,7 +105,8 @@ public class CollectionTabRepository {
         .FIELD("draft", record.getDraft())
         .FIELD("enabled", record.getEnabled())
         .FIELD("page_xml", record.getPageXml())
-        .FIELD("role_id_list", record.getRoleIdList());
+        .FIELD_UNLESS_NULL("roles", JsonCommand.toJsonArray(record.getRoles()), CastType.JSONB)
+        .FIELD_UNLESS_NULL("groups", JsonCommand.toJsonArray(record.getGroups()), CastType.JSONB);
     // In a transaction (use the existing connection)
     record.setId(insert.execute(connection));
     if (record.getId() == -1) {
@@ -124,7 +127,8 @@ public class CollectionTabRepository {
         .SET("draft", record.getDraft())
         .SET("enabled", record.getEnabled())
         .SET("page_xml", record.getPageXml())
-        .SET("role_id_list", record.getRoleIdList())
+        .SET("roles", JsonCommand.toJsonArray(record.getRoles()), CastType.JSONB)
+        .SET("groups", JsonCommand.toJsonArray(record.getGroups()), CastType.JSONB)
         .WHERE("tab_id = ?", record.getId());
     // In a transaction (use the existing connection)
     if (update.execute(connection).booleanValue()) {
@@ -155,8 +159,9 @@ public class CollectionTabRepository {
       record.setDraft(rs.getBoolean("draft"));
       record.setEnabled(rs.getBoolean("enabled"));
       record.setPageXml(rs.getString("page_xml"));
-      record.setRoleIdList(rs.getString("role_id_list"));
       record.setPageImageUrl(rs.getString("page_image_url"));
+      record.setRoles(JsonCommand.fromJsonArray(rs.getString("roles")));
+      record.setGroups(JsonCommand.fromJsonArray(rs.getString("groups")));
       return record;
     } catch (SQLException se) {
       LOG.error("buildRecord", se);

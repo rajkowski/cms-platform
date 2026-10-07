@@ -113,10 +113,11 @@ CREATE TABLE collection_tabs (
   draft BOOLEAN DEFAULT false,
   enabled BOOLEAN DEFAULT true,
   page_xml TEXT,
-  role_id_list VARCHAR(100) DEFAULT NULL,
-  page_image_url VARCHAR(512)
+  page_image_url VARCHAR(512),
+  roles JSONB,
+  groups JSONB
 );
-CREATE INDEX col_tabs_col_idx ON collections(collection_id);
+CREATE INDEX col_tabs_col_idx ON collection_tabs(collection_id);
 
 CREATE TABLE collection_tab_groups (
   allowed_id BIGSERIAL PRIMARY KEY,
@@ -125,4 +126,5 @@ CREATE TABLE collection_tab_groups (
   group_id BIGINT REFERENCES groups(group_id) NOT NULL
 );
 CREATE INDEX col_tab_group_col_idx ON collection_tab_groups(collection_id);
+CREATE INDEX col_tab_group_tab_idx ON collection_tab_groups(tab_id);
 CREATE INDEX col_tab_group_grp_idx ON collection_tab_groups(group_id);

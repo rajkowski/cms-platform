@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,9 +40,10 @@ public class MenuTab extends Entity {
   private String pageDescription = null;
   private boolean draft = false;
   private boolean enabled = false;
-  private String[] roleIdList = null;
   private String comments = null;
   private boolean active = false;
+  private String[] roles = null;
+  private String[] groups = null;
 
   private List<MenuItem> menuItemList = null;
 
@@ -128,14 +130,6 @@ public class MenuTab extends Entity {
     this.enabled = enabled;
   }
 
-  public String[] getRoleIdList() {
-    return roleIdList;
-  }
-
-  public void setRoleIdList(String[] roleIdList) {
-    this.roleIdList = roleIdList;
-  }
-
   public String getComments() {
     return comments;
   }
@@ -158,5 +152,21 @@ public class MenuTab extends Entity {
 
   public void setActive(boolean active) {
     this.active = active;
+  }
+
+  public String[] getRoles() {
+    return roles;
+  }
+
+  public void setRoles(String[] roles) {
+    this.roles = roles;
+  }
+
+  public String[] getGroups() {
+    return groups;
+  }
+
+  public void setGroups(String[] groups) {
+    this.groups = groups;
   }
 }

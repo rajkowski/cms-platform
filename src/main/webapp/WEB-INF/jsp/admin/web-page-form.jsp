@@ -176,6 +176,42 @@
           </label>
         </div>
       </label>
+
+      <c:if test="${!'/'.equals(webPage.link)}">
+        <div class="grid-x grid-padding-x">
+          <div class="small-12 medium-6 cell">
+            <label>Select roles which can access this page
+              <select name="roles" multiple size="8">
+                <c:set var="guestSelected" value="false" />
+                <c:set var="usersSelected" value="false" />
+                <c:forEach items="${webPage.roles}" var="r">
+                  <c:if test="${r eq 'guest'}"><c:set var="guestSelected" value="true" /></c:if>
+                  <c:if test="${r eq 'users'}"><c:set var="usersSelected" value="true" /></c:if>
+                </c:forEach>
+                <option value="guest"<c:if test="${guestSelected}"> selected</c:if>>Logged Out Users</option>
+                <option value="users"<c:if test="${usersSelected}"> selected</c:if>>Logged In Users</option>
+                <c:forEach items="${roleList}" var="role">
+                  <c:set var="roleSelected" value="false" />
+                  <c:forEach items="${webPage.roles}" var="r"><c:if test="${r eq role.code}"><c:set var="roleSelected" value="true" /></c:if></c:forEach>
+                  <option value="<c:out value="${role.code}" />"<c:if test="${roleSelected}"> selected</c:if>><c:out value="${role.title}" /></option>
+                </c:forEach>
+              </select>
+            </label>
+          </div>
+          <div class="small-12 medium-6 cell">
+            <label>Select groups which can access this page
+              <select name="groups" multiple size="8">
+                <c:forEach items="${groupList}" var="group">
+                  <c:set var="groupSelected" value="false" />
+                  <c:forEach items="${webPage.groups}" var="g"><c:if test="${g eq group.uniqueId}"><c:set var="groupSelected" value="true" /></c:if></c:forEach>
+                  <option value="<c:out value="${group.uniqueId}" />"<c:if test="${groupSelected}"> selected</c:if>><c:out value="${group.name}" /></option>
+                </c:forEach>
+              </select>
+            </label>
+          </div>
+        </div>
+      </c:if>
+
       <small>Open Graph Image</small>
       <img id="imageUrlPreview" src="<c:out value="${webPage.imageUrl}"/>" style="max-height: 150px; max-width: 150px"/>
       <input type="text" class="no-gap" placeholder="Local Image URL" id="imageUrl" name="imageUrl" value="<c:out value="${webPage.imageUrl}"/>">

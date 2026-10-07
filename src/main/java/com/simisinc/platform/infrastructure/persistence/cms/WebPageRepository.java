@@ -228,17 +228,16 @@ public class WebPageRepository {
         .FIELD("show_in_sitemap", record.getShowInSitemap())
         .FIELD("created_by", record.getCreatedBy())
         .FIELD("modified_by", record.getModifiedBy())
-        .FIELD("role_id_list", record.getRoleIdList())
         .FIELD("page_xml", record.getPageXml())
         .FIELD("draft_page_xml", StringUtils.trimToNull(record.getDraftPageXml()))
         .FIELD("comments", record.getComments())
         .FIELD("page_image_url", record.getImageUrl())
         .FIELD("has_redirect", StringUtils.trimToNull(record.getRedirectUrl()) != null)
         .FIELD("sitemap_priority", record.getSitemapPriority())
-        .FIELD("sitemap_changefreq", StringUtils.trimToNull(record.getSitemapChangeFrequency()));
-    if (record.getTags() != null && record.getTags().length > 0) {
-      insert.FIELD("tags", JsonCommand.toJsonArray(record.getTags()), CastType.JSONB);
-    }
+        .FIELD("sitemap_changefreq", StringUtils.trimToNull(record.getSitemapChangeFrequency()))
+        .FIELD_UNLESS_NULL("tags", JsonCommand.toJsonArray(record.getTags()), CastType.JSONB)
+        .FIELD_UNLESS_NULL("roles", JsonCommand.toJsonArray(record.getRoles()), CastType.JSONB)
+        .FIELD_UNLESS_NULL("groups", JsonCommand.toJsonArray(record.getGroups()), CastType.JSONB);
     record.setId(insert.execute());
     if (record.getId() == Insert.NO_GENERATED_KEY) {
       LOG.error("An id was not set!");
@@ -267,19 +266,16 @@ public class WebPageRepository {
         .SET("show_in_sitemap", record.getShowInSitemap())
         .SET("modified", new Timestamp(System.currentTimeMillis()))
         .SET("modified_by", record.getModifiedBy())
-        .SET("role_id_list", record.getRoleIdList())
         .SET("page_xml", record.getPageXml())
         .SET("draft_page_xml", StringUtils.trimToNull(record.getDraftPageXml()))
         .SET("comments", record.getComments())
         .SET("page_image_url", record.getImageUrl())
         .SET("has_redirect", StringUtils.trimToNull(record.getRedirectUrl()) != null)
         .SET("sitemap_priority", record.getSitemapPriority())
-        .SET("sitemap_changefreq", StringUtils.trimToNull(record.getSitemapChangeFrequency()));
-    if (record.getTags() != null && record.getTags().length > 0) {
-      update.SET("tags", JsonCommand.toJsonArray(record.getTags()), CastType.JSONB);
-    } else {
-      update.SET("tags", (String) null, CastType.JSONB);
-    }
+        .SET("sitemap_changefreq", StringUtils.trimToNull(record.getSitemapChangeFrequency()))
+        .SET("tags", JsonCommand.toJsonArray(record.getTags()), CastType.JSONB)
+        .SET("roles", JsonCommand.toJsonArray(record.getRoles()), CastType.JSONB)
+        .SET("groups", JsonCommand.toJsonArray(record.getGroups()), CastType.JSONB);
     update.WHERE("web_page_id = ?", record.getId());
     if (update.execute().booleanValue()) {
       if (previousRecord != null) {
@@ -439,7 +435,6 @@ public class WebPageRepository {
       record.setCreated(rs.getTimestamp("created"));
       record.setModified(rs.getTimestamp("modified"));
       record.setModifiedBy(rs.getLong("modified_by"));
-      record.setRoleIdList(rs.getString("role_id_list"));
       record.setPageXml(rs.getString("page_xml"));
       record.setDraftPageXml(rs.getString("draft_page_xml"));
       record.setComments(rs.getString("comments"));
@@ -449,6 +444,8 @@ public class WebPageRepository {
       record.setSitemapPriority(rs.getBigDecimal("sitemap_priority"));
       record.setSitemapChangeFrequency(rs.getString("sitemap_changefreq"));
       record.setTags(JsonCommand.fromJsonArray(rs.getString("tags")));
+      record.setRoles(JsonCommand.fromJsonArray(rs.getString("roles")));
+      record.setGroups(JsonCommand.fromJsonArray(rs.getString("groups")));
       if (DB.hasColumn(rs, "highlight")) {
         record.setHighlight(rs.getString("highlight"));
       } else {

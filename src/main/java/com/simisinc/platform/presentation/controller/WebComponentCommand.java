@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +22,8 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import com.zeroio.platform.presentation.controller.RoleConstants;
 
 /**
  * Verifies a user's access to the specified web component
@@ -50,17 +53,21 @@ public class WebComponentCommand implements Serializable {
   }
 
   public static boolean allowsUser(List<String> roles, List<String> groups, UserSession userSession) {
-    if (roles.isEmpty() && groups.isEmpty()) {
+    return allowsUser(roles.toArray(new String[0]), groups.toArray(new String[0]), userSession);
+  }
+
+  public static boolean allowsUser(String[] roles, String[] groups, UserSession userSession) {
+    if (roles.length == 0 && groups.length == 0) {
       return true;
     }
 
     // Roles can be for a user that is either logged in/out
-    boolean roleAllowed = roles.isEmpty();
+    boolean roleAllowed = roles.length == 0;
     for (String role : roles) {
-      if ("guest".equals(role) && !userSession.isLoggedIn()) {
+      if (RoleConstants.GUEST.equals(role) && !userSession.isLoggedIn()) {
         roleAllowed = true;
       }
-      if ("users".equals(role) && userSession.isLoggedIn()) {
+      if (RoleConstants.LOGGED_IN_USER.equals(role) && userSession.isLoggedIn()) {
         roleAllowed = true;
       }
       if (userSession.hasRole(role)) {
@@ -69,7 +76,7 @@ public class WebComponentCommand implements Serializable {
     }
 
     // Groups are for logged-in users
-    boolean groupAllowed = groups.isEmpty();
+    boolean groupAllowed = groups.length == 0;
     for (String group : groups) {
       if (userSession.hasGroup(group)) {
         groupAllowed = true;
