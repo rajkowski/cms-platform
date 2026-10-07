@@ -106,8 +106,8 @@ public class MenuTabRepository {
         .FIELD("draft", record.isDraft())
         .FIELD("enabled", record.isEnabled())
         .FIELD("comments", StringUtils.trimToNull(record.getComments()))
-        .FIELD_UNLESS_NULL("roles", JsonCommand.toJsonArray(record.getRoles()))
-        .FIELD_UNLESS_NULL("groups", JsonCommand.toJsonArray(record.getGroups()))
+        .FIELD_UNLESS_NULL("roles", JsonCommand.toJsonArray(record.getRoles()), CastType.JSONB)
+        .FIELD_UNLESS_NULL("groups", JsonCommand.toJsonArray(record.getGroups()), CastType.JSONB)
         .execute();
     record.setId(id);
     if (record.getId() == -1) {
