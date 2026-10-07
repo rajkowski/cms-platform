@@ -293,7 +293,10 @@ public class WebRequestFilter implements Filter {
             allowsGuestAccess = true;
           } else {
             WebPage webPage = LoadWebPageCommand.loadByLink(resource);
-            if (webPage != null && webPage.getRoles() != null && Strings.CI.containsAny(RoleConstants.GUEST, webPage.getRoles())) {
+            if (webPage != null
+                && webPage.getRoles() != null
+                && Strings.CI.equalsAny(RoleConstants.GUEST, webPage.getRoles())
+                && (webPage.getGroups() == null || webPage.getGroups().length == 0)) {
               allowsGuestAccess = true;
             }
           }
