@@ -53,9 +53,7 @@ public class ValidateUserAccessToWebPageCommand {
       // The page specifies roles or groups that are allowed to access it
       if ((webPage.getRoles() != null && webPage.getRoles().length > 0)
           || (webPage.getGroups() != null && webPage.getGroups().length > 0)) {
-        if (WebComponentCommand.allowsUser(webPage.getRoles(), webPage.getGroups(), userSession)) {
-          return true;
-        }
+        return (WebComponentCommand.allowsUser(webPage.getRoles(), webPage.getGroups(), userSession));
       }
     }
 
