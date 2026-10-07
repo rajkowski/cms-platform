@@ -57,6 +57,8 @@ public class WebComponentCommand implements Serializable {
   }
 
   public static boolean allowsUser(String[] roles, String[] groups, UserSession userSession) {
+    roles = roles != null ? roles : new String[0];
+    groups = groups != null ? groups : new String[0];
     if (roles.length == 0 && groups.length == 0) {
       return true;
     }
