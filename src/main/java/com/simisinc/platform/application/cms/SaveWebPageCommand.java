@@ -136,7 +136,10 @@ public class SaveWebPageCommand {
     webPage.setSitemapPriority(webPageBean.getSitemapPriority());
     webPage.setSitemapChangeFrequency(webPageBean.getSitemapChangeFrequency());
     webPage.setTags(webPageBean.getTags());
-    if (!"/".equals(webPageBean.getLink())) {
+    if ("/".equals(webPageBean.getLink())) {
+      webPage.setRoles(null);
+      webPage.setGroups(null);
+    } else {
       webPage.setRoles(webPageBean.getRoles());
       webPage.setGroups(webPageBean.getGroups());
     }
