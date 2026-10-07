@@ -47,8 +47,8 @@ public class FileItemDocumentContentCommand {
     }
 
     File file = FileSystemCommand.getFileServerRootPath(fileItem.getFileServerPath());
-    if (!file.exists()) {
-      LOG.warn("File does not exist: " + file.getPath());
+    if (file == null || !file.exists()) {
+      LOG.warn("File does not exist: " + fileItem.getFileServerPath());
       return false;
     }
 
