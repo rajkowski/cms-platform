@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
 
-<project name="CMS Platform" default="build" basedir="." xmlns:jacoco="antlib:org.jacoco.ant">
+<project name="CMS Platform" default="build" basedir="." xmlns:jacoco="antlib:org.jacoco.ant" xmlns:unless="ant:unless">
 
+  <property environment="env" />
   <property name="project" value="cms-platform" />
   <property name="jdk" value="21" />
   <property name="fs" value="${file.separator}"/>
@@ -17,18 +18,18 @@
   <property name="resources.dir" value="${base.dir}/src/main/resources" />
   <property name="web.dir" value="${base.dir}/src/main/webapp" />
   <property name="build.dir" value="${base.dir}/build" />
+  <property name="build.jsp.dir" value="${base.dir}/target/jsp-compiled" />
   <property name="target.dir" value="${base.dir}/target" />
   <property name="out.dir" value="${base.dir}/out" />
   <property name="exploded.dir" value="${out.dir}/exploded/webapps/ROOT" />
-  <property name="exploded.work.dir" value="${out.dir}/exploded-work/ROOT" />
   <property name="custom.dir" value="${base.dir}/web-customizations" />
   <property name="jee.lib.dir" value="${base.dir}/lib/war" />
 
-  <typedef resource="org/apache/catalina/ant/catalina.tasks">
+  <taskdef name="jasper" classname="org.apache.jasper.JspC">
     <classpath>
       <fileset dir="${base.dir}/lib/war" includes="*.jar"/>
     </classpath>
-  </typedef>
+  </taskdef>
 
   <taskdef resource="com/puppycrawl/tools/checkstyle/ant/checkstyle-ant-task.properties">
     <classpath>
@@ -98,6 +99,7 @@
 
   <!-- Compiles the source code -->
   <target name="compile" depends="prepare">
+    <!-- Compile Java source code -->
     <javac srcdir="${src.dir}" source="${jdk}" target="${jdk}"
            destdir="${build.dir}"
            debug="on"
@@ -109,6 +111,47 @@
         <path refid="web.classpath"/>
       </classpath>
     </javac>
+    <!-- Compile JSP files -->
+    <path id="jsp.classpath">
+      <pathelement location="${build.dir}"/>
+      <path refid="web.classpath"/>
+      <fileset dir="${jee.lib.dir}" includes="*.jar"/>
+    </path>
+    <uptodate property="jsp.dependencies.unchanged"
+              targetfile="${build.jsp.dir}/dependencies.checked">
+      <srcfiles dir="${web.dir}" includes="**/*.jspf,**/*.tag,**/*.tagx,**/*.tld,WEB-INF/web.xml"/>
+    </uptodate>
+    <delete dir="${build.jsp.dir}/src" unless:set="jsp.dependencies.unchanged"/>
+    <delete dir="${build.jsp.dir}/classes" unless:set="jsp.dependencies.unchanged"/>
+    <mkdir dir="${build.jsp.dir}/src"/>
+    <mkdir dir="${build.jsp.dir}/classes"/>
+    <copy todir="${build.jsp.dir}/webapp" preservelastmodified="true">
+      <fileset dir="${web.dir}">
+        <include name="WEB-INF/**"/>
+        <include name="**/*.jsp"/>
+        <include name="**/*.jspx"/>
+        <include name="**/*.jspf"/>
+        <include name="**/*.tag"/>
+        <include name="**/*.tagx"/>
+      </fileset>
+    </copy>
+    <jasper validateXml="false"
+            failOnError="true"
+            uriroot="${build.jsp.dir}/webapp"
+            classpath="${toString:jsp.classpath}"
+            webXmlFragment="${build.jsp.dir}/generated_web.xml"
+            addWebXmlMappings="true"
+            outputDir="${build.jsp.dir}/src" />
+    <javac srcdir="${build.jsp.dir}/src"
+           destdir="${build.jsp.dir}/classes"
+           source="${jdk}" target="${jdk}"
+           debug="on" debuglevel="lines,vars,source"
+           deprecation="on" optimize="on"
+           includeantruntime="false">
+      <classpath refid="jsp.classpath"/>
+      <include name="**/*.java"/>
+    </javac>
+    <touch file="${build.jsp.dir}/dependencies.checked"/>
   </target>
 
   <target name="jar" depends="compile">
@@ -120,10 +163,8 @@
   <target name="package" depends="clean,jar">
     <mkdir dir="${target.dir}/${project}"/>
     <mkdir dir="${target.dir}/${project}/WEB-INF"/>
-    <mkdir dir="${target.dir}/${project}/WEB-INF/compiled"/>
     <mkdir dir="${target.dir}/${project}/WEB-INF/classes"/>
     <mkdir dir="${target.dir}/${project}/WEB-INF/lib"/>
-    <mkdir dir="${target.dir}/${project}/WEB-INF/jsp"/>
     <!-- Project Jar -->
     <copy file="${target.dir}/${project}.jar"
           todir="${target.dir}/${project}/WEB-INF/lib"
@@ -150,15 +191,14 @@
     </copy>
     <copy todir="${target.dir}/${project}/WEB-INF/classes">
       <fileset dir="${resources.dir}">
-        <include name="**/*.properties"/>
         <include name="**/*.sql"/>
-        <exclude name="jobrunr.properties"/>
-        <exclude name="jobrunr.production.properties"/>
-        <exclude name="simplelogger.properties"/>
-        <exclude name="simplelogger.production.properties"/>
       </fileset>
     </copy>
     <!-- Production setting -->
+    <copy file="${resources.dir}/database.production.properties"
+          tofile="${target.dir}/${project}/WEB-INF/classes/database.properties"
+          overwrite="true"
+          verbose="false"/>
     <copy file="${resources.dir}/jobrunr.production.properties"
           tofile="${target.dir}/${project}/WEB-INF/classes/jobrunr.properties"
           overwrite="true"
@@ -177,6 +217,13 @@
         <include name="fonts/**"/>
         <include name="images/**"/>
         <include name="javascript/**"/>
+        <present targetdir="${custom.dir}/webapp" present="srconly"/>
+      </fileset>
+    </copy>
+    <!-- META-INF context config -->
+    <copy todir="${target.dir}/${project}/META-INF">
+      <fileset dir="${web.dir}/META-INF">
+        <include name="context.xml"/>
       </fileset>
     </copy>
     <!-- Custom Web App Content (optional) -->
@@ -189,44 +236,13 @@
         <include name="javascript/**"/>
       </fileset>
     </copy>
-    <!-- Prepare the JSPs-->
-    <copy todir="${target.dir}/${project}/WEB-INF/jsp">
-      <fileset dir="${web.dir}/WEB-INF/jsp"/>
-    </copy>
-    <!-- Convert the JSPs to Classes -->
-    <jasper validateXml="false"
-            uriroot="${target.dir}/${project}"
-            webXmlFragment="${target.dir}/${project}/WEB-INF/generated_web.xml"
-            addWebXmlMappings="true"
-            outputDir="${target.dir}/${project}/WEB-INF/src" />
-    <!-- Compile the JSPs -->
-    <javac destdir="${target.dir}/${project}/WEB-INF/compiled" source="${jdk}" target="${jdk}"
-           optimize="on" debug="on" debuglevel="lines,vars,source" deprecation="on"
-           srcdir="${target.dir}/${project}/WEB-INF/src"
-           excludes="**/*.smap"
-           includeantruntime="false">
-      <classpath>
-        <pathelement location="${target.dir}/${project}/WEB-INF/classes"/>
-        <fileset dir="${target.dir}/${project}/WEB-INF/lib">
-          <include name="*.jar"/>
-        </fileset>
-        <pathelement location="${jee.lib.dir}"/>
-        <fileset dir="${jee.lib.dir}">
-          <include name="*.jar"/>
-        </fileset>
-      </classpath>
-      <include name="**" />
-      <exclude name="tags/**" />
-    </javac>
+    <copy file="${build.jsp.dir}/webapp/WEB-INF/web.xml"
+          tofile="${target.dir}/${project}/WEB-INF/web.xml"
+          overwrite="true"/>
     <!-- JAR the JSPs -->
     <jar jarfile="${target.dir}/${project}/WEB-INF/lib/${project}-jsp.jar"
-         basedir="${target.dir}/${project}/WEB-INF/compiled" includes="**/*.class" />
+         basedir="${build.jsp.dir}/classes" includes="**/*.class" />
     <!-- Cleanup -->
-    <delete>
-      <fileset dir="${target.dir}/${project}/WEB-INF/jsp"/>
-      <fileset dir="${target.dir}/${project}/WEB-INF/src"/>
-      <fileset dir="${target.dir}/${project}/WEB-INF/compiled"/>
-    </delete>
     <delete includeemptydirs="true">
       <fileset dir="${target.dir}/${project}"  >
         <and>
@@ -240,7 +256,7 @@
          basedir="${target.dir}/${project}"
          compress="true"
          manifest="${base.dir}/src/main/webapp/META-INF/MANIFEST.MF"
-         webxml="${base.dir}/src/main/webapp/WEB-INF/web.xml"/>
+         webxml="${target.dir}/${project}/WEB-INF/web.xml"/>
     <!-- Create a checksum -->
     <checksum file="${target.dir}/${project}.war" algorithm="SHA-256" fileext=".sha256" pattern="{0} *{1}"/>
     <!-- Write out a version file to go with the .war -->
@@ -250,27 +266,66 @@
   <target name="deploy" depends="webapp" />
 
   <target name="webapp" depends="compile">
-    <delete dir="${exploded.work.dir}"/>
-    <mkdir dir="${exploded.work.dir}"/>
-    <mkdir dir="${exploded.work.dir}/WEB-INF"/>
-    <mkdir dir="${exploded.work.dir}/WEB-INF/classes"/>
-    <mkdir dir="${exploded.work.dir}/WEB-INF/lib"/>
-    <mkdir dir="${exploded.work.dir}/WEB-INF/jsp"/>
-    <!-- Project Classes -->
-    <copy todir="${exploded.work.dir}/WEB-INF/classes" preservelastmodified="true">
+    <!-- Prepare exploded webapp directory -->
+    <tstamp>
+      <format property="logs.cleanup.cutoff" pattern="MM/dd/yyyy hh:mm a" offset="-7" unit="day" />
+    </tstamp>
+    <mkdir dir="${out.dir}/exploded/conf"/>
+    <resourcecount property="exploded.conf.file.count">
+      <fileset dir="${out.dir}/exploded/conf" defaultexcludes="no"/>
+    </resourcecount>
+    <condition property="skip.tomcat.conf.copy">
+      <or>
+        <not>
+          <equals arg1="${exploded.conf.file.count}" arg2="0"/>
+        </not>
+        <not>
+          <available file="${env.CATALINA_HOME}/conf" type="dir"/>
+        </not>
+      </or>
+    </condition>
+    <copy todir="${out.dir}/exploded/conf" preservelastmodified="true" unless:set="skip.tomcat.conf.copy">
+      <fileset dir="${env.CATALINA_HOME}/conf" erroronmissingdir="false"/>
+    </copy>
+    <mkdir dir="${out.dir}/exploded/logs"/>
+    <delete>
+      <fileset dir="${out.dir}/exploded/logs">
+        <date datetime="${logs.cleanup.cutoff}" when="before" />
+        <type type="file" />
+      </fileset>
+    </delete>
+    <mkdir dir="${out.dir}/exploded/work"/>
+    <!-- Each sync copies only changed files and removes stale ones, directly into the exploded dir -->
+    <mkdir dir="${exploded.dir}/WEB-INF/classes"/>
+    <mkdir dir="${exploded.dir}/WEB-INF/lib"/>
+    <mkdir dir="${exploded.dir}/WEB-INF/jsp"/>
+    <!-- Project Classes and resources -->
+    <sync todir="${exploded.dir}/WEB-INF/classes" overwrite="false" verbose="true">
       <fileset dir="${build.dir}">
         <include name="**"/>
       </fileset>
-    </copy>
-    <!-- Dependency Libraries -->
-    <copy todir="${exploded.work.dir}/WEB-INF/lib" flatten="true" preservelastmodified="true">
-      <fileset dir="${lib.dir}">
-        <include name="**/*.jar"/>
+      <fileset dir="${resources.dir}">
+        <include name="**/*.properties"/>
+        <include name="**/*.sql"/>
+        <exclude name="database.production.properties"/>
+        <exclude name="jobrunr.production.properties"/>
+        <exclude name="simplelogger.production.properties"/>
       </fileset>
-    </copy>
-    <!-- Resources -->
-    <copy todir="${exploded.work.dir}/WEB-INF" preservelastmodified="true">
+    </sync>
+    <!-- Dependency Libraries -->
+    <sync todir="${exploded.dir}/WEB-INF/lib" overwrite="false" verbose="true">
+      <fileset dir="${lib.dir}">
+        <include name="*.jar"/>
+      </fileset>
+    </sync>
+    <!-- JSPs -->
+    <sync todir="${exploded.dir}/WEB-INF/jsp" overwrite="false" verbose="true">
+      <fileset dir="${web.dir}/WEB-INF/jsp"/>
+    </sync>
+    <!-- WEB-INF resources -->
+    <sync todir="${exploded.dir}/WEB-INF" overwrite="false" verbose="true">
       <fileset dir="${web.dir}/WEB-INF">
+        <exclude name="jsp/**"/>
         <include name="**/*.html"/>
         <include name="**/*.json"/>
         <include name="**/*.xml"/>
@@ -282,28 +337,14 @@
         <include name="**/*.cedar"/>
         <include name="**/*.cedarschema"/>
       </fileset>
-    </copy>
-    <copy todir="${exploded.work.dir}/WEB-INF/classes" preservelastmodified="true">
-      <fileset dir="${resources.dir}">
-        <include name="**/*.properties"/>
-        <include name="**/*.sql"/>
-        <exclude name="jobrunr.properties"/>
-        <exclude name="jobrunr.production.properties"/>
-        <exclude name="simplelogger.properties"/>
-        <exclude name="simplelogger.production.properties"/>
-      </fileset>
-    </copy>
-    <!-- Developer setting -->
-    <copy file="${resources.dir}/jobrunr.properties"
-          tofile="${exploded.work.dir}/WEB-INF/classes/jobrunr.properties"
-          verbose="false"
-          preservelastmodified="true"/>
-    <copy file="${resources.dir}/simplelogger.properties"
-          tofile="${exploded.work.dir}/WEB-INF/classes/simplelogger.properties"
-          verbose="false"
-          preservelastmodified="true"/>
+      <preserveintarget>
+        <include name="classes/**"/>
+        <include name="lib/**"/>
+        <include name="jsp/**"/>
+      </preserveintarget>
+    </sync>
     <!-- Web -->
-    <copy todir="${exploded.work.dir}" preservelastmodified="true">
+    <sync todir="${exploded.dir}" overwrite="false" verbose="true">
       <fileset dir="${web.dir}">
         <include name="robots.txt"/>
         <include name="css/**"/>
@@ -311,9 +352,17 @@
         <include name="images/**"/>
         <include name="javascript/**"/>
       </fileset>
-    </copy>
+      <preserveintarget>
+        <include name="WEB-INF/**"/>
+        <include name="favicon.ico"/>
+        <include name="css/**"/>
+        <include name="fonts/**"/>
+        <include name="images/**"/>
+        <include name="javascript/**"/>
+      </preserveintarget>
+    </sync>
     <!-- Custom Web App Content (optional) -->
-    <copy todir="${exploded.work.dir}" preservelastmodified="true" overwrite="true" failonerror="false">
+    <copy todir="${exploded.dir}" preservelastmodified="true" overwrite="false" failonerror="false">
       <fileset dir="${custom.dir}/webapp">
         <include name="favicon.ico"/>
         <include name="css/**"/>
@@ -322,27 +371,6 @@
         <include name="javascript/**"/>
       </fileset>
     </copy>
-    <!-- Prepare the JSPs-->
-    <copy todir="${exploded.work.dir}/WEB-INF/jsp" preservelastmodified="true">
-      <fileset dir="${web.dir}/WEB-INF/jsp"/>
-    </copy>
-    <!-- Cleanup -->
-    <!-- <delete verbose="true" includeemptydirs="true">
-      <fileset dir="${exploded.work.dir}"  >
-        <and>
-          <size value="0"/>
-          <type type="dir"/>
-        </and>
-      </fileset>
-    </delete> -->
-    <echo message=""/>
-    <!-- Sync with the exploded directory -->
-    <mkdir dir="${exploded.dir}"/>
-    <sync todir="${exploded.dir}">
-      <fileset dir="${exploded.work.dir}">
-        <include name="**"/>
-      </fileset>
-    </sync>
     <tstamp prefix="end">
       <format property="val" pattern="yyyy-MM-dd h:mm aa" />
     </tstamp>
