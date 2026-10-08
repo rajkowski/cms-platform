@@ -17,10 +17,10 @@ The following steps will guide you through the developer tools and environment s
 2. Install [Apache Ant 1.10+](https://ant.apache.org) and configure your terminal's path with ANT_HOME/bin
 3. Install [Apache Tomcat 9.x](https://tomcat.apache.org/download-90.cgi) into a directory of your choice
 4. Install the PostgreSQL database server – natively on MacOS with [Postgres.app](https://postgresapp.com) or with a Docker container like (postgis/postgis:18-3.6-alpine)
-5. Set environment variables for `CATALINA_HOME` to tomcat, `CATALINA_BASE` to the source code's working exploded directory, `CMS_PATH` to a new folder for the CMS user attachments, and `DB_NAME` for the PostgreSQL database; see example below...
+5. Set environment variables for `CATALINA_HOME` to tomcat, `CMS_PATH` to a new folder for the CMS user attachments, and `DB_NAME` for the PostgreSQL database; see example below...
 6. Clone the CMS Platform repo – `git clone https://github.com/rajkowski/cms-platform.git`
 7. In the repo directory execute `ant deploy` – this compiles and updates code and library changes in a working Tomcat exploded webapp directory `./out/exploded/webapps/ROOT`
-8. Start Tomcat and the web application using Tomcat's run command: `bin/catalina.sh run` or the included `run.sh`
+8. Start Tomcat and the web application using the included `run.sh` script
 
 Minimal Environment Variables:
 
