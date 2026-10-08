@@ -2,7 +2,7 @@
 id: customization
 title: Customization
 # prettier-ignore
-description: SimIS CMS topics for customization
+description: CMS Platform topics for customization
 ---
 
 ## Content Management System

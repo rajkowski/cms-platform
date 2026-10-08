@@ -5,7 +5,7 @@ title: Project Structure
 description: SimIS CMS frontend and backend details
 ---
 
-SimIS CMS is driven by a custom web framework which facilitates dynamic pages, layouts, components called widgets, preferences, user roles and groups.
+CMS Platform is driven by a custom web framework which facilitates dynamic pages, layouts, components called widgets, preferences, user roles and groups.
 
 The key concepts are:
 
