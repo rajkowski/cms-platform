@@ -47,6 +47,10 @@
     <format property="val" pattern="yyyy-MM-dd h:mm aa" />
   </tstamp>
 
+  <target name="check-catalina-home">
+    <fail unless="env.CATALINA_HOME">CATALINA_HOME environment variable must be set to a Tomcat directory before running this script</fail>
+  </target>
+
   <!-- Version for scripts to use -->
   <target name="version">
     <echo message="Project: ${ant.project.name}"/>
@@ -263,9 +267,9 @@
     <echo file="${target.dir}/VERSION" message="${version}"/>
   </target>
 
-  <target name="deploy" depends="webapp" />
+  <target name="deploy" depends="webapp" />  
 
-  <target name="webapp" depends="compile">
+  <target name="webapp" depends="check-catalina-home,compile">
     <!-- Prepare exploded webapp directory -->
     <tstamp>
       <format property="logs.cleanup.cutoff" pattern="MM/dd/yyyy hh:mm a" offset="-7" unit="day" />
