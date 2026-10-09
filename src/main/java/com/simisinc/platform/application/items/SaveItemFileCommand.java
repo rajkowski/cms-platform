@@ -167,7 +167,8 @@ public class SaveItemFileCommand {
       itemFolder.setItemId(fileItemBean.getItemId());
       itemFolder.setCreatedBy(fileItemBean.getCreatedBy());
       itemFolder.setModifiedBy(fileItemBean.getCreatedBy());
-      itemFolder.setAllowsGuests(false);
+      itemFolder.setAllowsGuests(true);
+      itemFolder.setGuestPrivacyType(3000);
       itemFolder.setFolderGroupList(folderGroupList);
       itemFolder = SaveItemFolderCommand.saveFolder(itemFolder);
     }
