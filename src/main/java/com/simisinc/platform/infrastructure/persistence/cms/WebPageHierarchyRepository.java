@@ -160,7 +160,7 @@ public class WebPageHierarchyRepository {
   private static WebPageHierarchy add(WebPageHierarchy record) {
     Insert insert = DB.INSERT().INTO(TABLE_NAME)
         .FIELD(COL_WEB_PAGE_ID, record.getWebPageId())
-        .FIELD(COL_PARENT_PAGE_ID, record.getParentPageId() != null ? record.getParentPageId() : -1L)
+        .FIELD(COL_PARENT_PAGE_ID, record.getParentPageId())
         .FIELD(COL_SORT_ORDER, record.getSortOrder())
         .FIELD(COL_DEPTH, record.getDepth())
         .FIELD(COL_PATH, StringUtils.trimToNull(record.getPath()))
@@ -180,7 +180,7 @@ public class WebPageHierarchyRepository {
   private static WebPageHierarchy add(Connection connection, WebPageHierarchy record) {
     DB.INSERT().INTO(TABLE_NAME)
         .FIELD(COL_WEB_PAGE_ID, record.getWebPageId())
-        .FIELD(COL_PARENT_PAGE_ID, record.getParentPageId() != null ? record.getParentPageId() : -1L)
+        .FIELD(COL_PARENT_PAGE_ID, record.getParentPageId())
         .FIELD(COL_SORT_ORDER, record.getSortOrder())
         .FIELD(COL_DEPTH, record.getDepth())
         .FIELD(COL_PATH, StringUtils.trimToNull(record.getPath()))
@@ -198,7 +198,7 @@ public class WebPageHierarchyRepository {
    */
   private static WebPageHierarchy update(WebPageHierarchy record) {
     Update update = DB.UPDATE(TABLE_NAME)
-        .SET(COL_PARENT_PAGE_ID, record.getParentPageId() != null ? record.getParentPageId() : -1L)
+        .SET(COL_PARENT_PAGE_ID, record.getParentPageId())
         .SET(COL_SORT_ORDER, record.getSortOrder())
         .SET(COL_DEPTH, record.getDepth())
         .SET(COL_PATH, StringUtils.trimToNull(record.getPath()))
@@ -220,7 +220,7 @@ public class WebPageHierarchyRepository {
   private static WebPageHierarchy update(Connection connection, WebPageHierarchy record) {
     try {
       Update update = DB.UPDATE(TABLE_NAME)
-          .SET(COL_PARENT_PAGE_ID, record.getParentPageId() != null ? record.getParentPageId() : -1L)
+          .SET(COL_PARENT_PAGE_ID, record.getParentPageId())
           .SET(COL_SORT_ORDER, record.getSortOrder())
           .SET(COL_DEPTH, record.getDepth())
           .SET(COL_PATH, StringUtils.trimToNull(record.getPath()))
