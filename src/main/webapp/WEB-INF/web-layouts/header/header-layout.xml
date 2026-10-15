@@ -27,7 +27,6 @@
       <column class="header-actions">
         <widget name="searchControl"><minChars>3</minChars><debounceMs>300</debounceMs></widget>
         <widget name="headerControl"><type>askAI</type></widget>
-        <!-- <widget name="menu"><links><link name="Ask AI" link="/ask-ai" icon="fa-brain" /></links></widget> -->
         <!-- <widget name="menu"><links><link name="Calendar" link="/calendar" icon="fa-calendar" /></links></widget> -->
         <!-- <widget name="menu"><links><link name="Directory" link="/directory" icon="fa-address-book" /></links></widget> -->
         <widget name="headerControl"><type>region</type></widget>
