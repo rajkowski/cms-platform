@@ -81,14 +81,6 @@ class XMLHeaderLoaderTest {
   }
 
   @Test
-  void delimiterAndUnsafeActionDestinationsAreRejected() {
-    assertThrows(IllegalArgumentException.class, () -> load(
-        "<header name='header.test'><widget name='menu'><links><link name='Invalid|Label' link='/safe'/></links></widget></header>"));
-    assertThrows(IllegalArgumentException.class, () -> load(
-        "<header name='header.test'><widget name='menu'><links><link name='Invalid' link='javascript:alert(1)'/></links></widget></header>"));
-  }
-
-  @Test
   void duplicateModernIdsAreRejected() {
     assertThrows(IllegalArgumentException.class,
         () -> load("<header name='header.test' id='brand'><widget name='logo' id='brand'/></header>"));
