@@ -80,10 +80,10 @@ public class TenantAwareJobRunner {
         WorkspaceContextManager.withWorkspace(workspace.getId(), workspace.getCanonicalDomain(),
             () -> workspaceWork.execute(workspace));
         outcomes.add(new Outcome(workspace.getId(), true, null));
-        LOG.trace("Completed background work for workspace " + workspace.getId());
+        LOG.trace("Completed background work for workspace: " + workspace.getUniqueId());
       } catch (Exception e) {
         outcomes.add(new Outcome(workspace.getId(), false, e.getMessage()));
-        LOG.error("Background work failed for workspace " + workspace.getId(), e);
+        LOG.error("Background work failed for workspace: " + workspace.getUniqueId(), e);
       } finally {
         WorkspaceContextManager.clear();
       }

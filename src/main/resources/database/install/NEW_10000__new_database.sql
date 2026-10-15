@@ -417,6 +417,7 @@ CREATE INDEX idx_permission_group_members_group_code ON permission_group_members
 
 CREATE TABLE IF NOT EXISTS workspaces (
   workspace_id BIGSERIAL PRIMARY KEY,
+  workspace_unique_id VARCHAR(255) UNIQUE NOT NULL,
   name VARCHAR(255) NOT NULL,
   site_url VARCHAR(512) NOT NULL,
   canonical_domain VARCHAR(255) NOT NULL UNIQUE,
@@ -431,6 +432,7 @@ CREATE TABLE IF NOT EXISTS workspaces (
   department VARCHAR(255),
   description TEXT
 );
+CREATE INDEX workspace_unique_id_idx ON workspaces(workspace_unique_id);
 
 CREATE TABLE IF NOT EXISTS workspace_domains (
   workspace_domain_id BIGSERIAL PRIMARY KEY,

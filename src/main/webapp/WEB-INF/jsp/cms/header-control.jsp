@@ -102,7 +102,7 @@
           <div class="user-menu-section-title"><c:out value="${headerControlLabel}" /></div>
           <c:forEach items="${headerControlWorkspaces}" var="workspace">
             <c:set var="isCurrentWorkspace" value="${workspace.id eq headerControlCurrentWorkspaceId}" />
-            <a class="user-menu-item" href="<c:out value='${headerControlWorkspaceLaunchBase}'/>/workspace-launch?workspaceId=${workspace.id}"<c:if test="${isCurrentWorkspace}"> aria-current="true"</c:if>>
+            <a class="user-menu-item" href="<c:out value='${headerControlWorkspaceLaunchBase}'/>/workspace-launch?workspace=${workspace.uniqueId}"<c:if test="${isCurrentWorkspace}"> aria-current="true"</c:if>>
               <i class="${font:fas()} ${isCurrentWorkspace ? 'fa-check' : 'fa-cube'}" aria-hidden="true"></i>
               <span class="user-menu-item-content"><span class="user-menu-item-label"><c:out value="${workspace.name}" /></span></span>
               <%-- <c:if test="${isCurrentWorkspace}"><span class="user-menu-item-desc">Current</span></c:if> --%>

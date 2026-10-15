@@ -78,10 +78,7 @@ import com.simisinc.platform.domain.model.items.Collection;
 import com.simisinc.platform.domain.model.items.Item;
 import com.simisinc.platform.presentation.widgets.cms.WebContainerContext;
 import com.zeroio.platform.application.cms.RenderMainMenuCommand;
-import com.zeroio.platform.application.cms.WorkspaceResolutionCommand;
-import com.zeroio.platform.application.login.WorkspaceAccessCommand;
 import com.zeroio.platform.domain.model.Region;
-import com.zeroio.platform.domain.model.tenant.Workspace;
 import com.zeroio.platform.infrastructure.persistence.RegionRepository;
 
 /**
@@ -96,7 +93,6 @@ import com.zeroio.platform.infrastructure.persistence.RegionRepository;
 public class PageServlet extends HttpServlet {
 
   private static Log LOG = LogFactory.getLog(PageServlet.class);
-  public static final String WORKSPACE_SELECTOR_PATH = "/workspace-selector";
   public static final String WORKSPACE_LAUNCH_RESOURCE = "/workspace-launch";
   public static final String WORKSPACE_HANDOFF_RESOURCE = "/workspace-handoff";
 
@@ -362,21 +358,6 @@ public class PageServlet extends HttpServlet {
       PageRequest pageRequest = new PageRequest(request);
       if (LOG.isDebugEnabled()) {
         LOG.debug("Using resource: " + pageRequest.getPagePath());
-      }
-
-      // If this is the main tenant, and user requests workspace selection, handle it here
-      if (WORKSPACE_SELECTOR_PATH.equals(pageRequest.getPagePath())
-          && WorkspaceResolutionCommand.isDefaultWorkspace(request.getServerName())) {
-        UserSession selectorUserSession = (UserSession) request.getSession().getAttribute(SessionConstants.USER);
-        if (selectorUserSession != null && selectorUserSession.isLoggedIn()) {
-          LOG.debug("Finding authorized workspaces for user: " + selectorUserSession.getUserId());
-          List<Workspace> workspaces = WorkspaceAccessCommand.findAuthorizedWorkspaces(selectorUserSession.getUserId());
-          request.setAttribute("workspaceList", workspaces);
-        } else {
-          LOG.debug("No user session found for workspace selector");
-        }
-        request.getServletContext().getRequestDispatcher("/WEB-INF/jsp/cms/workspace-selector.jsp").forward(request, response);
-        return;
       }
 
       // Use the session data (created in WebRequestFilter)

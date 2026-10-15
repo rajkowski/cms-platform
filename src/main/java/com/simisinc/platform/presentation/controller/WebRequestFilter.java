@@ -200,8 +200,7 @@ public class WebRequestFilter implements Filter {
 
           // Make sure there is a user session, otherwise redirect to default tenant
           if (httpServletRequest.getSession().getAttribute(SessionConstants.USER) == null) {
-            // @todo use the referring URL to redirect back after login (Header: referer)
-            do302(servletResponse, WorkspaceResolutionCommand.getDefaultWorkspaceUrl() + PageServlet.WORKSPACE_SELECTOR_PATH);
+            do302(servletResponse, WorkspaceResolutionCommand.getDefaultWorkspaceUrl());
             return;
           }
         }
@@ -609,8 +608,8 @@ public class WebRequestFilter implements Filter {
       if (isDefaultTenant && resource.equals(PageServlet.WORKSPACE_LAUNCH_RESOURCE)) {
         // Handle workspace launch specific logic here (create handoff token, and redirect)
         LOG.debug("Handling workspace launch for user: " + userSession.getUserId());
-        long targetWorkspaceId = Long.parseLong(request.getParameter("workspaceId"));
-        String redirect = WorkspaceCoordinatorCommand.prepareForLaunch(userSession, targetWorkspaceId);
+        String targetWorkspaceUniqueId = request.getParameter("workspace");
+        String redirect = WorkspaceCoordinatorCommand.prepareForLaunch(userSession, targetWorkspaceUniqueId);
         if (StringUtils.isNotBlank(redirect)) {
           do302(servletResponse, redirect);
           return;
