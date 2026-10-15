@@ -35,6 +35,7 @@ import com.simisinc.platform.application.cms.UrlCommand;
 import com.simisinc.platform.domain.model.cms.WebContainer;
 import com.simisinc.platform.infrastructure.persistence.cms.WebContainerRepository;
 import com.simisinc.platform.presentation.controller.WidgetContext;
+import com.simisinc.platform.presentation.controller.XMLFooterLoader;
 import com.simisinc.platform.presentation.controller.XMLHeaderLoader;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
 
@@ -79,7 +80,8 @@ public class WebContainerDesignerWidget extends GenericWidget {
       return context;
     }
     webContainer = WebContainerRepository.findByName(name);
-    // If the container was not found in the repository, attempt to load a bundled header if applicable
+
+    // If the container was not found in the repository, attempt to load a bundled value if applicable
     if (webContainer == null && name.startsWith("header.")) {
       try {
         String definition = XMLHeaderLoader.loadValidXmlFromURL(name,
@@ -92,6 +94,20 @@ public class WebContainerDesignerWidget extends GenericWidget {
         }
       } catch (Exception exception) {
         LOG.warn("Bundled header could not be loaded for editing: " + name, exception);
+      }
+    }
+    if (webContainer == null && name.startsWith("footer.")) {
+      try {
+        String definition = XMLFooterLoader.loadValidXmlFromURL(name,
+            context.getServletContext().getResource("/WEB-INF/web-layouts/footer/footer-layout.xml"));
+        if (definition != null) {
+          webContainer = new WebContainer();
+          webContainer.setName(name);
+          webContainer.setLabel(name);
+          webContainer.setContainerXml(definition);
+        }
+      } catch (Exception exception) {
+        LOG.warn("Bundled footer could not be loaded for editing: " + name, exception);
       }
     }
     if (webContainer == null) {
@@ -175,6 +191,16 @@ public class WebContainerDesignerWidget extends GenericWidget {
         context.setRequestObject(webContainer);
         context.setErrorMessage(
             "The header configuration could not be validated: " + StringEscapeUtils.escapeHtml4(exception.getMessage()));
+        return context;
+      }
+    }
+    if ("footer".equals(type) && StringUtils.isNotBlank(webContainer.getContainerXml())) {
+      try {
+        XMLFooterLoader.addFromXml(webContainer);
+      } catch (Exception exception) {
+        context.setRequestObject(webContainer);
+        context.setErrorMessage(
+            "The footer configuration could not be validated: " + StringEscapeUtils.escapeHtml4(exception.getMessage()));
         return context;
       }
     }

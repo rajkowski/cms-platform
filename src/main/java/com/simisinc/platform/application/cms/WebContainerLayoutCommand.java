@@ -40,6 +40,7 @@ public class WebContainerLayoutCommand {
 
   private static Log LOG = LogFactory.getLog(WebContainerLayoutCommand.class);
   private static final String LAST_VALID_HEADER_PREFIX = "LastValidatedHeader:";
+  private static final String LAST_VALID_FOOTER_PREFIX = "LastValidatedFooter:";
 
   /** 
    * Returns the cache key for the specified header layout name.
@@ -138,13 +139,18 @@ public class WebContainerLayoutCommand {
         footer = XMLFooterLoader.loadFromURL(layout, url);
       }
       if (footer == null) {
-        if ("footer.default".equals(layout)) {
-          return null;
+        footer = (Footer) CacheManager.getCurrentWorkspaceValue(CacheManager.OBJECT_CACHE, LAST_VALID_FOOTER_PREFIX + layout);
+        if (footer == null) {
+          if ("footer.default".equals(layout)) {
+            return null;
+          }
+          LOG.warn("Selected footer could not be loaded: " + layout + "; using footer.default");
+          return retrieveFooter("footer.default", url);
         }
-        LOG.warn("Selected footer could not be loaded: " + layout + "; using footer.default");
-        return retrieveFooter("footer.default", url);
+        LOG.warn("Retaining the last validated footer definition for " + layout);
       }
       CacheManager.putCurrentWorkspaceValue(CacheManager.OBJECT_CACHE, cacheName, footer);
+      CacheManager.putCurrentWorkspaceValue(CacheManager.OBJECT_CACHE, LAST_VALID_FOOTER_PREFIX + layout, footer);
     }
     return footer;
   }

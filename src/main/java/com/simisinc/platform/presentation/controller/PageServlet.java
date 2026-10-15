@@ -718,6 +718,7 @@ public class PageServlet extends HttpServlet {
           header = XMLHeaderLoader.loadFromURL(fallbackName, headerUrl);
         }
         if (header != null) {
+          // @note is this needed with the new header?
           if ((userSession.isLoggedIn() || "true".equals(sitePropertyMap.get("site.online")))
               && "true".equals(sitePropertyMap.get("site.regions.enabled"))) {
             List<Region> regionList = RegionRepository.findAll();
@@ -732,11 +733,15 @@ public class PageServlet extends HttpServlet {
         }
 
         // Render the footer
-        Footer footer = WebContainerLayoutCommand.retrieveFooter(selectFooterName(themePropertyMap),
-            request.getServletContext().getResource("/WEB-INF/web-layouts/footer/footer-layout.xml"));
-        footerRenderInfo = new FooterRenderInfo(footer, pageRequest.getPagePath());
-        WebContainerCommand.processWidgets(webContainerContext, footer.getSections(), footerRenderInfo, coreData,
-            userSession, themePropertyMap, request);
+        URL footerUrl = request.getServletContext().getResource("/WEB-INF/web-layouts/footer/footer-layout.xml");
+        Footer footer = WebContainerLayoutCommand.retrieveFooter(selectFooterName(themePropertyMap), footerUrl);
+        if (footer != null) {
+          footerRenderInfo = new FooterRenderInfo(footer, pageRequest.getPagePath());
+          WebContainerCommand.processWidgets(webContainerContext, footer.getSections(), footerRenderInfo, coreData,
+              userSession, themePropertyMap, request);
+        } else {
+          LOG.error("No valid footer definition could be loaded");
+        }
       }
 
       // Finalize the controller session (zero out the widget's session data)
