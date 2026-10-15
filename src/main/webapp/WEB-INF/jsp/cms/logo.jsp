@@ -1,5 +1,5 @@
 <%--
-  ~ Copyright 2022 SimIS Inc.
+  ~ Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -14,25 +14,19 @@
   ~ limitations under the License.
   --%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
-<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
-<%@ taglib prefix="url" uri="/WEB-INF/tlds/url-functions.tld" %>
-<%@ taglib prefix="text" uri="/WEB-INF/tlds/text-functions.tld" %>
-<jsp:useBean id="sitePropertyMap" class="java.util.HashMap" scope="request"/>
-<jsp:useBean id="themePropertyMap" class="java.util.HashMap" scope="request"/>
-<jsp:useBean id="logoClass" class="java.lang.String" scope="request"/>
-<jsp:useBean id="logoStyle" class="java.lang.String" scope="request"/>
-<jsp:useBean id="view" class="java.lang.String" scope="request"/>
-<jsp:useBean id="text" class="java.lang.String" scope="request"/>
-<jsp:useBean id="siteTitle" class="java.lang.String" scope="request"/>
-<c:choose>
-  <c:when test="${!empty logoSrc}">
-    <a href="${ctx}/"><img alt="Logo" <c:if test="${!empty logoClass}">class="${logoClass}" </c:if><c:if test="${!empty logoStyle}">style="${logoStyle}" </c:if>src="${logoSrc}" /></a>
-    <c:if test="${!empty text}">
-      <span class="menu-text" translate="no"><a href="${ctx}/"><c:out value="${text}"/></a></span>
-    </c:if>
-  </c:when>
-  <c:otherwise>
-    <span class="menu-text" translate="no"><a href="${ctx}/"><c:out value="${siteTitle}"/></a></span>
-  </c:otherwise>
-</c:choose>
+<%@ taglib prefix="font" uri="/WEB-INF/tlds/font-functions.tld" %>
+<a href="<c:out value='${logoHomeLink}'/>" class="header-logo <c:out value='${logoClass}'/>">
+  <c:choose>
+    <c:when test="${not empty logoSrc}">
+      <img class="logo" src="<c:out value='${logoSrc}'/>" alt="<c:out value='${siteTitle}'/>" style="<c:out value='${logoStyle}'/>" />
+    </c:when>
+    <c:when test="${not empty logoLightSrc}">
+      <img class="logo-light" src="<c:out value='${logoLightSrc}'/>" alt="<c:out value='${siteTitle}'/>" style="<c:out value='${logoStyle}'/>" />
+      <img class="logo-dark" src="<c:out value='${logoDarkSrc}'/>" alt="<c:out value='${siteTitle}'/>" style="<c:out value='${logoStyle}'/>" />
+    </c:when>
+    <c:otherwise>
+      <i class="${font:fas()} fa-cube" aria-hidden="true"></i>
+      <span><c:out value="${not empty text ? text : siteTitle}" /></span>
+    </c:otherwise>
+  </c:choose>
+</a>

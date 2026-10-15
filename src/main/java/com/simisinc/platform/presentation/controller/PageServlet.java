@@ -100,6 +100,28 @@ public class PageServlet extends HttpServlet {
   public static final String WORKSPACE_LAUNCH_RESOURCE = "/workspace-launch";
   public static final String WORKSPACE_HANDOFF_RESOURCE = "/workspace-handoff";
 
+  static String selectHeaderName(String pageName, String pagePath, String fetchDestination, Map<String, String> themeProperties) {
+    if ("iframe".equals(fetchDestination) || pagePath.startsWith("/admin/system") || pagePath.startsWith("/admin/visual-")) {
+      return null;
+    }
+    if (pageName.startsWith("/checkout")) {
+      return "header.plain";
+    }
+    String selected = themeProperties.get("theme.header.name");
+    if (selected != null && !selected.isBlank()) {
+      return selected.trim();
+    }
+    return "header.default";
+  }
+
+  static String selectFooterName(Map<String, String> themeProperties) {
+    String selected = themeProperties.get("theme.footer.name");
+    if (selected != null && !selected.isBlank()) {
+      return selected.trim();
+    }
+    return "footer.default";
+  }
+
   // Widget Cache (read-only after init; ConcurrentHashMap for safe concurrent access)
   private Map<String, Object> widgetInstances = new ConcurrentHashMap<>();
 
@@ -686,20 +708,31 @@ public class PageServlet extends HttpServlet {
       if (prepareHeaderFooter) {
         LOG.debug("Rendering header and footer...");
         // Render the header
-        Header header = null;
-        if (pageRenderInfo.getName().startsWith("/checkout")) {
-          header = WebContainerLayoutCommand.retrieveHeader("header.plain",
-              request.getServletContext().getResource("/WEB-INF/web-layouts/header/header-layout.xml"));
-        } else {
-          header = WebContainerLayoutCommand.retrieveHeader("header.default",
-              request.getServletContext().getResource("/WEB-INF/web-layouts/header/header-layout.xml"));
+        String headerName = selectHeaderName(pageRenderInfo.getName(), pageRequest.getPagePath(), request.getHeader("Sec-Fetch-Dest"),
+            themePropertyMap);
+        URL headerUrl = request.getServletContext().getResource("/WEB-INF/web-layouts/header/header-layout.xml");
+        Header header = WebContainerLayoutCommand.retrieveHeader(headerName, headerUrl);
+        if (header == null) {
+          String fallbackName = "header.default";
+          LOG.warn("Selected header could not be loaded: " + headerName + "; using bundled " + fallbackName);
+          header = XMLHeaderLoader.loadFromURL(fallbackName, headerUrl);
         }
-        headerRenderInfo = new HeaderRenderInfo(header, pageRequest.getPagePath());
-        WebContainerCommand.processWidgets(webContainerContext, header.getSections(), headerRenderInfo, coreData,
-            userSession, themePropertyMap, request);
+        if (header != null) {
+          if ((userSession.isLoggedIn() || "true".equals(sitePropertyMap.get("site.online")))
+              && "true".equals(sitePropertyMap.get("site.regions.enabled"))) {
+            List<Region> regionList = RegionRepository.findAll();
+            pageRequest.setAttribute(RequestConstants.REGION_LIST, regionList);
+            request.setAttribute(RequestConstants.REGION_LIST, regionList);
+          }
+          headerRenderInfo = new HeaderRenderInfo(header, pageRequest.getPagePath());
+          WebContainerCommand.processWidgets(webContainerContext, header.getSections(), headerRenderInfo, coreData,
+              userSession, themePropertyMap, request);
+        } else {
+          LOG.error("No valid header definition could be loaded");
+        }
 
         // Render the footer
-        Footer footer = WebContainerLayoutCommand.retrieveFooter("footer.default",
+        Footer footer = WebContainerLayoutCommand.retrieveFooter(selectFooterName(themePropertyMap),
             request.getServletContext().getResource("/WEB-INF/web-layouts/footer/footer-layout.xml"));
         footerRenderInfo = new FooterRenderInfo(footer, pageRequest.getPagePath());
         WebContainerCommand.processWidgets(webContainerContext, footer.getSections(), footerRenderInfo, coreData,
@@ -746,7 +779,8 @@ public class PageServlet extends HttpServlet {
         request.setAttribute(MASTER_MENU_TAB_LIST, menuTabList);
 
         // Load the region list if enabled
-        if ("true".equals(sitePropertyMap.getOrDefault("site.regions.enabled", "false"))) {
+        if ("true".equals(sitePropertyMap.getOrDefault("site.regions.enabled", "false"))
+            && request.getAttribute(RequestConstants.REGION_LIST) == null) {
           List<Region> regionList = RegionRepository.findAll();
           request.setAttribute(RequestConstants.REGION_LIST, regionList);
         }

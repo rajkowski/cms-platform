@@ -1,5 +1,5 @@
 <%--
-  ~ Copyright 2022 SimIS Inc.
+  ~ Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -14,47 +14,31 @@
   ~ limitations under the License.
   --%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
-<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="font" uri="/WEB-INF/tlds/font-functions.tld" %>
-<%@ taglib prefix="url" uri="/WEB-INF/tlds/url-functions.tld" %>
-<%@ taglib prefix="text" uri="/WEB-INF/tlds/text-functions.tld" %>
-<jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
-<jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
-<jsp:useBean id="masterMenuTabList" class="java.util.ArrayList" scope="request"/>
-<jsp:useBean id="collection" class="com.simisinc.platform.domain.model.items.Collection" scope="request"/>
-<jsp:useBean id="webPage" class="com.simisinc.platform.domain.model.cms.WebPage" scope="request"/>
-<jsp:useBean id="pagePath" class="java.lang.String" scope="request"/>
-<jsp:useBean id="useHighlight" class="java.lang.String" scope="request"/>
-<ul class="dropdown menu<c:if test="${!empty menuClass}"> <c:out value="${menuClass}" /></c:if>" data-dropdown-menu>
-  <c:forEach items="${masterMenuTabList}" var="menuTab" varStatus="menuTabStatus">
-    <c:choose>
-      <c:when test="${!empty menuTab.menuItemList}">
-        <%-- Display the submenu --%>
-        <li class="is-dropdown-submenu-parent<c:if test="${menuTab.active}"> active</c:if>">
-          <a href="${ctx}${menuTab.link}"><c:if test="${!empty menuTab.icon}"><i class="${font:fas()} fa-fw <c:out value="${menuTab.icon}" />"></i> </c:if><c:out value="${menuTab.name}" /></a>
-          <ul class="menu vertical">
-            <c:forEach items="${menuTab.menuItemList}" var="menuItem">
-              <li<c:if test="${menuItem.active}"> class="active"</c:if>><a href="${ctx}${menuItem.link}"><c:if test="${!empty submenuIcon}"><i class="fa <c:out value="${submenuIcon}" /><c:if test="${!empty submenuIconClass}"> <c:out value="${submenuIconClass}" /></c:if>"></i></c:if> <c:out value="${menuItem.name}" /></a></li>
-            </c:forEach>
-            <%-- @todo Check for content to append here --%>
-<%--
-                <li class="menu-item-callout" style="padding:0 16px 16px 16px">
-                  <div style="border-top: 2px solid #E0A590;padding-top: 8px;font-weight:400">
-                    NEW! Hemp Seed Oil Products<br />
-                    <a target="_blank" class="button primary" style="margin: 10px 0 0 0;padding: 8px;" href="https://example.com">Visit Example.com</a>
-                  </div>
-                </li>
---%>
-          </ul>
+<nav class="header-nav <c:out value='${menuClass}'/>" id="mainNav" data-header-nav aria-label="Main navigation">
+  <ul class="nav-menu">
+    <c:forEach items="${masterMenuTabList}" var="menuItem" varStatus="menuStatus">
+      <c:if test="${not (omitFirstHomeItem and menuStatus.first and menuItem.link eq '/')}">
+        <li class="nav-item${not empty menuItem.menuItemList ? ' has-dropdown' : ''}">
+          <a href="<c:out value='${headerMenuLinks[menuItem.link]}'/>" class="nav-link${menuItem.active ? ' active' : ''}">
+            <c:if test="${not empty menuItem.icon}"><i class="<c:out value='${menuItem.icon}'/>" aria-hidden="true"></i></c:if>
+            <c:out value="${menuItem.name}" />
+          </a>
+          <c:if test="${not empty menuItem.menuItemList}">
+            <button type="button" class="nav-dropdown-toggle" data-header-dropdown-toggle aria-label="Open submenu for <c:out value='${menuItem.name}'/>" aria-controls="mainNav-submenu-${menuStatus.index}" aria-expanded="false">
+              <i class="<c:out value='${headerSubmenuIcon}'/> <c:out value='${submenuIconClass}'/>" aria-hidden="true"></i>
+            </button>
+            <div class="dropdown-menu" id="mainNav-submenu-${menuStatus.index}">
+              <c:forEach items="${menuItem.menuItemList}" var="subItem">
+                <a href="<c:out value='${headerMenuLinks[subItem.link]}'/>" class="dropdown-item${subItem.active ? ' active' : ''}">
+                  <c:if test="${not empty subItem.icon}"><i class="<c:out value='${subItem.icon}'/>" aria-hidden="true"></i></c:if>
+                  <c:out value="${subItem.name}" />
+                </a>
+              </c:forEach>
+            </div>
+          </c:if>
         </li>
-      </c:when>
-      <c:when test="${!empty collection && !fn:startsWith(pagePath, '/admin/') && fn:toLowerCase(collection.name) eq fn:toLowerCase(menuTab.name)}">
-        <li class="is-standalone active"><a href="${ctx}${menuTab.link}"><c:if test="${!empty menuTab.icon}"><i class="${font:fas()} fa-fw <c:out value="${menuTab.icon}" />"></i> </c:if><c:out value="${menuTab.name}" /></a></li>
-      </c:when>
-      <c:otherwise>
-        <li class="is-standalone<c:if test="${useHighlight eq 'true' && (menuTab.link eq pagePath || (menuTab.link ne '/' && fn:startsWith(pagePath, menuTab.link)))}"> active</c:if>"><a href="${ctx}${menuTab.link}"><c:if test="${!empty menuTab.icon}"><i class="${font:fas()} fa-fw <c:out value="${menuTab.icon}" />"></i> </c:if><c:out value="${menuTab.name}" /></a></li>
-      </c:otherwise>
-    </c:choose>
-  </c:forEach>
-</ul>
+      </c:if>
+    </c:forEach>
+  </ul>
+</nav>

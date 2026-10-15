@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://www.github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,14 +15,16 @@
  * limitations under the License.
  */
 
-package com.simisinc.platform.presentation.widgets.cms;
+package com.zeroio.platform.presentation.widgets.cms;
+
+import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
 
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
-import org.apache.commons.lang3.StringUtils;
-
-import java.util.Map;
+import com.zeroio.platform.application.cms.ResolveHeaderLinkCommand;
 
 /**
  * Displays a bar with content and a link, useful for a system-wide header
@@ -39,10 +42,22 @@ public class SystemAlertWidget extends GenericWidget {
   public WidgetContext execute(WidgetContext context) {
     // Check if the widget has content and can be displayed
     Map<String, String> sitePropertyMap = LoadSitePropertyCommand.loadAsMap("site");
-    if (StringUtils.isBlank(sitePropertyMap.get("site.header.line1")) && !context.getUserSession().hasRole("admin")) {
+    if (StringUtils.isBlank(sitePropertyMap.get("site.header.line1"))) {
       return context;
     }
     context.getRequest().setAttribute("sitePropertyMap", sitePropertyMap);
+
+    String destination = sitePropertyMap.get("site.header.page");
+    if (StringUtils.isNotBlank(destination)) {
+      context.getRequest().setAttribute("announcementLink",
+          ResolveHeaderLinkCommand.resolveLink(destination, context.getContextPath()));
+    }
+
+    String label = sitePropertyMap.get("site.header.link");
+    context.getRequest().setAttribute("announcementLinkLabel",
+        StringUtils.isNotBlank(label) ? label : context.getPreferences().getOrDefault("linkLabel", "Details"));
+    context.getRequest().setAttribute("showAnnouncementEdit",
+        context.hasRole("admin") && Boolean.parseBoolean(context.getPreferences().getOrDefault("showEditButton", "true")));
 
     // Specify the content
     context.setJsp(JSP);

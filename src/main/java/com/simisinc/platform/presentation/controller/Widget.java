@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,6 +41,9 @@ public class Widget implements Serializable {
   private List<String> roles = new ArrayList<String>();
   private List<String> groups = new ArrayList<String>();
   protected Map<String, String> preferences = new HashMap<String, String>();
+  private boolean enabled = true;
+  private String visibility = "all";
+  private String wrapper = "auto";
 
   // Output properties
   protected String htmlId = null;
@@ -129,5 +133,29 @@ public class Widget implements Serializable {
 
   public Map<String, String> getPreferences() {
     return preferences;
+  }
+
+  public boolean isEnabled() {
+    return enabled;
+  }
+
+  public void setEnabled(boolean enabled) {
+    this.enabled = enabled;
+  }
+
+  public String getVisibility() {
+    return visibility;
+  }
+
+  public void setVisibility(String visibility) {
+    this.visibility = visibility;
+  }
+
+  public String getWrapper() {
+    return wrapper;
+  }
+
+  public void setWrapper(String wrapper) {
+    this.wrapper = wrapper;
   }
 }

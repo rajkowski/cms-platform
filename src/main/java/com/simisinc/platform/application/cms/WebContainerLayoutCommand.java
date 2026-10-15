@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,10 +39,33 @@ import com.simisinc.platform.presentation.controller.XMLHeaderLoader;
 public class WebContainerLayoutCommand {
 
   private static Log LOG = LogFactory.getLog(WebContainerLayoutCommand.class);
+  private static final String LAST_VALID_HEADER_PREFIX = "LastValidatedHeader:";
 
+  /** 
+   * Returns the cache key for the specified header layout name.
+   *
+   * @param layoutName the name of the header layout
+   * @return the cache key for the header layout
+   */
+  public static String headerCacheKey(String layoutName) {
+    if ("header.default".equals(layoutName)) {
+      return CacheManager.WEBSITE_HEADER;
+    }
+    if ("header.plain".equals(layoutName)) {
+      return CacheManager.WEBSITE_PLAIN_HEADER;
+    }
+    return CacheManager.WEBSITE_HEADER + ":" + layoutName;
+  }
+
+  /** 
+   * Retrieves the header for the specified layout, either from the cache, the database, or the provided URL.
+   *
+   * @param layout the name of the header layout
+   * @param url the URL to load the header from if not found in the cache or database
+   * @return the Header object for the specified layout, or null if it could not be retrieved
+   */
   public static Header retrieveHeader(String layout, URL url) {
-    String cacheName = ("header.default".equals(layout) ? CacheManager.WEBSITE_HEADER
-        : CacheManager.WEBSITE_PLAIN_HEADER);
+    String cacheName = headerCacheKey(layout);
     Header header = (Header) CacheManager.getCurrentWorkspaceValue(CacheManager.OBJECT_CACHE, cacheName);
     if (header == null) {
       header = retrieveHeaderFromDatabase(layout);
@@ -49,13 +73,24 @@ public class WebContainerLayoutCommand {
         header = XMLHeaderLoader.loadFromURL(layout, url);
       }
       if (header == null) {
-        return null;
+        header = (Header) CacheManager.getCurrentWorkspaceValue(CacheManager.OBJECT_CACHE, LAST_VALID_HEADER_PREFIX + layout);
+        if (header == null) {
+          return null;
+        }
+        LOG.warn("Retaining the last validated header definition for " + layout);
       }
       CacheManager.putCurrentWorkspaceValue(CacheManager.OBJECT_CACHE, cacheName, header);
+      CacheManager.putCurrentWorkspaceValue(CacheManager.OBJECT_CACHE, LAST_VALID_HEADER_PREFIX + layout, header);
     }
     return header;
   }
 
+  /** 
+   * Retrieves the header for the specified layout from the database.
+   *
+   * @param layout the name of the header layout
+   * @return the Header object for the specified layout, or null if it could not be retrieved from the database
+   */
   private static Header retrieveHeaderFromDatabase(String layout) {
     // Try the database
     WebContainer container = WebContainerRepository.findByName(layout);
@@ -71,21 +106,55 @@ public class WebContainerLayoutCommand {
     return null;
   }
 
+  /** 
+   * Returns the cache key for the specified footer layout name.
+   *
+   * @param layoutName the name of the footer layout
+   * @return the cache key for the footer layout
+   */
+  public static String footerCacheKey(String layoutName) {
+    if ("footer.default".equals(layoutName)) {
+      return CacheManager.WEBSITE_FOOTER;
+    }
+    return CacheManager.WEBSITE_FOOTER + ":" + layoutName;
+  }
+
+  /** 
+   * Retrieves the footer for the specified layout, either from the cache, the database, or the provided URL.
+   *
+   * @param layout the name of the footer layout
+   * @param url the URL to load the footer from if not found in the cache or database
+   * @return the Footer object for the specified layout, or null if it could not be retrieved
+   */
   public static Footer retrieveFooter(String layout, URL url) {
-    Footer footer = (Footer) CacheManager.getCurrentWorkspaceValue(CacheManager.OBJECT_CACHE, CacheManager.WEBSITE_FOOTER);
+    if (layout == null || layout.isBlank()) {
+      layout = "footer.default";
+    }
+    String cacheName = footerCacheKey(layout);
+    Footer footer = (Footer) CacheManager.getCurrentWorkspaceValue(CacheManager.OBJECT_CACHE, cacheName);
     if (footer == null) {
       footer = retrieveFooterFromDatabase(layout);
       if (footer == null) {
         footer = XMLFooterLoader.loadFromURL(layout, url);
       }
       if (footer == null) {
-        return null;
+        if ("footer.default".equals(layout)) {
+          return null;
+        }
+        LOG.warn("Selected footer could not be loaded: " + layout + "; using footer.default");
+        return retrieveFooter("footer.default", url);
       }
-      CacheManager.putCurrentWorkspaceValue(CacheManager.OBJECT_CACHE, CacheManager.WEBSITE_FOOTER, footer);
+      CacheManager.putCurrentWorkspaceValue(CacheManager.OBJECT_CACHE, cacheName, footer);
     }
     return footer;
   }
 
+  /** 
+   * Retrieves the footer for the specified layout from the database.
+   *
+   * @param layout the name of the footer layout
+   * @return the Footer object for the specified layout, or null if it could not be retrieved from the database
+   */
   private static Footer retrieveFooterFromDatabase(String layout) {
     // Try the database
     WebContainer container = WebContainerRepository.findByName(layout);

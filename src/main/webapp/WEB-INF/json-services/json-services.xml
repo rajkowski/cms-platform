@@ -28,6 +28,7 @@
   <service endpoint="/json/photoList" class="com.simisinc.platform.presentation.widgets.cms.PhotoListAjax" />
   <service endpoint="/json/emailSubscribe" class="com.simisinc.platform.presentation.widgets.ecommerce.EmailSubscribeAjax" />
   <service endpoint="/json/mailingList" class="com.simisinc.platform.presentation.widgets.mailinglists.MailingListAjax" />
+  <service endpoint="/json/search" class="com.zeroio.platform.presentation.services.SearchJsonService" />
   <service endpoint="/json/tags" class="com.zeroio.platform.presentation.services.TagsJsonService" />
   <!-- <service endpoint="/json/users" class="com.zeroio.platform.presentation.services.UsersJsonService" /> -->
   <!-- CMS Editing -->

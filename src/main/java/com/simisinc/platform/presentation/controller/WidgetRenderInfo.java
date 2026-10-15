@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://www.github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,11 +38,15 @@ public class WidgetRenderInfo implements Serializable {
   private boolean sticky = false;
   private boolean hr = false;
   private String content = null;
+  private String visibility = "all";
+  private String wrapper = "auto";
 
   public WidgetRenderInfo() {
   }
 
   public WidgetRenderInfo(Widget widget, String content) {
+    this.visibility = widget.getVisibility();
+    this.wrapper = widget.getWrapper();
     this.pageWidgetCount = widget.getPageWidgetCount();
     this.htmlId = widget.getHtmlId();
     this.cssClass = widget.getCssClass();
@@ -77,5 +82,13 @@ public class WidgetRenderInfo implements Serializable {
 
   public String getContent() {
     return content;
+  }
+
+  public String getVisibility() {
+    return visibility;
+  }
+
+  public String getWrapper() {
+    return wrapper;
   }
 }

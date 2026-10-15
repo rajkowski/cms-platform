@@ -411,7 +411,8 @@ public class PageTemplateEngine {
 
       // Render the footer
       URL footerUrl = new File(webLayoutsPath, Paths.get("footer", "footer-layout.xml").toString()).toURI().toURL();
-      Footer footer = WebContainerLayoutCommand.retrieveFooter("footer.default", footerUrl);
+      Footer footer = WebContainerLayoutCommand.retrieveFooter(
+          themePropertyMap != null ? themePropertyMap.get("theme.footer.name") : null, footerUrl);
       FooterRenderInfo footerRenderInfo = new FooterRenderInfo(footer, webPage.getLink());
       WebContainerCommand.processWidgets(webContainerContext, footer.getSections(), footerRenderInfo, coreData,
           userSession, themePropertyMap, null);

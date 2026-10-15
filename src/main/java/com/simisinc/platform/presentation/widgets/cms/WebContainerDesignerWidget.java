@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://www.github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,25 +17,29 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
-import com.simisinc.platform.application.cms.UrlCommand;
-import com.simisinc.platform.domain.model.cms.WebContainer;
-import com.simisinc.platform.infrastructure.persistence.cms.WebContainerRepository;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
+import java.io.InputStream;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.InputStream;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.commons.text.StringEscapeUtils;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+
+import com.simisinc.platform.application.cms.UrlCommand;
+import com.simisinc.platform.domain.model.cms.WebContainer;
+import com.simisinc.platform.infrastructure.persistence.cms.WebContainerRepository;
+import com.simisinc.platform.presentation.controller.WidgetContext;
+import com.simisinc.platform.presentation.controller.XMLHeaderLoader;
+import com.simisinc.platform.presentation.widgets.GenericWidget;
 
 /**
- * Description
+ * Widget for editing web containers (headers, footers, etc.)
  *
  * @author matt rajkowski
  * @created 1/21/21 9:13 PM
@@ -74,11 +79,26 @@ public class WebContainerDesignerWidget extends GenericWidget {
       return context;
     }
     webContainer = WebContainerRepository.findByName(name);
+    // If the container was not found in the repository, attempt to load a bundled header if applicable
+    if (webContainer == null && name.startsWith("header.")) {
+      try {
+        String definition = XMLHeaderLoader.loadValidXmlFromURL(name,
+            context.getServletContext().getResource("/WEB-INF/web-layouts/header/header-layout.xml"));
+        if (definition != null) {
+          webContainer = new WebContainer();
+          webContainer.setName(name);
+          webContainer.setLabel(name);
+          webContainer.setContainerXml(definition);
+        }
+      } catch (Exception exception) {
+        LOG.warn("Bundled header could not be loaded for editing: " + name, exception);
+      }
+    }
     if (webContainer == null) {
       // Prepare for a new one?
-//      webContainer = new WebContainer();
-//      webContainer.setName(name);
-//      webContainer.setContainerXml(XMLHeaderLoader.loadXmlFromFile());
+      //      webContainer = new WebContainer();
+      //      webContainer.setName(name);
+      //      webContainer.setContainerXml(XMLHeaderLoader.loadXmlFromFile());
       LOG.warn("Container not found for name: " + name);
       return context;
     }
@@ -141,11 +161,23 @@ public class WebContainerDesignerWidget extends GenericWidget {
       } catch (Exception e) {
         LOG.error("User input: xml did not validate: " + e.getMessage());
         context.setRequestObject(webContainer);
-        context.setErrorMessage("The XML could not be validated. Use <" + type + "><section><column><widget> notation. Error reported: " + e.getMessage());
+        context.setErrorMessage(
+            "The XML could not be validated. Use <" + type + "><section><column><widget> notation. Error reported: " + e.getMessage());
         return context;
       }
     }
 
+    // If this is a header container, validate the header configuration
+    if ("header".equals(type) && StringUtils.isNotBlank(webContainer.getContainerXml())) {
+      try {
+        XMLHeaderLoader.addFromXml(webContainer);
+      } catch (Exception exception) {
+        context.setRequestObject(webContainer);
+        context.setErrorMessage(
+            "The header configuration could not be validated: " + StringEscapeUtils.escapeHtml4(exception.getMessage()));
+        return context;
+      }
+    }
     // Save the page
     webContainer = WebContainerRepository.save(webContainer);
     if (webContainer == null) {

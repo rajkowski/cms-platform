@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,6 +39,10 @@ public class Section implements Serializable {
   private List<Section> sections = new ArrayList<>();
   private List<String> roles = new ArrayList<>();
   private List<String> groups = new ArrayList<>();
+  private boolean enabled = true;
+  private String visibility = "all";
+  private String container = "none";
+  private String containerClass;
 
   // Output properties
   private String htmlId = null;
@@ -136,5 +141,37 @@ public class Section implements Serializable {
 
   public void setGroups(List<String> groups) {
     this.groups = groups;
+  }
+
+  public boolean isEnabled() {
+    return enabled;
+  }
+
+  public void setEnabled(boolean enabled) {
+    this.enabled = enabled;
+  }
+
+  public String getVisibility() {
+    return visibility;
+  }
+
+  public void setVisibility(String visibility) {
+    this.visibility = visibility;
+  }
+
+  public String getContainer() {
+    return container;
+  }
+
+  public void setContainer(String container) {
+    this.container = container;
+  }
+
+  public String getContainerClass() {
+    return containerClass;
+  }
+
+  public void setContainerClass(String containerClass) {
+    this.containerClass = containerClass;
   }
 }

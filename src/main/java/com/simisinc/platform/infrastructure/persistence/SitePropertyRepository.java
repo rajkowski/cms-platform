@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,8 +17,6 @@
 
 package com.simisinc.platform.infrastructure.persistence;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
@@ -70,18 +69,29 @@ public class SitePropertyRepository {
         .returnDataResult(SitePropertyRepository::buildRecord).getRecords();
   }
 
-  private static PreparedStatement createPreparedStatementForUpdate(Connection connection, SiteProperty record) throws SQLException {
-    String SQL_QUERY = "UPDATE site_properties " +
-        "SET property_value = ? " +
-        "WHERE property_id = ?";
-    int i = 0;
-    PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
-    pst.setString(++i, StringUtils.trimToEmpty(record.getValue()));
-    pst.setInt(++i, record.getId());
-    return pst;
+  public static SiteProperty save(SiteProperty record) {
+    if (record.getId() > 0) {
+      return update(record);
+    }
+    return add(record);
   }
 
-  public static SiteProperty save(SiteProperty record) {
+  private static SiteProperty add(SiteProperty record) {
+    long id = DB.INSERT().INTO(TABLE_NAME)
+        .FIELD("property_order", 9999)
+        .FIELD("property_label", record.getLabel())
+        .FIELD("property_name", record.getName())
+        .FIELD("property_value", StringUtils.trimToEmpty(record.getValue()))
+        .FIELD("property_type", record.getType())
+        .execute();
+    if (id < 1) {
+      return null;
+    }
+    record.setId(Math.toIntExact(id));
+    return record;
+  }
+
+  private static SiteProperty update(SiteProperty record) {
     boolean updated = DB.UPDATE(TABLE_NAME)
         .SET("property_value", StringUtils.trimToEmpty(record.getValue()))
         .WHERE("property_id = ?", record.getId())

@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,6 +38,9 @@ public class Column implements Serializable {
   private List<Widget> widgets = new ArrayList<Widget>();
   private List<String> roles = new ArrayList<String>();
   private List<String> groups = new ArrayList<String>();
+  private boolean enabled = true;
+  private String visibility = "all";
+  private String wrapper = "default";
 
   // Output properties
   private String htmlId = null;
@@ -46,6 +50,30 @@ public class Column implements Serializable {
   private boolean hr = false;
 
   public Column() {
+  }
+
+  public boolean isEnabled() {
+    return enabled;
+  }
+
+  public void setEnabled(boolean enabled) {
+    this.enabled = enabled;
+  }
+
+  public String getVisibility() {
+    return visibility;
+  }
+
+  public void setVisibility(String visibility) {
+    this.visibility = visibility;
+  }
+
+  public String getWrapper() {
+    return wrapper;
+  }
+
+  public void setWrapper(String wrapper) {
+    this.wrapper = wrapper;
   }
 
   public int getPageColumnCount() {

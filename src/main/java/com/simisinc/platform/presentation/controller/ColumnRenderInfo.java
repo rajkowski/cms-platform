@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,6 +34,8 @@ public class ColumnRenderInfo implements Serializable {
   private List<WidgetRenderInfo> widgets = new ArrayList<WidgetRenderInfo>();
   private boolean hasWidgets = false;
   private int pageColumnCount = -1;
+  private String visibility = "all";
+  private String wrapper = "default";
 
   // Output properties
   private String htmlId = null;
@@ -45,12 +48,30 @@ public class ColumnRenderInfo implements Serializable {
   }
 
   public ColumnRenderInfo(Column column) {
+    this.visibility = column.getVisibility();
+    this.wrapper = column.getWrapper();
     this.pageColumnCount = column.getPageColumnCount();
     this.htmlId = column.getHtmlId();
     this.cssClass = column.getCssClass();
     this.cssStyle = column.getCssStyle();
     this.sticky = column.isSticky();
     this.hr = column.hasHr();
+  }
+
+  public String getVisibility() {
+    return visibility;
+  }
+
+  public void setVisibility(String visibility) {
+    this.visibility = visibility;
+  }
+
+  public String getWrapper() {
+    return wrapper;
+  }
+
+  public void setWrapper(String wrapper) {
+    this.wrapper = wrapper;
   }
 
   public List<WidgetRenderInfo> getWidgetRenderInfoList() {

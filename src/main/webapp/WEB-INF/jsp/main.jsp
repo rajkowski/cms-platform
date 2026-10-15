@@ -609,7 +609,7 @@
     (function () {
       var styleEl = document.getElementById('platform-body-min-height');
       function updatePlatformBodyMinHeight() {
-        var menu = document.getElementById('platform-menu');
+        var menu = document.querySelector('[data-header-modern]') || document.getElementById('platform-menu');
         var footer = document.getElementById('platform-footer');
         var body = document.querySelector('.platform-body');
         var menuH = menu ? menu.offsetHeight : 0;
@@ -626,7 +626,7 @@
       }
       document.addEventListener('DOMContentLoaded', function () {
         updatePlatformBodyMinHeight();
-        var targets = [document.getElementById('platform-menu'), document.getElementById('platform-footer')];
+        var targets = [document.querySelector('[data-header-modern]') || document.getElementById('platform-menu'), document.getElementById('platform-footer')];
         if (typeof ResizeObserver !== 'undefined') {
           var ro = new ResizeObserver(updatePlatformBodyMinHeight);
           targets.forEach(function (el) { if (el) ro.observe(el); });

@@ -300,7 +300,7 @@
 <widget name="logo">
   <maxHeight></maxHeight>
   <maxWidth></maxWidth>
-  <view>standard</view>
+  <%-- <view>standard</view> --%>
   <!-- <view>color</view> -->
   <!-- <view>white</view> -->
   <!-- <logoClass></logoClass> -->
