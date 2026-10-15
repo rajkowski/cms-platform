@@ -1,6 +1,138 @@
 <?xml version="1.0" ?>
 <footers>
+
   <footer name="footer.default" title="Default Footer">
+    <section class="padding-top-20 padding-bottom-15">
+      <column class="small-12 medium-4 cell">
+        <widget name="logo">
+          <maxHeight>48px</maxHeight>
+        </widget>
+        <widget name="content" class="margin-top-15">
+          <uniqueId>site-footer</uniqueId>
+        </widget>
+        <widget name="socialMediaLinks" class="margin-top-15" />
+      </column>
+    </section>
+    <section class="padding-top-15 padding-bottom-15">
+      <column class="small-12 medium-6 cell">
+        <widget name="copyright" />
+      </column>
+      <column class="small-12 medium-6 cell text-left medium-text-right">
+        <widget name="link">
+          <name>Privacy</name>
+          <link>/legal/privacy</link>
+          <class>margin-right-15 text-underline</class>
+        </widget>
+        <widget name="link">
+          <name>Terms</name>
+          <link>/legal/terms</link>
+          <class>text-underline</class>
+        </widget>
+      </column>
+    </section>
+  </footer>
+
+  <footer name="footer.modern" title="Modern Footer">
+    <section class="padding-top-40 padding-bottom-30">
+      <column class="small-12 medium-4 cell">
+        <widget name="logo">
+          <maxHeight>48px</maxHeight>
+        </widget>
+        <widget name="content" class="margin-top-15">
+          <uniqueId>site-footer</uniqueId>
+        </widget>
+        <widget name="socialMediaLinks" class="margin-top-15" />
+      </column>
+      <column class="small-6 medium-2 cell small-margin-top-30">
+        <widget name="menu">
+          <title>Explore</title>
+          <class>vertical</class>
+          <tocUniqueId>footer-useful-links-1</tocUniqueId>
+        </widget>
+      </column>
+      <column class="small-6 medium-2 cell small-margin-top-30">
+        <widget name="menu">
+          <title>Resources</title>
+          <class>vertical</class>
+          <tocUniqueId>footer-useful-links-2</tocUniqueId>
+        </widget>
+      </column>
+      <column class="small-12 medium-4 cell small-margin-top-30">
+        <widget name="content">
+          <html><![CDATA[<p class="text-bold">Stay in the loop</p><p>Get occasional updates and news from our team.</p>]]></html>
+        </widget>
+        <widget name="emailSubscribe" class="margin-top-10">
+          <view>inline</view>
+          <buttonName>Sign up</buttonName>
+        </widget>
+      </column>
+    </section>
+    <section class="padding-top-15 padding-bottom-15">
+      <column class="small-12 medium-6 cell">
+        <widget name="copyright" />
+      </column>
+      <column class="small-12 medium-6 cell text-left medium-text-right">
+        <widget name="link">
+          <name>Privacy</name>
+          <link>/legal/privacy</link>
+          <class>margin-right-15 text-underline</class>
+        </widget>
+        <widget name="link">
+          <name>Terms</name>
+          <link>/legal/terms</link>
+          <class>text-underline</class>
+        </widget>
+      </column>
+    </section>
+  </footer>
+
+  <footer name="footer.newsletter" title="Newsletter Footer">
+    <section class="padding-top-40 padding-bottom-40">
+      <column class="small-12 medium-6 cell">
+        <widget name="content">
+          <html><![CDATA[<p class="text-bold">Good things, occasionally.</p><p>Subscribe for useful updates, news, and events.</p>]]></html>
+        </widget>
+      </column>
+      <column class="small-12 medium-6 cell">
+        <widget name="emailSubscribe">
+          <view>inline</view>
+          <buttonName>Subscribe</buttonName>
+        </widget>
+      </column>
+    </section>
+    <section class="padding-top-20 padding-bottom-20">
+      <column class="small-12 medium-4 cell">
+        <widget name="logo">
+          <maxHeight>42px</maxHeight>
+        </widget>
+        <widget name="copyright" class="margin-top-15" />
+      </column>
+      <column class="small-6 medium-2 cell small-margin-top-20">
+        <widget name="menu">
+          <title>Organization</title>
+          <class>vertical</class>
+          <tocUniqueId>footer-useful-links-1</tocUniqueId>
+        </widget>
+      </column>
+      <column class="small-6 medium-2 cell small-margin-top-20">
+        <widget name="menu">
+          <title>Get help</title>
+          <class>vertical</class>
+          <tocUniqueId>footer-useful-links-2</tocUniqueId>
+        </widget>
+      </column>
+      <column class="small-12 medium-4 cell small-margin-top-20">
+        <widget name="socialMediaLinks" />
+        <widget name="link" class="margin-top-15">
+          <name>Privacy policy</name>
+          <link>/legal/privacy</link>
+          <class>text-underline</class>
+        </widget>
+      </column>
+    </section>
+  </footer>
+
+  <footer name="footer.standard" title="Standard Footer">
     <section class="padding-top-20">
       <column class="small-12 medium-4 cell medium-order-1 small-order-1">
         <widget name="logo">
