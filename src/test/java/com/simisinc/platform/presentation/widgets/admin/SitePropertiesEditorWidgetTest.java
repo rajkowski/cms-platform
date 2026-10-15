@@ -36,15 +36,15 @@ import com.zeroio.platform.presentation.controller.SitePropertyValueConstants;
 class SitePropertiesEditorWidgetTest extends WidgetBase {
 
   @Test
-  void themeEditorOffersAnUnsavedHeaderSelectionField() {
+  void themeEditorExposesTheConfiguredHeaderProperty() {
     widgetContext.getPreferences().put("prefix", "theme");
+    SiteProperty headerProperty = new SiteProperty("theme.header.name", "");
     try (var repository = mockStatic(SitePropertyRepository.class)) {
-      repository.when(() -> SitePropertyRepository.findAllByPrefix("theme")).thenReturn(List.of());
+      repository.when(() -> SitePropertyRepository.findAllByPrefix("theme")).thenReturn(List.of(headerProperty));
       new SitePropertiesEditorWidget().execute(widgetContext);
       List<?> properties = (List<?>) widgetContext.getRequest().getAttribute("sitePropertyList");
       assertEquals(1, properties.size());
-      assertEquals("theme.header.name", ((SiteProperty) properties.get(0)).getName());
-      assertEquals("", ((SiteProperty) properties.get(0)).getValue());
+      assertSame(headerProperty, properties.get(0));
     }
   }
 

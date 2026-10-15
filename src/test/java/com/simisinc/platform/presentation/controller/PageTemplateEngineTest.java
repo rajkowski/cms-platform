@@ -29,8 +29,8 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -63,6 +63,7 @@ class PageTemplateEngineTest {
     systemPropertyList.add(new SiteProperty("system.filepath", "."));
     systemPropertyList.add(new SiteProperty("system.www.context", ""));
     systemPropertyList.add(new SiteProperty("site.name", "Test Site"));
+    systemPropertyList.add(new SiteProperty("theme.footer.name", "footer.default"));
     systemPropertyList.add(new SiteProperty("maps.service.tiles", "openstreetmap"));
     return systemPropertyList;
   }

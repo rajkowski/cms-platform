@@ -36,8 +36,10 @@ import com.github.rajkowski.database.Insert;
 import com.github.rajkowski.database.Select;
 import com.github.rajkowski.database.TenantRegistry;
 import com.github.rajkowski.database.Update;
+import com.simisinc.platform.domain.model.SiteProperty;
 import com.simisinc.platform.domain.model.cms.WebContainer;
 import com.simisinc.platform.infrastructure.cache.CacheManager;
+import com.simisinc.platform.infrastructure.persistence.SitePropertyRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.WebContainerRepository;
 import com.simisinc.platform.presentation.controller.Footer;
 import com.simisinc.platform.presentation.controller.Header;
@@ -96,10 +98,15 @@ class WebContainerLayoutCommandTest {
     record.setName("header.default");
     record.setContainerXml("<header name='header.default'><widget name='logo'/></header>");
     Insert insert = mock(Insert.class, RETURNS_SELF);
+    Select select = mock(Select.class, RETURNS_SELF);
     when(insert.execute()).thenReturn(42L);
+    when(select.returnRecord(ArgumentMatchers.<DB.ResultSetMapper<@Nullable Object>>any())).thenReturn(null);
     try (var database = mockStatic(DB.class);
-        var cache = mockStatic(CacheManager.class)) {
+        var cache = mockStatic(CacheManager.class);
+        var siteProperties = mockStatic(SitePropertyRepository.class)) {
       database.when(DB::INSERT).thenReturn(insert);
+      database.when(() -> DB.SELECT("web_containers.*")).thenReturn(select);
+      siteProperties.when(() -> SitePropertyRepository.findByName("theme.header.name")).thenReturn(mock(SiteProperty.class));
       assertSame(record, WebContainerRepository.save(record));
       cache.verify(() -> CacheManager.invalidateCurrentWorkspaceKey(CacheManager.OBJECT_CACHE, CacheManager.WEBSITE_HEADER, true));
       cache.verify(
