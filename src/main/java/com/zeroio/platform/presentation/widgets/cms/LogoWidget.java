@@ -73,6 +73,12 @@ public class LogoWidget extends GenericWidget {
     }
     context.getRequest().setAttribute("siteTitle", sitePropertyMap.get("site.name"));
 
+    // Icon preference
+    String showIcon = context.getPreferences().getOrDefault("showIcon", "true");
+    if (StringUtils.isNotBlank(showIcon)) {
+      context.getRequest().setAttribute("showIcon", showIcon);
+    }
+
     // Home link for the logo
     context.getRequest().setAttribute("logoHomeLink",
         ResolveHeaderLinkCommand.resolveLink(context.getPreferences().getOrDefault("homeLink", "/"), context.getContextPath()));
