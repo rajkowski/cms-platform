@@ -200,8 +200,15 @@
             if (attr.name.startsWith('on')) {
               el.removeAttribute(attr.name);
             }
-            if (attr.name === 'href' && attr.value.trim().toLowerCase().startsWith('javascript:')) {
-              el.removeAttribute('href');
+            if (attr.name === 'href') {
+              const normalizedHref = attr.value.trim().toLowerCase();
+              if (
+                normalizedHref.startsWith('javascript:') ||
+                normalizedHref.startsWith('data:') ||
+                normalizedHref.startsWith('vbscript:')
+              ) {
+                el.removeAttribute('href');
+              }
             }
           });
         });
