@@ -2,6 +2,20 @@
 <footers>
 
   <footer name="footer.default" title="Default Footer">
+    <section class="padding-top-5 padding-bottom-20 align-middle">
+      <column class="small-12 medium-4 cell">
+        <widget name="logo">
+          <maxHeight>48px</maxHeight>
+          <showIcon>false</showIcon>
+        </widget>
+      </column>
+      <column class="small-12 medium-8 cell text-left medium-text-right">
+        <widget name="copyright" />
+      </column>
+    </section>
+  </footer>
+
+  <footer name="footer.compact" title="Compact Footer">
     <section class="padding-top-20 padding-bottom-15">
       <column class="small-12 medium-4 cell">
         <widget name="logo">
