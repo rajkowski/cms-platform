@@ -25,7 +25,9 @@
       <img class="logo-dark" src="<c:out value='${logoDarkSrc}'/>" alt="<c:out value='${siteTitle}'/>" style="<c:out value='${logoStyle}'/>" />
     </c:when>
     <c:otherwise>
-      <i class="${font:fas()} fa-cube" aria-hidden="true"></i>
+      <c:if test="${showIcon eq 'true'}">
+        <i class="${font:fas()} fa-cube" aria-hidden="true"></i>
+      </c:if>
       <span><c:out value="${not empty text ? text : siteTitle}" /></span>
     </c:otherwise>
   </c:choose>
