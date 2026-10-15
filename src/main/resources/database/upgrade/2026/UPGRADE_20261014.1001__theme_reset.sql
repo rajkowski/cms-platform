@@ -13,3 +13,6 @@ UPDATE web_containers SET container_name = 'footer.app.backup' WHERE container_n
 -- Remove legacy header and footer options
 DELETE FROM site_properties WHERE property_name = 'theme.menu.location';
 DELETE FROM site_properties WHERE property_name = 'theme.footer.style';
+DELETE FROM site_properties WHERE property_name = 'theme.footer.logo.color';
+DELETE FROM site_properties WHERE property_name = 'theme.fonts.headlines';
+DELETE FROM site_properties WHERE property_name = 'theme.fonts.body';

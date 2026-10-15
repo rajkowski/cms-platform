@@ -89,15 +89,6 @@
                 <option value="button"<c:if test="${siteProperty.value eq 'button'}"> selected</c:if>>Button links to a web page</option>
               </select>
             </c:when>
-            <c:when test="${siteProperty.name eq 'theme.footer.logo.color'}">
-              <select name="${siteProperty.name}">
-                <option value="full-color"<c:if test="${siteProperty.value eq 'full-color'}"> selected</c:if>>Full color</option>
-                <option value="all-white"<c:if test="${siteProperty.value eq 'all-white'}"> selected</c:if>>All white</option>
-                <option value="color-and-white"<c:if test="${siteProperty.value eq 'color-and-white'}"> selected</c:if>>Color and White</option>
-                <option value="text-only"<c:if test="${siteProperty.value eq 'text-only'}"> selected</c:if>>Text only</option>
-                <option value="none"<c:if test="${siteProperty.value eq 'none'}"> selected</c:if>>No logo</option>
-              </select>
-            </c:when>
             <c:when test="${siteProperty.type eq 'font'}">
               <select name="${siteProperty.name}">
                 <option value=""<c:if test="${siteProperty.value eq ''}"> selected</c:if>>Default (Use CSS)</option>

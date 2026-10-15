@@ -82,9 +82,6 @@ INSERT INTO site_properties (property_order, property_label, property_name, prop
 
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (7, 'Logo Color', 'theme.logo.color', 'text-only', 'text');
 
-INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (10, 'Headlines Font', 'theme.fonts.headlines', '', 'font');
-INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (11, 'Body Font', 'theme.fonts.body', '', 'font');
-
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (14, 'Web Page Background', 'theme.body.backgroundColor', '#ffffff', 'color');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (15, 'Web Page Text Color', 'theme.body.text.color', '#000000', 'color');
 
@@ -147,7 +144,6 @@ INSERT INTO site_properties (property_order, property_label, property_name, prop
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (112, 'Footer Background', 'theme.footer.backgroundColor', '#353535', 'color');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (114, 'Footer Text Color', 'theme.footer.text.color', '#acacac', 'color');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (116, 'Footer Links Color', 'theme.footer.links.color', '#cdcdcd', 'color');
-INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (120, 'Footer Logo Color', 'theme.footer.logo.color', 'text-only', 'text');
 
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (130, 'Header XML Name', 'theme.header.name', '', 'text');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (132, 'Footer XML Name', 'theme.footer.name', '', 'text');
