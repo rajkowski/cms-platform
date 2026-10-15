@@ -272,7 +272,8 @@
 
               const heading = document.createElement('h5');
               const link = document.createElement('a');
-              const href = (page.link && !page.link.trim().toLowerCase().startsWith('javascript:')) ? page.link : '#';
+              const normalizedLink = page.link ? page.link.trim().toLowerCase() : '';
+              const href = (page.link && !normalizedLink.startsWith('javascript:') && !normalizedLink.startsWith('data:') && !normalizedLink.startsWith('vbscript:')) ? page.link : '#';
               link.setAttribute('href', href);
               link.textContent = page.title || page.link || 'Untitled';
               heading.appendChild(link);
