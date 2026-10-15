@@ -125,13 +125,21 @@
 
   // Flag to track if we're in auto-selection mode
   let isAutoSelecting = false;
+  let previousRegionFocus = null;
+  let previousRegionOverflow = '';
 
   // Region Modal Functions
   function openRegionModal() {
     const modal = document.getElementById('regionModal');
     if (modal) {
+      if (modal.style.display !== 'block') {
+        previousRegionFocus = document.activeElement;
+        previousRegionOverflow = document.body.style.overflow;
+      }
       modal.style.display = 'block';
+      modal.setAttribute('aria-hidden', 'false');
       document.body.style.overflow = 'hidden';
+      if (modal.hasAttribute('tabindex')) modal.focus();
 
       // Force-clear all radio buttons immediately to prevent browser cache issues
       const regionForm = document.getElementById('regionFilterForm');
@@ -161,7 +169,11 @@
     const modal = document.getElementById('regionModal');
     if (modal) {
       modal.style.display = 'none';
-      document.body.style.overflow = 'auto';
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = previousRegionOverflow;
+      if (previousRegionFocus && previousRegionFocus.isConnected && typeof previousRegionFocus.focus === 'function') {
+        previousRegionFocus.focus();
+      }
     }
   }
 

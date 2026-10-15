@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://www.github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +20,7 @@ package com.simisinc.platform.presentation.controller;
 import static java.util.stream.Collectors.toList;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -35,6 +37,9 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+
+import com.zeroio.platform.application.cms.ResolveHeaderLinkCommand;
+import com.zeroio.platform.presentation.widgets.cms.HeaderAccountMenuWidget;
 
 /**
  * Commands to parse XML documents into nested classes
@@ -66,6 +71,16 @@ public class XMLContainerCommands implements Serializable {
       }
       // Check for sections
       Section section = new Section();
+      section.setEnabled(readBoolean(child, "enabled"));
+      section.setVisibility(readOption(child, "visibility", "all", "all", "small", "medium", "large"));
+      section.setContainer(readOption(child, "container", "none", "none", "grid", "header"));
+      String containerClass = child.getAttribute("containerClass").trim();
+      if (containerClass.isEmpty() && "grid".equals(section.getContainer())) {
+        containerClass = "grid-container";
+      } else if (containerClass.isEmpty() && "header".equals(section.getContainer())) {
+        containerClass = "header-container";
+      }
+      section.setContainerClass(containerClass);
 
       // Determine its sequence number
       int pageRowCount = pageRenderContext.incrementAndGetRowCount();
@@ -169,6 +184,9 @@ public class XMLContainerCommands implements Serializable {
           }
         }
         Column column = new Column();
+        column.setEnabled(readBoolean(child, "enabled"));
+        column.setVisibility(readOption(child, "visibility", "all", "all", "small", "medium", "large"));
+        column.setWrapper(readOption(child, "wrapper", "default", "default", "none"));
 
         // Determine its sequence number
         int pageColumnCount = pageRenderContext.incrementAndGetColumnCount();
@@ -262,6 +280,9 @@ public class XMLContainerCommands implements Serializable {
       LOG.trace("Found name: " + name);
 
       Widget widget = new Widget(name);
+      widget.setEnabled(readBoolean(child, "enabled"));
+      widget.setVisibility(readOption(child, "visibility", "all", "all", "small", "medium", "large"));
+      widget.setWrapper(readOption(child, "wrapper", "auto", "auto", "none"));
 
       // Determine its sequence number
       int pageWidgetCount = pageRenderContext.incrementAndGetWidgetCount();
@@ -327,6 +348,32 @@ public class XMLContainerCommands implements Serializable {
 
   private static void addWidgetPreferences(Widget widget, NodeList children) {
     addWidgetPreferences(widget.getPreferences(), children);
+  }
+
+  private static boolean readBoolean(Element element, String attribute) {
+    String value = element.getAttribute(attribute).trim();
+    if (value.isEmpty() || "true".equals(value)) {
+      return true;
+    }
+    if ("false".equals(value)) {
+      return false;
+    }
+    LOG.warn("Invalid " + element.getTagName() + " " + attribute + "; expected true or false; using true");
+    return true;
+  }
+
+  private static String readOption(Element element, String attribute, String defaultValue, String... allowedValues) {
+    String value = element.getAttribute(attribute).trim();
+    if (value.isEmpty()) {
+      return defaultValue;
+    }
+    for (String allowedValue : allowedValues) {
+      if (allowedValue.equals(value)) {
+        return value;
+      }
+    }
+    throw new IllegalArgumentException(
+        "Invalid " + element.getTagName() + " " + attribute + "; expected " + String.join(", ", allowedValues));
   }
 
   public static void addWidgetPreferences(Map<String, String> preferenceMap, NodeList children) {

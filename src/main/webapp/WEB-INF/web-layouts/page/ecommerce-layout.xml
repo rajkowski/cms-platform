@@ -5,8 +5,8 @@
     <section class="align-center">
       <column class="small-12 medium-11 cell">
         <widget name="cart">
-          <title>Your bag</title>
-          <emptyMessage>Your bag is empty.</emptyMessage>
+          <title>Your cart</title>
+          <emptyMessage>Your cart is empty.</emptyMessage>
           <card1uniqueId>cart-card1</card1uniqueId>
           <card2uniqueId>cart-card2</card2uniqueId>
         </widget>
@@ -235,7 +235,7 @@
         </widget>
         <widget name="cart">
           <view>items</view>
-          <emptyMessage>Your bag is empty.</emptyMessage>
+          <emptyMessage>Your cart is empty.</emptyMessage>
         </widget>
         <!-- the final order button -->
         <widget name="placeOrder" />

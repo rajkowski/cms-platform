@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://www.github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.simisinc.platform.presentation.widgets.cms;
+package com.zeroio.platform.presentation.widgets.cms;
 
 import java.util.Map;
 
@@ -23,6 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.zeroio.platform.application.cms.ResolveHeaderLinkCommand;
 
 /**
  * Renders a site logo
@@ -46,9 +48,6 @@ public class LogoWidget extends GenericWidget {
     context.getRequest().setAttribute("systemPropertyMap", systemPropertyMap);
     context.getRequest().setAttribute("sitePropertyMap", sitePropertyMap);
     context.getRequest().setAttribute("themePropertyMap", themePropertyMap);
-
-    // Preferred logo
-    String view = context.getPreferences().getOrDefault("view", "standard");
 
     // HTML Class
     context.getRequest().setAttribute("logoClass", context.getPreferences().get("logoClass"));
@@ -74,26 +73,54 @@ public class LogoWidget extends GenericWidget {
     }
     context.getRequest().setAttribute("siteTitle", sitePropertyMap.get("site.name"));
 
-    // Determine a logo image source
-    String logoSrc = null;
-    switch (view) {
-      case "standard":
-      case "full-color":
-        logoSrc = sitePropertyMap.get("site.logo");
-        break;
-      case "white":
-      case "all-white":
-        logoSrc = sitePropertyMap.get("site.logo.white");
-        break;
-      case "color":
-      case "color-and-white":
-        logoSrc = sitePropertyMap.get("site.logo.mixed");
-        break;
-      default:
-        break;
+    // Icon preference
+    String showIcon = context.getPreferences().getOrDefault("showIcon", "true");
+    if (StringUtils.isNotBlank(showIcon)) {
+      context.getRequest().setAttribute("showIcon", showIcon);
     }
-    if (StringUtils.isNotBlank(logoSrc)) {
-      context.getRequest().setAttribute("logoSrc", logoSrc);
+
+    // Home link for the logo
+    context.getRequest().setAttribute("logoHomeLink",
+        ResolveHeaderLinkCommand.resolveLink(context.getPreferences().getOrDefault("homeLink", "/"), context.getContextPath()));
+
+    // Preferred logo
+    boolean hasOverride = false;
+    String view = context.getPreferences().get("view");
+    if (view != null) {
+      String logoSrc = null;
+      switch (view) {
+        case "full-color":
+          logoSrc = sitePropertyMap.get("site.logo");
+          break;
+        case "white":
+        case "all-white":
+          logoSrc = sitePropertyMap.get("site.logo.white");
+          break;
+        case "color":
+        case "color-and-white":
+          logoSrc = sitePropertyMap.get("site.logo.mixed");
+          break;
+        default:
+          break;
+      }
+      if (StringUtils.isNotBlank(logoSrc)) {
+        hasOverride = true;
+        context.getRequest().setAttribute("logoSrc", logoSrc);
+      }
+    }
+
+    // Light/dark mode
+    if (!hasOverride) {
+      String lightLogo = sitePropertyMap.get("site.logo");
+      context.getRequest().setAttribute("logoLightSrc", lightLogo);
+      String darkLogo = sitePropertyMap.get("site.logo.mixed");
+      if (StringUtils.isBlank(darkLogo)) {
+        darkLogo = sitePropertyMap.get("site.logo.white");
+      }
+      if (StringUtils.isBlank(darkLogo)) {
+        darkLogo = sitePropertyMap.get("site.logo");
+      }
+      context.getRequest().setAttribute("logoDarkSrc", darkLogo);
     }
 
     // Show the JSP

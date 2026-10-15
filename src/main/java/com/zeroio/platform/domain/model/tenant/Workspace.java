@@ -22,6 +22,7 @@ import com.simisinc.platform.domain.model.Entity;
 public class Workspace extends Entity {
 
   private long id = -1;
+  private String uniqueId = null;
   private String name;
   private String siteUrl;
   private String canonicalDomain;
@@ -40,6 +41,14 @@ public class Workspace extends Entity {
 
   public String getName() {
     return name;
+  }
+
+  public String getUniqueId() {
+    return uniqueId;
+  }
+
+  public void setUniqueId(String uniqueId) {
+    this.uniqueId = uniqueId;
   }
 
   public String getSiteUrl() {

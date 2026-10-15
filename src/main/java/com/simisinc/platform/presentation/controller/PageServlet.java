@@ -78,10 +78,7 @@ import com.simisinc.platform.domain.model.items.Collection;
 import com.simisinc.platform.domain.model.items.Item;
 import com.simisinc.platform.presentation.widgets.cms.WebContainerContext;
 import com.zeroio.platform.application.cms.RenderMainMenuCommand;
-import com.zeroio.platform.application.cms.WorkspaceResolutionCommand;
-import com.zeroio.platform.application.login.WorkspaceAccessCommand;
 import com.zeroio.platform.domain.model.Region;
-import com.zeroio.platform.domain.model.tenant.Workspace;
 import com.zeroio.platform.infrastructure.persistence.RegionRepository;
 
 /**
@@ -96,9 +93,30 @@ import com.zeroio.platform.infrastructure.persistence.RegionRepository;
 public class PageServlet extends HttpServlet {
 
   private static Log LOG = LogFactory.getLog(PageServlet.class);
-  public static final String WORKSPACE_SELECTOR_PATH = "/workspace-selector";
   public static final String WORKSPACE_LAUNCH_RESOURCE = "/workspace-launch";
   public static final String WORKSPACE_HANDOFF_RESOURCE = "/workspace-handoff";
+
+  static String selectHeaderName(String pageName, String pagePath, String fetchDestination, Map<String, String> themeProperties) {
+    if ("iframe".equals(fetchDestination) || pagePath.startsWith("/admin/system") || pagePath.startsWith("/admin/visual-")) {
+      return null;
+    }
+    if (pageName.startsWith("/checkout")) {
+      return "header.plain";
+    }
+    String selected = themeProperties.get("theme.header.name");
+    if (selected != null && !selected.isBlank()) {
+      return selected.trim();
+    }
+    return "header.default";
+  }
+
+  static String selectFooterName(Map<String, String> themeProperties) {
+    String selected = themeProperties.get("theme.footer.name");
+    if (selected != null && !selected.isBlank()) {
+      return selected.trim();
+    }
+    return "footer.default";
+  }
 
   // Widget Cache (read-only after init; ConcurrentHashMap for safe concurrent access)
   private Map<String, Object> widgetInstances = new ConcurrentHashMap<>();
@@ -340,21 +358,6 @@ public class PageServlet extends HttpServlet {
       PageRequest pageRequest = new PageRequest(request);
       if (LOG.isDebugEnabled()) {
         LOG.debug("Using resource: " + pageRequest.getPagePath());
-      }
-
-      // If this is the main tenant, and user requests workspace selection, handle it here
-      if (WORKSPACE_SELECTOR_PATH.equals(pageRequest.getPagePath())
-          && WorkspaceResolutionCommand.isDefaultWorkspace(request.getServerName())) {
-        UserSession selectorUserSession = (UserSession) request.getSession().getAttribute(SessionConstants.USER);
-        if (selectorUserSession != null && selectorUserSession.isLoggedIn()) {
-          LOG.debug("Finding authorized workspaces for user: " + selectorUserSession.getUserId());
-          List<Workspace> workspaces = WorkspaceAccessCommand.findAuthorizedWorkspaces(selectorUserSession.getUserId());
-          request.setAttribute("workspaceList", workspaces);
-        } else {
-          LOG.debug("No user session found for workspace selector");
-        }
-        request.getServletContext().getRequestDispatcher("/WEB-INF/jsp/cms/workspace-selector.jsp").forward(request, response);
-        return;
       }
 
       // Use the session data (created in WebRequestFilter)
@@ -686,24 +689,40 @@ public class PageServlet extends HttpServlet {
       if (prepareHeaderFooter) {
         LOG.debug("Rendering header and footer...");
         // Render the header
-        Header header = null;
-        if (pageRenderInfo.getName().startsWith("/checkout")) {
-          header = WebContainerLayoutCommand.retrieveHeader("header.plain",
-              request.getServletContext().getResource("/WEB-INF/web-layouts/header/header-layout.xml"));
-        } else {
-          header = WebContainerLayoutCommand.retrieveHeader("header.default",
-              request.getServletContext().getResource("/WEB-INF/web-layouts/header/header-layout.xml"));
+        String headerName = selectHeaderName(pageRenderInfo.getName(), pageRequest.getPagePath(), request.getHeader("Sec-Fetch-Dest"),
+            themePropertyMap);
+        URL headerUrl = request.getServletContext().getResource("/WEB-INF/web-layouts/header/header-layout.xml");
+        Header header = WebContainerLayoutCommand.retrieveHeader(headerName, headerUrl);
+        if (header == null) {
+          String fallbackName = "header.default";
+          LOG.warn("Selected header could not be loaded: " + headerName + "; using bundled " + fallbackName);
+          header = XMLHeaderLoader.loadFromURL(fallbackName, headerUrl);
         }
-        headerRenderInfo = new HeaderRenderInfo(header, pageRequest.getPagePath());
-        WebContainerCommand.processWidgets(webContainerContext, header.getSections(), headerRenderInfo, coreData,
-            userSession, themePropertyMap, request);
+        if (header != null) {
+          // @note is this needed with the new header?
+          if ((userSession.isLoggedIn() || "true".equals(sitePropertyMap.get("site.online")))
+              && "true".equals(sitePropertyMap.get("site.regions.enabled"))) {
+            List<Region> regionList = RegionRepository.findAll();
+            pageRequest.setAttribute(RequestConstants.REGION_LIST, regionList);
+            request.setAttribute(RequestConstants.REGION_LIST, regionList);
+          }
+          headerRenderInfo = new HeaderRenderInfo(header, pageRequest.getPagePath());
+          WebContainerCommand.processWidgets(webContainerContext, header.getSections(), headerRenderInfo, coreData,
+              userSession, themePropertyMap, request);
+        } else {
+          LOG.error("No valid header definition could be loaded");
+        }
 
         // Render the footer
-        Footer footer = WebContainerLayoutCommand.retrieveFooter("footer.default",
-            request.getServletContext().getResource("/WEB-INF/web-layouts/footer/footer-layout.xml"));
-        footerRenderInfo = new FooterRenderInfo(footer, pageRequest.getPagePath());
-        WebContainerCommand.processWidgets(webContainerContext, footer.getSections(), footerRenderInfo, coreData,
-            userSession, themePropertyMap, request);
+        URL footerUrl = request.getServletContext().getResource("/WEB-INF/web-layouts/footer/footer-layout.xml");
+        Footer footer = WebContainerLayoutCommand.retrieveFooter(selectFooterName(themePropertyMap), footerUrl);
+        if (footer != null) {
+          footerRenderInfo = new FooterRenderInfo(footer, pageRequest.getPagePath());
+          WebContainerCommand.processWidgets(webContainerContext, footer.getSections(), footerRenderInfo, coreData,
+              userSession, themePropertyMap, request);
+        } else {
+          LOG.error("No valid footer definition could be loaded");
+        }
       }
 
       // Finalize the controller session (zero out the widget's session data)
@@ -746,7 +765,8 @@ public class PageServlet extends HttpServlet {
         request.setAttribute(MASTER_MENU_TAB_LIST, menuTabList);
 
         // Load the region list if enabled
-        if ("true".equals(sitePropertyMap.getOrDefault("site.regions.enabled", "false"))) {
+        if ("true".equals(sitePropertyMap.getOrDefault("site.regions.enabled", "false"))
+            && request.getAttribute(RequestConstants.REGION_LIST) == null) {
           List<Region> regionList = RegionRepository.findAll();
           request.setAttribute(RequestConstants.REGION_LIST, regionList);
         }

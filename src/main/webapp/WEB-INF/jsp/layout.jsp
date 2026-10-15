@@ -18,6 +18,7 @@
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="font" uri="/WEB-INF/tlds/font-functions.tld" %>
+<%@ taglib prefix="g" uri="http://granule.com/tags" %>
 <%@ taglib prefix="js" uri="/WEB-INF/tlds/javascript-escape.tld" %>
 <%@ taglib prefix="url" uri="/WEB-INF/tlds/url-functions.tld" %>
 <jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
@@ -33,16 +34,13 @@
 <jsp:useBean id="controllerShowMainMenu" class="java.lang.String" scope="request"/>
 <jsp:useBean id="requestRegionList" class="java.util.ArrayList" scope="request"/>
 <%-- Navigation --%>
-<c:if test="${controllerShowMainMenu eq 'true'}">
+<c:if test="${controllerShowMainMenu eq 'true' and not empty headerRenderInfo.name}">
   <c:choose>
     <c:when test="${fn:startsWith(pageRenderInfo.name, '/checkout')}">
       <%@ include file="layout-header-checkout.jspf" %>
     </c:when>
-    <c:when test="${'custom' eq themePropertyMap['theme.menu.location']}">
-      <%@ include file="layout-header-renderer.jspf" %>
-    </c:when>
     <c:otherwise>
-      <%@ include file="layout-header-modern.jspf" %>
+      <%@ include file="layout-header-renderer.jspf" %>
     </c:otherwise>
   </c:choose>
 </c:if>
@@ -59,15 +57,5 @@
 </div>
 <%-- Footer --%>
 <c:if test="${(controllerShowMainMenu eq 'true' && !fn:startsWith(pageRenderInfo.name, '/admin') && pageRenderInfo.name ne '/content-editor') || pageRenderInfo.name eq '/admin/theme-properties'}">
-  <c:choose>
-    <c:when test="${'none' eq themePropertyMap['theme.footer.style']}">
-
-    </c:when>
-    <c:when test="${'custom' eq themePropertyMap['theme.footer.style']}">
-      <%@ include file="layout-footer-renderer.jspf" %>
-    </c:when>
-    <c:otherwise>
-      <%@ include file="layout-footer-standard.jspf" %>
-    </c:otherwise>
-  </c:choose>
+  <%@ include file="layout-footer-renderer.jspf" %>
 </c:if>

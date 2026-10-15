@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://www.github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +17,7 @@
 
 package com.simisinc.platform.presentation.widgets.admin;
 
+import java.net.URL;
 import java.sql.Timestamp;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -29,6 +31,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.application.admin.ValidateSitePropertyCommand;
+import com.simisinc.platform.application.cms.WebContainerLayoutCommand;
 import com.simisinc.platform.domain.model.SiteProperty;
 import com.simisinc.platform.infrastructure.persistence.SitePropertyRepository;
 import com.simisinc.platform.presentation.controller.SqlTimestampConverter;
@@ -114,6 +117,16 @@ public class SitePropertiesEditorWidget extends GenericWidget {
       siteProperty.setValue(newValue);
       if (StringUtils.isBlank(newValue)) {
         continue;
+      }
+      if ("theme.header.name".equals(siteProperty.getName())) {
+        try {
+          URL headers = context.getServletContext().getResource("/WEB-INF/web-layouts/header/header-layout.xml");
+          if (WebContainerLayoutCommand.retrieveHeader(newValue, headers) == null) {
+            context.setErrorMessage("Header XML Definition was not found. Select an existing named header or leave the field empty.");
+          }
+        } catch (Exception exception) {
+          context.setErrorMessage("Header XML Definition could not be loaded. Select a valid header or leave the field empty.");
+        }
       }
       if ("url".equals(siteProperty.getType())) {
         if (!ValidateSitePropertyCommand.isValidUrl(newValue)) {

@@ -402,6 +402,17 @@
     </section>
   </page>
 
+  <page name="/admin/ai-properties" role="admin" title="AI Settings">
+    <section>
+      <column class="small-12 large-10 cell">
+        <widget name="sitePropertiesEditor">
+          <title>AI Settings</title>
+          <prefix>ai</prefix>
+        </widget>
+      </column>
+    </section>
+  </page>
+
   <page name="/admin/bi-properties" role="admin" title="BI Settings">
     <section>
       <column class="small-12 large-10 cell">

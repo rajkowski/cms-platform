@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,6 +42,9 @@ public class SectionRenderInfo implements Serializable {
   private boolean sticky = false;
   private boolean hr = false;
   private String videoBackgroundUrl = null;
+  private String visibility = "all";
+  private String container = "none";
+  private String containerClass;
 
   public SectionRenderInfo() {
   }
@@ -53,6 +57,9 @@ public class SectionRenderInfo implements Serializable {
     this.sticky = section.isSticky();
     this.hr = section.hasHr();
     this.videoBackgroundUrl = section.getVideoBackgroundUrl();
+    this.visibility = section.getVisibility();
+    this.container = section.getContainer();
+    this.containerClass = section.getContainerClass();
   }
 
   public List<ColumnRenderInfo> getColumnRenderInfoList() {
@@ -98,4 +105,29 @@ public class SectionRenderInfo implements Serializable {
   public String getVideoBackgroundUrl() {
     return videoBackgroundUrl;
   }
+
+  public String getVisibility() {
+    return visibility;
+  }
+
+  public void setVisibility(String visibility) {
+    this.visibility = visibility;
+  }
+
+  public String getContainer() {
+    return container;
+  }
+
+  public void setContainer(String container) {
+    this.container = container;
+  }
+
+  public String getContainerClass() {
+    return containerClass;
+  }
+
+  public void setContainerClass(String containerClass) {
+    this.containerClass = containerClass;
+  }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Matt Rajkowski (https://github.com/rajkowski)
+ * Copyright 2025-2026 Matt Rajkowski (https://github.com/rajkowski)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.simisinc.platform.presentation.widgets.cms;
+package com.zeroio.platform.presentation.widgets.cms;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mockStatic;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -65,6 +67,39 @@ class LogoWidgetTest extends WidgetBase {
   private void mockSitePropertyCache(MockedStatic<CacheManager> cacheManager) {
     cacheManager.when(() -> CacheManager.getCurrentWorkspaceLoadingValue(anyString(), anyString()))
         .thenAnswer(invocation -> sitePropertyListCache.get(invocation.getArgument(1)));
+  }
+
+  @Test
+  void modernDarkLogoUsesMixedWhiteThenStandardFallback() {
+    Map<String, String> properties = new HashMap<>();
+    properties.put("site.logo", "/standard.png");
+    properties.put("site.logo.white", "/white.png");
+    properties.put("site.logo.mixed", "/mixed.png");
+    try (var loader = mockStatic(com.simisinc.platform.application.admin.LoadSitePropertyCommand.class)) {
+      loader.when(() -> com.simisinc.platform.application.admin.LoadSitePropertyCommand.loadAsMap(anyString())).thenReturn(properties);
+      new LogoWidget().execute(widgetContext);
+      Assertions.assertEquals("/mixed.png", pageRequest.getAttribute("logoDarkSrc"));
+      properties.remove("site.logo.mixed");
+      new LogoWidget().execute(widgetContext);
+      Assertions.assertEquals("/white.png", pageRequest.getAttribute("logoDarkSrc"));
+      properties.remove("site.logo.white");
+      new LogoWidget().execute(widgetContext);
+      Assertions.assertEquals("/standard.png", pageRequest.getAttribute("logoDarkSrc"));
+      properties.remove("site.logo");
+      new LogoWidget().execute(widgetContext);
+      Assertions.assertNull(pageRequest.getAttribute("logoLightSrc"));
+    }
+  }
+
+  @Test
+  void modernBrandingHasASeparateViewAndLogoFallbacks() {
+    try (MockedStatic<CacheManager> cacheManager = mockStatic(CacheManager.class)) {
+      mockSitePropertyCache(cacheManager);
+      new LogoWidget().execute(widgetContext);
+    }
+    Assertions.assertEquals("/cms/logo.jsp", widgetContext.getJsp());
+    Assertions.assertEquals("/white-color.png", widgetContext.getRequest().getAttribute("logoDarkSrc"));
+    Assertions.assertEquals("New Site", widgetContext.getRequest().getAttribute("siteTitle"));
   }
 
   @Test

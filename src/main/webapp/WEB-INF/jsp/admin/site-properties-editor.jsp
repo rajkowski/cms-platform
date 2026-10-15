@@ -1,4 +1,5 @@
 <%--
+  ~ Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
   ~ Copyright 2022 SimIS Inc.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -73,39 +74,10 @@
         <td><c:out value="${siteProperty.label}" /></td>
         <td nowrap>
           <c:choose>
-            <c:when test="${siteProperty.name eq 'theme.logo.color'}">
+            <c:when test="${siteProperty.name eq 'ai.askai.control'}">
               <select name="${siteProperty.name}">
-                <option value="full-color"<c:if test="${siteProperty.value eq 'full-color'}"> selected</c:if>>Full color</option>
-                <option value="all-white"<c:if test="${siteProperty.value eq 'all-white'}"> selected</c:if>>All white</option>
-                <option value="color-and-white"<c:if test="${siteProperty.value eq 'color-and-white'}"> selected</c:if>>Color and White</option>
-                <option value="text-only"<c:if test="${siteProperty.value eq 'text-only'}"> selected</c:if>>Text only</option>
-                <option value="none"<c:if test="${siteProperty.value eq 'none'}"> selected</c:if>>No logo</option>
-              </select>
-            </c:when>
-            <c:when test="${siteProperty.name eq 'theme.footer.logo.color'}">
-              <select name="${siteProperty.name}">
-                <option value="full-color"<c:if test="${siteProperty.value eq 'full-color'}"> selected</c:if>>Full color</option>
-                <option value="all-white"<c:if test="${siteProperty.value eq 'all-white'}"> selected</c:if>>All white</option>
-                <option value="color-and-white"<c:if test="${siteProperty.value eq 'color-and-white'}"> selected</c:if>>Color and White</option>
-                <option value="text-only"<c:if test="${siteProperty.value eq 'text-only'}"> selected</c:if>>Text only</option>
-                <option value="none"<c:if test="${siteProperty.value eq 'none'}"> selected</c:if>>No logo</option>
-              </select>
-            </c:when>
-            <c:when test="${siteProperty.name eq 'theme.menu.location'}">
-              <select name="${siteProperty.name}">
-                <option value="center"<c:if test="${siteProperty.value eq 'center'}"> selected</c:if>>Centered</option>
-                <option value="left"<c:if test="${siteProperty.value eq 'left'}"> selected</c:if>>Left Justified</option>
-                <option value="right"<c:if test="${siteProperty.value eq 'right'}"> selected</c:if>>Right Justified</option>
-                <option value="pro"<c:if test="${siteProperty.value eq 'pro'}"> selected</c:if>>Expanded</option>
-                <option value="custom"<c:if test="${siteProperty.value eq 'custom'}"> selected</c:if>>Custom XML</option>
-                <option value="none"<c:if test="${siteProperty.value eq 'none'}"> selected</c:if>>None</option>
-              </select>
-            </c:when>
-            <c:when test="${siteProperty.name eq 'theme.footer.style'}">
-              <select name="${siteProperty.name}">
-                <option value="default"<c:if test="${siteProperty.value eq 'default'}"> selected</c:if>>Basic</option>
-                <option value="custom"<c:if test="${siteProperty.value eq 'custom'}"> selected</c:if>>Custom XML</option>
-                <option value="none"<c:if test="${siteProperty.value eq 'none'}"> selected</c:if>>None</option>
+                <option value="drawer"<c:if test="${siteProperty.value eq 'drawer'}"> selected</c:if>>Drawer slides out</option>
+                <option value="button"<c:if test="${siteProperty.value eq 'button'}"> selected</c:if>>Button links to a web page</option>
               </select>
             </c:when>
             <c:when test="${siteProperty.type eq 'font'}">
@@ -192,51 +164,53 @@
   var colorSelectorList = [];
   <c:forEach items="${sitePropertyList}" var="siteProperty">
   <c:if test="${siteProperty.type eq 'color'}">
-  colorIdList.push('${siteProperty.name}');
-  <c:choose>
-  <c:when test="${siteProperty.name eq 'theme.body.text.color'}">colorSelectorList.push('body');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.body.backgroundColor'}">colorSelectorList.push('body');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.utilitybar.text.color'}">colorSelectorList.push('#platform-menu .utility-bar');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.utilitybar.link.color'}">colorSelectorList.push('#platform-menu .utility-bar a');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.utilitybar.backgroundColor'}">colorSelectorList.push('#platform-menu .utility-bar');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.topbar.text.color'}">colorSelectorList.push('#platform-menu,#platform-menu .menu-text,#platform-menu .menu-text a,#platform-menu .menu-text a:hover');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.topbar.backgroundColor'}">colorSelectorList.push('#platform-menu,#platform-small-menu,#platform-small-menu .title-bar');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.topbar.menu.text.color'}">colorSelectorList.push('#platform-menu ul.menu li a');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.topbar.menu.arrow.color'}">colorSelectorList.push('.dropdown.menu>li.is-dropdown-submenu-parent>a::after');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.topbar.menu.text.hoverBackgroundColor'}">colorSelectorList.push('#platform-menu ul.menu li a:hover,#platform-menu .is-active');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.topbar.menu.hoverTextColor'}">colorSelectorList.push('#platform-menu ul.menu li > a:hover,#platform-menu ul.menu li.is-active > a,#platform-menu .is-active .is-dropdown-submenu-item a:hover');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.topbar.menu.dropdown.backgroundColor'}">colorSelectorList.push('#platform-menu ul.is-dropdown-submenu li.is-dropdown-submenu-item');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.topbar.menu.dropdown.text.color'}">colorSelectorList.push('#platform-menu ul.is-dropdown-submenu li.is-dropdown-submenu-item a');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.button.text.color'}">colorSelectorList.push('.button');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.button.default.backgroundColor'}">colorSelectorList.push('.button.base');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.button.default.hoverBackgroundColor'}">colorSelectorList.push('.button.base:hover, .button.base:focus');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.button.primary.backgroundColor'}">colorSelectorList.push('.button.primary');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.button.primary.hoverBackgroundColor'}">colorSelectorList.push('.button.primary:hover, .button.primary:focus');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.button.secondary.backgroundColor'}">colorSelectorList.push('.button.secondary');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.button.secondary.hoverBackgroundColor'}">colorSelectorList.push('.button.secondary:hover, .button.secondary:focus');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.button.success.backgroundColor'}">colorSelectorList.push('.button.success');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.button.success.hoverBackgroundColor'}">colorSelectorList.push('.button.success:hover, .button.success:focus');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.button.warning.backgroundColor'}">colorSelectorList.push('.button.warning');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.button.warning.hoverBackgroundColor'}">colorSelectorList.push('.button.warning:hover, .button.warning:focus');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.button.alert.backgroundColor'}">colorSelectorList.push('.button.alert');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.button.alert.hoverBackgroundColor'}">colorSelectorList.push('.button.alert:hover, .button.alert:focus');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.callout.backgroundColor'}">colorSelectorList.push('.callout.base');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.callout.text.color'}">colorSelectorList.push('.callout.base,.callout.base label');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.callout.primary.backgroundColor'}">colorSelectorList.push('.callout.primary');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.callout.primary.text.color'}">colorSelectorList.push('.callout.primary,.callout.primary label');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.callout.secondary.backgroundColor'}">colorSelectorList.push('.callout.secondary');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.callout.secondary.text.color'}">colorSelectorList.push('.callout.secondary,.callout.secondary label');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.callout.success.backgroundColor'}">colorSelectorList.push('.callout.success');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.callout.success.text.color'}">colorSelectorList.push('.callout.success,.callout.success label');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.callout.warning.backgroundColor'}">colorSelectorList.push('.callout.warning');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.callout.warning.text.color'}">colorSelectorList.push('.callout.warning,.callout.warning label');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.callout.alert.backgroundColor'}">colorSelectorList.push('.callout.alert');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.callout.alert.text.color'}">colorSelectorList.push('.callout.alert,.callout.alert label');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.footer.backgroundColor'}">colorSelectorList.push('.platform-footer');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.footer.text.color'}">colorSelectorList.push('.platform-footer');</c:when>
-  <c:when test="${siteProperty.name eq 'theme.footer.links.color'}">colorSelectorList.push('.platform-footer a');</c:when>
-  <c:otherwise>colorSelectorList.push('');</c:otherwise>
-  </c:choose>
+    <c:if test="${not empty siteProperty.value}">
+    colorIdList.push('${siteProperty.name}');
+    </c:if>
+    <c:choose>
+    <c:when test="${siteProperty.name eq 'theme.body.text.color'}">colorSelectorList.push('body');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.body.backgroundColor'}">colorSelectorList.push('body');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.utilitybar.text.color'}">colorSelectorList.push('#platform-menu .utility-bar');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.utilitybar.link.color'}">colorSelectorList.push('#platform-menu .utility-bar a');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.utilitybar.backgroundColor'}">colorSelectorList.push('#platform-menu .utility-bar');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.topbar.text.color'}">colorSelectorList.push('#platform-menu,#platform-menu .menu-text,#platform-menu .menu-text a,#platform-menu .menu-text a:hover');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.topbar.backgroundColor'}">colorSelectorList.push('#platform-menu,#platform-small-menu,#platform-small-menu .title-bar');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.topbar.menu.text.color'}">colorSelectorList.push('#platform-menu ul.menu li a');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.topbar.menu.arrow.color'}">colorSelectorList.push('.dropdown.menu>li.is-dropdown-submenu-parent>a::after');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.topbar.menu.text.hoverBackgroundColor'}">colorSelectorList.push('#platform-menu ul.menu li a:hover,#platform-menu .is-active');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.topbar.menu.hoverTextColor'}">colorSelectorList.push('#platform-menu ul.menu li > a:hover,#platform-menu ul.menu li.is-active > a,#platform-menu .is-active .is-dropdown-submenu-item a:hover');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.topbar.menu.dropdown.backgroundColor'}">colorSelectorList.push('#platform-menu ul.is-dropdown-submenu li.is-dropdown-submenu-item');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.topbar.menu.dropdown.text.color'}">colorSelectorList.push('#platform-menu ul.is-dropdown-submenu li.is-dropdown-submenu-item a');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.button.text.color'}">colorSelectorList.push('.button');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.button.default.backgroundColor'}">colorSelectorList.push('.button.base');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.button.default.hoverBackgroundColor'}">colorSelectorList.push('.button.base:hover, .button.base:focus');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.button.primary.backgroundColor'}">colorSelectorList.push('.button.primary');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.button.primary.hoverBackgroundColor'}">colorSelectorList.push('.button.primary:hover, .button.primary:focus');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.button.secondary.backgroundColor'}">colorSelectorList.push('.button.secondary');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.button.secondary.hoverBackgroundColor'}">colorSelectorList.push('.button.secondary:hover, .button.secondary:focus');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.button.success.backgroundColor'}">colorSelectorList.push('.button.success');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.button.success.hoverBackgroundColor'}">colorSelectorList.push('.button.success:hover, .button.success:focus');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.button.warning.backgroundColor'}">colorSelectorList.push('.button.warning');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.button.warning.hoverBackgroundColor'}">colorSelectorList.push('.button.warning:hover, .button.warning:focus');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.button.alert.backgroundColor'}">colorSelectorList.push('.button.alert');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.button.alert.hoverBackgroundColor'}">colorSelectorList.push('.button.alert:hover, .button.alert:focus');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.callout.backgroundColor'}">colorSelectorList.push('.callout.base');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.callout.text.color'}">colorSelectorList.push('.callout.base,.callout.base label');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.callout.primary.backgroundColor'}">colorSelectorList.push('.callout.primary');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.callout.primary.text.color'}">colorSelectorList.push('.callout.primary,.callout.primary label');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.callout.secondary.backgroundColor'}">colorSelectorList.push('.callout.secondary');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.callout.secondary.text.color'}">colorSelectorList.push('.callout.secondary,.callout.secondary label');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.callout.success.backgroundColor'}">colorSelectorList.push('.callout.success');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.callout.success.text.color'}">colorSelectorList.push('.callout.success,.callout.success label');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.callout.warning.backgroundColor'}">colorSelectorList.push('.callout.warning');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.callout.warning.text.color'}">colorSelectorList.push('.callout.warning,.callout.warning label');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.callout.alert.backgroundColor'}">colorSelectorList.push('.callout.alert');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.callout.alert.text.color'}">colorSelectorList.push('.callout.alert,.callout.alert label');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.footer.backgroundColor'}">colorSelectorList.push('.platform-footer');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.footer.text.color'}">colorSelectorList.push('.platform-footer');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.footer.links.color'}">colorSelectorList.push('.platform-footer a');</c:when>
+    <c:otherwise>colorSelectorList.push('');</c:otherwise>
+    </c:choose>
   </c:if>
   </c:forEach>
 

@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Description
+ * Represents the render information for a header component in the platform's presentation layer.
  *
  * @author matt rajkowski
  * @created 1/17/21 10:24 AM
@@ -38,6 +39,14 @@ public class HeaderRenderInfo implements ContainerRenderInfo, Serializable {
   private String name;
   private String pagePath;
   private String cssClass = null;
+  private String htmlId = "platform-menu";
+  private String cssStyle;
+  private boolean enabled = true;
+  private boolean sticky;
+  private String scrollBehavior = "none";
+  private int scrollThreshold = 100;
+  private List<String> roles = new ArrayList<>();
+  private List<String> groups = new ArrayList<>();
 
   public HeaderRenderInfo() {
   }
@@ -46,6 +55,14 @@ public class HeaderRenderInfo implements ContainerRenderInfo, Serializable {
     this.name = header.getName();
     this.cssClass = header.getCssClass();
     this.pagePath = pagePath;
+    this.htmlId = header.getHtmlId();
+    this.cssStyle = header.getCssStyle();
+    this.enabled = header.isEnabled();
+    this.sticky = header.isSticky();
+    this.scrollBehavior = header.getScrollBehavior();
+    this.scrollThreshold = header.getScrollThreshold();
+    this.roles = new ArrayList<>(header.getRoles());
+    this.groups = new ArrayList<>(header.getGroups());
   }
 
   public String getName() {
@@ -90,6 +107,38 @@ public class HeaderRenderInfo implements ContainerRenderInfo, Serializable {
 
   public String getCssClass() {
     return cssClass;
+  }
+
+  public String getHtmlId() {
+    return htmlId;
+  }
+
+  public String getCssStyle() {
+    return cssStyle;
+  }
+
+  public boolean isEnabled() {
+    return enabled;
+  }
+
+  public boolean isSticky() {
+    return sticky;
+  }
+
+  public String getScrollBehavior() {
+    return scrollBehavior;
+  }
+
+  public int getScrollThreshold() {
+    return scrollThreshold;
+  }
+
+  public List<String> getRoles() {
+    return roles;
+  }
+
+  public List<String> getGroups() {
+    return groups;
   }
 
 }

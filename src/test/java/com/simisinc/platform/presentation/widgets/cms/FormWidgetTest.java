@@ -55,8 +55,10 @@ class FormWidgetTest extends WidgetBase {
             "    <field name=\"Your email address\" value=\"email\" type=\"email\" required=\"true\" />\n" +
             "    <!--<field name=\"Are you:\" value=\"are-you\" list=\"Patient,Doctor,Lawmaker,Other\" />-->\n" +
             "    <field name=\"An optional phone number we can contact you at\" value=\"phoneNumber\" />\n" +
-            "    <field name=\"Who would you like to contact?\" value=\"who\" list=\"Sales,Marketing,Business Development,Contracts,Technical,Security,Other\" />\n" +
-            "    <field name=\"How Can We Help?\" value=\"comments\" type=\"textarea\" placeholder=\"Your message\" required=\"true\" />\n" +
+            "    <field name=\"Who would you like to contact?\" value=\"who\" list=\"Sales,Marketing,Business Development,Contracts,Technical,Security,Other\" />\n"
+            +
+            "    <field name=\"How Can We Help?\" value=\"comments\" type=\"textarea\" placeholder=\"Your message\" required=\"true\" />\n"
+            +
             "  </fields>\n" +
             "  <buttonName>Contact Me</buttonName>\n" +
             "  <successMessage><![CDATA[Thanks! We normally respond within 24-48 hours.]]></successMessage>\n" +
@@ -131,7 +133,7 @@ class FormWidgetTest extends WidgetBase {
     // Show the form submit success message
     try (MockedStatic<RateLimitCommand> rateLimitCommand = mockStatic(RateLimitCommand.class)) {
       rateLimitCommand.when(() -> RateLimitCommand.isIpAllowedRightNow(any(), anyBoolean())).thenReturn(true);
-      
+
       FormWidget widget = new FormWidget();
       widget.execute(widgetContext);
       Assertions.assertEquals(FormWidget.SUCCESS_JSP, widgetContext.getJsp());

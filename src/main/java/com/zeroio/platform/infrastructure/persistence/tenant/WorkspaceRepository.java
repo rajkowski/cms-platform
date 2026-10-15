@@ -18,8 +18,11 @@ package com.zeroio.platform.infrastructure.persistence.tenant;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import com.github.rajkowski.database.DB;
 import com.zeroio.platform.domain.model.tenant.Workspace;
 import com.zeroio.platform.infrastructure.database.WorkspaceContextManager;
@@ -40,6 +43,16 @@ public class WorkspaceRepository {
         () -> DB.SELECT("*")
             .FROM(TABLE_NAME)
             .WHERE("workspace_id = ?", workspaceId).returnRecord(WorkspaceRepository::buildRecord));
+  }
+
+  public static Workspace findByUniqueId(String uniqueId) {
+    if (StringUtils.isBlank(uniqueId)) {
+      return null;
+    }
+    return WorkspaceContextManager.withoutWorkspace(
+        () -> DB.SELECT("*")
+            .FROM(TABLE_NAME)
+            .WHERE("workspace_unique_id = ?", uniqueId).returnRecord(WorkspaceRepository::buildRecord));
   }
 
   public static Workspace findActiveByCanonicalDomain(String canonicalDomain) {
@@ -76,10 +89,45 @@ public class WorkspaceRepository {
             .returnDataResult(WorkspaceRepository::buildRecord).getRecords());
   }
 
+  public static Workspace save(Workspace workspace) {
+    if (workspace == null) {
+      return null;
+    }
+    return WorkspaceContextManager.withoutWorkspace(
+        () -> {
+          if (workspace.getId() > 0) {
+            DB.UPDATE(TABLE_NAME)
+                .SET("workspace_unique_id = ?", workspace.getUniqueId())
+                .SET("name = ?", workspace.getName())
+                .SET("site_url = ?", workspace.getSiteUrl())
+                .SET("canonical_domain = ?", workspace.getCanonicalDomain())
+                .SET("file_root = ?", workspace.getFileRoot())
+                .SET("active = ?", workspace.isActive())
+                .SET("modified = ?", workspace.getModified())
+                .WHERE("workspace_id = ?", workspace.getId())
+                .execute();
+          } else {
+            long id = DB.INSERT().INTO(TABLE_NAME)
+                .FIELD("workspace_unique_id = ?", workspace.getUniqueId())
+                .FIELD("name = ?", workspace.getName())
+                .FIELD("site_url = ?", workspace.getSiteUrl())
+                .FIELD("canonical_domain = ?", workspace.getCanonicalDomain())
+                .FIELD("file_root = ?", workspace.getFileRoot())
+                .FIELD("active = ?", workspace.isActive())
+                .FIELD("created = ?", workspace.getCreated())
+                .FIELD("modified = ?", workspace.getModified())
+                .execute();
+            workspace.setId(id);
+          }
+          return workspace;
+        });
+  }
+
   private static Workspace buildRecord(ResultSet resultSet) {
     try {
       Workspace workspace = new Workspace();
       workspace.setId(resultSet.getLong("workspace_id"));
+      workspace.setUniqueId(resultSet.getString("workspace_unique_id"));
       workspace.setName(resultSet.getString("name"));
       workspace.setSiteUrl(resultSet.getString("site_url"));
       workspace.setCanonicalDomain(resultSet.getString("canonical_domain"));

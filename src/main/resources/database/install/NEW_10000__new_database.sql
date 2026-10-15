@@ -74,17 +74,11 @@ INSERT INTO site_properties (property_order, property_label, property_name, prop
 INSERT INTO site_properties (property_order, property_label, property_name, property_value) VALUES (162, 'Newsletter Message', 'site.newsletter.message', 'Enter your email for the latest trends, product info, and deals.');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (165, 'Newsletter Text Color', 'site.newsletter.color', '#000000', 'color');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (166, 'Newsletter Background Color', 'site.newsletter.backgroundColor', '#FFFFFF', 'color');
-INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (200, 'Full Color Logo', 'site.logo', '', 'image');
-INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (210, 'All White Logo', 'site.logo.white', '', 'image');
-INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (220, 'Mixed Color Logo', 'site.logo.mixed', '', 'image');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (200, 'Standard Logo', 'site.logo', '', 'image');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (210, 'Dark Mode Logo', 'site.logo.mixed', '', 'image');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (220, 'All White Logo', 'site.logo.white', '', 'image');
 
 -- Theme
-
-INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (5, 'Menu Theme', 'theme.menu.location', 'custom', 'text');
-INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (7, 'Logo Color', 'theme.logo.color', 'text-only', 'text');
-
-INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (10, 'Headlines Font', 'theme.fonts.headlines', '', 'font');
-INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (11, 'Body Font', 'theme.fonts.body', '', 'font');
 
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (14, 'Web Page Background', 'theme.body.backgroundColor', '#ffffff', 'color');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (15, 'Web Page Text Color', 'theme.body.text.color', '#000000', 'color');
@@ -103,8 +97,20 @@ INSERT INTO site_properties (property_order, property_label, property_name, prop
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (30, 'Menu Tab Active Bg', 'theme.topbar.menu.activeBackgroundColor', '#4d4d4d', 'color');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (31, 'Drop Down Menu', 'theme.topbar.menu.dropdown.backgroundColor', '#2e2e2e', 'color');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (32, 'Drop Down Menu Text', 'theme.topbar.menu.dropdown.text.color', '#FFFFFF', 'color');
--- INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (34, 'Drop Down Menu Hover Text', 'theme.topbar.menu.dropdown.text.color', '#FFFFFF', 'color');
--- INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (35, 'Drop Down Menu Hover Bg', 'theme.topbar.menu.dropdown.text.color', '#FFFFFF', 'color');
+-- INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (33, 'Drop Down Menu Hover Text', 'theme.topbar.menu.dropdown.text.color', '#FFFFFF', 'color');
+-- INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (34, 'Drop Down Menu Hover Bg', 'theme.topbar.menu.dropdown.text.color', '#FFFFFF', 'color');
+
+-- Top Bar Dark Theme Properties
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (38, 'Dark Top Bar', 'theme.topbar.dark.backgroundColor', '#1a1a1a', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (39, 'Dark Top Bar Text Color', 'theme.topbar.dark.text.color', '#e0e0e0', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (40, 'Dark Menu Tab Text', 'theme.topbar.dark.menu.text.color', '#e0e0e0', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (41, 'Dark Menu Tab Arrow', 'theme.topbar.dark.menu.arrow.color', '#e0e0e0', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (42, 'Dark Menu Tab Hover Text', 'theme.topbar.dark.menu.hoverTextColor', '#ffffff', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (43, 'Dark Menu Tab Hover Bg', 'theme.topbar.dark.menu.text.hoverBackgroundColor', '#3a3a3a', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (44, 'Dark Menu Tab Active Text', 'theme.topbar.dark.menu.activeTextColor', '#ffffff', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (45, 'Dark Menu Tab Active Bg', 'theme.topbar.dark.menu.activeBackgroundColor', '#3a3a3a', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (46, 'Dark Drop Down Menu', 'theme.topbar.dark.menu.dropdown.backgroundColor', '#2a2a2a', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (47, 'Dark Drop Down Menu Text', 'theme.topbar.dark.menu.dropdown.text.color', '#e0e0e0', 'color');
 
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (50, 'Button Text', 'theme.button.text.color', '#FFFFFF', 'color');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (52, 'Default Button', 'theme.button.default.backgroundColor', '#1779ba', 'color');
@@ -133,11 +139,12 @@ INSERT INTO site_properties (property_order, property_label, property_name, prop
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (95, 'Alert Callout Background', 'theme.callout.alert.backgroundColor', '#f7e4e1', 'color');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (96, 'Alert Callout Text Color', 'theme.callout.alert.text.color', '#0a0a0a', 'color');
 
-INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (110, 'Footer Theme', 'theme.footer.style', 'custom', 'text');
-INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (112, 'Footer Background', 'theme.footer.backgroundColor', '#353535', 'color');
-INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (114, 'Footer Text Color', 'theme.footer.text.color', '#acacac', 'color');
-INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (116, 'Footer Links Color', 'theme.footer.links.color', '#cdcdcd', 'color');
-INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (120, 'Footer Logo Color', 'theme.footer.logo.color', 'text-only', 'text');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (112, 'Footer Background', 'theme.footer.backgroundColor', '', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (114, 'Footer Text Color', 'theme.footer.text.color', '', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (116, 'Footer Links Color', 'theme.footer.links.color', '', 'color');
+
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (130, 'Header XML Name', 'theme.header.name', '', 'text');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (132, 'Footer XML Name', 'theme.footer.name', '', 'text');
 
 -- Mail
 
@@ -195,16 +202,25 @@ INSERT INTO site_properties (property_order, property_label, property_name, prop
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (40, 'Flickr', 'social.flickr.url', '', 'url');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (45, 'Youtube', 'social.youtube.url', '', 'url');
 
+-- AI
+
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (1, 'Enable AI?', 'ai.enabled', 'false', 'boolean');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (10, 'Enable Ask AI?', 'ai.askai.enabled', 'false', 'boolean');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (12, 'Ask AI Control Type', 'ai.askai.control', 'drawer', 'text');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (14, 'Ask AI Text', 'ai.askai.text', 'Ask AI', 'text');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (15, 'Ask AI Link', 'ai.askai.link', '/ask-ai', 'web-page');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (16, 'Ask AI Icon', 'ai.askai.icon', 'fa-brain', 'icon');
+
 -- BI
 
-INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (1, 'Enable bi?', 'bi.enabled', 'true', 'boolean');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (1, 'Enable BI?', 'bi.enabled', 'false', 'boolean');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (10, 'Superset Url', 'bi.superset.url', '', 'url');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (12, 'Superset Id', 'bi.superset.id', '', 'text');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (14, 'Superset Secret', 'bi.superset.secret', '', 'text');
 
 -- E-Commerce
 
-INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (1, 'Enable e-commerce?', 'ecommerce.enabled', 'true', 'disabled');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (1, 'Enable e-commerce?', 'ecommerce.enabled', 'false', 'disabled');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (3, 'Enable real orders?', 'ecommerce.production', 'false', 'boolean');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (7, 'Last Order Date', 'ecommerce.lastOrderDate', 'None', 'disabled');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (10, 'Payment Processor API', 'ecommerce.paymentProcessor', 'None', 'disabled');
@@ -241,7 +257,7 @@ INSERT INTO site_properties (property_order, property_label, property_name, prop
 
 -- E-Learning
 
-INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (1, 'Enable e-learning?', 'elearning.enabled', 'true', 'boolean');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (1, 'Enable e-learning?', 'elearning.enabled', 'false', 'boolean');
 
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (10, 'Enable LRS xAPI?', 'elearning.xapi.enabled', 'false', 'boolean');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (12, 'LRS URL', 'elearning.lrs.url', '', 'url');
@@ -260,7 +276,7 @@ INSERT INTO site_properties (property_order, property_label, property_name, prop
 
 -- Web Conferencing
 
-INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (1, 'Enable web conferencing?', 'conferencing.enabled', 'true', 'boolean');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (1, 'Enable web conferencing?', 'conferencing.enabled', 'false', 'boolean');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (10, 'BBB URL', 'conferencing.bbb.url', '', 'url');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (12, 'BBB Secret', 'conferencing.bbb.secret', '', 'text');
 
@@ -401,6 +417,7 @@ CREATE INDEX idx_permission_group_members_group_code ON permission_group_members
 
 CREATE TABLE IF NOT EXISTS workspaces (
   workspace_id BIGSERIAL PRIMARY KEY,
+  workspace_unique_id VARCHAR(255) UNIQUE NOT NULL,
   name VARCHAR(255) NOT NULL,
   site_url VARCHAR(512) NOT NULL,
   canonical_domain VARCHAR(255) NOT NULL UNIQUE,
@@ -415,6 +432,7 @@ CREATE TABLE IF NOT EXISTS workspaces (
   department VARCHAR(255),
   description TEXT
 );
+CREATE INDEX workspace_unique_id_idx ON workspaces(workspace_unique_id);
 
 CREATE TABLE IF NOT EXISTS workspace_domains (
   workspace_domain_id BIGSERIAL PRIMARY KEY,

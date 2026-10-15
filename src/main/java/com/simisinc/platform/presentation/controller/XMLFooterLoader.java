@@ -21,6 +21,7 @@ import static java.util.stream.Collectors.toList;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.io.StringWriter;
 import java.net.URL;
 import java.util.List;
 import java.util.stream.Stream;
@@ -30,6 +31,10 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.FactoryConfigurationError;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
@@ -53,6 +58,28 @@ public class XMLFooterLoader implements Serializable {
   private static Log LOG = LogFactory.getLog(XMLFooterLoader.class);
 
   public XMLFooterLoader() {
+  }
+
+  public static String loadValidXmlFromURL(String layoutName, URL url) throws Exception {
+    Document document = parseDocument(url);
+    NodeList footers = document.getElementsByTagName("footer");
+    for (int index = 0; index < footers.getLength(); index++) {
+      Element footer = (Element) footers.item(index);
+      if (!layoutName.equals(footer.getAttribute("name"))) {
+        continue;
+      }
+      TransformerFactory factory = TransformerFactory.newInstance();
+      factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+      factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+      factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
+      var transformer = factory.newTransformer();
+      transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+      transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+      StringWriter output = new StringWriter();
+      transformer.transform(new DOMSource(footer), new StreamResult(output));
+      return output.toString();
+    }
+    return null;
   }
 
   public static Footer loadFromURL(String layoutName, URL url) {

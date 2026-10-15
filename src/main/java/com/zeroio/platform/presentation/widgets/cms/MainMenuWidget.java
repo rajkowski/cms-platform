@@ -15,11 +15,14 @@
  * limitations under the License.
  */
 
-package com.simisinc.platform.presentation.widgets.cms;
+package com.zeroio.platform.presentation.widgets.cms;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
+import com.simisinc.platform.application.cms.FontCommand;
 import com.simisinc.platform.application.items.LoadCollectionCommand;
 import com.simisinc.platform.domain.model.cms.MenuTab;
 import com.simisinc.platform.domain.model.items.Collection;
@@ -27,6 +30,7 @@ import com.simisinc.platform.presentation.controller.RequestConstants;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
 import com.zeroio.platform.application.cms.RenderMainMenuCommand;
+import com.zeroio.platform.application.cms.ResolveHeaderLinkCommand;
 
 /**
  * Displays the site's main menu
@@ -39,11 +43,8 @@ public class MainMenuWidget extends GenericWidget {
   static final long serialVersionUID = -8484048371911908893L;
 
   static String JSP = "/cms/main-menu.jsp";
+  // @todo update this template
   static String TEMPLATE = "/cms/main-menu.html";
-  static String FLAT_JSP = "/cms/main-menu-flat.jsp";
-  static String FLAT_TEMPLATE = "/cms/main-menu-flat.jsp";
-  static String NESTED_JSP = "/cms/main-menu-nested.jsp";
-  static String NESTED_TEMPLATE = "/cms/main-menu-nested.html";
 
   public WidgetContext execute(WidgetContext context) {
 
@@ -78,19 +79,27 @@ public class MainMenuWidget extends GenericWidget {
     // Prepare the menu based on the user
     List<MenuTab> menuTabListToUse = RenderMainMenuCommand.renderMainMenu(context.getRequest().getPagePath(), context.getUserSession(),
         collection, checkUser, highlightActiveTab, highlightSubmenuItem);
+    if (menuTabListToUse.isEmpty()) {
+      return context;
+    }
     context.getRequest().setAttribute(RequestConstants.MASTER_MENU_TAB_LIST, menuTabListToUse);
 
     // Show the JSP
-    if ("flat".equals(view)) {
-      context.setJsp(FLAT_JSP);
-      context.setTemplate(FLAT_TEMPLATE);
-    } else if ("nested".equals(view)) {
-      context.setJsp(NESTED_JSP);
-      context.setTemplate(NESTED_TEMPLATE);
-    } else {
-      context.setJsp(JSP);
-      context.setTemplate(TEMPLATE);
+    Map<String, String> links = new HashMap<>();
+    for (MenuTab tab : menuTabListToUse) {
+      links.put(tab.getLink(), ResolveHeaderLinkCommand.resolveLink(tab.getLink(), context.getContextPath()));
+      if (tab.getMenuItemList() != null) {
+        tab.getMenuItemList().forEach(
+            item -> links.put(item.getLink(), ResolveHeaderLinkCommand.resolveLink(item.getLink(), context.getContextPath())));
+      }
     }
+    context.getRequest().setAttribute("headerMenuLinks", links);
+    String submenuIcon = context.getPreferences().getOrDefault("submenuIcon", "fa-chevron-down");
+    context.getRequest().setAttribute("headerSubmenuIcon",
+        submenuIcon.contains(" ") ? submenuIcon : FontCommand.fas() + " " + submenuIcon);
+    context.getRequest().setAttribute("omitFirstHomeItem",
+        Boolean.parseBoolean(context.getPreferences().getOrDefault("omitFirstHomeItem", "true")));
+    context.setJsp(JSP);
     return context;
   }
 }

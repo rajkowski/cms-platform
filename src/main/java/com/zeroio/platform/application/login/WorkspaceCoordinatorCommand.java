@@ -53,11 +53,11 @@ public class WorkspaceCoordinatorCommand {
   }
 
   /** Default tenant can prepare for launch */
-  public static String prepareForLaunch(UserSession userSession, long targetWorkspaceId) {
-    Workspace workspace = WorkspaceRepository.findById(targetWorkspaceId);
+  public static String prepareForLaunch(UserSession userSession, String targetWorkspaceUniqueId) {
+    Workspace workspace = WorkspaceRepository.findByUniqueId(targetWorkspaceUniqueId);
     if (!WorkspaceAccessCommand.hasAccess(userSession.getUserId(), workspace)) {
-      LOG.warn("Main Tenant User " + userSession.getUserId() + " does not have access to workspace " + targetWorkspaceId);
-      return defaultTenantRedirect(PageServlet.WORKSPACE_SELECTOR_PATH);
+      LOG.warn("Main Tenant User " + userSession.getUserId() + " does not have access to workspace " + targetWorkspaceUniqueId);
+      return defaultTenantRedirect("/");
     }
     // Issue a token that will be used by the target tenant
     String handoffToken = WorkspaceSessionHandoffCommand.issueToken(userSession.getUserId(), workspace.getId(), "/");
@@ -79,7 +79,7 @@ public class WorkspaceCoordinatorCommand {
     WorkspaceSessionHandoffToken handoff = WorkspaceSessionHandoffCommand.consumeToken(token);
     if (handoff == null) {
       LOG.warn("Workspace handoff token is missing, expired, or already used");
-      return defaultTenantRedirect(PageServlet.WORKSPACE_SELECTOR_PATH);
+      return defaultTenantRedirect("/");
     }
 
     // Check the user information in the default site
@@ -88,7 +88,7 @@ public class WorkspaceCoordinatorCommand {
     if (!hasAccess) {
       LOG.warn("Main Tenant User " + handoff.getMainTenantUserId() + " no longer has access to workspace "
           + handoff.getWorkspaceId());
-      return defaultTenantRedirect(PageServlet.WORKSPACE_SELECTOR_PATH);
+      return defaultTenantRedirect("/");
     }
 
     // Create or update the user record in the workspace

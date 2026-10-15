@@ -79,6 +79,15 @@ public class WebContainerCommand implements Serializable {
       throws Exception {
 
     LOG.debug("Processing container layout... " + containerRenderInfo.getName());
+
+    // Header specific checks
+    HeaderRenderInfo headerRenderInfo = containerRenderInfo instanceof HeaderRenderInfo ? (HeaderRenderInfo) containerRenderInfo
+        : null;
+    if (headerRenderInfo != null && (!headerRenderInfo.isEnabled()
+        || !WebComponentCommand.allowsUser(headerRenderInfo.getRoles(), headerRenderInfo.getGroups(), userSession))) {
+      return new PageResponse();
+    }
+
     if (webContainerContext.isTargeted()) {
       LOG.debug("  Targeted widget: " + containerRenderInfo.getTargetWidget());
     }
@@ -109,7 +118,7 @@ public class WebContainerCommand implements Serializable {
     for (Section section : sections) {
 
       // Check the user's role and groups
-      if (!WebComponentCommand.allowsUser(section, userSession)) {
+      if (!section.isEnabled() || !WebComponentCommand.allowsUser(section, userSession)) {
         LOG.debug("SECTION NOT ALLOWED: " +
             (!section.getRoles().isEmpty() ? "[roles=" + section.getRoles().toString() + "]" + " " : "") +
             (!section.getGroups().isEmpty() ? "[groups=" + section.getGroups().toString() + "]" + " " : "") +
@@ -124,7 +133,7 @@ public class WebContainerCommand implements Serializable {
       for (Column column : section.getColumns()) {
 
         // Check the user's role and groups
-        if (!WebComponentCommand.allowsUser(column, userSession)) {
+        if (!column.isEnabled() || !WebComponentCommand.allowsUser(column, userSession)) {
           LOG.debug("COLUMN NOT ALLOWED: " +
               (!column.getRoles().isEmpty() ? "[roles=" + column.getRoles().toString() + "]" + " " : "") +
               (!column.getGroups().isEmpty() ? "[groups=" + column.getGroups().toString() + "]" + " " : "") +
@@ -139,7 +148,7 @@ public class WebContainerCommand implements Serializable {
         for (Widget widget : column.getWidgets()) {
 
           // Check the user's role and groups
-          if (!WebComponentCommand.allowsUser(widget, userSession)) {
+          if (!widget.isEnabled() || !WebComponentCommand.allowsUser(widget, userSession)) {
             LOG.debug("WIDGET NOT ALLOWED: " + widget.getWidgetName() + " " +
                 (!widget.getRoles().isEmpty() ? "[roles=" + widget.getRoles().toString() + "]" + " " : "") +
                 (!widget.getGroups().isEmpty() ? "[groups=" + widget.getGroups().toString() + "]" + " " : "") +
@@ -521,7 +530,7 @@ public class WebContainerCommand implements Serializable {
           }
 
           // If there's content, then turn on the output
-          if (widgetContent != null && widgetContent.length() > 0) {
+          if (widgetContent != null && StringUtils.isNotBlank(widgetContent)) {
             // The widget asked to be included without the main css/scripts/footer
             if (widgetContext.isEmbedded()) {
               webContainerContext.setEmbedded(true);

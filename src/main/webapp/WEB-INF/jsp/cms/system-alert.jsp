@@ -1,5 +1,5 @@
 <%--
-  ~ Copyright 2022 SimIS Inc.
+  ~ Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -14,29 +14,15 @@
   ~ limitations under the License.
   --%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
-<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="font" uri="/WEB-INF/tlds/font-functions.tld" %>
-<%@ taglib prefix="url" uri="/WEB-INF/tlds/url-functions.tld" %>
-<%@ taglib prefix="text" uri="/WEB-INF/tlds/text-functions.tld" %>
-<jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
-<jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
-<jsp:useBean id="sitePropertyMap" class="java.util.HashMap" scope="request"/>
-<div class="utility-text">
-  <c:if test="${!empty sitePropertyMap['site.header.line1']}">
-    <c:out value="${sitePropertyMap['site.header.line1']}" />
-    <c:if test="${!empty sitePropertyMap['site.header.page']}">
-      <c:choose>
-        <c:when test="${!empty sitePropertyMap['site.header.link']}">
-          <a style="white-space: nowrap" href="${ctx}${sitePropertyMap['site.header.page']}"><c:out value="${sitePropertyMap['site.header.link']}" /></a>
-        </c:when>
-        <c:otherwise>
-          <a href="${ctx}${sitePropertyMap['site.header.page']}">Details</a>
-        </c:otherwise>
-      </c:choose>
-    </c:if>
+<p>
+  <c:out value="${sitePropertyMap['site.header.line1']}" />
+  <c:if test="${not empty announcementLink}">
+    <a style="white-space: nowrap" href="<c:out value='${announcementLink}'/>"><c:out value="${announcementLinkLabel}" /></a>
   </c:if>
-  <c:if test="${userSession.hasRole('admin')}">
-    <a class="hollow button tiny secondary" style="padding:2px; margin:0;" href="${ctx}/admin/site-header-properties"><i class="${font:fas()} fa-edit"></i></a>
+  <c:if test="${showAnnouncementEdit}">
+    <a class="hollow button tiny secondary" style="padding:2px; margin:0" href="${ctx}/admin/site-header-properties" title="Edit announcement" aria-label="Edit announcement">
+      <i class="${font:fas()} fa-edit" aria-hidden="true"></i>
+    </a>
   </c:if>
-</div>
+</p>

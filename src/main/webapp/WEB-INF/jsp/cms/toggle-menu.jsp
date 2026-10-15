@@ -37,14 +37,6 @@
     <c:when test="${view eq 'standard'}">
       <c:set var="logoSrc" scope="request"><c:out value="${sitePropertyMap['site.logo']}"/></c:set>
     </c:when>
-    <c:when test="${themePropertyMap['theme.logo.color'] eq 'all-white'}">
-      <c:set var="logoSrc" scope="request"><c:out value="${sitePropertyMap['site.logo.white']}"/></c:set>
-    </c:when>
-    <c:when test="${themePropertyMap['theme.logo.color'] eq 'color-and-white'}">
-      <c:set var="logoSrc" scope="request"><c:out value="${sitePropertyMap['site.logo.mixed']}"/></c:set>
-    </c:when>
-    <c:when test="${themePropertyMap['theme.logo.color'] eq 'text-only'}">
-    </c:when>
     <c:otherwise>
       <c:set var="logoSrc" scope="request"><c:out value="${sitePropertyMap['site.logo']}"/></c:set>
     </c:otherwise>

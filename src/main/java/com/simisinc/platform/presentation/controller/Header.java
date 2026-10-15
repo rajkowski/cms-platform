@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Description
+ * Represents a header component in the platform's presentation layer.
  *
  * @author matt rajkowski
  * @created 1/17/21 10:30 AM
@@ -29,6 +30,13 @@ public class Header {
 
   private String name;
   private String cssClass = null;
+  private String title;
+  private String htmlId = "platform-menu";
+  private String cssStyle;
+  private boolean enabled = true;
+  private boolean sticky;
+  private String scrollBehavior = "none";
+  private int scrollThreshold = 100;
 
   private List<Section> sections = new ArrayList<Section>();
   private List<String> roles = new ArrayList<String>();
@@ -79,5 +87,61 @@ public class Header {
 
   public void setCssClass(String cssClass) {
     this.cssClass = cssClass;
+  }
+
+  public String getTitle() {
+    return title;
+  }
+
+  public void setTitle(String title) {
+    this.title = title;
+  }
+
+  public String getHtmlId() {
+    return htmlId;
+  }
+
+  public void setHtmlId(String htmlId) {
+    this.htmlId = htmlId;
+  }
+
+  public String getCssStyle() {
+    return cssStyle;
+  }
+
+  public void setCssStyle(String cssStyle) {
+    this.cssStyle = cssStyle;
+  }
+
+  public boolean isEnabled() {
+    return enabled;
+  }
+
+  public void setEnabled(boolean enabled) {
+    this.enabled = enabled;
+  }
+
+  public boolean isSticky() {
+    return sticky;
+  }
+
+  public void setSticky(boolean sticky) {
+    this.sticky = sticky;
+  }
+
+  public String getScrollBehavior() {
+    return scrollBehavior;
+  }
+
+  public void setScrollBehavior(String scrollBehavior) {
+    this.scrollBehavior = scrollBehavior;
+  }
+
+  public int getScrollThreshold() {
+    return scrollThreshold;
+  }
+
+  public void setScrollThreshold(int scrollThreshold) {
+    this.scrollThreshold = scrollThreshold;
   }
 }

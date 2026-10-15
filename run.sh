@@ -3,4 +3,5 @@
 CATALINA_BASE="${CATALINA_BASE:-$PWD/out/exploded}"
 export CATALINA_BASE
 
-sh "$CATALINA_HOME/bin/catalina.sh" run
+ant deploy && sh "$CATALINA_HOME/bin/catalina.sh" run
+

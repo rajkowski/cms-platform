@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,25 +15,63 @@
  * limitations under the License.
  */
 
-package com.simisinc.platform.presentation.widgets.cms;
+package com.zeroio.platform.presentation.widgets.cms;
 
-import com.simisinc.platform.WidgetBase;
-import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
-import com.simisinc.platform.presentation.controller.RequestConstants;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
+import static org.mockito.Mockito.mockStatic;
 
 import java.util.List;
 import java.util.Map;
 
-import static org.mockito.Mockito.mockStatic;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+
+import com.simisinc.platform.WidgetBase;
+import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
+import com.simisinc.platform.presentation.controller.RequestConstants;
 
 /**
  * @author matt rajkowski
  * @created 5/4/2022 7:00 PM
  */
 class MenuWidgetTest extends WidgetBase {
+
+  @Test
+  void modernActionLinksUseASeparateView() {
+    addPreferencesFromWidgetXml(widgetContext,
+        "<widget name='menu'><links><link name='Ask AI' link='/ask-ai' icon='fa-brain'/></links></widget>");
+    new MenuWidget().execute(widgetContext);
+    Assertions.assertEquals("/cms/menu.jsp", widgetContext.getJsp());
+  }
+
+  @Test
+  void modernActionOrderLabelsAndDestinationsAreConfigured() {
+    addPreferencesFromWidgetXml(widgetContext,
+        "<widget name='menu'><links><link name='Contact first' link='/contact-us'/><link name='Assistant' link='/ask-ai'/></links></widget>");
+    new MenuWidget().execute(widgetContext);
+    java.util.List<?> links = (java.util.List<?>) widgetContext.getRequest().getAttribute("linkList");
+    Assertions.assertEquals("Contact first", ((java.util.Map<?, ?>) links.get(0)).get("name"));
+    Assertions.assertEquals("/ask-ai", ((java.util.Map<?, ?>) links.get(1)).get("link"));
+  }
+
+  @Test
+  void modernLinksKeepContextAndExternalDestinationsSeparate() {
+    org.mockito.Mockito.when(pageRequest.getContextPath()).thenReturn("/cms");
+    addPreferencesFromWidgetXml(widgetContext,
+        "<widget name='menu'><links><link name='Internal' link='/contact-us'/><link name='External' link='https://example.org/help'/></links></widget>");
+    new MenuWidget().execute(widgetContext);
+    java.util.List<?> links = (java.util.List<?>) pageRequest.getAttribute("linkList");
+    Assertions.assertEquals("/cms/contact-us", ((java.util.Map<?, ?>) links.get(0)).get("link"));
+    Assertions.assertEquals("https://example.org/help", ((java.util.Map<?, ?>) links.get(1)).get("link"));
+  }
+
+  @Test
+  void unsafeModernActionLinksAreNotRendered() {
+    addPreferencesFromWidgetXml(widgetContext,
+        "<widget name='menu'><links><link name='Unsafe' link='javascript:alert(1)'/><link name='Unsafe host' link='//other.example/path'/></links></widget>");
+    new MenuWidget().execute(widgetContext);
+    Assertions.assertNull(pageRequest.getAttribute("linkList"));
+  }
 
   @Test
   void execute() {

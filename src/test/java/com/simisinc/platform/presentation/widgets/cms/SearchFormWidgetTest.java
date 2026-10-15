@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,15 +17,34 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
-import com.simisinc.platform.WidgetBase;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import com.simisinc.platform.WidgetBase;
+import com.zeroio.platform.presentation.widgets.cms.SearchControlWidget;
 
 /**
  * @author matt rajkowski
  * @created 5/7/2022 8:30 AM
  */
 class SearchFormWidgetTest extends WidgetBase {
+
+  @Test
+  void modernSearchHasASeparateViewAndDefaultTiming() {
+    new SearchControlWidget().execute(widgetContext);
+    Assertions.assertEquals("/cms/search-control.jsp", widgetContext.getJsp());
+    Assertions.assertEquals(3, widgetContext.getRequest().getAttribute("searchMinChars"));
+    Assertions.assertEquals(300, widgetContext.getRequest().getAttribute("searchDebounceMs"));
+  }
+
+  @Test
+  void modernTimingBoundsUseDocumentedDefaults() {
+    widgetContext.getPreferences().put("minChars", "0");
+    widgetContext.getPreferences().put("debounceMs", "5001");
+    new SearchControlWidget().execute(widgetContext);
+    Assertions.assertEquals(3, pageRequest.getAttribute("searchMinChars"));
+    Assertions.assertEquals(300, pageRequest.getAttribute("searchDebounceMs"));
+  }
 
   @Test
   void execute() {

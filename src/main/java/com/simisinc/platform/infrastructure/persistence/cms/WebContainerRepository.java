@@ -22,13 +22,17 @@ import java.sql.SQLException;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.github.rajkowski.database.DB;
 import com.github.rajkowski.database.DataConstraints;
+import com.simisinc.platform.domain.model.SiteProperty;
 import com.simisinc.platform.domain.model.cms.WebContainer;
 import com.simisinc.platform.infrastructure.cache.CacheManager;
+import com.simisinc.platform.infrastructure.persistence.SitePropertyRepository;
+import com.simisinc.platform.presentation.controller.XMLHeaderLoader;
 
 /**
  * Persists and retrieves web container objects
@@ -82,10 +86,43 @@ public class WebContainerRepository {
   }
 
   public static WebContainer save(WebContainer record) {
-    if (record.getId() > -1) {
-      return update(record);
+    if (Strings.CS.startsWith(record.getName(), "header.") && StringUtils.isNotBlank(record.getContainerXml())) {
+      try {
+        if (XMLHeaderLoader.addFromXml(record) == null) {
+          LOG.warn("Header definition is missing for " + record.getName());
+          return null;
+        }
+      } catch (Exception exception) {
+        LOG.warn("Header definition could not be validated for " + record.getName(), exception);
+        return null;
+      }
     }
-    return add(record);
+    // Never save over the defaults; save as custom and point the site property at it
+    String propertyName = null;
+    if ("header.default".equals(record.getName())) {
+      record.setName("header.custom");
+      propertyName = "theme.header.name";
+    } else if ("footer.default".equals(record.getName())) {
+      record.setName("footer.custom");
+      propertyName = "theme.footer.name";
+    }
+    if (propertyName != null) {
+      WebContainer existing = findByName(record.getName());
+      if (existing != null) {
+        record.setId(existing.getId());
+      }
+    }
+    WebContainer saved = record.getId() > -1 ? update(record) : add(record);
+    if (saved != null && propertyName != null) {
+      selectContainer(propertyName, saved.getName());
+    }
+    return saved;
+  }
+
+  private static void selectContainer(String propertyName, String containerName) {
+    SiteProperty property = SitePropertyRepository.findByName(propertyName);
+    property.setValue(containerName);
+    SitePropertyRepository.saveAll("theme", List.of(property));
   }
 
   private static WebContainer add(WebContainer record) {
@@ -101,10 +138,14 @@ public class WebContainerRepository {
       LOG.error("An id was not set!");
       return null;
     }
+    invalidateContainerCache(record.getName());
     return record;
   }
 
   private static WebContainer update(WebContainer record) {
+    WebContainer previous = Strings.CS.startsWith(record.getName(), "header.") || Strings.CS.startsWith(record.getName(), "footer.")
+        ? findById(record.getId())
+        : null;
     if (DB.UPDATE(TABLE_NAME)
         .SET("container_name", StringUtils.trimToNull(record.getName()))
         .SET("label", StringUtils.trimToNull(record.getLabel()))
@@ -115,16 +156,29 @@ public class WebContainerRepository {
         .WHERE("container_id = ?", record.getId())
         .execute()) {
       // Invalidate the cache
-      if (record.getName().startsWith("header")) {
-        CacheManager.invalidateCurrentWorkspaceKey(CacheManager.OBJECT_CACHE, CacheManager.WEBSITE_HEADER, true);
-        CacheManager.invalidateCurrentWorkspaceKey(CacheManager.OBJECT_CACHE, CacheManager.WEBSITE_PLAIN_HEADER, true);
-      } else if (record.getName().startsWith("footer")) {
-        CacheManager.invalidateCurrentWorkspaceKey(CacheManager.OBJECT_CACHE, CacheManager.WEBSITE_FOOTER, true);
+      invalidateContainerCache(record.getName());
+      if (previous != null && !previous.getName().equals(record.getName())) {
+        invalidateContainerCache(previous.getName());
       }
       return record;
     }
     LOG.error("The update failed!");
     return null;
+  }
+
+  private static void invalidateContainerCache(String name) {
+    if (Strings.CS.startsWith(name, "header")) {
+      CacheManager.invalidateCurrentWorkspaceKey(CacheManager.OBJECT_CACHE, CacheManager.WEBSITE_HEADER, true);
+      CacheManager.invalidateCurrentWorkspaceKey(CacheManager.OBJECT_CACHE, CacheManager.WEBSITE_PLAIN_HEADER, true);
+      if (!"header.default".equals(name) && !"header.plain".equals(name)) {
+        CacheManager.invalidateCurrentWorkspaceKey(CacheManager.OBJECT_CACHE, CacheManager.WEBSITE_HEADER + ":" + name, true);
+      }
+    } else if (Strings.CS.startsWith(name, "footer")) {
+      CacheManager.invalidateCurrentWorkspaceKey(CacheManager.OBJECT_CACHE, CacheManager.WEBSITE_FOOTER, true);
+      if (!"footer.default".equals(name)) {
+        CacheManager.invalidateCurrentWorkspaceKey(CacheManager.OBJECT_CACHE, CacheManager.WEBSITE_FOOTER + ":" + name, true);
+      }
+    }
   }
 
   private static WebContainer buildRecord(ResultSet rs) {

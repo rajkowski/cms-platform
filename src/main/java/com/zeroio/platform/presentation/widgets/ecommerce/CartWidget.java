@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://www.github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,27 +14,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package com.simisinc.platform.presentation.widgets.ecommerce;
-
-import com.simisinc.platform.application.cms.FontCommand;
-import com.simisinc.platform.application.cms.LoadContentCommand;
-import com.simisinc.platform.application.ecommerce.*;
-import com.simisinc.platform.domain.model.cms.Content;
-import com.simisinc.platform.domain.model.ecommerce.*;
-import com.simisinc.platform.infrastructure.persistence.ecommerce.CartItemRepository;
-import com.simisinc.platform.infrastructure.persistence.ecommerce.CartRepository;
-import com.simisinc.platform.infrastructure.persistence.ecommerce.ProductSkuRepository;
-import com.simisinc.platform.presentation.widgets.GenericWidget;
-import com.simisinc.platform.presentation.controller.WidgetContext;
-import org.apache.commons.lang3.StringUtils;
+package com.zeroio.platform.presentation.widgets.ecommerce;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
+import com.simisinc.platform.application.cms.FontCommand;
+import com.simisinc.platform.application.cms.LoadContentCommand;
+import com.simisinc.platform.application.ecommerce.CartCommand;
+import com.simisinc.platform.application.ecommerce.CartValidationCommand;
+import com.simisinc.platform.application.ecommerce.LoadCartCommand;
+import com.simisinc.platform.application.ecommerce.LoadCartItemCommand;
+import com.simisinc.platform.application.ecommerce.LoadProductCommand;
+import com.simisinc.platform.application.ecommerce.ProductInventoryCommand;
+import com.simisinc.platform.domain.model.cms.Content;
+import com.simisinc.platform.domain.model.ecommerce.Cart;
+import com.simisinc.platform.domain.model.ecommerce.CartEntry;
+import com.simisinc.platform.domain.model.ecommerce.CartItem;
+import com.simisinc.platform.domain.model.ecommerce.PricingRule;
+import com.simisinc.platform.domain.model.ecommerce.ProductSku;
+import com.simisinc.platform.infrastructure.persistence.ecommerce.CartItemRepository;
+import com.simisinc.platform.infrastructure.persistence.ecommerce.CartRepository;
+import com.simisinc.platform.infrastructure.persistence.ecommerce.ProductSkuRepository;
+import com.simisinc.platform.presentation.controller.WidgetContext;
+import com.simisinc.platform.presentation.widgets.GenericWidget;
+
 /**
- * Description
+ * Handles the display and management of the shopping cart in the e-commerce platform.
  *
  * @author matt rajkowski
  * @created 4/14/19 10:38 PM
@@ -175,7 +185,7 @@ public class CartWidget extends GenericWidget {
       context.setJsp(ITEMS_JSP);
     } else {
       // Check if there is html content to include
-      String[] contentList = new String[]{"card1", "card2"};
+      String[] contentList = new String[] { "card1", "card2" };
       for (String cardName : contentList) {
         String contentUniqueId = context.getPreferences().get(cardName + "uniqueId");
         if (StringUtils.isBlank(contentUniqueId)) {
@@ -189,7 +199,9 @@ public class CartWidget extends GenericWidget {
         }
         if (StringUtils.isBlank(html)) {
           if (context.hasRole("admin") || context.hasRole("content-manager")) {
-            html = "<a class=\"button tiny radius primary\" href=\"" + context.getContextPath() + "/content-editor?uniqueId=" + contentUniqueId + "&returnPage=" + context.getUri() + "\"><i class=\"" + FontCommand.fas() + " fa-edit\"></i> Add Content Here</a>";
+            html = "<a class=\"button tiny radius primary\" href=\"" + context.getContextPath() + "/content-editor?uniqueId="
+                + contentUniqueId + "&returnPage=" + context.getUri() + "\"><i class=\"" + FontCommand.fas()
+                + " fa-edit\"></i> Add Content Here</a>";
           }
         }
         if (StringUtils.isBlank(html)) {
