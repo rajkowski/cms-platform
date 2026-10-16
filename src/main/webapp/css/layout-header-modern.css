@@ -502,7 +502,7 @@ button.header-btn .btn-text {
 }
 
 .search-dropdown-results .platform-content-search-result {
-  padding: 0.75rem 0;
+  padding: 0 0 0.75rem 0;
   border-bottom: 1px solid var(--header-border);
 }
 

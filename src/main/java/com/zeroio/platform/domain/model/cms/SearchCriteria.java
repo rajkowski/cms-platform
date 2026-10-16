@@ -38,6 +38,7 @@ public class SearchCriteria extends Entity {
   public static final String ATTACHMENTS = "attachments";
   public static final String POSTS = "posts";
   public static final String RESOURCES = "resources";
+  public static final String RESOURCE_FILES = "resourceFiles";
 
   private String query = null;
   private String[] tags = null;

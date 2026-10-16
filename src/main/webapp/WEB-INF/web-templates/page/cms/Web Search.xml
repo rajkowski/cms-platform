@@ -31,22 +31,13 @@
           <limit>1</limit>
           <showWhenEmpty>false</showWhenEmpty>
         </widget>
-        <widget name="webPageSearchResults" hr="true">
-          <title>Web Pages Found:</title>
-          <limit>5</limit>
+
+        <widget name="unifiedSearchResults" hr="true">
+          <title>Unified Search Results:</title>
+          <limit>15</limit>
           <showWhenEmpty>false</showWhenEmpty>
         </widget>
-        <widget name="blogPostSearchResults" hr="true">
-          <title>News Posts Found:</title>
-          <limit>5</limit>
-          <showWhenEmpty>false</showWhenEmpty>
-        </widget>
-        <widget name="itemsSearchResults" hr="true">
-          <title>Resources Found:</title>
-          <limit>10</limit>
-          <showWhenEmpty>false</showWhenEmpty>
-          <useItemLink>true</useItemLink>
-        </widget>
+
         <widget name="content" class="margin-50">
           <uniqueId>${webPageName}-footer</uniqueId>
         </widget>

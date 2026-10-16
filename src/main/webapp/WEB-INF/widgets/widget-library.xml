@@ -49,6 +49,7 @@
   <widget name="searchInfo" class="com.simisinc.platform.presentation.widgets.cms.SearchInfoWidget" />
   <widget name="searchFilterSidebar" class="com.zeroio.platform.presentation.widgets.cms.SearchFilterSidebarWidget" />
   <widget name="webPageSearchResults" class="com.simisinc.platform.presentation.widgets.cms.WebPageSearchResultsWidget" />
+  <widget name="unifiedSearchResults" class="com.simisinc.platform.presentation.widgets.cms.UnifiedSearchResultsWidget" />
   <widget name="webPageTitleSearchResults" class="com.simisinc.platform.presentation.widgets.cms.WebPageTitleSearchResultsWidget" />
   <widget name="fileSearchResults" class="com.zeroio.platform.presentation.widgets.cms.FileSearchResultsWidget" />
   <widget name="tableOfContents" class="com.simisinc.platform.presentation.widgets.cms.TableOfContentsWidget" />

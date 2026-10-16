@@ -28,7 +28,9 @@ import java.sql.Timestamp;
  */
 public class SearchResult extends Entity {
 
+  private String type = null;
   private String link = null;
+  private String highlight = null;
   private String pageTitle = null;
   private String pageDescription = null;
   private String htmlExcerpt = null;
@@ -40,6 +42,24 @@ public class SearchResult extends Entity {
   private Timestamp modified = null;
 
   public SearchResult() {
+  }
+
+  /** The kind of content, one of the SearchCriteria type constants */
+  public String getType() {
+    return type;
+  }
+
+  public void setType(String type) {
+    this.type = type;
+  }
+
+  /** The raw excerpt with ${b} and ${/b} match markers, not yet escaped */
+  public String getHighlight() {
+    return highlight;
+  }
+
+  public void setHighlight(String highlight) {
+    this.highlight = highlight;
   }
 
   public String getLink() {

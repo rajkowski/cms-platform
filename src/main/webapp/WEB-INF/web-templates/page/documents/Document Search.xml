@@ -35,7 +35,7 @@
           <linkText>Search</linkText>
           <expand>false</expand>
         </widget>
-        <widget name="searchInfo" class="callout box margin-bottom-50" />
+        <widget name="searchInfo" class="callout box" />
         <widget name="webPageTitleSearchResults">
           <title>Pages found:</title>
           <showWhenEmpty>false</showWhenEmpty>
@@ -47,9 +47,8 @@
           <showWhenEmpty>false</showWhenEmpty>
           <showWhenOfType>all</showWhenOfType>
         </widget>
-        <widget name="webPageSearchResults">
-          <title>Web Pages Found:</title>
-          <limit>10</limit>
+        <widget name="unifiedSearchResults">
+          <limit>15</limit>
           <showWhenEmpty>true</showWhenEmpty>
           <useUserRegion>true</useUserRegion>
           <showPaging>true</showPaging>
@@ -57,22 +56,19 @@
         </widget>
         <!-- Tied to the filter type -->
         <widget name="webPageSearchResults">
-          <title>Web Pages Found:</title>
-          <limit>10</limit>
+          <limit>15</limit>
           <showWhenEmpty>true</showWhenEmpty>
           <useUserRegion>true</useUserRegion>
           <showPaging>true</showPaging>
           <showWhenOfType>pages</showWhenOfType>
         </widget>
         <widget name="blogPostSearchResults">
-          <title>Posts Found:</title>
-          <limit>10</limit>
+          <limit>15</limit>
           <showWhenEmpty>true</showWhenEmpty>
           <showWhenOfType>posts</showWhenOfType>
         </widget>
         <widget name="itemsSearchResults">
-          <title>Resources Found:</title>
-          <limit>10</limit>
+          <limit>15</limit>
           <showWhenEmpty>true</showWhenEmpty>
           <useItemLink>false</useItemLink>
           <useUserRegion>true</useUserRegion>
@@ -80,8 +76,7 @@
           <showWhenOfType>resources</showWhenOfType>
         </widget>
         <widget name="fileSearchResults">
-          <title>Attachments Found:</title>
-          <limit>10</limit>
+          <limit>15</limit>
           <showWhenEmpty>true</showWhenEmpty>
           <showPaging>true</showPaging>
           <showWhenOfType>attachments</showWhenOfType>
@@ -89,31 +84,6 @@
         <widget class="margin-50" name="content">
           <uniqueId>${webPageName}-footer</uniqueId>
           <html><![CDATA[<p>You can also review the <a href="/all-faqs">FAQs</a></p>]]></html>
-        </widget>
-      </column>
-      <column class="small-12 medium-4 large-3 cell">
-        <widget name="blogPostSearchResults" class="callout box">
-          <title>Posts Found:</title>
-          <limit>5</limit>
-          <showWhenEmpty>false</showWhenEmpty>
-          <showViewMoreLink>true</showViewMoreLink>
-          <showWhenOfType>all</showWhenOfType>
-        </widget>
-        <widget name="itemsSearchResults" class="callout box">
-          <title>Resources Found:</title>
-          <limit>5</limit>
-          <showWhenEmpty>false</showWhenEmpty>
-          <useItemLink>false</useItemLink>
-          <useUserRegion>true</useUserRegion>
-          <showViewMoreLink>true</showViewMoreLink>
-          <showWhenOfType>all</showWhenOfType>
-        </widget>
-        <widget name="fileSearchResults" class="callout box">
-          <title>Attachments Found:</title>
-          <limit>5</limit>
-          <showWhenEmpty>false</showWhenEmpty>
-          <showViewMoreLink>true</showViewMoreLink>
-          <showWhenOfType>all</showWhenOfType>
         </widget>
       </column>
     </section>
