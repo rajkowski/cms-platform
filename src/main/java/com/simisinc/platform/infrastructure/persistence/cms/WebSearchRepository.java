@@ -17,9 +17,6 @@
 
 package com.simisinc.platform.infrastructure.persistence.cms;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -59,12 +56,9 @@ public class WebSearchRepository {
   }
 
   public static boolean remove(WebSearch record) {
-    try (Connection connection = DB.getConnection()) {
-      return DB.DELETE().FROM(TABLE_NAME).WHERE("search_id = ?", record.getId()).execute(connection);
-    } catch (SQLException se) {
-      LOG.error("SQLException: " + se.getMessage());
-    }
-    LOG.error("The delete failed!");
-    return false;
+    return DB.DELETE()
+        .FROM(TABLE_NAME)
+        .WHERE("search_id = ?", record.getId())
+        .execute();
   }
 }

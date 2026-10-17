@@ -18,7 +18,6 @@ package com.simisinc.platform.infrastructure.persistence;
 
 import java.io.File;
 import java.io.IOException;
-import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
@@ -27,8 +26,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.github.rajkowski.database.AutoRollback;
-import com.github.rajkowski.database.AutoStartTransaction;
 import com.github.rajkowski.database.DB;
 import com.github.rajkowski.database.DataConstraints;
 import com.github.rajkowski.database.DataResult;
@@ -123,16 +120,10 @@ public class BlockedIPRepository {
   }
 
   public static boolean remove(BlockedIP record) {
-    try (Connection connection = DB.getConnection();
-        AutoStartTransaction a = new AutoStartTransaction(connection);
-        AutoRollback transaction = new AutoRollback(connection)) {
-      DB.DELETE().FROM(TABLE_NAME).WHERE("block_list_id = ?", record.getId()).execute(connection);
-      transaction.commit();
-      return true;
-    } catch (SQLException se) {
-      LOG.error("SQLException: " + se.getMessage());
-    }
-    return false;
+    return DB.DELETE()
+        .FROM(TABLE_NAME)
+        .WHERE("block_list_id = ?", record.getId())
+        .execute();
   }
 
   private static BlockedIP buildRecord(ResultSet rs) {

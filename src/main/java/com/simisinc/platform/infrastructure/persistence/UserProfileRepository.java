@@ -16,7 +16,6 @@
 
 package com.simisinc.platform.infrastructure.persistence;
 
-import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -26,8 +25,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.github.rajkowski.database.AutoRollback;
-import com.github.rajkowski.database.AutoStartTransaction;
 import com.github.rajkowski.database.CastType;
 import com.github.rajkowski.database.DB;
 import com.github.rajkowski.database.DataConstraints;
@@ -130,16 +127,7 @@ public class UserProfileRepository {
       update.SET("field_values", (String) null, CastType.JSONB);
     }
     update.WHERE("user_id = ?", record.getId());
-    try (Connection connection = DB.getConnection();
-        AutoStartTransaction a = new AutoStartTransaction(connection);
-        AutoRollback transaction = new AutoRollback(connection)) {
-      update.execute(connection);
-      transaction.commit();
-      return record;
-    } catch (SQLException se) {
-      LOG.error("SQLException: " + se.getMessage(), se);
-    }
-    return null;
+    return update.execute().booleanValue() ? record : null;
   }
 
   private static UserProfile buildRecord(ResultSet rs) {

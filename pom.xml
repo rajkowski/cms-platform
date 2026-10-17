@@ -47,12 +47,12 @@
     <dependency>
       <groupId>com.bucket4j</groupId>
       <artifactId>bucket4j_jdk17-core</artifactId>
-      <version>8.20.0</version>
+      <version>8.21.0</version>
     </dependency>
     <dependency>
       <groupId>com.github.ben-manes.caffeine</groupId>
       <artifactId>caffeine</artifactId>
-      <version>3.2.4</version>
+      <version>3.3.1</version>
     </dependency>
     <dependency>
       <groupId>org.apache.httpcomponents.core5</groupId>
@@ -67,7 +67,7 @@
     <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
-      <version>1.22.1</version>
+      <version>1.23.0</version>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
@@ -127,13 +127,18 @@
     <dependency>
       <groupId>com.github.rajkowski</groupId>
       <artifactId>db</artifactId>
-      <version>1.0.20</version>
+      <version>1.0.21</version>
     </dependency>
     <dependency>
       <groupId>com.github.rajkowski</groupId>
       <artifactId>easy-flows-playbooks</artifactId>
       <version>1.2.0</version>
     </dependency>
+    <!-- <dependency>
+      <groupId>io.github.inference4j</groupId>
+      <artifactId>inference4j-core</artifactId>
+      <version>0.12.0</version>
+    </dependency> -->
     <dependency>
       <groupId>com.vladsch.flexmark</groupId>
       <artifactId>flexmark-all</artifactId>
@@ -213,7 +218,7 @@
     <dependency>
       <groupId>jakarta.json.bind</groupId>
       <artifactId>jakarta.json.bind-api</artifactId>
-      <version>3.0.3</version>
+      <version>3.0.4</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -259,7 +264,7 @@
     <dependency>
       <groupId>com.googlecode.libphonenumber</groupId>
       <artifactId>libphonenumber</artifactId>
-      <version>9.0.40</version>
+      <version>9.0.41</version>
     </dependency>
     <dependency>
       <groupId>org.projectlombok</groupId>
@@ -270,7 +275,7 @@
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
-      <version>42.7.13</version>
+      <version>42.7.14</version>
     </dependency>
     <dependency>
       <groupId>com.azure</groupId>
@@ -359,13 +364,13 @@
     <dependency>
       <groupId>org.apache.tomcat</groupId>
       <artifactId>tomcat-jsp-api</artifactId>
-      <version>9.0.122</version>
+      <version>9.0.123</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.tomcat</groupId>
       <artifactId>tomcat-servlet-api</artifactId>
-      <version>9.0.122</version>
+      <version>9.0.123</version>
       <scope>provided</scope>
     </dependency>
     <dependency>

@@ -17,7 +17,6 @@
 package com.simisinc.platform.infrastructure.persistence;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
@@ -151,8 +150,9 @@ public class GroupRepository {
 
   public static boolean remove(Group record) {
     try (Connection connection = DB.getConnection();
-        AutoStartTransaction a = new AutoStartTransaction(connection);
-        AutoRollback transaction = new AutoRollback(connection)) {
+        AutoStartTransaction a = DB.startTransaction(connection);
+        AutoRollback transaction = DB.rollback(connection)) {
+      // Remove the user-group associations for this group before deleting the group itself
       UserGroupRepository.remove(connection, record);
       DB.DELETE().FROM(TABLE_NAME).WHERE("group_id = ?", record.getId()).execute(connection);
       transaction.commit();
@@ -163,34 +163,19 @@ public class GroupRepository {
     return false;
   }
 
-  private static PreparedStatement createPreparedStatementForUserCount(Connection connection, long groupId, int value)
-      throws SQLException {
-    String SQL_QUERY = "UPDATE groups " +
-        "SET user_count = user_count + ? " +
-        "WHERE group_id = ?";
-    int i = 0;
-    PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
-    pst.setInt(++i, value);
-    pst.setLong(++i, groupId);
-    return pst;
-  }
-
   public static boolean updateUserCount(long groupId, int value) {
-    // Adjust the count
-    try (Connection connection = DB.getConnection()) {
-      return updateUserCount(connection, groupId, value);
-    } catch (SQLException se) {
-      LOG.error("SQLException: " + se.getMessage());
-    }
-    LOG.error("The update failed!");
-    return false;
-
+    return DB.UPDATE("groups")
+        .SET("user_count = user_count + ?", value)
+        .WHERE("group_id = ?", groupId)
+        .execute();
   }
 
   public static boolean updateUserCount(Connection connection, long groupId, int value) {
-    // Adjust the count
-    try (PreparedStatement pst = createPreparedStatementForUserCount(connection, groupId, value)) {
-      return pst.execute();
+    try {
+      return DB.UPDATE("groups")
+          .SET("user_count = user_count + ?", value)
+          .WHERE("group_id = ?", groupId)
+          .execute(connection);
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }
@@ -198,20 +183,12 @@ public class GroupRepository {
     return false;
   }
 
-  private static PreparedStatement createPreparedStatementForRemoveUserCount(Connection connection, long userId) throws SQLException {
-    String SQL_QUERY = "UPDATE groups " +
-        "SET user_count = user_count - 1 " +
-        "WHERE EXISTS (SELECT 1 FROM user_groups WHERE group_id = groups.group_id AND user_id = ?)";
-    int i = 0;
-    PreparedStatement pst = connection.prepareStatement(SQL_QUERY);
-    pst.setLong(++i, userId);
-    return pst;
-  }
-
   public static boolean removeUserCount(Connection connection, User user) {
-    // Adjust the count
-    try (PreparedStatement pst = createPreparedStatementForRemoveUserCount(connection, user.getId())) {
-      return pst.execute();
+    try {
+      return DB.UPDATE("groups")
+          .SET("user_count = user_count - 1")
+          .WHERE("EXISTS (SELECT 1 FROM user_groups WHERE group_id = groups.group_id AND user_id = ?)", user.getId())
+          .execute(connection);
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
     }

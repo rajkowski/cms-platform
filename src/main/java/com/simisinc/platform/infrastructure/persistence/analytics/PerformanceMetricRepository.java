@@ -19,7 +19,6 @@ package com.simisinc.platform.infrastructure.persistence.analytics;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -132,10 +131,9 @@ public class PerformanceMetricRepository {
    * Delete records older than the specified number of days.
    */
   public static void deleteOlderThan(int days) {
-    try (Connection connection = DB.getConnection()) {
-      DB.DELETE().FROM(TABLE_NAME).WHERE("metric_date < NOW() - (? || ' days')::interval", days).execute(connection);
-    } catch (SQLException se) {
-      LOG.error("SQLException: " + se.getMessage());
-    }
+    DB.DELETE()
+        .FROM(TABLE_NAME)
+        .WHERE("metric_date < NOW() - (? || ' days')::interval", days)
+        .execute();
   }
 }

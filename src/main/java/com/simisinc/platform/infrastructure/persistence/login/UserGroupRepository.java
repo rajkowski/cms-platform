@@ -99,7 +99,10 @@ public class UserGroupRepository {
   }
 
   public static void remove(Connection connection, Group group) throws SQLException {
-    DB.DELETE().FROM(TABLE_NAME).WHERE("group_id = ?", group.getId()).execute(connection);
+    DB.DELETE()
+        .FROM(TABLE_NAME)
+        .WHERE("group_id = ?", group.getId())
+        .execute(connection);
   }
 
   private static UserGroup buildRecord(ResultSet rs) {

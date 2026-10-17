@@ -9,7 +9,7 @@
     },
     "ace": {
       "package": "ace-builds",
-      "version": "1.44.0",
+      "version": "1.45.0",
       "paths": [
         "node_modules/ace-builds/src-min-noconflict/*"
       ]
@@ -138,7 +138,7 @@
       "version": "4.2.2"
     },
     "mermaid": {
-      "version": "12.1.0",
+      "version": "12.2.0",
       "paths": [
         "node_modules/mermaid/dist/mermaid.js",
         "node_modules/mermaid/dist/mermaid.min.js"
