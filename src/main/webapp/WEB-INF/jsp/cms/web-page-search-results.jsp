@@ -47,6 +47,7 @@
               <c:out value="${searchResult.pageTitle}"/>
             </c:otherwise>
           </c:choose>
+          <span class="badge"><c:out value="${searchResult.getTypeLabel()}"/></span>
         </h5>
       </c:when>
       <c:otherwise>
@@ -62,23 +63,22 @@
         </h5>
       </c:otherwise>
     </c:choose>
-    <c:if test="${!empty searchResult.actionLink and !empty searchResult.actionLabel}">
-      <p class="margin-bottom-5">
-        <a href="${ctx}${searchResult.actionLink}" class="button tiny no-gap"><c:out value="${searchResult.actionLabel}"/></a>
-      </p>
-    </c:if>
     <c:if test="${!empty searchResult.pageDescription}">
       <p><c:out value="${searchResult.pageDescription}" /></p>
     </c:if>
     <p>${searchResult.htmlExcerpt}</p>
+    <c:if test="${!empty searchResult.actionLink and !empty searchResult.actionLabel}">
+      <p class="margin-bottom-10">
+        <a target="_blank" href="${ctx}${searchResult.actionLink}" class="button tiny no-gap"><c:out value="${searchResult.actionLabel}"/></a>
+      </p>
+    </c:if>
     <c:if test="${searchResult.modifiedBy > 0 or !empty searchResult.modified}">
       <div class="margin-top-5" style="font-size: 0.85em; color: #888; margin-bottom: 8px;">
-        <c:if test="${searchResult.modifiedBy > 0}">
-          <span>Modified by: <c:out value="${user:name(searchResult.modifiedBy)}"/></span>
-        </c:if>
         <c:if test="${!empty searchResult.modified}">
-          <c:if test="${searchResult.modifiedBy > 0}"> | </c:if>
-          <span>Last modified: <fmt:formatDate value="${searchResult.modified}" pattern="MMM dd, yyyy"/></span>
+          <span>Modified <fmt:formatDate value="${searchResult.modified}" pattern="MMM dd, yyyy"/></span>
+        </c:if>
+        <c:if test="${searchResult.modifiedBy > 0}">
+          <span>by <c:out value="${user:name(searchResult.modifiedBy)}"/></span>
         </c:if>
       </div>
     </c:if>

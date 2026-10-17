@@ -17,8 +17,10 @@
 
 package com.simisinc.platform.domain.model.cms;
 
-import com.simisinc.platform.domain.model.Entity;
 import java.sql.Timestamp;
+
+import com.simisinc.platform.domain.model.Entity;
+import com.zeroio.platform.domain.model.cms.SearchCriteria;
 
 /**
  * A search result to be included with the search results
@@ -28,7 +30,9 @@ import java.sql.Timestamp;
  */
 public class SearchResult extends Entity {
 
+  private String type = null;
   private String link = null;
+  private String highlight = null;
   private String pageTitle = null;
   private String pageDescription = null;
   private String htmlExcerpt = null;
@@ -40,6 +44,24 @@ public class SearchResult extends Entity {
   private Timestamp modified = null;
 
   public SearchResult() {
+  }
+
+  /** The kind of content, one of the SearchCriteria type constants */
+  public String getType() {
+    return type;
+  }
+
+  public void setType(String type) {
+    this.type = type;
+  }
+
+  /** The raw excerpt with ${b} and ${/b} match markers, not yet escaped */
+  public String getHighlight() {
+    return highlight;
+  }
+
+  public void setHighlight(String highlight) {
+    this.highlight = highlight;
   }
 
   public String getLink() {
@@ -120,5 +142,22 @@ public class SearchResult extends Entity {
 
   public void setModified(Timestamp modified) {
     this.modified = modified;
+  }
+
+  /** The label shown beside a result */
+  public String getTypeLabel() {
+    if (SearchCriteria.POSTS.equals(type)) {
+      return "Blog post";
+    }
+    if (SearchCriteria.CALENDAR.equals(type)) {
+      return "Event";
+    }
+    if (SearchCriteria.ATTACHMENTS.equals(type)) {
+      return "Attachment";
+    }
+    if (SearchCriteria.RESOURCES.equals(type)) {
+      return "Resource";
+    }
+    return "Web page";
   }
 }

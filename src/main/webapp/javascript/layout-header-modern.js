@@ -285,7 +285,7 @@
               link.textContent = page.title || page.link || 'Untitled';
               heading.appendChild(link);
 
-              if (page.type && page.type.trim().toLowerCase() !== 'webpage') {
+              if (page.type) { // && page.type.trim().toLowerCase() !== 'web page'
                 const typeTag = document.createElement('span');
                 typeTag.className = 'badge secondary search-result-tag';
                 typeTag.textContent = page.type;
@@ -293,17 +293,6 @@
                 heading.appendChild(typeTag);
               }
               item.appendChild(heading);
-
-              if (page.actionLink && page.actionLabel) {
-                const actionP = document.createElement('p');
-                actionP.className = 'margin-bottom-5';
-                const actionA = document.createElement('a');
-                actionA.setAttribute('href', page.actionLink);
-                actionA.className = 'button tiny no-gap';
-                actionA.textContent = page.actionLabel;
-                actionP.appendChild(actionA);
-                item.appendChild(actionP);
-              }
 
               if (page.description && page.description !== page.content) {
                 const descP = document.createElement('p');
@@ -324,17 +313,33 @@
                 item.appendChild(contentP);
               }
 
+              if (page.actionLink && page.actionLabel) {
+                const actionP = document.createElement('p');
+                actionP.className = 'margin-bottom-5';
+                const actionA = document.createElement('a');
+                actionA.setAttribute('target', '_blank');
+                actionA.setAttribute('href', page.actionLink);
+                actionA.className = 'button tiny no-gap';
+                actionA.textContent = page.actionLabel;
+                actionP.appendChild(actionA);
+                item.appendChild(actionP);
+              }
+
               const metaParts = [];
-              if (page.modifiedBy) {
-                metaParts.push('Modified by: ' + page.modifiedBy);
+              if (page.modifiedBy || page.lastModified) {
+                metaParts.push('Modified');
+                if (page.lastModified) {
+                  metaParts.push(page.lastModified);
+                }
+                if (page.modifiedBy) {
+                  metaParts.push('by ' + page.modifiedBy);
+                }
               }
-              if (page.lastModified) {
-                metaParts.push('Last modified: ' + page.lastModified);
-              }
+              
               if (metaParts.length > 0) {
                 const meta = document.createElement('div');
                 meta.className = 'search-result-meta';
-                meta.textContent = metaParts.join(' | ');
+                meta.textContent = metaParts.join(' ');
                 item.appendChild(meta);
               }
 

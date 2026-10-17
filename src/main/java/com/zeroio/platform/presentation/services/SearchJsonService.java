@@ -26,9 +26,9 @@ import com.simisinc.platform.application.UserCommand;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.application.cms.FormatDateCommand;
 import com.simisinc.platform.application.json.JsonCommand;
-import com.simisinc.platform.domain.model.cms.WebPage;
-import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
-import com.simisinc.platform.infrastructure.persistence.cms.WebPageSpecification;
+import com.simisinc.platform.domain.model.cms.SearchResult;
+import com.simisinc.platform.infrastructure.persistence.cms.UnifiedSearchRepository;
+import com.simisinc.platform.infrastructure.persistence.cms.UnifiedSearchSpecification;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
 import com.zeroio.platform.domain.model.Region;
@@ -36,7 +36,7 @@ import com.zeroio.platform.infrastructure.persistence.RegionRepository;
 
 /**
  * Handles JSON/AJAX GET requests for /json/search endpoint
- * Returns search results based on query parameters
+ * Returns ranked search results across all content types
  *
  * @author matt rajkowski
  * @created 10/13/26 8:00 AM
@@ -58,16 +58,12 @@ public class SearchJsonService extends GenericJsonService {
       // Retrieve the search query parameter from the request
       String query = context.getRequest().getParameter("query");
 
-      // Create a specification for querying web pages based on the search term
-      WebPageSpecification specification = new WebPageSpecification();
-      if (!context.hasRole("admin") && !context.hasRole("content-manager")) {
-        // Limit the search to published pages that are enabled, searchable, and not drafts
-        specification.setSearchable(true);
-        specification.setDraft(false);
-      }
-      specification.setEnabled(true);
-      specification.setHasRedirect(false);
+      // Rank pages, posts, events, attachments and items together
+      UnifiedSearchSpecification specification = new UnifiedSearchSpecification();
       specification.setSearchTerm(query);
+      specification.setForUserId(context.getUserSession().getUserId());
+      specification.setContentManager(context.hasRole("admin") || context.hasRole("content-manager"));
+      specification.setDataManager(context.hasRole("admin") || context.hasRole("data-manager"));
 
       // Limit to region
       if (LoadSitePropertyCommand.loadByNameAsBoolean("site.regions.enabled")) {
@@ -83,51 +79,52 @@ public class SearchJsonService extends GenericJsonService {
       // Set data constraints for the query (pagination)
       DataConstraints constraints = new DataConstraints(0, 20);
 
-      // Execute the query to find all web pages matching the specification and constraints
-      List<WebPage> results = WebPageRepository.findAll(specification, constraints);
+      List<SearchResult> results = UnifiedSearchRepository.findAll(specification, constraints);
 
       // Build JSON response
-      int count = (results != null) ? results.size() : 0;
+      int count = results.size();
       StringBuilder json = new StringBuilder();
       json.append("{");
       json.append("\"status\":\"ok\",");
       json.append("\"meta\":{\"type\":\"search\",\"count\":").append(count).append("},");
       json.append("\"data\":[");
 
-      if (results != null && !results.isEmpty()) {
-        for (int i = 0; i < results.size(); i++) {
-          WebPage page = results.get(i);
-          if (i > 0) {
-            json.append(",");
-          }
-          String lastModified = page.getModified() != null ? FormatDateCommand.formatMonthDayYear(page.getModified()) : null;
-          String modifiedBy = page.getModifiedBy() > 0 ? UserCommand.name(page.getModifiedBy()) : null;
-          String content = page.getHighlight();
-          if (content == null) {
-            content = page.getDescription();
-          }
-
-          json.append("{");
-          json.append("\"type\":\"").append(JsonCommand.toJson("webpage")).append("\",");
-          json.append("\"title\":\"").append(JsonCommand.toJson(page.getTitle())).append("\",");
-          json.append("\"link\":\"").append(JsonCommand.toJson(page.getLink())).append("\",");
-          json.append("\"lastModified\":").append(lastModified != null ? "\"" + JsonCommand.toJson(lastModified) + "\"" : "null")
-              .append(",");
-          json.append("\"modifiedBy\":").append(modifiedBy != null ? "\"" + JsonCommand.toJson(modifiedBy) + "\"" : "null")
-              .append(",");
-          json.append("\"content\":").append(content != null ? "\"" + JsonCommand.toJson(content) + "\"" : "null");
-          if (page.getTags() != null && page.getTags().length > 0) {
-            json.append(",\"tags\":[");
-            for (int t = 0; t < page.getTags().length; t++) {
-              if (t > 0) {
-                json.append(",");
-              }
-              json.append("\"").append(JsonCommand.toJson(page.getTags()[t])).append("\"");
-            }
-            json.append("]");
-          }
-          json.append("}");
+      for (int i = 0; i < count; i++) {
+        SearchResult result = results.get(i);
+        if (i > 0) {
+          json.append(",");
         }
+        String lastModified = result.getModified() != null ? FormatDateCommand.formatMonthDayYear(result.getModified()) : null;
+        String modifiedBy = result.getModifiedBy() > 0 ? UserCommand.name(result.getModifiedBy()) : null;
+        String content = result.getHighlight();
+        if (content == null) {
+          content = result.getPageDescription();
+        }
+
+        json.append("{");
+        json.append("\"type\":\"").append(JsonCommand.toJson(result.getTypeLabel())).append("\",");
+        json.append("\"title\":\"").append(JsonCommand.toJson(result.getPageTitle())).append("\",");
+        json.append("\"link\":\"").append(JsonCommand.toJson(result.getLink())).append("\",");
+        json.append("\"lastModified\":").append(lastModified != null ? "\"" + JsonCommand.toJson(lastModified) + "\"" : "null")
+            .append(",");
+        json.append("\"modifiedBy\":").append(modifiedBy != null ? "\"" + JsonCommand.toJson(modifiedBy) + "\"" : "null")
+            .append(",");
+        json.append("\"content\":").append(content != null ? "\"" + JsonCommand.toJson(content) + "\"" : "null");
+        if (result.getActionLink() != null && result.getActionLabel() != null) {
+          json.append(",\"actionLink\":\"").append(JsonCommand.toJson(result.getActionLink())).append("\"");
+          json.append(",\"actionLabel\":\"").append(JsonCommand.toJson(result.getActionLabel())).append("\"");
+        }
+        if (result.getTags() != null && result.getTags().length > 0) {
+          json.append(",\"tags\":[");
+          for (int t = 0; t < result.getTags().length; t++) {
+            if (t > 0) {
+              json.append(",");
+            }
+            json.append("\"").append(JsonCommand.toJson(result.getTags()[t])).append("\"");
+          }
+          json.append("]");
+        }
+        json.append("}");
       }
 
       json.append("]}");

@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the [Common Changelog](https://common-changelog.org/).
 
+## 2026-10-17
+
+- Unified search results in the dynamic header control panel and the search results web page
+
 ## 2026-10-14
 
 - Reimagined header and footer containers as modern light/dark mode, dynamic controls, customizable
