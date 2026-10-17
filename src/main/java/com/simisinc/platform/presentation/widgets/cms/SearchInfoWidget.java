@@ -45,8 +45,12 @@ public class SearchInfoWidget extends GenericWidget {
     context.getRequest().setAttribute("searchCriteria", searchCriteria);
 
     // Track the search terms
-    if (StringUtils.isNotBlank(searchCriteria.getQuery()) &&
-        (!context.getUserSession().isLoggedIn() || !(context.hasRole("admin") || context.hasRole("content-manager")))) {
+    boolean trackSearch = true;
+    if (!LOG.isDebugEnabled() && (context.hasRole("admin") || context.hasRole("content-manager"))) {
+      trackSearch = false;
+    }
+
+    if (StringUtils.isNotBlank(searchCriteria.getQuery()) && trackSearch) {
 
       // Determine where the query came from
       String pagePath = (String) context.getRequest().getAttribute(RequestConstants.WEB_PAGE_PATH);

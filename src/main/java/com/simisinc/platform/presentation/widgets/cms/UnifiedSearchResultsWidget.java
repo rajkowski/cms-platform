@@ -89,6 +89,11 @@ public class UnifiedSearchResultsWidget extends GenericWidget {
     UnifiedSearchSpecification specification = new UnifiedSearchSpecification();
     if (!SearchCriteria.ALL.equals(isOfType)) {
       specification.setTypes(new String[] { isOfType });
+    } else {
+      // Everything but Calendar since it is highlighted separately
+      specification.setTypes(new String[] {
+          SearchCriteria.PAGES, SearchCriteria.POSTS, SearchCriteria.ATTACHMENTS,
+          SearchCriteria.RESOURCES, SearchCriteria.RESOURCE_FILES });
     }
     specification.setForUserId(context.getUserId());
     specification.setContentManager(context.hasRole("admin") || context.hasRole("content-manager"));

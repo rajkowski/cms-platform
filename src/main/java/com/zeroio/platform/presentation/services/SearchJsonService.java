@@ -32,7 +32,6 @@ import com.simisinc.platform.infrastructure.persistence.cms.UnifiedSearchSpecifi
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
 import com.zeroio.platform.domain.model.Region;
-import com.zeroio.platform.domain.model.cms.SearchCriteria;
 import com.zeroio.platform.infrastructure.persistence.RegionRepository;
 
 /**
@@ -103,7 +102,7 @@ public class SearchJsonService extends GenericJsonService {
         }
 
         json.append("{");
-        json.append("\"type\":\"").append(JsonCommand.toJson(typeLabel(result.getType()))).append("\",");
+        json.append("\"type\":\"").append(JsonCommand.toJson(result.getTypeLabel())).append("\",");
         json.append("\"title\":\"").append(JsonCommand.toJson(result.getPageTitle())).append("\",");
         json.append("\"link\":\"").append(JsonCommand.toJson(result.getLink())).append("\",");
         json.append("\"lastModified\":").append(lastModified != null ? "\"" + JsonCommand.toJson(lastModified) + "\"" : "null")
@@ -139,22 +138,5 @@ public class SearchJsonService extends GenericJsonService {
       context.setJson("{\"status\":\"error\",\"error\":{\"title\":\"Failed to fetch results\"}}");
       return context;
     }
-  }
-
-  /** The label shown beside a result; web pages are the default and have no label */
-  private static String typeLabel(String type) {
-    if (SearchCriteria.POSTS.equals(type)) {
-      return "Blog post";
-    }
-    if (SearchCriteria.CALENDAR.equals(type)) {
-      return "Event";
-    }
-    if (SearchCriteria.ATTACHMENTS.equals(type)) {
-      return "Attachment";
-    }
-    if (SearchCriteria.RESOURCES.equals(type)) {
-      return "Resource";
-    }
-    return "Web page";
   }
 }

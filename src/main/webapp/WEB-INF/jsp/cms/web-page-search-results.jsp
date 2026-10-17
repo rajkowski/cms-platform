@@ -47,6 +47,7 @@
               <c:out value="${searchResult.pageTitle}"/>
             </c:otherwise>
           </c:choose>
+          <span class="badge"><c:out value="${searchResult.getTypeLabel()}"/></span>
         </h5>
       </c:when>
       <c:otherwise>

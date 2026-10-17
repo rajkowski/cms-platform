@@ -17,8 +17,10 @@
 
 package com.simisinc.platform.domain.model.cms;
 
-import com.simisinc.platform.domain.model.Entity;
 import java.sql.Timestamp;
+
+import com.simisinc.platform.domain.model.Entity;
+import com.zeroio.platform.domain.model.cms.SearchCriteria;
 
 /**
  * A search result to be included with the search results
@@ -140,5 +142,22 @@ public class SearchResult extends Entity {
 
   public void setModified(Timestamp modified) {
     this.modified = modified;
+  }
+
+  /** The label shown beside a result */
+  public String getTypeLabel() {
+    if (SearchCriteria.POSTS.equals(type)) {
+      return "Blog post";
+    }
+    if (SearchCriteria.CALENDAR.equals(type)) {
+      return "Event";
+    }
+    if (SearchCriteria.ATTACHMENTS.equals(type)) {
+      return "Attachment";
+    }
+    if (SearchCriteria.RESOURCES.equals(type)) {
+      return "Resource";
+    }
+    return "Web page";
   }
 }

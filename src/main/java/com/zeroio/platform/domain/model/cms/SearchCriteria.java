@@ -283,7 +283,6 @@ public class SearchCriteria extends Entity {
       uri.append("&").append(key).append("=").append(UrlCommand.encodeUri(value));
     }
     return uri.toString();
-
   }
 
   public String toString() {

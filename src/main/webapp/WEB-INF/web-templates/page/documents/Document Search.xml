@@ -81,7 +81,7 @@
           <showPaging>true</showPaging>
           <showWhenOfType>attachments</showWhenOfType>
         </widget>
-        <widget class="margin-50" name="content">
+        <widget class="margin-top-20 margin-bottom-50" name="content">
           <uniqueId>${webPageName}-footer</uniqueId>
           <html><![CDATA[<p>You can also review the <a href="/all-faqs">FAQs</a></p>]]></html>
         </widget>
