@@ -70,6 +70,8 @@ public class ConnectionPool {
       config.setConnectionTimeout(5_000);
     }
     config.setMaxLifetime(600_000);
+    config.setLeakDetectionThreshold(60000);
+    config.setInitializationFailTimeout(-1);
     config.setPoolName("Web-Application-Pool");
     return new HikariDataSource(config);
   }
@@ -78,6 +80,8 @@ public class ConnectionPool {
   private static HikariDataSource initBackgroundJobsCP(Properties properties) {
     HikariConfig config = new HikariConfig(mergePropertiesFromPrefix(properties, "backgroundJobs"));
     config.setMaxLifetime(600_000);
+    config.setLeakDetectionThreshold(60000);
+    config.setInitializationFailTimeout(-1);
     config.setPoolName("Background-Jobs-Pool");
     return new HikariDataSource(config);
   }
@@ -86,6 +90,8 @@ public class ConnectionPool {
   private static HikariDataSource initDistributedMessagingCP(Properties properties) {
     HikariConfig config = new HikariConfig(mergePropertiesFromPrefix(properties, "distributedMessaging"));
     config.setMaxLifetime(600_000);
+    config.setLeakDetectionThreshold(60000);
+    config.setInitializationFailTimeout(-1);
     config.setPoolName("Distributed-Messaging-Pool");
     return new HikariDataSource(config);
   }
