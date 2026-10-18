@@ -21,7 +21,8 @@ SELECT
   (COALESCE(web_pages.searchable, false) AND NOT COALESCE(web_pages.draft, false)) AS is_public,
   NULL::bigint AS folder_id,
   NULL::bigint AS collection_id,
-  NULL::timestamp(3) AS start_date
+  NULL::timestamp(3) AS start_date,
+  NULL::text AS category
 FROM web_pages
 UNION ALL
 SELECT
@@ -43,7 +44,8 @@ SELECT
   true,
   NULL::bigint,
   NULL::bigint,
-  NULL::timestamp(3)
+  NULL::timestamp(3),
+  blogs.name::text
 FROM blog_posts
 JOIN blogs ON blog_posts.blog_id = blogs.blog_id
 UNION ALL
@@ -66,8 +68,10 @@ SELECT
   true,
   NULL::bigint,
   NULL::bigint,
-  calendar_events.start_date
+  calendar_events.start_date,
+  calendars.name::text
 FROM calendar_events
+JOIN calendars ON calendar_events.calendar_id = calendars.calendar_id
 UNION ALL
 SELECT
   'attachments'::text,
@@ -88,7 +92,8 @@ SELECT
   true,
   files.folder_id,
   NULL::bigint,
-  NULL::timestamp(3)
+  NULL::timestamp(3),
+  NULL::text
 FROM files
 UNION ALL
 SELECT
@@ -110,8 +115,10 @@ SELECT
   (items.approved IS NOT NULL),
   NULL::bigint,
   items.collection_id,
-  NULL::timestamp(3)
+  NULL::timestamp(3),
+  collections.name::text
 FROM items
+JOIN collections ON items.collection_id = collections.collection_id
 UNION ALL
 SELECT
   'resourceFiles'::text,
@@ -132,6 +139,8 @@ SELECT
   true,
   item_files.folder_id,
   items.collection_id,
-  NULL::timestamp(3)
+  NULL::timestamp(3),
+  collections.name::text
 FROM item_files
-JOIN items ON item_files.item_id = items.item_id;
+JOIN items ON item_files.item_id = items.item_id
+JOIN collections ON items.collection_id = collections.collection_id;

@@ -48,6 +48,9 @@
             </c:otherwise>
           </c:choose>
           <span class="badge"><c:out value="${searchResult.getTypeLabel()}"/></span>
+          <c:if test="${!empty searchResult.category}">
+            <span class="badge"><c:out value="${searchResult.category}"/></span>
+          </c:if>
         </h5>
       </c:when>
       <c:otherwise>

@@ -292,6 +292,13 @@
                 heading.appendChild(document.createTextNode(' '));
                 heading.appendChild(typeTag);
               }
+              if (page.category) {
+                const categoryP = document.createElement('span');
+                categoryP.className = 'badge secondary search-result-category';
+                categoryP.textContent = page.category;
+                heading.appendChild(document.createTextNode(' '));
+                heading.appendChild(categoryP);
+              }
               item.appendChild(heading);
 
               if (page.description && page.description !== page.content) {

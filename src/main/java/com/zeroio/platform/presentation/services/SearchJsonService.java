@@ -114,6 +114,9 @@ public class SearchJsonService extends GenericJsonService {
           json.append(",\"actionLink\":\"").append(JsonCommand.toJson(result.getActionLink())).append("\"");
           json.append(",\"actionLabel\":\"").append(JsonCommand.toJson(result.getActionLabel())).append("\"");
         }
+        if (result.getCategory() != null) {
+          json.append(",\"category\":\"").append(JsonCommand.toJson(result.getCategory())).append("\"");
+        }
         if (result.getTags() != null && result.getTags().length > 0) {
           json.append(",\"tags\":[");
           for (int t = 0; t < result.getTags().length; t++) {
