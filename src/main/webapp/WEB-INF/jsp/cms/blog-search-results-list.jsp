@@ -36,10 +36,16 @@
   <div class="platform-content-search-result margin-top-10">
     <c:choose>
       <c:when test="${!empty searchResult.pageTitle}">
-        <h5><a href="${ctx}${searchResult.link}"><c:out value="${searchResult.pageTitle}"/></a></h5>
+        <h5>
+          <a href="${ctx}${searchResult.link}"><c:out value="${searchResult.pageTitle}"/></a>
+          <span class="badge"><c:out value="${searchResult.getTypeLabel()}"/></span>
+        </h5>
       </c:when>
       <c:otherwise>
-        <h5><a href="${ctx}${searchResult.link}"><c:out value="${searchResult.link}"/></a></h5>
+        <h5>
+          <a href="${ctx}${searchResult.link}"><c:out value="${searchResult.link}"/></a>
+          <span class="badge"><c:out value="${searchResult.getTypeLabel()}"/></span>
+        </h5>
       </c:otherwise>
     </c:choose>
     <c:if test="${!empty searchResult.pageDescription}">

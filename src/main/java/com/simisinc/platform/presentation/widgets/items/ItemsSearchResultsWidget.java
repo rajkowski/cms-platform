@@ -142,6 +142,7 @@ public class ItemsSearchResultsWidget extends GenericWidget {
       // Add the search result
       SearchResult searchResult = new SearchResult();
       searchResult.setPageTitle(item.getName());
+      searchResult.setType(SearchCriteria.RESOURCES);
       if (useItemLink && StringUtils.isNotBlank(item.getUrl())
           && (item.getUrl().startsWith("http://") || item.getUrl().startsWith("https://"))) {
         searchResult.setLink(item.getUrl());

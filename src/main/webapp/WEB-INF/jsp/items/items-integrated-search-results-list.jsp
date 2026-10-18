@@ -49,10 +49,10 @@
       </c:choose>
       <c:if test="${!empty item.city}"><small class="subheader"><c:out value="${item.city}" /></small></c:if>
       <c:if test="${item.collectionId gt 0 && item.collectionId ne collection.id}">
-        <span class="label" style="${collection:headerColorCSS(item.collectionId)}"><c:out value="${collection:name(item.collectionId)}" /></span>
+        <span class="badge" style="${collection:headerColorCSS(item.collectionId)}"><c:out value="${collection:name(item.collectionId)}" /></span>
       </c:if>
       <c:if test="${item.categoryId gt 0}">
-        <span class="label" style="${category:headerColorCSS(item.categoryId)}"><c:out value="${category:name(item.categoryId)}" /></span>
+        <span class="badge" style="${category:headerColorCSS(item.categoryId)}"><c:out value="${category:name(item.categoryId)}" /></span>
       </c:if>
     </h5>
     <c:choose>

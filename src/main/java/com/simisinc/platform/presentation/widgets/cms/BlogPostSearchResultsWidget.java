@@ -114,6 +114,7 @@ public class BlogPostSearchResultsWidget extends GenericWidget {
       // Add the search result
       SearchResult searchResult = new SearchResult();
       searchResult.setPageTitle(blogPost.getTitle());
+      searchResult.setType(SearchCriteria.POSTS);
       if (StringUtils.isNotBlank(blogPost.getSummary())) {
         searchResult.setPageDescription(blogPost.getSummary());
       }

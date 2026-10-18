@@ -152,6 +152,7 @@ public class FileSearchResultsWidget extends GenericWidget {
         SearchResult searchResult = new SearchResult();
         searchResult.setPageTitle(StringUtils.defaultIfBlank(fileItem.getTitle(), fileItem.getFilename()));
         searchResult.setPageDescription(fileItem.getSummary());
+        searchResult.setType(SearchCriteria.ATTACHMENTS);
         boolean isDiagram = "drawio".equalsIgnoreCase(fileItem.getExtension())
             || "diagram".equalsIgnoreCase(fileItem.getFileType());
         boolean isViewable = isDiagram || isInlineViewable(fileItem);

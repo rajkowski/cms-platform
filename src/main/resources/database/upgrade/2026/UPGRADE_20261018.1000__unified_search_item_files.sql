@@ -95,7 +95,7 @@ SELECT
   'resources'::text,
   items.item_id,
   items.name::text,
-  items.summary::text,
+  items.summary_text::text,
   ('/show/' || items.unique_id)::text,
   items.tags,
   items.modified,
