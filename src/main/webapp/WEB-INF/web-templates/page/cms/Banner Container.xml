@@ -1,0 +1,123 @@
+<?xml version="1.0" ?>
+<!--
+  ~ Copyright 2026 Matt Rajkowski
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<template name="Banner Container" image="Banner Container.png">
+  <style><![CDATA[
+.welcome-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  gap: 1rem;
+}
+
+.welcome-card h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+.welcome-card p {
+  margin: 0 0 1.5rem 0;
+  opacity: 0.9;
+  line-height: 1.6;
+}
+
+.stat-item {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  padding: 1rem;
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+  min-width: 140px;
+}
+  ]]></style>
+  <page>
+    <!-- Banner -->
+    <section class="margin-bottom-50 welcome-card">
+      <column class="small-12 cell">
+        <widget name="content">
+          <uniqueId>${webPageName}-banner-title</uniqueId>
+          <html><![CDATA[<h3>Welcome to Website Editing &amp; Management</h3>]]></html>
+        </widget>
+        <widget name="content">
+          <uniqueId>${webPageName}-banner-content</uniqueId>
+          <html><![CDATA[<p>Your comprehensive toolkit for creating and managing web pages. Use the integrated Visual Page Editor to build professional websites with drag-and-drop simplicity.</p>]]></html>
+        </widget>
+      </column>
+      <!-- Statistics -->
+      <column class="small-6 medium-4 callout stat-item">
+        <widget name="statisticCard">
+          <label>Active Pages</label>
+          <value>25</value>
+          <icon>fa-chart-line</icon>
+          <link></link>
+          <iconColor>#60d6d2</iconColor>
+          <view>default</view>
+        </widget>
+      </column>
+      <column class="small-6 medium-4 callout stat-item">
+        <widget name="statisticCard">
+          <label>Media Files</label>
+          <value>85</value>
+          <icon>fa-chart-bar</icon>
+          <link></link>
+          <iconColor>#ff9900</iconColor>
+          <view>default</view>
+        </widget>
+      </column>
+      <column class="small-6 medium-4 callout stat-item">
+        <widget name="statisticCard">
+          <label>Templates</label>
+          <value>30</value>
+          <icon>fa-paint-brush</icon>
+          <link></link>
+          <iconColor>#ffd966</iconColor>
+          <view>default</view>
+        </widget>
+      </column>
+      <!-- Search Form -->
+      <!--
+      <column class="small-12 medium-8 medium-offset-2 cell">
+        <widget name="searchForm">
+          <placeholder>Search pages, media, templates...</placeholder>
+        </widget>
+      </column>
+      -->
+    </section>
+    <!-- Content Sections -->
+    <section class="margin-bottom-50">
+      <column class="small-12 medium-6 cell">
+        <widget name="content">
+          <uniqueId>${webPageName}-benefits-1</uniqueId>
+        </widget>
+      </column>
+      <column class="small-12 medium-6 cell">
+        <widget name="content">
+          <uniqueId>${webPageName}-benefits-2</uniqueId>
+        </widget>
+      </column>
+    </section>
+    <section class="margin-bottom-50">
+      <column class="small-12 text-center cell">
+        <widget name="content">
+          <uniqueId>${webPageName}-features</uniqueId>
+        </widget>
+      </column>
+    </section>
+  </page>
+</template>
