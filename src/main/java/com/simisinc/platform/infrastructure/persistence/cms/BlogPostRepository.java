@@ -98,7 +98,7 @@ public class BlogPostRepository {
       select.SELECT(
           "ts_headline('english', body_text, websearch_to_tsquery('content_stem', ?), 'StartSel=${b}, StopSel=${/b}, MaxWords=30, MinWords=15, ShortWord=3, HighlightAll=FALSE, MaxFragments=2, FragmentDelimiter=\" ... \"') AS highlight",
           (Object[]) new Object[] { searchTerm });
-        select.SELECT("ts_rank_cd(tsv, websearch_to_tsquery('content_stem', ?)) AS rank", (Object[]) new Object[] { searchTerm });
+      select.SELECT("ts_rank_cd(tsv, websearch_to_tsquery('content_stem', ?)) AS rank", (Object[]) new Object[] { searchTerm });
       select.ORDER_BY("rank DESC, post_id desc");
     }
     if (constraints != null) {
@@ -141,7 +141,9 @@ public class BlogPostRepository {
   }
 
   public static long findCount(BlogPostSpecification specification) {
-    Select select = DB.SELECT().COUNT("*");
+    Select select = DB.SELECT()
+        .COUNT("*")
+        .FROM(TABLE_NAME);
     appendWhereClause(select, specification);
     return select.returnCount();
   }
@@ -220,7 +222,9 @@ public class BlogPostRepository {
   }
 
   public static void removeAll(Connection connection, Blog blog) throws SQLException {
-    DB.DELETE().FROM(TABLE_NAME).WHERE("blog_id = ?", blog.getId()).execute(connection);
+    DB.DELETE()
+        .FROM(TABLE_NAME)
+        .WHERE("blog_id = ?", blog.getId()).execute(connection);
   }
 
   private static BlogPost buildRecord(ResultSet rs) {
