@@ -90,7 +90,6 @@ public class ConnectionPool {
   private static HikariDataSource initDistributedMessagingCP(Properties properties) {
     HikariConfig config = new HikariConfig(mergePropertiesFromPrefix(properties, "distributedMessaging"));
     config.setMaxLifetime(600_000);
-    config.setLeakDetectionThreshold(60000);
     config.setInitializationFailTimeout(-1);
     config.setPoolName("Distributed-Messaging-Pool");
     return new HikariDataSource(config);
