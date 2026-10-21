@@ -150,7 +150,7 @@ public class ItemsSearchResultsWidget extends GenericWidget {
         searchResult.setLink(context.getContextPath() + "/show/" + item.getUniqueId());
       }
       if (StringUtils.isNotBlank(item.getSummary())) {
-        searchResult.setPageDescription(item.getSummary());
+        searchResult.setPageDescription(HtmlCommand.text(item.getSummary()));
       }
       searchResult.setTags(item.getTags());
       // Include an excerpt
