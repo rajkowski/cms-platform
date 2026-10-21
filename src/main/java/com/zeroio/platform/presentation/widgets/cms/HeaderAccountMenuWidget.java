@@ -16,6 +16,7 @@
 package com.zeroio.platform.presentation.widgets.cms;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -152,8 +153,15 @@ public class HeaderAccountMenuWidget extends GenericWidget {
     return context;
   }
 
+  // Convert a comma-separated string into an array of trimmed values
   private static String[] values(String value) {
-    return StringUtils.isBlank(value) ? new String[0] : value.trim().split("\\s*,\\s*");
+    if (StringUtils.isBlank(value)) {
+      return new String[0];
+    }
+    return Arrays.stream(value.split(","))
+        .map(String::trim)
+        .filter(StringUtils::isNotBlank)
+        .toArray(String[]::new);
   }
 
   private static String destination(WidgetContext context, String action, String override) {
