@@ -31,6 +31,7 @@ import java.time.LocalDate;
  * @author matt rajkowski
  * @created 3/7/20 4:29 PM
  */
+@SuppressWarnings("java:S101")
 public class V20220331_1002__update_web_snapshots extends BaseJavaMigration {
 
   private static Log LOG = LogFactory.getLog(BaseJavaMigration.class);

@@ -30,6 +30,7 @@ import org.flywaydb.core.api.migration.Context;
  * @author matt rajkowski
  * @created 1/22/19 12:12 PM
  */
+@SuppressWarnings("java:S101")
 public class V71110__set_filepath extends BaseJavaMigration {
 
   @Override

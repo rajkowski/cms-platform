@@ -34,6 +34,7 @@ import com.simisinc.platform.domain.model.items.Item;
  * @author matt rajkowski
  * @created 9/14/2026 7:25 AM
  */
+@SuppressWarnings("java:S101")
 public class V20260914_1001__item_summary_text extends BaseJavaMigration {
 
   @Override

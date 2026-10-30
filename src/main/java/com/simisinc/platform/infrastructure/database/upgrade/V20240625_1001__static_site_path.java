@@ -31,6 +31,7 @@ import com.simisinc.platform.application.filesystem.FileSystemCommand;
  * @author matt rajkowski
  * @created 6/25/2024 7:25 AM
  */
+@SuppressWarnings("java:S101")
 public class V20240625_1001__static_site_path extends BaseJavaMigration {
 
   private static final String CMS_PATH = "CMS_PATH";

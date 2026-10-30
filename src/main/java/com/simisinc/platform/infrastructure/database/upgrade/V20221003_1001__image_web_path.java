@@ -32,6 +32,7 @@ import com.simisinc.platform.infrastructure.persistence.ecommerce.ProductReposit
  * @author matt rajkowski
  * @created 10/7/22 7:50 AM
  */
+@SuppressWarnings("java:S101")
 public class V20221003_1001__image_web_path extends BaseJavaMigration {
 
   @Override

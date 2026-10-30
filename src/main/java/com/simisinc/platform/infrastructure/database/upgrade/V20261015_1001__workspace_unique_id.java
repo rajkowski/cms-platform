@@ -35,6 +35,7 @@ import com.zeroio.platform.domain.model.tenant.Workspace;
  * @author matt rajkowski
  * @created 10/15/26 8:00 AM
  */
+@SuppressWarnings("java:S101")
 public class V20261015_1001__workspace_unique_id extends BaseJavaMigration {
 
   @Override

@@ -29,6 +29,7 @@ import java.sql.PreparedStatement;
  * @author matt rajkowski
  * @created 4/21/22 5:12 PM
  */
+@SuppressWarnings("java:S101")
 public class V71130__set_properties extends BaseJavaMigration {
 
   @Override

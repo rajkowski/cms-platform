@@ -34,6 +34,7 @@ import java.util.List;
  * @author matt rajkowski
  * @created 4/9/22 8:45 AM
  */
+@SuppressWarnings("java:S101")
 public class V20220409_1001__group_unique_id extends BaseJavaMigration {
 
   @Override

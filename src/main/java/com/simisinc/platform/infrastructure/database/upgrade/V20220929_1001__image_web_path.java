@@ -31,6 +31,7 @@ import com.simisinc.platform.infrastructure.persistence.SitePropertyRepository;
  * @author matt rajkowski
  * @created 9/29/22 8:00 PM
  */
+@SuppressWarnings("java:S101")
 public class V20220929_1001__image_web_path extends BaseJavaMigration {
 
   @Override

@@ -32,6 +32,7 @@ import com.simisinc.platform.infrastructure.persistence.cms.ContentRepository;
  * @author matt rajkowski
  * @created 11/19/22 8:38 AM
  */
+@SuppressWarnings("java:S101")
 public class V20221118_1002__file_web_path extends BaseJavaMigration {
 
   @Override
