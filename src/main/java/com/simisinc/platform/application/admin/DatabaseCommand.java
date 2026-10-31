@@ -31,7 +31,12 @@ import com.github.rajkowski.database.DB;
 import com.simisinc.platform.domain.model.DatabaseVersion;
 import com.simisinc.platform.infrastructure.database.ConnectionPool;
 import com.simisinc.platform.infrastructure.persistence.DatabaseVersionRepository;
+import com.zaxxer.hikari.HikariDataSource;
 import com.zeroio.platform.ApplicationInfo;
+import com.zeroio.platform.domain.model.tenant.TenantDataSourceDatabase;
+import com.zeroio.platform.infrastructure.database.TenantDataSourceConfiguration;
+import com.zeroio.platform.infrastructure.database.TenantDataSourceConfigurationStore;
+import com.zeroio.platform.infrastructure.database.TenantDataSourceRegistrar;
 
 /**
  * Installs and upgrades the database
@@ -59,12 +64,17 @@ public class DatabaseCommand {
     // R (Repeatable every upgrade)
     // Java-based: public class V1_2__Another_user implements JdbcMigration
 
+    // Show the JDBC url or database name
+    LOG.info("Initializing database with data source: " + dataSource.toString());
+
     if (!isInstalled(dataSource)) {
       LOG.info("New system detected, installing the database... " + ApplicationInfo.VERSION);
-      boolean installResult = installDatabase(dataSource);
-      if (!installResult) {
+      boolean[] installResult = { false };
+      DB.withDataSource(dataSource, () -> installResult[0] = installDatabase(dataSource));
+      if (!installResult[0]) {
         return false;
       }
+
       // An entry is required
       DatabaseVersion databaseVersion = new DatabaseVersion("Initial Setup", ApplicationInfo.VERSION);
       DB.withDataSource(dataSource, () -> DatabaseVersionRepository.save(databaseVersion));
@@ -118,9 +128,9 @@ public class DatabaseCommand {
   }
 
   /**
-  * Installs or upgrades every configured workspace database.
+   * Installs or upgrades every configured workspace database.
    *
-  * @return {@code true} when every workspace database initialized successfully
+   * @return {@code true} when every workspace database initialized successfully
    */
   public static boolean checkWorkspaceDatabases() {
     boolean successful = true;
@@ -131,6 +141,22 @@ public class DatabaseCommand {
       }
     }
     return successful;
+  }
+
+  /**
+   * Installs or upgrades the specified workspace database.
+   * 
+   * @param database
+   * @return
+   */
+  public static synchronized boolean checkPoolDatabase(TenantDataSourceDatabase database) {
+    if (database == null) {
+      return false;
+    }
+    // Create a data source from the tenant database
+    TenantDataSourceConfiguration configuration = TenantDataSourceConfigurationStore.findByDatabaseId(database.getId());
+    HikariDataSource dataSource = TenantDataSourceRegistrar.createDataSource(configuration);
+    return initialize(dataSource);
   }
 
   private static boolean upgrade(DataSource dataSource) {
