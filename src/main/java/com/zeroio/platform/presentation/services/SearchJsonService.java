@@ -25,6 +25,7 @@ import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.application.UserCommand;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.application.cms.FormatDateCommand;
+import com.simisinc.platform.application.items.CollectionCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.SearchResult;
 import com.simisinc.platform.infrastructure.persistence.cms.UnifiedSearchRepository;
@@ -116,6 +117,7 @@ public class SearchJsonService extends GenericJsonService {
         }
         if (result.getCategory() != null) {
           json.append(",\"category\":\"").append(JsonCommand.toJson(result.getCategory())).append("\"");
+          json.append(",\"headerColorCSS\":\"").append(JsonCommand.toJson(CollectionCommand.headerColorCSS(result.getRelatedCategoryId()))).append("\"");
         }
         if (result.getTags() != null && result.getTags().length > 0) {
           json.append(",\"tags\":[");

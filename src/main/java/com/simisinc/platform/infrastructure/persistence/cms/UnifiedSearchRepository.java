@@ -59,7 +59,7 @@ public class UnifiedSearchRepository {
     }
     String term = StringUtils.trimToNull(specification.getSearchTerm());
 
-    Select select = DB.SELECT("result_type", "result_id", "title", "description", "link", "category", "tags", "modified",
+    Select select = DB.SELECT("result_type", "result_id", "title", "description", "link", "related_category_id", "category", "tags", "modified",
         "modified_by", "file_name", "file_type", "mime_type", "extension");
     if (term == null) {
       select.SELECT("CAST(NULL AS TEXT) AS highlight");
@@ -199,6 +199,7 @@ public class UnifiedSearchRepository {
       record.setPageTitle(rs.getString("title"));
       record.setPageDescription(StringUtils.trimToNull(rs.getString("description")));
       record.setHighlight(StringUtils.trimToNull(rs.getString("highlight")));
+      record.setRelatedCategoryId(rs.getLong("related_category_id"));
       record.setCategory(StringUtils.trimToNull(rs.getString("category")));
       record.setTags(JsonCommand.fromJsonArray(rs.getString("tags")));
       record.setModified(rs.getTimestamp("modified"));

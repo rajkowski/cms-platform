@@ -9,6 +9,7 @@ SELECT
   web_pages.page_description::text AS description,
   web_pages.link::text AS link,
   web_pages.tags AS tags,
+  web_pages.created AS created,
   web_pages.modified AS modified,
   web_pages.modified_by AS modified_by,
   NULL::text AS file_name,
@@ -22,7 +23,10 @@ SELECT
   NULL::bigint AS folder_id,
   NULL::bigint AS collection_id,
   NULL::timestamp(3) AS start_date,
-  NULL::text AS category
+  NULL::bigint AS related_category_id,
+  NULL::text AS category,
+  NULL::jsonb AS custom_field_values,
+  web_pages.page_text AS text_content
 FROM web_pages
 UNION ALL
 SELECT
@@ -32,6 +36,7 @@ SELECT
   blog_posts.summary::text,
   ('/' || blogs.blog_unique_id || '/' || blog_posts.post_unique_id)::text,
   NULL::jsonb,
+  blog_posts.created,
   blog_posts.modified,
   blog_posts.modified_by,
   NULL::text,
@@ -45,7 +50,10 @@ SELECT
   NULL::bigint,
   NULL::bigint,
   NULL::timestamp(3),
-  blogs.name::text
+  blogs.blog_id::bigint,
+  blogs.name::text,
+  NULL::jsonb,
+  blog_posts.body_text
 FROM blog_posts
 JOIN blogs ON blog_posts.blog_id = blogs.blog_id
 UNION ALL
@@ -56,6 +64,7 @@ SELECT
   calendar_events.summary::text,
   ('/calendar-event/' || calendar_events.event_unique_id)::text,
   NULL::jsonb,
+  calendar_events.created,
   calendar_events.modified,
   calendar_events.modified_by,
   NULL::text,
@@ -69,7 +78,10 @@ SELECT
   NULL::bigint,
   NULL::bigint,
   calendar_events.start_date,
-  calendars.name::text
+  calendars.calendar_id::bigint,
+  calendars.name::text,
+  NULL::jsonb,
+  calendars.description::text
 FROM calendar_events
 JOIN calendars ON calendar_events.calendar_id = calendars.calendar_id
 UNION ALL
@@ -80,6 +92,7 @@ SELECT
   files.summary::text,
   (files.web_path || '-' || files.file_id)::text,
   files.tags,
+  files.created,
   files.modified,
   files.modified_by,
   files.filename::text,
@@ -93,7 +106,10 @@ SELECT
   files.folder_id,
   NULL::bigint,
   NULL::timestamp(3),
-  NULL::text
+  NULL::bigint,
+  NULL::text,
+  NULL::jsonb,
+  files.document_text
 FROM files
 UNION ALL
 SELECT
@@ -103,6 +119,7 @@ SELECT
   items.summary_text::text,
   ('/show/' || items.unique_id)::text,
   items.tags,
+  items.created,
   items.modified,
   items.modified_by,
   NULL::text,
@@ -116,7 +133,10 @@ SELECT
   NULL::bigint,
   items.collection_id,
   NULL::timestamp(3),
-  collections.name::text
+  collections.collection_id::bigint,
+  collections.name::text,
+  items.field_values::jsonb,
+  items.description_text::text
 FROM items
 JOIN collections ON items.collection_id = collections.collection_id
 UNION ALL
@@ -127,6 +147,7 @@ SELECT
   item_files.summary::text,
   ('/show/' || items.unique_id || '/assets/' || item_files.web_path || '-' || item_files.file_id)::text,
   item_files.tags,
+  item_files.created,
   item_files.modified,
   item_files.modified_by,
   item_files.filename::text,
@@ -140,7 +161,10 @@ SELECT
   item_files.folder_id,
   items.collection_id,
   NULL::timestamp(3),
-  collections.name::text
+  collections.collection_id::bigint,
+  collections.name::text,
+  NULL::jsonb,
+  item_files.document_text
 FROM item_files
 JOIN items ON item_files.item_id = items.item_id
 JOIN collections ON items.collection_id = collections.collection_id;

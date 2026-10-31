@@ -257,6 +257,12 @@
             isJson = false;
           }
 
+          if (!isJson) {
+            message('Error parsing search results');
+            renderedQuery = '';
+            return;
+          }
+
           const fragment = document.createDocumentFragment();
 
           if (isJson) {
@@ -295,6 +301,9 @@
               if (page.category) {
                 const categoryP = document.createElement('span');
                 categoryP.className = 'badge secondary search-result-category';
+                if (page.headerColorCSS) {
+                  categoryP.style.cssText = page.headerColorCSS;
+                }
                 categoryP.textContent = page.category;
                 heading.appendChild(document.createTextNode(' '));
                 heading.appendChild(categoryP);

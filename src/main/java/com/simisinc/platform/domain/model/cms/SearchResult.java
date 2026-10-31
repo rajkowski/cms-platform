@@ -36,6 +36,7 @@ public class SearchResult extends Entity {
   private String pageTitle = null;
   private String pageDescription = null;
   private String htmlExcerpt = null;
+  private long relatedCategoryId = -1L;
   private String category = null;
   private String[] tags = null;
   private boolean titleLinkEnabled = true;
@@ -105,6 +106,14 @@ public class SearchResult extends Entity {
     this.tags = tags;
   }
 
+  public long getRelatedCategoryId() {
+    return relatedCategoryId;
+  }
+
+  public void setRelatedCategoryId(long relatedCategoryId) {
+    this.relatedCategoryId = relatedCategoryId;
+  }
+
   public String getCategory() {
     return category;
   }
@@ -167,6 +176,13 @@ public class SearchResult extends Entity {
     if (SearchCriteria.RESOURCES.equals(type)) {
       return "Resource";
     }
-    return "Web page";
+    if (SearchCriteria.RESOURCE_FILES.equals(type)) {
+      return "Attachment";
+    }
+    if (SearchCriteria.PAGES.equals(type)) {
+      return "Web page";
+    }
+    return null;
   }
+
 }

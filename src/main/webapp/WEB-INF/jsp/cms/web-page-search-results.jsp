@@ -23,6 +23,7 @@
 <%@ taglib prefix="date" uri="/WEB-INF/tlds/date-functions.tld" %>
 <%@ taglib prefix="number" uri="/WEB-INF/tlds/number-functions.tld" %>
 <%@ taglib prefix="user" uri="/WEB-INF/tlds/user-functions.tld" %>
+<%@ taglib prefix="collection" uri="/WEB-INF/tlds/collection-functions.tld" %>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <jsp:useBean id="sitePropertyMap" class="java.util.HashMap" scope="request"/>
 <jsp:useBean id="recordPaging" class="com.github.rajkowski.database.DataConstraints" scope="request"/>
@@ -47,9 +48,18 @@
               <c:out value="${searchResult.pageTitle}"/>
             </c:otherwise>
           </c:choose>
-          <span class="badge"><c:out value="${searchResult.getTypeLabel()}"/></span>
+          <c:if test="${!empty searchResult.getTypeLabel()}">
+            <span class="badge"><c:out value="${searchResult.getTypeLabel()}"/></span>
+          </c:if>
           <c:if test="${!empty searchResult.category}">
-            <span class="badge"><c:out value="${searchResult.category}"/></span>
+            <c:choose>
+              <c:when test="${(searchResult.getType() eq 'resources' || searchResult.getType() eq 'resourceFiles') && searchResult.relatedCategoryId gt 0}">                
+                <span class="badge" style="${collection:headerColorCSS(searchResult.relatedCategoryId)}"><c:out value="${collection:name(searchResult.relatedCategoryId)}"/></span>
+              </c:when>
+              <c:otherwise>
+                <span class="badge"><c:out value="${searchResult.category}"/></span>
+              </c:otherwise>
+            </c:choose>
           </c:if>
         </h5>
       </c:when>
