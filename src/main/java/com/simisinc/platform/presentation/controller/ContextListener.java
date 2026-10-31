@@ -63,7 +63,7 @@ import com.zeroio.platform.infrastructure.permission.PermissionLoader;
 import com.zeroio.platform.infrastructure.persistence.tenant.WorkspaceRepository;
 
 /**
- * Description
+ * Context listener for initializing the web application context and resources
  *
  * @author matt rajkowski
  * @created 4/8/18 4:52 PM
