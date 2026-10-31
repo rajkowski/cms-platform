@@ -24,11 +24,11 @@ import org.apache.commons.logging.LogFactory;
 
 import com.github.rajkowski.database.DB;
 import com.github.rajkowski.database.TenantRegistry;
-import com.zeroio.platform.infrastructure.database.SitePropertyTenantDataSourceConfigurationStore;
-import com.zeroio.platform.infrastructure.database.TenantDataSourceConfiguration;
-import com.zeroio.platform.infrastructure.database.TenantDataSourceRegistrar;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import com.zeroio.platform.infrastructure.database.TenantDataSourceConfiguration;
+import com.zeroio.platform.infrastructure.database.TenantDataSourceConfigurationStore;
+import com.zeroio.platform.infrastructure.database.TenantDataSourceRegistrar;
 
 /**
  * Manages the PostgreSQL database connections and generates the SQL statements
@@ -54,8 +54,8 @@ public class ConnectionPool {
     DB.setDataSource(applicationDS);
     DB.setTenantRegistry(TENANT_REGISTRY);
     TENANT_REGISTRY.setMaximumConnections(getTenantConnectionBudget(properties));
-    tenantDataSourceRegistrar = new TenantDataSourceRegistrar(new SitePropertyTenantDataSourceConfigurationStore(),
-      getTenantConnectionBudget(properties));
+    tenantDataSourceRegistrar = new TenantDataSourceRegistrar(new TenantDataSourceConfigurationStore(),
+        getTenantConnectionBudget(properties));
     LOG.info("Max pool size (applicationDS): " + applicationDS.getMaximumPoolSize());
     backgroundJobsDS = initBackgroundJobsCP(properties);
     LOG.info("Max pool size (backgroundJobsDS): " + backgroundJobsDS.getMaximumPoolSize());
@@ -86,7 +86,10 @@ public class ConnectionPool {
     return new HikariDataSource(config);
   }
 
-  /** Configure the application's connection pool for distributed messaging connections */
+  /**
+   * Configure the application's connection pool for distributed messaging
+   * connections
+   */
   private static HikariDataSource initDistributedMessagingCP(Properties properties) {
     HikariConfig config = new HikariConfig(mergePropertiesFromPrefix(properties, "distributedMessaging"));
     config.setMaxLifetime(600_000);
@@ -131,7 +134,10 @@ public class ConnectionPool {
     }
   }
 
-  /* Each pool is configured with the base dataSource properties and name specific properties */
+  /*
+   * Each pool is configured with the base dataSource properties and name specific
+   * properties
+   */
   private static Properties mergePropertiesFromPrefix(Properties properties, String prefix) {
     Properties filteredProperties = new Properties();
     for (String name : properties.stringPropertyNames()) {
@@ -176,17 +182,24 @@ public class ConnectionPool {
   }
 
   public static void registerConfiguredTenantDataSources() {
+    reloadTenantDataSourceRegistry();
+  }
+
+  public static void registerConfiguredTenantDataSource(TenantDataSourceConfiguration configuration) {
+    if (tenantDataSourceRegistrar == null) {
+      throw new IllegalStateException("ConnectionPool has not been initialized");
+    }
+    if (configuration == null) {
+      throw new IllegalArgumentException("TenantDataSourceConfiguration cannot be null");
+    }
+    tenantDataSourceRegistrar.register(configuration);
+  }
+
+  private static void reloadTenantDataSourceRegistry() {
     if (tenantDataSourceRegistrar == null) {
       throw new IllegalStateException("ConnectionPool has not been initialized");
     }
     tenantDataSourceRegistrar.registerAllAtStartup();
-  }
-
-  public static void saveAndRegisterTenantDataSource(TenantDataSourceConfiguration configuration) {
-    if (tenantDataSourceRegistrar == null) {
-      throw new IllegalStateException("ConnectionPool has not been initialized");
-    }
-    tenantDataSourceRegistrar.saveAndRegister(configuration);
   }
 
   public static void retireIdleTenantDataSources() {

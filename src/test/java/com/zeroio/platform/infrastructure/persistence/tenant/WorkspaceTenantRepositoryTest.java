@@ -19,13 +19,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.sql.Connection;
 import java.sql.Statement;
+
 import javax.sql.DataSource;
+
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import com.github.rajkowski.database.DB;
 import com.github.rajkowski.database.TenantRegistry;
 import com.zeroio.platform.application.cms.WorkspaceResolutionCommand;
@@ -47,12 +52,16 @@ class WorkspaceTenantRepositoryTest {
     DB.setTenantRegistry(new TenantRegistry());
     try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
       statement.execute(
-          "CREATE TABLE workspaces (workspace_id BIGINT PRIMARY KEY, workspace_unique_id VARCHAR(255) UNIQUE NOT NULL, name VARCHAR(255), site_url VARCHAR(512), canonical_domain VARCHAR(255), file_root VARCHAR(1024), active BOOLEAN, created TIMESTAMP, modified TIMESTAMP)");
+          "CREATE TABLE workspaces (workspace_id BIGINT PRIMARY KEY, workspace_unique_id VARCHAR(255) UNIQUE NOT NULL, name VARCHAR(255), site_url VARCHAR(512), canonical_domain VARCHAR(255), file_root VARCHAR(1024), active BOOLEAN, owner BIGINT, description VARCHAR(255), department VARCHAR(255), show_in_catalog BOOLEAN, created TIMESTAMP, modified TIMESTAMP)");
+      statement.execute("CREATE TABLE users (user_id BIGINT PRIMARY KEY, first_name VARCHAR(255), last_name VARCHAR(255), email VARCHAR(255))");
       statement.execute(
           "CREATE TABLE workspace_domains (workspace_domain_id BIGINT PRIMARY KEY, workspace_id BIGINT, host_pattern VARCHAR(255), wildcard BOOLEAN, active BOOLEAN)");
       statement.execute("CREATE TABLE workspace_access_grants (workspace_id BIGINT, user_id BIGINT, active BOOLEAN)");
+      statement.execute("CREATE TABLE pool_databases (pool_database_id BIGINT PRIMARY KEY)");
+      statement.execute("CREATE TABLE workspace_data_sources (workspace_id BIGINT PRIMARY KEY REFERENCES workspaces(workspace_id), pool_database_id BIGINT REFERENCES pool_databases(pool_database_id))");
+      statement.execute("INSERT INTO pool_databases VALUES (10), (20)");
       statement.execute(
-          "INSERT INTO workspaces (workspace_id, workspace_unique_id, name, site_url, canonical_domain, file_root, active) VALUES (1, '1', 'Exact', 'https://exact.example.com', 'exact.example.com', '/var/cms/exact', TRUE), (2, '2', 'Wildcard', 'https://wild.example.com', 'wild.example.com', '/var/cms/wildcard', TRUE), (3, '3', 'Inactive', 'https://inactive.example.com', 'inactive.example.com', '/var/cms/inactive', FALSE)");
+          "INSERT INTO workspaces (workspace_id, workspace_unique_id, name, site_url, canonical_domain, file_root, active) VALUES (1, 'exact-workspace', 'Exact', 'https://exact.example.com', 'exact.example.com', '/var/cms/exact', TRUE), (2, 'wildcard-workspace', 'Wildcard', 'https://wild.example.com', 'wild.example.com', '/var/cms/wildcard', TRUE), (3, 'inactive-workspace', 'Inactive', 'https://inactive.example.com', 'inactive.example.com', '/var/cms/inactive', FALSE)");
       statement.execute(
           "INSERT INTO workspace_domains VALUES (1, 1, 'exact.example.com', FALSE, TRUE), (2, 2, '*.example.com', TRUE, TRUE), (3, 3, 'inactive.example.com', FALSE, TRUE)");
       statement.execute("INSERT INTO workspace_access_grants VALUES (1, 10, TRUE), (2, 10, TRUE)");
@@ -84,6 +93,29 @@ class WorkspaceTenantRepositoryTest {
     Workspace workspace = WorkspaceRepository.findById(1);
 
     assertEquals("/var/cms/exact", workspace.getFileRoot());
+    assertEquals("exact-workspace", workspace.getUniqueId());
+  }
+
+  @Test
+  void workspaceCanBeFoundByUniqueId() {
+    Workspace workspace = WorkspaceRepository.findByUniqueId("wildcard-workspace");
+
+    assertEquals(2, workspace.getId());
+    assertEquals("wildcard-workspace", workspace.getUniqueId());
+  }
+
+  @Test
+  void workspaceDatasourceMappingCanBeAssignedAndReplaced() {
+    assertEquals(-1, WorkspaceRepository.findById(1).getPoolDatabaseId());
+    assertTrue(WorkspaceRepository.saveDataSourceMapping(1, 10));
+    assertEquals(10, WorkspaceRepository.findById(1).getPoolDatabaseId());
+    assertTrue(WorkspaceRepository.saveDataSourceMapping(1, 20));
+    assertEquals(20, WorkspaceRepository.findByUniqueId("exact-workspace").getPoolDatabaseId());
+    assertEquals(20, WorkspaceRepository.findByCanonicalDomain("exact.example.com").getPoolDatabaseId());
+    assertEquals(20, WorkspaceRepository.findActiveByCanonicalDomain("exact.example.com").getPoolDatabaseId());
+    assertEquals(20, WorkspaceRepository.findAllActive().get(0).getPoolDatabaseId());
+    assertEquals(20, WorkspaceRepository.findActiveWorkspacesByUserId(10).get(0).getPoolDatabaseId());
+    assertEquals(-1, WorkspaceRepository.findById(2).getPoolDatabaseId());
   }
 
   @Test

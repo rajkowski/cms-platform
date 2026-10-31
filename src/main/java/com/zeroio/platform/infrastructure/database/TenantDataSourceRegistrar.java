@@ -16,8 +16,8 @@
 package com.zeroio.platform.infrastructure.database;
 
 import java.util.Map;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -30,7 +30,8 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
 /**
- * Builds and registers live workspace datasource pools from persisted configuration.
+ * Builds and registers live workspace datasource pools from persisted
+ * configuration.
  */
 public class TenantDataSourceRegistrar {
 
@@ -38,7 +39,7 @@ public class TenantDataSourceRegistrar {
   private static final String AZURE_SPN_AUTH_METHOD = "azure-sql-spn";
   private static final String AZURE_AUTHENTICATION_PLUGIN = "com.azure.identity.extensions.jdbc.postgresql.AzurePostgresqlAuthenticationPlugin";
 
-  private final TenantDataSourceConfigurationStore store;
+  private final TenantDataSourceConfigurationStoreInterface store;
   private final Map<Long, HikariDataSource> activeDataSources = new ConcurrentHashMap<>();
   private final ConcurrentLinkedQueue<HikariDataSource> retiredDataSources = new ConcurrentLinkedQueue<>();
   private final int maximumTenantConnections;
@@ -48,11 +49,11 @@ public class TenantDataSourceRegistrar {
     return thread;
   });
 
-  public TenantDataSourceRegistrar(TenantDataSourceConfigurationStore store) {
+  public TenantDataSourceRegistrar(TenantDataSourceConfigurationStoreInterface store) {
     this(store, 8);
   }
 
-  public TenantDataSourceRegistrar(TenantDataSourceConfigurationStore store, int maximumTenantConnections) {
+  public TenantDataSourceRegistrar(TenantDataSourceConfigurationStoreInterface store, int maximumTenantConnections) {
     if (store == null) {
       throw new IllegalArgumentException("TenantDataSourceConfigurationStore cannot be null");
     }
@@ -64,6 +65,13 @@ public class TenantDataSourceRegistrar {
     retirementExecutor.scheduleWithFixedDelay(this::retireIdleDataSources, 100, 100, TimeUnit.MILLISECONDS);
   }
 
+  /**
+   * Registers all tenant data sources at startup.
+   * 
+   * This method retrieves all tenant data source configurations from the store
+   * and registers them. Any configurations that are null or cause errors during
+   * registration are logged and ignored.
+   */
   public void registerAllAtStartup() {
     for (TenantDataSourceConfiguration configuration : store.findAll()) {
       if (configuration == null) {
@@ -79,15 +87,12 @@ public class TenantDataSourceRegistrar {
     retireIdleDataSources();
   }
 
-  public void saveAndRegister(TenantDataSourceConfiguration configuration) {
-    TenantDataSourceConfiguration savedConfiguration = store.save(configuration);
-    if (savedConfiguration == null) {
-      throw new IllegalStateException("Unable to save datasource configuration for workspace " + configuration.getWorkspaceId());
-    }
-    register(savedConfiguration);
-    retireIdleDataSources();
-  }
-
+  /**
+   * Retires idle data sources that have no active connections.
+   * 
+   * This method iterates over the retired data sources and closes any that have
+   * zero active connections.
+   */
   public void retireIdleDataSources() {
     for (HikariDataSource dataSource : retiredDataSources) {
       if (dataSource.getHikariPoolMXBean().getActiveConnections() == 0 && retiredDataSources.remove(dataSource)) {
@@ -96,6 +101,11 @@ public class TenantDataSourceRegistrar {
     }
   }
 
+  /**
+   * Shuts down all active and retired data sources and clears the internal
+   * collections.
+   * Also shuts down the retirement executor.
+   */
   public void shutdown() {
     for (HikariDataSource dataSource : activeDataSources.values()) {
       dataSource.close();
@@ -108,38 +118,95 @@ public class TenantDataSourceRegistrar {
     retirementExecutor.shutdownNow();
   }
 
-  private void register(TenantDataSourceConfiguration configuration) {
-    HikariDataSource replacement = createDataSource(configuration);
+  /**
+   * Register a tenant data source based on the provided configuration.
+   * 
+   * @param configuration
+   */
+  public void register(TenantDataSourceConfiguration configuration) {
+    HikariDataSource replacement = createDataSourceForPool(configuration);
     HikariDataSource previous = activeDataSources.put(configuration.getWorkspaceId(), replacement);
-    ConnectionPool.registerTenantDataSource(String.valueOf(configuration.getWorkspaceId()), replacement, configuration.getPoolGroup());
+    ConnectionPool.registerTenantDataSource(String.valueOf(configuration.getWorkspaceId()), replacement,
+        configuration.getPoolGroup());
     if (configuration.getPoolGroup() != null && !configuration.getPoolGroup().isBlank()) {
-      ConnectionPool.setTenantMaximumConnections(configuration.getPoolGroup(), maximumTenantConnections);
+      ConnectionPool.setTenantMaximumConnections(configuration.getPoolGroup(),
+          configuration.getMaxConnections() > 0 ? configuration.getMaxConnections() : maximumTenantConnections);
     }
     if (previous != null) {
       retiredDataSources.add(previous);
     }
   }
 
-  private HikariDataSource createDataSource(TenantDataSourceConfiguration configuration) {
-    if (configuration == null || configuration.getWorkspaceId() < 1 || configuration.getJdbcUrl() == null
-        || configuration.getJdbcUrl().isBlank() || configuration.getUsername() == null || configuration.getUsername().isBlank()
-        || configuration.getDriverClassName() == null || configuration.getDriverClassName().isBlank()) {
+  /**
+   * Creates a HikariDataSource object for the given tenant data source
+   * configuration.
+   * 
+   * @param configuration the tenant data source configuration
+   * @return a configured HikariDataSource object
+   */
+  private HikariDataSource createDataSourceForPool(TenantDataSourceConfiguration configuration) {
+    if (configuration == null || configuration.getWorkspaceId() < 1) {
+      throw new IllegalArgumentException("Invalid workspace datasource configuration");
+    }
+    HikariConfig hikariConfig = createHikariConfig(configuration);
+    // Pool settings
+    hikariConfig.setMaximumPoolSize(
+        configuration.getMaxConnections() > 0 ? configuration.getMaxConnections() : maximumTenantConnections);
+    hikariConfig.setMinimumIdle(0);
+    hikariConfig.setPoolName("Workspace-" + configuration.getWorkspaceId() + "-Pool");
+    return new HikariDataSource(hikariConfig);
+  }
+
+  /**
+   * Creates a HikariDataSource object based on the provided tenant data source
+   * configuration.
+   * 
+   * @param configuration the tenant data source configuration
+   * @return a configured HikariDataSource object
+   */
+  public static HikariDataSource createDataSource(TenantDataSourceConfiguration configuration) {
+    return new HikariDataSource(createHikariConfig(configuration));
+  }
+
+  /**
+   * Creates a HikariConfig object based on the provided tenant data source
+   * configuration.
+   * 
+   * @param configuration the tenant data source configuration
+   * @return a configured HikariConfig object
+   */
+  private static HikariConfig createHikariConfig(TenantDataSourceConfiguration configuration) {
+    if (configuration == null
+        || (configuration.getDataSourceClassName() == null && configuration.getJdbcUrl() == null)
+        || configuration.getUsername() == null
+        || configuration.getUsername().isBlank()) {
       throw new IllegalArgumentException("Invalid workspace datasource configuration");
     }
     HikariConfig hikariConfig = new HikariConfig();
-    hikariConfig.setJdbcUrl(configuration.getJdbcUrl());
+    // Configure the data source class name or JDBC URL and driver class name based
+    // on the configuration
+    if (configuration.getDataSourceClassName() != null && !configuration.getDataSourceClassName().isBlank()) {
+      hikariConfig.setDataSourceClassName(configuration.getDataSourceClassName());
+      hikariConfig.addDataSourceProperty("serverName", configuration.getServerName());
+      hikariConfig.addDataSourceProperty("portNumber", configuration.getPortNumber());
+      hikariConfig.addDataSourceProperty("databaseName", configuration.getDatabaseName());
+      hikariConfig.addDataSourceProperty("ssl", configuration.isSsl());
+    } else {
+      hikariConfig.setJdbcUrl(configuration.getJdbcUrl());
+      hikariConfig.setDriverClassName(configuration.getDriverClassName());
+    }
     hikariConfig.setUsername(configuration.getUsername());
     hikariConfig.setPassword(configuration.getPassword());
-    hikariConfig.setDriverClassName(configuration.getDriverClassName());
+
     if (AZURE_SPN_AUTH_METHOD.equals(configuration.getAuthMethod())) {
+      hikariConfig.addDataSourceProperty("sslmode", "require");
       hikariConfig.addDataSourceProperty("authenticationPluginClassName", AZURE_AUTHENTICATION_PLUGIN);
       hikariConfig.addDataSourceProperty("azure.tenantId", configuration.getAzureTenantId());
       hikariConfig.addDataSourceProperty("azure.clientId", configuration.getAzureClientId());
       hikariConfig.addDataSourceProperty("azure.clientSecret", configuration.getAzureClientSecret());
     }
-    hikariConfig.setMaximumPoolSize(maximumTenantConnections);
-    hikariConfig.setMinimumIdle(0);
-    hikariConfig.setPoolName("Workspace-" + configuration.getWorkspaceId() + "-Pool");
-    return new HikariDataSource(hikariConfig);
+
+    return hikariConfig;
   }
+
 }

@@ -19,6 +19,17 @@ import java.sql.Timestamp;
 
 import com.simisinc.platform.domain.model.Entity;
 
+/**
+ * Workspace metadata for the tenant-aware CMS model.
+ *
+ * Purpose of this change: store the tenant host, canonical domain, active flag,
+ * and ownership details used when the
+ * app resolves a request to the correct workspace database. The tenant routing
+ * logic depends on this data to ensure a
+ * user is redirected to and authenticated in the correct workspace instead of
+ * silently falling back to the default CMS
+ * site.
+ */
 public class Workspace extends Entity {
 
   private long id = -1;
@@ -28,8 +39,19 @@ public class Workspace extends Entity {
   private String canonicalDomain;
   private String fileRoot;
   private boolean active;
+  private boolean showInCatalog = true;
+  private String description;
+  private String department;
+  private long ownerId = -1;
+  private String ownerName;
+  private String ownerEmail;
   private Timestamp created;
   private Timestamp modified;
+  private long createdBy = -1;
+  private long modifiedBy = -1;
+
+  // helper
+  private long poolDatabaseId = -1;
 
   public long getId() {
     return id;
@@ -87,6 +109,54 @@ public class Workspace extends Entity {
     this.active = active;
   }
 
+  public boolean isShowInCatalog() {
+    return showInCatalog;
+  }
+
+  public void setShowInCatalog(boolean showInCatalog) {
+    this.showInCatalog = showInCatalog;
+  }
+
+  public String getDescription() {
+    return description;
+  }
+
+  public void setDescription(String description) {
+    this.description = description;
+  }
+
+  public String getDepartment() {
+    return department;
+  }
+
+  public void setDepartment(String department) {
+    this.department = department;
+  }
+
+  public long getOwnerId() {
+    return ownerId;
+  }
+
+  public void setOwnerId(long ownerId) {
+    this.ownerId = ownerId;
+  }
+
+  public String getOwnerName() {
+    return ownerName;
+  }
+
+  public void setOwnerName(String ownerName) {
+    this.ownerName = ownerName;
+  }
+
+  public String getOwnerEmail() {
+    return ownerEmail;
+  }
+
+  public void setOwnerEmail(String ownerEmail) {
+    this.ownerEmail = ownerEmail;
+  }
+
   public Timestamp getCreated() {
     return created;
   }
@@ -103,4 +173,27 @@ public class Workspace extends Entity {
     this.modified = modified;
   }
 
+  public long getCreatedBy() {
+    return createdBy;
+  }
+
+  public void setCreatedBy(long createdBy) {
+    this.createdBy = createdBy;
+  }
+
+  public long getModifiedBy() {
+    return modifiedBy;
+  }
+
+  public void setModifiedBy(long modifiedBy) {
+    this.modifiedBy = modifiedBy;
+  }
+
+  public long getPoolDatabaseId() {
+    return poolDatabaseId;
+  }
+
+  public void setPoolDatabaseId(long poolDatabaseId) {
+    this.poolDatabaseId = poolDatabaseId;
+  }
 }

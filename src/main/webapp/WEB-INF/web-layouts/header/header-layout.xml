@@ -35,6 +35,13 @@
             <link name="Contact" link="/contact-us" icon="fa-envelope" />
           </links>
         </widget>
+        <widget name="headerControl" role="guest"><type>appearance</type></widget>
+        <widget name="menu" role="guest">
+          <links>
+            <link name="Login" link="/login" icon="fa-sign-in-alt" class="primary" />
+            <link name="Register" link="/register" icon="fa-user-plus" class="primary" rule="site.registrations" />
+          </links>
+        </widget>
         <widget name="headerAccountMenu">
           <links>
             <link action="pageInfo" section="page" sectionLabel="Page Tools" name="Page Info" icon="fa-info-circle" />
@@ -46,19 +53,13 @@
             <link action="instructions" section="admin" sectionLabel="Admin Tools" name="Instructions" icon="fa-circle-info" />
             <link action="siteAnalytics" section="admin" sectionLabel="Admin Tools" name="Site Analytics" icon="fa-chart-line" />
             <link action="users" section="admin" sectionLabel="Admin Tools" name="Users" icon="fa-users" />
+            <link action="workspaces" section="admin" sectionLabel="Admin Tools" name="Workspaces" icon="fa-cubes" />
             <link action="announcement" section="admin" sectionLabel="Admin Tools" name="Announcement" icon="fa-bullhorn" />
             <link action="siteCss" section="admin" sectionLabel="Admin Tools" name="Site CSS" icon="fa-brands fa-css" />
             <link action="setup" section="admin" sectionLabel="Admin Tools" name="Setup" icon="fa-cog" />
             <link action="appearance" name="Toggle Light/Dark Mode" icon="fa-moon" />
             <link action="account" name="My Account" icon="fa-user-cog" />
             <link action="logout" name="Logout" icon="fa-sign-out-alt" />
-          </links>
-        </widget>
-        <widget name="headerControl" role="guest"><type>appearance</type></widget>
-        <widget name="menu" role="guest">
-          <links>
-            <link name="Login" link="/login" icon="fa-sign-in-alt" class="primary" />
-            <link name="Register" link="/register" icon="fa-user-plus" class="primary" rule="site.registrations" />
           </links>
         </widget>
         <widget name="cartMenu"></widget>

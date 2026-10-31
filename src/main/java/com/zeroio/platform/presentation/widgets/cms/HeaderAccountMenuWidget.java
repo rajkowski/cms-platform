@@ -58,7 +58,8 @@ public class HeaderAccountMenuWidget extends GenericWidget {
       Map.entry("appearance", Set.of()),
       Map.entry("account", Set.of()),
       Map.entry("logout", Set.of()),
-      Map.entry("link", Set.of()));
+      Map.entry("link", Set.of()),
+      Map.entry("workspaces", ADMIN_ROLE));
 
   public static boolean supportsAction(String action) {
     return PERMISSIONS.containsKey(action);

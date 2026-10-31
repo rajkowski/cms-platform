@@ -413,6 +413,35 @@ CREATE TABLE permission_group_members (
 
 CREATE INDEX idx_permission_group_members_group_code ON permission_group_members(group_code);
 
+-- Pool of Data Sources
+
+CREATE TABLE IF NOT EXISTS data_source_pools (
+  pool_id BIGSERIAL PRIMARY KEY,
+  pool_unique_id VARCHAR(255) UNIQUE NOT NULL,  
+  ds_class_name VARCHAR(255),
+  driver_class_name VARCHAR(255),
+  server_name VARCHAR(255) NOT NULL,
+  port_number INT DEFAULT 5432,
+  ssl BOOLEAN NOT NULL DEFAULT FALSE,
+  username VARCHAR(255) NOT NULL,
+  password VARCHAR(2048),
+  auth_method VARCHAR(50),
+  azure_tenant_id VARCHAR(255),
+  azure_client_id VARCHAR(255),
+  azure_client_secret VARCHAR(2048),
+  max_connections INT NOT NULL DEFAULT 8
+);
+
+CREATE TABLE IF NOT EXISTS pool_databases (
+  pool_database_id BIGSERIAL PRIMARY KEY,
+  pool_id BIGINT NOT NULL REFERENCES data_source_pools(pool_id) ON DELETE CASCADE,
+  database_name VARCHAR(255) NOT NULL,
+  active BOOLEAN NOT NULL DEFAULT FALSE,
+  available BOOLEAN NOT NULL DEFAULT TRUE,
+  created TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+  modified TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Workspaces
 
 CREATE TABLE IF NOT EXISTS workspaces (
@@ -447,16 +476,11 @@ CREATE INDEX IF NOT EXISTS workspace_domains_active_idx ON workspace_domains (ho
 
 CREATE TABLE IF NOT EXISTS workspace_data_sources (
   workspace_id BIGINT PRIMARY KEY REFERENCES workspaces(workspace_id) ON DELETE CASCADE,
-  jdbc_url VARCHAR(2048) NOT NULL,
-  username VARCHAR(255) NOT NULL,
-  password VARCHAR(2048),
-  driver_class_name VARCHAR(255) NOT NULL,
-  pool_group VARCHAR(255),
-  auth_method VARCHAR(50),
-  azure_tenant_id VARCHAR(255),
-  azure_client_id VARCHAR(255),
-  azure_client_secret VARCHAR(2048)
+  pool_database_id BIGINT REFERENCES pool_databases(pool_database_id) ON DELETE CASCADE,
+  created TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP
 );
+ALTER TABLE workspace_data_sources
+ADD CONSTRAINT unique_workspace_pool_database UNIQUE (workspace_id, pool_database_id);
 
 CREATE TABLE IF NOT EXISTS workspace_access_grants (
   workspace_id BIGINT NOT NULL REFERENCES workspaces(workspace_id) ON DELETE CASCADE,
@@ -468,6 +492,8 @@ CREATE TABLE IF NOT EXISTS workspace_access_grants (
   groups JSONB,
   PRIMARY KEY (workspace_id, user_id)
 );
+ALTER TABLE workspace_access_grants
+ADD CONSTRAINT unique_workspace_user UNIQUE (workspace_id, user_id);
 
 CREATE INDEX IF NOT EXISTS workspace_access_grants_user_idx ON workspace_access_grants (user_id) WHERE active;
 

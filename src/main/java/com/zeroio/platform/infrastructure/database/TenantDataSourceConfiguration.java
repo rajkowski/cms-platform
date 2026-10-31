@@ -21,15 +21,21 @@ package com.zeroio.platform.infrastructure.database;
 public class TenantDataSourceConfiguration {
 
   private long workspaceId = -1;
-  private String jdbcUrl;
-  private String username;
-  private String password;
-  private String driverClassName;
   private String poolGroup;
+  private String serverName;
+  private int portNumber = 5432;
+  private boolean ssl = false;
   private String authMethod;
   private String azureTenantId;
   private String azureClientId;
   private String azureClientSecret;
+  private String username;
+  private String password;
+  private String dataSourceClassName;
+  private String driverClassName;
+  private String jdbcUrl;
+  private int maxConnections;
+  private String databaseName;
 
   public long getWorkspaceId() {
     return workspaceId;
@@ -63,6 +69,14 @@ public class TenantDataSourceConfiguration {
     this.password = password;
   }
 
+  public String getDataSourceClassName() {
+    return dataSourceClassName;
+  }
+
+  public void setDataSourceClassName(String dataSourceClassName) {
+    this.dataSourceClassName = dataSourceClassName;
+  }
+
   public String getDriverClassName() {
     return driverClassName;
   }
@@ -77,6 +91,30 @@ public class TenantDataSourceConfiguration {
 
   public void setPoolGroup(String poolGroup) {
     this.poolGroup = poolGroup;
+  }
+
+  public String getServerName() {
+    return serverName;
+  }
+
+  public void setServerName(String serverName) {
+    this.serverName = serverName;
+  }
+
+  public int getPortNumber() {
+    return portNumber;
+  }
+
+  public void setPortNumber(int portNumber) {
+    this.portNumber = portNumber;
+  }
+
+  public boolean isSsl() {
+    return ssl;
+  }
+
+  public void setSsl(boolean ssl) {
+    this.ssl = ssl;
   }
 
   public String getAuthMethod() {
@@ -109,5 +147,41 @@ public class TenantDataSourceConfiguration {
 
   public void setAzureClientSecret(String azureClientSecret) {
     this.azureClientSecret = azureClientSecret;
+  }
+
+  public int getMaxConnections() {
+    return maxConnections;
+  }
+
+  public void setMaxConnections(int maxConnections) {
+    this.maxConnections = maxConnections;
+  }
+
+  public String getDatabaseName() {
+    return databaseName;
+  }
+
+  public void setDatabaseName(String databaseName) {
+    this.databaseName = databaseName;
+  }
+
+  public String toString() {
+    return "TenantDataSourceConfiguration{" +
+        "workspaceId=" + workspaceId +
+        ", jdbcUrl='" + jdbcUrl + '\'' +
+        ", username='" + username + '\'' +
+        ", dataSourceClassName='" + dataSourceClassName + '\'' +
+        ", driverClassName='" + driverClassName + '\'' +
+        ", poolGroup='" + poolGroup + '\'' +
+        ", serverName='" + serverName + '\'' +
+        ", portNumber=" + portNumber +
+        ", ssl=" + ssl +
+        ", authMethod='" + authMethod + '\'' +
+        ", azureTenantId='" + azureTenantId + '\'' +
+        ", azureClientId='" + azureClientId + '\'' +
+        ", azureClientSecret='" + azureClientSecret + '\'' +
+        ", maxConnections=" + maxConnections +
+        ", databaseName='" + databaseName + '\'' +
+        '}';
   }
 }

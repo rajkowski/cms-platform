@@ -61,6 +61,9 @@
       <c:if test="${userSession.hasRole('admin') || userSession.hasRole('content-manager')}">
         <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/visual')}"> class="is-active"</c:if>><a href="javascript:void(0)" onclick="loadAdminContent('${ctx}/admin/visual-analytics-dashboard', this)"><i class="${font:far()} fa-edit fa-fw"></i> <span>Dashboard</span></a></li>
       </c:if>
+      <c:if test="${userSession.hasRole('admin')}">
+        <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/workspace')}"> class="is-active"</c:if>><a href="javascript:void(0)" onclick="loadAdminContent('${ctx}/admin/workspaces', this)"><i class="${font:far()} fa-cubes fa-fw"></i> <span>Workspaces</span></a></li>
+      </c:if>
     </ul>
     <%-- Community menu --%>
     <c:if test="${userSession.hasRole('admin') || userSession.hasRole('community-manager')}">

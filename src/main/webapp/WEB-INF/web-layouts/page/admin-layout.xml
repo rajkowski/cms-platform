@@ -597,6 +597,24 @@
     </section>
   </page>
 
+  <page name="/admin/workspaces" role="admin" title="Workspaces">
+    <section>
+      <column class="small-12 cell">
+        <widget name="workspacesList">
+          <title>Workspaces</title>
+        </widget>
+      </column>
+    </section>
+  </page>
+
+  <!-- <page name="/admin/workspace-details{?workspaceId}" role="admin" title="Workspace Details">
+    <section>
+      <column class="small-12 cell">
+        <widget name="workspaceDetails" />
+      </column>
+    </section>
+  </page> -->
+
   <page name="/admin/users" role="admin,community-manager" title="Users">
     <!--<section>-->
       <!--<column class="small-12 cell">-->
