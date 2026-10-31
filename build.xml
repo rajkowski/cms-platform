@@ -196,6 +196,7 @@
     <copy todir="${target.dir}/${project}/WEB-INF/classes">
       <fileset dir="${resources.dir}">
         <include name="**/*.sql"/>
+        <include name="**/*.json"/>
       </fileset>
     </copy>
     <!-- Production setting -->
