@@ -9,7 +9,7 @@
     },
     "ace": {
       "package": "ace-builds",
-      "version": "1.45.0",
+      "version": "1.45.2",
       "paths": [
         "node_modules/ace-builds/src-min-noconflict/*"
       ]
@@ -25,7 +25,7 @@
     },
     "chartjs": {
       "package": "chart.js",
-      "version": "4.5.1",
+      "version": "4.6.1",
       "paths": [
         "node_modules/chart.js/dist/chart.umd.js"
       ]
@@ -48,10 +48,8 @@
     "dropzone": {
       "version": "5.9.3",
       "paths": [
-        "node_modules/dropzone/dist/basic.css",
         "node_modules/dropzone/dist/dropzone.css",
         "node_modules/dropzone/dist/dropzone.js",
-        "node_modules/dropzone/dist/min/basic.min.css",
         "node_modules/dropzone/dist/min/dropzone.min.css",
         "node_modules/dropzone/dist/min/dropzone.min.js"
       ]
@@ -113,7 +111,7 @@
       ]
     },
     "jsuites": {
-      "version": "6.5.0",
+      "version": "6.5.1",
       "paths": [
         "node_modules/jsuites/dist/jsuites.css",
         "node_modules/jsuites/dist/jsuites.d.ts",
@@ -191,7 +189,7 @@
       ]
     },
     "swiper": {
-      "version": "14.3.0",
+      "version": "14.4.0",
       "paths": [
         "node_modules/swiper/swiper-bundle.css",
         "node_modules/swiper/swiper-bundle.js",
@@ -204,7 +202,7 @@
       ]
     },
     "hugerte": {
-      "version": "1.0.14",
+      "version": "1.0.15",
       "paths": [
         "node_modules/hugerte/hugerte.js",
         "node_modules/hugerte/hugerte.min.js",
