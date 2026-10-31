@@ -6,7 +6,7 @@
  * @created 2/14/26
  */
 
-class ImageBrowserManager {
+window.ImageBrowserManager = window.ImageBrowserManager || class ImageBrowserManager {
   constructor(config) {
     this.config = config;
     this.currentPage = 1;
@@ -292,9 +292,10 @@ class ImageBrowserManager {
     img.dataset.src = imageSrc;
     img.alt = image.filename;
     img.loading = 'lazy';
-    img.onclick = () => this.selectImage(imageSrc);
 
     browserDiv.appendChild(img);
+    browserDiv.onclick = () => this.selectImage(imageSrc);
+    
     cell.appendChild(browserDiv);
 
     const cardSection = document.createElement('div');
@@ -367,4 +368,4 @@ class ImageBrowserManager {
     div.textContent = text;
     return div.innerHTML;
   }
-}
+};

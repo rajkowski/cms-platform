@@ -286,7 +286,7 @@
   $('#imageBrowserReveal').on('open.zf.reveal', function () {
     $('#imageBrowserReveal').html("<h3>Loading...</h3>");
     $.ajax({
-      url: '${ctx}/image-browser?inputId=imageUrl' + currentPhotoId + '&view=reveal',
+      url: '${ctx}/image-browser?inputId=imageUrl' + currentPhotoId + '&previewId=imageUrlPreview' + currentPhotoId + '&view=reveal',
       cache: false,
       dataType: 'html'
     }).done(function (content) {

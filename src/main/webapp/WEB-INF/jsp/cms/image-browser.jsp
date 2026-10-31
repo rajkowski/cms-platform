@@ -302,8 +302,8 @@
     <c:when test="${!empty inputId}">
       <%-- Directly called by a web page --%>
       function mySubmit(itemUrl) {
-        top.document.getElementById("<c:out value="${inputId}" />").value = itemUrl;
-        var imagePreview = top.document.getElementById("<c:out value="${inputId}Preview" />");
+        document.getElementById("<c:out value="${inputId}" />").value = itemUrl;
+        var imagePreview = document.getElementById("<c:out value="${param.previewId}" default="${inputId}Preview" />");
         if (imagePreview) {
           imagePreview.src = itemUrl;
         }
@@ -322,13 +322,21 @@
   </c:choose>
 
   // Initialize the image browser manager
-  document.addEventListener('DOMContentLoaded', function() {
-    const imageBrowserConfig = {
-      apiBaseUrl: '${ctx}/json',
-      contextPath: '${ctx}'
-    };
-    
-    const imageBrowserManager = new ImageBrowserManager(imageBrowserConfig);
-    imageBrowserManager.init();
-  });
+  (function() {
+    function initializeImageBrowser() {
+      const imageBrowserConfig = {
+        apiBaseUrl: '${ctx}/json',
+        contextPath: '${ctx}'
+      };
+
+      const imageBrowserManager = new window.ImageBrowserManager(imageBrowserConfig);
+      imageBrowserManager.init();
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initializeImageBrowser, { once: true });
+    } else {
+      initializeImageBrowser();
+    }
+  })();
 </script>
