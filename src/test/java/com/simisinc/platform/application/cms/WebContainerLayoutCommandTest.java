@@ -52,6 +52,7 @@ class WebContainerLayoutCommandTest {
   @BeforeEach
   void setUp() {
     CacheManager.startup();
+    CacheManager.getCache(CacheManager.OBJECT_CACHE).invalidateAll();
     DB.setTenantRegistry(new TenantRegistry());
     DB.registerTenantDataSource("1", mock(DataSource.class));
     DB.registerTenantDataSource("2", mock(DataSource.class));
