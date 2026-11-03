@@ -16,10 +16,12 @@
 
 package com.simisinc.platform.application.cms;
 
-import com.simisinc.platform.domain.model.cms.WebPage;
-import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import com.simisinc.platform.domain.model.cms.WebPage;
+import com.simisinc.platform.infrastructure.cache.CacheManager;
 
 /**
  * Loads a link's web page object
@@ -33,8 +35,7 @@ public class LoadWebPageCommand {
 
   public static WebPage loadByLink(String pagePath) {
     // Look for web pages as-is
-    // @todo use cache
-    WebPage webPage = WebPageRepository.findByLink(pagePath);
+    WebPage webPage = retrieveFromCache(pagePath);
     if (webPage != null) {
       LOG.debug("Found web page: " + webPage.getLink());
       return webPage;
@@ -46,19 +47,19 @@ public class LoadWebPageCommand {
       if (doubleSlashIndex > 1) {
         // "/news/x/*"
         String alternatePage = pagePath.substring(0, doubleSlashIndex) + "/*";
-        webPage = WebPageRepository.findByLink(alternatePage);
+        webPage = retrieveFromCache(alternatePage);
       }
       if (webPage == null) {
         // "/news/*"
         String alternatePage = pagePath.substring(0, slashIndex) + "/*";
-        webPage = WebPageRepository.findByLink(alternatePage);
+        webPage = retrieveFromCache(alternatePage);
       }
       if (webPage == null) {
         // "/admin/documentation/wiki" ??
         // "/admin/documentation/wiki/Home" and name="/*"
         String alternatePage = pagePath.substring(0, slashIndex);
         LOG.debug("Checking for wildcard: " + alternatePage);
-        WebPage testPage = WebPageRepository.findByLink(alternatePage);
+        WebPage testPage = retrieveFromCache(alternatePage);
         if (testPage != null && testPage.getPageXml().contains("name=\"/*\"")) {
           webPage = testPage;
         }
@@ -71,4 +72,22 @@ public class LoadWebPageCommand {
     }
     return webPage;
   }
+
+  /**
+   * Retrieves a web page from the cache based on the link, returning null if not found or if the cached value indicates no web page exists.
+   */
+  private static WebPage retrieveFromCache(String link) {
+    if (StringUtils.isBlank(link)) {
+      return null;
+    }
+    WebPage result = (WebPage) CacheManager.getCurrentWorkspaceLoadingValue(CacheManager.WEB_PAGE_CACHE, link);
+    if (result == null) {
+      return null;
+    }
+    if (result.getId() == -1) {
+      return null;
+    }
+    return result;
+  }
+
 }

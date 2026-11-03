@@ -17,10 +17,11 @@
 
 package com.simisinc.platform.infrastructure.cache;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
@@ -29,6 +30,7 @@ import com.simisinc.platform.domain.model.SiteProperty;
 import com.simisinc.platform.domain.model.cms.Content;
 import com.simisinc.platform.domain.model.cms.Stylesheet;
 import com.simisinc.platform.domain.model.cms.TableOfContents;
+import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.domain.model.items.Collection;
 import com.simisinc.platform.infrastructure.distributedmessaging.MessagingCommand;
 import com.simisinc.platform.infrastructure.persistence.AppRepository;
@@ -36,6 +38,7 @@ import com.simisinc.platform.infrastructure.persistence.SitePropertyRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.ContentRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.StylesheetRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.TableOfContentsRepository;
+import com.simisinc.platform.infrastructure.persistence.cms.WebPageRepository;
 import com.simisinc.platform.infrastructure.persistence.items.CollectionRepository;
 import com.zeroio.platform.infrastructure.database.WorkspaceContextManager;
 
@@ -56,6 +59,7 @@ public class CacheManager {
   public static String CONTENT_REMOTE_URL_CACHE = "ContentRemoteUrlCache";
   public static String COLLECTION_UNIQUE_ID_CACHE = "CollectionUniqueIdCache";
   public static String TABLE_OF_CONTENTS_UNIQUE_ID_CACHE = "TableOfContentsUniqueIdCache";
+  public static String WEB_PAGE_CACHE = "WebPageCache";
   public static String RATE_LIMIT_LOGIN_ATTEMPT_BY_USERNAME_CACHE = "RateLimitLoginAttemptByUsernameCache";
   public static String RATE_LIMIT_ATTEMPT_BY_IP_CACHE = "RateLimitAttemptByIpCache";
   public static String RATE_LIMIT_BY_APP_CACHE = "RateLimitByAppCache";
@@ -68,28 +72,33 @@ public class CacheManager {
   public static final String WEBSITE_PLAIN_HEADER = "PlainHeader";
   public static final String WEBSITE_FOOTER = "Footer";
 
-  private static Map<String, Cache> cacheManager = new HashMap<>();
+  // None Objects
+  public static final WebPage NO_WEBPAGE = new WebPage();
+
+  private static final Map<String, Cache> cacheManager = new ConcurrentHashMap<>();
 
   private CacheManager() {
   }
 
-  public static void startup() {
+  public static synchronized void startup() {
 
-    // @todo Menu Tab/Item Cache
+    if (!cacheManager.isEmpty()) {
+      return;
+    }
 
     // System Property Cache (prefix = map)
     LoadingCache<String, List<SiteProperty>> sitePropertyListCache = Caffeine.newBuilder()
         .maximumSize(10_000)
-        //        .expireAfterWrite(5, TimeUnit.MINUTES)
-        //        .refreshAfterWrite(1, TimeUnit.MINUTES)
-      .build(cacheKey -> SitePropertyRepository.findAllByPrefix(cacheValue(cacheKey)));
+        .recordStats()
+        .expireAfterAccess(7, TimeUnit.DAYS)
+        .build(cacheKey -> SitePropertyRepository.findAllByPrefix(cacheValue(cacheKey)));
     cacheManager.put(SYSTEM_PROPERTY_PREFIX_CACHE, sitePropertyListCache);
 
     // App Cache (publicKey = app)
     LoadingCache<String, App> appCache = Caffeine.newBuilder()
         .maximumSize(1_000)
-        //        .expireAfterWrite(5, TimeUnit.MINUTES)
-        //        .refreshAfterWrite(1, TimeUnit.MINUTES)
+        .recordStats()
+        .expireAfterAccess(7, TimeUnit.DAYS)
         .build(cacheKey -> AppRepository.findByPublicKey(cacheValue(cacheKey)));
     cacheManager.put(APP_CACHE, appCache);
 
@@ -97,52 +106,69 @@ public class CacheManager {
     Cache<Long, String> userCredentialsCache = Caffeine.newBuilder()
         .maximumSize(1_000_000)
         .expireAfterAccess(20, TimeUnit.HOURS)
+        .recordStats()
         .build();
     cacheManager.put(USER_CREDENTIALS_CACHE, userCredentialsCache);
 
     // Stylesheet Cache (webPageId = stylesheet)
     LoadingCache<String, Stylesheet> stylesheetCache = Caffeine.newBuilder()
         .maximumSize(100)
-        //        .expireAfterWrite(5, TimeUnit.MINUTES)
-        //        .refreshAfterWrite(1, TimeUnit.MINUTES)
+        .recordStats()
+        .expireAfterAccess(7, TimeUnit.DAYS)
         .build(cacheKey -> StylesheetRepository.findByWebPageId(Long.parseLong(cacheValue(cacheKey))));
     cacheManager.put(STYLESHEET_WEB_PAGE_ID_CACHE, stylesheetCache);
 
     // Content Cache (contentUniqueId = content)
     LoadingCache<String, Content> contentCache = Caffeine.newBuilder()
-        .maximumSize(10_000)
-        //        .expireAfterWrite(5, TimeUnit.MINUTES)
-        //        .refreshAfterWrite(1, TimeUnit.MINUTES)
-      .build(cacheKey -> ContentRepository.findByUniqueId(cacheValue(cacheKey)));
+        .maximumSize(100_000)
+        .recordStats()
+        .expireAfterAccess(7, TimeUnit.DAYS)
+        .build(cacheKey -> ContentRepository.findByUniqueId(cacheValue(cacheKey)));
     cacheManager.put(CONTENT_UNIQUE_ID_CACHE, contentCache);
 
     // Remote Content Cache (contentRemoteUrl = remote content)
     Cache<String, Content> remoteContentCache = Caffeine.newBuilder()
         .maximumSize(100)
         .expireAfterAccess(5, TimeUnit.MINUTES)
+        .recordStats()
         .build();
     cacheManager.put(CONTENT_REMOTE_URL_CACHE, remoteContentCache);
 
     // Collection Unique Id Cache (collectionUniqueId = collection)
     LoadingCache<String, Collection> collectionCache = Caffeine.newBuilder()
         .maximumSize(100)
-        //        .expireAfterWrite(5, TimeUnit.MINUTES)
-        //        .refreshAfterWrite(1, TimeUnit.MINUTES)
+        .recordStats()
+        .expireAfterAccess(7, TimeUnit.DAYS)
         .build(cacheKey -> CollectionRepository.findByUniqueId(cacheValue(cacheKey)));
     cacheManager.put(COLLECTION_UNIQUE_ID_CACHE, collectionCache);
 
     // Collection Unique Id Cache (collectionUniqueId = collection)
     LoadingCache<String, TableOfContents> tableOfContentsCache = Caffeine.newBuilder()
         .maximumSize(100)
-        //        .expireAfterWrite(5, TimeUnit.MINUTES)
-        //        .refreshAfterWrite(1, TimeUnit.MINUTES)
+        .recordStats()
+        .expireAfterAccess(7, TimeUnit.DAYS)
         .build(cacheKey -> TableOfContentsRepository.findByUniqueId(cacheValue(cacheKey)));
     cacheManager.put(TABLE_OF_CONTENTS_UNIQUE_ID_CACHE, tableOfContentsCache);
+
+    // Web Page Cache (link = web page or NO_WEBPAGE)
+    LoadingCache<String, WebPage> webPageCache = Caffeine.newBuilder()
+        .maximumSize(10_000)
+        .expireAfterAccess(7, TimeUnit.DAYS)
+        .recordStats()
+        .build(cacheKey -> {
+          WebPage record = WebPageRepository.findByLink(cacheValue(cacheKey));
+          if (record == null) {
+            return NO_WEBPAGE;
+          }
+          return record;
+        });
+    cacheManager.put(WEB_PAGE_CACHE, webPageCache);
 
     // Login attempt by username cache
     Cache<String, Object> loginAttemptByUsernameCache = Caffeine.newBuilder()
         .maximumSize(100_000)
         .expireAfterAccess(30, TimeUnit.MINUTES)
+        .recordStats()
         .build();
     cacheManager.put(RATE_LIMIT_LOGIN_ATTEMPT_BY_USERNAME_CACHE, loginAttemptByUsernameCache);
 
@@ -150,12 +176,14 @@ public class CacheManager {
     Cache<String, Object> accessAttemptByIpCache = Caffeine.newBuilder()
         .maximumSize(1_000_000)
         .expireAfterAccess(30, TimeUnit.MINUTES)
+        .recordStats()
         .build();
     cacheManager.put(RATE_LIMIT_ATTEMPT_BY_IP_CACHE, accessAttemptByIpCache);
 
     // Rate limit by app cache
     Cache<String, Object> rateLimitByAppCache = Caffeine.newBuilder()
         .expireAfterAccess(15, TimeUnit.MINUTES)
+        .recordStats()
         .build();
     cacheManager.put(RATE_LIMIT_BY_APP_CACHE, rateLimitByAppCache);
 
@@ -163,6 +191,7 @@ public class CacheManager {
     Cache<String, Object> rateLimitByAppUserCache = Caffeine.newBuilder()
         .maximumSize(1_000_000)
         .expireAfterAccess(15, TimeUnit.MINUTES)
+        .recordStats()
         .build();
     cacheManager.put(RATE_LIMIT_BY_APP_USER_CACHE, rateLimitByAppUserCache);
 
@@ -170,30 +199,25 @@ public class CacheManager {
     Cache<String, Object> objectCache = Caffeine.newBuilder()
         .maximumSize(100)
         .expireAfterAccess(24, TimeUnit.HOURS)
+        .recordStats()
         .build();
     cacheManager.put(OBJECT_CACHE, objectCache);
   }
 
+  private static void ensureStarted() {
+    if (cacheManager.isEmpty()) {
+      startup();
+    }
+  }
+
   public static Cache getCache(String cacheName) {
+    ensureStarted();
     return cacheManager.get(cacheName);
   }
 
-  public static LoadingCache getLoadingCache(String cacheName) {
+  private static LoadingCache getLoadingCache(String cacheName) {
+    ensureStarted();
     return (LoadingCache) cacheManager.get(cacheName);
-  }
-
-  public static void invalidateKey(String cacheName, Object key) {
-    invalidateKey(cacheName, key, true);
-  }
-
-  public static void invalidateKey(String cacheName, Object key, boolean distributeInvalidation) {
-    Cache cache = cacheManager.get(cacheName);
-    if (cache != null) {
-      cache.invalidate(key);
-      if (distributeInvalidation) {
-        MessagingCommand.sendNotification(cacheName, key);
-      }
-    }
   }
 
   public static void putTenantValue(String cacheName, String workspaceId, Object key, Object value) {
@@ -256,14 +280,14 @@ public class CacheManager {
   }
 
   public static void addToObjectCache(String key, Object value) {
-      putCurrentWorkspaceValue(OBJECT_CACHE, key, value);
+    putCurrentWorkspaceValue(OBJECT_CACHE, key, value);
   }
 
   public static Object getFromObjectCache(String key) {
-      return getCurrentWorkspaceValue(OBJECT_CACHE, key);
+    return getCurrentWorkspaceValue(OBJECT_CACHE, key);
   }
 
   public static void invalidateObjectCacheKey(String key) {
-      invalidateCurrentWorkspaceKey(OBJECT_CACHE, key, true);
+    invalidateCurrentWorkspaceKey(OBJECT_CACHE, key, true);
   }
 }

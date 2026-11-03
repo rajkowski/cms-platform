@@ -48,6 +48,7 @@ import com.simisinc.platform.application.cms.TextCommand;
 import com.simisinc.platform.application.cms.WebPageXmlLayoutCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.WebPage;
+import com.simisinc.platform.infrastructure.cache.CacheManager;
 import com.simisinc.platform.presentation.controller.DataConstants;
 import com.zeroio.platform.infrastructure.persistence.cms.PageFileRepository;
 import com.zeroio.platform.infrastructure.persistence.cms.WebPageVersionRepository;
@@ -243,6 +244,8 @@ public class WebPageRepository {
       LOG.error("An id was not set!");
       return null;
     }
+    // A previously non-existing link will need to be invalidated
+    invalidateCachedPage(link);
     return record;
   }
 
@@ -279,9 +282,9 @@ public class WebPageRepository {
     update.WHERE("web_page_id = ?", record.getId());
     if (update.execute().booleanValue()) {
       if (previousRecord != null) {
-        WebPageXmlLayoutCommand.removeCustomPage(previousRecord.getLink());
+        invalidateCachedPage(previousRecord.getLink());
       }
-      WebPageXmlLayoutCommand.removeCustomPage(record.getLink());
+      invalidateCachedPage(record.getLink());
       return record;
     }
     LOG.error("The update failed!");
@@ -298,7 +301,7 @@ public class WebPageRepository {
         .SET("draft = false")
         .WHERE("draft_page_xml IS NOT NULL AND web_page_id = ?", record.getId())
         .execute().booleanValue()) {
-      WebPageXmlLayoutCommand.removeCustomPage(record.getLink());
+      invalidateCachedPage(record.getLink());
     }
   }
 
@@ -326,6 +329,7 @@ public class WebPageRepository {
       record.setSearchable(true);
       record.setShowInSitemap(true);
     }
+    invalidateCachedPage(record.getLink());
   }
 
   public static boolean archivePage(WebPage record, long userId) {
@@ -345,6 +349,7 @@ public class WebPageRepository {
       // Note: We do NOT remove the page from cache when archiving
       // The page layout/content hasn't changed, only the enabled status
       // This allows admins/content-managers to still view the archived page
+      invalidateCachedPage(record.getLink());
     }
     return updated;
   }
@@ -365,6 +370,7 @@ public class WebPageRepository {
       record.setModifiedBy(userId);
       // Note: We do NOT remove the page from cache when unarchiving
       // The page layout/content hasn't changed, only the enabled status
+      invalidateCachedPage(record.getLink());
     }
     return updated;
   }
@@ -379,7 +385,7 @@ public class WebPageRepository {
         .WHERE("web_page_id = ?", record.getId())
         .execute()) {
       // Forces the page to re-cache
-      WebPageXmlLayoutCommand.removeCustomPage(record.getLink());
+      invalidateCachedPage(record.getLink());
     }
   }
 
@@ -402,7 +408,7 @@ public class WebPageRepository {
       // Finish transaction
       transaction.commit();
       // Force the page to re-cache
-      WebPageXmlLayoutCommand.removeCustomPage(record.getLink());
+      invalidateCachedPage(record.getLink());
       return true;
     } catch (SQLException se) {
       LOG.error("SQLException: " + se.getMessage());
@@ -566,5 +572,13 @@ public class WebPageRepository {
       this.uniqueId = uniqueId;
       this.depth = depth;
     }
+  }
+
+  private static void invalidateCachedPage(String link) {
+    if (link == null) {
+      return;
+    }
+    WebPageXmlLayoutCommand.removeCustomPage(link);
+    CacheManager.invalidateCurrentWorkspaceKey(CacheManager.WEB_PAGE_CACHE, link, true);
   }
 }
