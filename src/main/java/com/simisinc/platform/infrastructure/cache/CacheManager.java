@@ -215,7 +215,7 @@ public class CacheManager {
     return cacheManager.get(cacheName);
   }
 
-  private static LoadingCache getLoadingCache(String cacheName) {
+  public static LoadingCache getLoadingCache(String cacheName) {
     ensureStarted();
     return (LoadingCache) cacheManager.get(cacheName);
   }
