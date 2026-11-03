@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,28 +17,16 @@
 
 package com.simisinc.platform.presentation.widgets.cms;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.simisinc.platform.application.cms.LoadWikiCommand;
 import com.simisinc.platform.application.cms.LoadWikiPageCommand;
+import com.simisinc.platform.application.cms.MarkdownCommand;
 import com.simisinc.platform.domain.model.cms.Wiki;
 import com.simisinc.platform.domain.model.cms.WikiPage;
-import com.simisinc.platform.domain.model.cms.WikiParserExtension;
 import com.simisinc.platform.infrastructure.persistence.cms.WikiPageRepository;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
-import com.vladsch.flexmark.ext.gfm.strikethrough.StrikethroughExtension;
-import com.vladsch.flexmark.ext.gfm.tasklist.TaskListExtension;
-import com.vladsch.flexmark.ext.gitlab.GitLabExtension;
-import com.vladsch.flexmark.ext.tables.TablesExtension;
-import com.vladsch.flexmark.ext.typographic.TypographicExtension;
-import com.vladsch.flexmark.ext.wikilink.WikiLinkExtension;
-import com.vladsch.flexmark.ext.youtube.embedded.YouTubeLinkExtension;
-import com.vladsch.flexmark.html.HtmlRenderer;
-import com.vladsch.flexmark.parser.Parser;
-import com.vladsch.flexmark.util.ast.Node;
-import com.vladsch.flexmark.util.data.MutableDataSet;
-import org.apache.commons.lang3.StringUtils;
-
-import java.util.Arrays;
 
 /**
  * Displays a wiki which can be navigated
@@ -110,29 +99,7 @@ public class WikiWidget extends GenericWidget {
     }
     context.getRequest().setAttribute("wikiPage", wikiPage);
 
-    // Set the markup conversion settings
-    MutableDataSet options = new MutableDataSet();
-    options.set(Parser.EXTENSIONS, Arrays.asList(
-//        AnchorLinkExtension.create(),
-            StrikethroughExtension.create(),
-            TablesExtension.create(),
-            TaskListExtension.create(),
-            TypographicExtension.create(),
-            WikiLinkExtension.create(),
-            YouTubeLinkExtension.create(),
-            WikiParserExtension.create(),
-            GitLabExtension.create()
-        )
-    );
-    options.set(HtmlRenderer.SOFT_BREAK, "<br />\n");
-    options.set(HtmlRenderer.GENERATE_HEADER_ID, true);
-    options.set(WikiLinkExtension.LINK_PREFIX, wikiLinkPrefix + "/");
-    Parser parser = Parser.builder(options).build();
-    HtmlRenderer renderer = HtmlRenderer.builder(options).build();
-
-    // Convert the markup to html
-    Node document = parser.parse(wikiPage.getBody());
-    String contentHtml = renderer.render(document);
+    String contentHtml = MarkdownCommand.html(wikiPage.getBody(), wikiLinkPrefix);
     context.getRequest().setAttribute("contentHtml", contentHtml);
 
     if (wikiPage.getBody().contains("```mermaid")) {

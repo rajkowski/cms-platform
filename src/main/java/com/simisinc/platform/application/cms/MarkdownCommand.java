@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,9 +17,16 @@
 
 package com.simisinc.platform.application.cms;
 
+import java.util.Arrays;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.simisinc.platform.domain.model.cms.WikiParserExtension;
 import com.vladsch.flexmark.ext.gfm.strikethrough.StrikethroughExtension;
 import com.vladsch.flexmark.ext.gfm.tasklist.TaskListExtension;
+import com.vladsch.flexmark.ext.gitlab.GitLabExtension;
 import com.vladsch.flexmark.ext.tables.TablesExtension;
 import com.vladsch.flexmark.ext.typographic.TypographicExtension;
 import com.vladsch.flexmark.ext.wikilink.WikiLinkExtension;
@@ -27,11 +35,6 @@ import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.ast.Node;
 import com.vladsch.flexmark.util.data.MutableDataSet;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import java.util.Arrays;
 
 /**
  * Methods for working with markdown
@@ -50,6 +53,10 @@ public class MarkdownCommand {
    * @return
    */
   public static String html(String markdown) {
+    return html(markdown, null);
+  }
+
+  public static String html(String markdown, String wikiLinkPrefix) {
     if (StringUtils.isBlank(markdown)) {
       return "";
     }
@@ -57,19 +64,20 @@ public class MarkdownCommand {
     // Set the markup conversion settings
     MutableDataSet options = new MutableDataSet();
     options.set(Parser.EXTENSIONS, Arrays.asList(
-//        AnchorLinkExtension.create(),
-            StrikethroughExtension.create(),
-            TablesExtension.create(),
-            TaskListExtension.create(),
-            TypographicExtension.create(),
-            WikiLinkExtension.create(),
-            YouTubeLinkExtension.create(),
-            WikiParserExtension.create()
-        )
-    );
+        //        AnchorLinkExtension.create(),
+        StrikethroughExtension.create(),
+        TablesExtension.create(),
+        TaskListExtension.create(),
+        TypographicExtension.create(),
+        WikiLinkExtension.create(),
+        YouTubeLinkExtension.create(),
+        WikiParserExtension.create(),
+        GitLabExtension.create()));
     options.set(HtmlRenderer.SOFT_BREAK, "<br />\n");
     options.set(HtmlRenderer.GENERATE_HEADER_ID, true);
-//    options.set(WikiLinkExtension.LINK_PREFIX, wikiLinkPrefix + "/");
+    if (wikiLinkPrefix != null) {
+      options.set(WikiLinkExtension.LINK_PREFIX, wikiLinkPrefix + "/");
+    }
     Parser parser = Parser.builder(options).build();
     HtmlRenderer renderer = HtmlRenderer.builder(options).build();
 
