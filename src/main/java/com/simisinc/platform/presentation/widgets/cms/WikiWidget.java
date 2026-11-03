@@ -21,12 +21,12 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.simisinc.platform.application.cms.LoadWikiCommand;
 import com.simisinc.platform.application.cms.LoadWikiPageCommand;
-import com.simisinc.platform.application.cms.MarkdownCommand;
 import com.simisinc.platform.domain.model.cms.Wiki;
 import com.simisinc.platform.domain.model.cms.WikiPage;
 import com.simisinc.platform.infrastructure.persistence.cms.WikiPageRepository;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
+import com.zeroio.platform.application.cms.MarkdownCommand;
 
 /**
  * Displays a wiki which can be navigated

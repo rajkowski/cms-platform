@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,20 +17,21 @@
 
 package com.simisinc.platform.application.elearning;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.simisinc.platform.application.cms.HtmlCommand;
-import com.simisinc.platform.application.cms.MarkdownCommand;
-import com.simisinc.platform.domain.model.elearning.Course;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import static com.simisinc.platform.application.elearning.PERLSApiClientCommand.COURSE_API;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import static com.simisinc.platform.application.elearning.PERLSApiClientCommand.COURSE_API;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.simisinc.platform.application.cms.HtmlCommand;
+import com.simisinc.platform.domain.model.elearning.Course;
+import com.zeroio.platform.application.cms.MarkdownCommand;
 
 /**
  * Commands for working with PERLS Courses
@@ -69,7 +71,7 @@ public class PERLSCourseListCommand {
       if (courseNode.has("id")) {
         String remoteId = courseNode.get("id").asText();
         course.setRemoteId(remoteId);
-//        course.setUrl(serverUrl + "/course/view.php?id=" + remoteId);
+        //        course.setUrl(serverUrl + "/course/view.php?id=" + remoteId);
       }
       if (courseNode.has("fullname")) {
         course.setName(StringUtils.trimToNull(courseNode.get("fullname").asText()));

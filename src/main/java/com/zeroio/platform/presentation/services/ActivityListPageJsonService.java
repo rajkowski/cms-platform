@@ -1,5 +1,5 @@
 /*
- * Copyright 2026 Matt Rajkowski
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.github.rajkowski.database.DataConstraints;
-import com.simisinc.platform.application.cms.MarkdownCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.domain.model.xapi.XapiStatement;
@@ -33,6 +32,7 @@ import com.simisinc.platform.infrastructure.persistence.xapi.XapiStatementReposi
 import com.simisinc.platform.infrastructure.persistence.xapi.XapiStatementSpecification;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
+import com.zeroio.platform.application.cms.MarkdownCommand;
 
 /**
  * JSON service for page-level activity history

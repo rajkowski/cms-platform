@@ -25,7 +25,7 @@
             Returns html version of markdown
         </description>
         <name>html</name>
-        <function-class>com.simisinc.platform.application.cms.MarkdownCommand</function-class>
+        <function-class>com.zeroio.platform.application.cms.MarkdownCommand</function-class>
         <function-signature>java.lang.String html(java.lang.String)</function-signature>
     </function>
 </taglib>

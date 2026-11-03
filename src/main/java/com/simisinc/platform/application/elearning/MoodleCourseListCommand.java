@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,21 +17,26 @@
 
 package com.simisinc.platform.application.elearning;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
-import com.simisinc.platform.application.cms.HtmlCommand;
-import com.simisinc.platform.application.cms.MarkdownCommand;
-import com.simisinc.platform.domain.model.User;
-import com.simisinc.platform.domain.model.elearning.Course;
-import com.simisinc.platform.domain.model.elearning.CourseUser;
-import com.simisinc.platform.domain.model.elearning.CourseUserAggregate;
+import static com.simisinc.platform.application.elearning.MoodleApiClientCommand.GET_USERS_COURSES_API;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.util.*;
-
-import static com.simisinc.platform.application.elearning.MoodleApiClientCommand.GET_USERS_COURSES_API;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
+import com.simisinc.platform.application.cms.HtmlCommand;
+import com.simisinc.platform.domain.model.User;
+import com.simisinc.platform.domain.model.elearning.Course;
+import com.simisinc.platform.domain.model.elearning.CourseUser;
+import com.simisinc.platform.domain.model.elearning.CourseUserAggregate;
+import com.zeroio.platform.application.cms.MarkdownCommand;
 
 /**
  * Commands for working with Moodle Courses

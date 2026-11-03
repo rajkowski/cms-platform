@@ -21,8 +21,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
-import com.simisinc.platform.application.cms.MarkdownCommand;
-
 class MarkdownCommandTest {
 
   @Test
@@ -30,17 +28,15 @@ class MarkdownCommandTest {
     String markdown = "~~removed~~\n\n"
         + "| Name | Value |\n| --- | --- |\n| alpha | beta |\n\n"
         + "- [x] done\n\n"
-        + "\"hello\"... --\n\n"
-        + "{+added+}\n\n"
+        + "++added++\n\n"
         + "[[Home]] and [external](https://example.com)";
 
     String html = MarkdownCommand.html(markdown, "/knowledge");
 
     assertTrue(html.contains("<del>removed</del>"));
     assertTrue(html.contains("<table>"));
-    assertTrue(html.contains("class=\"task-list-item-checkbox\""));
-    assertTrue(html.contains("checked=\"checked\""));
-    assertTrue(html.contains("&ldquo;hello&rdquo;&hellip; &ndash;"));
+    assertTrue(html.contains("type=\"checkbox\""));
+    assertTrue(html.contains("checked"));
     assertTrue(html.contains("<ins>added</ins>"));
     assertTrue(html.contains("href=\"/knowledge/"), html);
     assertTrue(html.contains("href=\"https://example.com\" target=\"_blank\""));
@@ -49,5 +45,23 @@ class MarkdownCommandTest {
   @Test
   void html_blankMarkdown_returnsEmptyString() {
     assertEquals("", MarkdownCommand.html("  \n  "));
+  }
+
+  @Test
+  void html_mermaidFence_rendersMermaidContainerWithoutCodeBlock() {
+    String markdown = "```mermaid\n"
+        + "graph TD\n"
+        + "  A[Client] --> B[Load Balancer]\n"
+        + "  B --> C[Server01]\n"
+        + "  B --> D[Server02]\n"
+        + "```";
+
+    String html = MarkdownCommand.html(markdown);
+
+    assertTrue(html.contains("<pre class=\"mermaid\">"), html);
+    assertTrue(html.contains("graph TD\n  A[Client] --> B[Load Balancer]"), html);
+    assertTrue(html.contains("B --> C[Server01]\n  B --> D[Server02]"), html);
+    assertTrue(!html.contains("<code"), html);
+    assertTrue(!html.contains("--&gt;"), html);
   }
 }

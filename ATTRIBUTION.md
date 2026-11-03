@@ -12,8 +12,8 @@ This project uses and licenses several technologies:
    Azure SDK for Java          MIT      Azure integration                                 https://github.com/Azure/azure-sdk-for-java
    Bucket4J                    Apache   Rate limiting                                     https://github.com/bucket4j/bucket4j
    Caffeine                    Apache   High performance cache                            https://github.com/ben-manes/caffeine
+   CommonMark Java             BSD-2CL  Mark down parser and renderer                     https://github.com/commonmark/commonmark-java
    Easy Flows Playbooks EditionMIT      Workflow engine                                   https://github.com/rajkowski/easy-flows
-   FlexMark                    BSD2     Markdown parsing                                  https://github.com/vsch/flexmark-java
    Flyway                      Apache   Database scripts install and upgrade tracking     https://github.com/flyway/flyway
    GeoIP2                      Apache   IP geolocation client                             https://github.com/maxmind/GeoIP2-java
    GeoJson                     Apache   GeoJson Parser                                    https://github.com/opendatalab-de/geojson-jackson
