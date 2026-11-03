@@ -33,6 +33,7 @@ import com.zeroio.platform.application.tenant.ActivateWorkspaceCommand;
 import com.zeroio.platform.domain.model.tenant.TenantDataSourceDatabase;
 import com.zeroio.platform.domain.model.tenant.TenantDataSourcePool;
 import com.zeroio.platform.domain.model.tenant.Workspace;
+import com.zeroio.platform.infrastructure.database.WorkspaceContextManager;
 import com.zeroio.platform.infrastructure.persistence.tenant.TenantDataSourceDatabaseRepository;
 import com.zeroio.platform.infrastructure.persistence.tenant.TenantDataSourcePoolRepository;
 import com.zeroio.platform.infrastructure.persistence.tenant.WorkspaceRepository;
@@ -48,6 +49,9 @@ public class WorkspacesListWidget extends GenericWidget {
 
   @Override
   public WidgetContext execute(WidgetContext context) {
+    if (!WorkspaceContextManager.isDefaultTenant()) {
+      return context;
+    }
     if (!context.hasRole("admin")) {
       LOG.debug("No permission to: " + WorkspacesListWidget.class.getSimpleName());
       return context;
@@ -69,6 +73,9 @@ public class WorkspacesListWidget extends GenericWidget {
 
   @Override
   public WidgetContext post(WidgetContext context) throws InvocationTargetException, IllegalAccessException {
+    if (!WorkspaceContextManager.isDefaultTenant()) {
+      return context;
+    }
     if (!context.hasRole("admin")) {
       return context;
     }

@@ -23,6 +23,7 @@
 <%@ taglib prefix="js" uri="/WEB-INF/tlds/javascript-escape.tld" %>
 <%@ taglib prefix="g" uri="http://granule.com/tags" %>
 <%@ taglib prefix="web" uri="/WEB-INF/tlds/web.tld" %>
+<%@ taglib prefix="tenant" uri="/WEB-INF/tlds/tenant-functions.tld" %>
 <%@ taglib prefix="url" uri="/WEB-INF/tlds/url-functions.tld" %>
 <jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
 <jsp:useBean id="masterWebPage" class="com.simisinc.platform.domain.model.cms.WebPage" scope="request"/>
@@ -61,7 +62,7 @@
       <c:if test="${userSession.hasRole('admin') || userSession.hasRole('content-manager')}">
         <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/visual')}"> class="is-active"</c:if>><a href="javascript:void(0)" onclick="loadAdminContent('${ctx}/admin/visual-analytics-dashboard', this)"><i class="${font:far()} fa-edit fa-fw"></i> <span>Dashboard</span></a></li>
       </c:if>
-      <c:if test="${userSession.hasRole('admin')}">
+      <c:if test="${userSession.hasRole('admin') && tenant:isDefault()}">
         <li<c:if test="${fn:startsWith(pageRenderInfo.name, '/admin/workspace')}"> class="is-active"</c:if>><a href="javascript:void(0)" onclick="loadAdminContent('${ctx}/admin/workspaces', this)"><i class="${font:far()} fa-cubes fa-fw"></i> <span>Workspaces</span></a></li>
       </c:if>
     </ul>

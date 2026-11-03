@@ -27,6 +27,10 @@ public class WorkspaceContextManager {
   private WorkspaceContextManager() {
   }
 
+  public static boolean isDefaultTenant() {
+    return WORKSPACE_CONTEXT.get() == null;
+  }
+
   public static WorkspaceContext getCurrentContext() {
     return WORKSPACE_CONTEXT.get();
   }
