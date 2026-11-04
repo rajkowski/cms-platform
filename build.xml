@@ -105,13 +105,14 @@
   <!-- Compiles the source code -->
   <target name="compile" depends="prepare">
     <!-- Compile Java source code -->
-    <javac srcdir="${src.dir}" source="${jdk}" target="${jdk}"
+    <javac srcdir="${src.dir}" release="${jdk}"
            destdir="${build.dir}"
            debug="on"
            debuglevel="lines,vars,source"
            deprecation="on"
            optimize="on"
            includeantruntime="false">
+      <compilerarg value="-proc:full"/>
       <classpath>
         <path refid="web.classpath"/>
       </classpath>
@@ -149,10 +150,11 @@
             outputDir="${build.jsp.dir}/src" />
     <javac srcdir="${build.jsp.dir}/src"
            destdir="${build.jsp.dir}/classes"
-           source="${jdk}" target="${jdk}"
+           release="${jdk}"
            debug="on" debuglevel="lines,vars,source"
            deprecation="on" optimize="on"
            includeantruntime="false">
+      <compilerarg value="-proc:full"/>
       <classpath refid="jsp.classpath"/>
       <include name="**/*.java"/>
     </javac>
@@ -394,7 +396,7 @@
   </target>
 
   <target name="compile-test" depends="jar">
-    <javac srcdir="${src.test.dir}" source="${jdk}" target="${jdk}"
+    <javac srcdir="${src.test.dir}" release="${jdk}"
            destdir="${build.dir}"
            debug="off"
            deprecation="on"
@@ -427,10 +429,10 @@
     <fail if="hasFailingTest" />
   </target>
 
-  <target name="run-test" depends="compile-test">
+  <target name="run-test-with-coverage" depends="compile-test">
     <mkdir dir="${target.dir}/test-reports"/>
     <jacoco:agent property="jacocoagent" destfile="${target.dir}/jacoco.exec"/>
-    <junitlauncher haltOnFailure="true" printSummary="true">
+    <junitlauncher haltOnFailure="true" printSummary="false">
       <classpath refid="web.classpath" />
       <classpath refid="test.classpath" />
       <classpath>
@@ -445,11 +447,13 @@
           <jvmarg value="${jacocoagent}"/>
           <jvmarg value="-Djava.awt.headless=true"/>
         </fork>
+        <listener type="legacy-xml" sendSysOut="true" sendSysErr="true"/>
       </testclasses>
     </junitlauncher>
   </target>
 
-  <target name="test" depends="run-test">
+  <target name="test" depends="run-test-with-coverage">
+    <!-- Write a JaCoCo coverage report -->
     <jacoco:report>
       <executiondata>
         <file file="${target.dir}/jacoco.exec"/>
@@ -467,10 +471,8 @@
       <html destdir="${target.dir}/coverage-reports/jacoco"/>
       <xml destfile="${target.dir}/coverage-reports/jacoco/jacoco.xml"/>
     </jacoco:report>
-    <java classpathref="test.classpath" classname="org.junit.platform.console.ConsoleLauncher" fork="true" failonerror="true">
-      <arg value="--scan-classpath"/>
-      <arg line="--reports-dir ${target.dir}/test-reports"/>
-    </java>
+
+    <!-- Write an HTML JUnit report -->
     <junitreport todir="${target.dir}/test-reports">
       <fileset dir="${target.dir}/test-reports">
         <include name="TEST-*.xml"/>
@@ -486,6 +488,7 @@
   </target>
 
   <target name="mvn-dependencies">
+    <!-- Application JARs -->
     <delete dir="${lib.dir}" />
     <exec executable="mvn">
       <arg value="dependency:copy-dependencies" />
@@ -493,6 +496,21 @@
       <arg value="-DexcludeArtifactIds=commons-logging" />
       <arg value="-DexcludeGroupIds=org.apache.tomcat,org.projectlombok,org.jetbrains.kotlin,junit" />
       <arg value="-DoutputDirectory=${lib.dir}" />
+    </exec>
+    <!-- Compile-time JARs -->
+    <delete dir="${lib.compile.dir}" />
+    <exec executable="mvn">
+      <arg value="dependency:copy-dependencies" />
+      <arg value="-DincludeGroupIds=org.apache.tomcat,org.projectlombok" />
+      <arg value="-DoutputDirectory=${lib.compile.dir}" />
+    </exec>
+    <!-- Test JARs -->
+    <delete dir="${lib.test.dir}" />
+    <exec executable="mvn">
+      <arg value="dependency:copy-dependencies" />
+      <arg value="-DexcludeScope=runtime" />
+      <arg value="-DexcludeGroupIds=org.apache.tomcat,org.projectlombok,jakarta.json" />
+      <arg value="-DoutputDirectory=${lib.test.dir}" />
     </exec>
   </target>
 

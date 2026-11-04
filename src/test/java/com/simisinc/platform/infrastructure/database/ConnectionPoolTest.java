@@ -36,8 +36,12 @@ class ConnectionPoolTest {
     Properties properties = new Properties();
     properties.setProperty("jdbcUrl", "jdbc:h2:mem:connection_pool_" + System.nanoTime() + ";DB_CLOSE_DELAY=-1");
     properties.setProperty("driverClassName", "org.h2.Driver");
-    properties.setProperty("username", "sa");
-    properties.setProperty("password", "");
+    properties.setProperty("application.username", "sa");
+    properties.setProperty("application.password", "");
+    properties.setProperty("backgroundJobs.username", "sa");
+    properties.setProperty("backgroundJobs.password", "");
+    properties.setProperty("distributedMessaging.username", "sa");
+    properties.setProperty("distributedMessaging.password", "");
     properties.setProperty("application.maximumPoolSize", "1");
     properties.setProperty("application.minimumIdle", "0");
     properties.setProperty("application.connectionTimeout", "250");
