@@ -5,8 +5,8 @@
   <property environment="env" />
   <property name="project" value="cms-platform" />
   <property name="jdk" value="21" />
-  <property name="fs" value="${file.separator}"/>
-  <property name="lf" value="${line.separator}"/>
+  <property name="fs" value="${file.separator}" />
+  <property name="lf" value="${line.separator}" />
   <property name="javadoc.dir" value="docs" />
   <property name="base.dir" value="." />
   <property name="src.dir" value="${base.dir}/src/main/java" />
@@ -27,19 +27,19 @@
 
   <taskdef name="jasper" classname="org.apache.jasper.JspC">
     <classpath>
-      <fileset dir="${base.dir}/lib/war" includes="*.jar"/>
+      <fileset dir="${base.dir}/lib/war" includes="*.jar" />
     </classpath>
   </taskdef>
 
   <taskdef resource="com/puppycrawl/tools/checkstyle/ant/checkstyle-ant-task.properties">
     <classpath>
-      <fileset dir="${base.dir}/lib/style" includes="*.jar"/>
+      <fileset dir="${base.dir}/lib/style" includes="*.jar" />
     </classpath>
   </taskdef>
 
   <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml">
     <classpath>
-      <fileset dir="${base.dir}/lib/tests" includes="*.jar"/>
+      <fileset dir="${base.dir}/lib/tests" includes="*.jar" />
     </classpath>
   </taskdef>
 
@@ -48,117 +48,118 @@
   </tstamp>
 
   <target name="check-catalina-home">
-    <fail unless="env.CATALINA_HOME">CATALINA_HOME environment variable must be set to a Tomcat directory before running this script</fail>
+    <fail unless="env.CATALINA_HOME">CATALINA_HOME environment variable must be set to a Tomcat directory before running
+      this script</fail>
   </target>
 
   <!-- Version for scripts to use -->
   <target name="version">
-    <echo message="Project: ${ant.project.name}"/>
+    <echo message="Project: ${ant.project.name}" />
     <loadfile srcfile="${src.dir}/com/zeroio/platform/ApplicationInfo.java" property="version">
       <filterchain>
         <linecontains>
-          <contains value="String VERSION ="/>
+          <contains value="String VERSION =" />
         </linecontains>
         <tokenfilter>
-<!--          public static final String VERSION = "20200323.10000";-->
-          <replacestring from="public static final String VERSION = &quot;" to=""/>
-          <replacestring from="&quot;;" to=""/>
+          <!--          public static final String VERSION = "20200323.10000";-->
+          <replacestring from="public static final String VERSION = &quot;" to="" />
+          <replacestring from="&quot;;" to="" />
           <trim />
         </tokenfilter>
       </filterchain>
     </loadfile>
     <fail unless="version">The version string could not be detected in ApplicationInfo.java</fail>
-    <echo message="Version: ${version}"/>
+    <echo message="Version: ${version}" />
     <echo message="Date: ${start.val}" />
   </target>
 
   <target name="clean">
     <delete dir="${build.dir}" />
     <delete dir="${target.dir}" />
-    <delete dir="${out.dir}/exploded/work"/>
+    <delete dir="${out.dir}/exploded/work" />
   </target>
 
   <!-- Creates build directories -->
   <target name="prepare" depends="version">
-    <mkdir dir="${build.dir}"/>
-    <mkdir dir="${target.dir}"/>
+    <mkdir dir="${build.dir}" />
+    <mkdir dir="${target.dir}" />
     <tstamp />
     <path id="web.classpath">
       <fileset dir="${lib.compile.dir}">
-        <include name="**/*.jar"/>
+        <include name="**/*.jar" />
       </fileset>
       <fileset dir="${lib.dir}">
-        <include name="**/*.jar"/>
+        <include name="**/*.jar" />
       </fileset>
     </path>
     <path id="test.classpath">
       <fileset dir="${lib.test.dir}">
-        <include name="**/*.jar"/>
+        <include name="**/*.jar" />
       </fileset>
     </path>
   </target>
 
   <target name="build" depends="package">
-    <echo message="Production .war: ${target.dir}/${project}.war"/>
+    <echo message="Production .war: ${target.dir}/${project}.war" />
   </target>
 
   <!-- Compiles the source code -->
   <target name="compile" depends="prepare">
     <!-- Compile Java source code -->
     <javac srcdir="${src.dir}" release="${jdk}"
-           destdir="${build.dir}"
-           debug="on"
-           debuglevel="lines,vars,source"
-           deprecation="on"
-           optimize="on"
-           includeantruntime="false">
-      <compilerarg value="-proc:full"/>
+      destdir="${build.dir}"
+      debug="on"
+      debuglevel="lines,vars,source"
+      deprecation="on"
+      optimize="on"
+      includeantruntime="false">
+      <compilerarg value="-proc:full" />
       <classpath>
-        <path refid="web.classpath"/>
+        <path refid="web.classpath" />
       </classpath>
     </javac>
     <!-- Compile JSP files -->
     <path id="jsp.classpath">
-      <pathelement location="${build.dir}"/>
-      <path refid="web.classpath"/>
-      <fileset dir="${jee.lib.dir}" includes="*.jar"/>
+      <pathelement location="${build.dir}" />
+      <path refid="web.classpath" />
+      <fileset dir="${jee.lib.dir}" includes="*.jar" />
     </path>
     <uptodate property="jsp.dependencies.unchanged"
-              targetfile="${build.jsp.dir}/dependencies.checked">
-      <srcfiles dir="${web.dir}" includes="**/*.jspf,**/*.tag,**/*.tagx,**/*.tld,WEB-INF/web.xml"/>
+      targetfile="${build.jsp.dir}/dependencies.checked">
+      <srcfiles dir="${web.dir}" includes="**/*.jspf,**/*.tag,**/*.tagx,**/*.tld,WEB-INF/web.xml" />
     </uptodate>
-    <delete dir="${build.jsp.dir}/src" unless:set="jsp.dependencies.unchanged"/>
-    <delete dir="${build.jsp.dir}/classes" unless:set="jsp.dependencies.unchanged"/>
-    <mkdir dir="${build.jsp.dir}/src"/>
-    <mkdir dir="${build.jsp.dir}/classes"/>
+    <delete dir="${build.jsp.dir}/src" unless:set="jsp.dependencies.unchanged" />
+    <delete dir="${build.jsp.dir}/classes" unless:set="jsp.dependencies.unchanged" />
+    <mkdir dir="${build.jsp.dir}/src" />
+    <mkdir dir="${build.jsp.dir}/classes" />
     <copy todir="${build.jsp.dir}/webapp" preservelastmodified="true">
       <fileset dir="${web.dir}">
-        <include name="WEB-INF/**"/>
-        <include name="**/*.jsp"/>
-        <include name="**/*.jspx"/>
-        <include name="**/*.jspf"/>
-        <include name="**/*.tag"/>
-        <include name="**/*.tagx"/>
+        <include name="WEB-INF/**" />
+        <include name="**/*.jsp" />
+        <include name="**/*.jspx" />
+        <include name="**/*.jspf" />
+        <include name="**/*.tag" />
+        <include name="**/*.tagx" />
       </fileset>
     </copy>
     <jasper validateXml="false"
-            failOnError="true"
-            uriroot="${build.jsp.dir}/webapp"
-            classpath="${toString:jsp.classpath}"
-            webXmlFragment="${build.jsp.dir}/generated_web.xml"
-            addWebXmlMappings="true"
-            outputDir="${build.jsp.dir}/src" />
+      failOnError="true"
+      uriroot="${build.jsp.dir}/webapp"
+      classpath="${toString:jsp.classpath}"
+      webXmlFragment="${build.jsp.dir}/generated_web.xml"
+      addWebXmlMappings="true"
+      outputDir="${build.jsp.dir}/src" />
     <javac srcdir="${build.jsp.dir}/src"
-           destdir="${build.jsp.dir}/classes"
-           release="${jdk}"
-           debug="on" debuglevel="lines,vars,source"
-           deprecation="on" optimize="on"
-           includeantruntime="false">
-      <compilerarg value="-proc:full"/>
-      <classpath refid="jsp.classpath"/>
-      <include name="**/*.java"/>
+      destdir="${build.jsp.dir}/classes"
+      release="${jdk}"
+      debug="on" debuglevel="lines,vars,source"
+      deprecation="on" optimize="on"
+      includeantruntime="false">
+      <compilerarg value="-proc:full" />
+      <classpath refid="jsp.classpath" />
+      <include name="**/*.java" />
     </javac>
-    <touch file="${build.jsp.dir}/dependencies.checked"/>
+    <touch file="${build.jsp.dir}/dependencies.checked" />
   </target>
 
   <target name="jar" depends="compile">
@@ -168,215 +169,215 @@
   </target>
 
   <target name="package" depends="clean,jar">
-    <mkdir dir="${target.dir}/${project}"/>
-    <mkdir dir="${target.dir}/${project}/WEB-INF"/>
-    <mkdir dir="${target.dir}/${project}/WEB-INF/classes"/>
-    <mkdir dir="${target.dir}/${project}/WEB-INF/lib"/>
+    <mkdir dir="${target.dir}/${project}" />
+    <mkdir dir="${target.dir}/${project}/WEB-INF" />
+    <mkdir dir="${target.dir}/${project}/WEB-INF/classes" />
+    <mkdir dir="${target.dir}/${project}/WEB-INF/lib" />
     <!-- Project Jar -->
     <copy file="${target.dir}/${project}.jar"
-          todir="${target.dir}/${project}/WEB-INF/lib"
-          verbose="true"/>
+      todir="${target.dir}/${project}/WEB-INF/lib"
+      verbose="true" />
     <!-- Dependency Libraries -->
     <copy todir="${target.dir}/${project}/WEB-INF/lib" flatten="true" preservelastmodified="true">
       <fileset dir="${lib.dir}">
-        <include name="**/*.jar"/>
+        <include name="**/*.jar" />
       </fileset>
     </copy>
     <!-- Resources -->
     <copy todir="${target.dir}/${project}/WEB-INF">
       <fileset dir="${web.dir}/WEB-INF">
-        <include name="**/*.html"/>
-        <include name="**/*.xml"/>
-        <include name="**/*.yml"/>
-        <include name="**/*.tld"/>
-        <include name="**/*.json"/>
-        <include name="**/*.mmdb"/>
-        <include name="**/*.properties"/>
-        <include name="**/*.cedar"/>
-        <include name="**/*.cedarschema"/>
+        <include name="**/*.html" />
+        <include name="**/*.xml" />
+        <include name="**/*.yml" />
+        <include name="**/*.tld" />
+        <include name="**/*.json" />
+        <include name="**/*.mmdb" />
+        <include name="**/*.properties" />
+        <include name="**/*.cedar" />
+        <include name="**/*.cedarschema" />
       </fileset>
     </copy>
     <copy todir="${target.dir}/${project}/WEB-INF/classes">
       <fileset dir="${resources.dir}">
-        <include name="**/*.sql"/>
-        <include name="**/*.json"/>
+        <include name="**/*.sql" />
+        <include name="**/*.json" />
       </fileset>
     </copy>
     <!-- Production setting -->
     <copy file="${resources.dir}/database.production.properties"
-          tofile="${target.dir}/${project}/WEB-INF/classes/database.properties"
-          overwrite="true"
-          verbose="false"/>
+      tofile="${target.dir}/${project}/WEB-INF/classes/database.properties"
+      overwrite="true"
+      verbose="false" />
     <copy file="${resources.dir}/jobrunr.production.properties"
-          tofile="${target.dir}/${project}/WEB-INF/classes/jobrunr.properties"
-          overwrite="true"
-          verbose="false"/>
+      tofile="${target.dir}/${project}/WEB-INF/classes/jobrunr.properties"
+      overwrite="true"
+      verbose="false" />
     <copy file="${resources.dir}/simplelogger.production.properties"
-          tofile="${target.dir}/${project}/WEB-INF/classes/simplelogger.properties"
-          overwrite="true"
-          verbose="false"/>
+      tofile="${target.dir}/${project}/WEB-INF/classes/simplelogger.properties"
+      overwrite="true"
+      verbose="false" />
     <!-- Version string for scripts -->
     <echo file="${target.dir}/${project}/WEB-INF/VERSION" append="true">${version}</echo>
     <!-- Web -->
     <copy todir="${target.dir}/${project}">
       <fileset dir="${web.dir}">
-        <include name="robots.txt"/>
-        <include name="css/**"/>
-        <include name="fonts/**"/>
-        <include name="images/**"/>
-        <include name="javascript/**"/>
-        <present targetdir="${custom.dir}/webapp" present="srconly"/>
+        <include name="robots.txt" />
+        <include name="css/**" />
+        <include name="fonts/**" />
+        <include name="images/**" />
+        <include name="javascript/**" />
+        <present targetdir="${custom.dir}/webapp" present="srconly" />
       </fileset>
     </copy>
     <!-- META-INF context config -->
     <copy todir="${target.dir}/${project}/META-INF">
       <fileset dir="${web.dir}/META-INF">
-        <include name="context.xml"/>
+        <include name="context.xml" />
       </fileset>
     </copy>
     <!-- Custom Web App Content (optional) -->
     <copy todir="${target.dir}/${project}" preservelastmodified="true" overwrite="true" failonerror="false">
       <fileset dir="${custom.dir}/webapp">
-        <include name="favicon.ico"/>
-        <include name="css/**"/>
-        <include name="fonts/**"/>
-        <include name="images/**"/>
-        <include name="javascript/**"/>
+        <include name="favicon.ico" />
+        <include name="css/**" />
+        <include name="fonts/**" />
+        <include name="images/**" />
+        <include name="javascript/**" />
       </fileset>
     </copy>
     <copy file="${build.jsp.dir}/webapp/WEB-INF/web.xml"
-          tofile="${target.dir}/${project}/WEB-INF/web.xml"
-          overwrite="true"/>
+      tofile="${target.dir}/${project}/WEB-INF/web.xml"
+      overwrite="true" />
     <!-- JAR the JSPs -->
     <jar jarfile="${target.dir}/${project}/WEB-INF/lib/${project}-jsp.jar"
-         basedir="${build.jsp.dir}/classes" includes="**/*.class" />
+      basedir="${build.jsp.dir}/classes" includes="**/*.class" />
     <!-- Cleanup -->
     <delete includeemptydirs="true">
-      <fileset dir="${target.dir}/${project}"  >
+      <fileset dir="${target.dir}/${project}">
         <and>
-          <size value="0"/>
-          <type type="dir"/>
+          <size value="0" />
+          <type type="dir" />
         </and>
       </fileset>
     </delete>
     <!-- Create .war -->
     <war destfile="${target.dir}/${project}.war"
-         basedir="${target.dir}/${project}"
-         compress="true"
-         manifest="${base.dir}/src/main/webapp/META-INF/MANIFEST.MF"
-         webxml="${target.dir}/${project}/WEB-INF/web.xml"/>
+      basedir="${target.dir}/${project}"
+      compress="true"
+      manifest="${base.dir}/src/main/webapp/META-INF/MANIFEST.MF"
+      webxml="${target.dir}/${project}/WEB-INF/web.xml" />
     <!-- Create a checksum -->
-    <checksum file="${target.dir}/${project}.war" algorithm="SHA-256" fileext=".sha256" pattern="{0} *{1}"/>
+    <checksum file="${target.dir}/${project}.war" algorithm="SHA-256" fileext=".sha256" pattern="{0} *{1}" />
     <!-- Write out a version file to go with the .war -->
-    <echo file="${target.dir}/VERSION" message="${version}"/>
+    <echo file="${target.dir}/VERSION" message="${version}" />
   </target>
 
-  <target name="deploy" depends="webapp" />  
+  <target name="deploy" depends="webapp" />
 
   <target name="webapp" depends="check-catalina-home,compile">
     <!-- Prepare exploded webapp directory -->
     <tstamp>
       <format property="logs.cleanup.cutoff" pattern="MM/dd/yyyy hh:mm a" offset="-7" unit="day" />
     </tstamp>
-    <mkdir dir="${out.dir}/exploded/conf"/>
+    <mkdir dir="${out.dir}/exploded/conf" />
     <resourcecount property="exploded.conf.file.count">
-      <fileset dir="${out.dir}/exploded/conf" defaultexcludes="no"/>
+      <fileset dir="${out.dir}/exploded/conf" defaultexcludes="no" />
     </resourcecount>
     <condition property="skip.tomcat.conf.copy">
       <or>
         <not>
-          <equals arg1="${exploded.conf.file.count}" arg2="0"/>
+          <equals arg1="${exploded.conf.file.count}" arg2="0" />
         </not>
         <not>
-          <available file="${env.CATALINA_HOME}/conf" type="dir"/>
+          <available file="${env.CATALINA_HOME}/conf" type="dir" />
         </not>
       </or>
     </condition>
     <copy todir="${out.dir}/exploded/conf" preservelastmodified="true" unless:set="skip.tomcat.conf.copy">
-      <fileset dir="${env.CATALINA_HOME}/conf" erroronmissingdir="false"/>
+      <fileset dir="${env.CATALINA_HOME}/conf" erroronmissingdir="false" />
     </copy>
-    <mkdir dir="${out.dir}/exploded/logs"/>
+    <mkdir dir="${out.dir}/exploded/logs" />
     <delete>
       <fileset dir="${out.dir}/exploded/logs">
         <date datetime="${logs.cleanup.cutoff}" when="before" />
         <type type="file" />
       </fileset>
     </delete>
-    <mkdir dir="${out.dir}/exploded/work"/>
+    <mkdir dir="${out.dir}/exploded/work" />
     <!-- Each sync copies only changed files and removes stale ones, directly into the exploded dir -->
-    <mkdir dir="${exploded.dir}/WEB-INF/classes"/>
-    <mkdir dir="${exploded.dir}/WEB-INF/lib"/>
-    <mkdir dir="${exploded.dir}/WEB-INF/jsp"/>
+    <mkdir dir="${exploded.dir}/WEB-INF/classes" />
+    <mkdir dir="${exploded.dir}/WEB-INF/lib" />
+    <mkdir dir="${exploded.dir}/WEB-INF/jsp" />
     <!-- Project Classes and resources -->
     <sync todir="${exploded.dir}/WEB-INF/classes" overwrite="false" verbose="true">
       <fileset dir="${build.dir}">
-        <include name="**"/>
+        <include name="**" />
       </fileset>
       <fileset dir="${resources.dir}">
-        <include name="**/*.properties"/>
-        <include name="**/*.sql"/>
-        <exclude name="database.production.properties"/>
-        <exclude name="jobrunr.production.properties"/>
-        <exclude name="simplelogger.production.properties"/>
+        <include name="**/*.properties" />
+        <include name="**/*.sql" />
+        <exclude name="database.production.properties" />
+        <exclude name="jobrunr.production.properties" />
+        <exclude name="simplelogger.production.properties" />
       </fileset>
     </sync>
     <!-- Dependency Libraries -->
     <sync todir="${exploded.dir}/WEB-INF/lib" overwrite="false" verbose="true">
       <fileset dir="${lib.dir}">
-        <include name="*.jar"/>
+        <include name="*.jar" />
       </fileset>
     </sync>
     <!-- JSPs -->
     <sync todir="${exploded.dir}/WEB-INF/jsp" overwrite="false" verbose="true">
-      <fileset dir="${web.dir}/WEB-INF/jsp"/>
+      <fileset dir="${web.dir}/WEB-INF/jsp" />
     </sync>
     <!-- WEB-INF resources -->
     <sync todir="${exploded.dir}/WEB-INF" overwrite="false" verbose="true">
       <fileset dir="${web.dir}/WEB-INF">
-        <exclude name="jsp/**"/>
-        <include name="**/*.html"/>
-        <include name="**/*.json"/>
-        <include name="**/*.xml"/>
-        <include name="**/*.yaml"/>
-        <include name="**/*.yml"/>
-        <include name="**/*.tld"/>
-        <include name="**/*.mmdb"/>
-        <include name="**/*.properties"/>
-        <include name="**/*.cedar"/>
-        <include name="**/*.cedarschema"/>
+        <exclude name="jsp/**" />
+        <include name="**/*.html" />
+        <include name="**/*.json" />
+        <include name="**/*.xml" />
+        <include name="**/*.yaml" />
+        <include name="**/*.yml" />
+        <include name="**/*.tld" />
+        <include name="**/*.mmdb" />
+        <include name="**/*.properties" />
+        <include name="**/*.cedar" />
+        <include name="**/*.cedarschema" />
       </fileset>
       <preserveintarget>
-        <include name="classes/**"/>
-        <include name="lib/**"/>
-        <include name="jsp/**"/>
+        <include name="classes/**" />
+        <include name="lib/**" />
+        <include name="jsp/**" />
       </preserveintarget>
     </sync>
     <!-- Web -->
     <sync todir="${exploded.dir}" overwrite="false" verbose="true">
       <fileset dir="${web.dir}">
-        <include name="robots.txt"/>
-        <include name="css/**"/>
-        <include name="fonts/**"/>
-        <include name="images/**"/>
-        <include name="javascript/**"/>
+        <include name="robots.txt" />
+        <include name="css/**" />
+        <include name="fonts/**" />
+        <include name="images/**" />
+        <include name="javascript/**" />
       </fileset>
       <preserveintarget>
-        <include name="WEB-INF/**"/>
-        <include name="favicon.ico"/>
-        <include name="css/**"/>
-        <include name="fonts/**"/>
-        <include name="images/**"/>
-        <include name="javascript/**"/>
+        <include name="WEB-INF/**" />
+        <include name="favicon.ico" />
+        <include name="css/**" />
+        <include name="fonts/**" />
+        <include name="images/**" />
+        <include name="javascript/**" />
       </preserveintarget>
     </sync>
     <!-- Custom Web App Content (optional) -->
     <copy todir="${exploded.dir}" preservelastmodified="true" overwrite="false" failonerror="false">
       <fileset dir="${custom.dir}/webapp">
-        <include name="favicon.ico"/>
-        <include name="css/**"/>
-        <include name="fonts/**"/>
-        <include name="images/**"/>
-        <include name="javascript/**"/>
+        <include name="favicon.ico" />
+        <include name="css/**" />
+        <include name="fonts/**" />
+        <include name="images/**" />
+        <include name="javascript/**" />
       </fileset>
     </copy>
     <tstamp prefix="end">
@@ -386,37 +387,37 @@
   </target>
 
   <target name="checkstyle" depends="prepare">
-    <mkdir dir="${target.dir}/checkstyle"/>
+    <mkdir dir="${target.dir}/checkstyle" />
     <checkstyle config="checkstyle.xml"
-                failureProperty="checkstyle.failure"
-                failOnViolation="true">
-      <formatter type="xml" tofile="${target.dir}/checkstyle-result.xml"/>
-      <fileset dir="${src.dir}" includes="**/*.java"/>
+      failureProperty="checkstyle.failure"
+      failOnViolation="true">
+      <formatter type="xml" tofile="${target.dir}/checkstyle-result.xml" />
+      <fileset dir="${src.dir}" includes="**/*.java" />
     </checkstyle>
   </target>
 
   <target name="compile-test" depends="jar">
     <javac srcdir="${src.test.dir}" release="${jdk}"
-           destdir="${build.dir}"
-           debug="off"
-           deprecation="on"
-           optimize="on"
-           includeantruntime="false">
-      <compilerarg value="-proc:full"/>
+      destdir="${build.dir}"
+      debug="off"
+      deprecation="on"
+      optimize="on"
+      includeantruntime="false">
+      <compilerarg value="-proc:full" />
       <classpath>
-        <path refid="web.classpath"/>
-        <path refid="test.classpath"/>
+        <path refid="web.classpath" />
+        <path refid="test.classpath" />
       </classpath>
     </javac>
   </target>
 
   <target name="ci-test" depends="compile-test">
-    <mkdir dir="${target.dir}/test-reports"/>
+    <mkdir dir="${target.dir}/test-reports" />
     <junitlauncher haltOnFailure="false" printsummary="false" failureproperty="hasFailingTest">
       <classpath refid="web.classpath" />
       <classpath refid="test.classpath" />
       <classpath>
-        <pathelement location="${build.dir}"/>
+        <pathelement location="${build.dir}" />
       </classpath>
       <testclasses outputdir="${target.dir}/test-reports">
         <fileset dir="${build.dir}">
@@ -424,22 +425,22 @@
           <include name="**/*Tests.class" />
         </fileset>
         <fork>
-          <jvmarg value="-Djava.awt.headless=true"/>
+          <jvmarg value="-Djava.awt.headless=true" />
         </fork>
-        <listener type="legacy-brief" sendSysOut="true" sendSysErr="true"/>
+        <listener type="legacy-brief" sendSysOut="true" sendSysErr="true" />
       </testclasses>
     </junitlauncher>
     <fail if="hasFailingTest" />
   </target>
 
-  <target name="run-test-with-coverage" depends="compile-test">
-    <mkdir dir="${target.dir}/test-reports"/>
-    <jacoco:agent property="jacocoagent" destfile="${target.dir}/jacoco.exec"/>
+  <target name="run-tests-with-coverage" depends="compile-test">
+    <mkdir dir="${target.dir}/test-reports" />
+    <jacoco:agent property="jacocoagent" destfile="${target.dir}/jacoco.exec" />
     <junitlauncher haltOnFailure="true" printSummary="false">
       <classpath refid="web.classpath" />
       <classpath refid="test.classpath" />
       <classpath>
-        <pathelement location="${build.dir}"/>
+        <pathelement location="${build.dir}" />
       </classpath>
       <testclasses outputdir="${target.dir}/test-reports">
         <fileset dir="${build.dir}">
@@ -447,40 +448,46 @@
           <include name="**/*Tests.class" />
         </fileset>
         <fork>
-          <jvmarg value="${jacocoagent}"/>
-          <jvmarg value="-Djava.awt.headless=true"/>
+          <jvmarg value="${jacocoagent}" />
+          <jvmarg value="-Djava.awt.headless=true" />
         </fork>
-        <listener type="legacy-xml" sendSysOut="true" sendSysErr="true"/>
+        <listener type="legacy-xml" sendSysOut="true" sendSysErr="true" />
       </testclasses>
     </junitlauncher>
   </target>
 
-  <target name="test" depends="run-test-with-coverage">
+  <target name="test" depends="run-tests-with-coverage" />
+
+  <target name="test-reports" depends="test">
     <!-- Write a JaCoCo coverage report -->
     <jacoco:report>
       <executiondata>
-        <file file="${target.dir}/jacoco.exec"/>
+        <file file="${target.dir}/jacoco.exec" />
       </executiondata>
       <structure name="CMS Platform">
         <classfiles>
           <fileset dir="${build.dir}">
-            <exclude name="**/*Test*.class"/>
+            <exclude name="**/*Test*.class" />
           </fileset>
         </classfiles>
         <sourcefiles encoding="UTF-8">
-          <fileset dir="src/main/java"/>
+          <fileset dir="src/main/java" />
         </sourcefiles>
       </structure>
-      <html destdir="${target.dir}/coverage-reports/jacoco"/>
-      <xml destfile="${target.dir}/coverage-reports/jacoco/jacoco.xml"/>
+      <html destdir="${target.dir}/coverage-reports/jacoco" />
+      <xml destfile="${target.dir}/coverage-reports/jacoco/jacoco.xml" />
+      <check failonviolation="true">
+        <rule element="BUNDLE">
+          <limit counter="LINE" value="COVEREDRATIO" minimum="0.20" />
+        </rule>
+      </check>
     </jacoco:report>
-
     <!-- Write an HTML JUnit report -->
     <junitreport todir="${target.dir}/test-reports">
       <fileset dir="${target.dir}/test-reports">
-        <include name="TEST-*.xml"/>
+        <include name="TEST-*.xml" />
       </fileset>
-      <report format="frames" todir="${target.dir}/test-reports/html"/>
+      <report format="frames" todir="${target.dir}/test-reports/html" />
     </junitreport>
   </target>
 
@@ -526,7 +533,7 @@
     <exec executable="npm">
       <arg value="run" />
       <arg value="dependencies" />
-    </exec>    
+    </exec>
   </target>
 
   <target name="snyk">
