@@ -402,6 +402,7 @@
            deprecation="on"
            optimize="on"
            includeantruntime="false">
+      <compilerarg value="-proc:full"/>
       <classpath>
         <path refid="web.classpath"/>
         <path refid="test.classpath"/>
