@@ -30,9 +30,7 @@ import com.github.rajkowski.database.AutoStartTransaction;
 import com.github.rajkowski.database.CastType;
 import com.github.rajkowski.database.DB;
 import com.simisinc.platform.application.json.JsonCommand;
-import com.simisinc.platform.infrastructure.database.ConnectionPool;
 import com.zeroio.platform.domain.model.tenant.Workspace;
-import com.zeroio.platform.infrastructure.database.TenantDataSourceConfigurationStore;
 import com.zeroio.platform.infrastructure.database.WorkspaceContextManager;
 
 /**
@@ -271,12 +269,6 @@ public class WorkspaceRepository {
           LOG.error("Unable to allocate database " + poolDatabaseId + " for workspace " + id);
           return null;
         }
-        
-        // Seed the database... which needs a different connection, so it is commented out for now.
-        // if (!TenantSeedLoader.seedWorkspaceDatabase(tenantConnection??, id)) {
-        //   LOG.error("Unable to seed database for workspace " + id);
-        //   return null;
-        // }
 
         // Add the owner to Workspace Access Grants
         if (record.getOwnerId() > 0) {
@@ -292,14 +284,12 @@ public class WorkspaceRepository {
             return null;
           }
         }
-        
+
         // Finish the transaction
         transaction.commit();
         record.setId(id);
         record.setPoolDatabaseId(poolDatabaseId);
 
-        // Register the data source
-        ConnectionPool.registerConfiguredTenantDataSource(TenantDataSourceConfigurationStore.findByWorkspaceId(id));
         return record;
       } catch (SQLException se) {
         LOG.error("SQLException: " + se.getMessage());
