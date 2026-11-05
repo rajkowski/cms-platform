@@ -48,6 +48,7 @@ import com.simisinc.platform.application.cms.TextCommand;
 import com.simisinc.platform.application.cms.WebPageXmlLayoutCommand;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.WebPage;
+import com.simisinc.platform.domain.model.cms.WebPageHierarchy;
 import com.simisinc.platform.infrastructure.cache.CacheManager;
 import com.simisinc.platform.presentation.controller.DataConstants;
 import com.zeroio.platform.infrastructure.persistence.cms.PageFileRepository;
@@ -91,13 +92,15 @@ public class WebPageRepository {
         select.AND("has_redirect = ?", specification.getHasRedirect() == DataConstants.TRUE);
       }
       if (specification.getRegionTags() != null && specification.getRegionTags().length > 0) {
-        ConditionGroup condition = ConditionGroup.build("web_pages.tags", specification.getRegionTags(), ConditionGroup.ANY);
+        ConditionGroup condition = ConditionGroup.build("web_pages.tags", specification.getRegionTags(),
+            ConditionGroup.ANY);
         if (condition != null) {
           select.AND(condition.sql(), (Object[]) condition.values());
         }
       }
       if (specification.getFilterTags() != null && specification.getFilterTags().length > 0) {
-        ConditionGroup filterCondition = ConditionGroup.build("web_pages.tags", specification.getFilterTags(), ConditionGroup.ALL);
+        ConditionGroup filterCondition = ConditionGroup.build("web_pages.tags", specification.getFilterTags(),
+            ConditionGroup.ALL);
         if (filterCondition != null) {
           select.AND(filterCondition.sql(), (Object[]) filterCondition.values());
         }
@@ -181,6 +184,7 @@ public class WebPageRepository {
 
   /**
    * Retrieves all distinct tags from published web pages and items
+   * 
    * @return List of unique tag strings, sorted alphabetically
    */
   public static List<String> findAllDistinctTags() {
@@ -217,36 +221,61 @@ public class WebPageRepository {
       link = link.toLowerCase();
     }
 
-    Insert insert = DB.INSERT().INTO(TABLE_NAME)
-        .FIELD("link", link)
-        .FIELD("redirect_url", StringUtils.trimToNull(record.getRedirectUrl()))
-        .FIELD("page_title", StringUtils.trimToNull(record.getTitle()))
-        .FIELD("page_keywords", StringUtils.trimToNull(record.getKeywords()))
-        .FIELD("page_description", StringUtils.trimToNull(record.getDescription()))
-        .FIELD("draft", record.getDraft())
-        .FIELD("enabled", record.isEnabled())
-        .FIELD("searchable", record.isSearchable())
-        .FIELD("show_in_sitemap", record.getShowInSitemap())
-        .FIELD("created_by", record.getCreatedBy())
-        .FIELD("modified_by", record.getModifiedBy())
-        .FIELD("page_xml", record.getPageXml())
-        .FIELD("draft_page_xml", StringUtils.trimToNull(record.getDraftPageXml()))
-        .FIELD("comments", record.getComments())
-        .FIELD("page_image_url", record.getImageUrl())
-        .FIELD("has_redirect", StringUtils.trimToNull(record.getRedirectUrl()) != null)
-        .FIELD("sitemap_priority", record.getSitemapPriority())
-        .FIELD("sitemap_changefreq", StringUtils.trimToNull(record.getSitemapChangeFrequency()))
-        .FIELD_UNLESS_NULL("tags", JsonCommand.toJsonArray(record.getTags()), CastType.JSONB)
-        .FIELD_UNLESS_NULL("roles", JsonCommand.toJsonArray(record.getRoles()), CastType.JSONB)
-        .FIELD_UNLESS_NULL("groups", JsonCommand.toJsonArray(record.getGroups()), CastType.JSONB);
-    record.setId(insert.execute());
-    if (record.getId() == Insert.NO_GENERATED_KEY) {
-      LOG.error("An id was not set!");
-      return null;
+    // Use a transaction
+    try (Connection connection = DB.getConnection();
+        AutoStartTransaction a = new AutoStartTransaction(connection);
+        AutoRollback transaction = new AutoRollback(connection)) {
+
+      Insert insert = DB.INSERT().INTO(TABLE_NAME)
+          .FIELD("link", link)
+          .FIELD("redirect_url", StringUtils.trimToNull(record.getRedirectUrl()))
+          .FIELD("page_title", StringUtils.trimToNull(record.getTitle()))
+          .FIELD("page_keywords", StringUtils.trimToNull(record.getKeywords()))
+          .FIELD("page_description", StringUtils.trimToNull(record.getDescription()))
+          .FIELD("draft", record.getDraft())
+          .FIELD("enabled", record.isEnabled())
+          .FIELD("searchable", record.isSearchable())
+          .FIELD("show_in_sitemap", record.getShowInSitemap())
+          .FIELD("created_by", record.getCreatedBy())
+          .FIELD("modified_by", record.getModifiedBy())
+          .FIELD("page_xml", record.getPageXml())
+          .FIELD("draft_page_xml", StringUtils.trimToNull(record.getDraftPageXml()))
+          .FIELD("comments", record.getComments())
+          .FIELD("page_image_url", record.getImageUrl())
+          .FIELD("has_redirect", StringUtils.trimToNull(record.getRedirectUrl()) != null)
+          .FIELD("sitemap_priority", record.getSitemapPriority())
+          .FIELD("sitemap_changefreq", StringUtils.trimToNull(record.getSitemapChangeFrequency()))
+          .FIELD_UNLESS_NULL("tags", JsonCommand.toJsonArray(record.getTags()), CastType.JSONB)
+          .FIELD_UNLESS_NULL("roles", JsonCommand.toJsonArray(record.getRoles()), CastType.JSONB)
+          .FIELD_UNLESS_NULL("groups", JsonCommand.toJsonArray(record.getGroups()), CastType.JSONB);
+      record.setId(insert.execute(connection));
+
+      if (record.getId() == Insert.NO_GENERATED_KEY) {
+        LOG.error("An id was not set!");
+        return null;
+      }
+
+      // Attach this web page to the web page hierarchy at the bottom, with no parent
+      WebPageHierarchy webPageHierarchy = new WebPageHierarchy();
+      webPageHierarchy.setWebPageId(record.getId());
+      webPageHierarchy.setParentPageId(null);
+      webPageHierarchy.setSortOrder(WebPageHierarchyRepository.getNextSortOrder(connection, null));
+      webPageHierarchy.setDepth(0);
+      webPageHierarchy.setPath("/");
+      webPageHierarchy.setCreated(new Timestamp(System.currentTimeMillis()));
+      webPageHierarchy.setModified(new Timestamp(System.currentTimeMillis()));
+      WebPageHierarchyRepository.save(connection, webPageHierarchy);
+
+      // Finish the transaction
+      transaction.commit();
+
+      // A previously non-existing link will need to be invalidated
+      invalidateCachedPage(link);
+      return record;
+    } catch (SQLException se) {
+      LOG.error("SQLException: " + se.getMessage());
     }
-    // A previously non-existing link will need to be invalidated
-    invalidateCachedPage(link);
-    return record;
+    return null;
   }
 
   private static WebPage update(WebPage record) {
@@ -305,7 +334,10 @@ public class WebPageRepository {
     }
   }
 
-  /** Mark the web page as modified and move it to a findable state if content is published on the page */
+  /**
+   * Mark the web page as modified and move it to a findable state if content is
+   * published on the page
+   */
   public static void markAsModifiedAndFindable(WebPage record, long userId) {
     if (record.getId() == -1) {
       return;
