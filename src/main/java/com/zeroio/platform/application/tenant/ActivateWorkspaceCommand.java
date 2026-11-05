@@ -21,10 +21,15 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
 
+import com.github.rajkowski.database.DB;
 import com.simisinc.platform.application.admin.DatabaseCommand;
+import com.simisinc.platform.infrastructure.database.ConnectionPool;
+import com.simisinc.platform.infrastructure.persistence.SitePropertyRepository;
+import com.zaxxer.hikari.HikariDataSource;
 import com.zeroio.platform.application.cms.WorkspaceResolutionCommand;
 import com.zeroio.platform.domain.model.tenant.TenantDataSourceDatabase;
 import com.zeroio.platform.domain.model.tenant.Workspace;
+import com.zeroio.platform.infrastructure.database.TenantDataSourceConfigurationStore;
 import com.zeroio.platform.infrastructure.persistence.tenant.TenantDataSourceDatabaseRepository;
 import com.zeroio.platform.infrastructure.persistence.tenant.WorkspaceRepository;
 
@@ -93,25 +98,13 @@ public class ActivateWorkspaceCommand {
             }
         }
 
-        // Have Flyway check the database schema
-        if (!DatabaseCommand.checkPoolDatabase(database)) {
+        // A datasource is created for the selected database
+        HikariDataSource dataSource = DatabaseCommand.createDataSource(database);
+
+        // Have Flyway check/initialize/upgrade the database schema
+        if (!DatabaseCommand.initialize(dataSource)) {
             return "The selected database could not be verified.";
         }
-
-        // Set properties in the new site
-        // site.name
-        // site.url
-        // site.description
-
-        // system.configpath
-        // system.filepath
-        // system.customizations.filepath
-        // system.staticsite.filepath
-
-        // mail.from_name
-        // mail.from_address
-
-        // in the seed: site.online = true
 
         // Activate the workspace
         Workspace workspace = new Workspace();
@@ -128,12 +121,31 @@ public class ActivateWorkspaceCommand {
         }
         workspace.setCreatedBy(createdBy);
 
-        // Saves the workspace, maps the database, and marks it active/unavailable
-        // atomically
+        // Attempt to save and allocate the workspace
         Workspace saved = WorkspaceRepository.saveAndAllocateDatabase(workspace, poolDatabaseId);
         if (saved == null) {
             return "Workspace could not be saved. Please review the values and try again.";
         }
+
+        // Set essential properties for the new site
+        DB.withDataSource(dataSource, () -> {
+            SitePropertyRepository.saveValue("site.name", workspace.getName());
+            SitePropertyRepository.saveValue("site.url", workspace.getSiteUrl());
+            SitePropertyRepository.saveValue("site.description", workspace.getDescription());
+            SitePropertyRepository.saveValue("system.configpath", new File(fileRootDir, "config").getPath());
+            SitePropertyRepository.saveValue("system.filepath", new File(fileRootDir, "files").getPath());
+            SitePropertyRepository.saveValue("system.customizations.filepath",
+                    new File(fileRootDir, "customization").getPath());
+            SitePropertyRepository.saveValue("system.staticsite.filepath",
+                    new File(fileRootDir, "static-site").getPath());
+            SitePropertyRepository.saveValue("site.online", "true");
+        });
+
+        // @todo Load the seed data for the tenant database
+
+        // Register the data source so it can be used
+        ConnectionPool.registerConfiguredTenantDataSource(
+                TenantDataSourceConfigurationStore.findByWorkspaceId(saved.getId()));
 
         return null; // Return an error message if activation fails, otherwise return null
     }

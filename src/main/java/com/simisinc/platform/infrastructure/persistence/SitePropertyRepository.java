@@ -41,7 +41,7 @@ public class SitePropertyRepository {
 
   private static Log LOG = LogFactory.getLog(SitePropertyRepository.class);
 
-  private static String TABLE_NAME = "site_properties";
+  private static final String TABLE_NAME = "site_properties";
   private static String[] PRIMARY_KEY = new String[] { "property_id" };
 
   public static SiteProperty findByName(String name) {
@@ -100,6 +100,23 @@ public class SitePropertyRepository {
       return record;
     }
     return null;
+  }
+
+  /**
+   * Saves the value of a site property identified by its name.
+   *
+   * @param propertyName  the name of the property to update
+   * @param propertyValue the new value for the property
+   * @return {@code true} if the update was successful, {@code false} otherwise
+   */
+  public static boolean saveValue(String propertyName, String propertyValue) {
+    DB.UPDATE(TABLE_NAME)
+        .SET("property_value", StringUtils.trimToEmpty(propertyValue))
+        .WHERE("property_name = ?", propertyName)
+        .execute();
+    // @todo consider invalidating the cache for the property prefix in the caller
+    // (if necessary)
+    return true;
   }
 
   public static boolean saveAll(String prefix, List<SiteProperty> sitePropertyList) {

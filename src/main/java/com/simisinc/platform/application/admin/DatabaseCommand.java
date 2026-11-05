@@ -55,17 +55,43 @@ public class DatabaseCommand {
   private static final String UPGRADE_SQL_MIGRATION_PREFIX = "UPGRADE_";
   private static final String REPEATABLE_SQL_MIGRATION_PREFIX = "REPEAT_";
 
+  /**
+   * Creates a HikariDataSource for the given workspace database.
+   * 
+   * @param database the tenant database for which to create the data source
+   * @return a HikariDataSource configured for the given tenant database
+   */
+  public static HikariDataSource createDataSource(TenantDataSourceDatabase database) {
+    TenantDataSourceConfiguration configuration = TenantDataSourceConfigurationStore
+        .findByDatabaseId(database.getId());
+    HikariDataSource dataSource = TenantDataSourceRegistrar.createDataSource(configuration);
+    return dataSource;
+  }
+
+  /**
+   * Installs or upgrades every configured workspace database.
+   *
+   * @return {@code true} when every workspace database initialized successfully
+   */
+  public static boolean checkWorkspaceDatabases() {
+    boolean successful = true;
+    for (String workspaceId : ConnectionPool.getTenantRegistry().getTenantIds()) {
+      LOG.info("Initializing workspace database: " + workspaceId);
+      if (!initialize(ConnectionPool.getTenantRegistry().getDataSource(workspaceId))) {
+        successful = false;
+      }
+    }
+    return successful;
+  }
+
   public static boolean initialize() {
     return initialize(ConnectionPool.getApplicationDataSource());
   }
 
-  private static boolean initialize(DataSource dataSource) {
+  public static synchronized boolean initialize(DataSource dataSource) {
     // V (One-Time Version files)
     // R (Repeatable every upgrade)
     // Java-based: public class V1_2__Another_user implements JdbcMigration
-
-    // Show the JDBC url or database name
-    LOG.info("Initializing database with data source: " + dataSource.toString());
 
     if (!isInstalled(dataSource)) {
       LOG.info("New system detected, installing the database... " + ApplicationInfo.VERSION);
@@ -105,8 +131,9 @@ public class DatabaseCommand {
       LOG.info("Database installation completed");
     }
     {
-      // Mark each existing upgrade script as already applied since the install scripts
-      // already reflect the latest schema. This prevents them from running later.
+      // Mark each existing upgrade script as already applied since the install
+      // scripts already reflect the latest schema. This prevents them from running
+      // later.
       Flyway flyway = Flyway.configure()
           .table(UPGRADE_HISTORY_TABLE)
           .sqlMigrationPrefix(UPGRADE_SQL_MIGRATION_PREFIX)
@@ -125,38 +152,6 @@ public class DatabaseCommand {
       LOG.info("Marked " + result.migrationsExecuted + " existing upgrade script(s) as already applied");
     }
     return true;
-  }
-
-  /**
-   * Installs or upgrades every configured workspace database.
-   *
-   * @return {@code true} when every workspace database initialized successfully
-   */
-  public static boolean checkWorkspaceDatabases() {
-    boolean successful = true;
-    for (String workspaceId : ConnectionPool.getTenantRegistry().getTenantIds()) {
-      LOG.info("Initializing workspace database: " + workspaceId);
-      if (!initialize(ConnectionPool.getTenantRegistry().getDataSource(workspaceId))) {
-        successful = false;
-      }
-    }
-    return successful;
-  }
-
-  /**
-   * Installs or upgrades the specified workspace database.
-   * 
-   * @param database
-   * @return
-   */
-  public static synchronized boolean checkPoolDatabase(TenantDataSourceDatabase database) {
-    if (database == null) {
-      return false;
-    }
-    // Create a data source from the tenant database
-    TenantDataSourceConfiguration configuration = TenantDataSourceConfigurationStore.findByDatabaseId(database.getId());
-    HikariDataSource dataSource = TenantDataSourceRegistrar.createDataSource(configuration);
-    return initialize(dataSource);
   }
 
   private static boolean upgrade(DataSource dataSource) {
