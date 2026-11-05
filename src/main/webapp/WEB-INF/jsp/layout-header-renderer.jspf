@@ -23,6 +23,7 @@
     .modern-header[data-theme="dark"]{<c:forEach items="${fn:split(topbarVarMap, ',')}" var="topbarEntry"><c:set var="topbarPair" value="${fn:split(topbarEntry, '=')}" /><c:set var="topbarKey" value="theme.topbar.dark.${topbarPair[1]}" /><c:set var="topbarValue" value="${themePropertyMap[topbarKey]}" /><c:if test="${not empty topbarValue}">${topbarPair[0]}:<c:out value="${topbarValue}" />;</c:if></c:forEach>}
   </style>
   <header id="<c:out value='${headerRenderInfo.htmlId}'/>" class="modern-header<c:out value=' ${headerRenderInfo.cssClass}'/>" style="<c:out value='${headerRenderInfo.cssStyle}'/>" data-theme="<c:out value='${theme}'/>" data-header-modern data-header-sticky="${headerRenderInfo.sticky}" data-scroll-behavior="${headerRenderInfo.scrollBehavior}" data-scroll-threshold="${headerRenderInfo.scrollThreshold}">
+    <script>(function(){try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark'){document.currentScript.parentNode.dataset.theme=t;document.documentElement.dataset.theme=t;}}catch(e){}})();</script>
     <c:forEach items="${headerRenderInfo.sectionRenderInfoList}" var="section">
       <c:set var="sectionVisibility" value="${section.visibility eq 'small' ? 'show-for-small-only' : section.visibility eq 'medium' ? 'show-for-medium' : section.visibility eq 'large' ? 'show-for-large' : ''}" />
       <div<c:if test="${not empty section.htmlId}"> id="<c:out value='${section.htmlId}'/>"</c:if> class="<c:out value='${section.cssClass}'/> ${sectionVisibility}" style="<c:out value='${section.cssStyle}'/>">
