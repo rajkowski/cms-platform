@@ -436,7 +436,7 @@
   <target name="run-tests-with-coverage" depends="compile-test">
     <mkdir dir="${target.dir}/test-reports" />
     <jacoco:agent property="jacocoagent" destfile="${target.dir}/jacoco.exec" />
-    <junitlauncher haltOnFailure="true" printSummary="false">
+    <junitlauncher haltOnFailure="true" printSummary="true">
       <classpath refid="web.classpath" />
       <classpath refid="test.classpath" />
       <classpath>
@@ -451,7 +451,7 @@
           <jvmarg value="${jacocoagent}" />
           <jvmarg value="-Djava.awt.headless=true" />
         </fork>
-        <listener type="legacy-xml" sendSysOut="true" sendSysErr="true" />
+        <!-- <listener type="legacy-xml" sendSysOut="true" sendSysErr="false" /> -->
       </testclasses>
     </junitlauncher>
   </target>
