@@ -357,13 +357,13 @@ button.header-btn .btn-text {
 .header-btn.primary {
   background: var(--button-primary);
   border-color: var(--button-primary);
-  color: #ffffff;
+  color: var(--header-bg);
 }
 
 .header-btn.primary:hover {
   background: var(--button-primary-hover);
   border-color: var(--button-primary-hover);
-  color: #ffffff;
+  color: var(--header-bg);
 }
 
 .header-btn i {
@@ -407,8 +407,8 @@ button.header-btn .btn-text {
   border: 1px solid var(--header-border);
   border-right: none;
   border-radius: 6px 0 0 6px;
-  background: #ffffff;
-  color: #333333;
+  background: var(--search-input-bg);
+  color: var(--header-text);
   font-size: 0.9rem;
   outline: none;
   transition: width 0.3s ease, border-color 0.2s ease;
@@ -418,7 +418,7 @@ button.header-btn .btn-text {
 }
 
 .search-input::placeholder {
-  color: #777777;
+  color: color-mix(in srgb, var(--header-text) 60%, transparent);
 }
 
 .search-input:focus {
@@ -426,9 +426,19 @@ button.header-btn .btn-text {
   width: 280px;
 }
 
-[data-theme="dark"] .search-input {
-  color: #ffffff;
-  background: #2a2a2a;
+/* Beat framework input:focus background so text stays readable */
+.modern-header .search-form .search-input:focus,
+.modern-header .search-form .search-input:active,
+.modern-header .search-form .search-input:-webkit-autofill {
+  background-color: var(--search-input-bg);
+  color: var(--header-text);
+  -webkit-text-fill-color: var(--header-text);
+  box-shadow: none;
+}
+
+.modern-header:not([data-theme="dark"]) .search-input::-webkit-search-cancel-button {
+  filter: brightness(0) invert(1);
+  opacity: 0.75;
 }
 
 .search-submit {
@@ -1573,6 +1583,21 @@ a.cart-item {
 
 .region-option.global-option:has(input:checked) label i {
   color: #388e3c;
+}
+
+/* Header controls follow theme.topbar.* colors; fallbacks apply when not customized */
+.modern-header {
+  --header-border: color-mix(in srgb, var(--header-text) 20%, transparent);
+  --button-primary: var(--nav-hover-text, #2c3e50);
+  --button-primary-hover: color-mix(in srgb, var(--button-primary) 85%, var(--header-bg));
+  --button-active: var(--nav-active-text, #00B097);
+  --button-active-dropdown: var(--nav-active-text, #16a085);
+  --search-input-bg: color-mix(in srgb, var(--header-text) 1%, var(--header-bg));
+}
+
+.modern-header[data-theme="dark"] {
+  --button-primary: var(--nav-hover-text, #00B097);
+  --button-active: var(--nav-active-text, #00B097);
 }
 
 /* Header dropdown surfaces follow theme.topbar.menu.dropdown.* */
