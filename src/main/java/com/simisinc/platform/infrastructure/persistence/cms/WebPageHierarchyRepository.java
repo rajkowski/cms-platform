@@ -312,6 +312,9 @@ public class WebPageHierarchyRepository {
     if (StringUtils.isBlank(oldPath)) {
       return;
     }
+    if ("/".equals(oldPath)) {
+      throw new IllegalArgumentException("Cannot update descendants of an invalid root path");
+    }
     StringBuilder sql = new StringBuilder();
     sql.append("UPDATE ").append(TABLE_NAME).append(" ");
     sql.append("SET path = REPLACE(path, ?, ?), ");
@@ -340,7 +343,7 @@ public class WebPageHierarchyRepository {
    * @return true if records were deleted
    */
   public static boolean removeByPath(Connection connection, String path) {
-    if (StringUtils.isBlank(path)) {
+    if (StringUtils.isBlank(path) || "/".equals(path)) {
       return false;
     }
     try {
@@ -368,7 +371,7 @@ public class WebPageHierarchyRepository {
     if (hierarchyRecord != null && StringUtils.isNotBlank(hierarchyRecord.getPath())) {
       return removeByPath(connection, hierarchyRecord.getPath());
     }
-    return false;
+    return hierarchyRecord == null;
   }
 
   /**
