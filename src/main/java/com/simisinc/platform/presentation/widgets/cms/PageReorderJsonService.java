@@ -67,6 +67,9 @@ public class PageReorderJsonService extends GenericJsonService {
       if (pageId == -1) {
         return context.writeError("Page ID is required");
       }
+      if (pageId == targetPageId) {
+        return context.writeError("Cannot move a page relative to itself");
+      }
 
       // Load the page
       WebPage page = WebPageRepository.findById(pageId);
@@ -89,6 +92,10 @@ public class PageReorderJsonService extends GenericJsonService {
         }
 
         oldPath = currentRecord.getPath();
+        int oldDepth = currentRecord.getDepth();
+        if (oldPath == null || oldPath.isBlank() || "/".equals(oldPath)) {
+          return context.writeError("Page hierarchy path is invalid");
+        }
 
         // Determine placement based on position parameter
         if ("inside".equals(position) && targetPageId > 0) {
@@ -109,6 +116,9 @@ public class PageReorderJsonService extends GenericJsonService {
           WebPageHierarchy targetRecord = WebPageHierarchyRepository.findByPageId(connection, targetPageId);
           if (targetRecord == null) {
             return context.writeError("Target page not found in hierarchy");
+          }
+          if (targetRecord.getPath() != null && targetRecord.getPath().startsWith(oldPath)) {
+            return context.writeError("Cannot move a page beneath its own descendant");
           }
           newParentId = targetRecord.getParentPageId();
           newDepth = targetRecord.getDepth();
@@ -164,7 +174,7 @@ public class PageReorderJsonService extends GenericJsonService {
         }
 
         if (oldPath != null && !oldPath.equals(newPath)) {
-          WebPageHierarchyRepository.updateDescendantPaths(connection, oldPath, newPath, newDepth - currentRecord.getDepth(), pageId);
+          WebPageHierarchyRepository.updateDescendantPaths(connection, oldPath, newPath, newDepth - oldDepth, pageId);
         }
 
         transaction.commit();

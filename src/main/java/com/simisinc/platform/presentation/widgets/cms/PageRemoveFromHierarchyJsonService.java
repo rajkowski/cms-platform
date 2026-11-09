@@ -72,7 +72,9 @@ public class PageRemoveFromHierarchyJsonService extends GenericJsonService {
           return context.writeError("Page hierarchy record not found");
         }
 
-        WebPageHierarchyRepository.removeByPath(connection, record.getPath());
+        if (!WebPageHierarchyRepository.removeByPath(connection, record.getPath())) {
+          return context.writeError("Unable to remove the page from the hierarchy");
+        }
         transaction.commit();
       }
 
