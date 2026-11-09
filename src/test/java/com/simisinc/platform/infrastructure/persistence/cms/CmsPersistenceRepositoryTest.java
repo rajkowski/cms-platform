@@ -16,13 +16,18 @@
 package com.simisinc.platform.infrastructure.persistence.cms;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.sql.SQLException;
+import java.sql.Connection;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import com.github.rajkowski.database.DB;
 
 import com.simisinc.platform.domain.model.cms.Blog;
 import com.simisinc.platform.domain.model.cms.BlogPost;
@@ -582,6 +587,27 @@ class CmsPersistenceRepositoryTest {
     }
 
     @Test
+        void newPagesGetUniqueRootHierarchyPaths() {
+                WebPage first = new WebPage("/first", "<page />");
+                WebPage second = new WebPage("/second", "<page />");
+                assertNotNull(WebPageRepository.save(first));
+                assertNotNull(WebPageRepository.save(second));
+                assertEquals("/" + first.getId() + "/", WebPageHierarchyRepository.findByPageId(first.getId()).getPath());
+                assertEquals("/" + second.getId() + "/", WebPageHierarchyRepository.findByPageId(second.getId()).getPath());
+        }
+
+        @Test
+        void rootMarkerCannotRemoveOrRewriteTheHierarchy() throws SQLException {
+                RepositoryDatabaseTestSupport.executeSql("INSERT INTO web_page_hierarchy (web_page_id, path) VALUES (1, '/'), (2, '/2/')");
+                try (Connection connection = DB.getConnection()) {
+                        assertFalse(WebPageHierarchyRepository.removeByPath(connection, "/"));
+                        assertThrows(IllegalArgumentException.class, () -> WebPageHierarchyRepository.updateDescendantPaths(connection, "/", "/1/", 0, 1));
+                }
+                assertNotNull(WebPageHierarchyRepository.findByPageId(1));
+                assertNotNull(WebPageHierarchyRepository.findByPageId(2));
+        }
+
+        @Test
     void themeAndWebRepositories_findRecords() throws SQLException {
         RepositoryDatabaseTestSupport.executeSql(
                 "INSERT INTO themes (name, created_by, modified_by) VALUES ('default', 1, 1)");
