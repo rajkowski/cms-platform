@@ -303,6 +303,7 @@
         <type type="file" />
       </fileset>
     </delete>
+    <mkdir dir="${out.dir}/exploded/temp" />
     <mkdir dir="${out.dir}/exploded/work" />
     <!-- Each sync copies only changed files and removes stale ones, directly into the exploded dir -->
     <mkdir dir="${exploded.dir}/WEB-INF/classes" />
