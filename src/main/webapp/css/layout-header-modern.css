@@ -1056,6 +1056,12 @@ a.cart-item {
   color: var(--button-primary);
 }
 
+.ask-ai-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
 .ask-ai-close {
   background: none;
   border: none;
@@ -1090,10 +1096,40 @@ a.cart-item {
   gap: 1rem;
 }
 
+.ask-ai-previous summary {
+  color: var(--header-text);
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ask-ai-previous summary .ask-ai-clear {
+  position: static;
+  margin-left: auto;
+}
+
+.ask-ai-previous .ask-ai-message {
+  margin-top: 1rem;
+}
+
 .ask-ai-message {
   display: flex;
   gap: 0.75rem;
   animation: fadeIn 0.3s ease;
+}
+
+.ask-ai-message-user {
+  flex-direction: column;
+}
+
+.ask-ai-separator {
+  width: 100%;
+  margin: 0;
+  border: 0;
+  border-top: 1px solid var(--header-border);
 }
 
 @keyframes fadeIn {
@@ -1150,8 +1186,26 @@ a.cart-item {
 
 .ask-ai-message-text {
   flex: 1;
+  min-width: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   color: var(--header-text);
   line-height: 1.6;
+}
+
+.ask-ai-pending .fa-spinner {
+  margin-right: 0.5em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ask-ai-pending .fa-spinner {
+    animation: fa-spin 2s linear infinite !important;
+  }
+}
+
+.ask-ai-sources {
+  margin: 0.75rem 0 0 1.25rem;
+  white-space: normal;
 }
 
 .ask-ai-message-text strong {
@@ -1168,6 +1222,12 @@ a.cart-item {
   padding: 1.5rem;
   border-top: 1px solid var(--header-border);
   background: var(--header-bg);
+}
+
+.ask-ai-conversation-note {
+  margin: 0 0 0.75rem;
+  color: var(--header-text);
+  font-size: 0.8125rem;
 }
 
 .ask-ai-form {
@@ -1195,6 +1255,8 @@ a.cart-item {
 .ask-ai-input:focus {
   outline: none;
   border-color: var(--button-primary);
+  background-color: var(--nav-dropdown-bg, var(--dropdown-bg));
+  box-shadow: 0 0 0 2px var(--header-border);
 }
 
 .ask-ai-input:disabled {
@@ -1216,6 +1278,31 @@ a.cart-item {
   align-items: center;
   justify-content: center;
   transition: background-color 0.2s ease;
+}
+
+.ask-ai-clear {
+  position: sticky;
+  top: 0;
+  align-self: flex-end;
+  z-index: 1;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  color: var(--header-text);
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+
+.ask-ai-clear:hover {
+  background: var(--nav-hover-bg);
 }
 
 .ask-ai-send:hover:not(:disabled) {

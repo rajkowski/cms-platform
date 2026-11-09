@@ -42,6 +42,7 @@ public class UnifiedSearchSpecification extends Entity {
   private boolean contentManager = false;
   // Can see unapproved items
   private boolean dataManager = false;
+  private boolean includeSourceText = false;
 
   public UnifiedSearchSpecification() {
   }
@@ -124,5 +125,13 @@ public class UnifiedSearchSpecification extends Entity {
 
   public void setDataManager(boolean dataManager) {
     this.dataManager = dataManager;
+  }
+
+  public boolean isIncludeSourceText() {
+    return includeSourceText;
+  }
+
+  public void setIncludeSourceText(boolean includeSourceText) {
+    this.includeSourceText = includeSourceText;
   }
 }

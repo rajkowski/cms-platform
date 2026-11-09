@@ -1,6 +1,8 @@
 -- Copyright 2026 Matt Rajkowski (https://github.com/rajkowski), Licensed under the Apache License, Version 2.0 (the "License").
 -- One searchable row per page, blog post, calendar event, attachment and item, ranked together using each table's tsv
 
+DROP VIEW IF EXISTS unified_search;
+
 CREATE OR REPLACE VIEW unified_search AS
 SELECT
   'pages'::text AS result_type,
@@ -16,8 +18,8 @@ SELECT
   NULL::text AS file_type,
   NULL::text AS mime_type,
   NULL::text AS extension,
-  left(COALESCE(NULLIF(web_pages.page_text, ''), web_pages.page_description), 20000) AS headline_source,
-  web_pages.tsv AS tsv,
+  left(concat_ws(' ', COALESCE(NULLIF(web_pages.page_text, ''), web_pages.page_description), page_file_text.content), 20000) AS headline_source,
+  web_pages.tsv || to_tsvector('web_page_stem', COALESCE(page_file_text.content, '')) AS tsv,
   (COALESCE(web_pages.enabled, false) AND NOT COALESCE(web_pages.has_redirect, false)) AS is_listed,
   (COALESCE(web_pages.searchable, false) AND NOT COALESCE(web_pages.draft, false)) AS is_public,
   NULL::bigint AS folder_id,
@@ -26,8 +28,14 @@ SELECT
   NULL::bigint AS related_category_id,
   NULL::text AS category,
   NULL::jsonb AS custom_field_values,
-  web_pages.page_text AS text_content
+  concat_ws(' ', web_pages.page_text, page_file_text.content) AS text_content
 FROM web_pages
+LEFT JOIN LATERAL (
+  SELECT string_agg(concat_ws(' ', files.filename, files.title, files.summary, files.document_text), ' ') AS content
+  FROM web_page_files
+  JOIN files ON web_page_files.file_id = files.file_id
+  WHERE web_page_files.web_page_id = web_pages.web_page_id
+) page_file_text ON true
 UNION ALL
 SELECT
   'posts'::text,
@@ -126,8 +134,8 @@ SELECT
   NULL::text,
   NULL::text,
   NULL::text,
-  left(items.name || ' ' || COALESCE(items.keywords, '') || ' ' || COALESCE(items.summary_text, '') || ' ' || COALESCE(items.description_text, ''), 20000),
-  items.tsv,
+  left(concat_ws(' ', items.name, items.keywords, items.summary_text, items.description_text, item_file_text.content), 20000),
+  items.tsv || to_tsvector('title_stem', COALESCE(item_file_text.content, '')),
   true,
   (items.approved IS NOT NULL),
   NULL::bigint,
@@ -136,9 +144,14 @@ SELECT
   collections.collection_id::bigint,
   collections.name::text,
   items.field_values::jsonb,
-  items.description_text::text
+  concat_ws(' ', items.description_text, item_file_text.content)
 FROM items
 JOIN collections ON items.collection_id = collections.collection_id
+LEFT JOIN LATERAL (
+  SELECT string_agg(concat_ws(' ', item_files.filename, item_files.title, item_files.summary, item_files.document_text), ' ') AS content
+  FROM item_files
+  WHERE item_files.item_id = items.item_id
+) item_file_text ON true
 UNION ALL
 SELECT
   'resourceFiles'::text,

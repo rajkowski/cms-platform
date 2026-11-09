@@ -22,6 +22,7 @@ import java.sql.Timestamp;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -38,7 +39,9 @@ import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.domain.model.cms.SearchResult;
 import com.simisinc.platform.presentation.controller.DataConstants;
 import com.simisinc.platform.presentation.controller.UserSession;
+import com.zeroio.platform.application.ai.EmbeddingCommand;
 import com.zeroio.platform.domain.model.cms.SearchCriteria;
+import com.zeroio.platform.infrastructure.persistence.cms.SearchChunkRepository;
 
 /**
  * Searches pages, blog posts, calendar events, attachments and items with a single ranked query over each table's full text tsv
@@ -51,6 +54,16 @@ public class UnifiedSearchRepository {
   private static Log LOG = LogFactory.getLog(UnifiedSearchRepository.class);
 
   private static final String VIEW_NAME = "unified_search";
+
+  private static final int VECTOR_CHUNK_LIMIT = 200;
+  private static final int VECTOR_SOURCE_LIMIT = 10;
+  private static final double VECTOR_MAX_DISTANCE = 0.45;
+  private static final long VECTOR_RETRY_MILLIS = 5 * 60 * 1000L;
+  private static final Pattern SOURCE_KEY = Pattern.compile("[A-Za-z]+:\\d+");
+  private static final Pattern QUESTION_PREFIX = Pattern.compile(
+      "^(?:tell me about|tell me(?!\\s+about(?:\\s|$))|what is|what are|what was|what were|who is|who are|where is|where are|when is|when are|how do i|how can i|can you tell me about|can you tell me(?!\\s+about(?:\\s|$)))\\s+", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+  private static volatile long vectorRetryAfter = 0L;
+
   private static final String HEADLINE_OPTIONS = "StartSel=${b}, StopSel=${/b}, MaxWords=30, MinWords=15, ShortWord=3, HighlightAll=FALSE, MaxFragments=2, FragmentDelimiter=\" ... \"";
 
   public static List<SearchResult> findAll(UnifiedSearchSpecification specification, DataConstraints constraints) {
@@ -58,30 +71,46 @@ public class UnifiedSearchRepository {
       specification = new UnifiedSearchSpecification();
     }
     String term = StringUtils.trimToNull(specification.getSearchTerm());
+    String lexicalTerm = term == null ? "" : lexicalSearchTerm(term);
+
+    // Semantic matches, closest first, as an inline SQL array (keys are validated); null when vector search is unavailable
+    String vectorKeys = term == null ? null : findSemanticKeys(term);
 
     Select select = DB.SELECT("result_type", "result_id", "title", "description", "link", "related_category_id", "category", "tags", "modified",
         "modified_by", "file_name", "file_type", "mime_type", "extension");
+
+    if (specification.isIncludeSourceText()) {
+      select.SELECT("text_content AS source_text");
+    } else {
+      select.SELECT("CAST(NULL AS TEXT) AS source_text");
+    }
+
     if (term == null) {
       select.SELECT("CAST(NULL AS TEXT) AS highlight");
       select.SELECT("CAST(0 AS DOUBLE PRECISION) AS rank");
     } else {
-      String escaped = term.toLowerCase()
+      String escaped = lexicalTerm.toLowerCase(java.util.Locale.ROOT)
           .replace("!", "!!")
           .replace("%", "!%")
           .replace("_", "!_")
           .replace("[", "![");
       select.SELECT("ts_headline('english', headline_source, websearch_to_tsquery('english', ?), '" + HEADLINE_OPTIONS
-          + "') AS highlight", (Object[]) new Object[] { term });
+          + "') AS highlight", (Object[]) new Object[] { lexicalTerm });
       // ts_rank_cd normalization 32 keeps ranks from different tables comparable
+      String vectorBoost = vectorKeys == null ? "" : " + COALESCE(10.0 / (10 + array_position(" + vectorKeys + ", result_type || ':' || result_id)), 0.0)";
       select.SELECT("(ts_rank_cd(tsv, websearch_to_tsquery('english', ?), 32)"
           + " + CASE WHEN LOWER(title) LIKE ? ESCAPE '!' THEN 1.0 ELSE 0.0 END"
-          + " + CASE WHEN LOWER(title) LIKE ? ESCAPE '!' THEN 0.5 ELSE 0.0 END) AS rank",
-          (Object[]) new Object[] { term, escaped + "%", "%" + escaped + "%" });
+          + " + CASE WHEN LOWER(title) LIKE ? ESCAPE '!' THEN 0.5 ELSE 0.0 END" + vectorBoost + ") AS rank",
+          (Object[]) new Object[] { lexicalTerm, escaped + "%", "%" + escaped + "%" });
     }
     select.FROM(VIEW_NAME).WHERE();
 
     if (term != null) {
-      select.AND("tsv @@ websearch_to_tsquery('english', ?)", term);
+      if (vectorKeys == null) {
+        select.AND("tsv @@ websearch_to_tsquery('english', ?)", lexicalTerm);
+      } else {
+        select.AND("(tsv @@ websearch_to_tsquery('english', ?) OR (result_type || ':' || result_id) = ANY(" + vectorKeys + "))", lexicalTerm);
+      }
     }
     if (hasValues(specification.getTypes())) {
       select.AND("result_type = ANY(?)", specification.getTypes(), CastType.ARRAY);
@@ -94,6 +123,35 @@ public class UnifiedSearchRepository {
       select.PAGING(constraints);
     }
     return select.returnDataResult(UnifiedSearchRepository::buildRecord).getRecords();
+  }
+
+  static String lexicalSearchTerm(String term) {
+    String stripped = StringUtils.trimToNull(QUESTION_PREFIX.matcher(term).replaceFirst(""));
+    return stripped == null ? term : stripped;
+  }
+
+  /** Returns an inline ARRAY[...] of nearest source keys, or null so the keyword-only search is used */
+  private static String findSemanticKeys(String term) {
+    if (System.currentTimeMillis() < vectorRetryAfter || !EmbeddingCommand.isAvailable()) {
+      return null;
+    }
+    try {
+      float[] vector = EmbeddingCommand.embed(List.of(term)).get(0);
+      List<String> keys = SearchChunkRepository.findNearestSources(vector, EmbeddingCommand.MODEL_NAME, VECTOR_CHUNK_LIMIT, VECTOR_SOURCE_LIMIT, VECTOR_MAX_DISTANCE);
+      StringBuilder sb = new StringBuilder();
+      for (String key : keys) {
+        if (!SOURCE_KEY.matcher(key).matches()) {
+          continue;
+        }
+        sb.append(sb.length() == 0 ? "ARRAY['" : ",'").append(key).append("'");
+      }
+      return sb.length() == 0 ? null : sb.append("]").toString();
+    } catch (Exception e) {
+      // Missing pgvector or table, or a model failure: fall back to keywords for a while
+      LOG.warn("Vector search unavailable, using keyword search: " + e.getMessage());
+      vectorRetryAfter = System.currentTimeMillis() + VECTOR_RETRY_MILLIS;
+      return null;
+    }
   }
 
   private static boolean hasValues(String[] values) {
@@ -198,6 +256,7 @@ public class UnifiedSearchRepository {
       record.setType(type);
       record.setPageTitle(rs.getString("title"));
       record.setPageDescription(StringUtils.trimToNull(rs.getString("description")));
+      record.setSourceText(StringUtils.trimToNull(rs.getString("source_text")));
       record.setHighlight(StringUtils.trimToNull(rs.getString("highlight")));
       record.setRelatedCategoryId(rs.getLong("related_category_id"));
       record.setCategory(StringUtils.trimToNull(rs.getString("category")));

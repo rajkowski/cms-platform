@@ -353,6 +353,11 @@
       <version>33.2.0</version>
     </dependency>
     <dependency>
+      <groupId>dev.langchain4j</groupId>
+      <artifactId>langchain4j-embeddings</artifactId>
+      <version>1.23.0-beta33</version>
+    </dependency>
+    <dependency>
       <groupId>org.thymeleaf</groupId>
       <artifactId>thymeleaf</artifactId>
       <version>3.1.5.RELEASE</version>

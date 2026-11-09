@@ -35,6 +35,7 @@ public class SearchResult extends Entity {
   private String highlight = null;
   private String pageTitle = null;
   private String pageDescription = null;
+  private String sourceText = null;
   private String htmlExcerpt = null;
   private long relatedCategoryId = -1L;
   private String category = null;
@@ -88,6 +89,14 @@ public class SearchResult extends Entity {
 
   public void setPageDescription(String pageDescription) {
     this.pageDescription = pageDescription;
+  }
+
+  public String getSourceText() {
+    return sourceText;
+  }
+
+  public void setSourceText(String sourceText) {
+    this.sourceText = sourceText;
   }
 
   public String getHtmlExcerpt() {

@@ -32,7 +32,7 @@ docker buildx build \
   .
 ```
 
-## PostgreSQL Image with PostGIS
+## PostgreSQL Image with Extensions
 
 ```bash
 docker buildx build \

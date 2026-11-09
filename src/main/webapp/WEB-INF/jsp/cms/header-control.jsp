@@ -59,24 +59,24 @@
     <div id="askAIDrawer" class="ask-ai-drawer" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="askAIDrawerTitle" tabindex="-1">
       <div class="ask-ai-drawer-header">
         <h3 id="askAIDrawerTitle"><i class="${font:fas()} fa-brain" aria-hidden="true"></i> Ask AI Assistant</h3>
-        <button type="button" class="ask-ai-close" data-header-control="closeAskAI" aria-label="Close">
-          <i class="${font:fas()} fa-times" aria-hidden="true"></i>
-        </button>
+        <div class="ask-ai-header-actions">
+          <button type="button" class="ask-ai-close" data-header-control="closeAskAI" title="Close" aria-label="Close">
+            <i class="${font:fas()} fa-times" aria-hidden="true"></i>
+          </button>
+        </div>
       </div>
       <div class="ask-ai-drawer-content">
-        <div class="ask-ai-messages" id="askAIMessages">
-          <div class="ask-ai-message ask-ai-message-system">
-            <div class="ask-ai-message-icon"><i class="${font:fas()} fa-info-circle" aria-hidden="true"></i></div>
-            <div class="ask-ai-message-text">
-              <strong>AI Assistant Not Connected</strong>
-              <p>The AI assistant service is currently not configured. Please contact your administrator to enable this feature.</p>
-            </div>
-          </div>
+        <div class="ask-ai-messages" id="askAIMessages" aria-live="polite" aria-relevant="additions">
+          <button type="button" class="ask-ai-clear" data-ask-ai-clear title="Clear chat" aria-label="Clear chat">
+            <i class="${font:fas()} fa-delete-left" aria-hidden="true"></i>
+          </button>
         </div>
         <div class="ask-ai-input-container">
-          <form class="ask-ai-form" data-ask-ai-form>
-            <textarea id="askAIInput" class="ask-ai-input" placeholder="Type your question here..." rows="3" disabled></textarea>
-            <button type="submit" class="ask-ai-send" disabled title="AI assistant not connected">
+          <p id="askAIConversationNote" class="ask-ai-conversation-note">Each message starts a new conversation. Previous messages are not included.</p>
+          <form class="ask-ai-form" data-ask-ai-form data-context-path="<c:out value='${pageContext.request.contextPath}'/>" data-user-id="<c:out value='${userSession.userId}' default='-1'/>" action="${pageContext.request.contextPath}/json/askAI" method="post">
+            <input type="hidden" name="token" value="<c:out value='${userSession.formToken}'/>" />
+            <textarea id="askAIInput" name="question" class="ask-ai-input" placeholder="Ask a question..." aria-label="Your question" aria-describedby="askAIConversationNote" maxlength="1000" rows="3" required></textarea>
+            <button type="submit" class="ask-ai-send" title="Send question" aria-label="Send question">
               <i class="${font:fas()} fa-paper-plane" aria-hidden="true"></i>
             </button>
           </form>
