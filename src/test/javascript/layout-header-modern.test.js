@@ -158,24 +158,44 @@ test('Ask AI control opens and closes its drawer with keyboard focus management'
   initialize('<button data-header-control="askAI" aria-controls="askAIDrawer" aria-expanded="false">Ask AI</button><div id="askAIDrawer" role="dialog" aria-hidden="true" tabindex="-1"><button data-header-control="closeAskAI">Close</button><form data-ask-ai-form><textarea></textarea><button type="submit">Send</button></form></div>');
   const trigger = document.querySelector('[data-header-control="askAI"]');
   const drawer = document.getElementById('askAIDrawer');
-  const close = drawer.querySelector('[data-header-control="closeAskAI"]');
+  const textarea = drawer.querySelector('textarea');
+  const messages = document.createElement('div');
+  messages.id = 'askAIMessages';
+  Object.defineProperty(messages, 'scrollHeight', { value: 500 });
+  drawer.appendChild(messages);
   expect(drawer.parentElement).toBe(document.body);
   trigger.click();
   expect(drawer.classList.contains('open')).toBe(true);
   expect(drawer.getAttribute('aria-hidden')).toBe('false');
   expect(trigger.getAttribute('aria-expanded')).toBe('true');
-  expect(document.activeElement).toBe(close);
+  expect(document.activeElement).toBe(textarea);
+  expect(messages.scrollTop).toBe(500);
+  textarea.click();
+  expect(drawer.classList.contains('open')).toBe(true);
   document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
   expect(drawer.classList.contains('open')).toBe(false);
   expect(drawer.getAttribute('aria-hidden')).toBe('true');
   expect(trigger.getAttribute('aria-expanded')).toBe('false');
   expect(document.activeElement).toBe(trigger);
+  trigger.click();
+  document.body.click();
+  expect(drawer.classList.contains('open')).toBe(false);
+  expect(trigger.getAttribute('aria-expanded')).toBe('false');
 });
 
-test('Ask AI drawer close button and form submit are handled without inline handlers', () => {
-  initialize('<button data-header-control="askAI" aria-expanded="false">Ask AI</button><div id="askAIDrawer" aria-hidden="true"><button data-header-control="closeAskAI">Close</button><form data-ask-ai-form><textarea></textarea><button type="submit">Send</button></form></div>');
+test('Ask AI submits a question and renders answers and safe sources as text', async () => {
+  initialize('<button data-header-control="askAI" aria-expanded="false">Ask AI</button><div id="askAIDrawer" aria-hidden="true"><button data-header-control="closeAskAI">Close</button><div id="askAIMessages"></div><form data-ask-ai-form data-context-path="/cms" action="/cms/json/askAI"><input name="token" value="test-token"><textarea name="question"></textarea><button type="submit">Send</button></form></div>');
+  const request = deferred();
+  fetch.mockReturnValue(request.promise);
   const trigger = document.querySelector('[data-header-control="askAI"]');
   const drawer = document.getElementById('askAIDrawer');
+  const page = document.createElement('div');
+  page.className = 'web-content';
+  page.innerHTML = '<p>Visible page content</p><p style="display:none">Hidden content</p><form>Private form text<input value="secret"></form><script>ignored</script>';
+  document.body.appendChild(page);
+  const outside = document.createElement('article');
+  outside.textContent = 'Outside page content';
+  document.body.appendChild(outside);
   trigger.click();
   drawer.querySelector('[data-header-control="closeAskAI"]').click();
   expect(drawer.classList.contains('open')).toBe(false);
@@ -185,6 +205,201 @@ test('Ask AI drawer close button and form submit are handled without inline hand
   drawer.querySelector('form').dispatchEvent(submit);
   expect(submit.defaultPrevented).toBe(true);
   expect(textarea.value).toBe('');
+  expect(textarea.disabled).toBe(true);
+  expect(fetch.mock.calls[0][0]).toBe('http://localhost/cms/json/askAI');
+  expect(fetch.mock.calls[0][1].body.get('token')).toBe('test-token');
+  expect(fetch.mock.calls[0][1].body.get('question')).toBe('Question');
+  expect(fetch.mock.calls[0][1].body.get('pageContext')).toBe('Visible page content');
+  expect(drawer.querySelector('.ask-ai-pending').textContent).toContain('Searching');
+  expect(drawer.querySelector('.ask-ai-pending .fa-spinner').className).toBe('fa-solid fa-spinner fa-spin');
+  request.resolve({ ok: true, json: async () => ({ status: 'ok', data: { answer: '<img src=x>', sources: [{ title: 'Source', link: '/page' }, { title: 'Bad', link: '/\\evil.test' }] } }) });
+  await settle();
+  expect(textarea.disabled).toBe(false);
+  expect(drawer.querySelector('.ask-ai-pending')).toBeNull();
+  expect(drawer.querySelector('.ask-ai-message-assistant').textContent).toContain('<img src=x>');
+  expect(drawer.querySelector('img')).toBeNull();
+  expect(drawer.querySelectorAll('.ask-ai-sources a')).toHaveLength(1);
+  expect(drawer.querySelector('.ask-ai-sources a').getAttribute('href')).toBe('/cms/page');
+});
+
+test('Ask AI submits on Enter but preserves Shift+Enter and composition', () => {
+  initialize('<div id="askAIDrawer"><div id="askAIMessages"></div><form data-ask-ai-form action="/json/askAI"><textarea name="question" required></textarea><button type="submit">Send</button></form></div>');
+  const textarea = document.querySelector('#askAIDrawer textarea');
+  const shiftEnter = new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true, bubbles: true, cancelable: true });
+  const composingEnter = new KeyboardEvent('keydown', { key: 'Enter', isComposing: true, bubbles: true, cancelable: true });
+  textarea.value = 'First line\nSecond line';
+  textarea.dispatchEvent(shiftEnter);
+  textarea.dispatchEvent(composingEnter);
+  expect(shiftEnter.defaultPrevented).toBe(false);
+  expect(composingEnter.defaultPrevented).toBe(false);
+  expect(fetch).not.toHaveBeenCalled();
+  const enter = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+  textarea.dispatchEvent(enter);
+  expect(enter.defaultPrevented).toBe(true);
+  expect(fetch).toHaveBeenCalledTimes(1);
+  expect(fetch.mock.calls[0][1].body.get('question')).toBe('First line\nSecond line');
+  expect(fetch.mock.calls[0][1].body.has('pageContext')).toBe(false);
+});
+
+test('Ask AI limits page context and excludes hidden or interactive content', () => {
+  initialize('<div id="askAIDrawer"><div id="askAIMessages"></div><form data-ask-ai-form action="/json/askAI"><textarea name="question"></textarea><button type="submit">Send</button></form></div>');
+  const page = document.createElement('div');
+  page.className = 'web-content';
+  page.innerHTML = '<div hidden>Hidden</div><div style="visibility:hidden">Invisible</div><nav>Navigation</nav><form>Form</form><p></p>';
+  page.querySelector('p').textContent = 'x'.repeat(13000);
+  document.body.appendChild(page);
+  document.querySelector('#askAIDrawer textarea').value = 'Question';
+  document.querySelector('#askAIDrawer form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+  expect(fetch.mock.calls[0][1].body.get('pageContext')).toBe('x'.repeat(12000));
+});
+
+test('Ask AI restores a failed question for retry', async () => {
+  initialize('<div id="askAIDrawer"><div id="askAIMessages"></div><form data-ask-ai-form action="/json/askAI"><textarea name="question"></textarea><button type="submit">Send</button></form></div>');
+  fetch.mockResolvedValue({ ok: false, json: async () => ({ status: 'error', error: 'AI unavailable' }) });
+  const drawer = document.getElementById('askAIDrawer');
+  const textarea = drawer.querySelector('textarea');
+  textarea.value = 'Question';
+  drawer.querySelector('form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+  await settle();
+  expect(textarea.value).toBe('Question');
+  expect(textarea.disabled).toBe(false);
+  expect(drawer.querySelector('#askAIMessages').textContent).toContain('AI unavailable');
+});
+
+test('Ask AI restores saved messages and safe sources after navigation', async () => {
+  const markup = '<div id="askAIDrawer"><button data-ask-ai-clear>Clear</button><div id="askAIMessages"></div><form data-ask-ai-form data-context-path="/cms" data-user-id="42" action="/cms/json/askAI"><textarea name="question"></textarea><button type="submit">Send</button></form></div>';
+  initialize(markup);
+  fetch.mockResolvedValue({ ok: true, json: async () => ({ status: 'ok', data: { answer: '<b>Answer</b>', sources: [{ title: 'Source', link: '/page' }, { title: 'Unsafe', link: '//evil.test' }, { title: 'Unsafe', link: '/\n/evil.test' }] } }) });
+  document.querySelector('#askAIDrawer textarea').value = 'Question';
+  document.querySelector('#askAIDrawer form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+  await settle();
+  initialize(markup);
+  const messages = document.querySelector('#askAIMessages');
+  expect(messages.querySelector('.ask-ai-message-user').textContent).toBe('Question');
+  expect(messages.querySelector('.ask-ai-message-assistant').textContent).toContain('<b>Answer</b>');
+  expect(messages.querySelector('b')).toBeNull();
+  expect(messages.querySelectorAll('.ask-ai-sources a')).toHaveLength(1);
+  expect(messages.querySelector('.ask-ai-sources a').getAttribute('href')).toBe('/cms/page');
+  initialize(markup.replace('data-user-id="42"', 'data-user-id="43"'));
+  expect(document.querySelector('#askAIMessages').textContent).toBe('');
+  initialize(markup);
+  document.querySelector('[data-ask-ai-clear]').click();
+  initialize(markup);
+  expect(document.querySelector('#askAIMessages').textContent).toBe('');
+});
+
+test('Ask AI separates exchanges in restored, collapsed, and new history', async () => {
+  localStorage.setItem('askAI::42', JSON.stringify([
+    { type: 'user', text: 'First question' },
+    { type: 'assistant', text: 'First answer' },
+    { type: 'user', text: 'Second question' },
+    { type: 'assistant', text: 'Second answer' }
+  ]));
+  initialize('<button data-header-control="askAI">Ask AI</button><div id="askAIDrawer"><div id="askAIMessages"><button data-ask-ai-clear>Clear</button></div><form data-ask-ai-form data-user-id="42"><textarea></textarea><button type="submit">Send</button></form></div>');
+  const messages = document.querySelector('#askAIMessages');
+  const questions = messages.querySelectorAll('.ask-ai-message-user');
+  expect(questions[0].querySelector('hr')).toBeNull();
+  expect(questions[1].firstElementChild.matches('hr.ask-ai-separator')).toBe(true);
+  document.querySelector('[data-header-control="askAI"]').click();
+  expect(messages.querySelector('.ask-ai-previous hr.ask-ai-separator')).not.toBeNull();
+  fetch.mockResolvedValue({ ok: true, json: async () => ({ status: 'ok', data: { answer: 'Third answer' } }) });
+  document.querySelector('#askAIDrawer textarea').value = 'Third question';
+  document.querySelector('#askAIDrawer form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+  await settle();
+  expect(messages.querySelectorAll('hr.ask-ai-separator')).toHaveLength(2);
+  expect(messages.querySelector(':scope > .ask-ai-message-user > hr.ask-ai-separator')).not.toBeNull();
+  document.querySelector('[data-ask-ai-clear]').click();
+  expect(messages.querySelector('hr')).toBeNull();
+});
+
+test('Ask AI positions a new answer at its beginning without scrolling the page', async () => {
+  initialize('<button data-header-control="askAI">Ask AI</button><div id="askAIDrawer"><div id="askAIMessages"></div><form data-ask-ai-form action="/json/askAI"><textarea name="question"></textarea><button type="submit">Send</button></form></div>');
+  document.querySelector('[data-header-control="askAI"]').click();
+  const messages = document.querySelector('#askAIMessages');
+  const input = document.querySelector('#askAIDrawer textarea');
+  const focus = jest.spyOn(input, 'focus');
+  Object.defineProperty(messages, 'scrollHeight', { value: 1800 });
+  jest.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function () {
+    if (this === messages) return { top: 100 };
+    if (this.classList.contains('ask-ai-message-assistant')) return { top: 600 - messages.scrollTop };
+    return { top: 200 - messages.scrollTop };
+  });
+  fetch.mockResolvedValue({ ok: true, json: async () => ({ status: 'ok', data: { answer: 'Long answer' } }) });
+  input.value = 'Question';
+  document.querySelector('#askAIDrawer form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+  await settle();
+  expect(messages.scrollTop).toBe(484);
+  expect(focus).toHaveBeenLastCalledWith({ preventScroll: true });
+});
+
+test('Ask AI collapses previous discussion on opening and keeps new responses visible', async () => {
+  localStorage.setItem('askAI::42', JSON.stringify([{ type: 'user', text: 'Earlier question' }, { type: 'assistant', text: 'Earlier answer', sources: [{ title: 'Source', link: '/page' }] }]));
+  initialize('<button data-header-control="askAI">Ask AI</button><div id="askAIDrawer"><button data-header-control="closeAskAI">Close</button><div id="askAIMessages"><button type="button" data-ask-ai-clear>Clear</button></div><form data-ask-ai-form data-user-id="42" action="/json/askAI"><textarea name="question"></textarea><button type="submit">Send</button></form></div>');
+  const trigger = document.querySelector('[data-header-control="askAI"]');
+  const drawer = document.querySelector('#askAIDrawer');
+  trigger.click();
+  const previous = drawer.querySelector('details.ask-ai-previous');
+  expect(previous.open).toBe(false);
+  expect(previous.querySelector('summary').firstChild.textContent).toBe('Previous discussion');
+  expect(previous.querySelector('summary [data-ask-ai-clear]')).not.toBeNull();
+  expect(previous.querySelectorAll('.ask-ai-message')).toHaveLength(2);
+  expect(previous.querySelector('a').getAttribute('href')).toBe('/page');
+  previous.open = true;
+  const request = deferred();
+  fetch.mockReturnValue(request.promise);
+  drawer.querySelector('textarea').value = 'New question';
+  drawer.querySelector('form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+  drawer.querySelector('[data-header-control="closeAskAI"]').click();
+  trigger.click();
+  expect(previous.open).toBe(false);
+  expect(previous.textContent).toContain('New question');
+  expect(drawer.querySelector('.ask-ai-pending').closest('details')).toBeNull();
+  request.resolve({ ok: true, json: async () => ({ status: 'ok', data: { answer: 'New answer' } }) });
+  await settle();
+  expect(drawer.querySelector('.ask-ai-message-assistant:last-child').closest('details')).toBeNull();
+  drawer.querySelector('[data-ask-ai-clear]').click();
+  expect(drawer.querySelector('.ask-ai-previous')).toBeNull();
+  expect(drawer.querySelector('#askAIMessages > [data-ask-ai-clear]')).not.toBeNull();
+  drawer.querySelector('[data-header-control="closeAskAI"]').click();
+  trigger.click();
+  expect(drawer.querySelector('.ask-ai-previous')).toBeNull();
+});
+
+test('Ask AI clear removes saved chat and ignores an in-flight answer', async () => {
+  const markup = '<div id="askAIDrawer"><div id="askAIMessages"><button type="button" data-ask-ai-clear>Clear</button></div><form data-ask-ai-form action="/json/askAI"><textarea name="question"></textarea><button type="submit">Send</button></form></div>';
+  initialize(markup);
+  expect(document.querySelector('#askAIMessages').contains(document.querySelector('[data-ask-ai-clear]'))).toBe(true);
+  expect(document.querySelector('[data-ask-ai-form]').contains(document.querySelector('[data-ask-ai-clear]'))).toBe(false);
+  const request = deferred();
+  fetch.mockReturnValue(request.promise);
+  const textarea = document.querySelector('#askAIDrawer textarea');
+  textarea.value = 'Question';
+  document.querySelector('#askAIDrawer form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+  textarea.value = 'Draft to keep';
+  document.querySelector('[data-ask-ai-clear]').click();
+  expect(textarea.disabled).toBe(false);
+  expect(textarea.value).toBe('Draft to keep');
+  expect(document.querySelectorAll('#askAIMessages .ask-ai-message')).toHaveLength(0);
+  expect(document.querySelector('#askAIMessages [data-ask-ai-clear]')).not.toBeNull();
+  request.resolve({ ok: true, json: async () => ({ status: 'ok', data: { answer: 'Late answer' } }) });
+  await settle();
+  initialize(markup);
+  expect(document.querySelectorAll('#askAIMessages .ask-ai-message')).toHaveLength(0);
+  expect(document.querySelector('#askAIMessages [data-ask-ai-clear]')).not.toBeNull();
+});
+
+test('Ask AI works when browser storage is unavailable', async () => {
+  jest.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('Denied'); });
+  jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('Denied'); });
+  jest.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => { throw new Error('Denied'); });
+  initialize('<div id="askAIDrawer"><button data-ask-ai-clear>Clear</button><div id="askAIMessages"></div><form data-ask-ai-form action="/json/askAI"><textarea name="question"></textarea><button type="submit">Send</button></form></div>');
+  fetch.mockResolvedValue({ ok: true, json: async () => ({ status: 'ok', data: { answer: 'Answer' } }) });
+  document.querySelector('#askAIDrawer textarea').value = 'Question';
+  document.querySelector('#askAIDrawer form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+  await settle();
+  expect(document.querySelector('#askAIMessages').textContent).toContain('Answer');
+  document.querySelector('[data-ask-ai-clear]').click();
+  expect(document.querySelector('#askAIMessages').textContent).toBe('');
 });
 
 test('theme controls work when browser storage access is denied', () => {

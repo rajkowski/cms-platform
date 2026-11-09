@@ -96,8 +96,8 @@ public class UnifiedSearchResultsWidget extends GenericWidget {
           SearchCriteria.RESOURCES, SearchCriteria.RESOURCE_FILES });
     }
     specification.setForUserId(context.getUserId());
-    specification.setContentManager(context.hasRole("admin") || context.hasRole("content-manager"));
-    specification.setDataManager(context.hasRole("admin") || context.hasRole("data-manager"));
+    // specification.setContentManager(context.hasRole("admin") || context.hasRole("content-manager"));
+    // specification.setDataManager(context.hasRole("admin") || context.hasRole("data-manager"));
     if (StringUtils.isNotBlank(searchCriteria.getQuery())) {
       specification.setSearchTerm(searchCriteria.getQuery());
     }
@@ -135,12 +135,22 @@ public class UnifiedSearchResultsWidget extends GenericWidget {
 
     for (SearchResult searchResult : searchResultList) {
       searchResult.setHtmlExcerpt(toHtmlExcerpt(searchResult.getHighlight()));
+      searchResult.setPageTitle(toPageTitle(searchResult));
     }
     context.getRequest().setAttribute("searchResultList", searchResultList);
 
     // Show the JSP
     context.setJsp(JSP);
     return context;
+  }
+
+  private static String toPageTitle(SearchResult searchResult) {
+    String pageTitle = searchResult.getPageTitle();
+    // if link is "/" and page title is empty, set title to "Home"
+    if ("/".equals(searchResult.getLink()) && (searchResult.getPageTitle() == null || searchResult.getPageTitle().isEmpty())) {
+      pageTitle = "Home";
+    }
+    return pageTitle;
   }
 
   private static String toHtmlExcerpt(String highlight) {

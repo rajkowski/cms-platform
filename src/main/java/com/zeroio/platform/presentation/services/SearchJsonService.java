@@ -60,22 +60,7 @@ public class SearchJsonService extends GenericJsonService {
       String query = context.getRequest().getParameter("query");
 
       // Rank pages, posts, events, attachments and items together
-      UnifiedSearchSpecification specification = new UnifiedSearchSpecification();
-      specification.setSearchTerm(query);
-      specification.setForUserId(context.getUserSession().getUserId());
-      specification.setContentManager(context.hasRole("admin") || context.hasRole("content-manager"));
-      specification.setDataManager(context.hasRole("admin") || context.hasRole("data-manager"));
-
-      // Limit to region
-      if (LoadSitePropertyCommand.loadByNameAsBoolean("site.regions.enabled")) {
-        String userRegionCode = context.getUserSession().getSelectedRegionCode();
-        if (StringUtils.isNotBlank(userRegionCode)) {
-          Region region = RegionRepository.findByCode(userRegionCode);
-          if (region != null) {
-            specification.setRegionTags(region.getValues());
-          }
-        }
-      }
+      UnifiedSearchSpecification specification = createSpecification(context, query);
 
       // Set data constraints for the query (pagination)
       DataConstraints constraints = new DataConstraints(0, 20);
@@ -101,10 +86,15 @@ public class SearchJsonService extends GenericJsonService {
         if (content == null) {
           content = result.getPageDescription();
         }
+        // if link is "/" and page title is empty, set title to "Home"
+        String pageTitle = result.getPageTitle();
+        if ("/".equals(result.getLink()) && (result.getPageTitle() == null || result.getPageTitle().isEmpty())) {
+          pageTitle = "Home";
+        }
 
         json.append("{");
         json.append("\"type\":\"").append(JsonCommand.toJson(result.getTypeLabel())).append("\",");
-        json.append("\"title\":\"").append(JsonCommand.toJson(result.getPageTitle())).append("\",");
+        json.append("\"title\":\"").append(JsonCommand.toJson(pageTitle)).append("\",");
         json.append("\"link\":\"").append(JsonCommand.toJson(result.getLink())).append("\",");
         json.append("\"lastModified\":").append(lastModified != null ? "\"" + JsonCommand.toJson(lastModified) + "\"" : "null")
             .append(",");
@@ -117,7 +107,8 @@ public class SearchJsonService extends GenericJsonService {
         }
         if (result.getCategory() != null) {
           json.append(",\"category\":\"").append(JsonCommand.toJson(result.getCategory())).append("\"");
-          json.append(",\"headerColorCSS\":\"").append(JsonCommand.toJson(CollectionCommand.headerColorCSS(result.getRelatedCategoryId()))).append("\"");
+          json.append(",\"headerColorCSS\":\"")
+              .append(JsonCommand.toJson(CollectionCommand.headerColorCSS(result.getRelatedCategoryId()))).append("\"");
         }
         if (result.getTags() != null && result.getTags().length > 0) {
           json.append(",\"tags\":[");
@@ -143,5 +134,23 @@ public class SearchJsonService extends GenericJsonService {
       context.setJson("{\"status\":\"error\",\"error\":{\"title\":\"Failed to fetch results\"}}");
       return context;
     }
+  }
+
+  static UnifiedSearchSpecification createSpecification(JsonServiceContext context, String query) {
+    UnifiedSearchSpecification specification = new UnifiedSearchSpecification();
+    specification.setSearchTerm(query);
+    specification.setForUserId(context.getUserSession().getUserId());
+    // specification.setContentManager(context.hasRole("admin") || context.hasRole("content-manager"));
+    // specification.setDataManager(context.hasRole("admin") || context.hasRole("data-manager"));
+    if (LoadSitePropertyCommand.loadByNameAsBoolean("site.regions.enabled")) {
+      String userRegionCode = context.getUserSession().getSelectedRegionCode();
+      if (StringUtils.isNotBlank(userRegionCode)) {
+        Region region = RegionRepository.findByCode(userRegionCode);
+        if (region != null) {
+          specification.setRegionTags(region.getValues());
+        }
+      }
+    }
+    return specification;
   }
 }

@@ -43,8 +43,29 @@
       askAIDrawer.setAttribute('aria-hidden', String(!open));
       if (askAITrigger) askAITrigger.setAttribute('aria-expanded', String(open));
       if (open) {
-        const closeButton = askAIDrawer.querySelector('[data-header-control="closeAskAI"]');
-        if (closeButton) closeButton.focus();
+        const messages = askAIDrawer.querySelector('#askAIMessages');
+        const input = askAIDrawer.querySelector('textarea');
+        if (messages) {
+          let previous = messages.querySelector('.ask-ai-previous');
+          const completed = Array.from(messages.children).filter(element => element.classList.contains('ask-ai-message') && !element.querySelector('.ask-ai-pending'));
+          if (completed.length && !previous) {
+            previous = document.createElement('details');
+            previous.className = 'ask-ai-previous';
+            const summary = document.createElement('summary');
+            summary.textContent = 'Previous discussion';
+            previous.appendChild(summary);
+            messages.insertBefore(previous, completed[0]);
+          }
+          if (previous) {
+            const clear = messages.querySelector('[data-ask-ai-clear]');
+            if (clear) previous.querySelector('summary').appendChild(clear);
+            completed.forEach(message => previous.appendChild(message));
+            previous.open = false;
+          }
+        }
+        if (messages) messages.scrollTop = messages.scrollHeight;
+        if (input && !input.disabled) input.focus({ preventScroll: true });
+        else askAIDrawer.focus({ preventScroll: true });
       } else if (restoreFocus && askAITrigger) {
         askAITrigger.focus();
       }
@@ -56,10 +77,148 @@
       });
       const askAIForm = askAIDrawer.querySelector('[data-ask-ai-form]');
       if (askAIForm) {
-        askAIForm.addEventListener('submit', event => {
+        const askAIInput = askAIForm.querySelector('textarea');
+        const messages = askAIDrawer.querySelector('#askAIMessages');
+        const send = askAIForm.querySelector('[type="submit"]');
+        const clear = askAIDrawer.querySelector('[data-ask-ai-clear]');
+        const clearParent = clear && clear.parentNode;
+        const storageKey = 'askAI:' + (askAIForm.dataset.contextPath || '') + ':' + (askAIForm.dataset.userId || '-1');
+        let history = [];
+        let generation = 0;
+
+        function renderMessage(entry) {
+          const message = document.createElement('div');
+          message.className = 'ask-ai-message ask-ai-message-' + entry.type;
+          if (entry.type === 'user' && messages.querySelector('.ask-ai-message')) {
+            const separator = document.createElement('hr');
+            separator.className = 'ask-ai-separator';
+            message.appendChild(separator);
+          }
+          const content = document.createElement('div');
+          content.className = 'ask-ai-message-text';
+          content.textContent = entry.text;
+          message.appendChild(content);
+          if (Array.isArray(entry.sources)) {
+            const list = document.createElement('ul');
+            list.className = 'ask-ai-sources';
+            entry.sources.forEach(source => {
+              if (!source || typeof source.title !== 'string' || typeof source.link !== 'string' || !source.link.startsWith('/') || source.link.startsWith('//') || source.link.includes('\\') || /[\u0000-\u001f\u007f]/.test(source.link)) return;
+              const item = document.createElement('li');
+              const link = document.createElement('a');
+              link.href = (askAIForm.dataset.contextPath || '') + source.link;
+              link.textContent = source.title;
+              item.appendChild(link);
+              list.appendChild(item);
+            });
+            if (list.childElementCount) content.appendChild(list);
+          }
+          messages.appendChild(message);
+          messages.scrollTop += message.getBoundingClientRect().top - messages.getBoundingClientRect().top - messages.clientTop - 16;
+          return content;
+        }
+
+        function addMessage(entry) {
+          history.push(entry);
+          try { localStorage.setItem(storageKey, JSON.stringify(history)); } catch (error) { }
+          return renderMessage(entry);
+        }
+
+        function pageContext() {
+          const page = document.querySelector('div.web-content');
+          if (!page) return '';
+          const walker = document.createTreeWalker(page, NodeFilter.SHOW_TEXT);
+          const parts = [];
+          let length = 0;
+          while (walker.nextNode() && length < 12000) {
+            const node = walker.currentNode;
+            const parent = node.parentElement;
+            if (!parent || parent.closest('script, style, noscript, nav, form, [hidden], [aria-hidden="true"]')) continue;
+            let visible = true;
+            for (let element = parent; element && element !== page.parentElement; element = element.parentElement) {
+              const style = getComputedStyle(element);
+              if (style.display === 'none' || style.visibility === 'hidden' || style.visibility === 'collapse') {
+                visible = false;
+                break;
+              }
+            }
+            const text = visible ? node.textContent.trim() : '';
+            if (text) {
+              parts.push(text.slice(0, 12000 - length));
+              length += text.length + 1;
+            }
+          }
+          return parts.join('\n').slice(0, 12000);
+        }
+
+        if (messages) {
+          try {
+            const saved = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            if (Array.isArray(saved)) {
+              history = saved.filter(entry => entry && ['user', 'assistant', 'system'].includes(entry.type) && typeof entry.text === 'string');
+              history.forEach(renderMessage);
+            }
+          } catch (error) { }
+        }
+        if (clear) clear.addEventListener('click', event => {
           event.preventDefault();
-          const askAIInput = askAIForm.querySelector('textarea');
-          if (askAIInput && askAIInput.value.trim()) askAIInput.value = '';
+          event.stopPropagation();
+          generation++;
+          history = [];
+          try { localStorage.removeItem(storageKey); } catch (error) { }
+          if (messages) messages.querySelectorAll('.ask-ai-message').forEach(message => message.remove());
+          if (messages) messages.querySelectorAll('.ask-ai-previous').forEach(previous => previous.remove());
+          if (clearParent) clearParent.appendChild(clear);
+          if (askAIInput) {
+            askAIInput.disabled = false;
+            askAIInput.focus();
+          }
+          if (send) send.disabled = false;
+        });
+        if (askAIInput) {
+          askAIInput.addEventListener('keydown', event => {
+            if (event.key !== 'Enter' || event.shiftKey || event.isComposing || event.keyCode === 229) return;
+            event.preventDefault();
+            askAIForm.requestSubmit();
+          });
+        }
+        askAIForm.addEventListener('submit', async event => {
+          event.preventDefault();
+          const question = askAIInput && askAIInput.value.trim();
+          if (!question || !messages || !send || send.disabled) return;
+          const requestGeneration = generation;
+          addMessage({ text: question, type: 'user' });
+          askAIInput.value = '';
+          send.disabled = true;
+          askAIInput.disabled = true;
+          const pending = renderMessage({ text: 'Searching and preparing an answer...', type: 'system' });
+          pending.classList.add('ask-ai-pending');
+          const spinner = document.createElement('i');
+          spinner.className = 'fa-solid fa-spinner fa-spin';
+          spinner.setAttribute('aria-hidden', 'true');
+          pending.prepend(spinner);
+          try {
+            const data = new URLSearchParams(new FormData(askAIForm));
+            data.set('question', question);
+            const context = pageContext();
+            if (context) data.set('pageContext', context);
+            const response = await fetch(askAIForm.action, { method: 'POST', body: data, credentials: 'same-origin' });
+            const json = await response.json();
+            if (requestGeneration !== generation) return;
+            if (!response.ok || json.status !== 'ok') throw new Error(typeof json.error === 'string' ? json.error : 'Unable to answer your question.');
+            pending.parentElement.remove();
+            addMessage({ text: json.data.answer, type: 'assistant', sources: json.data.sources });
+          } catch (error) {
+            if (requestGeneration !== generation) return;
+            pending.parentElement.remove();
+            addMessage({ text: error.message || 'Unable to answer your question. Please try again.', type: 'system' });
+            askAIInput.value = question;
+          } finally {
+            if (requestGeneration === generation) {
+              send.disabled = false;
+              askAIInput.disabled = false;
+              if (askAIDrawer.classList.contains('open')) askAIInput.focus({ preventScroll: true });
+            }
+          }
         });
       }
     }
@@ -480,6 +639,9 @@
       });
     }
     document.addEventListener('click', event => {
+      if (askAIDrawer && askAIDrawer.classList.contains('open') && !askAIDrawer.contains(event.target) && (!askAITrigger || !askAITrigger.contains(event.target))) {
+        setAskAIDrawer(false, false);
+      }
       if (form && !form.contains(event.target)) closeSearch();
       if (account && !account.contains(event.target)) setMenu(account, false);
       if (cart && !cart.contains(event.target)) setMenu(cart, false);
@@ -516,7 +678,7 @@
         });
       }
       if (event.key === 'Tab' && askAIDrawer && askAIDrawer.classList.contains('open')) {
-        const controls = Array.from(askAIDrawer.querySelectorAll('button, input, a[href], select, textarea, [tabindex="0"]')).filter(element => !element.disabled && getComputedStyle(element).display !== 'none');
+        const controls = Array.from(askAIDrawer.querySelectorAll('button, input, a[href], select, textarea, summary, [tabindex="0"]')).filter(element => !element.disabled && getComputedStyle(element).display !== 'none' && (element.tagName === 'SUMMARY' || !element.closest('details:not([open])')));
         const first = controls[0];
         const last = controls[controls.length - 1];
         if (!first) { event.preventDefault(); askAIDrawer.focus(); }
