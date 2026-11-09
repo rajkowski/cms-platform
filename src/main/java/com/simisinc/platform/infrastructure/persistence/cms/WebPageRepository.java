@@ -261,7 +261,7 @@ public class WebPageRepository {
       webPageHierarchy.setParentPageId(null);
       webPageHierarchy.setSortOrder(WebPageHierarchyRepository.getNextSortOrder(connection, null));
       webPageHierarchy.setDepth(0);
-      webPageHierarchy.setPath("/");
+      webPageHierarchy.setPath(WebPageHierarchyRepository.buildPath("/", record.getId()));
       webPageHierarchy.setCreated(new Timestamp(System.currentTimeMillis()));
       webPageHierarchy.setModified(new Timestamp(System.currentTimeMillis()));
       WebPageHierarchyRepository.save(connection, webPageHierarchy);
@@ -430,7 +430,9 @@ public class WebPageRepository {
         AutoRollback transaction = new AutoRollback(connection)) {
       // Delete the references
       PageFileRepository.removeAll(connection, record);
+      // Remove the page from the hierarchy if it exists
       WebPageHierarchyRepository.remove(connection, record);
+      // Remove all versions of the page
       WebPageVersionRepository.removeAll(connection, record);
       // Delete the record
       DB.DELETE()
