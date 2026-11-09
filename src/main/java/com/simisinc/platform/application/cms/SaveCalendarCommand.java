@@ -78,7 +78,7 @@ public class SaveCalendarCommand {
     calendar.setDescription(calendarBean.getDescription());
     calendar.setColor(calendarBean.getColor());
     calendar.setCreatedBy(calendarBean.getCreatedBy());
-    calendar.setModifiedBy(calendarBean.getModifiedBy());
+    calendar.setModifiedBy(calendarBean.getModifiedBy() > -1 ? calendarBean.getModifiedBy() : calendarBean.getCreatedBy());
     calendar.setEnabled(calendarBean.getEnabled());
     return CalendarRepository.save(calendar);
   }
