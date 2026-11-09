@@ -34,6 +34,7 @@
   <widget name="visualHierarchyEditor" class="com.simisinc.platform.presentation.widgets.editor.VisualHierarchyEditorWidget" />
   <widget name="visualWebSyncEditor" class="com.simisinc.platform.presentation.widgets.editor.VisualWebSyncWidget" />
   <widget name="visualWorkflowEditor" class="com.simisinc.platform.presentation.widgets.editor.VisualWorkflowEditorWidget" />
+  <widget name="visualSchedulerEditor" class="com.simisinc.platform.presentation.widgets.editor.VisualSchedulerEditorWidget" />
   <widget name="visualCRMEditor" class="com.simisinc.platform.presentation.widgets.editor.VisualCRMEditorWidget" />
   <widget name="logo" class="com.zeroio.platform.presentation.widgets.cms.LogoWidget" />
   <widget name="copyright" class="com.simisinc.platform.presentation.widgets.cms.CopyrightWidget" />
