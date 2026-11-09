@@ -202,7 +202,7 @@
   display: flex;
   align-items: center;
   text-decoration: none;
-  color: var(--header-text);
+  color: var(--button-primary);
   font-size: 1.5rem;
   font-weight: 700;
   white-space: nowrap;
@@ -229,7 +229,7 @@
 }
 
 .header-logo:hover {
-  color: var(--button-primary);
+  color: var(--button-primary-hover);
   text-decoration: none;
 }
 
@@ -1220,6 +1220,15 @@ a.cart-item {
 
 .ask-ai-send:hover:not(:disabled) {
   background: var(--button-primary-hover);
+}
+
+[data-theme="dark"] .ask-ai-send {
+  background: #3a3a3a;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .ask-ai-send:hover:not(:disabled) {
+  background: #505050;
 }
 
 .ask-ai-send:disabled {
