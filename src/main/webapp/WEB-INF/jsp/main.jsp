@@ -572,8 +572,8 @@
         var menu = document.querySelector('[data-header-modern]') || document.getElementById('platform-menu');
         var footer = document.getElementById('platform-footer');
         var body = document.querySelector('.platform-body');
-        var menuH = menu ? menu.offsetHeight : 0;
-        var footerH = footer ? footer.offsetHeight : 0;
+        var menuH = menu ? Math.floor(menu.getBoundingClientRect().height) : 0;
+        var footerH = footer ? Math.floor(footer.getBoundingClientRect().height) : 0;
         var bodyMargin = 0;
         if (body) {
           var bodyStyle = window.getComputedStyle(body);
