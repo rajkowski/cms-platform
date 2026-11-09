@@ -15,6 +15,7 @@
  */
 package com.zeroio.platform.presentation.services;
 
+import java.io.File;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -46,6 +47,9 @@ import com.simisinc.platform.presentation.controller.PageRequest;
 import com.simisinc.platform.presentation.services.GenericJsonService;
 import com.zeroio.platform.domain.model.cms.SearchCriteria;
 
+import dev.langchain4j.model.scoring.ScoringModel;
+import dev.langchain4j.model.scoring.onnx.OnnxScoringModel;
+
 public class AskAIJsonService extends GenericJsonService {
   private static final long serialVersionUID = 1L;
   private static final Log LOG = LogFactory.getLog(AskAIJsonService.class);
@@ -56,6 +60,10 @@ public class AskAIJsonService extends GenericJsonService {
   private static final int PAGE_CONTEXT_LIMIT = 12000;
   private static final int SEARCH_CANDIDATE_LIMIT = 20;
   private static final int SEARCH_RESULT_LIMIT = 6;
+  private static final int RERANK_PASSAGE_LENGTH = 1200;
+  private static final int RERANK_PASSAGE_STEP = 1000;
+  private static final int RERANK_TEXT_LIMIT = 8000;
+  private static volatile ScoringModel scoringModel;
 
   @Override
   public JsonServiceContext post(JsonServiceContext context) {
@@ -110,7 +118,7 @@ public class AskAIJsonService extends GenericJsonService {
           results = UnifiedSearchRepository.findAll(specification, new DataConstraints(0, SEARCH_CANDIDATE_LIMIT));
         }
       }
-      results = prioritizeResults(results);
+      results = rerankResults(question, results);
       if (results.isEmpty() && StringUtils.isBlank(pageContext)) {
         return context.writeOk(MAPPER
             .writeValueAsString(Map.of("answer", "I couldn't find relevant content to answer that question.", "sources", List.of())));
@@ -202,6 +210,67 @@ public class AskAIJsonService extends GenericJsonService {
         .limit(SEARCH_RESULT_LIMIT)
         .collect(Collectors.toList());
   }
+
+  private static List<SearchResult> rerankResults(String question, List<SearchResult> results) {
+    String modelPath = StringUtils.trimToNull(System.getenv("CMS_RERANK_MODEL_PATH"));
+    if (modelPath == null || results.isEmpty()) {
+      return prioritizeResults(results);
+    }
+    File model = new File(modelPath, "model.onnx");
+    File tokenizer = new File(modelPath, "tokenizer.json");
+    if (!model.isFile() || !tokenizer.isFile()) {
+      LOG.warn("Reranking model files not found in " + modelPath);
+      return prioritizeResults(results);
+    }
+    try {
+      if (scoringModel == null) {
+        synchronized (AskAIJsonService.class) {
+          if (scoringModel == null) {
+            scoringModel = new OnnxScoringModel(model.getPath(), tokenizer.getPath());
+          }
+        }
+      }
+      return rerankResults(question, results, scoringModel);
+    } catch (RuntimeException | LinkageError exception) {
+      LOG.warn("Unable to rerank Ask AI results; using search ordering", exception);
+      return prioritizeResults(results);
+    }
+  }
+
+  static List<SearchResult> rerankResults(String question, List<SearchResult> results, ScoringModel model) {
+    try {
+      return scoreResults(question, results, model);
+    } catch (RuntimeException | LinkageError exception) {
+      LOG.warn("Unable to rerank Ask AI results; using search ordering", exception);
+      return prioritizeResults(results);
+    }
+  }
+
+  private static List<SearchResult> scoreResults(String question, List<SearchResult> results, ScoringModel model) {
+    List<ScoredResult> scored = new ArrayList<>(results.size());
+    for (SearchResult result : results) {
+      String text = StringUtils.substring(StringUtils.defaultString(result.getSourceText()), 0, RERANK_TEXT_LIMIT);
+      double bestScore = Double.NEGATIVE_INFINITY;
+      for (int offset = 0; offset < text.length(); offset += RERANK_PASSAGE_STEP) {
+        String passage = StringUtils.substring(text, offset, offset + RERANK_PASSAGE_LENGTH);
+        if (StringUtils.isNotBlank(passage)) {
+          Double score = model.score(passage, question).content();
+          if (score == null || !Double.isFinite(score)) {
+            throw new IllegalStateException("Invalid reranking score");
+          }
+          bestScore = Math.max(bestScore, score);
+        }
+        if (offset + RERANK_PASSAGE_LENGTH >= text.length()) {
+          break;
+        }
+      }
+      scored.add(new ScoredResult(result, bestScore));
+    }
+    return scored.stream().sorted(Comparator.comparingDouble((ScoredResult result) -> result.score()).reversed())
+      .limit(SEARCH_RESULT_LIMIT).map(result -> result.result()).collect(Collectors.toList());
+  }
+
+  private record ScoredResult(SearchResult result, double score) { }
 
   static String keywordQuery(String question) {
     return java.util.Arrays.stream(question.toLowerCase(java.util.Locale.ROOT).split("[^\\p{L}\\p{N}]+"))
