@@ -141,8 +141,12 @@
 
   <!-- Visual Workflow Editor group -->
   <component action="cms.visual-workflow-editor.access" group="visual-workflow-editor" type="WIDGET" />
-  <component action="cms.workflow.tasks" group="visual-workflow-editor" type="SERVICE" />
   <component action="cms.workflow.events" group="visual-workflow-editor" type="SERVICE" />
-  <component action="cms.workflow.task-history" group="visual-workflow-editor" type="SERVICE" />
+
+  <!-- Visual Scheduler Editor group -->
+  <component action="cms.visual-scheduler-editor.access" group="visual-scheduler-editor" type="WIDGET" />
+  <component action="cms.workflow.tasks" group="visual-scheduler-editor" type="SERVICE" />
+  <component action="cms.workflow.task-history" group="visual-scheduler-editor" type="SERVICE" />
+  <component action="cms.workflow.task-trigger" group="visual-scheduler-editor" type="SERVICE" />
 
 </components>

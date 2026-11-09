@@ -1,5 +1,5 @@
 // Permission policy for the Visual Workflow Editor feature group.
-// Covers workflow task and event management.
+// Covers event workflow management.
 // Grants the "access" action only to principals whose roles contain "admin".
 
 permit (

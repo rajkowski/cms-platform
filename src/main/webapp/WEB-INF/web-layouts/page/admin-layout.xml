@@ -1350,4 +1350,14 @@
     </section>
   </page>
 
+  <page name="/admin/visual-scheduler-editor" role="admin" title="Visual Scheduler Editor" class="full-page">
+    <section class="grid-x">
+      <column class="small-12 cell">
+        <widget name="visualSchedulerEditor">
+          <title>Visual Scheduler Editor</title>
+        </widget>
+      </column>
+    </section>
+  </page>
+
 </pages>

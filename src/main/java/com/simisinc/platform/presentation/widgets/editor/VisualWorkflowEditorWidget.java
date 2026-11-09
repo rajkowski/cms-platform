@@ -26,7 +26,7 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
 import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
- * Visual Workflow Editor Widget for viewing scheduled tasks and event workflows
+ * Visual Workflow Editor Widget for viewing event workflows
  *
  * @author matt rajkowski
  * @created 02/27/26 9:00 AM
@@ -54,12 +54,7 @@ public class VisualWorkflowEditorWidget extends GenericWidget {
     String returnPage = UrlCommand.getValidReturnPage(context.getParameter("returnPage"));
     context.getRequest().setAttribute("returnPage", returnPage);
 
-    // Determine the view mode (tasks or events)
-    String viewMode = context.getParameter("view");
-    if (StringUtils.isBlank(viewMode)) {
-      viewMode = "tasks";
-    }
-    context.getRequest().setAttribute("viewMode", viewMode);
+    context.getRequest().setAttribute("viewMode", "events");
 
     // Determine if a specific item is selected
     String selectedId = context.getParameter("id");

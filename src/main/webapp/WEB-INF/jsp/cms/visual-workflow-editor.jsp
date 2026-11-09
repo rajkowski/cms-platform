@@ -86,20 +86,8 @@
     <div id="workflow-library-panel">
       <div class="library-tabs-container">
         <ul class="tabs-nav">
-          <li><a href="#tasks-tab" class="${viewMode == 'tasks' ? 'active' : ''}">Tasks <span id="tasks-count" class="tab-count"></span></a></li>
           <li><a href="#events-tab" class="${viewMode == 'events' ? 'active' : ''}">Events <span id="events-count" class="tab-count"></span></a></li>
         </ul>
-
-        <!-- Tasks Tab -->
-        <div id="tasks-tab" class="tab-content ${viewMode == 'tasks' ? 'active' : ''}">
-          <div id="tasks-error" style="display: none;"></div>
-          <div id="tasks-empty" style="display: none;">
-            <p>No scheduled tasks available</p>
-          </div>
-          <ul id="tasks-list" class="workflow-list">
-            <!-- Tasks will be dynamically inserted here -->
-          </ul>
-        </div>
 
         <!-- Events Tab -->
         <div id="events-tab" class="tab-content ${viewMode == 'events' ? 'active' : ''}">
@@ -116,76 +104,6 @@
 
     <!-- Center Panel: Main View -->
     <div id="workflow-editor-canvas">
-      <!-- Tasks Overview (shown when Tasks tab active, no task selected) -->
-      <div id="tasks-overview" style="display: none;">
-        <!-- Stats Cards -->
-        <div class="workflow-stats-cards" id="stats-cards">
-          <div class="workflow-stat-card">
-            <div class="stat-value" id="stat-total">-</div>
-            <div class="stat-label"># of Jobs</div>
-          </div>
-          <div class="workflow-stat-card">
-            <div class="stat-value" id="stat-enqueued">-</div>
-            <div class="stat-label">Enqueued</div>
-          </div>
-          <div class="workflow-stat-card success-card">
-            <div class="stat-value" id="stat-succeeded">-</div>
-            <div class="stat-label">Succeeded</div>
-          </div>
-          <div class="workflow-stat-card danger-card">
-            <div class="stat-value" id="stat-failed">-</div>
-            <div class="stat-label">Failed</div>
-          </div>
-        </div>
-
-        <!-- Live Activity Feed -->
-        <div class="workflow-activity-section">
-          <div class="workflow-activity-header">
-            <span><i class="${font:far()} fa-circle-dot"></i> Live Activity</span>
-            <span id="activity-last-updated" class="activity-timestamp"></span>
-          </div>
-          <div id="activity-feed">
-            <p style="color: var(--editor-text-muted); font-size: 13px; padding: 12px;">Loading activity...</p>
-          </div>
-        </div>
-
-        <!-- Jobs Table -->
-        <div class="workflow-table-container">
-          <table class="workflow-table" id="jobs-table">
-            <thead>
-              <tr>
-                <th>Job ID</th>
-                <th>Job Name</th>
-                <th>Schedule (Cron)</th>
-                <th>Next Run</th>
-              </tr>
-            </thead>
-            <tbody id="jobs-table-body">
-              <!-- Rows inserted dynamically -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Task Detail (shown when a specific task is selected) -->
-      <div id="task-detail" style="display: none;">
-        <div class="detail-header">
-          <h5 id="task-detail-name"></h5>
-        </div>
-        <div class="detail-section">
-          <label class="detail-label">Job ID</label>
-          <div class="detail-value" id="task-detail-id"></div>
-        </div>
-        <div class="detail-section">
-          <label class="detail-label">Schedule (Cron)</label>
-          <div class="detail-value" id="task-detail-schedule"></div>
-        </div>
-        <div class="detail-section">
-          <label class="detail-label">Next Run</label>
-          <div class="detail-value" id="task-detail-next-run"></div>
-        </div>
-      </div>
-
       <!-- Events Overview (shown when Events tab active, no event selected) -->
       <div id="events-overview" style="display: none;">
         <div class="workflow-stats-cards">
@@ -226,7 +144,7 @@
       <div class="empty-canvas" id="workflow-empty-canvas">
         <i class="${font:far()} fa-diagram-project fa-3x margin-bottom-10"></i>
         <h5>Welcome to the Workflow Editor</h5>
-        <p>Select a task or event from the left panel to view details</p>
+        <p>Select an event from the left panel to view its workflow</p>
       </div>
     </div>
 
@@ -244,14 +162,7 @@
         <!-- Info Tab -->
         <div id="wf-info-tab" class="tab-content right-panel-tab-content active" data-tab="wf-info">
           <div id="wf-info-content">
-            <p style="color: var(--editor-text-muted); font-size: 14px;">Select a task or event to view its details</p>
-          </div>
-        </div>
-
-        <!-- History Tab -->
-        <div id="wf-history-tab" class="tab-content right-panel-tab-content" data-tab="wf-history">
-          <div id="wf-history-content">
-            <p style="color: var(--editor-text-muted); font-size: 14px;">Select a scheduled task to view recent run history</p>
+            <p style="color: var(--editor-text-muted); font-size: 14px;">Select an event to view its details</p>
           </div>
         </div>
       </div>

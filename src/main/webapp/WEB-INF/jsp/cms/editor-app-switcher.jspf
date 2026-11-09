@@ -66,16 +66,22 @@
       <i class="${font:far()} fa-file-lines"></i>
       <span>Pages</span>
     </a>
+    <c:if test="${activeApp == 'scheduler' || userSession.hasRole('admin')}">
+      <a href="${ctx}/admin/visual-scheduler-editor" class="editor-app-item ${activeApp == 'scheduler' ? 'active' : ''} confirm-exit" title="Scheduler">
+        <i class="${font:far()} fa-clock"></i>
+        <span>Scheduler</span>
+      </a>
+    </c:if>
+    <c:if test="${activeApp == 'workflow' || userSession.hasRole('admin')}">
+      <a href="${ctx}/admin/visual-workflow-editor" class="editor-app-item ${activeApp == 'workflow' ? 'active' : ''} confirm-exit" title="Workflows">
+        <i class="${font:far()} fa-diagram-project"></i>
+        <span>Workflow</span>
+      </a>
+    </c:if>
     <c:if test="${activeApp == 'sync' || userSession.hasRole('admin')}">
       <a href="${ctx}/admin/visual-web-sync" class="editor-app-item ${activeApp == 'sync' ? 'active' : ''} confirm-exit" title="Web Sync">
         <i class="${font:far()} fa-rotate"></i>
         <span>Web Sync</span>
-      </a>
-    </c:if>
-    <c:if test="${activeApp == 'workflow' || userSession.hasRole('admin')}">
-      <a href="${ctx}/admin/visual-workflow-editor" class="editor-app-item ${activeApp == 'workflow' ? 'active' : ''} confirm-exit" title="Workflow Editor">
-        <i class="${font:far()} fa-diagram-project"></i>
-        <span>Workflow</span>
       </a>
     </c:if>
   </div>

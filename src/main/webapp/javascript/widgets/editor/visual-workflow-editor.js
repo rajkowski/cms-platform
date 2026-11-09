@@ -364,17 +364,22 @@ class VisualWorkflowEditor {
   }
 
   showTasksOverview() {
-    document.getElementById('workflow-empty-canvas').style.display = 'none';
-    document.getElementById('tasks-overview').style.display = 'block';
-    document.getElementById('task-detail').style.display = 'none';
-    document.getElementById('events-overview').style.display = 'none';
-    document.getElementById('event-flowchart').style.display = 'none';
+    this.setDisplay('workflow-empty-canvas', 'none');
+    this.setDisplay('tasks-overview', 'block');
+    this.setDisplay('task-detail', 'none');
+    this.setDisplay('events-overview', 'none');
+    this.setDisplay('event-flowchart', 'none');
 
     const titleEl = document.getElementById('workflow-editor-title');
     if (titleEl) titleEl.textContent = 'Scheduled Tasks';
 
     this.startTasksAutoRefresh();
     this.startActivityRefresh();
+  }
+
+  setDisplay(id, display) {
+    const element = document.getElementById(id);
+    if (element) element.style.display = display;
   }
 
   startTasksAutoRefresh() {
@@ -397,11 +402,11 @@ class VisualWorkflowEditor {
   }
 
   showEventsOverview() {
-    document.getElementById('workflow-empty-canvas').style.display = 'none';
-    document.getElementById('tasks-overview').style.display = 'none';
-    document.getElementById('task-detail').style.display = 'none';
-    document.getElementById('events-overview').style.display = 'block';
-    document.getElementById('event-flowchart').style.display = 'none';
+    this.setDisplay('workflow-empty-canvas', 'none');
+    this.setDisplay('tasks-overview', 'none');
+    this.setDisplay('task-detail', 'none');
+    this.setDisplay('events-overview', 'block');
+    this.setDisplay('event-flowchart', 'none');
 
     const titleEl = document.getElementById('workflow-editor-title');
     if (titleEl) titleEl.textContent = 'Event Workflows';
@@ -457,11 +462,11 @@ class VisualWorkflowEditor {
     this.stopActivityRefresh();
 
     // Show flowchart in center
-    document.getElementById('workflow-empty-canvas').style.display = 'none';
-    document.getElementById('tasks-overview').style.display = 'none';
-    document.getElementById('task-detail').style.display = 'none';
-    document.getElementById('events-overview').style.display = 'none';
-    document.getElementById('event-flowchart').style.display = 'block';
+    this.setDisplay('workflow-empty-canvas', 'none');
+    this.setDisplay('tasks-overview', 'none');
+    this.setDisplay('task-detail', 'none');
+    this.setDisplay('events-overview', 'none');
+    this.setDisplay('event-flowchart', 'block');
 
     const titleEl = document.getElementById('workflow-editor-title');
     if (titleEl) titleEl.textContent = wf.name || wf.id;
