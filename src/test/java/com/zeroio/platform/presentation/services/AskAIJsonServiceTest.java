@@ -81,8 +81,8 @@ class AskAIJsonServiceTest {
       String prompt = requestBody.get().path("messages").get(1).path("content").asText();
       assertTrue(prompt.contains(fullContent));
       assertTrue(prompt.contains("What is the policy?"));
-      assertTrue(prompt.indexOf("Full content:") < prompt.indexOf("Current page (supplementary context):"));
-      assertTrue(requestBody.get().path("messages").get(0).path("content").asText().contains("do not mention that"));
+      assertTrue(prompt.indexOf("Full content:") < prompt.indexOf("Current page context:"));
+      assertTrue(requestBody.get().path("messages").get(0).path("content").asText().contains("do not mention it"));
     } finally {
       server.stop(0);
     }
@@ -330,7 +330,7 @@ class AskAIJsonServiceTest {
         service.post(context);
         verify(context).writeOk(contains("Page answer"));
         String prompt = requestBody.get().path("messages").get(1).path("content").asText();
-        assertTrue(prompt.contains("Current page (supplementary context):\nPage content"));
+        assertTrue(prompt.contains("Current page context:\nPage content"));
         assertFalse(prompt.contains("SHOULD NOT APPEAR"));
         assertTrue(requestBody.get().path("messages").get(0).path("content").asText().contains("untrusted data"));
       }

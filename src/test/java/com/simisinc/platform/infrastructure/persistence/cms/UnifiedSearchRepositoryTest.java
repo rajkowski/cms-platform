@@ -39,6 +39,14 @@ class UnifiedSearchRepositoryTest {
   }
 
   @Test
+  void expandsAttachmentsToIncludeResourceFiles() {
+    assertEquals(List.of(SearchCriteria.ATTACHMENTS, SearchCriteria.RESOURCE_FILES),
+        List.of(UnifiedSearchRepository.expandAttachmentTypes(new String[] { SearchCriteria.ATTACHMENTS })));
+    assertEquals(List.of(SearchCriteria.RESOURCE_FILES),
+        List.of(UnifiedSearchRepository.expandAttachmentTypes(new String[] { SearchCriteria.RESOURCE_FILES })));
+  }
+
+  @Test
   void combinesOriginalQuestionEmbeddingWithRelaxedLexicalQuery() throws Exception {
     String question = "tell me about the economic profile";
     float[] vector = { 0.1f };
@@ -52,8 +60,8 @@ class UnifiedSearchRepositoryTest {
         var embeddings = mockStatic(EmbeddingCommand.class);
         var chunks = mockStatic(SearchChunkRepository.class);
         var properties = mockStatic(LoadSitePropertyCommand.class)) {
-      database.when(() -> DB.SELECT("result_type", "result_id", "title", "description", "link", "related_category_id", "category", "tags", "modified",
-          "modified_by", "file_name", "file_type", "mime_type", "extension")).thenReturn(select);
+        database.when(() -> DB.SELECT("result_type", "result_id", "title", "description", "link", "related_category_id", "category", "tags",
+          "created", "modified", "modified_by", "file_name", "file_type", "mime_type", "extension", "custom_field_values")).thenReturn(select);
       embeddings.when(EmbeddingCommand::isAvailable).thenReturn(true);
       embeddings.when(() -> EmbeddingCommand.embed(List.of(question))).thenReturn(List.of(vector));
       chunks.when(() -> SearchChunkRepository.findNearestSources(vector, EmbeddingCommand.MODEL_NAME, 200, 10, 0.45)).thenReturn(List.of("pages:42"));
@@ -61,8 +69,8 @@ class UnifiedSearchRepositoryTest {
       UnifiedSearchRepository.findAll(specification, null);
 
       embeddings.verify(() -> EmbeddingCommand.embed(List.of(question)));
-      verify(select).AND("(tsv @@ (websearch_to_tsquery('english', ?) || CASE WHEN result_type = ? THEN websearch_to_tsquery('title_stem', ?) ELSE ''::tsquery END) OR (result_type || ':' || result_id) = ANY(ARRAY['pages:42']))",
-          "the economic profile", SearchCriteria.RESOURCES, "the economic profile OR the OR economic OR profile");
+        verify(select).AND("(tsv @@ websearch_to_tsquery('english', ?) OR (result_type || ':' || result_id) = ANY(ARRAY['pages:42']))",
+          "the economic profile");
     }
   }
 
@@ -77,14 +85,13 @@ class UnifiedSearchRepositoryTest {
     try (var database = mockStatic(DB.class);
         var embeddings = mockStatic(EmbeddingCommand.class);
         var properties = mockStatic(LoadSitePropertyCommand.class)) {
-      database.when(() -> DB.SELECT("result_type", "result_id", "title", "description", "link", "related_category_id", "category", "tags", "modified",
-          "modified_by", "file_name", "file_type", "mime_type", "extension")).thenReturn(select);
+        database.when(() -> DB.SELECT("result_type", "result_id", "title", "description", "link", "related_category_id", "category", "tags",
+          "created", "modified", "modified_by", "file_name", "file_type", "mime_type", "extension", "custom_field_values")).thenReturn(select);
       embeddings.when(EmbeddingCommand::isAvailable).thenReturn(false);
 
       UnifiedSearchRepository.findAll(specification, null);
 
-      verify(select).AND("(tsv @@ (websearch_to_tsquery('english', ?) || CASE WHEN result_type = ? THEN websearch_to_tsquery('title_stem', ?) ELSE ''::tsquery END))",
-          "the economic profile", SearchCriteria.RESOURCES, "the economic profile OR the OR economic OR profile");
+        verify(select).AND("(tsv @@ websearch_to_tsquery('english', ?))", "the economic profile");
     }
   }
 }
