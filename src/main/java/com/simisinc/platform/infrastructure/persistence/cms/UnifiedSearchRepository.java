@@ -61,7 +61,8 @@ public class UnifiedSearchRepository {
   private static final long VECTOR_RETRY_MILLIS = 5 * 60 * 1000L;
   private static final Pattern SOURCE_KEY = Pattern.compile("[A-Za-z]+:\\d+");
   private static final Pattern QUESTION_PREFIX = Pattern.compile(
-      "^(?:tell me about|tell me(?!\\s+about(?:\\s|$))|what is|what are|what was|what were|who is|who are|where is|where are|when is|when are|how do i|how can i|can you tell me about|can you tell me(?!\\s+about(?:\\s|$)))\\s+", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+      "^(?:tell me about|tell me(?!\\s+about(?:\\s|$))|what is|what are|what was|what were|who is|who are|where is|where are|when is|when are|how do i|how can i|can you tell me about|can you tell me(?!\\s+about(?:\\s|$)))\\s+",
+      Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
   private static volatile long vectorRetryAfter = 0L;
 
   private static final String HEADLINE_OPTIONS = "StartSel=${b}, StopSel=${/b}, MaxWords=30, MinWords=15, ShortWord=3, HighlightAll=FALSE, MaxFragments=2, FragmentDelimiter=\" ... \"";
@@ -76,7 +77,8 @@ public class UnifiedSearchRepository {
     // Semantic matches, closest first, as an inline SQL array (keys are validated); null when vector search is unavailable
     String vectorKeys = term == null ? null : findSemanticKeys(term);
 
-    Select select = DB.SELECT("result_type", "result_id", "title", "description", "link", "related_category_id", "category", "tags", "modified",
+    Select select = DB.SELECT("result_type", "result_id", "title", "description", "link", "related_category_id", "category", "tags",
+        "modified",
         "modified_by", "file_name", "file_type", "mime_type", "extension");
 
     if (specification.isIncludeSourceText()) {
@@ -97,7 +99,8 @@ public class UnifiedSearchRepository {
       select.SELECT("ts_headline('english', headline_source, websearch_to_tsquery('english', ?), '" + HEADLINE_OPTIONS
           + "') AS highlight", (Object[]) new Object[] { lexicalTerm });
       // ts_rank_cd normalization 32 keeps ranks from different tables comparable
-      String vectorBoost = vectorKeys == null ? "" : " + COALESCE(10.0 / (10 + array_position(" + vectorKeys + ", result_type || ':' || result_id)), 0.0)";
+      String vectorBoost = vectorKeys == null ? ""
+          : " + COALESCE(10.0 / (10 + array_position(" + vectorKeys + ", result_type || ':' || result_id)), 0.0)";
       select.SELECT("(ts_rank_cd(tsv, websearch_to_tsquery('english', ?), 32)"
           + " + CASE WHEN LOWER(title) LIKE ? ESCAPE '!' THEN 1.0 ELSE 0.0 END"
           + " + CASE WHEN LOWER(title) LIKE ? ESCAPE '!' THEN 0.5 ELSE 0.0 END" + vectorBoost + ") AS rank",
@@ -106,14 +109,11 @@ public class UnifiedSearchRepository {
     select.FROM(VIEW_NAME).WHERE();
 
     if (term != null) {
-      String resourceTerm = lexicalTerm + " OR " + lexicalTerm.replaceAll("\\s+", " OR ");
-      String lexicalMatch = "tsv @@ (websearch_to_tsquery('english', ?) || CASE WHEN result_type = ? THEN websearch_to_tsquery('title_stem', ?) ELSE ''::tsquery END)";
+      String lexicalMatch = "tsv @@ websearch_to_tsquery('english', ?)";
       if (vectorKeys == null) {
-        select.AND("(" + lexicalMatch + ")",
-            lexicalTerm, SearchCriteria.RESOURCES, resourceTerm);
+        select.AND("(" + lexicalMatch + ")", lexicalTerm);
       } else {
-        select.AND("(" + lexicalMatch + " OR (result_type || ':' || result_id) = ANY(" + vectorKeys + "))",
-            lexicalTerm, SearchCriteria.RESOURCES, resourceTerm);
+        select.AND("(" + lexicalMatch + " OR (result_type || ':' || result_id) = ANY(" + vectorKeys + "))", lexicalTerm);
       }
     }
     if (hasValues(specification.getTypes())) {
@@ -129,6 +129,24 @@ public class UnifiedSearchRepository {
     return select.returnDataResult(UnifiedSearchRepository::buildRecord).getRecords();
   }
 
+  /** Rebuilds the materialized index without blocking readers, only when a source table changed since the last refresh */
+  public static boolean refreshIfNeeded() throws SQLException {
+    try (java.sql.Connection connection = DB.getConnection();
+        java.sql.Statement statement = connection.createStatement()) {
+      // Cleared first so changes made during the refresh flag the next one
+      if (statement.executeUpdate("UPDATE unified_search_refresh SET dirty = false WHERE dirty") == 0) {
+        return false;
+      }
+      try {
+        statement.execute("REFRESH MATERIALIZED VIEW CONCURRENTLY unified_search_mv");
+      } catch (SQLException e) {
+        statement.executeUpdate("UPDATE unified_search_refresh SET dirty = true");
+        throw e;
+      }
+      return true;
+    }
+  }
+
   static String lexicalSearchTerm(String term) {
     String stripped = StringUtils.trimToNull(QUESTION_PREFIX.matcher(term).replaceFirst(""));
     return stripped == null ? term : stripped;
@@ -141,7 +159,8 @@ public class UnifiedSearchRepository {
     }
     try {
       float[] vector = EmbeddingCommand.embed(List.of(term)).get(0);
-      List<String> keys = SearchChunkRepository.findNearestSources(vector, EmbeddingCommand.MODEL_NAME, VECTOR_CHUNK_LIMIT, VECTOR_SOURCE_LIMIT, VECTOR_MAX_DISTANCE);
+      List<String> keys = SearchChunkRepository.findNearestSources(vector, EmbeddingCommand.MODEL_NAME, VECTOR_CHUNK_LIMIT,
+          VECTOR_SOURCE_LIMIT, VECTOR_MAX_DISTANCE);
       StringBuilder sb = new StringBuilder();
       for (String key : keys) {
         if (!SOURCE_KEY.matcher(key).matches()) {

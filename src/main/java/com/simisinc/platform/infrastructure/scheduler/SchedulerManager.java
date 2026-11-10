@@ -55,6 +55,7 @@ import com.simisinc.platform.infrastructure.scheduler.socialmedia.InstagramMedia
 import com.zeroio.platform.infrastructure.scheduler.cms.RefreshAllDocumentTextIndexesJob;
 import com.zeroio.platform.infrastructure.scheduler.cms.RefreshAllWebPageTextIndexesJob;
 import com.zeroio.platform.infrastructure.scheduler.cms.RefreshSearchVectorJob;
+import com.zeroio.platform.infrastructure.scheduler.cms.RefreshUnifiedSearchJob;
 
 import tools.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 
@@ -88,6 +89,7 @@ public class SchedulerManager {
   public static final String REFRESH_ALL_WEB_PAGE_TEXT_INDEXES_JOB = "RefreshAllWebPageTextIndexes";
   public static final String REFRESH_ALL_DOCUMENT_TEXT_INDEXES_JOB = "RefreshAllDocumentTextIndexes";
   public static final String REFRESH_SEARCH_VECTORS_JOB = "RefreshSearchVectors";
+  public static final String REFRESH_UNIFIED_SEARCH_JOB = "RefreshUnifiedSearch";
 
   // Jobs which can be run by multiple clients
   public static final String DATASETS_DOWNLOAD_AND_SYNC_JOB = "DatasetsDownloadAndSync";
@@ -176,6 +178,7 @@ public class SchedulerManager {
             RefreshAllWebPageTextIndexesJob::execute);
         BackgroundJob.scheduleRecurrently(REFRESH_ALL_DOCUMENT_TEXT_INDEXES_JOB, Cron.hourly(),
             RefreshAllDocumentTextIndexesJob::execute);
+        BackgroundJob.scheduleRecurrently(REFRESH_UNIFIED_SEARCH_JOB, Cron.every15seconds(), RefreshUnifiedSearchJob::execute);
         BackgroundJob.scheduleRecurrently(REFRESH_SEARCH_VECTORS_JOB, Cron.every5minutes(), RefreshSearchVectorJob::execute);
         BackgroundJob.scheduleRecurrently(INSTAGRAM_MEDIA_SNAPSHOT_JOB, Cron.hourly(), InstagramMediaSnapshotJob::execute);
         BackgroundJob.scheduleRecurrently(DATASETS_DOWNLOAD_AND_SYNC_JOB, Cron.minutely(), DatasetsDownloadAndSyncJob::execute);

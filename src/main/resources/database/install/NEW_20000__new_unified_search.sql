@@ -1,9 +1,11 @@
 -- Copyright 2026 Matt Rajkowski (https://github.com/rajkowski), Licensed under the Apache License, Version 2.0 (the "License").
 -- One searchable row per page, blog post, calendar event, attachment and item, ranked together using each table's tsv
+-- Materialized so the combined tsv is indexed; unified_search stays the read name and is refreshed by RefreshUnifiedSearchJob
 
 DROP VIEW IF EXISTS unified_search;
+DROP MATERIALIZED VIEW IF EXISTS unified_search_mv;
 
-CREATE OR REPLACE VIEW unified_search AS
+CREATE MATERIALIZED VIEW unified_search_mv AS
 SELECT
   'pages'::text AS result_type,
   web_pages.web_page_id AS result_id,
@@ -19,7 +21,7 @@ SELECT
   NULL::text AS mime_type,
   NULL::text AS extension,
   left(concat_ws(' ', COALESCE(NULLIF(web_pages.page_text, ''), web_pages.page_description), page_file_text.content), 20000) AS headline_source,
-  web_pages.tsv || to_tsvector('web_page_stem', COALESCE(page_file_text.content, '')) AS tsv,
+  web_pages.tsv || setweight(to_tsvector('web_page_stem', COALESCE(page_file_text.content, '')), 'D') AS tsv,
   (COALESCE(web_pages.enabled, false) AND NOT COALESCE(web_pages.has_redirect, false)) AS is_listed,
   (COALESCE(web_pages.searchable, false) AND NOT COALESCE(web_pages.draft, false)) AS is_public,
   NULL::bigint AS folder_id,
@@ -54,7 +56,7 @@ SELECT
   left(blog_posts.body_text, 20000),
   blog_posts.tsv,
   (blog_posts.published IS NOT NULL),
-  true,
+  COALESCE(blogs.enabled, true),
   NULL::bigint,
   NULL::bigint,
   NULL::timestamp(3),
@@ -135,7 +137,7 @@ SELECT
   NULL::text,
   NULL::text,
   left(concat_ws(' ', items.name, items.keywords, items.summary_text, items.description_text, item_file_text.content), 20000),
-  items.tsv || to_tsvector('title_stem', COALESCE(item_file_text.content, '')),
+  items.tsv || setweight(to_tsvector('title_stem', COALESCE(item_file_text.content, '')), 'D'),
   true,
   (items.approved IS NOT NULL),
   NULL::bigint,
@@ -170,7 +172,7 @@ SELECT
   left(COALESCE(NULLIF(item_files.document_text, ''), item_files.summary), 20000),
   item_files.tsv,
   true,
-  true,
+  (items.approved IS NOT NULL),
   item_files.folder_id,
   items.collection_id,
   NULL::timestamp(3),
@@ -180,4 +182,39 @@ SELECT
   item_files.document_text
 FROM item_files
 JOIN items ON item_files.item_id = items.item_id
-JOIN collections ON items.collection_id = collections.collection_id;
+JOIN collections ON items.collection_id = collections.collection_id
+WITH DATA;
+
+-- Required for REFRESH MATERIALIZED VIEW CONCURRENTLY
+CREATE UNIQUE INDEX unified_search_mv_key_idx ON unified_search_mv (result_type, result_id);
+CREATE INDEX unified_search_mv_tsv_idx ON unified_search_mv USING gin(tsv);
+CREATE INDEX unified_search_mv_type_modified_idx ON unified_search_mv (result_type, modified DESC);
+
+CREATE VIEW unified_search AS SELECT * FROM unified_search_mv;
+
+-- Flags unified_search_mv as stale when any source table changes; RefreshUnifiedSearchJob refreshes it when flagged
+
+CREATE TABLE IF NOT EXISTS unified_search_refresh (
+  dirty BOOLEAN NOT NULL DEFAULT true
+);
+INSERT INTO unified_search_refresh (dirty) SELECT true WHERE NOT EXISTS (SELECT 1 FROM unified_search_refresh);
+
+CREATE OR REPLACE FUNCTION unified_search_mark_dirty() RETURNS trigger AS $$
+BEGIN
+  -- Matches no row (and takes no lock) when already flagged
+  UPDATE unified_search_refresh SET dirty = true WHERE NOT dirty;
+  RETURN NULL;
+END
+$$ LANGUAGE plpgsql;
+
+DO $$
+DECLARE
+  source_table text;
+BEGIN
+  FOREACH source_table IN ARRAY ARRAY['web_pages', 'web_page_files', 'blogs', 'blog_posts', 'calendars', 'calendar_events', 'files', 'collections', 'items', 'item_files']
+  LOOP
+    EXECUTE format('DROP TRIGGER IF EXISTS unified_search_dirty ON %I', source_table);
+    EXECUTE format('CREATE TRIGGER unified_search_dirty AFTER INSERT OR UPDATE OR DELETE ON %I FOR EACH STATEMENT EXECUTE FUNCTION unified_search_mark_dirty()', source_table);
+  END LOOP;
+END
+$$;
