@@ -18,6 +18,7 @@
 package com.simisinc.platform.domain.model.cms;
 
 import java.sql.Timestamp;
+import java.util.Map;
 
 import com.simisinc.platform.domain.model.Entity;
 import com.zeroio.platform.domain.model.cms.SearchCriteria;
@@ -30,6 +31,7 @@ import com.zeroio.platform.domain.model.cms.SearchCriteria;
  */
 public class SearchResult extends Entity {
 
+  private long recordId = -1;
   private String type = null;
   private String link = null;
   private String highlight = null;
@@ -44,9 +46,19 @@ public class SearchResult extends Entity {
   private String actionLink = null;
   private String actionLabel = null;
   private long modifiedBy = -1;
+  private Timestamp created = null;
   private Timestamp modified = null;
+  private Map<String, String> customFields = null;
 
   public SearchResult() {
+  }
+
+  public long getRecordId() {
+    return recordId;
+  }
+
+  public void setRecordId(long recordId) {
+    this.recordId = recordId;
   }
 
   /** The kind of content, one of the SearchCriteria type constants */
@@ -163,12 +175,28 @@ public class SearchResult extends Entity {
     this.modifiedBy = modifiedBy;
   }
 
+  public Timestamp getCreated() {
+    return created;
+  }
+
+  public void setCreated(Timestamp created) {
+    this.created = created;
+  }
+
   public Timestamp getModified() {
     return modified;
   }
 
   public void setModified(Timestamp modified) {
     this.modified = modified;
+  }
+
+  public Map<String, String> getCustomFields() {
+    return customFields;
+  }
+
+  public void setCustomFields(Map<String, String> customFields) {
+    this.customFields = customFields;
   }
 
   /** The label shown beside a result */

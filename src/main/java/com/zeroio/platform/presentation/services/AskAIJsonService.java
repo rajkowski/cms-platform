@@ -45,7 +45,6 @@ import com.simisinc.platform.infrastructure.persistence.cms.UnifiedSearchSpecifi
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.controller.PageRequest;
 import com.simisinc.platform.presentation.services.GenericJsonService;
-import com.zeroio.platform.application.ai.EmbeddingCommand;
 import com.zeroio.platform.domain.model.cms.SearchCriteria;
 
 import dev.langchain4j.model.scoring.ScoringModel;
@@ -55,7 +54,7 @@ public class AskAIJsonService extends GenericJsonService {
 
   private static final long serialVersionUID = 1L;
   private static final Log LOG = LogFactory.getLog(AskAIJsonService.class);
-  
+
   private static final ObjectMapper MAPPER = new ObjectMapper();
   private static final HttpClient CLIENT = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
   private static volatile Semaphore REQUESTS;
@@ -110,6 +109,10 @@ public class AskAIJsonService extends GenericJsonService {
       // Create a search specification based on the question and context
       UnifiedSearchSpecification specification = SearchJsonService.createSpecification(context, question);
       specification.setIncludeSourceText(true);
+      // Search the pages by default
+      specification.setTypes(new String[] {
+          SearchCriteria.PAGES, SearchCriteria.POSTS, SearchCriteria.RESOURCES
+      });
 
       // Execute the search and retrieve the top results
       List<SearchResult> results = UnifiedSearchRepository.findAll(specification, new DataConstraints(0, SEARCH_CANDIDATE_LIMIT));
@@ -213,8 +216,8 @@ public class AskAIJsonService extends GenericJsonService {
 
   static List<SearchResult> prioritizeResults(List<SearchResult> results) {
     return results.stream()
-      // .filter(result -> StringUtils.isNotBlank(result.getSourceText()))
-      .sorted(Comparator.comparingInt(result -> SearchCriteria.PAGES.equals(result.getType()) ? 0
+        // .filter(result -> StringUtils.isNotBlank(result.getSourceText()))
+        .sorted(Comparator.comparingInt(result -> SearchCriteria.PAGES.equals(result.getType()) ? 0
             : SearchCriteria.ATTACHMENTS.equals(result.getType()) ? 2 : 1))
         .limit(SEARCH_RESULT_LIMIT)
         .collect(Collectors.toList());
@@ -279,10 +282,11 @@ public class AskAIJsonService extends GenericJsonService {
       scored.add(new ScoredResult(result, bestScore));
     }
     return scored.stream().sorted(Comparator.comparingDouble((ScoredResult result) -> result.score()).reversed())
-      .limit(SEARCH_RESULT_LIMIT).map(result -> result.result()).collect(Collectors.toList());
+        .limit(SEARCH_RESULT_LIMIT).map(result -> result.result()).collect(Collectors.toList());
   }
 
-  private record ScoredResult(SearchResult result, double score) { }
+  private record ScoredResult(SearchResult result, double score) {
+  }
 
   static String keywordQuery(String question) {
     return java.util.Arrays.stream(question.toLowerCase(java.util.Locale.ROOT).split("[^\\p{L}\\p{N}]+"))
@@ -318,7 +322,7 @@ public class AskAIJsonService extends GenericJsonService {
 
     // Construct the user message with the question and source text.
     List<Map<String, String>> messages = List.of(Map.of("role", "system", "content", system),
-      Map.of("role", "user", "content", "Question: " + question + "\n\nSearch results and page context:\n" + sources));
+        Map.of("role", "user", "content", "Question: " + question + "\n\nSearch results and page context:\n" + sources));
 
     // Serialize the request body to JSON.
     String body = MAPPER.writeValueAsString(

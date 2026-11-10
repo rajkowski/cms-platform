@@ -21,7 +21,9 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
@@ -78,8 +80,8 @@ public class UnifiedSearchRepository {
     String vectorKeys = term == null ? null : findSemanticKeys(term);
 
     Select select = DB.SELECT("result_type", "result_id", "title", "description", "link", "related_category_id", "category", "tags",
-        "modified",
-        "modified_by", "file_name", "file_type", "mime_type", "extension");
+        "created", "modified",
+        "modified_by", "file_name", "file_type", "mime_type", "extension", "custom_field_values");
 
     if (specification.isIncludeSourceText()) {
       select.SELECT("text_content AS source_text");
@@ -117,7 +119,7 @@ public class UnifiedSearchRepository {
       }
     }
     if (hasValues(specification.getTypes())) {
-      select.AND("result_type = ANY(?)", specification.getTypes(), CastType.ARRAY);
+      select.AND("result_type = ANY(?)", expandAttachmentTypes(specification.getTypes()), CastType.ARRAY);
     }
     addVisibilityFilters(select, specification);
     addCommonFilters(select, specification);
@@ -179,6 +181,17 @@ public class UnifiedSearchRepository {
 
   private static boolean hasValues(String[] values) {
     return values != null && values.length > 0;
+  }
+
+  static String[] expandAttachmentTypes(String[] types) {
+    boolean includesAttachments = Arrays.asList(types).contains(SearchCriteria.ATTACHMENTS);
+    boolean includesResourceFiles = Arrays.asList(types).contains(SearchCriteria.RESOURCE_FILES);
+    if (!includesAttachments && includesResourceFiles) {
+      return types;
+    }
+    String[] expandedTypes = Arrays.copyOf(types, types.length + 1);
+    expandedTypes[types.length] = SearchCriteria.RESOURCE_FILES;
+    return expandedTypes;
   }
 
   /** Each type's rules only apply to rows of that type */
@@ -276,6 +289,7 @@ public class UnifiedSearchRepository {
     try {
       SearchResult record = new SearchResult();
       String type = rs.getString("result_type");
+      record.setRecordId(rs.getLong("result_id"));
       record.setType(type);
       record.setPageTitle(rs.getString("title"));
       record.setPageDescription(StringUtils.trimToNull(rs.getString("description")));
@@ -284,8 +298,10 @@ public class UnifiedSearchRepository {
       record.setRelatedCategoryId(rs.getLong("related_category_id"));
       record.setCategory(StringUtils.trimToNull(rs.getString("category")));
       record.setTags(JsonCommand.fromJsonArray(rs.getString("tags")));
+      record.setCreated(rs.getTimestamp("created"));
       record.setModified(rs.getTimestamp("modified"));
       record.setModifiedBy(rs.getLong("modified_by"));
+      record.setCustomFields(parseCustomFields(rs.getString("custom_field_values")));
 
       String link = rs.getString("link");
       if (SearchCriteria.ATTACHMENTS.equals(type)) {
@@ -303,6 +319,13 @@ public class UnifiedSearchRepository {
       LOG.error("buildRecord", se);
       return null;
     }
+  }
+
+  private static Map<String, String> parseCustomFields(String json) {
+    if (StringUtils.isBlank(json)) {
+      return null;
+    }
+    return JsonCommand.fromJsonMap(json);
   }
 
   private static void setAttachmentLinks(SearchResult record, ResultSet rs, String prefix, String url) throws SQLException {

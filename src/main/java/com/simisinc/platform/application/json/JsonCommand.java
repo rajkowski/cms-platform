@@ -30,6 +30,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.commons.text.StringEscapeUtils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -199,5 +200,19 @@ public class JsonCommand {
       LOG.error("fromJson", e);
     }
     return new String[0];
+  }
+
+  public static Map<String, String> fromJsonMap(String json) {
+    if (StringUtils.isBlank(json)) {
+      return null;
+    }
+    try {
+      ObjectMapper mapper = new ObjectMapper();
+      return mapper.readValue(json, new TypeReference<Map<String, String>>() {
+      });
+    } catch (Exception e) {
+      LOG.error("fromJsonMap", e);
+    }
+    return null;
   }
 }

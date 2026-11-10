@@ -33,6 +33,7 @@ import com.simisinc.platform.infrastructure.persistence.cms.UnifiedSearchSpecifi
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
 import com.zeroio.platform.domain.model.Region;
+import com.zeroio.platform.domain.model.cms.SearchCriteria;
 import com.zeroio.platform.infrastructure.persistence.RegionRepository;
 
 /**
@@ -139,6 +140,11 @@ public class SearchJsonService extends GenericJsonService {
   static UnifiedSearchSpecification createSpecification(JsonServiceContext context, String query) {
     UnifiedSearchSpecification specification = new UnifiedSearchSpecification();
     specification.setSearchTerm(query);
+    // Search the pages (not attachments) by default
+    specification.setTypes(new String[] {
+        SearchCriteria.PAGES, SearchCriteria.POSTS, SearchCriteria.RESOURCES
+        // SearchCriteria.ATTACHMENTS, SearchCriteria.RESOURCE_FILES
+    });
     specification.setForUserId(context.getUserSession().getUserId());
     // specification.setContentManager(context.hasRole("admin") || context.hasRole("content-manager"));
     // specification.setDataManager(context.hasRole("admin") || context.hasRole("data-manager"));
