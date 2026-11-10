@@ -18,6 +18,7 @@ import com.github.rajkowski.database.Select;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.domain.model.cms.SearchResult;
 import com.zeroio.platform.application.ai.EmbeddingCommand;
+import com.zeroio.platform.domain.model.cms.SearchCriteria;
 import com.zeroio.platform.infrastructure.persistence.cms.SearchChunkRepository;
 
 class UnifiedSearchRepositoryTest {
@@ -60,8 +61,8 @@ class UnifiedSearchRepositoryTest {
       UnifiedSearchRepository.findAll(specification, null);
 
       embeddings.verify(() -> EmbeddingCommand.embed(List.of(question)));
-      verify(select).AND("(tsv @@ websearch_to_tsquery('english', ?) OR (result_type || ':' || result_id) = ANY(ARRAY['pages:42']))",
-          "the economic profile");
+      verify(select).AND("(tsv @@ (websearch_to_tsquery('english', ?) || CASE WHEN result_type = ? THEN websearch_to_tsquery('title_stem', ?) ELSE ''::tsquery END) OR (result_type || ':' || result_id) = ANY(ARRAY['pages:42']))",
+          "the economic profile", SearchCriteria.RESOURCES, "the economic profile OR the OR economic OR profile");
     }
   }
 
@@ -82,7 +83,8 @@ class UnifiedSearchRepositoryTest {
 
       UnifiedSearchRepository.findAll(specification, null);
 
-      verify(select).AND("tsv @@ websearch_to_tsquery('english', ?)", "the economic profile");
+      verify(select).AND("(tsv @@ (websearch_to_tsquery('english', ?) || CASE WHEN result_type = ? THEN websearch_to_tsquery('title_stem', ?) ELSE ''::tsquery END))",
+          "the economic profile", SearchCriteria.RESOURCES, "the economic profile OR the OR economic OR profile");
     }
   }
 }

@@ -107,11 +107,12 @@ public class UnifiedSearchRepository {
 
     if (term != null) {
       String resourceTerm = lexicalTerm + " OR " + lexicalTerm.replaceAll("\\s+", " OR ");
+      String lexicalMatch = "tsv @@ (websearch_to_tsquery('english', ?) || CASE WHEN result_type = ? THEN websearch_to_tsquery('title_stem', ?) ELSE ''::tsquery END)";
       if (vectorKeys == null) {
-        select.AND("(tsv @@ websearch_to_tsquery('english', ?) OR (result_type = ? AND tsv @@ websearch_to_tsquery('title_stem', ?)))",
+        select.AND("(" + lexicalMatch + ")",
             lexicalTerm, SearchCriteria.RESOURCES, resourceTerm);
       } else {
-        select.AND("(tsv @@ websearch_to_tsquery('english', ?) OR (result_type = ? AND tsv @@ websearch_to_tsquery('title_stem', ?)) OR (result_type || ':' || result_id) = ANY(" + vectorKeys + "))",
+        select.AND("(" + lexicalMatch + " OR (result_type || ':' || result_id) = ANY(" + vectorKeys + "))",
             lexicalTerm, SearchCriteria.RESOURCES, resourceTerm);
       }
     }
