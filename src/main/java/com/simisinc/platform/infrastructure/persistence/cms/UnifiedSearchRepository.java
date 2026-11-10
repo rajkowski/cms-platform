@@ -106,10 +106,13 @@ public class UnifiedSearchRepository {
     select.FROM(VIEW_NAME).WHERE();
 
     if (term != null) {
+      String resourceTerm = lexicalTerm + " OR " + lexicalTerm.replaceAll("\\s+", " OR ");
       if (vectorKeys == null) {
-        select.AND("tsv @@ websearch_to_tsquery('english', ?)", lexicalTerm);
+        select.AND("(tsv @@ websearch_to_tsquery('english', ?) OR (result_type = ? AND tsv @@ websearch_to_tsquery('title_stem', ?)))",
+            lexicalTerm, SearchCriteria.RESOURCES, resourceTerm);
       } else {
-        select.AND("(tsv @@ websearch_to_tsquery('english', ?) OR (result_type || ':' || result_id) = ANY(" + vectorKeys + "))", lexicalTerm);
+        select.AND("(tsv @@ websearch_to_tsquery('english', ?) OR (result_type = ? AND tsv @@ websearch_to_tsquery('title_stem', ?)) OR (result_type || ':' || result_id) = ANY(" + vectorKeys + "))",
+            lexicalTerm, SearchCriteria.RESOURCES, resourceTerm);
       }
     }
     if (hasValues(specification.getTypes())) {
