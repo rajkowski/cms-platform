@@ -60,10 +60,13 @@ public class AskAIJsonService extends GenericJsonService {
   private static final ObjectMapper MAPPER = new ObjectMapper();
   private static final HttpClient CLIENT = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
   private static volatile Semaphore REQUESTS;
+  
   private static final int QUESTION_LIMIT = 1000;
   private static final int PAGE_CONTEXT_LIMIT = 12000;
   private static final int SEARCH_CANDIDATE_LIMIT = 20;
   private static final int SEARCH_RESULT_LIMIT = 6;
+  private static final int MAX_CONTENT_LENGTH_TOKENS = 128000;
+
   private static final int RERANK_PASSAGE_LENGTH = 1200;
   private static final int RERANK_PASSAGE_STEP = 1000;
   private static final int RERANK_TEXT_LIMIT = 8000;
@@ -151,12 +154,13 @@ public class AskAIJsonService extends GenericJsonService {
           : null;
 
       // Ask the AI assistant for an answer based on the question, search results, and page context
-      String answer = generate(server, model, apiKey, question, results, pageContext, openAi, azure, apiVersion);
+      PreparedContent content = prepareContent(results, pageContext, MAX_CONTENT_LENGTH_TOKENS);
+      String answer = generate(server, model, apiKey, question, content, openAi, azure, apiVersion);
       LOG.debug("Generated answer: " + answer.length());
 
       // Collect the sources from the search results to include in the response
       List<Map<String, String>> sources = new ArrayList<>();
-      for (SearchResult result : results) {
+      for (SearchResult result : content.results()) {
         if (StringUtils.isNotBlank(result.getLink())) {
           sources.add(Map.of("title", StringUtils.defaultIfBlank(result.getPageTitle(), "Source"), "link", result.getLink()));
         }
@@ -322,16 +326,12 @@ public class AskAIJsonService extends GenericJsonService {
   static String generate(String server, String model, String apiKey, String question, List<SearchResult> results, String pageContext,
       boolean openAi, boolean azure, String apiVersion)
       throws Exception {
+    return generate(server, model, apiKey, question, prepareContent(results, pageContext, MAX_CONTENT_LENGTH_TOKENS),
+        openAi, azure, apiVersion);
+  }
 
-    StringBuilder sources = new StringBuilder();
-    for (SearchResult result : results) {
-      sources.append("\nSearch result (title for identification only): ")
-          .append(StringUtils.abbreviate(StringUtils.defaultString(result.getPageTitle()), 300)).append("\nFull content:\n")
-          .append(StringUtils.defaultString(result.getSourceText())).append('\n');
-    }
-    if (StringUtils.isNotBlank(pageContext)) {
-      sources.append("\nCurrent page context:\n").append(pageContext).append('\n');
-    }
+  private static String generate(String server, String model, String apiKey, String question, PreparedContent content,
+      boolean openAi, boolean azure, String apiVersion) throws Exception {
 
     // Construct the system prompt and user message for the AI model.
     String system = "Answer the user's question using all relevant supplied content, including search results and current page context (which might not be relevant). "
@@ -341,7 +341,7 @@ public class AskAIJsonService extends GenericJsonService {
 
     // Construct the user message with the question and source text.
     List<Map<String, String>> messages = List.of(Map.of("role", "system", "content", system),
-        Map.of("role", "user", "content", "Question: " + question + "\n\nSearch results and page context:\n" + sources));
+        Map.of("role", "user", "content", "Question: " + question + "\n\nSearch results and page context:\n" + content.text()));
 
     // Serialize the request body to JSON.
     String body = MAPPER.writeValueAsString(azure ? Map.of("messages", messages)
@@ -366,6 +366,7 @@ public class AskAIJsonService extends GenericJsonService {
     long endTime = System.currentTimeMillis();
     LOG.debug("AI request time: " + ((endTime - startTime) / 1000.0) + " s");
     if (response.statusCode() != 200) {
+      LOG.error("AI provider returned HTTP " + response.statusCode() + ": " + response.body());
       throw new IllegalStateException("AI provider returned HTTP " + response.statusCode());
     }
 
@@ -377,5 +378,79 @@ public class AskAIJsonService extends GenericJsonService {
       throw new IllegalStateException("AI provider returned an empty answer");
     }
     return answer;
+  }
+
+  static PreparedContent prepareContent(List<SearchResult> results, String pageContext, int maxContentLengthTokens) {
+    if (maxContentLengthTokens < 0) {
+      throw new IllegalArgumentException("Content limit must not be negative");
+    }
+
+    // UTF-8 bytes are a conservative proxy for tokens across the supported providers.
+    String page = StringUtils.isBlank(pageContext) ? ""
+        : utf8Prefix("\nCurrent page context:\n" + pageContext + '\n', maxContentLengthTokens);
+    int remaining = maxContentLengthTokens - utf8Length(page);
+    List<String> blocks = new ArrayList<>(results.size());
+    long totalBytes = 0;
+    for (SearchResult result : results) {
+      String header = "\nSearch result (title for identification only): "
+          + StringUtils.abbreviate(StringUtils.defaultString(result.getPageTitle()), 300) + "\nFull content:\n";
+      String text = utf8Prefix(StringUtils.defaultString(result.getSourceText()), maxContentLengthTokens);
+      String block = header + text + '\n';
+      blocks.add(block);
+      totalBytes += utf8Length(block);
+    }
+
+    boolean reduce = totalBytes > remaining;
+    StringBuilder sources = new StringBuilder();
+    List<SearchResult> included = new ArrayList<>();
+    for (int i = 0; i < blocks.size(); i++) {
+      String block = blocks.get(i);
+      int allocation = reduce ? remaining / (blocks.size() - i) : remaining;
+      String header = "\nSearch result (title for identification only): "
+          + StringUtils.abbreviate(StringUtils.defaultString(results.get(i).getPageTitle()), 300) + "\nFull content:\n";
+      int headerBytes = utf8Length(header);
+      if (allocation <= headerBytes && StringUtils.isNotEmpty(results.get(i).getSourceText())) {
+        continue;
+      }
+      if (allocation < headerBytes) {
+        continue;
+      }
+      String excerpt = utf8Prefix(block, allocation);
+      if (StringUtils.isNotEmpty(results.get(i).getSourceText()) && excerpt.length() == header.length()) {
+        continue;
+      }
+      sources.append(excerpt);
+      remaining -= utf8Length(excerpt);
+      included.add(results.get(i));
+    }
+    if (reduce || utf8Length(page) < utf8Length(StringUtils.isBlank(pageContext) ? "" : "\nCurrent page context:\n" + pageContext + '\n')) {
+      LOG.debug("Ask AI content reduced to fit its UTF-8 byte budget");
+    }
+    sources.append(page);
+    return new PreparedContent(sources.toString(), included);
+  }
+
+  private static int utf8Length(String text) {
+    return text.getBytes(StandardCharsets.UTF_8).length;
+  }
+
+  private static String utf8Prefix(String text, int maxBytes) {
+    int bytes = 0;
+    int end = 0;
+    while (end < text.length()) {
+      int codePoint = text.codePointAt(end);
+      int length = Character.charCount(codePoint);
+      int byteCount = codePoint < 0x80 ? 1 : codePoint < 0x800 ? 2
+          : codePoint >= 0xD800 && codePoint <= 0xDFFF ? 1 : codePoint < 0x10000 ? 3 : 4;
+      if (byteCount > maxBytes - bytes) {
+        break;
+      }
+      bytes += byteCount;
+      end += length;
+    }
+    return text.substring(0, end);
+  }
+
+  static record PreparedContent(String text, List<SearchResult> results) {
   }
 }

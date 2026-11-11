@@ -53,6 +53,101 @@ import dev.langchain4j.model.scoring.ScoringModel;
 class AskAIJsonServiceTest {
 
   @Test
+  void preservesContentThatFitsTheBudget() {
+    SearchResult first = new SearchResult();
+    first.setPageTitle("First");
+    first.setSourceText("First source.");
+    SearchResult second = new SearchResult();
+    second.setPageTitle("Second");
+    second.setSourceText("Second source.");
+    List<SearchResult> results = List.of(first, second);
+
+    AskAIJsonService.PreparedContent content = AskAIJsonService.prepareContent(results, "Page text.", 1000);
+    String expected = "\nSearch result (title for identification only): First\nFull content:\nFirst source.\n"
+        + "\nSearch result (title for identification only): Second\nFull content:\nSecond source.\n"
+        + "\nCurrent page context:\nPage text.\n";
+    assertEquals(expected, content.text());
+    assertEquals(results, content.results());
+    assertEquals(expected, AskAIJsonService.prepareContent(results, "Page text.", expected.getBytes(StandardCharsets.UTF_8).length).text());
+  }
+
+  @Test
+  void reducesMultipleResultsAndReservesPageContext() {
+    SearchResult first = new SearchResult();
+    first.setPageTitle("First");
+    first.setSourceText("A".repeat(1000));
+    SearchResult second = new SearchResult();
+    second.setPageTitle("Second");
+    second.setSourceText("B".repeat(1000));
+
+    AskAIJsonService.PreparedContent content = AskAIJsonService.prepareContent(List.of(first, second), "Page text.", 300);
+    assertTrue(content.text().getBytes(StandardCharsets.UTF_8).length <= 300);
+    assertTrue(content.text().contains("First\nFull content:\nA"));
+    assertTrue(content.text().contains("Second\nFull content:\nB"));
+    assertTrue(content.text().endsWith("\nCurrent page context:\nPage text.\n"));
+    assertEquals(List.of(first, second), content.results());
+  }
+
+  @Test
+  void truncatesAtUnicodeBoundariesAndOmitsSourcesThatDoNotFit() {
+    SearchResult result = new SearchResult();
+    result.setPageTitle("Title");
+    result.setSourceText("\uD83D\uDE00".repeat(10));
+    String header = "\nSearch result (title for identification only): Title\nFull content:\n";
+    int headerLength = header.getBytes(StandardCharsets.UTF_8).length;
+
+    assertTrue(AskAIJsonService.prepareContent(List.of(result), "", headerLength + 3).results().isEmpty());
+    AskAIJsonService.PreparedContent content = AskAIJsonService.prepareContent(List.of(result), "", headerLength + 7);
+    assertEquals(header + "\uD83D\uDE00", content.text());
+    assertEquals(List.of(result), content.results());
+    assertTrue(content.text().getBytes(StandardCharsets.UTF_8).length <= headerLength + 7);
+    assertEquals("", AskAIJsonService.prepareContent(List.of(result), "", 0).text());
+    assertThrows(IllegalArgumentException.class, () -> AskAIJsonService.prepareContent(List.of(result), "", -1));
+  }
+
+  @Test
+  void limitsMultibytePageContextBeforeAllocatingSearchResults() {
+    SearchResult result = new SearchResult();
+    result.setSourceText("Source");
+    String pageHeader = "\nCurrent page context:\n";
+    int budget = pageHeader.getBytes(StandardCharsets.UTF_8).length + 7;
+    AskAIJsonService.PreparedContent content = AskAIJsonService.prepareContent(List.of(result), "\u4E16\u754C\uD83D\uDE00", budget);
+    assertEquals(pageHeader + "\u4E16\u754C", content.text());
+    assertEquals(List.of(), content.results());
+    assertEquals(budget - 1, content.text().getBytes(StandardCharsets.UTF_8).length);
+  }
+
+  @Test
+  void limitsContentActuallySentToTheProvider() throws Exception {
+    AtomicReference<JsonNode> requestBody = new AtomicReference<>();
+    ObjectMapper mapper = new ObjectMapper();
+    HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+    server.createContext("/api/chat", exchange -> {
+      requestBody.set(mapper.readTree(exchange.getRequestBody()));
+      byte[] body = "{\"message\":{\"content\":\"Answer\"}}".getBytes(StandardCharsets.UTF_8);
+      exchange.sendResponseHeaders(200, body.length);
+      exchange.getResponseBody().write(body);
+      exchange.close();
+    });
+    server.start();
+    try {
+      SearchResult result = new SearchResult();
+      result.setSourceText("x".repeat(140000) + "OMITTED_END");
+      AskAIJsonService.generate("http://127.0.0.1:" + server.getAddress().getPort(), "model", null,
+          "Question", List.of(result), "Page text.", false);
+      String prompt = requestBody.get().path("messages").get(1).path("content").asText();
+      String prefix = "Question: Question\n\nSearch results and page context:\n";
+      assertTrue(prompt.startsWith(prefix));
+      String content = prompt.substring(prefix.length());
+      assertTrue(content.getBytes(StandardCharsets.UTF_8).length <= 128000);
+      assertFalse(content.contains("OMITTED_END"));
+      assertTrue(content.contains("\nCurrent page context:\nPage text.\n"));
+    } finally {
+      server.stop(0);
+    }
+  }
+
+  @Test
   void sendsQuestionAndSourceToOllama() throws Exception {
     AtomicReference<JsonNode> requestBody = new AtomicReference<>();
     AtomicReference<String> authorization = new AtomicReference<>();
