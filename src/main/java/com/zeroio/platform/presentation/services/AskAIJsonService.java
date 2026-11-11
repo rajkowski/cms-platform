@@ -17,9 +17,11 @@ package com.zeroio.platform.presentation.services;
 
 import java.io.File;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -78,12 +80,15 @@ public class AskAIJsonService extends GenericJsonService {
 
     String aiProvider = LoadSitePropertyCommand.loadByName("ai.llm.provider");
 
-    boolean openAi = "openai".equalsIgnoreCase(StringUtils.trimToEmpty(aiProvider));
-    String server = openAi
-        ? StringUtils.defaultIfBlank(LoadSitePropertyCommand.loadByName("ai.llm.openai.url"), "https://api.openai.com")
-        : StringUtils.trimToNull(LoadSitePropertyCommand.loadByName("ai.llm.ollama.url"));
-    String apiKey = openAi ? StringUtils.trimToNull(LoadSitePropertyCommand.loadByName("ai.llm.openai.apiKey"))
-        : LoadSitePropertyCommand.loadByName("ai.llm.ollama.apiKey");
+    boolean azure = "azure".equalsIgnoreCase(StringUtils.trimToEmpty(aiProvider));
+    boolean openAi = azure || "openai".equalsIgnoreCase(StringUtils.trimToEmpty(aiProvider));
+    String server = azure ? StringUtils.trimToNull(LoadSitePropertyCommand.loadByName("ai.llm.azure.url"))
+        : openAi
+            ? StringUtils.defaultIfBlank(LoadSitePropertyCommand.loadByName("ai.llm.openai.url"), "https://api.openai.com")
+            : StringUtils.trimToNull(LoadSitePropertyCommand.loadByName("ai.llm.ollama.url"));
+    String apiKey = azure ? StringUtils.trimToNull(LoadSitePropertyCommand.loadByName("ai.llm.azure.apiKey"))
+        : openAi ? StringUtils.trimToNull(LoadSitePropertyCommand.loadByName("ai.llm.openai.apiKey"))
+            : LoadSitePropertyCommand.loadByName("ai.llm.ollama.apiKey");
     if (server == null || (openAi && apiKey == null)) {
       return context.writeError("The AI assistant is not configured.");
     }
@@ -135,11 +140,18 @@ public class AskAIJsonService extends GenericJsonService {
       }
 
       // Determine the model to use for the AI assistant based on the environment variables and provider
-      String model = openAi ? LoadSitePropertyCommand.loadByName("ai.llm.openai.model")
-          : LoadSitePropertyCommand.loadByName("ai.llm.ollama.model");
+      String model = azure ? LoadSitePropertyCommand.loadByName("ai.llm.azure.model")
+          : openAi ? LoadSitePropertyCommand.loadByName("ai.llm.openai.model")
+              : LoadSitePropertyCommand.loadByName("ai.llm.ollama.model");
+      if (azure && StringUtils.isBlank(model)) {
+        return context.writeError("The AI assistant is not configured.");
+      }
+      String apiVersion = azure
+          ? StringUtils.defaultIfBlank(LoadSitePropertyCommand.loadByName("ai.llm.azure.apiVersion"), "2024-06-01")
+          : null;
 
       // Ask the AI assistant for an answer based on the question, search results, and page context
-      String answer = generate(server, model, apiKey, question, results, pageContext, openAi);
+      String answer = generate(server, model, apiKey, question, results, pageContext, openAi, azure, apiVersion);
       LOG.debug("Generated answer: " + answer.length());
 
       // Collect the sources from the search results to include in the response
@@ -303,6 +315,13 @@ public class AskAIJsonService extends GenericJsonService {
   static String generate(String server, String model, String apiKey, String question, List<SearchResult> results, String pageContext,
       boolean openAi)
       throws Exception {
+    return generate(server, model, apiKey, question, results, pageContext, openAi, false, null);
+  }
+
+  // When azure is true, model is the Azure deployment name and server is the resource endpoint (https://{resource}.openai.azure.com)
+  static String generate(String server, String model, String apiKey, String question, List<SearchResult> results, String pageContext,
+      boolean openAi, boolean azure, String apiVersion)
+      throws Exception {
 
     StringBuilder sources = new StringBuilder();
     for (SearchResult result : results) {
@@ -325,13 +344,19 @@ public class AskAIJsonService extends GenericJsonService {
         Map.of("role", "user", "content", "Question: " + question + "\n\nSearch results and page context:\n" + sources));
 
     // Serialize the request body to JSON.
-    String body = MAPPER.writeValueAsString(
-        openAi ? Map.of("model", model, "messages", messages) : Map.of("model", model, "stream", false, "messages", messages));
-    String path = openAi ? "/v1/chat/completions" : "/api/chat";
+    String body = MAPPER.writeValueAsString(azure ? Map.of("messages", messages)
+        : openAi ? Map.of("model", model, "messages", messages) : Map.of("model", model, "stream", false, "messages", messages));
+    String path = azure
+        ? "/openai/deployments/" + URLEncoder.encode(model, StandardCharsets.UTF_8) + "/chat/completions?api-version="
+            + URLEncoder.encode(StringUtils.defaultIfBlank(apiVersion, "2024-06-01"), StandardCharsets.UTF_8)
+        : openAi ? "/v1/chat/completions" : "/api/chat";
+
     HttpRequest.Builder request = HttpRequest.newBuilder(URI.create(StringUtils.stripEnd(server, "/") + path))
         .timeout(Duration.ofSeconds(120)).header("Content-Type", "application/json")
         .POST(HttpRequest.BodyPublishers.ofString(body));
-    if (StringUtils.isNotBlank(apiKey)) {
+    if (azure) {
+      request.header("api-key", apiKey);
+    } else if (StringUtils.isNotBlank(apiKey)) {
       request.header("Authorization", "Bearer " + apiKey);
     }
 
