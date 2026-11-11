@@ -24,7 +24,6 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -451,10 +450,11 @@ public class ItemRepository {
             .toArray(String[]::new);
         select.SELECT(
             "ts_headline('english', items.name || ' ' || coalesce(items.keywords,'') || ' ' || coalesce(items.summary_text,'') || ' ' || coalesce(items.description_text,''), websearch_to_tsquery('title_stem', ?), 'StartSel=${b}, StopSel=${/b}, MaxWords=30, MinWords=15, ShortWord=3, HighlightAll=FALSE, MaxFragments=2, FragmentDelimiter=\" ... \"') AS highlight",
-          (Object[]) new Object[] { term });
+            (Object[]) new Object[] { term });
         select.SELECT("(ts_rank_cd(tsv, websearch_to_tsquery('title_stem', ?)) " + Arrays.stream(titleSearchWords)
             .map(word -> " + CASE WHEN LOWER(items.name) LIKE LOWER(?) ESCAPE '!' THEN 10.0 ELSE 0.0 END")
-          .collect(Collectors.joining()) + ") AS rank", (Object[]) Stream.concat(Stream.of(term), Arrays.stream(titleSearchWords)).toArray());
+            .collect(Collectors.joining()) + ") AS rank",
+            (Object[]) Stream.concat(Stream.of(term), Arrays.stream(titleSearchWords)).toArray());
         select.AND("tsv @@ websearch_to_tsquery('title_stem', ?)", whereToUse);
         select.ORDER_BY("rank DESC, items.modified DESC");
       }
@@ -545,27 +545,31 @@ public class ItemRepository {
     if (constraints != null) {
       select.WITH(constraints);
     }
-    return select.returnDataResult(ItemRepository::buildRecord);
+    DataResult<Item> result = select.returnDataResult(ItemRepository::buildRecord);
+    for (Item item : result.getRecords()) {
+      populateCategories(item);
+    }
+    return result;
   }
 
   public static Item findById(long id) {
     if (id == -1) {
       return null;
     }
-    return DB.SELECT("*")
+    return populateCategories(DB.SELECT("*")
         .FROM(TABLE_NAME)
         .WHERE("item_id = ?", id)
-        .returnRecord(ItemRepository::buildRecord);
+        .returnRecord(ItemRepository::buildRecord));
   }
 
   public static Item findByUniqueId(String uniqueId) {
     if (StringUtils.isBlank(uniqueId)) {
       return null;
     }
-    return DB.SELECT("*")
+    return populateCategories(DB.SELECT("*")
         .FROM(TABLE_NAME)
         .WHERE("unique_id = ?", uniqueId)
-        .returnRecord(ItemRepository::buildRecord);
+        .returnRecord(ItemRepository::buildRecord));
   }
 
   public static Item findByIdWithinCollection(long itemId, long collectionId) {
@@ -577,11 +581,11 @@ public class ItemRepository {
       LOG.warn("findByNameWithinCollection collection ID is -1");
       return null;
     }
-    return DB.SELECT("*")
+    return populateCategories(DB.SELECT("*")
         .FROM(TABLE_NAME)
         .WHERE("item_id = ?", itemId)
         .AND("collection_id = ?", collectionId)
-        .returnRecord(ItemRepository::buildRecord);
+        .returnRecord(ItemRepository::buildRecord));
   }
 
   public static Item findByUniqueIdWithinCollection(String uniqueId, long collectionId) {
@@ -592,11 +596,11 @@ public class ItemRepository {
       LOG.warn("findByNameWithinCollection collection ID is -1");
       return null;
     }
-    return DB.SELECT("*")
+    return populateCategories(DB.SELECT("*")
         .FROM(TABLE_NAME)
         .WHERE("unique_id = ?", uniqueId)
         .AND("collection_id = ?", collectionId)
-        .returnRecord(ItemRepository::buildRecord);
+        .returnRecord(ItemRepository::buildRecord));
   }
 
   public static Item findByNameWithinCollection(String name, long collectionId) {
@@ -608,11 +612,11 @@ public class ItemRepository {
       LOG.warn("findByNameWithinCollection collection ID is -1");
       return null;
     }
-    return DB.SELECT("*")
+    return populateCategories(DB.SELECT("*")
         .FROM(TABLE_NAME)
         .WHERE("LOWER(name) = ?", name.trim().toLowerCase())
         .AND("collection_id = ?", collectionId)
-        .returnRecord(ItemRepository::buildRecord);
+        .returnRecord(ItemRepository::buildRecord));
   }
 
   public static Item findByDatasetKeyValue(String datasetKeyValue, long datasetId) {
@@ -623,11 +627,11 @@ public class ItemRepository {
       LOG.warn("findByDatasetKeyValue dataset ID is -1");
       return null;
     }
-    return DB.SELECT("*")
+    return populateCategories(DB.SELECT("*")
         .FROM(TABLE_NAME)
         .WHERE("dataset_key_value = ?", datasetKeyValue)
         .AND("dataset_id = ?", datasetId)
-        .returnRecord(ItemRepository::buildRecord);
+        .returnRecord(ItemRepository::buildRecord));
   }
 
   public static List<Item> findAll(ItemSpecification specification, DataConstraints constraints) {
@@ -636,6 +640,21 @@ public class ItemRepository {
     }
     constraints.setDefaultColumnToSortBy("LOWER(items.name)");
     return query(specification, constraints).getRecords();
+  }
+
+  private static Item populateCategories(Item record) {
+    if (record == null) {
+      return null;
+    }
+    List<ItemCategory> categoryList = ItemCategoryRepository.findAllByItemId(record.getId());
+    if (categoryList != null) {
+      List<Long> categoryIdList = new ArrayList<>();
+      for (ItemCategory itemCategory : categoryList) {
+        categoryIdList.add(itemCategory.getCategoryId());
+      }
+      record.setCategoryIdList(categoryIdList.toArray(new Long[0]));
+    }
+    return record;
   }
 
   private static Item buildRecord(ResultSet rs) {
@@ -691,15 +710,6 @@ public class ItemRepository {
       // Other
       if (DB.hasColumn(rs, "highlight")) {
         record.setHighlight(rs.getString("highlight"));
-      }
-      // Populate categoryIdList
-      List<ItemCategory> categoryList = ItemCategoryRepository.findAllByItemId(record.getId());
-      if (categoryList != null) {
-        List<Long> categoryIdList = new ArrayList<>();
-        for (ItemCategory itemCategory : categoryList) {
-          categoryIdList.add(itemCategory.getCategoryId());
-        }
-        record.setCategoryIdList(categoryIdList.toArray(new Long[0]));
       }
       return record;
     } catch (SQLException se) {

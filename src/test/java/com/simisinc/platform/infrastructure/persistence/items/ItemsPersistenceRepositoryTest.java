@@ -17,10 +17,12 @@ package com.simisinc.platform.infrastructure.persistence.items;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,7 +37,9 @@ import com.simisinc.platform.domain.model.items.ItemFolder;
 import com.simisinc.platform.domain.model.items.ItemSubFolder;
 import com.simisinc.platform.domain.model.items.Member;
 import com.simisinc.platform.domain.model.items.PrivacyType;
+import com.simisinc.platform.infrastructure.database.ConnectionPool;
 import com.simisinc.platform.infrastructure.persistence.RepositoryDatabaseTestSupport;
+import com.zaxxer.hikari.HikariDataSource;
 
 class ItemsPersistenceRepositoryTest {
 
@@ -441,6 +445,31 @@ class ItemsPersistenceRepositoryTest {
         ActivitySpecification activitySpecification = new ActivitySpecification();
         activitySpecification.setItemId(1L);
         assertEquals("created", ActivityRepository.findAll(activitySpecification, null).get(0).getActivityType());
+    }
+
+    @Test
+    void itemLookupsPopulateCategoriesWithOneConnection() throws SQLException {
+        RepositoryDatabaseTestSupport.executeSql(
+                "INSERT INTO items (collection_id, unique_id, name, created_by, modified_by, dataset_id, dataset_key_value) VALUES (1, 'item-1', 'Widget', 1, 1, 3, 'key-1'), (1, 'item-2', 'Other', 1, 1, 3, 'key-2')");
+        RepositoryDatabaseTestSupport.executeSql(
+                "INSERT INTO item_categories (item_id, category_id, collection_id) VALUES (1, 10, 1), (1, 20, 1)");
+        HikariDataSource dataSource = (HikariDataSource) ConnectionPool.getApplicationDataSource();
+        dataSource.setMaximumPoolSize(1);
+        dataSource.setConnectionTimeout(250);
+
+        assertEquals(Set.of(10L, 20L), Set.of(ItemRepository.findById(1L).getCategoryIdList()));
+        assertEquals(Set.of(10L, 20L), Set.of(ItemRepository.findByUniqueId("item-1").getCategoryIdList()));
+        assertEquals(Set.of(10L, 20L), Set.of(ItemRepository.findByIdWithinCollection(1L, 1L).getCategoryIdList()));
+        assertEquals(Set.of(10L, 20L), Set.of(ItemRepository.findByUniqueIdWithinCollection("item-1", 1L).getCategoryIdList()));
+        assertEquals(Set.of(10L, 20L), Set.of(ItemRepository.findByNameWithinCollection("Widget", 1L).getCategoryIdList()));
+        assertEquals(Set.of(10L, 20L), Set.of(ItemRepository.findByDatasetKeyValue("key-1", 3L).getCategoryIdList()));
+        assertEquals(0, ItemRepository.findById(2L).getCategoryIdList().length);
+        assertNull(ItemRepository.findById(99L));
+
+        var items = ItemRepository.findAll(null, null);
+        assertEquals(2, items.size());
+        assertEquals(0, items.get(0).getCategoryIdList().length);
+        assertEquals(Set.of(10L, 20L), Set.of(items.get(1).getCategoryIdList()));
     }
 
     @Test
