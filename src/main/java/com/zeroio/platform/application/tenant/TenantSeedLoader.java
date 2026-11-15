@@ -56,7 +56,7 @@ public class TenantSeedLoader {
   private static Log LOG = LogFactory.getLog(TenantSeedLoader.class);
 
   private static final ObjectMapper MAPPER = new ObjectMapper();
-  private static final String SEED_FILE = "/WEB-INF/classes/database/seed/tenant-seed.json";
+  private static final String SEED_FILE = "/WEB-INF/classes/database/tenant-seed.json";
   private static final String WEB_TEMPLATES_PAGE_DIR = "/WEB-INF/web-templates/page";
 
   private TenantSeedLoader() {
@@ -64,12 +64,15 @@ public class TenantSeedLoader {
 
   public static void seedDatabase(Workspace workspace) throws Exception {
 
+    LOG.debug("Starting database seeding for workspace: " + workspace.getName());
+
     if (!WebApp.isAvailable()) {
       LOG.error("WebApp is not available");
       return;
     }
 
     try (InputStream inputStream = WebApp.getResourceAsStream(SEED_FILE)) {
+      LOG.debug("Reading seed file: " + SEED_FILE);
       String json = IOUtils.toString(inputStream, StandardCharsets.UTF_8.name());
       if (StringUtils.isBlank(json)) {
         LOG.error("Seed file is blank: " + SEED_FILE);

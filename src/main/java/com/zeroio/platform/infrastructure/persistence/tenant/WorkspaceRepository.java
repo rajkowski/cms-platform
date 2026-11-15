@@ -176,6 +176,7 @@ public class WorkspaceRepository {
     return WorkspaceContextManager.withoutWorkspace(
         () -> {
           if (record.getId() > 0) {
+            LOG.debug("Updating workspace: " + record.getId());
             boolean updated = DB.UPDATE(TABLE_NAME)
                 .SET("workspace_unique_id = ?", record.getUniqueId())
                 .SET("name = ?", StringUtils.trimToNull(record.getName()))
@@ -196,6 +197,7 @@ public class WorkspaceRepository {
             }
             return record;
           } else {
+            LOG.debug("Inserting new workspace: " + record.getName());
             long id = DB.INSERT().INTO(TABLE_NAME)
                 .FIELD("workspace_unique_id", StringUtils.trimToNull(record.getUniqueId()))
                 .FIELD("name", StringUtils.trimToNull(record.getName()))
