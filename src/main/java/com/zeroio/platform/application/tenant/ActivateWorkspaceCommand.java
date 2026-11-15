@@ -16,10 +16,13 @@
 package com.zeroio.platform.application.tenant;
 
 import java.io.File;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import com.github.rajkowski.database.DB;
 import com.simisinc.platform.application.admin.DatabaseCommand;
@@ -34,6 +37,8 @@ import com.zeroio.platform.infrastructure.persistence.tenant.TenantDataSourceDat
 import com.zeroio.platform.infrastructure.persistence.tenant.WorkspaceRepository;
 
 public class ActivateWorkspaceCommand {
+
+    private static Log LOG = LogFactory.getLog(ActivateWorkspaceCommand.class);
 
     // Used as a subdomain and a folder name
     private static final Pattern UNIQUE_ID_PATTERN = Pattern.compile("^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$");
@@ -99,54 +104,70 @@ public class ActivateWorkspaceCommand {
         }
 
         // A datasource is created for the selected database
-        HikariDataSource dataSource = DatabaseCommand.createDataSource(database);
+        try (HikariDataSource dataSource = DatabaseCommand.createDataSource(database)) {
 
-        // Have Flyway check/initialize/upgrade the database schema
-        if (!DatabaseCommand.initialize(dataSource)) {
-            return "The selected database could not be verified.";
+            // Have Flyway check/initialize/upgrade the database schema
+            if (!DatabaseCommand.initialize(dataSource)) {
+                return "The selected database could not be verified.";
+            }
+
+            // Activate the workspace
+            Workspace workspace = new Workspace();
+            workspace.setUniqueId(uniqueId);
+            workspace.setName(name);
+            workspace.setSiteUrl(siteUrl);
+            workspace.setCanonicalDomain(canonicalDomain);
+            workspace.setFileRoot(fileRoot);
+            workspace.setDepartment(department);
+            workspace.setDescription(description);
+            workspace.setActive(true);
+            if (ownerId > 0) {
+                workspace.setOwnerId(ownerId);
+            }
+            workspace.setCreatedBy(createdBy);
+
+            // Attempt to save and allocate the workspace
+            Workspace saved = WorkspaceRepository.saveAndAllocateDatabase(workspace, poolDatabaseId);
+            if (saved == null) {
+                return "Workspace could not be saved. Please review the values and try again.";
+            }
+
+            // Populate the tenant database with initial seed data
+            AtomicBoolean tenantSuccess = new AtomicBoolean(false);
+            DB.withDataSource(dataSource, () -> {
+                // Set essential properties for the new site
+                SitePropertyRepository.saveValue("site.name", workspace.getName());
+                SitePropertyRepository.saveValue("site.url", workspace.getSiteUrl());
+                SitePropertyRepository.saveValue("site.description", workspace.getDescription());
+                SitePropertyRepository.saveValue("system.configpath", new File(fileRootDir, "config").getPath());
+                SitePropertyRepository.saveValue("system.filepath", new File(fileRootDir, "files").getPath());
+                SitePropertyRepository.saveValue("system.customizations.filepath",
+                        new File(fileRootDir, "customization").getPath());
+                SitePropertyRepository.saveValue("system.staticsite.filepath",
+                        new File(fileRootDir, "static-site").getPath());
+                SitePropertyRepository.saveValue("site.online", "true");
+
+                // Load the seed data for the tenant database
+                try {
+                    TenantSeedLoader.seedDatabase(workspace);
+                    tenantSuccess.set(true);
+                } catch (Exception e) {
+                    tenantSuccess.set(false);
+                }
+            });
+            
+            if (!tenantSuccess.get()) {
+                // Mark the workspace as failed/not active
+                workspace.setActive(false);
+                WorkspaceRepository.save(workspace);
+                return "Failed to seed tenant database, could not activate workspace.";
+            }
+
+            // Register the data source so it can be used
+            ConnectionPool.registerConfiguredTenantDataSource(
+                    TenantDataSourceConfigurationStore.findByWorkspaceId(saved.getId()));
+
+            return null; // Return an error message if activation fails, otherwise return null
         }
-
-        // Activate the workspace
-        Workspace workspace = new Workspace();
-        workspace.setUniqueId(uniqueId);
-        workspace.setName(name);
-        workspace.setSiteUrl(siteUrl);
-        workspace.setCanonicalDomain(canonicalDomain);
-        workspace.setFileRoot(fileRoot);
-        workspace.setDepartment(department);
-        workspace.setDescription(description);
-        workspace.setActive(true);
-        if (ownerId > 0) {
-            workspace.setOwnerId(ownerId);
-        }
-        workspace.setCreatedBy(createdBy);
-
-        // Attempt to save and allocate the workspace
-        Workspace saved = WorkspaceRepository.saveAndAllocateDatabase(workspace, poolDatabaseId);
-        if (saved == null) {
-            return "Workspace could not be saved. Please review the values and try again.";
-        }
-
-        // Set essential properties for the new site
-        DB.withDataSource(dataSource, () -> {
-            SitePropertyRepository.saveValue("site.name", workspace.getName());
-            SitePropertyRepository.saveValue("site.url", workspace.getSiteUrl());
-            SitePropertyRepository.saveValue("site.description", workspace.getDescription());
-            SitePropertyRepository.saveValue("system.configpath", new File(fileRootDir, "config").getPath());
-            SitePropertyRepository.saveValue("system.filepath", new File(fileRootDir, "files").getPath());
-            SitePropertyRepository.saveValue("system.customizations.filepath",
-                    new File(fileRootDir, "customization").getPath());
-            SitePropertyRepository.saveValue("system.staticsite.filepath",
-                    new File(fileRootDir, "static-site").getPath());
-            SitePropertyRepository.saveValue("site.online", "true");
-        });
-
-        // @todo Load the seed data for the tenant database
-
-        // Register the data source so it can be used
-        ConnectionPool.registerConfiguredTenantDataSource(
-                TenantDataSourceConfigurationStore.findByWorkspaceId(saved.getId()));
-
-        return null; // Return an error message if activation fails, otherwise return null
     }
 }

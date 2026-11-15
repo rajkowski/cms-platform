@@ -317,6 +317,7 @@
       <fileset dir="${resources.dir}">
         <include name="**/*.properties" />
         <include name="**/*.sql" />
+        <include name="**/*.json" />
         <exclude name="database.production.properties" />
         <exclude name="jobrunr.production.properties" />
         <exclude name="simplelogger.production.properties" />

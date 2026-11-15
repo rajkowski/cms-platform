@@ -1,0 +1,629 @@
+{
+  "metadata": {
+    "version": "1.1",
+    "description": "Tenant database seed configuration - common pages and configurations for new tenant initialization",
+    "created": "2026-11-07T08:16:00Z",
+    "modules": [
+      "navigation",
+      "web_pages",
+      "forms",
+      "blogs",
+      "folders",
+      "collections",
+      "calendars",
+      "content",
+      "site_properties",
+      "theme_properties"
+    ],
+    "notes": "This JSON defines all common/boilerplate data that should be automatically inserted when provisioning a new tenant."
+  },
+  "navigation": {
+    "menu_tabs": [
+      {
+        "tab_order": 1,
+        "name": "Home",
+        "link": "/",
+        "page_title": "Home",
+        "enabled": true,
+        "draft": false
+      },
+      {
+        "tab_order": 2,
+        "name": "About",
+        "link": "/about",
+        "page_title": "About",
+        "enabled": true,
+        "draft": false
+      },
+      {
+        "tab_order": 3,
+        "name": "Index",
+        "link": "/index",
+        "page_title": "Index",
+        "enabled": true,
+        "draft": false
+      }
+    ],
+    "menu_items": []
+  },
+  "web_pages": [
+    {
+      "link": "/",
+      "page_title": "Home",
+      "searchable": true,
+      "show_in_sitemap": true,
+      "sitemap_priority": 0.5,
+      "template": "Document Home Page",
+      "page_xml_file": "documents/Document Home Page.xml",
+      "content": "Document Home Page with search",
+      "enabled": true,
+      "locale": "en"
+    },
+    {
+      "link": "/contact-us",
+      "page_title": "Contact Us",
+      "searchable": true,
+      "show_in_sitemap": true,
+      "sitemap_priority": 0.5,
+      "template": "Single Content Block",
+      "page_xml_file": "cms/Single Content Block.xml",
+      "enabled": true,
+      "locale": "en"
+    },
+    {
+      "link": "/account",
+      "page_title": "My Account",
+      "searchable": false,
+      "show_in_sitemap": false,
+      "sitemap_priority": 0.2,
+      "template": "My Account: Activity",
+      "page_xml_file": "documents/My Page - Documents.xml",
+      "enabled": true,
+      "locale": "en"
+    },
+    {
+      "link": "/search",
+      "page_title": "Search Results",
+      "searchable": false,
+      "show_in_sitemap": false,
+      "sitemap_priority": 0.2,
+      "template": "Document Search Results",
+      "page_xml_file": "documents/Document Search.xml",
+      "enabled": true,
+      "locale": "en"
+    },
+    {
+      "link": "/index",
+      "page_title": "Index Page",
+      "searchable": true,
+      "show_in_sitemap": true,
+      "sitemap_priority": 0.7,
+      "template": "Hierarchy Index Page",
+      "page_xml_file": "documents/Hierarchy Index Page.xml",
+      "enabled": true,
+      "locale": "en"
+    },
+    {
+      "link": "/about",
+      "page_title": "About",
+      "searchable": true,
+      "show_in_sitemap": true,
+      "sitemap_priority": 0.5,
+      "template": "Document Landing Page",
+      "page_xml_file": "documents/Document Landing Page.xml",
+      "enabled": true,
+      "locale": "en"
+    },
+    {
+      "link": "/calendar",
+      "page_title": "Calendar",
+      "searchable": true,
+      "show_in_sitemap": true,
+      "sitemap_priority": 0.5,
+      "template": "Calendar",
+      "page_xml_file": "cms/Calendar.xml",
+      "enabled": true,
+      "locale": "en"
+    },
+    {
+      "link": "/blog",
+      "page_title": "Blog",
+      "searchable": true,
+      "show_in_sitemap": true,
+      "sitemap_priority": 0.5,
+      "template": "Blog Posts - List",
+      "page_xml_file": "cms/Blog Posts - List.xml",
+      "enabled": true,
+      "locale": "en"
+    },
+    {
+      "link": "/blog/*",
+      "page_title": "Blog Post",
+      "searchable": false,
+      "show_in_sitemap": false,
+      "sitemap_priority": 0.5,
+      "template": "Blog Post Article Page",
+      "page_xml_file": "cms/Blog Post Article Page.xml",
+      "enabled": true,
+      "locale": "en"
+    },
+    {
+      "link": "/faq",
+      "page_title": "FAQ",
+      "searchable": true,
+      "show_in_sitemap": true,
+      "sitemap_priority": 0.5,
+      "template": "FAQ",
+      "page_xml_file": "cms/FAQ.xml",
+      "enabled": true,
+      "locale": "en"
+    },
+    {
+      "link": "/directories",
+      "page_title": "Directories",
+      "searchable": true,
+      "show_in_sitemap": true,
+      "sitemap_priority": 0.5,
+      "template": "Directories",
+      "page_xml_file": "portal/Directories.xml",
+      "enabled": true,
+      "locale": "en"
+    }
+  ],
+  "forms": [
+    {
+      "name": "Contact Us",
+      "unique_id": "contact-us",
+      "use_captcha": true,
+      "check_for_spam": true,
+      "button_name": "Submit",
+      "success_message": "Thank you for contacting us. We normally respond within 1-2 business days.",
+      "fields": [
+        {
+          "label": "Reason for contacting us",
+          "value": "reason",
+          "type": "list",
+          "options": [
+            "Ask a question",
+            "Provide feedback",
+            "Request support",
+            "Other"
+          ],
+          "required": true
+        },
+        {
+          "label": "First Name",
+          "value": "firstName",
+          "type": "text",
+          "placeholder": "Your first name",
+          "required": true
+        },
+        {
+          "label": "Last Name",
+          "value": "lastName",
+          "type": "text",
+          "placeholder": "Your last name",
+          "required": true
+        },
+        {
+          "label": "Email Address",
+          "value": "email",
+          "type": "email",
+          "placeholder": "Your email address",
+          "required": true
+        },
+        {
+          "label": "Phone Number",
+          "intro": "To ensure we are getting you the information you seek, we may need to contact you by phone to get some clarification.",
+          "value": "phone",
+          "type": "text",
+          "placeholder": "Your phone number",
+          "required": false
+        },
+        {
+          "label": "Who would you like to contact?",
+          "value": "who",
+          "type": "list",
+          "options": [
+            "Sales",
+            "Marketing",
+            "Technical Support",
+            "Other"
+          ],
+          "required": true
+        },
+        {
+          "label": "Message",
+          "value": "message",
+          "type": "textarea",
+          "placeholder": "Your message",
+          "required": true
+        }
+      ]
+    }
+  ],
+  "blogs": [
+    {
+      "name": "Blog",
+      "description": "Blog posts and articles",
+      "enabled": true
+    }
+  ],
+  "folders": [
+    {
+      "name": "Documents",
+      "description": "Shared documents"
+    },
+    {
+      "name": "Videos",
+      "description": "Shared videos"
+    },
+    {
+      "name": "Diagrams",
+      "description": "Architecture and process diagrams"
+    }
+  ],
+  "collections": [
+    {
+      "name": "Team Knowledge Base",
+      "description": "Useful internal team references and documents",
+      "allows_guests": true,
+      "enabled": true,
+      "datasets": [
+        {
+          "name": "Reference Links",
+          "filename": "reference-links.csv",
+          "path": "/seed/datasets/reference-links.csv"
+        }
+      ]
+    }
+  ],
+  "calendars": [
+    {
+      "name": "Events",
+      "description": "Team events and announcements",
+      "holidays": false,
+      "color": "#0066CC",
+      "enabled": true
+    }
+  ],
+  "content": [
+    {
+      "content_unique_id": "home-welcome",
+      "content": "<h3>Welcome to our workspace!</h3>",
+      "tags": [
+        "welcome",
+        "home"
+      ],
+      "locale": "en"
+    },
+    {
+      "content_unique_id": "home-headline",
+      "content": "<p>Information and updates for our team</p>",
+      "tags": [
+        "welcome",
+        "home"
+      ],
+      "locale": "en"
+    },
+    {
+      "content_unique_id": "home-module-1",
+      "content": "<p>Use this space for any team-related content.</p>",
+      "tags": [
+        "welcome",
+        "home"
+      ],
+      "locale": "en"
+    },
+    {
+      "content_unique_id": "home-module-2",
+      "content": "<p>Use this space for any team-related content.</p>",
+      "tags": [
+        "welcome",
+        "home"
+      ],
+      "locale": "en"
+    },
+    {
+      "content_unique_id": "home-module-3",
+      "content": "<p>Use this space for any team-related content.</p",
+      "tags": [
+        "welcome",
+        "home"
+      ],
+      "locale": "en"
+    },
+    {
+      "content_unique_id": "home-module-4",
+      "content": "<p>Use this space for any team-related content.</p",
+      "tags": [
+        "welcome",
+        "home"
+      ],
+      "locale": "en"
+    }
+  ],
+  "site_properties": [
+    {
+      "name": "site.pageChildren.overlay.enabled",
+      "value": "false"
+    }
+  ],
+  "theme_properties_kc": [
+    {
+      "id": 1,
+      "name": "theme.body.backgroundColor",
+      "value": "#f3f3f3"
+    },
+    {
+      "id": 2,
+      "name": "theme.body.text.color",
+      "value": "#000000"
+    },
+    {
+      "id": 3,
+      "name": "theme.utilitybar.backgroundColor",
+      "value": "#0046cb"
+    },
+    {
+      "id": 4,
+      "name": "theme.utilitybar.text.color",
+      "value": "#ffffff"
+    },
+    {
+      "id": 5,
+      "name": "theme.utilitybar.link.color",
+      "value": "#dae3f5"
+    },
+    {
+      "id": 6,
+      "name": "theme.topbar.backgroundColor",
+      "value": "#ffffff"
+    },
+    {
+      "id": 7,
+      "name": "theme.topbar.text.color",
+      "value": "#000000"
+    },
+    {
+      "id": 8,
+      "name": "theme.topbar.menu.text.color",
+      "value": "#000000"
+    },
+    {
+      "id": 9,
+      "name": "theme.topbar.menu.arrow.color",
+      "value": "#000000"
+    },
+    {
+      "id": 10,
+      "name": "theme.topbar.menu.hoverTextColor",
+      "value": "#0046cb"
+    },
+    {
+      "id": 11,
+      "name": "theme.topbar.menu.text.hoverBackgroundColor",
+      "value": "#f5f5f5"
+    },
+    {
+      "id": 12,
+      "name": "theme.topbar.menu.activeTextColor",
+      "value": "#0046cb"
+    },
+    {
+      "id": 13,
+      "name": "theme.topbar.menu.activeBackgroundColor",
+      "value": "#f5f5f5"
+    },
+    {
+      "id": 14,
+      "name": "theme.topbar.menu.dropdown.backgroundColor",
+      "value": "#ffffff"
+    },
+    {
+      "id": 15,
+      "name": "theme.topbar.menu.dropdown.text.color",
+      "value": "#000000"
+    },
+    {
+      "id": 16,
+      "name": "theme.topbar.dark.backgroundColor",
+      "value": "#1a1a1a"
+    },
+    {
+      "id": 17,
+      "name": "theme.topbar.dark.text.color",
+      "value": "#e0e0e0"
+    },
+    {
+      "id": 18,
+      "name": "theme.topbar.dark.menu.text.color",
+      "value": "#e0e0e0"
+    },
+    {
+      "id": 19,
+      "name": "theme.topbar.dark.menu.arrow.color",
+      "value": "#e0e0e0"
+    },
+    {
+      "id": 20,
+      "name": "theme.topbar.dark.menu.hoverTextColor",
+      "value": "#ffffff"
+    },
+    {
+      "id": 21,
+      "name": "theme.topbar.dark.menu.text.hoverBackgroundColor",
+      "value": "#3a3a3a"
+    },
+    {
+      "id": 22,
+      "name": "theme.topbar.dark.menu.activeTextColor",
+      "value": "#ffffff"
+    },
+    {
+      "id": 23,
+      "name": "theme.topbar.dark.menu.activeBackgroundColor",
+      "value": "#3a3a3a"
+    },
+    {
+      "id": 24,
+      "name": "theme.topbar.dark.menu.dropdown.backgroundColor",
+      "value": "#2a2a2a"
+    },
+    {
+      "id": 25,
+      "name": "theme.topbar.dark.menu.dropdown.text.color",
+      "value": "#e0e0e0"
+    },
+    {
+      "id": 26,
+      "name": "theme.button.text.color",
+      "value": "#ffffff"
+    },
+    {
+      "id": 27,
+      "name": "theme.button.default.backgroundColor",
+      "value": "#000000"
+    },
+    {
+      "id": 28,
+      "name": "theme.button.default.hoverBackgroundColor",
+      "value": "#575757"
+    },
+    {
+      "id": 29,
+      "name": "theme.button.primary.backgroundColor",
+      "value": "#4a76cf"
+    },
+    {
+      "id": 30,
+      "name": "theme.button.primary.hoverBackgroundColor",
+      "value": "#0046cb"
+    },
+    {
+      "id": 31,
+      "name": "theme.button.secondary.backgroundColor",
+      "value": "#bfbfbf"
+    },
+    {
+      "id": 32,
+      "name": "theme.button.secondary.hoverBackgroundColor",
+      "value": "#999999"
+    },
+    {
+      "id": 33,
+      "name": "theme.button.success.backgroundColor",
+      "value": "#49947d"
+    },
+    {
+      "id": 34,
+      "name": "theme.button.success.hoverBackgroundColor",
+      "value": "#0b714f"
+    },
+    {
+      "id": 35,
+      "name": "theme.button.warning.backgroundColor",
+      "value": "#fca565"
+    },
+    {
+      "id": 36,
+      "name": "theme.button.warning.hoverBackgroundColor",
+      "value": "#fd8f3f"
+    },
+    {
+      "id": 37,
+      "name": "theme.button.alert.backgroundColor",
+      "value": "#e56666"
+    },
+    {
+      "id": 38,
+      "name": "theme.button.alert.hoverBackgroundColor",
+      "value": "#e84848"
+    },
+    {
+      "id": 39,
+      "name": "theme.callout.backgroundColor",
+      "value": "#dae3f5"
+    },
+    {
+      "id": 40,
+      "name": "theme.callout.text.color",
+      "value": "#000000"
+    },
+    {
+      "id": 41,
+      "name": "theme.callout.primary.backgroundColor",
+      "value": "#aabfe8"
+    },
+    {
+      "id": 42,
+      "name": "theme.callout.primary.text.color",
+      "value": "#000000"
+    },
+    {
+      "id": 43,
+      "name": "theme.callout.secondary.backgroundColor",
+      "value": "#f9f9f9"
+    },
+    {
+      "id": 44,
+      "name": "theme.callout.secondary.text.color",
+      "value": "#0a0a0a"
+    },
+    {
+      "id": 45,
+      "name": "theme.callout.success.backgroundColor",
+      "value": "#dee9e5"
+    },
+    {
+      "id": 46,
+      "name": "theme.callout.success.text.color",
+      "value": "#000000"
+    },
+    {
+      "id": 47,
+      "name": "theme.callout.warning.backgroundColor",
+      "value": "#fcefe3"
+    },
+    {
+      "id": 48,
+      "name": "theme.callout.warning.text.color",
+      "value": "#000000"
+    },
+    {
+      "id": 49,
+      "name": "theme.callout.alert.backgroundColor",
+      "value": "#e56666"
+    },
+    {
+      "id": 50,
+      "name": "theme.callout.alert.text.color",
+      "value": "#ffffff"
+    },
+    {
+      "id": 51,
+      "name": "theme.footer.backgroundColor",
+      "value": "#0046cb"
+    },
+    {
+      "id": 52,
+      "name": "theme.footer.text.color",
+      "value": "#f3f3f3"
+    },
+    {
+      "id": 53,
+      "name": "theme.footer.links.color",
+      "value": "#f3f3f3"
+    },
+    {
+      "id": 54,
+      "name": "theme.header.name",
+      "value": ""
+    },
+    {
+      "id": 55,
+      "name": "theme.footer.name",
+      "value": ""
+    }
+  ]
+}
