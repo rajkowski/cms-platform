@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,9 +17,9 @@
 
 package com.simisinc.platform.domain.model.cms;
 
-import com.simisinc.platform.domain.model.Entity;
-
 import java.util.Map;
+
+import com.simisinc.platform.domain.model.Entity;
 
 /**
  * The field definition and user response value
@@ -29,6 +30,9 @@ import java.util.Map;
 public class FormField extends Entity {
 
   private Long id = -1L;
+
+  private long formDefinitionId = -1;
+  private int fieldOrder = -1;
 
   private String label = null;
   private String name = null;
@@ -48,6 +52,22 @@ public class FormField extends Entity {
 
   public void setId(Long id) {
     this.id = id;
+  }
+
+  public long getFormDefinitionId() {
+    return formDefinitionId;
+  }
+
+  public void setFormDefinitionId(long formDefinitionId) {
+    this.formDefinitionId = formDefinitionId;
+  }
+
+  public int getFieldOrder() {
+    return fieldOrder;
+  }
+
+  public void setFieldOrder(int fieldOrder) {
+    this.fieldOrder = fieldOrder;
   }
 
   public String getLabel() {

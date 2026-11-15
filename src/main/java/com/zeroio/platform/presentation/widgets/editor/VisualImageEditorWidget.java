@@ -1,5 +1,5 @@
 /*
- * Copyright 2026 Matt Rajkowski
+ * Copyright 2025 Matt Rajkowski (https://github.com/rajkowski)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.simisinc.platform.presentation.widgets.editor;
+package com.zeroio.platform.presentation.widgets.editor;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -26,22 +26,22 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
 import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
- * Visual Document Editor widget shell for managing folders and files
+ * Visual Image Editor Widget for viewing, editing, and managing images
  *
  * @author matt rajkowski
- * @created 1/22/26 10:05 AM
+ * @created 1/21/26 8:45 PM
  */
-public class VisualDocumentEditorWidget extends GenericWidget {
+public class VisualImageEditorWidget extends GenericWidget {
 
   static final long serialVersionUID = -8484048371911908893L;
-  protected static Log LOG = LogFactory.getLog(VisualDocumentEditorWidget.class);
+  protected static Log LOG = LogFactory.getLog(VisualImageEditorWidget.class);
 
-  static String EDITOR_JSP = "/cms/visual-document-editor.jsp";
+  static String EDITOR_JSP = "/cms/visual-image-editor.jsp";
 
   public WidgetContext execute(WidgetContext context) {
     // Check permissions
-    if (!Permission.check("cms.visual-document-editor.access", context.getUserSession())) {
-      LOG.debug("No permission to: " + VisualDocumentEditorWidget.class.getSimpleName());
+    if (!Permission.check("cms.visual-image-editor.access", context.getUserSession())) {
+      LOG.debug("No permission to: " + VisualImageEditorWidget.class.getSimpleName());
       return context;
     }
 
@@ -52,22 +52,14 @@ public class VisualDocumentEditorWidget extends GenericWidget {
     String returnPage = UrlCommand.getValidReturnPage(context.getParameter("returnPage"));
     context.getRequest().setAttribute("returnPage", returnPage);
 
-    // Optional: pre-select a folder or file
-    String folderIdValue = context.getParameter("folderId");
-    if (StringUtils.isNotBlank(folderIdValue)) {
+    // Optional: Load a specific image if imageId is provided
+    String imageIdValue = context.getParameter("imageId");
+    if (StringUtils.isNotBlank(imageIdValue)) {
       try {
-        context.getRequest().setAttribute("selectedFolderId", Long.parseLong(folderIdValue));
+        long imageId = Long.parseLong(imageIdValue);
+        context.getRequest().setAttribute("selectedImageId", imageId);
       } catch (NumberFormatException nfe) {
-        LOG.warn("Invalid folderId parameter: " + folderIdValue);
-      }
-    }
-
-    String fileIdValue = context.getParameter("fileId");
-    if (StringUtils.isNotBlank(fileIdValue)) {
-      try {
-        context.getRequest().setAttribute("selectedFileId", Long.parseLong(fileIdValue));
-      } catch (NumberFormatException nfe) {
-        LOG.warn("Invalid fileId parameter: " + fileIdValue);
+        LOG.warn("Invalid imageId parameter: " + imageIdValue);
       }
     }
 

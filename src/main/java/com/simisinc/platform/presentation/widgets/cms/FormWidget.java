@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +20,7 @@ package com.simisinc.platform.presentation.widgets.cms;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -30,14 +32,17 @@ import com.simisinc.platform.application.cms.FormCommand;
 import com.simisinc.platform.application.cms.FormFieldCommand;
 import com.simisinc.platform.domain.events.cms.FormSubmittedEvent;
 import com.simisinc.platform.domain.model.cms.FormData;
+import com.simisinc.platform.domain.model.cms.FormDefinition;
 import com.simisinc.platform.domain.model.cms.FormField;
 import com.simisinc.platform.infrastructure.persistence.cms.FormDataRepository;
+import com.simisinc.platform.infrastructure.persistence.cms.FormDefinitionRepository;
+import com.simisinc.platform.infrastructure.persistence.cms.FormFieldRepository;
 import com.simisinc.platform.infrastructure.workflow.WorkflowManager;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
 
 /**
- * Description
+ * Form widget for handling form submissions and displaying success messages
  *
  * @author matt rajkowski
  * @created 6/1/18 11:11 AM
@@ -59,25 +64,59 @@ public class FormWidget extends GenericWidget {
       return context;
     }
 
+    // Initialize the list of form fields, either from the database or preferences
+    List<FormField> formFieldList = null;
+
+    // Load the form definition and fields preference if no definition is found
+    FormDefinition formDefinition = loadDefinition(context);
+    if (formDefinition != null) {
+      if (formDefinition.getEnabled()) {
+        formFieldList = FormFieldRepository.findAllByFormDefinitionId(formDefinition.getId());
+      }
+    }
+
+    // Check for preference entries list if no form definition is found
+    PreferenceEntriesList fieldsEntriesList = null;
+    if (formFieldList == null) {
+      fieldsEntriesList = context.getPreferenceAsDataList("fields");
+      if (fieldsEntriesList == null || fieldsEntriesList.isEmpty()) {
+        return null;
+      }
+      formFieldList = FormFieldCommand.parseFieldContent(context.getPreferences().get("formUniqueId"), fieldsEntriesList);
+    }
+
+    if (formFieldList == null || formFieldList.isEmpty()) {
+      return null;
+    }
+
+    // Check if the form was successfully submitted in a previous request
     String isSuccess = context.getSharedRequestValue(context.getUniqueId() + "formWidgetSuccess");
     if ("true".equals(isSuccess)) {
-      context.getRequest().setAttribute("successTitle", context.getPreferences().get("successTitle"));
-      context.getRequest().setAttribute("successMessage", context.getPreferences().getOrDefault("successMessage", "Your information has been submitted."));
+      context.getRequest().setAttribute("successTitle",
+          formDefinition == null ? context.getPreferences().get("successTitle") : formDefinition.getSuccessTitle());
+      context.getRequest().setAttribute("successMessage",
+          formDefinition == null ? context.getPreferences().getOrDefault("successMessage", "Your information has been submitted.")
+              : StringUtils.defaultIfBlank(formDefinition.getSuccessMessage(), "Your information has been submitted."));
       context.setJsp(SUCCESS_JSP);
       return context;
     }
     context.setJsp(JSP);
 
     // Preferences
-    context.getRequest().setAttribute("buttonName", context.getPreferences().getOrDefault("buttonName", "Submit"));
+    context.getRequest().setAttribute("buttonName",
+        formDefinition == null ? context.getPreferences().getOrDefault("buttonName", "Submit")
+            : StringUtils.defaultIfBlank(formDefinition.getButtonName(), "Submit"));
 
     // Standard request items
     context.getRequest().setAttribute("icon", context.getPreferences().get("icon"));
-    context.getRequest().setAttribute("title", context.getPreferences().get("title"));
-    context.getRequest().setAttribute("subtitle", context.getPreferences().get("subtitle"));
+    context.getRequest().setAttribute("title",
+        formDefinition == null ? context.getPreferences().get("title") : formDefinition.getTitle());
+    context.getRequest().setAttribute("subtitle",
+        formDefinition == null ? context.getPreferences().get("subtitle") : formDefinition.getSubtitle());
 
     // Determine the captcha service
-    boolean useCaptcha = "true".equals(context.getPreferences().getOrDefault("useCaptcha", "false"));
+    boolean useCaptcha = formDefinition == null ? "true".equals(context.getPreferences().getOrDefault("useCaptcha", "false"))
+        : formDefinition.getUseCaptcha();
     if (useCaptcha) {
       context.getRequest().setAttribute("useCaptcha", "true");
       context.getRequest().setAttribute("googleSiteKey", LoadSitePropertyCommand.loadByName("captcha.google.sitekey"));
@@ -93,15 +132,8 @@ public class FormWidget extends GenericWidget {
       return context;
     }
 
-    // Use the fields preference to determine the item properties to be shown
-    PreferenceEntriesList fieldsEntriesList = context.getPreferenceAsDataList("fields");
-    if (fieldsEntriesList.isEmpty()) {
-      LOG.warn("Fields preference was not found");
-      return null;
-    }
-    String formUniqueId = context.getPreferences().get("formUniqueId");
-    List<FormField> formFieldList = FormFieldCommand.parseFieldContent(formUniqueId, fieldsEntriesList);
-    if (formFieldList.isEmpty()) {
+    // Use the fields to determine the item properties to be shown
+    if (formFieldList == null || formFieldList.isEmpty()) {
       LOG.warn("No fields were found");
       return null;
     }
@@ -117,17 +149,38 @@ public class FormWidget extends GenericWidget {
   }
 
   public WidgetContext post(WidgetContext context) {
+
     // Determine the fields
+    String formUniqueId = null;
+    List<FormField> formFieldList = null;
     boolean isValid = true;
     int blankValues = 0;
 
-    PreferenceEntriesList fieldsEntriesList = context.getPreferenceAsDataList("fields");
-    if (fieldsEntriesList.isEmpty()) {
-      LOG.warn("Fields preference was not found");
+    // Load the form definition and fields preference if no definition is found
+    FormDefinition formDefinition = loadDefinition(context);
+    if (formDefinition != null) {
+      if (formDefinition.getEnabled()) {
+        formUniqueId = formDefinition.getUniqueId();
+        formFieldList = FormFieldRepository.findAllByFormDefinitionId(formDefinition.getId());
+      }
+    }
+
+    // Check for preference entries list if no form definition is found
+    PreferenceEntriesList fieldsEntriesList = null;
+    if (formFieldList == null) {
+      fieldsEntriesList = context.getPreferenceAsDataList("fields");
+      if (fieldsEntriesList == null || fieldsEntriesList.isEmpty()) {
+        return null;
+      }
+      formUniqueId = context.getPreferences().get("formUniqueId");
+      formFieldList = FormFieldCommand.parseFieldContent(formUniqueId, fieldsEntriesList);
+    }
+
+    // Determine the list of form fields based on the form definition or preference entries list
+    if (formFieldList == null || formFieldList.isEmpty()) {
       return null;
     }
-    String formUniqueId = context.getPreferences().get("formUniqueId");
-    List<FormField> formFieldList = FormFieldCommand.parseFieldContent(formUniqueId, fieldsEntriesList);
+
     for (FormField formField : formFieldList) {
       // Determine the user's value
       String parameterValue = context.getParameter(context.getUniqueId() + formField.getName());
@@ -142,6 +195,11 @@ public class FormWidget extends GenericWidget {
       }
       parameterValue = parameterValue.trim();
       if (formField.getListOfOptions() != null) {
+        if (!formField.getListOfOptions().containsKey(parameterValue)) {
+          isValid = false;
+          context.setWarningMessage("Check " + formField.getLabel() + " and try again");
+          continue;
+        }
         formField.setUserValue(formField.getListOfOptions().get(parameterValue));
       } else {
         formField.setUserValue(parameterValue);
@@ -160,7 +218,8 @@ public class FormWidget extends GenericWidget {
     }
 
     // Validate the captcha
-    boolean useCaptcha = "true".equals(context.getPreferences().getOrDefault("useCaptcha", "false"));
+    boolean useCaptcha = formDefinition == null ? "true".equals(context.getPreferences().getOrDefault("useCaptcha", "false"))
+        : formDefinition.getUseCaptcha();
     if (useCaptcha) {
       boolean captchaSuccess = CaptchaCommand.validateRequest(context);
       if (!captchaSuccess) {
@@ -195,7 +254,8 @@ public class FormWidget extends GenericWidget {
       return context;
     }
 
-    boolean checkForSpam = Boolean.parseBoolean(context.getPreferences().getOrDefault("checkForSpam", "true"));
+    boolean checkForSpam = formDefinition == null ? Boolean.parseBoolean(context.getPreferences().getOrDefault("checkForSpam", "true"))
+        : formDefinition.getCheckForSpam();
     if (checkForSpam) {
       FormCommand.checkNotificationRules(formData);
     }
@@ -208,12 +268,21 @@ public class FormWidget extends GenericWidget {
     }
 
     // Send an alert based on the preferences (or transform for another system)
-    String emailAddresses = context.getPreferences().get("emailTo");
+    String emailAddresses = formDefinition == null ? context.getPreferences().get("emailTo") : formDefinition.getEmailTo();
     WorkflowManager.triggerWorkflowForEvent(new FormSubmittedEvent(formData, emailAddresses));
 
     // Redirect back so the message can be displayed
     context.addSharedRequestValue(context.getUniqueId() + "formWidgetSuccess", "true");
 
     return null;
+  }
+
+  private FormDefinition loadDefinition(WidgetContext context) {
+    String uniqueId = context.getPreferences().get("formUniqueId");
+    if (StringUtils.isNotBlank(uniqueId)) {
+      return FormDefinitionRepository.findByUniqueId(uniqueId);
+    }
+    long id = NumberUtils.toLong(context.getPreferences().get("formId"), -1);
+    return id > -1 ? FormDefinitionRepository.findById(id) : null;
   }
 }

@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +22,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mockStatic;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -30,8 +32,11 @@ import com.simisinc.platform.WidgetBase;
 import com.simisinc.platform.application.RateLimitCommand;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.domain.model.cms.FormData;
+import com.simisinc.platform.domain.model.cms.FormDefinition;
 import com.simisinc.platform.domain.model.cms.FormField;
 import com.simisinc.platform.infrastructure.persistence.cms.FormDataRepository;
+import com.simisinc.platform.infrastructure.persistence.cms.FormDefinitionRepository;
+import com.simisinc.platform.infrastructure.persistence.cms.FormFieldRepository;
 import com.simisinc.platform.infrastructure.workflow.WorkflowManager;
 import com.simisinc.platform.presentation.controller.SessionConstants;
 import com.simisinc.platform.presentation.controller.WidgetContext;
@@ -222,6 +227,93 @@ class FormWidgetTest extends WidgetBase {
       FormWidget widget = new FormWidget();
       widget.execute(widgetContext);
       Assertions.assertEquals(FormWidget.RATE_LIMITED_JSP, widgetContext.getJsp());
+    }
+  }
+
+  @Test
+  void databaseFormDisplaysSavedFieldsAndSettings() {
+    preferences.put("formUniqueId", "contact-us");
+    FormDefinition definition = new FormDefinition();
+    definition.setId(42L);
+    definition.setTitle("Contact us");
+    definition.setButtonName("Send");
+    FormField field = new FormField();
+    field.setName("message");
+    field.setLabel("Message");
+    try (MockedStatic<RateLimitCommand> rate = mockStatic(RateLimitCommand.class);
+        MockedStatic<FormDefinitionRepository> forms = mockStatic(FormDefinitionRepository.class);
+        MockedStatic<FormFieldRepository> fields = mockStatic(FormFieldRepository.class)) {
+      rate.when(() -> RateLimitCommand.isIpAllowedRightNow(any(), anyBoolean())).thenReturn(true);
+      forms.when(() -> FormDefinitionRepository.findByUniqueId("contact-us")).thenReturn(definition);
+      fields.when(() -> FormFieldRepository.findAllByFormDefinitionId(42)).thenReturn(List.of(field));
+      Assertions.assertNotNull(new FormWidget().execute(widgetContext));
+      Assertions.assertEquals("Contact us", pageRequest.getAttribute("title"));
+      Assertions.assertEquals("Send", pageRequest.getAttribute("buttonName"));
+      Assertions.assertEquals(List.of(field), pageRequest.getAttribute("formFieldList"));
+    }
+  }
+
+  @Test
+  void disabledDatabaseFormCannotBeSubmitted() {
+    preferences.put("formUniqueId", "disabled");
+    FormDefinition definition = new FormDefinition();
+    definition.setEnabled(false);
+    try (MockedStatic<FormDefinitionRepository> forms = mockStatic(FormDefinitionRepository.class);
+        MockedStatic<FormDataRepository> submissions = mockStatic(FormDataRepository.class)) {
+      forms.when(() -> FormDefinitionRepository.findByUniqueId("disabled")).thenReturn(definition);
+      Assertions.assertNull(new FormWidget().post(widgetContext));
+      submissions.verifyNoInteractions();
+    }
+  }
+
+  @Test
+  void databaseFormRejectsUnknownSelectOption() {
+    preferences.put("formUniqueId", "contact-us");
+    FormDefinition definition = new FormDefinition();
+    definition.setId(42L);
+    definition.setUniqueId("contact-us");
+    FormField field = new FormField();
+    field.setName("reason");
+    field.setLabel("Reason");
+    field.setListOfOptions(Map.of("help", "Help"));
+    addQueryParameter(widgetContext, widgetContext.getUniqueId() + "reason", "invalid");
+    try (MockedStatic<FormDefinitionRepository> forms = mockStatic(FormDefinitionRepository.class);
+        MockedStatic<FormFieldRepository> fields = mockStatic(FormFieldRepository.class);
+        MockedStatic<FormDataRepository> submissions = mockStatic(FormDataRepository.class)) {
+      forms.when(() -> FormDefinitionRepository.findByUniqueId("contact-us")).thenReturn(definition);
+      fields.when(() -> FormFieldRepository.findAllByFormDefinitionId(42)).thenReturn(List.of(field));
+      Assertions.assertNotNull(new FormWidget().post(widgetContext));
+      Assertions.assertEquals("Check Reason and try again", widgetContext.getWarningMessage());
+      submissions.verifyNoInteractions();
+    }
+  }
+
+  @Test
+  void databaseFormSavesSubmissionUsingDefinitionSettings() {
+    preferences.put("formUniqueId", "contact-us");
+    FormDefinition definition = new FormDefinition();
+    definition.setId(42L);
+    definition.setUniqueId("contact-us");
+    definition.setCheckForSpam(false);
+    definition.setEmailTo("team@example.com");
+    FormField field = new FormField();
+    field.setName("message");
+    field.setLabel("Message");
+    field.setRequired(true);
+    addQueryParameter(widgetContext, widgetContext.getUniqueId() + "message", "Hello");
+    try (MockedStatic<FormDefinitionRepository> forms = mockStatic(FormDefinitionRepository.class);
+        MockedStatic<FormFieldRepository> fields = mockStatic(FormFieldRepository.class);
+        MockedStatic<FormDataRepository> submissions = mockStatic(FormDataRepository.class);
+        MockedStatic<WorkflowManager> workflows = mockStatic(WorkflowManager.class)) {
+      forms.when(() -> FormDefinitionRepository.findByUniqueId("contact-us")).thenReturn(definition);
+      fields.when(() -> FormFieldRepository.findAllByFormDefinitionId(42)).thenReturn(List.of(field));
+      submissions.when(() -> FormDataRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+      Assertions.assertNull(new FormWidget().post(widgetContext));
+      submissions.verify(() -> FormDataRepository.save(org.mockito.ArgumentMatchers.argThat(data ->
+          "contact-us".equals(data.getFormUniqueId()) && "Hello".equals(data.getFormFieldList().get(0).getUserValue()))));
+      workflows.verify(() -> WorkflowManager.triggerWorkflowForEvent(org.mockito.ArgumentMatchers.argThat(event ->
+          event instanceof com.simisinc.platform.domain.events.cms.FormSubmittedEvent
+              && "team@example.com".equals(((com.simisinc.platform.domain.events.cms.FormSubmittedEvent) event).getEmailAddressesTo()))));
     }
   }
 }

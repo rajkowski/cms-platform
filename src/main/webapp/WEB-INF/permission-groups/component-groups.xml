@@ -28,6 +28,7 @@
 
   <!-- Visual Content Editor group (content blocks, pages, sitemap, blogs, calendars) -->
   <component action="cms.visual-content-editor.access" group="visual-content-editor" type="WIDGET" />
+  <component action="cms.visual-forms-editor.access" group="visual-content-editor" type="WIDGET" />
   <component action="cms.visual-hierarchy-editor.access" group="visual-content-editor" type="WIDGET" />
   <component action="cms.visual-page-editor.access" group="visual-content-editor" type="WIDGET" />
   <component action="cms.content.list" group="visual-content-editor" type="SERVICE" />

@@ -58,6 +58,12 @@
       <i class="${font:far()} fa-file"></i>
       <span>Documents</span>
     </a>
+    <c:if test="${activeApp == 'forms' || userSession.hasRole('admin')}">
+      <a href="${ctx}/admin/visual-forms-editor" class="editor-app-item ${activeApp == 'forms' ? 'active' : ''} confirm-exit" title="Manage Forms">
+        <i class="${font:far()} fa-clipboard-list"></i>
+        <span>Forms</span>
+      </a>
+    </c:if>
     <a href="${ctx}/admin/visual-image-editor" class="editor-app-item ${activeApp == 'images' ? 'active' : ''} confirm-exit" title="Manage Images">
       <i class="${font:far()} fa-image"></i>
       <span>Images</span>

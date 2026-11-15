@@ -349,7 +349,7 @@
   <div class="accordion-content" data-tab-content>
 <textarea rows="10">
 <widget name="form">
-  formUniqueId, icon, title, subtitle, buttonName, useCaptcha, successTitle, successMessage, fields=field[name, value, placeholder, required]
+  <formUniqueId>contact-us</formUniqueId>
 </widget>
 </textarea>
   </div>

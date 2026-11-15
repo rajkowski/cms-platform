@@ -1,4 +1,5 @@
 <%--
+  ~ Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
   ~ Copyright 2022 SimIS Inc.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,7 +50,7 @@
     <c:forEach items="${formFieldList}" var="formField" varStatus="status">
       <c:if test="${formField.required}">
         <c:choose>
-          <c:when test="${!empty formField.listOfOptions}">
+          <c:when test="${!empty formField.listOfOptions or formField.type eq 'checkbox'}">
 
           </c:when>
           <c:otherwise>
@@ -84,23 +85,28 @@
     <label><c:out value="${formField.label}"/><c:if test="${formField.required}"> <span class="required">*</span></c:if>
     <c:choose>
       <c:when test="${!empty formField.listOfOptions}">
-        <select id="${widgetContext.uniqueId}<c:out value="${formField.name}"/>" name="${widgetContext.uniqueId}<c:out value="${formField.name}"/>">
+        <select id="${widgetContext.uniqueId}<c:out value="${formField.name}"/>" name="${widgetContext.uniqueId}<c:out value="${formField.name}"/>" <c:if test="${formField.required}">required</c:if>>
           <option value="">&lt; Please Choose &gt;</option>
           <c:forEach items="${formField.listOfOptions}" var="option">
-            <option value="${option.key}"><c:out value="${option.value}" /></option>
+            <option value="<c:out value='${option.key}'/>" <c:if test="${formField.userValue eq option.value or (empty formField.userValue and formField.defaultValue eq option.key)}">selected</c:if>><c:out value="${option.value}" /></option>
           </c:forEach>
         </select>
       </c:when>
       <c:when test="${formField.type eq 'textarea'}">
         <textarea id="${widgetContext.uniqueId}<c:out value="${formField.name}"/>" name="${widgetContext.uniqueId}<c:out value="${formField.name}"/>" style="height:120px"
             <c:if test="${!empty formField.placeholder}"> placeholder="<c:out value="${formField.placeholder}" />"</c:if>
-            <c:if test="${formField.required}">required</c:if>><c:if test="${!empty formField.userValue}"><c:out value="${formField.userValue}" /></c:if></textarea>
+            <c:if test="${formField.required}">required</c:if>><c:out value="${empty formField.userValue ? formField.defaultValue : formField.userValue}" /></textarea>
+      </c:when>
+      <c:when test="${formField.type eq 'checkbox'}">
+        <input type="checkbox" id="${widgetContext.uniqueId}<c:out value="${formField.name}"/>" name="${widgetContext.uniqueId}<c:out value="${formField.name}"/>" value="true"
+            <c:if test="${formField.userValue eq 'true' or (empty formField.userValue and formField.defaultValue eq 'true')}">checked</c:if>
+            <c:if test="${formField.required}">required</c:if>>
       </c:when>
       <c:otherwise>
-        <input type="text"
+        <input type="${formField.type eq 'email' or formField.type eq 'date' ? formField.type : 'text'}"
             id="${widgetContext.uniqueId}<c:out value="${formField.name}"/>" name="${widgetContext.uniqueId}<c:out value="${formField.name}"/>"
             <c:if test="${!empty formField.placeholder}">placeholder="<c:out value="${formField.placeholder}" />"</c:if>
-            <c:if test="${!empty formField.userValue}">value="<c:out value="${formField.userValue}" />"</c:if>
+            value="<c:out value='${empty formField.userValue ? formField.defaultValue : formField.userValue}'/>"
             <c:if test="${formField.required}">required</c:if>>
       </c:otherwise>
     </c:choose>

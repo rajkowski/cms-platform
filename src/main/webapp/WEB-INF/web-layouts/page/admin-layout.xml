@@ -1270,6 +1270,14 @@
     </section>
   </page>
 
+  <page name="/admin/visual-forms-editor" role="admin,content-manager" title="Visual Forms Editor" class="full-page">
+    <section class="grid-x">
+      <column class="small-12 cell">
+        <widget name="visualFormsEditor" />
+      </column>
+    </section>
+  </page>
+
   <page name="/admin/visual-hierarchy-editor" role="admin,content-manager" title="Visual Hierarchy Editor" class="full-page">
     <section class="grid-x">
       <column class="small-12 cell">

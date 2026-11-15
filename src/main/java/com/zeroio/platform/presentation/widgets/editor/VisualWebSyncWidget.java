@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.simisinc.platform.presentation.widgets.editor;
+package com.zeroio.platform.presentation.widgets.editor;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
+ * Copyright 2026 Matt Rajkowski
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.simisinc.platform.presentation.widgets.editor;
+package com.zeroio.platform.presentation.widgets.editor;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -26,24 +26,22 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
 import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
- * Visual Workflow Editor Widget for viewing event workflows
+ * Visual Document Editor widget shell for managing folders and files
  *
  * @author matt rajkowski
- * @created 02/27/26 9:00 AM
+ * @created 1/22/26 10:05 AM
  */
-public class VisualWorkflowEditorWidget extends GenericWidget {
+public class VisualDocumentEditorWidget extends GenericWidget {
 
-  static final long serialVersionUID = -8484048371911908899L;
-  protected static Log LOG = LogFactory.getLog(VisualWorkflowEditorWidget.class);
+  static final long serialVersionUID = -8484048371911908893L;
+  protected static Log LOG = LogFactory.getLog(VisualDocumentEditorWidget.class);
 
-  static String EDITOR_JSP = "/cms/visual-workflow-editor.jsp";
+  static String EDITOR_JSP = "/cms/visual-document-editor.jsp";
 
-  @Override
   public WidgetContext execute(WidgetContext context) {
-
     // Check permissions
-    if (!Permission.check("cms.visual-workflow-editor.access", context.getUserSession())) {
-      LOG.debug("No permission to: " + VisualWorkflowEditorWidget.class.getSimpleName());
+    if (!Permission.check("cms.visual-document-editor.access", context.getUserSession())) {
+      LOG.debug("No permission to: " + VisualDocumentEditorWidget.class.getSimpleName());
       return context;
     }
 
@@ -54,12 +52,23 @@ public class VisualWorkflowEditorWidget extends GenericWidget {
     String returnPage = UrlCommand.getValidReturnPage(context.getParameter("returnPage"));
     context.getRequest().setAttribute("returnPage", returnPage);
 
-    context.getRequest().setAttribute("viewMode", "events");
+    // Optional: pre-select a folder or file
+    String folderIdValue = context.getParameter("folderId");
+    if (StringUtils.isNotBlank(folderIdValue)) {
+      try {
+        context.getRequest().setAttribute("selectedFolderId", Long.parseLong(folderIdValue));
+      } catch (NumberFormatException nfe) {
+        LOG.warn("Invalid folderId parameter: " + folderIdValue);
+      }
+    }
 
-    // Determine if a specific item is selected
-    String selectedId = context.getParameter("id");
-    if (StringUtils.isNotBlank(selectedId)) {
-      context.getRequest().setAttribute("selectedId", selectedId);
+    String fileIdValue = context.getParameter("fileId");
+    if (StringUtils.isNotBlank(fileIdValue)) {
+      try {
+        context.getRequest().setAttribute("selectedFileId", Long.parseLong(fileIdValue));
+      } catch (NumberFormatException nfe) {
+        LOG.warn("Invalid fileId parameter: " + fileIdValue);
+      }
     }
 
     return context;

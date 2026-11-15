@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -68,6 +69,7 @@ public class WidgetBase {
 
   public static final String ADMIN = "admin";
   public static final String CONTENT_MANAGER = "content-manager";
+  public static final String CONTENT_EDITOR = "content-editor";
   public static final String COMMUNITY_MANAGER = "community-manager";
 
   public ServletContext servletContext = mock(ServletContext.class);

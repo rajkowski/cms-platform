@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Matt Rajkowski (https://github.com/rajkowski)
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.simisinc.platform.presentation.widgets.editor;
+package com.zeroio.platform.presentation.widgets.editor;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -26,22 +26,24 @@ import com.simisinc.platform.presentation.widgets.GenericWidget;
 import com.zeroio.platform.infrastructure.permission.Permission;
 
 /**
- * Visual Image Editor Widget for viewing, editing, and managing images
+ * Visual Workflow Editor Widget for viewing event workflows
  *
  * @author matt rajkowski
- * @created 1/21/26 8:45 PM
+ * @created 02/27/26 9:00 AM
  */
-public class VisualImageEditorWidget extends GenericWidget {
+public class VisualWorkflowEditorWidget extends GenericWidget {
 
-  static final long serialVersionUID = -8484048371911908893L;
-  protected static Log LOG = LogFactory.getLog(VisualImageEditorWidget.class);
+  static final long serialVersionUID = -8484048371911908899L;
+  protected static Log LOG = LogFactory.getLog(VisualWorkflowEditorWidget.class);
 
-  static String EDITOR_JSP = "/cms/visual-image-editor.jsp";
+  static String EDITOR_JSP = "/cms/visual-workflow-editor.jsp";
 
+  @Override
   public WidgetContext execute(WidgetContext context) {
+
     // Check permissions
-    if (!Permission.check("cms.visual-image-editor.access", context.getUserSession())) {
-      LOG.debug("No permission to: " + VisualImageEditorWidget.class.getSimpleName());
+    if (!Permission.check("cms.visual-workflow-editor.access", context.getUserSession())) {
+      LOG.debug("No permission to: " + VisualWorkflowEditorWidget.class.getSimpleName());
       return context;
     }
 
@@ -52,15 +54,12 @@ public class VisualImageEditorWidget extends GenericWidget {
     String returnPage = UrlCommand.getValidReturnPage(context.getParameter("returnPage"));
     context.getRequest().setAttribute("returnPage", returnPage);
 
-    // Optional: Load a specific image if imageId is provided
-    String imageIdValue = context.getParameter("imageId");
-    if (StringUtils.isNotBlank(imageIdValue)) {
-      try {
-        long imageId = Long.parseLong(imageIdValue);
-        context.getRequest().setAttribute("selectedImageId", imageId);
-      } catch (NumberFormatException nfe) {
-        LOG.warn("Invalid imageId parameter: " + imageIdValue);
-      }
+    context.getRequest().setAttribute("viewMode", "events");
+
+    // Determine if a specific item is selected
+    String selectedId = context.getParameter("id");
+    if (StringUtils.isNotBlank(selectedId)) {
+      context.getRequest().setAttribute("selectedId", selectedId);
     }
 
     return context;
