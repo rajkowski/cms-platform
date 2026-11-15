@@ -84,38 +84,51 @@ class FormWidgetTest extends WidgetBase {
       try (MockedStatic<RateLimitCommand> rateLimitCommand = mockStatic(RateLimitCommand.class)) {
         rateLimitCommand.when(() -> RateLimitCommand.isIpAllowedRightNow(any(), anyBoolean())).thenReturn(true);
 
-        FormWidget widget = new FormWidget();
-        widget.execute(widgetContext);
+        try (MockedStatic<FormDefinitionRepository> forms = mockStatic(FormDefinitionRepository.class)) {
+          forms.when(() -> FormDefinitionRepository.findByUniqueId(any())).thenReturn(null);
 
-        // Verify the output
-        Assertions.assertEquals(FormWidget.JSP, widgetContext.getJsp());
+          FormWidget widget = new FormWidget();
+          widget.execute(widgetContext);
 
-        List<FormField> formFieldList = (List) widgetContext.getRequest().getAttribute("formFieldList");
-        Assertions.assertEquals(6, formFieldList.size());
+          // Verify the output
+          Assertions.assertEquals(FormWidget.JSP, widgetContext.getJsp());
 
-        FormField formFieldName = formFieldList.get(0);
-        Assertions.assertEquals("Your first and last name", formFieldName.getLabel());
-        Assertions.assertEquals("name", formFieldName.getName());
-        Assertions.assertNull(formFieldName.getType());
-        Assertions.assertTrue(formFieldName.isRequired());
+          List<FormField> formFieldList = (List) widgetContext.getRequest().getAttribute("formFieldList");
+          Assertions.assertEquals(6, formFieldList.size());
 
-        FormField formFieldOrganization = formFieldList.get(1);
-        Assertions.assertEquals("Name of your organization", formFieldOrganization.getLabel());
-        Assertions.assertEquals("organization", formFieldOrganization.getName());
-        Assertions.assertNull(formFieldOrganization.getType());
-        Assertions.assertFalse(formFieldOrganization.isRequired());
+          FormField formFieldName = formFieldList.get(0);
+          Assertions.assertEquals("Your first and last name", formFieldName.getLabel());
+          Assertions.assertEquals("name", formFieldName.getName());
+          Assertions.assertNull(formFieldName.getType());
+          Assertions.assertTrue(formFieldName.isRequired());
 
-        FormField formFieldReason = formFieldList.get(5);
-        Assertions.assertEquals("How Can We Help?", formFieldReason.getLabel());
-        Assertions.assertEquals("comments", formFieldReason.getName());
-        Assertions.assertEquals("textarea", formFieldReason.getType());
-        Assertions.assertTrue(formFieldReason.isRequired());
+          FormField formFieldOrganization = formFieldList.get(1);
+          Assertions.assertEquals("Name of your organization", formFieldOrganization.getLabel());
+          Assertions.assertEquals("organization", formFieldOrganization.getName());
+          Assertions.assertNull(formFieldOrganization.getType());
+          Assertions.assertFalse(formFieldOrganization.isRequired());
+
+          FormField formFieldReason = formFieldList.get(5);
+          Assertions.assertEquals("How Can We Help?", formFieldReason.getLabel());
+          Assertions.assertEquals("comments", formFieldReason.getName());
+          Assertions.assertEquals("textarea", formFieldReason.getType());
+          Assertions.assertTrue(formFieldReason.isRequired());
+        }
       }
     }
   }
 
   @Test
   void executeFormDisplayError() {
+    // Set up widget preferences with minimal fields
+    addPreferencesFromWidgetXml(widgetContext,
+        "<widget name=\"form\">\n" +
+            "  <formUniqueId>contact</formUniqueId>\n" +
+            "  <fields>\n" +
+            "    <field name=\"Your first and last name\" value=\"name\" required=\"true\" />\n" +
+            "  </fields>\n" +
+            "</widget>");
+
     // Add the form data which has error
     FormData formData = new FormData();
     widgetContext.setRequestObject(formData);
@@ -124,14 +137,27 @@ class FormWidgetTest extends WidgetBase {
     try (MockedStatic<RateLimitCommand> rateLimitCommand = mockStatic(RateLimitCommand.class)) {
       rateLimitCommand.when(() -> RateLimitCommand.isIpAllowedRightNow(any(), anyBoolean())).thenReturn(true);
 
-      FormWidget widget = new FormWidget();
-      widget.execute(widgetContext);
-      Assertions.assertEquals(FormWidget.JSP, widgetContext.getJsp());
+      try (MockedStatic<FormDefinitionRepository> forms = mockStatic(FormDefinitionRepository.class)) {
+        forms.when(() -> FormDefinitionRepository.findByUniqueId(any())).thenReturn(null);
+
+        FormWidget widget = new FormWidget();
+        widget.execute(widgetContext);
+        Assertions.assertEquals(FormWidget.JSP, widgetContext.getJsp());
+      }
     }
   }
 
   @Test
   void executeFormDisplaySuccess() {
+    // Set up widget preferences with minimal fields
+    addPreferencesFromWidgetXml(widgetContext,
+        "<widget name=\"form\">\n" +
+            "  <formUniqueId>contact</formUniqueId>\n" +
+            "  <fields>\n" +
+            "    <field name=\"Your first and last name\" value=\"name\" required=\"true\" />\n" +
+            "  </fields>\n" +
+            "</widget>");
+
     // Uses the posted success status
     widgetContext.addSharedRequestValue(widgetContext.getUniqueId() + "formWidgetSuccess", "true");
 
@@ -139,9 +165,13 @@ class FormWidgetTest extends WidgetBase {
     try (MockedStatic<RateLimitCommand> rateLimitCommand = mockStatic(RateLimitCommand.class)) {
       rateLimitCommand.when(() -> RateLimitCommand.isIpAllowedRightNow(any(), anyBoolean())).thenReturn(true);
 
-      FormWidget widget = new FormWidget();
-      widget.execute(widgetContext);
-      Assertions.assertEquals(FormWidget.SUCCESS_JSP, widgetContext.getJsp());
+      try (MockedStatic<FormDefinitionRepository> forms = mockStatic(FormDefinitionRepository.class)) {
+        forms.when(() -> FormDefinitionRepository.findByUniqueId(any())).thenReturn(null);
+
+        FormWidget widget = new FormWidget();
+        widget.execute(widgetContext);
+        Assertions.assertEquals(FormWidget.SUCCESS_JSP, widgetContext.getJsp());
+      }
     }
   }
 
@@ -167,21 +197,25 @@ class FormWidgetTest extends WidgetBase {
       property.when(() -> LoadSitePropertyCommand.loadByName("captcha.google.sitekey")).thenReturn(null);
       property.when(() -> LoadSitePropertyCommand.loadByName("captcha.google.secretkey")).thenReturn(null);
 
-      try (MockedStatic<FormDataRepository> formDataRepositoryMockedStatic = mockStatic(FormDataRepository.class)) {
-        formDataRepositoryMockedStatic.when(() -> FormDataRepository.save(any())).thenReturn(new FormData());
+      try (MockedStatic<FormDefinitionRepository> formDefinitions = mockStatic(FormDefinitionRepository.class)) {
+        formDefinitions.when(() -> FormDefinitionRepository.findByUniqueId(any())).thenReturn(null);
 
-        try (MockedStatic<WorkflowManager> workflowManagerMockedStatic = mockStatic(WorkflowManager.class)) {
+        try (MockedStatic<FormDataRepository> formDataRepositoryMockedStatic = mockStatic(FormDataRepository.class)) {
+          formDataRepositoryMockedStatic.when(() -> FormDataRepository.save(any())).thenReturn(new FormData());
 
-          // Execute
-          FormWidget widget = new FormWidget();
-          WidgetContext result = widget.post(widgetContext);
+          try (MockedStatic<WorkflowManager> workflowManagerMockedStatic = mockStatic(WorkflowManager.class)) {
 
-          // Verify
-          Assertions.assertNull(result);
-          Assertions.assertNull(widgetContext.getWarningMessage());
-          Assertions.assertNull(widgetContext.getErrorMessage());
-          workflowManagerMockedStatic.verify(() -> WorkflowManager.triggerWorkflowForEvent(any()));
-          Assertions.assertEquals("true", widgetContext.getSharedRequestValue(widgetContext.getUniqueId() + "formWidgetSuccess"));
+            // Execute
+            FormWidget widget = new FormWidget();
+            WidgetContext result = widget.post(widgetContext);
+
+            // Verify
+            Assertions.assertNull(result);
+            Assertions.assertNull(widgetContext.getWarningMessage());
+            Assertions.assertNull(widgetContext.getErrorMessage());
+            workflowManagerMockedStatic.verify(() -> WorkflowManager.triggerWorkflowForEvent(any()));
+            Assertions.assertEquals("true", widgetContext.getSharedRequestValue(widgetContext.getUniqueId() + "formWidgetSuccess"));
+          }
         }
       }
     }
@@ -207,14 +241,18 @@ class FormWidgetTest extends WidgetBase {
       property.when(() -> LoadSitePropertyCommand.loadByName("captcha.google.sitekey")).thenReturn(null);
       property.when(() -> LoadSitePropertyCommand.loadByName("captcha.google.secretkey")).thenReturn(null);
 
-      // Execute
-      FormWidget widget = new FormWidget();
-      WidgetContext result = widget.post(widgetContext);
+      try (MockedStatic<FormDefinitionRepository> formDefinitions = mockStatic(FormDefinitionRepository.class)) {
+        formDefinitions.when(() -> FormDefinitionRepository.findByUniqueId(any())).thenReturn(null);
 
-      // Verify
-      Assertions.assertNotNull(result);
-      Assertions.assertEquals("How Can We Help? is required", widgetContext.getWarningMessage());
-      Assertions.assertNull(widgetContext.getErrorMessage());
+        // Execute
+        FormWidget widget = new FormWidget();
+        WidgetContext result = widget.post(widgetContext);
+
+        // Verify
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals("How Can We Help? is required", widgetContext.getWarningMessage());
+        Assertions.assertNull(widgetContext.getErrorMessage());
+      }
     }
   }
 

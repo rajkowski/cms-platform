@@ -33,8 +33,9 @@ class CharacterTextSplitterTest {
 
   @Test
   void preservesSentenceBoundariesAndAddsConfiguredOverlap() {
-    String firstSentence = "a".repeat(450) + ". ";
-    String text = firstSentence + "b".repeat(220) + ".";
+    int chunkSize = CharacterTextSplitter.CHARACTER_CHUNK_SIZE;
+    String firstSentence = "a".repeat((int) (chunkSize * 0.6)) + ". ";
+    String text = firstSentence + "b".repeat((int) (chunkSize * 0.6)) + ".";
 
     List<String> chunks = CharacterTextSplitter.recursivelySplitText(text);
 
@@ -58,7 +59,7 @@ class CharacterTextSplitterTest {
   @Test
   void keepsWordsWholeAcrossChunkBoundaries() {
     StringBuilder textBuilder = new StringBuilder();
-    for (int index = 0; index < 200; index++) {
+    for (int index = 0; index < 1500; index++) {
       textBuilder.append("word").append(index).append(' ');
     }
     String text = textBuilder.toString();
