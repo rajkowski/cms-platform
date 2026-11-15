@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -330,17 +331,18 @@ public class MultipartFileSender {
     }
 
     /**
-     * Stream the given input to the given output via NIO {@link Channels} and a directly allocated NIO
+     * Stream the given file to the given output via NIO {@link Channels} and a directly allocated NIO
      * {@link ByteBuffer}. Both the input and output streams will implicitly be closed after streaming,
      * regardless of whether an exception is been thrown or not.
      *
-     * @param input  The input stream.
-     * @param output The output stream.
+     * @param file  The input file.
+     * @param output The output stream to write the file content to.
      * @return The length of the written bytes.
      * @throws IOException When an I/O error occurs.
      */
-    public static long stream(InputStream input, OutputStream output) throws IOException {
-      try (ReadableByteChannel inputChannel = Channels.newChannel(input);
+    public static long stream(File file, OutputStream output) throws IOException {
+      try (InputStream input = new FileInputStream(file);
+          ReadableByteChannel inputChannel = Channels.newChannel(input);
           WritableByteChannel outputChannel = Channels.newChannel(output)) {
         ByteBuffer buffer = ByteBuffer.allocateDirect(DEFAULT_BUFFER_SIZE);
         long size = 0;
@@ -363,18 +365,19 @@ public class MultipartFileSender {
      * @param file   The file.
      * @param output The output stream.
      * @param start  The start position (offset).
-     * @param length The (intented) length of written bytes.
+     * @param length The (intended) length of written bytes.
      * @return The (actual) length of the written bytes. This may be smaller when the given length is too large.
      * @throws IOException When an I/O error occurs.
      * @since 2.2
      */
     public static long stream(File file, OutputStream output, long start, long length) throws IOException {
       if (start == 0 && length >= file.length()) {
-        return stream(new FileInputStream(file), output);
+        return stream(file, output);
       }
 
-      try (FileChannel fileChannel = (FileChannel) Files.newByteChannel(file.toPath(), StandardOpenOption.READ)) {
-        WritableByteChannel outputChannel = Channels.newChannel(output);
+      try (FileChannel fileChannel = (FileChannel) Files.newByteChannel(file.toPath(), StandardOpenOption.READ);
+          WritableByteChannel outputChannel = Channels.newChannel(output)) {
+
         ByteBuffer buffer = ByteBuffer.allocateDirect(DEFAULT_BUFFER_SIZE);
         long size = 0;
 

@@ -207,18 +207,14 @@ public class DownloadItemFileWidget extends GenericWidget {
     }
 
     // Stream the file
-    try {
-      FileInputStream in = new FileInputStream(file);
-      OutputStream out = context.getResponse().getOutputStream();
-
+    try (FileInputStream in = new FileInputStream(file);
+        OutputStream out = context.getResponse().getOutputStream()) {
       // Copy the contents of the file to the output stream
       byte[] buf = new byte[1024];
       int count = 0;
       while ((count = in.read(buf)) >= 0) {
         out.write(buf, 0, count);
       }
-      out.close();
-      in.close();
     } catch (Exception e) {
       LOG.debug("Stream error: " + e.getMessage());
     }
