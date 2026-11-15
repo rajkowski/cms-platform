@@ -88,11 +88,19 @@ public class WorkspaceResolutionCommand {
       return null;
     }
     String normalizedHost = host.trim().toLowerCase(Locale.ROOT);
+    int schemeIndex = normalizedHost.indexOf("://");
+    if (schemeIndex > -1) {
+      normalizedHost = normalizedHost.substring(schemeIndex + 3);
+    }
+    int pathIndex = normalizedHost.indexOf('/');
+    if (pathIndex > -1) {
+      normalizedHost = normalizedHost.substring(0, pathIndex);
+    }
     int portIndex = normalizedHost.indexOf(':');
     if (portIndex > -1) {
       normalizedHost = normalizedHost.substring(0, portIndex);
     }
-    return normalizedHost.isBlank() || normalizedHost.contains("/") ? null : normalizedHost;
+    return normalizedHost.isBlank() ? null : normalizedHost;
   }
 
   private static Workspace resolveUnique(List<WorkspaceDomainMapping> mappings) {
