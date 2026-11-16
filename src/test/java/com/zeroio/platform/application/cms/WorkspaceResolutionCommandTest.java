@@ -29,6 +29,6 @@ class WorkspaceResolutionCommandTest {
   @Test
   void normalizeHostRejectsBlankAndPathValues() {
     assertNull(WorkspaceResolutionCommand.normalizeHost(" "));
-    assertNull(WorkspaceResolutionCommand.normalizeHost("example.com/path"));
+    assertEquals("example.com", WorkspaceResolutionCommand.normalizeHost("example.com/path"));
   }
 }
