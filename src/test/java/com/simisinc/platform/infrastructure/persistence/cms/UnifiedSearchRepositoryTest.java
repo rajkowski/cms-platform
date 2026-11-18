@@ -64,13 +64,16 @@ class UnifiedSearchRepositoryTest {
           "created", "modified", "modified_by", "file_name", "file_type", "mime_type", "extension", "custom_field_values")).thenReturn(select);
       embeddings.when(EmbeddingCommand::isAvailable).thenReturn(true);
       embeddings.when(() -> EmbeddingCommand.embed(List.of(question))).thenReturn(List.of(vector));
-      chunks.when(() -> SearchChunkRepository.findNearestSources(vector, EmbeddingCommand.MODEL_NAME, 200, 10, 0.45)).thenReturn(List.of("pages:42"));
+      chunks.when(() -> SearchChunkRepository.findNearestSources(vector, EmbeddingCommand.MODEL_NAME, 200, 20, 0.60))
+          .thenReturn(List.of("pages:42"));
 
       UnifiedSearchRepository.findAll(specification, null);
 
       embeddings.verify(() -> EmbeddingCommand.embed(List.of(question)));
-        verify(select).AND("(tsv @@ websearch_to_tsquery('english', ?) OR (result_type || ':' || result_id) = ANY(ARRAY['pages:42']))",
-          "the economic profile");
+      verify(select).AND(
+          "(tsv @@ websearch_to_tsquery('english', ?) OR tsv @@ " + UnifiedSearchRepository.relaxedLexicalQuery()
+              + " OR (result_type || ':' || result_id) = ANY(ARRAY['pages:42']))",
+          "the economic profile", "the economic profile");
     }
   }
 
@@ -91,7 +94,31 @@ class UnifiedSearchRepositoryTest {
 
       UnifiedSearchRepository.findAll(specification, null);
 
-        verify(select).AND("(tsv @@ websearch_to_tsquery('english', ?))", "the economic profile");
+      verify(select).AND(
+          "(tsv @@ websearch_to_tsquery('english', ?) OR tsv @@ " + UnifiedSearchRepository.relaxedLexicalQuery() + ")",
+          "the economic profile", "the economic profile");
     }
+  }
+
+  @Test
+  void prioritizesKeywordMatchesOverSemanticOnlyResults() {
+    String sql = UnifiedSearchRepository.relevanceSql("ARRAY['pages:42']");
+
+    assertEquals(
+        "(ts_rank_cd(tsv, websearch_to_tsquery('english', ?), 32)"
+            + " + CASE WHEN tsv @@ websearch_to_tsquery('english', ?) THEN 1.0 ELSE 0.0 END"
+            + " + ts_rank_cd(tsv, " + UnifiedSearchRepository.relaxedLexicalQuery() + ", 32)"
+            + " + CASE WHEN LOWER(title) = ? THEN 2.0 ELSE 0.0 END"
+            + " + CASE WHEN LOWER(title) LIKE ? ESCAPE '!' THEN 1.0 ELSE 0.0 END"
+            + " + CASE WHEN LOWER(title) LIKE ? ESCAPE '!' THEN 0.5 ELSE 0.0 END"
+            + " + COALESCE(0.5 / (10 + array_position(ARRAY['pages:42'], result_type || ':' || result_id)), 0.0)) AS rank",
+        sql);
+  }
+
+  @Test
+  void createsStemmedOrQueryForPartialTermMatches() {
+    assertEquals(
+        "to_tsquery('english', replace(plainto_tsquery('english', ?)::text, ' & ', ' | '))",
+        UnifiedSearchRepository.relaxedLexicalQuery());
   }
 }

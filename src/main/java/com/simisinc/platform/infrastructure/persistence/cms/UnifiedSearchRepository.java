@@ -22,6 +22,7 @@ import java.sql.Timestamp;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -30,6 +31,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.github.rajkowski.database.CastType;
 import com.github.rajkowski.database.ConditionGroup;
 import com.github.rajkowski.database.DB;
@@ -58,8 +60,8 @@ public class UnifiedSearchRepository {
   private static final String VIEW_NAME = "unified_search";
 
   private static final int VECTOR_CHUNK_LIMIT = 200;
-  private static final int VECTOR_SOURCE_LIMIT = 10;
-  private static final double VECTOR_MAX_DISTANCE = 0.45;
+  private static final int VECTOR_SOURCE_LIMIT = 20;
+  private static final double SIMILARITY_THRESHOLD = 0.60;
   private static final long VECTOR_RETRY_MILLIS = 5 * 60 * 1000L;
   private static final Pattern SOURCE_KEY = Pattern.compile("[A-Za-z]+:\\d+");
   private static final Pattern QUESTION_PREFIX = Pattern.compile(
@@ -100,22 +102,26 @@ public class UnifiedSearchRepository {
           .replace("[", "![");
       select.SELECT("ts_headline('english', headline_source, websearch_to_tsquery('english', ?), '" + HEADLINE_OPTIONS
           + "') AS highlight", (Object[]) new Object[] { lexicalTerm });
-      // ts_rank_cd normalization 32 keeps ranks from different tables comparable
-      String vectorBoost = vectorKeys == null ? ""
-          : " + COALESCE(10.0 / (10 + array_position(" + vectorKeys + ", result_type || ':' || result_id)), 0.0)";
-      select.SELECT("(ts_rank_cd(tsv, websearch_to_tsquery('english', ?), 32)"
-          + " + CASE WHEN LOWER(title) LIKE ? ESCAPE '!' THEN 1.0 ELSE 0.0 END"
-          + " + CASE WHEN LOWER(title) LIKE ? ESCAPE '!' THEN 0.5 ELSE 0.0 END" + vectorBoost + ") AS rank",
-          (Object[]) new Object[] { lexicalTerm, escaped + "%", "%" + escaped + "%" });
+      select.SELECT(relevanceSql(vectorKeys),
+          (Object[]) new Object[] {
+              lexicalTerm,
+              lexicalTerm,
+              lexicalTerm,
+              lexicalTerm.toLowerCase(java.util.Locale.ROOT),
+              escaped + "%",
+              "%" + escaped + "%"
+          });
     }
     select.FROM(VIEW_NAME).WHERE();
 
     if (term != null) {
       String lexicalMatch = "tsv @@ websearch_to_tsquery('english', ?)";
+      String partialLexicalMatch = "tsv @@ " + relaxedLexicalQuery();
       if (vectorKeys == null) {
-        select.AND("(" + lexicalMatch + ")", lexicalTerm);
+        select.AND("(" + lexicalMatch + " OR " + partialLexicalMatch + ")", lexicalTerm, lexicalTerm);
       } else {
-        select.AND("(" + lexicalMatch + " OR (result_type || ':' || result_id) = ANY(" + vectorKeys + "))", lexicalTerm);
+        select.AND("(" + lexicalMatch + " OR " + partialLexicalMatch + " OR (result_type || ':' || result_id) = ANY(" + vectorKeys
+            + "))", lexicalTerm, lexicalTerm);
       }
     }
     if (hasValues(specification.getTypes())) {
@@ -129,6 +135,22 @@ public class UnifiedSearchRepository {
       select.PAGING(constraints);
     }
     return select.returnDataResult(UnifiedSearchRepository::buildRecord).getRecords();
+  }
+
+  static String relevanceSql(String vectorKeys) {
+    // ts_rank_cd normalization 32 keeps ranks from different tables comparable
+    String vectorBoost = vectorKeys == null ? ""
+        : " + COALESCE(0.5 / (10 + array_position(" + vectorKeys + ", result_type || ':' || result_id)), 0.0)";
+    return "(ts_rank_cd(tsv, websearch_to_tsquery('english', ?), 32)"
+        + " + CASE WHEN tsv @@ websearch_to_tsquery('english', ?) THEN 1.0 ELSE 0.0 END"
+        + " + ts_rank_cd(tsv, " + relaxedLexicalQuery() + ", 32)"
+        + " + CASE WHEN LOWER(title) = ? THEN 2.0 ELSE 0.0 END"
+        + " + CASE WHEN LOWER(title) LIKE ? ESCAPE '!' THEN 1.0 ELSE 0.0 END"
+        + " + CASE WHEN LOWER(title) LIKE ? ESCAPE '!' THEN 0.5 ELSE 0.0 END" + vectorBoost + ") AS rank";
+  }
+
+  static String relaxedLexicalQuery() {
+    return "to_tsquery('english', replace(plainto_tsquery('english', ?)::text, ' & ', ' | '))";
   }
 
   /** Rebuilds the materialized index without blocking readers, only when a source table changed since the last refresh */
@@ -162,7 +184,7 @@ public class UnifiedSearchRepository {
     try {
       float[] vector = EmbeddingCommand.embed(List.of(term)).get(0);
       List<String> keys = SearchChunkRepository.findNearestSources(vector, EmbeddingCommand.MODEL_NAME, VECTOR_CHUNK_LIMIT,
-          VECTOR_SOURCE_LIMIT, VECTOR_MAX_DISTANCE);
+          VECTOR_SOURCE_LIMIT, SIMILARITY_THRESHOLD);
       StringBuilder sb = new StringBuilder();
       for (String key : keys) {
         if (!SOURCE_KEY.matcher(key).matches()) {
@@ -325,7 +347,25 @@ public class UnifiedSearchRepository {
     if (StringUtils.isBlank(json)) {
       return null;
     }
-    return JsonCommand.fromJsonMap(json);
+    try {
+      JsonNode array = JsonCommand.fromString(json);
+      if (array == null || !array.isArray()) {
+        return null;
+      }
+      Map<String, String> map = new LinkedHashMap<>();
+      for (JsonNode node : array) {
+        String key = node.get("name").asText(null);
+        String value = node.get("value").asText(null);
+        if (StringUtils.isAllBlank(key, value)) {
+          continue;
+        }
+        map.put(key, value);
+      }
+      return map.isEmpty() ? null : map;
+    } catch (Exception e) {
+      LOG.error("parseCustomFields", e);
+      return null;
+    }
   }
 
   private static void setAttachmentLinks(SearchResult record, ResultSet rs, String prefix, String url) throws SQLException {

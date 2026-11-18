@@ -22,7 +22,10 @@ public class CharacterTextSplitter {
 
   // Split text into sentences or '\n'; group sentences together until reaching word count; never split in the middle of a sentence (create a new chunk)
 
-  public static final int CHARACTER_CHUNK_SIZE = 8192;
+  public static final int CHARACTER_CHUNK_MAX = 8192;
+  public static final double CHUNK_SIZE_RESERVE = 0.1;
+  public static final int CHARACTER_CHUNK_SIZE = (int) (CHARACTER_CHUNK_MAX * (1 - CHUNK_SIZE_RESERVE));
+
   public static final double CHUNK_OVERLAP = 0.2;
 
   // default text separators

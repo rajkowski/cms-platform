@@ -21,8 +21,8 @@ import java.util.Locale;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.zeroio.platform.domain.model.tenant.WorkspaceDomainMapping;
 import com.zeroio.platform.domain.model.tenant.Workspace;
+import com.zeroio.platform.domain.model.tenant.WorkspaceDomainMapping;
 import com.zeroio.platform.infrastructure.persistence.tenant.WorkspaceDomainMappingRepository;
 import com.zeroio.platform.infrastructure.persistence.tenant.WorkspaceRepository;
 
@@ -66,6 +66,11 @@ public class WorkspaceResolutionCommand {
     if (hostname == null) {
       return false;
     }
+    // Allow IPv4 and IPv6 addresses to bypass default workspace check for readiness/liveness/monitoring
+    if (hostname.matches("\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b") || hostname.matches("\\b(?:[0-9a-fA-F]{0,4}:){1,7}[0-9a-fA-F]{0,4}\\b")) {
+      return true;
+    }
+    // Validate the default workspace URL
     String defaultUrl = getDefaultWorkspaceUrl();
     if (defaultUrl == null || defaultUrl.isBlank()) {
       return false;
