@@ -356,7 +356,7 @@ public class UnifiedSearchRepository {
       for (JsonNode node : array) {
         String key = node.get("name").asText(null);
         String value = node.get("value").asText(null);
-        if (StringUtils.isAllBlank(key, value)) {
+        if (StringUtils.isAnyBlank(key, value)) {
           continue;
         }
         map.put(key, value);
