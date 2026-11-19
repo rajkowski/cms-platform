@@ -65,3 +65,16 @@ Example:
 ```text
 api.rate.limit.lenient.apps=101,public-key-abc123
 ```
+
+## Admin APIs
+
+Found in the application `rest-services.xml` configuration:
+
+| Method | Endpoint | Description |
+| ------ | -------- | ----------- |
+| `POST` | `/api/image` | Upload an image (restricted) |
+| `POST` | `/api/rawImage` | Upload a raw image (backend) |
+| `POST` | `/api/rawFile` | Upload a raw file (backend) |
+| `POST` | `/api/rawModelFile` | Upload `model.onnx` or `tokenizer.json` into a named model folder (admin only) |
+| `POST` | `/api/rawDataset` | Upload a raw dataset (backend) |
+| `POST` | `/api/rawItemFile` | Upload a file associated with an item (restricted) |

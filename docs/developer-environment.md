@@ -35,6 +35,8 @@ CMS_ADMIN_PASSWORD=test
 
 If not specified, the path for file assets and external configuration on Linux is `/opt/cms-platform`; otherwise `$USER_HOME/Web/cms-platform`
 
+Use `ant deploy` to further update the web application with your changes. In debug mode, many Javascript, JSP, and XML files are automatically reloaded. If there are newly compiled Java files, libraries, or database migration scripts, then restart Tomcat.
+
 ### Ask AI
 
 Enable the `ai.enabled` and `ai.askai.enabled` site properties and set `ai.askai.control` to `drawer`. Configure the application process with:
@@ -49,9 +51,11 @@ Pull the model on the Ollama server (`ollama pull mistral:7b`). `OLLAMA_URL` is 
 
 ### Hybrid Search
 
-Unified search combines PostgreSQL full-text results with semantic matches when the `pgvector` extension and search vector migrations are installed. Provide the Granite small English embedding model's `model.onnx` and `tokenizer.json` in `./models/granite-embedding-small-english-r2`, relative to the application process working directory, or set `CMS_EMBEDDING_MODEL_PATH` to their directory. The background scheduler must run cluster jobs to index content; it refreshes search vectors every five minutes. Until indexing completes, or when the model or vector search is unavailable, search uses full-text matching.
+Unified search combines PostgreSQL full-text results with semantic matches when the `pgvector` extension and search vector migrations are installed. Provide the Granite small English embedding model's `model.onnx` and `tokenizer.json` in `./models/granite-embedding-small-english-r2`, relative to the application file library directory, and set `CMS_EMBEDDING_MODEL` to their directory. The background scheduler must run cluster jobs to index content; it refreshes search vectors every five minutes. Until indexing completes, or when the model or vector search is unavailable, search uses full-text matching.
 
-Use `ant deploy` to further update the web application with your changes. In debug mode, many Javascript, JSP, and XML files are automatically reloaded. If there are newly compiled Java files, libraries, or database migration scripts, then restart Tomcat.
+To rerank Ask AI search results, set `CMS_RERANK_MODEL` in the application process to a directory containing `model.onnx` and `tokenizer.json` for an ONNX BERT cross-encoder scoring model. This must be a reranking model, not the Granite embedding model. The first 8,000 characters of each candidate's source text are scored in overlapping passages, and up to six highest-scoring nonempty results are sent to the language model. Without the model files, or if scoring fails, Ask AI retains the original search ranking and excludes empty results. In containers, mount the model directory and set the environment variable to its path inside the container.
+
+Set `CMS_RERANK_MODEL` to a reranking model like `./models/granite-embedding-reranker-english-r2`.
 
 ## Developer Resources
 

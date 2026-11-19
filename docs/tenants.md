@@ -85,29 +85,6 @@ tenant-workspace migration first; it creates `workspaces`, `workspace_domains`,
 
 Do not put tenant database passwords or Azure client secrets in source control.
 
-## Adding a tenant from the console
-
-After building the application, an administrator can create the workspace,
-domain mapping, and datasource record in one transaction with:
-
-```shell
-java -cp "target/cms-platform.jar:lib/compile/*:lib/build/*" com.zeroio.platform.AddTenant \
-   --name "Customer Example" \
-   --site-url https://customer.example.com \
-   --domain customer.example.com \
-   --file-root /var/lib/cms/customer-example \
-   --jdbc-url jdbc:postgresql://localhost:5432/customer_example \
-   --username postgres \
-   --password '<database-password>'
-```
-
-The default database connection is loaded from
-`target/cms-platform/WEB-INF/classes/database.properties`. Use
-`--database-properties <path>` to load another default connection, or add
-`--driver <class>` and `--pool-group <name>` for datasource-specific settings.
-The tenant password is encrypted before it is stored. Do not retain the
-password in shell history or source control.
-
 ## Switching between tenants
 
 1. Sign in.
@@ -120,4 +97,3 @@ password in shell history or source control.
 Users can also open a mapped tenant domain directly when tenant routing is
 enabled. An inactive workspace, inactive domain mapping, or missing access
 grant prevents the workspace from being selected or resolved.
-

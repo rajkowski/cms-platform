@@ -38,6 +38,18 @@ First explore the capabilities available in the CMS administration interface and
 
 Prefer configuration when the requirement is about which features are enabled, what content is shown, who can access it, or how existing components are arranged. Keep environment-specific values in configuration rather than embedding them in code. Verify the result using the roles and environments that will use it.
 
+### Database-Backed Forms
+
+Administrators and content managers can create forms and fields in the Forms Editor (`/admin/visual-forms-editor`). After saving a form, use the displayed Form ID in a page's form widget:
+
+```xml
+<widget name="form">
+	<formUniqueId>contact-us</formUniqueId>
+</widget>
+```
+
+The form definition supplies the fields, display text, CAPTCHA, spam checking, and notification recipients. A disabled form is hidden from visitors and cannot be submitted by them. Existing widgets with inline `<fields>` continue to use their inline configuration, even when they specify a `formUniqueId`; remove the inline fields to use the database definition.
+
 ## Customization
 
 Use supported customization for project-specific presentation and assets that do not require new platform behavior. Typical examples include:
