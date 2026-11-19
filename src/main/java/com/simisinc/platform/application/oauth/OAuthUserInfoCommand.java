@@ -66,7 +66,7 @@ public class OAuthUserInfoCommand {
     // Find out if this is a new or returning user
     User userBean = new User();
 
-    // Use accessToken itself to get values for display purposes
+    // Use accessToken itself to get values for display purposes only
     String accessToken = oAuthToken.getAccessToken();
     if (accessToken.contains(".")) {
       LOG.debug("Found OAuth access token...");
@@ -79,7 +79,9 @@ public class OAuthUserInfoCommand {
     String idToken = oAuthToken.getIdToken();
     if (!StringUtils.isBlank(idToken) && idToken.contains(".")) {
       LOG.debug("Found OAuth id token...");
+      // @todo decide which method
       JsonNode idTokenJson = JWTCommand.parseJwt(idToken);
+      // JsonNode idTokenJson = JWTCommand.parseVerifiedJwt(idToken);
       hasAllProperties = populateUserFromIdTokenPayload(idTokenJson, userBean);
       processUserMembership(idTokenJson, userBean);
     }
@@ -318,7 +320,7 @@ public class OAuthUserInfoCommand {
     if (json.has("family_name")) {
       user.setLastName(json.get("family_name").asText());
     }
-if (StringUtils.isAllBlank(user.getFirstName(), user.getLastName())) {
+    if (StringUtils.isAllBlank(user.getFirstName(), user.getLastName())) {
       // If both first and last names are blank, try to populate from the "name" field
       if (json.has("name")) {
         String name = json.get("name").asText();
