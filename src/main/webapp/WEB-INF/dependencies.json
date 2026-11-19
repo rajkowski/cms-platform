@@ -19,7 +19,7 @@
       "paths": [
         "node_modules/add-to-calendar-button/dist/atcb.js",
         "node_modules/add-to-calendar-button/dist/atcb.min.js",
-        "node_modules/add-to-calendar-button/dist/styles/simple.css"
+        "node_modules/add-to-calendar-button/dist/styles"
       ]
     },
     "autocomplete": {
