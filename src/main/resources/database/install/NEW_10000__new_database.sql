@@ -50,6 +50,7 @@ INSERT INTO site_properties (property_label, property_name, property_value) VALU
 INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('File server path', 'system.filepath', '/opt/cms-platform/files');
 INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('Configuration path', 'system.configpath', '/opt/cms-platform/config');
 INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('Static Site path', 'system.staticsite.filepath', '/opt/cms-platform/static-site');
+INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('Models Path', 'system.models.filepath', '/opt/cms-platform/models');
 
 -- Site
 

@@ -40,6 +40,7 @@
   <service method="post" endpoint="webPage" class="com.zeroio.platform.rest.WebPageService" />
   <!-- Remotely load data -->
   <service method="post" endpoint="rawFile" class="com.zeroio.platform.rest.RawFileService" />
+  <service method="post" endpoint="rawModelFile" class="com.zeroio.platform.rest.RawModelFileService" />
   <service method="get" endpoint="rawImage" class="com.zeroio.platform.rest.RawImageService" />
   <service method="post" endpoint="rawImage" class="com.zeroio.platform.rest.RawImageService" />
   <service method="post" endpoint="rawDataset" class="com.zeroio.platform.rest.RawDatasetService" />

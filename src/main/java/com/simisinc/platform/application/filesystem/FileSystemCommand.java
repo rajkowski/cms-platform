@@ -55,6 +55,7 @@ public class FileSystemCommand {
   private static String configPath = null;
   private static String filesPath = null;
   private static String staticSitePath = null;
+  private static String modelsPath = null;
 
   /**
    * Return the static config path based on system environment and database settings
@@ -192,7 +193,7 @@ public class FileSystemCommand {
    * 
    * @return
    */
-  public static String getFileServerStaticSitePathValue() {
+  private static String getFileServerStaticSitePathValue() {
     // Check for the cached path
     if (staticSitePath != null) {
       return staticSitePath;
@@ -231,6 +232,46 @@ public class FileSystemCommand {
       }
     }
     return new File(serverStaticSitePath);
+  }
+
+  public static File getFileServerModelsPath(String... subdirectories) {
+    String serverModelsPath = getFileServerModelsPathValue();
+    if (StringUtils.isBlank(serverModelsPath)) {
+      return null;
+    }
+    if (subdirectories != null && subdirectories.length > 0) {
+      for (String subdirectory : subdirectories) {
+        serverModelsPath += subdirectory + File.separator;
+      }
+    }
+    return new File(serverModelsPath);
+  }
+
+  private static String getFileServerModelsPathValue() {
+    // Check for the cached path
+    if (modelsPath != null) {
+      return modelsPath;
+    }
+    String serverRootPath = null;
+    if (System.getenv().containsKey(CMS_PATH)) {
+      serverRootPath = new File(System.getenv(CMS_PATH), "models").getPath();
+    }
+    if (StringUtils.isBlank(serverRootPath)) {
+      serverRootPath = LoadSitePropertyCommand.loadByName("system.models.filepath");
+    }
+    if (StringUtils.isBlank(serverRootPath)) {
+      // @note this value is checked at system startup and will abort then
+      LOG.error("CMS_PATH environment variable can be set, or add 'system.models.filepath' to the database");
+      LOG.info(
+          "HINT: INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('Models Path', 'system.models.filepath', '/opt/cms-platform/models')");
+      return null;
+    }
+    if (!serverRootPath.endsWith(File.separator)) {
+      serverRootPath += File.separator;
+    }
+    // Cache the path
+    modelsPath = serverRootPath;
+    return modelsPath;
   }
 
   /**

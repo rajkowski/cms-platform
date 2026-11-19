@@ -23,6 +23,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.filesystem.FileSystemCommand;
+
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
@@ -47,14 +49,15 @@ public class EmbeddingCommand {
   public static final String MODEL_NAME = "ibm-granite/granite-embedding-small-english-r2";
   public static final int DIMENSIONS = 384;
 
-  private static final String MODEL_PATH_ENV = "CMS_EMBEDDING_MODEL_PATH";
-  private static final String DEFAULT_MODEL_PATH = "./models";
-
+  private static final String MODEL_PATH_ENV = "CMS_EMBEDDING_MODEL";
   private static volatile EmbeddingModel embeddingModel = null;
 
   /** The model.onnx and tokenizer.json must be in the model folder */
   public static boolean isAvailable() {
     File modelPath = getModelPath();
+    if (modelPath == null) {
+      return false;
+    }
     return new File(modelPath, "model.onnx").isFile() && new File(modelPath, "tokenizer.json").isFile();
   }
 
@@ -71,21 +74,33 @@ public class EmbeddingCommand {
   }
 
   private static File getModelPath() {
-    String configuredPath = System.getenv(MODEL_PATH_ENV);
-    if (StringUtils.isNotBlank(configuredPath)) {
-      return new File(configuredPath);
+    // The model path is the FileSystem models directory, plus the environment variable CMS_RERANK_MODEL directory name
+    String modelPathEnv = System.getenv(MODEL_PATH_ENV);
+    if (StringUtils.isBlank(modelPathEnv)) {
+      return null;
     }
-    return new File(DEFAULT_MODEL_PATH);
+    File modelFolder = FileSystemCommand.getFileServerModelsPath(modelPathEnv);
+    if (modelFolder != null && modelFolder.isDirectory()) {
+      return modelFolder;
+    }
+    return null;
   }
 
   private static EmbeddingModel getModel() {
     if (embeddingModel == null) {
       synchronized (EmbeddingCommand.class) {
         if (embeddingModel == null) {
-          File modelPath = getModelPath();
-          LOG.info("Loading embedding model from " + modelPath.getPath());
-          embeddingModel = new OnnxEmbeddingModel(new File(modelPath, "model.onnx").getPath(),
-              new File(modelPath, "tokenizer.json").getPath(), PoolingMode.MEAN);
+          File modelFolder = getModelPath();
+          if (modelFolder == null) {
+            throw new IllegalStateException("Embedding model path not found");
+          }
+          File model = new File(modelFolder, "model.onnx");
+          File tokenizer = new File(modelFolder, "tokenizer.json");
+          if (!model.isFile() || !tokenizer.isFile()) {
+            throw new IllegalStateException("Embedding model files not found in " + modelFolder);
+          }
+          LOG.info("Loading embedding model from " + modelFolder.getPath());
+          embeddingModel = new OnnxEmbeddingModel(model.getPath(), tokenizer.getPath(), PoolingMode.MEAN);
         }
       }
     }

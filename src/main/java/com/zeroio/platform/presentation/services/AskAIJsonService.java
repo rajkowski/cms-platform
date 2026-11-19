@@ -40,6 +40,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.rajkowski.database.DataConstraints;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.application.cms.LoadWebPageCommand;
+import com.simisinc.platform.application.filesystem.FileSystemCommand;
 import com.simisinc.platform.domain.model.cms.SearchResult;
 import com.simisinc.platform.domain.model.cms.WebPage;
 import com.simisinc.platform.infrastructure.persistence.cms.UnifiedSearchRepository;
@@ -60,7 +61,7 @@ public class AskAIJsonService extends GenericJsonService {
   private static final ObjectMapper MAPPER = new ObjectMapper();
   private static final HttpClient CLIENT = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
   private static volatile Semaphore REQUESTS;
-  
+
   private static final int QUESTION_LIMIT = 1000;
   private static final int PAGE_CONTEXT_LIMIT = 12000;
   private static final int SEARCH_CANDIDATE_LIMIT = 20;
@@ -70,6 +71,9 @@ public class AskAIJsonService extends GenericJsonService {
   private static final int RERANK_PASSAGE_LENGTH = 1200;
   private static final int RERANK_PASSAGE_STEP = 1000;
   private static final int RERANK_TEXT_LIMIT = 8000;
+
+  private static final String MODEL_PATH_ENV = "CMS_RERANK_MODEL";
+  
   private static volatile ScoringModel scoringModel;
 
   @Override
@@ -240,20 +244,25 @@ public class AskAIJsonService extends GenericJsonService {
   }
 
   private static List<SearchResult> rerankResults(String question, List<SearchResult> results) {
-    String modelPath = StringUtils.trimToNull(System.getenv("CMS_RERANK_MODEL_PATH"));
-    if (modelPath == null || results.isEmpty()) {
+    String modelPathEnv = System.getenv(MODEL_PATH_ENV);
+    if (StringUtils.isBlank(modelPathEnv)) {
       return prioritizeResults(results);
     }
-    File model = new File(modelPath, "model.onnx");
-    File tokenizer = new File(modelPath, "tokenizer.json");
+    // The model path is the FileSystem models directory, plus the environment variable CMS_RERANK_MODEL directory name
+    File modelFolder = FileSystemCommand.getFileServerModelsPath(modelPathEnv);
+    if (modelFolder == null || !modelFolder.isDirectory()) {
+      return prioritizeResults(results);
+    }
+    File model = new File(modelFolder, "model.onnx");
+    File tokenizer = new File(modelFolder, "tokenizer.json");
     if (!model.isFile() || !tokenizer.isFile()) {
-      LOG.warn("Reranking model files not found in " + modelPath);
       return prioritizeResults(results);
     }
     try {
       if (scoringModel == null) {
         synchronized (AskAIJsonService.class) {
           if (scoringModel == null) {
+            LOG.info("Loading reranking model from " + modelFolder.getPath());
             scoringModel = new OnnxScoringModel(model.getPath(), tokenizer.getPath());
           }
         }
@@ -440,8 +449,9 @@ public class AskAIJsonService extends GenericJsonService {
     while (end < text.length()) {
       int codePoint = text.codePointAt(end);
       int length = Character.charCount(codePoint);
-      int byteCount = codePoint < 0x80 ? 1 : codePoint < 0x800 ? 2
-          : codePoint >= 0xD800 && codePoint <= 0xDFFF ? 1 : codePoint < 0x10000 ? 3 : 4;
+      int byteCount = codePoint < 0x80 ? 1
+          : codePoint < 0x800 ? 2
+              : codePoint >= 0xD800 && codePoint <= 0xDFFF ? 1 : codePoint < 0x10000 ? 3 : 4;
       if (byteCount > maxBytes - bytes) {
         break;
       }
