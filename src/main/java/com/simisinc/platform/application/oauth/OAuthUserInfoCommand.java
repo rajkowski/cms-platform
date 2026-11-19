@@ -318,6 +318,19 @@ public class OAuthUserInfoCommand {
     if (json.has("family_name")) {
       user.setLastName(json.get("family_name").asText());
     }
+if (StringUtils.isAllBlank(user.getFirstName(), user.getLastName())) {
+      // If both first and last names are blank, try to populate from the "name" field
+      if (json.has("name")) {
+        String name = json.get("name").asText();
+        if (name.contains(",")) {
+          String[] parts = name.split(",", 2);
+          user.setLastName(parts[0].trim());
+          user.setFirstName(parts[1].trim());
+        } else {
+          user.setFirstName(name);
+        }
+      }
+    }
     if (json.has("email_verified")) {
       JsonNode node = json.get("email_verified");
       if (node.asBoolean(false)) {

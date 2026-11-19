@@ -38,6 +38,7 @@ public class OAuthConfigurationCommand {
 
   private static Log LOG = LogFactory.getLog(OAuthConfigurationCommand.class);
   private static final String OAUTH_CONFIGURATION_CACHE_NAME = "OAUTH.CONFIGURATION.JSON";
+  private static final String OAUTH_JWKS_CACHE_NAME = "OAUTH.JWKS.JSON";
 
   public static boolean isEnabled() {
     String enabled = System.getenv("OAUTH_ENABLED");
@@ -117,6 +118,45 @@ public class OAuthConfigurationCommand {
 
   public static String retrieveUserInfoEndpoint() {
     return retrieveValue("userinfo_endpoint");
+  }
+
+  public static String retrieveJwksEndpoint() {
+    return retrieveValue("jwks_uri");
+  }
+
+  public static JsonNode retrieveJwks() {
+    return retrieveJwks(false);
+  }
+
+  public static synchronized JsonNode retrieveJwks(boolean refresh) {
+    if (refresh) {
+      CacheManager.invalidateObjectCacheKey(OAUTH_JWKS_CACHE_NAME);
+    }
+    JsonNode json = (JsonNode) CacheManager.getFromObjectCache(OAUTH_JWKS_CACHE_NAME);
+    if (json != null) {
+      return json;
+    }
+    String jwksEndpoint = retrieveJwksEndpoint();
+    if (StringUtils.isBlank(jwksEndpoint)) {
+      LOG.warn("OAuth configuration does not contain a jwks_uri");
+      return null;
+    }
+    String responseValue = HttpGetCommand.execute(jwksEndpoint);
+    if (StringUtils.isBlank(responseValue)) {
+      LOG.warn("OAuth JWKS endpoint returned no content");
+      return null;
+    }
+    try {
+      json = JsonCommand.fromString(responseValue);
+      if (json != null && json.has("keys") && json.get("keys").isArray()) {
+        CacheManager.addToObjectCache(OAUTH_JWKS_CACHE_NAME, json);
+        return json;
+      }
+      LOG.warn("OAuth JWKS endpoint returned an invalid key set");
+    } catch (Exception e) {
+      LOG.error("Unable to parse OAuth JWKS", e);
+    }
+    return null;
   }
 
   public static String retrieveUserGroupsEndpoint(String prefix) {

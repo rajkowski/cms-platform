@@ -73,10 +73,6 @@ public class OAuthHttpCommand {
       LOG.error("HttpGet Remote content is empty");
       return null;
     }
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("REMOTE TEXT: " + remoteContent);
-    }
-
     try {
       return JsonCommand.fromString(remoteContent);
     } catch (Exception e) {
@@ -121,10 +117,6 @@ public class OAuthHttpCommand {
       LOG.error("HttpPost Remote content is empty");
       return null;
     }
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("REMOTE TEXT: " + remoteContent);
-    }
-
     // Return the content as JSON
     try {
       return JsonCommand.fromString(remoteContent);
