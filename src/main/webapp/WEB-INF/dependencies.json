@@ -15,9 +15,11 @@
       ]
     },
     "add-to-calendar-button": {
-      "version": "2.15.0",
+      "version": "3.6.2",
       "paths": [
-        "node_modules/add-to-calendar-button/dist/atcb.js"
+        "node_modules/add-to-calendar-button/dist/atcb.js",
+        "node_modules/add-to-calendar-button/dist/atcb.min.js",
+        "node_modules/add-to-calendar-button/dist/styles/simple.css"
       ]
     },
     "autocomplete": {
@@ -71,7 +73,7 @@
       ]
     },
     "fullcalendar": {
-      "version": "7.0.2",
+      "version": "7.1.5",
       "paths": [
         "node_modules/fullcalendar/all/global.js",
         "node_modules/fullcalendar/skeleton.css",
@@ -111,7 +113,7 @@
       ]
     },
     "jsuites": {
-      "version": "6.5.1",
+      "version": "6.6.1",
       "paths": [
         "node_modules/jsuites/dist/jsuites.css",
         "node_modules/jsuites/dist/jsuites.d.ts",
@@ -136,7 +138,7 @@
       "version": "4.2.2"
     },
     "mermaid": {
-      "version": "12.2.0",
+      "version": "12.3.0",
       "paths": [
         "node_modules/mermaid/dist/mermaid.js",
         "node_modules/mermaid/dist/mermaid.min.js"

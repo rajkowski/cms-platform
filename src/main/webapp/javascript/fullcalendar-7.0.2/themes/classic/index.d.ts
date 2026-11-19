@@ -1,5 +1,0 @@
-import { am as PluginInput } from '../../chunks/05b54543';
-
-declare const _default: PluginInput;
-
-export { _default as default };

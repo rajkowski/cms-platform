@@ -29,7 +29,7 @@
 <jsp:useBean id="calendar" class="com.simisinc.platform.domain.model.cms.Calendar" scope="request"/>
 <jsp:useBean id="calendarEvent" class="com.simisinc.platform.domain.model.cms.CalendarEvent" scope="request"/>
 <%@include file="../page_messages.jspf" %>
-<web:script package="add-to-calendar-button" file="atcb.js" async="true" defer="true" />
+<web:script package="add-to-calendar-button" file="atcb.min.js" async="true" defer="true" />
 <div class="platform-calendar-details-container">
 <c:if test="${!empty title}">
   <div class="platform-calendar-title text-center">
@@ -100,21 +100,21 @@
     </c:if>
     <add-to-calendar-button
       name="<c:out value="${calendarEvent.title}" />"
-      options="'Apple','Google','Microsoft365','Outlook.com'"
+      options="'apple','google','Microsoft365','Outlook.com'"
       <c:if test="${!empty calendarEvent.location}">
         location="<c:out value="${calendarEvent.location}" />"
       </c:if>
-      startDate="<fmt:formatDate pattern="yyyy-MM-dd" value="${calendarEvent.startDate}" />"
-      endDate="<fmt:formatDate pattern="yyyy-MM-dd" value="${calendarEvent.endDate}" />"
+      start-date="<fmt:formatDate pattern="yyyy-MM-dd" value="${calendarEvent.startDate}" />"
+      end-date="<fmt:formatDate pattern="yyyy-MM-dd" value="${calendarEvent.endDate}" />"
       <c:if test="${!calendarEvent.allDay}">
-        startTime="<fmt:formatDate pattern="HH:mm" value="${calendarEvent.startDate}" />"
-        endTime="<fmt:formatDate pattern="HH:mm" value="${calendarEvent.endDate}" />"
+        start-time="<fmt:formatDate pattern="HH:mm" value="${calendarEvent.startDate}" />"
+        end-time="<fmt:formatDate pattern="HH:mm" value="${calendarEvent.endDate}" />"
       </c:if>
-      timeZone="<c:out value="${timezone}"/>"
+      time-zone="<c:out value="${timezone}"/>"
       <c:if test="${!empty detailsForCalendarButton}">
         description="<c:out value="${detailsForCalendarButton}" />"
       </c:if>
-      hideBranding="true" hideBackground="true" forceOverlay="true" buttonStyle="simple"></add-to-calendar-button>
+      hide-branding="true" hideBackground="true" forceOverlay="true" buttonStyle="simple"></add-to-calendar-button>
     <c:if test="${!empty calendarEvent.summary}">
       <p class="platform-calendar-event-summary"><c:out value="${calendarEvent.summary}" /></p>
     </c:if>
