@@ -21,6 +21,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.simisinc.platform.domain.model.cms.Image;
+import com.simisinc.platform.domain.model.cms.ImageVersion;
 import com.simisinc.platform.infrastructure.persistence.cms.ImageRepository;
 
 /**
@@ -83,6 +84,11 @@ public class ImageUrlCommand {
     }
     String fileIdValue = resourceValue.substring(dashIdx + 1);
     return Long.parseLong(fileIdValue);
+  }
+
+  public static String getVersionUrl(Image image, ImageVersion version) {
+    return "/assets/img/" + image.getWebPath() + "-" + image.getId() + "/"
+        + UrlCommand.encodeUri(version.getFilename()) + "?versionId=" + version.getId();
   }
 
   public static Image decodeToImageRecord(String uri) {

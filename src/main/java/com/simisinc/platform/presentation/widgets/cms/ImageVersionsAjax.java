@@ -22,8 +22,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.cms.ImageUrlCommand;
 import com.simisinc.platform.application.json.JsonCommand;
+import com.simisinc.platform.domain.model.cms.Image;
 import com.simisinc.platform.domain.model.cms.ImageVersion;
+import com.simisinc.platform.infrastructure.persistence.cms.ImageRepository;
 import com.simisinc.platform.infrastructure.persistence.cms.ImageVersionRepository;
 import com.simisinc.platform.presentation.controller.JsonServiceContext;
 import com.simisinc.platform.presentation.services.GenericJsonService;
@@ -57,6 +60,11 @@ public class ImageVersionsAjax extends GenericJsonService {
       return context.writeError("Image ID required");
     }
 
+    Image image = ImageRepository.findById(imageId);
+    if (image == null) {
+      return context.writeError("Image not found");
+    }
+
     // Query versions
     List<ImageVersion> versions = ImageVersionRepository.findAllByImageId(imageId);
 
@@ -76,6 +84,7 @@ public class ImageVersionsAjax extends GenericJsonService {
       sb.append("\"id\":").append(version.getId()).append(",");
       sb.append("\"versionNumber\":").append(version.getVersionNumber()).append(",");
       sb.append("\"filename\":\"").append(JsonCommand.toJson(version.getFilename())).append("\",");
+      sb.append("\"url\":\"").append(JsonCommand.toJson(ImageUrlCommand.getVersionUrl(image, version))).append("\",");
       sb.append("\"fileLength\":").append(version.getFileLength()).append(",");
       sb.append("\"fileType\":\"").append(JsonCommand.toJson(StringUtils.defaultString(version.getFileType()))).append("\",");
       sb.append("\"width\":").append(version.getWidth()).append(",");

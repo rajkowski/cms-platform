@@ -29,6 +29,8 @@ import org.apache.commons.logging.LogFactory;
 import com.simisinc.platform.application.cms.ImageUrlCommand;
 import com.simisinc.platform.application.filesystem.FileSystemCommand;
 import com.simisinc.platform.domain.model.cms.Image;
+import com.simisinc.platform.domain.model.cms.ImageVersion;
+import com.simisinc.platform.infrastructure.persistence.cms.ImageVersionRepository;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
 import com.zeroio.platform.application.cms.IntegrationAttachmentCommand;
@@ -63,16 +65,31 @@ public class StreamImageWidget extends GenericWidget {
       }
     }
 
-    // Use thumbnail path if requested and available
-    String filePath = isThumbnail && record.hasThumbnail()
-        ? record.getProcessedPath()
-        : record.getFileServerPath();
+    String filePath = record.getFileServerPath();
+    String fileType = record.getFileType();
+    long lastModified = record.getModified().getTime();
+
+    long versionId = context.getParameterAsLong("versionId", -1);
+    if (versionId > -1) {
+      ImageVersion version = ImageVersionRepository.findById(versionId);
+      if (version == null || version.getImageId() != record.getId()) {
+        LOG.debug("Image version not found for uri: " + context.getUri());
+        return null;
+      }
+      filePath = version.getFileServerPath();
+      fileType = version.getFileType();
+      if (version.getCreated() != null) {
+        lastModified = version.getCreated().getTime();
+      }
+    } else if (isThumbnail && record.hasThumbnail()) {
+      filePath = record.getProcessedPath();
+    }
 
     File file = FileSystemCommand.getFileServerRootPath(filePath);
     if (!file.isFile()) {
       LOG.warn("Server file does not exist: " + file.getAbsolutePath());
       // If thumbnail doesn't exist, fall back to original
-      if (isThumbnail && !record.getFileServerPath().equals(filePath)) {
+      if (versionId == -1 && isThumbnail && !record.getFileServerPath().equals(filePath)) {
         file = FileSystemCommand.getFileServerRootPath(record.getFileServerPath());
         if (!file.isFile()) {
           LOG.warn("Original image file also does not exist: " + record.getFileServerPath());
@@ -84,7 +101,6 @@ public class StreamImageWidget extends GenericWidget {
     }
 
     // Check for a last-modified header and return 304 if possible
-    long lastModified = record.getModified().getTime();
     long headerValue = context.getRequest().getDateHeader("If-Modified-Since");
     if (lastModified <= headerValue + 1000) {
       context.getResponse().setStatus(HttpServletResponse.SC_NOT_MODIFIED);
@@ -94,7 +110,7 @@ public class StreamImageWidget extends GenericWidget {
 
     // Set header info
     context.getResponse().setDateHeader("Last-Modified", lastModified);
-    context.getResponse().setContentType(record.getFileType());
+    context.getResponse().setContentType(fileType);
     context.getResponse().setContentLength((int) file.length());
 
     // Check for head method

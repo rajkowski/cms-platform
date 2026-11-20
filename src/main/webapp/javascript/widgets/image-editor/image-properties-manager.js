@@ -490,7 +490,7 @@ class ImagePropertiesManager {
     
     versions.forEach((version, index) => {
       const isCurrent = !!version.isCurrent;
-      const thumbnailUrl = `${this.editor.config.contextPath}${version.url || this.currentImage.url}`;
+      const thumbnailUrl = `${this.editor.config.contextPath}${version.url}`;
       
       html += `
         <div class="version-item ${isCurrent ? 'current' : ''}">

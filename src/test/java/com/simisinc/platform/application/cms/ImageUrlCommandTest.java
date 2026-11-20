@@ -21,6 +21,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.junit.jupiter.api.Test;
 
+import com.simisinc.platform.domain.model.cms.Image;
+import com.simisinc.platform.domain.model.cms.ImageVersion;
+
 class ImageUrlCommandTest {
   @Test
   void testExtractFileId() {
@@ -51,5 +54,18 @@ class ImageUrlCommandTest {
     String resourceValue = ImageUrlCommand.reduceImageUri(uri);
     assertNotNull(resourceValue);
     assertEquals("20180503171549-5", resourceValue);
+  }
+
+  @Test
+  void testGetVersionUrl() {
+    Image image = new Image();
+    image.setId(5L);
+    image.setWebPath("20180503171549");
+    ImageVersion version = new ImageVersion();
+    version.setId(12L);
+    version.setFilename("Previous version.png");
+
+    assertEquals("/assets/img/20180503171549-5/Previous%20version.png?versionId=12",
+        ImageUrlCommand.getVersionUrl(image, version));
   }
 }
