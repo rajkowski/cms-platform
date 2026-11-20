@@ -10,6 +10,8 @@ class ImagePropertiesManager {
   constructor(editor) {
     this.editor = editor;
     this.currentImage = null;
+    this.versions = [];
+    this.selectedVersionId = null;
   }
 
   /**
@@ -63,6 +65,28 @@ class ImagePropertiesManager {
         this.uploadNewVersion();
       });
     }
+
+    const versionsList = document.getElementById('versions-list');
+    if (versionsList) {
+      versionsList.addEventListener('click', (event) => {
+        if (event.target.closest('button')) return;
+
+        const versionItem = event.target.closest('.version-item');
+        if (versionItem) {
+          this.previewVersion(Number(versionItem.dataset.versionId));
+        }
+      });
+      versionsList.addEventListener('keydown', (event) => {
+        if (event.target.closest('button')) return;
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+
+        const versionItem = event.target.closest('.version-item');
+        if (!versionItem) return;
+
+        event.preventDefault();
+        this.previewVersion(Number(versionItem.dataset.versionId));
+      });
+    }
   }
 
   /**
@@ -91,6 +115,7 @@ class ImagePropertiesManager {
       }
 
       this.currentImage = imageData;
+      this.selectedVersionId = null;
       this.displayProperties(imageData);
       
       // Load versions and update tab badge
@@ -166,6 +191,8 @@ class ImagePropertiesManager {
    */
   clear() {
     this.currentImage = null;
+    this.versions = [];
+    this.selectedVersionId = null;
 
     const noImageDiv = document.querySelector('#properties-tab-content .no-image-selected');
     const form = document.getElementById('image-metadata-form');
@@ -450,7 +477,8 @@ class ImagePropertiesManager {
         throw new Error(data.error);
       }
 
-      this.displayVersions(data.versions || []);
+      this.versions = data.versions || [];
+      this.displayVersions(this.versions);
       
       // Update Versions tab with count badge
       const versionsTab = document.querySelector('[data-tab="versions"]');
@@ -477,6 +505,11 @@ class ImagePropertiesManager {
     const versionsList = document.getElementById('versions-list');
     if (!versionsList) return;
 
+    if (!this.selectedVersionId) {
+      const currentVersion = versions.find(version => !!version.isCurrent);
+      this.selectedVersionId = currentVersion ? currentVersion.id : null;
+    }
+
     if (versions.length === 0) {
       versionsList.innerHTML = `
         <div class="no-versions-message">
@@ -490,10 +523,11 @@ class ImagePropertiesManager {
     
     versions.forEach((version, index) => {
       const isCurrent = !!version.isCurrent;
+      const isSelected = Number(this.selectedVersionId) === Number(version.id);
       const thumbnailUrl = `${this.editor.config.contextPath}${version.url}`;
       
       html += `
-        <div class="version-item ${isCurrent ? 'current' : ''}">
+        <div class="version-item ${isCurrent ? 'current' : ''} ${isSelected ? 'selected' : ''}" data-version-id="${version.id}" role="button" tabindex="0" aria-pressed="${isSelected}" aria-label="Preview version ${version.versionNumber || versions.length - index}">
           <div class="version-thumbnail">
             <img src="${thumbnailUrl}" alt="Version ${version.versionNumber}" 
                  style="max-width: 60px; max-height: 60px; border-radius: 4px; border: 1px solid #e0e0e0;" />
@@ -527,6 +561,32 @@ class ImagePropertiesManager {
     
     html += '</div>';
     versionsList.innerHTML = html;
+  }
+
+  /**
+   * Preview a version without changing which version is current
+   */
+  async previewVersion(versionId) {
+    const version = this.versions.find(item => Number(item.id) === Number(versionId));
+    if (!version || !this.currentImage) return;
+
+    if (this.editor.hasUnsavedChanges() && !confirm('You have unsaved changes. Discard them and preview this version?')) {
+      return;
+    }
+
+    try {
+      await this.editor.imageViewer.loadVersion(this.currentImage, version);
+      this.selectedVersionId = version.id;
+      this.editor.clearModified();
+
+      document.querySelectorAll('#versions-list .version-item').forEach(item => {
+        const isSelected = Number(item.dataset.versionId) === Number(versionId);
+        item.classList.toggle('selected', isSelected);
+        item.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+      });
+    } catch (error) {
+      alert('Failed to preview image version: ' + error.message);
+    }
   }
 
   /**
@@ -582,10 +642,12 @@ class ImagePropertiesManager {
       this.showToast('Reverted to selected version successfully!', 'success');
       
       // Reload the image and versions
-      await this.loadImage(this.currentImage.id);
-      await this.loadVersions();
-      this.editor.imageViewer.loadImage(this.currentImage.id);
-      this.editor.imageLibrary.loadImages(false, true);
+      const imageId = this.currentImage.id;
+      await Promise.all([
+        this.loadImage(imageId),
+        this.editor.imageViewer.loadImage(imageId, true)
+      ]);
+      await this.editor.imageLibrary.loadImages(false, true);
 
     } catch (error) {
       console.error('Error reverting to version:', error);

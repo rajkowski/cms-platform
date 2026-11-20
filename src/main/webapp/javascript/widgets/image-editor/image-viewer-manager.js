@@ -282,7 +282,7 @@ class ImageViewerManager {
   /**
    * Load and display an image
    */
-  async loadImage(imageId) {
+  async loadImage(imageId, cacheBust = false) {
     console.log('Loading image in viewer:', imageId);
 
     this.showLoadingState();
@@ -307,7 +307,7 @@ class ImageViewerManager {
       }
 
       this.currentImage = imageData;
-      await this.displayImage(imageData);
+      await this.displayImage(imageData, cacheBust);
       this.enableTools();
 
     } catch (error) {
@@ -317,9 +317,35 @@ class ImageViewerManager {
   }
 
   /**
+   * Display a specific image version in the viewer
+   */
+  async loadVersion(imageData, version) {
+    if (!imageData || !version || !version.url) {
+      throw new Error('Invalid image version');
+    }
+
+    console.log('Loading image version in viewer:', version.id);
+    this.showLoadingState();
+
+    try {
+      this.currentImage = imageData;
+      await this.displayImage({
+        ...imageData,
+        filename: `${imageData.filename} (Version ${version.versionNumber})`,
+        url: version.url
+      });
+      this.enableTools();
+    } catch (error) {
+      console.error('Error loading image version:', error);
+      this.showErrorState('Failed to load image version. Please try again.');
+      throw error;
+    }
+  }
+
+  /**
    * Display the image on the canvas
    */
-  async displayImage(imageData) {
+  async displayImage(imageData, cacheBust = false) {
     return new Promise((resolve, reject) => {
       const img = new Image();
 
@@ -372,7 +398,10 @@ class ImageViewerManager {
         reject(new Error('Failed to load image'));
       };
 
-      img.src = `${this.editor.config.contextPath}${imageData.url}`;
+      const imageUrl = `${this.editor.config.contextPath}${imageData.url}`;
+      img.src = cacheBust
+        ? `${imageUrl}${imageUrl.includes('?') ? '&' : '?'}t=${Date.now()}`
+        : imageUrl;
     });
   }
 

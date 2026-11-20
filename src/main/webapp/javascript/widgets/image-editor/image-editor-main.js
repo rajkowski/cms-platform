@@ -207,8 +207,11 @@ class ImageEditor {
 
       // For version uploads, reload the image and versions list
       if (isVersionUpload && imageId) {
-        await this.imageProperties.loadImage(imageId);
-        await this.imageProperties.loadVersions();
+        await Promise.all([
+          this.imageProperties.loadImage(imageId),
+          this.imageViewer.loadImage(imageId, true)
+        ]);
+        await this.imageLibrary.loadImages(false, true);
         
         setTimeout(() => {
           modal.close();
@@ -306,8 +309,10 @@ class ImageEditor {
         // Reload the image to show the new version
         const currentImageId = this.imageProperties.getCurrentImage()?.id;
         if (currentImageId) {
-          await this.imageProperties.loadImage(currentImageId);
-          await this.imageProperties.loadVersions();
+          await Promise.all([
+            this.imageProperties.loadImage(currentImageId),
+            this.imageViewer.loadImage(currentImageId, true)
+          ]);
         }
       } else {
         this.showToast('Image copy created successfully!', 'success');
