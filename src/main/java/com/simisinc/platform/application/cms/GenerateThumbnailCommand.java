@@ -122,7 +122,6 @@ public class GenerateThumbnailCommand {
       image.setProcessedWidth(thumbnailWidth);
       image.setProcessedHeight(thumbnailHeight);
       image.setProcessed(new Timestamp(System.currentTimeMillis()));
-      image.setModifiedBy(-1); // System operation
 
       // Save to database
       Image savedImage = ImageRepository.save(image);
