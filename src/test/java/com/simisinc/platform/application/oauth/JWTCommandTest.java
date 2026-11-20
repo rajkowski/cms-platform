@@ -98,7 +98,9 @@ class JWTCommandTest {
     generator.initialize(2048);
     KeyPair keyPair = generator.generateKeyPair();
     String token = rsaJwt("{\"alg\":\"RS256\",\"kid\":\"test-key\"}", "{\"sub\":\"user-1\"}", keyPair);
-    String tamperedToken = token.substring(0, token.length() - 1) + (token.endsWith("A") ? "B" : "A");
+    int signatureStart = token.lastIndexOf('.') + 1;
+    char replacement = token.charAt(signatureStart) == 'A' ? 'B' : 'A';
+    String tamperedToken = token.substring(0, signatureStart) + replacement + token.substring(signatureStart + 1);
     JsonNode jwks = new com.fasterxml.jackson.databind.ObjectMapper().readTree(rsaJwks((RSAPublicKey) keyPair.getPublic()));
 
     try (MockedStatic<OAuthConfigurationCommand> configuration = Mockito.mockStatic(OAuthConfigurationCommand.class)) {
