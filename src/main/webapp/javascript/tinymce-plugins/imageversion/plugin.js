@@ -103,6 +103,43 @@
       return html.replace(new RegExp(escapeRegExp(oldUrl), 'g'), newUrl);
     }
 
+    function removeImageCacheVersion(url) {
+      if (!url) {
+        return url;
+      }
+
+      var hashIndex = url.indexOf('#');
+      var hash = '';
+      if (hashIndex !== -1) {
+        hash = url.substring(hashIndex);
+        url = url.substring(0, hashIndex);
+      }
+
+      var queryIndex = url.indexOf('?');
+      if (queryIndex === -1) {
+        return url + hash;
+      }
+
+      var baseUrl = url.substring(0, queryIndex);
+      var query = url.substring(queryIndex + 1);
+      var separator = /&amp;/i.test(query) ? '&amp;' : '&';
+      var queryParams = query.split(/&(?:amp;)?/i).filter(function (param) {
+        return param.split('=', 1)[0] !== 'v';
+      });
+
+      return baseUrl + (queryParams.length ? '?' + queryParams.join(separator) : '') + hash;
+    }
+
+    function stripImageCacheVersionsFromHtml(html) {
+      if (!html) {
+        return html;
+      }
+
+      return html.replace(/(<img\b[^>]*\bsrc\s*=\s*["'])([^"']+)(["'][^>]*>)/gi, function (match, prefix, src, suffix) {
+        return prefix + removeImageCacheVersion(src) + suffix;
+      });
+    }
+
     function replaceUrlsForImageReference(html, imageWebPath, finalUrl, fallbackUrl) {
       if (!html || !finalUrl) {
         return html;
@@ -203,33 +240,29 @@
       }
 
       var html = activeEditor.getContent();
+      var cacheBustedImages = [];
 
       return pendingUploads.reduce(function (chain, pending) {
         return chain.then(function () {
           return uploadVersionFileToServer(pending.file, pending.imageId, pending.imageWebPath).then(function (finalUrl) {
-            var appliedToNode = false;
-            if (body && pending.markerId) {
-              var node = body.querySelector('img[data-pending-version-id="' + pending.markerId + '"]');
-              if (node) {
-                node.setAttribute('src', finalUrl);
-                node.removeAttribute('data-pending-version-id');
-                appliedToNode = true;
-              }
-            }
-
-            if (!appliedToNode) {
-              html = replaceUrlsForImageReference(html, pending.imageWebPath, finalUrl, pending.originalUrl);
-            }
+            var canonicalUrl = removeImageCacheVersion(finalUrl);
+            html = replaceUrlsForImageReference(html, pending.imageWebPath, canonicalUrl, pending.originalUrl);
 
             if (pending.originalUrl) {
-              html = replaceUrlInHtml(html, pending.originalUrl, finalUrl);
+              html = replaceUrlInHtml(html, pending.originalUrl, canonicalUrl);
             }
             if (pending.stagedUrl) {
-              html = replaceUrlInHtml(html, pending.stagedUrl, finalUrl);
+              html = replaceUrlInHtml(html, pending.stagedUrl, canonicalUrl);
             }
             if (pending.previewUrl) {
-              html = replaceUrlInHtml(html, pending.previewUrl, finalUrl);
+              html = replaceUrlInHtml(html, pending.previewUrl, canonicalUrl);
             }
+
+            cacheBustedImages.push({
+              imageWebPath: pending.imageWebPath,
+              canonicalUrl: canonicalUrl,
+              finalUrl: finalUrl
+            });
 
             if (pending.previewUrl) {
               URL.revokeObjectURL(pending.previewUrl);
@@ -240,6 +273,23 @@
         pendingUploads.length = 0;
         activeEditor.setContent(html);
         activeEditor.save();
+        cacheBustedImages.forEach(function (image) {
+          var currentBody = activeEditor.getBody();
+          if (!currentBody) {
+            return;
+          }
+
+          var imageNodes = currentBody.querySelectorAll('img');
+          for (var i = 0; i < imageNodes.length; i += 1) {
+            var node = imageNodes[i];
+            var src = node.getAttribute('src') || '';
+            var parsedReference = parseImageReferenceFromUrl(src);
+            if (normalizeImageUrlForCompare(src) === normalizeImageUrlForCompare(image.canonicalUrl)
+                || (parsedReference && parsedReference.imageWebPath === image.imageWebPath)) {
+              node.setAttribute('src', image.finalUrl);
+            }
+          }
+        });
         state.uploadAsVersion = false;
         refreshUploadVersionActionButton();
       });
@@ -429,34 +479,16 @@
       }
       var enabled = !!state.imageWebPath;
       button.disabled = !enabled;
-      button.style.opacity = enabled ? '1' : '0.5';
-      button.textContent = 'UPLOAD NEW VERSION';
+      button.textContent = 'Upload New Version';
     }
 
     function ensureToggle(ed, dialogRoot) {
       if (!toggleContainer) {
-        var container = document.createElement('div');
-        container.id = 'content-editor-upload-version-toggle';
-        container.style.position = 'fixed';
-        container.style.zIndex = '100100';
-        container.style.background = '#ffffff';
-        container.style.border = '1px solid #d9d9d9';
-        container.style.borderRadius = '4px';
-        container.style.padding = '0.25rem';
-        container.style.boxShadow = '0 2px 6px rgba(0,0,0,0.12)';
-        container.style.display = 'none';
-
         var button = document.createElement('button');
         button.type = 'button';
         button.id = 'content-editor-upload-new-version-btn';
-        button.style.border = '1px solid #cfd3d8';
-        button.style.borderRadius = '4px';
-        button.style.background = '#ffffff';
-        button.style.padding = '0.35rem 0.65rem';
-        button.style.fontSize = '0.78rem';
-        button.style.fontWeight = '600';
-        button.style.letterSpacing = '0.02em';
-        button.style.cursor = 'pointer';
+        button.className = 'tox-button tox-button--secondary';
+        button.title = 'Upload a replacement image while keeping its existing references';
         button.addEventListener('click', function () {
           var activeDialogRoot = getActiveImageDialogRoot() || dialogRoot;
           if (activeEditor) {
@@ -471,10 +503,9 @@
           fileInput.click();
         });
 
-        button.textContent = 'UPLOAD NEW VERSION';
-        container.appendChild(button);
-        document.body.appendChild(container);
-        toggleContainer = container;
+        button.textContent = 'Upload New Version';
+        button.style.display = 'none';
+        toggleContainer = button;
       }
 
       if (!state.imageWebPath) {
@@ -482,10 +513,15 @@
       }
       refreshUploadVersionActionButton();
 
-      var rect = dialogRoot.getBoundingClientRect();
-      toggleContainer.style.left = Math.max(10, rect.left + 12) + 'px';
-      toggleContainer.style.top = Math.max(10, rect.bottom - 50) + 'px';
-      toggleContainer.style.display = 'block';
+      var footerStart = dialogRoot.querySelector('.tox-dialog__footer-start');
+      if (!footerStart) {
+        hideToggle();
+        return;
+      }
+      if (toggleContainer.parentNode !== footerStart) {
+        footerStart.appendChild(toggleContainer);
+      }
+      toggleContainer.style.display = '';
     }
 
     function parseImageReferenceFromUrl(imageUrl) {
@@ -602,13 +638,14 @@
       ensureToggle(ed, dialogRoot);
 
       var sourceInput = getImageDialogSourceInput(dialogRoot);
-      if (sourceInput) {
+      if (sourceInput && sourceInput.getAttribute('data-image-version-source-bound') !== 'true') {
         var handleSourceValueChange = function () {
           updateImageUploadStateFromSource(ed, dialogRoot);
           ensureToggle(ed, dialogRoot);
         };
         sourceInput.addEventListener('input', handleSourceValueChange);
         sourceInput.addEventListener('change', handleSourceValueChange);
+        sourceInput.setAttribute('data-image-version-source-bound', 'true');
       }
     }
 
@@ -681,6 +718,10 @@
     editor.on('init', function () {
       activeEditor = editor;
       startDialogWatcher(editor);
+    });
+
+    editor.on('GetContent', function (event) {
+      event.content = stripImageCacheVersionsFromHtml(event.content);
     });
 
     editor.on('OpenWindow', function () {
