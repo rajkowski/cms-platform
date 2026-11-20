@@ -76,6 +76,7 @@
   <target name="clean">
     <delete dir="${build.dir}" />
     <delete dir="${target.dir}" />
+    <delete dir="${exploded.dir}" />
     <delete dir="${out.dir}/exploded/work" />
   </target>
 
