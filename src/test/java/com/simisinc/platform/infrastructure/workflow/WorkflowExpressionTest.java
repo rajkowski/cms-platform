@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,16 +17,17 @@
 
 package com.simisinc.platform.infrastructure.workflow;
 
-import com.simisinc.platform.application.workflow.WorkflowCommand;
-import org.jeasy.flows.work.Expression;
-import org.jeasy.flows.work.LogTask;
-import org.jeasy.flows.work.TaskContext;
-import org.jeasy.flows.work.WorkContext;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.util.HashMap;
-import java.util.Map;
+import com.github.rajkowski.workflow.work.Expression;
+import com.github.rajkowski.workflow.work.LogTask;
+import com.github.rajkowski.workflow.work.TaskContext;
+import com.github.rajkowski.workflow.work.WorkContext;
+import com.simisinc.platform.application.workflow.WorkflowCommand;
 
 /**
  * Tests for workflow expression processing
@@ -48,8 +50,10 @@ class WorkflowExpressionTest {
 
     taskContext.put("order", order);
 
-    String subject1 = (String) Expression.evaluate(workContext, taskContext, "{{ !order.live ? \"TEST \" : \"\" }}New order # {{ order.uniqueId }}");
-    String subject2 = WorkflowCommand.getValue(workContext, taskContext, "{{ !order.live ? \"TEST \" : \"\" }}New order # {{ order.uniqueId }}");
+    String subject1 = (String) Expression.evaluate(workContext, taskContext,
+        "{{ !order.live ? \"TEST \" : \"\" }}New order # {{ order.uniqueId }}");
+    String subject2 = WorkflowCommand.getValue(workContext, taskContext,
+        "{{ !order.live ? \"TEST \" : \"\" }}New order # {{ order.uniqueId }}");
     Assertions.assertEquals("TEST New order # 0000-0000-0000", subject1);
     Assertions.assertEquals("TEST New order # 0000-0000-0000", subject2);
   }

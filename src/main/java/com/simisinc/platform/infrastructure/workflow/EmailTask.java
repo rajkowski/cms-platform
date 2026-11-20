@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +17,29 @@
 
 package com.simisinc.platform.infrastructure.workflow;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.servlet.ServletContext;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.commons.mail.ImageHtmlEmail;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
+import org.thymeleaf.templatemode.TemplateMode;
+import org.thymeleaf.templateresolver.WebApplicationTemplateResolver;
+import org.thymeleaf.web.servlet.JavaxServletWebApplication;
+
+import com.github.rajkowski.workflow.work.DefaultWorkReport;
+import com.github.rajkowski.workflow.work.TaskContext;
+import com.github.rajkowski.workflow.work.Work;
+import com.github.rajkowski.workflow.work.WorkContext;
+import com.github.rajkowski.workflow.work.WorkReport;
+import com.github.rajkowski.workflow.work.WorkStatus;
 import com.simisinc.platform.application.LoadUserCommand;
 import com.simisinc.platform.application.admin.LoadSitePropertyCommand;
 import com.simisinc.platform.application.admin.SendCommunityManagerEmailCommand;
@@ -26,22 +50,6 @@ import com.simisinc.platform.application.email.EmailTemplateCommand;
 import com.simisinc.platform.application.workflow.WorkflowCommand;
 import com.simisinc.platform.domain.model.User;
 import com.simisinc.platform.infrastructure.scheduler.SchedulerManager;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.commons.mail.ImageHtmlEmail;
-import org.jeasy.flows.work.*;
-import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.context.Context;
-import org.thymeleaf.templatemode.TemplateMode;
-import org.thymeleaf.templateresolver.WebApplicationTemplateResolver;
-import org.thymeleaf.web.servlet.JavaxServletWebApplication;
-
-import javax.servlet.ServletContext;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * A workflow task to send email
@@ -119,7 +127,8 @@ public class EmailTask implements Work {
           // Set user specific site links
           User thisUser = (User) entry.getValue();
           if (thisUser != null && StringUtils.isNotBlank(thisUser.getAccountToken())) {
-            ctx.setVariable("validateAccountUrl", siteUrl + "/validate-account?confirmation=" + UrlCommand.encodeUri(thisUser.getAccountToken()));
+            ctx.setVariable("validateAccountUrl",
+                siteUrl + "/validate-account?confirmation=" + UrlCommand.encodeUri(thisUser.getAccountToken()));
           }
         }
       }

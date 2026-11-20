@@ -13,7 +13,7 @@ This project uses and licenses several technologies:
    Bucket4J                    Apache   Rate limiting                                     https://github.com/bucket4j/bucket4j
    Caffeine                    Apache   High performance cache                            https://github.com/ben-manes/caffeine
    CommonMark Java             BSD-2CL  Mark down parser and renderer                     https://github.com/commonmark/commonmark-java
-   Easy Flows Playbooks EditionMIT      Workflow engine                                   https://github.com/rajkowski/easy-flows
+   DB                          Apache   Multi-tenant fluent SQL builder                   https://github.com/rajkowski/db
    Flyway                      Apache   Database scripts install and upgrade tracking     https://github.com/flyway/flyway
    GeoIP2                      Apache   IP geolocation client                             https://github.com/maxmind/GeoIP2-java
    GeoJson                     Apache   GeoJson Parser                                    https://github.com/opendatalab-de/geojson-jackson
@@ -38,6 +38,7 @@ This project uses and licenses several technologies:
    Thymeleaf                   Apache   Template engine                                   https://github.com/thymeleaf/thymeleaf
    Timeago                     Apache   Relative time                                     https://github.com/marlonlom/timeago
    uniVocity                   Apache   CSV processing                                    https://github.com/uniVocity/univocity-parsers
+   Workflow                    MIT      Workflow engine                                   https://github.com/rajkowski/workflow
 
  Frontend:
 

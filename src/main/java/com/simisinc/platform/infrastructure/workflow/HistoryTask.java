@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,20 +17,26 @@
 
 package com.simisinc.platform.infrastructure.workflow;
 
-import com.simisinc.platform.application.xapi.XapiStatementCommand;
+import static com.simisinc.platform.infrastructure.workflow.WorkflowManager.EVENT_OBJECT;
+
+import java.sql.Timestamp;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.github.rajkowski.workflow.work.DefaultWorkReport;
+import com.github.rajkowski.workflow.work.TaskContext;
+import com.github.rajkowski.workflow.work.Work;
+import com.github.rajkowski.workflow.work.WorkContext;
+import com.github.rajkowski.workflow.work.WorkReport;
+import com.github.rajkowski.workflow.work.WorkStatus;
 import com.simisinc.platform.application.workflow.WorkflowCommand;
+import com.simisinc.platform.application.xapi.XapiStatementCommand;
 import com.simisinc.platform.domain.events.Event;
 import com.simisinc.platform.domain.model.User;
 import com.simisinc.platform.domain.model.xapi.XapiStatement;
 import com.simisinc.platform.infrastructure.persistence.xapi.XapiStatementRepository;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.jeasy.flows.work.*;
-
-import java.sql.Timestamp;
-
-import static com.simisinc.platform.infrastructure.workflow.WorkflowManager.EVENT_OBJECT;
 
 /**
  * A workflow task to save a history record

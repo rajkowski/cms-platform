@@ -27,11 +27,11 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jeasy.flows.playbook.Playbook;
-import org.jeasy.flows.playbook.Task;
-import org.jeasy.flows.playbook.TaskList;
-import org.jeasy.flows.reader.YamlReader;
 
+import com.github.rajkowski.workflow.playbook.Playbook;
+import com.github.rajkowski.workflow.playbook.Task;
+import com.github.rajkowski.workflow.playbook.TaskList;
+import com.github.rajkowski.workflow.reader.YamlReader;
 import com.simisinc.platform.application.json.JsonCommand;
 import com.simisinc.platform.infrastructure.scheduler.SchedulerManager;
 import com.simisinc.platform.presentation.controller.WidgetContext;

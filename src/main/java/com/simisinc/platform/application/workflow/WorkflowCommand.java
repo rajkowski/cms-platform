@@ -1,4 +1,5 @@
 /*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
  * Copyright 2022 SimIS Inc. (https://www.simiscms.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,9 +20,10 @@ package com.simisinc.platform.application.workflow;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jeasy.flows.work.Expression;
-import org.jeasy.flows.work.TaskContext;
-import org.jeasy.flows.work.WorkContext;
+
+import com.github.rajkowski.workflow.work.Expression;
+import com.github.rajkowski.workflow.work.TaskContext;
+import com.github.rajkowski.workflow.work.WorkContext;
 
 /**
  * Methods for workflow values
