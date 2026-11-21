@@ -472,10 +472,10 @@
 ]]></html>
         </widget>
         <widget name="map" class="callout secondary radius">
-          <latitude>36.869648</latitude>
-          <longitude>-76.416138</longitude>
-          <markerTitle>SimIS HQ</markerTitle>
-          <markerText>Portsmouth, Virginia</markerText>
+          <markerTitle>New York City</markerTitle>
+          <markerText>New York, New York</markerText>
+          <coordinates>40.712982, -74.007205</coordinates>
+          <mapZoomLevel>12</mapZoomLevel>
         </widget>
       </column>
     </section>
