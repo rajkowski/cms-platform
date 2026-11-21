@@ -10,6 +10,7 @@
   --editor-header-border: color-mix(in srgb, var(--editor-header-text, #ffffff) 22%, transparent);
   --editor-header-control-bg: color-mix(in srgb, var(--editor-header-text, #ffffff) 8%, transparent);
   --editor-header-control-hover: color-mix(in srgb, var(--editor-header-text, #ffffff) 15%, transparent);
+  --editor-header-control-height: 38px;
   min-height: 62px;
   box-sizing: border-box;
   flex-wrap: wrap;
@@ -32,11 +33,12 @@
 #editor-titlebar .titlebar-left > a:first-child,
 #dashboard-toolbar .titlebar-left > a:first-child {
   display: inline-flex;
-  width: 38px;
-  height: 38px;
+  width: var(--editor-header-control-height);
+  height: var(--editor-header-control-height);
+  box-sizing: border-box;
   align-items: center;
   justify-content: center;
-  flex: 0 0 38px;
+  flex: 0 0 var(--editor-header-control-height);
   overflow: hidden;
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid var(--editor-header-border, rgba(255, 255, 255, 0.18));
@@ -52,13 +54,25 @@
 }
 
 .editor-app-switcher-btn {
-  min-height: 38px;
+  display: inline-flex;
+  height: var(--editor-header-control-height);
+  min-height: var(--editor-header-control-height);
+  max-height: var(--editor-header-control-height);
+  box-sizing: border-box;
+  align-items: center;
+  margin: 0;
   padding: 0.15rem 0.65rem;
   color: var(--editor-header-text, #ffffff);
   background: var(--editor-header-control-bg, rgba(255, 255, 255, 0.08));
   border: 1px solid var(--editor-header-border, rgba(255, 255, 255, 0.22));
   border-radius: 6px;
   text-align: left;
+}
+
+.editor-app-switcher {
+  display: flex;
+  height: var(--editor-header-control-height);
+  align-items: center;
 }
 
 .editor-app-switcher-btn:hover,
