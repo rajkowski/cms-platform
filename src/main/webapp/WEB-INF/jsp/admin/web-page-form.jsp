@@ -127,6 +127,33 @@
         <input type="hidden" id="tags-hidden" name="tagsValue"
               value="<c:out value='${tagsValue}'/>" />
       </label>
+      <div class="button-container">
+        <input type="submit" class="button radius success" value="Save" />
+        <c:if test="${userSession.hasRole('admin') || userSession.hasRole('content-manager')}">
+          <c:choose>
+            <c:when test="${webPage.enabled}">
+              <a class="button radius warning" href="javascript:archivePage()"><i class="fa fa-archive"></i> Archive Page</a>
+            </c:when>
+            <c:otherwise>
+              <a class="button radius warning" href="javascript:unarchivePage()"><i class="fa fa-undo"></i> Unarchive Page</a>
+            </c:otherwise>
+          </c:choose>
+        </c:if>
+        <c:if test="${userSession.hasRole('admin')}">
+          <a class="button radius alert" href="javascript:deletePage()"><i class="fa fa-trash-o"></i> Delete Page</a>
+        </c:if>
+        <c:choose>
+          <c:when test="${!empty returnPage}">
+            <a href="${returnPage}" class="button radius secondary">Cancel</a>
+          </c:when>
+          <c:when test="${!empty webPage.link}">
+            <a href="${ctx}${webPage.link}" class="button radius secondary">Cancel</a>
+          </c:when>
+          <c:otherwise>
+
+          </c:otherwise>
+        </c:choose>
+      </div>
     </div>
     <div class="small-12 medium-6 cell">
       <label>Publish?
@@ -182,6 +209,7 @@
           <div class="small-12 medium-6 cell">
             <label>Select roles which can access this page
               <select name="roles" multiple size="8">
+                <option value=""<c:if test="${empty webPage.roles}"> selected</c:if>>All Roles</option>
                 <c:set var="guestSelected" value="false" />
                 <c:set var="usersSelected" value="false" />
                 <c:forEach items="${webPage.roles}" var="r">
@@ -221,37 +249,6 @@
         <a class="button small primary radius no-gap" data-open="imageBrowserReveal">Browse Images</a>
       </p>
     </div>
-  </div>
-  <div class="button-container">
-    <input type="submit" class="button radius success" value="Save" />
-
-    <c:if test="${userSession.hasRole('admin') || userSession.hasRole('content-manager')}">
-      <c:choose>
-        <c:when test="${webPage.enabled}">
-          <a class="button radius warning" href="javascript:archivePage()"><i class="fa fa-archive"></i> Archive Page</a>
-        </c:when>
-        <c:otherwise>
-          <a class="button radius warning" href="javascript:unarchivePage()"><i class="fa fa-undo"></i> Unarchive Page</a>
-        </c:otherwise>
-      </c:choose>
-    </c:if>
-    
-    <c:if test="${userSession.hasRole('admin')}">
-      <a class="button radius alert" href="javascript:deletePage()"><i class="fa fa-trash-o"></i> Delete Page</a>
-    </c:if>
-
-    <c:choose>
-      <c:when test="${!empty returnPage}">
-        <a href="${returnPage}" class="button radius secondary">Cancel</a>
-      </c:when>
-      <c:when test="${!empty webPage.link}">
-        <a href="${ctx}${webPage.link}" class="button radius secondary">Cancel</a>
-      </c:when>
-      <c:otherwise>
-
-      </c:otherwise>
-    </c:choose>
-
   </div>
 </form>
 

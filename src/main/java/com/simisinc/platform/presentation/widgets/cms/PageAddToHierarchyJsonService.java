@@ -71,6 +71,9 @@ public class PageAddToHierarchyJsonService extends GenericJsonService {
       if (page == null) {
         return context.writeError("Page not found");
       }
+      if (page.hasWildcardLink()) {
+        return context.writeError("Pages with wildcard links cannot be added to the hierarchy");
+      }
 
       Long parentId = parentPageId > 0 ? parentPageId : null;
 

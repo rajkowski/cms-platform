@@ -483,9 +483,13 @@ label {
   background: var(--editor-panel-bg);
   border: 1px solid var(--editor-border);
   border-radius: 4px;
-  cursor: pointer;
+  cursor: grab;
   transition: all 0.2s;
   gap: 8px;
+}
+
+.page-tree-item:active {
+  cursor: grabbing;
 }
 
 .page-tree-item:hover {

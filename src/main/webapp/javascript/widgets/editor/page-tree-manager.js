@@ -760,6 +760,14 @@ class PageTreeManager {
     const node = e.target.closest('.page-tree-node');
     if (!node) return;
 
+    const dragItem = node.querySelector(':scope > .page-tree-item');
+    if (dragItem && e.dataTransfer.setDragImage) {
+      const rect = dragItem.getBoundingClientRect();
+      const offsetX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+      const offsetY = Math.max(0, Math.min(e.clientY - rect.top, rect.height));
+      e.dataTransfer.setDragImage(dragItem, offsetX, offsetY);
+    }
+
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/html', node.innerHTML);
     const title = node.querySelector('.page-title')?.textContent || '';

@@ -255,16 +255,18 @@ public class WebPageRepository {
         return null;
       }
 
-      // Attach this web page to the web page hierarchy at the bottom, with no parent
-      WebPageHierarchy webPageHierarchy = new WebPageHierarchy();
-      webPageHierarchy.setWebPageId(record.getId());
-      webPageHierarchy.setParentPageId(null);
-      webPageHierarchy.setSortOrder(WebPageHierarchyRepository.getNextSortOrder(connection, null));
-      webPageHierarchy.setDepth(0);
-      webPageHierarchy.setPath(WebPageHierarchyRepository.buildPath("/", record.getId()));
-      webPageHierarchy.setCreated(new Timestamp(System.currentTimeMillis()));
-      webPageHierarchy.setModified(new Timestamp(System.currentTimeMillis()));
-      WebPageHierarchyRepository.save(connection, webPageHierarchy);
+      if (!record.hasWildcardLink()) {
+        // Attach this web page to the web page hierarchy at the bottom, with no parent
+        WebPageHierarchy webPageHierarchy = new WebPageHierarchy();
+        webPageHierarchy.setWebPageId(record.getId());
+        webPageHierarchy.setParentPageId(null);
+        webPageHierarchy.setSortOrder(WebPageHierarchyRepository.getNextSortOrder(connection, null));
+        webPageHierarchy.setDepth(0);
+        webPageHierarchy.setPath(WebPageHierarchyRepository.buildPath("/", record.getId()));
+        webPageHierarchy.setCreated(new Timestamp(System.currentTimeMillis()));
+        webPageHierarchy.setModified(new Timestamp(System.currentTimeMillis()));
+        WebPageHierarchyRepository.save(connection, webPageHierarchy);
+      }
 
       // Finish the transaction
       transaction.commit();

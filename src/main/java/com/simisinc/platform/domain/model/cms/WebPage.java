@@ -84,6 +84,10 @@ public class WebPage extends Entity {
     this.link = link;
   }
 
+  public boolean hasWildcardLink() {
+    return link != null && link.contains("/*");
+  }
+
   public String getRedirectUrl() {
     return redirectUrl;
   }

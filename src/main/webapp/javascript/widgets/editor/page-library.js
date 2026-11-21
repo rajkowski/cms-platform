@@ -263,6 +263,12 @@ class PageLibraryManager {
       `;
 
       pageEl.addEventListener('dragstart', (e) => {
+        if (e.dataTransfer.setDragImage) {
+          const rect = pageEl.getBoundingClientRect();
+          const offsetX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+          const offsetY = Math.max(0, Math.min(e.clientY - rect.top, rect.height));
+          e.dataTransfer.setDragImage(pageEl, offsetX, offsetY);
+        }
         e.dataTransfer.effectAllowed = 'copy';
         e.dataTransfer.setData('application/x-page-data', JSON.stringify({
           id: page.id,

@@ -73,6 +73,9 @@ public class WebPageListAjax extends GenericJsonService {
     // Build JSON response
     StringBuilder sb = new StringBuilder();
     for (WebPage page : pageList) {
+      if (page.hasWildcardLink()) {
+        continue;
+      }
       if (!sb.isEmpty()) {
         sb.append(",");
       }
