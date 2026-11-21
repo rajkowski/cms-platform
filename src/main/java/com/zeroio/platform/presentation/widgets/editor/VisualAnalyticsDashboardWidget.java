@@ -19,6 +19,7 @@ package com.zeroio.platform.presentation.widgets.editor;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.cms.UrlCommand;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
 
@@ -43,6 +44,8 @@ public class VisualAnalyticsDashboardWidget extends GenericWidget {
     context.getRequest().setAttribute("defaultTimeRange", "7d");
     context.getRequest().setAttribute("liveEnabled", true);
     context.getRequest().setAttribute("technicalMetricsEnabled", true);
+    String returnPage = UrlCommand.getValidReturnPage(context.getParameter("returnPage"));
+    context.getRequest().setAttribute("returnPage", returnPage);
 
     context.setJsp(DASHBOARD_JSP);
     return context;

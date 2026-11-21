@@ -20,10 +20,28 @@
     - editorName: Display name of the current editor (e.g., "Web Page Editor")
     - activeApp: ID of the active app (e.g., "pages", "images", "documents", "data", "content", "hierarchy", "analytics")
 --%>
+<g:compress><link rel="stylesheet" href="${ctx}/css/editor-header.css" /></g:compress>
+<style>
+  #editor-toolbar,
+  #editor-titlebar,
+  #dashboard-toolbar {
+    <c:if test="${not empty themePropertyMap['theme.topbar.backgroundColor']}">--editor-header-bg: <c:out value="${themePropertyMap['theme.topbar.backgroundColor']}" />;</c:if>
+    <c:if test="${not empty themePropertyMap['theme.topbar.text.color']}">--editor-header-text: <c:out value="${themePropertyMap['theme.topbar.text.color']}" />;</c:if>
+  }
+  [data-theme="dark"] #editor-toolbar,
+  [data-theme="dark"] #editor-titlebar,
+  [data-theme="dark"] #dashboard-toolbar {
+    <c:if test="${not empty themePropertyMap['theme.topbar.dark.backgroundColor']}">--editor-header-bg: <c:out value="${themePropertyMap['theme.topbar.dark.backgroundColor']}" />;</c:if>
+    <c:if test="${not empty themePropertyMap['theme.topbar.dark.text.color']}">--editor-header-text: <c:out value="${themePropertyMap['theme.topbar.dark.text.color']}" />;</c:if>
+  }
+</style>
 <div class="editor-app-switcher">
-  <button class="editor-app-switcher-btn" title="Switch Editor">
-    <span class="editor-name"><c:out value="${editorName}"/></span>
-    <i class="fas fa-chevron-down" style="font-size: 0.75rem; margin-left: 0.5rem;"></i>
+  <button type="button" class="editor-app-switcher-btn" title="Switch Editor" aria-label="Switch editor. Current: <c:out value='${editorName}'/>" aria-haspopup="true" aria-expanded="false">
+    <span class="editor-app-label">
+      <span class="editor-workspace-label">Site Editor</span>
+      <span class="editor-name"><c:out value="${editorName}"/></span>
+    </span>
+    <i class="fas fa-chevron-down" aria-hidden="true"></i>
   </button>
   <div class="editor-app-switcher-dropdown">
     <c:if test="${activeApp == 'analytics' || userSession.hasRole('admin')}">
@@ -32,6 +50,10 @@
         <span>Analytics</span>
       </a>
     </c:if>
+    <a href="${ctx}/admin/visual-page-editor" class="editor-app-item ${activeApp == 'pages' ? 'active' : ''} confirm-exit" title="Edit Pages">
+      <i class="${font:far()} fa-file-lines"></i>
+      <span>Pages</span>
+    </a>
     <c:if test="${activeApp == 'content' || userSession.hasRole('admin') || userSession.hasRole('content-manager')}">
       <a href="${ctx}/admin/visual-content-editor" class="editor-app-item ${activeApp == 'content' ? 'active' : ''} confirm-exit" title="Manage Content">
         <i class="${font:far()} fa-edit"></i>
@@ -44,19 +66,9 @@
         <span>Hierarchy</span>
       </a>
     </c:if>
-    <c:if test="${activeApp == 'crm' || userSession.hasRole('admin') || userSession.hasRole('content-manager') || userSession.hasRole('ecommerce-manager')}">
-      <a href="${ctx}/admin/visual-crm-editor" class="editor-app-item ${activeApp == 'crm' ? 'active' : ''} confirm-exit" title="CRM">
-        <i class="${font:far()} fa-address-book"></i>
-        <span>CRM</span>
-      </a>
-    </c:if>
-    <a href="${ctx}/admin/visual-data-editor" class="editor-app-item ${activeApp == 'data' ? 'active' : ''} confirm-exit" title="Manage Data">
-      <i class="${font:far()} fa-table"></i>
-      <span>Data</span>
-    </a>
     <a href="${ctx}/admin/visual-document-editor" class="editor-app-item ${activeApp == 'documents' ? 'active' : ''} confirm-exit" title="Manage Documents">
       <i class="${font:far()} fa-file"></i>
-      <span>Documents</span>
+      <span>Files</span>
     </a>
     <c:if test="${activeApp == 'forms' || userSession.hasRole('admin')}">
       <a href="${ctx}/admin/visual-forms-editor" class="editor-app-item ${activeApp == 'forms' ? 'active' : ''} confirm-exit" title="Manage Forms">
@@ -68,10 +80,16 @@
       <i class="${font:far()} fa-image"></i>
       <span>Images</span>
     </a>
-    <a href="${ctx}/admin/visual-page-editor" class="editor-app-item ${activeApp == 'pages' ? 'active' : ''} confirm-exit" title="Edit Pages">
-      <i class="${font:far()} fa-file-lines"></i>
-      <span>Pages</span>
+    <a href="${ctx}/admin/visual-data-editor" class="editor-app-item ${activeApp == 'data' ? 'active' : ''} confirm-exit" title="Manage Data">
+      <i class="${font:far()} fa-table"></i>
+      <span>Data</span>
     </a>
+    <c:if test="${activeApp == 'crm' || userSession.hasRole('admin') || userSession.hasRole('content-manager') || userSession.hasRole('ecommerce-manager')}">
+      <a href="${ctx}/admin/visual-crm-editor" class="editor-app-item ${activeApp == 'crm' ? 'active' : ''} confirm-exit" title="CRM">
+        <i class="${font:far()} fa-address-book"></i>
+        <span>CRM</span>
+      </a>
+    </c:if>
     <c:if test="${activeApp == 'scheduler' || userSession.hasRole('admin')}">
       <a href="${ctx}/admin/visual-scheduler-editor" class="editor-app-item ${activeApp == 'scheduler' ? 'active' : ''} confirm-exit" title="Scheduler">
         <i class="${font:far()} fa-clock"></i>

@@ -1,0 +1,29 @@
+<%--
+  ~ Copyright 2026 Matt Rajkowski (https://www.github.com/rajkowski)
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  --%>
+<c:choose>
+  <c:when test="${not empty returnPage}">
+    <c:set var="editorSiteExitUrl" value="${returnPage}" />
+  </c:when>
+  <c:when test="${not empty webPage.link}">
+    <c:set var="editorSiteExitUrl" value="${ctx}${webPage.link}" />
+  </c:when>
+  <c:otherwise>
+    <c:set var="editorSiteExitUrl" value="${ctx}/" />
+  </c:otherwise>
+</c:choose>
+<a href="<c:out value='${editorSiteExitUrl}'/>" class="titlebar-btn apps-btn confirm-exit" title="Exit back to the current site" aria-label="Exit back to the current site">
+  <i class="${font:far()} fa-arrow-right-from-bracket" aria-hidden="true"></i>
+</a>

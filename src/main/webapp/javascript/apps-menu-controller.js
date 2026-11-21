@@ -77,6 +77,7 @@ function setupEditorAppSwitcher() {
     }
     isOpen = false;
     appSwitcher.classList.remove('open');
+    switcherBtn.setAttribute('aria-expanded', 'false');
     document.removeEventListener('click', handleOutsideClick);
   }
 
@@ -91,6 +92,7 @@ function setupEditorAppSwitcher() {
     event.stopPropagation();
     isOpen = !isOpen;
     appSwitcher.classList.toggle('open', isOpen);
+    switcherBtn.setAttribute('aria-expanded', String(isOpen));
     if (isOpen) {
       document.addEventListener('click', handleOutsideClick);
     } else {

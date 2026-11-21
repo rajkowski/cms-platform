@@ -43,12 +43,26 @@ class VisualFormsEditorWidgetTest extends WidgetBase {
   @Test
   void contentManagerCanOpenEditor() {
     setRoles(widgetContext, CONTENT_MANAGER);
+    addQueryParameter(widgetContext, "returnPage", "/tenant-home");
     try (MockedStatic<Permission> permissions = mockStatic(Permission.class);
         MockedStatic<FormDefinitionRepository> forms = mockStatic(FormDefinitionRepository.class)) {
       permissions.when(() -> Permission.check("cms.visual-forms-editor.access", widgetContext.getUserSession())).thenReturn(true);
       new VisualFormsEditorWidget().execute(widgetContext);
       Assertions.assertEquals("/cms/visual-forms-editor.jsp", widgetContext.getJsp());
+      Assertions.assertEquals("/tenant-home", widgetContext.getRequest().getAttribute("returnPage"));
       forms.verify(FormDefinitionRepository::findAll);
+    }
+  }
+
+  @Test
+  void externalReturnPageIsRejected() {
+    setRoles(widgetContext, CONTENT_MANAGER);
+    addQueryParameter(widgetContext, "returnPage", "https://example.com/");
+    try (MockedStatic<Permission> permissions = mockStatic(Permission.class);
+        MockedStatic<FormDefinitionRepository> forms = mockStatic(FormDefinitionRepository.class)) {
+      permissions.when(() -> Permission.check("cms.visual-forms-editor.access", widgetContext.getUserSession())).thenReturn(true);
+      new VisualFormsEditorWidget().execute(widgetContext);
+      Assertions.assertNull(widgetContext.getRequest().getAttribute("returnPage"));
     }
   }
 

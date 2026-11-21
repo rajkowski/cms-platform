@@ -23,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.simisinc.platform.application.DataException;
 import com.simisinc.platform.application.cms.SaveFormDefinitionCommand;
 import com.simisinc.platform.application.cms.SaveFormFieldCommand;
+import com.simisinc.platform.application.cms.UrlCommand;
 import com.simisinc.platform.domain.model.cms.FormDefinition;
 import com.simisinc.platform.domain.model.cms.FormField;
 import com.simisinc.platform.infrastructure.persistence.cms.FormDefinitionRepository;
@@ -45,6 +46,8 @@ public class VisualFormsEditorWidget extends GenericWidget {
     if (!allowed(context)) {
       return context;
     }
+    String returnPage = UrlCommand.getValidReturnPage(context.getParameter("returnPage"));
+    context.getRequest().setAttribute("returnPage", returnPage);
     context.getRequest().setAttribute("forms", FormDefinitionRepository.findAll());
     long formId = context.getParameterAsLong("formId");
     FormDefinition form = FormDefinitionRepository.findById(formId);

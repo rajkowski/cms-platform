@@ -24,12 +24,12 @@
   <div id="editor-toolbar">
     <div class="titlebar-left">
       <a href="${ctx}/"><img src="${ctx}/images/favicon.png" alt="Home" /></a>
-      <c:set var="editorName" value="Forms Editor" />
+      <c:set var="editorName" value="Forms" />
       <c:set var="activeApp" value="forms" />
       <%@include file="editor-app-switcher.jspf" %>
     </div>
     <div class="toolbar-section left"><a class="button tiny success no-gap radius" href="${ctx}/admin/visual-forms-editor?new=true"><i class="${font:far()} fa-plus"></i> New Form</a></div>
-    <div class="titlebar-right"><a href="${ctx}/" class="titlebar-btn apps-btn" title="Exit to site"><i class="${font:far()} fa-arrow-right-from-bracket"></i></a></div>
+    <div class="titlebar-right"><%@include file="editor-site-exit.jspf" %></div>
   </div>
   <%@include file="../page_messages.jspf" %>
   <div class="forms-editor-layout">

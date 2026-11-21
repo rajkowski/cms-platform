@@ -39,7 +39,7 @@
   <div id="editor-toolbar">
     <div class="titlebar-left">
       <a href="${ctx}/"><img src="${ctx}/images/favicon.png" alt="Logo" /></a>
-      <c:set var="editorName" value="Data Editor" />
+      <c:set var="editorName" value="Data" />
       <c:set var="activeApp" value="data" />
       <%@include file="editor-app-switcher.jspf" %>
     </div>
@@ -67,18 +67,7 @@
       <a href="#" id="dark-mode-toggle-menu" class="titlebar-btn apps-btn" title="Toggle Dark Mode">
         <i class="${font:far()} fa-moon"></i>
       </a>
-      <c:choose>
-        <c:when test="${!empty returnPage}">
-          <a href="${returnPage}" class="titlebar-btn apps-btn confirm-exit" title="Exit back to site">
-            <i class="${font:far()} fa-arrow-right-from-bracket"></i>
-          </a>
-        </c:when>
-        <c:otherwise>
-          <a href="${ctx}/" class="titlebar-btn apps-btn confirm-exit" title="Exit back to site">
-            <i class="${font:far()} fa-arrow-right-from-bracket"></i>
-          </a>
-        </c:otherwise>
-      </c:choose>
+      <%@include file="editor-site-exit.jspf" %>
     </div>
   </div>
   

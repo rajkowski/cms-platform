@@ -19,6 +19,7 @@ package com.zeroio.platform.presentation.widgets.editor;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.simisinc.platform.application.cms.UrlCommand;
 import com.simisinc.platform.presentation.controller.WidgetContext;
 import com.simisinc.platform.presentation.widgets.GenericWidget;
 
@@ -45,6 +46,8 @@ public class VisualWebSyncWidget extends GenericWidget {
 
     // Set the JSP
     context.setJsp(EDITOR_JSP);
+    String returnPage = UrlCommand.getValidReturnPage(context.getParameter("returnPage"));
+    context.getRequest().setAttribute("returnPage", returnPage);
 
     return context;
   }
