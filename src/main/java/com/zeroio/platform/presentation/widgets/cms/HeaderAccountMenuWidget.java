@@ -134,6 +134,7 @@ public class HeaderAccountMenuWidget extends GenericWidget {
       if (!section.equals(previousSection)) {
         actions = new ArrayList<>();
         Map<String, Object> group = new HashMap<>();
+        group.put("name", section);
         group.put("label", label);
         group.put("actions", actions);
         sections.add(group);

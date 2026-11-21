@@ -24,6 +24,7 @@
     const askAITrigger = root.querySelector('[data-header-control="askAI"]');
     const askAIDrawer = root.querySelector('#askAIDrawer');
     const account = root.querySelector('[data-header-account]');
+    const admin = root.querySelector('[data-header-admin]');
     const cart = root.querySelector('[data-header-cart]');
     const regionTrigger = root.querySelector('[data-header-control="region"]');
     const workspaces = root.querySelector('[data-header-workspaces]');
@@ -260,8 +261,13 @@
     function setMenu(menu, open) {
       if (!menu) return;
       menu.classList.toggle('open', open);
-      const trigger = menu.querySelector('[data-header-account-trigger], [data-header-cart-trigger], [data-header-control="workspaces"]');
+      const trigger = menu.querySelector('[data-header-account-trigger], [data-header-admin-trigger], [data-header-cart-trigger], [data-header-control="workspaces"]');
       if (trigger) trigger.setAttribute('aria-expanded', String(open));
+    }
+
+    function setExclusiveMenu(menu) {
+      const open = menu && !menu.classList.contains('open');
+      [account, admin, cart, workspaces].forEach(other => setMenu(other, other === menu && open));
     }
 
     function setDropdown(item, open) {
@@ -613,13 +619,15 @@
         } else if (control.dataset.headerControl === 'askAI' && askAIDrawer) {
           setAskAIDrawer(!askAIDrawer.classList.contains('open'), true);
         } else if (control.dataset.headerControl === 'workspaces' && workspaces) {
-          setMenu(workspaces, !workspaces.classList.contains('open'));
+          setExclusiveMenu(workspaces);
         }
       }
       const accountTrigger = event.target.closest('[data-header-account-trigger]');
+      const adminTrigger = event.target.closest('[data-header-admin-trigger]');
       const cartTrigger = event.target.closest('[data-header-cart-trigger]');
-      if (accountTrigger && account) setMenu(account, !account.classList.contains('open'));
-      if (cartTrigger && cart) setMenu(cart, !cart.classList.contains('open'));
+      if (accountTrigger && account) setExclusiveMenu(account);
+      if (adminTrigger && admin) setExclusiveMenu(admin);
+      if (cartTrigger && cart) setExclusiveMenu(cart);
       const dropdownToggle = event.target.closest('[data-header-dropdown-toggle]');
       if (dropdownToggle) {
         const item = dropdownToggle.closest('.nav-item');
@@ -627,6 +635,7 @@
       }
       if (event.target.closest('a')) {
         setMenu(account, false);
+        setMenu(admin, false);
         setMenu(cart, false);
         setMenu(workspaces, false);
         setMobile(false);
@@ -644,6 +653,7 @@
       }
       if (form && !form.contains(event.target)) closeSearch();
       if (account && !account.contains(event.target)) setMenu(account, false);
+      if (admin && !admin.contains(event.target)) setMenu(admin, false);
       if (cart && !cart.contains(event.target)) setMenu(cart, false);
       if (workspaces && !workspaces.contains(event.target)) setMenu(workspaces, false);
       if (nav && mobileToggle && !nav.contains(event.target) && !mobileToggle.contains(event.target)) setMobile(false);
@@ -659,7 +669,7 @@
         closeSearch();
         if (askAIDrawer && askAIDrawer.classList.contains('open')) setAskAIDrawer(false, true);
         if (regionOpen()) closeRegion();
-        [account, cart, workspaces].forEach(menu => {
+        [account, admin, cart, workspaces].forEach(menu => {
           if (menu && menu.classList.contains('open')) {
             menu.dataset.headerHoverDismissed = 'true';
             setMenu(menu, false);

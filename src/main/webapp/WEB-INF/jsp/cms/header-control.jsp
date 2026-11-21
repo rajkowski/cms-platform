@@ -87,25 +87,25 @@
   <%-- Workspaces --%>
   <c:when test="${headerControlType eq 'workspaces'}">
     <div class="user-menu" data-header-workspaces>
-      <button type="button" class="header-btn" data-header-control="workspaces" title="<c:out value='${headerControlLabel}'/>" aria-haspopup="true" aria-expanded="false">
+      <button type="button" class="header-btn workspace-switcher" data-header-control="workspaces" title="Switch workspace. Current: <c:out value='${headerControlCurrentWorkspaceName}'/>" aria-label="Switch workspace. Current: <c:out value='${headerControlCurrentWorkspaceName}'/>" aria-haspopup="true" aria-expanded="false">
         <i class="<c:out value='${headerControlIcon}'/>" aria-hidden="true"></i>
-        <span class="btn-text"><c:out value="${headerControlLabel}" /></span>
+        <span class="btn-text workspace-name"><c:out value="${headerControlCurrentWorkspaceName}" /></span>
+        <i class="${font:fas()} fa-chevron-down header-menu-chevron" aria-hidden="true"></i>
       </button>
-      <div class="user-menu-dropdown header-menu-dropdown">
+      <div class="user-menu-dropdown header-menu-dropdown workspace-menu-dropdown">
         <div class="user-menu-section">
-          <a class="user-menu-item" href="<c:out value='${headerControlDefaultWorkspaceUrl}'/>" title="Go to Home">
-            <i class="${font:fas()} fa-home" aria-hidden="true"></i>
-            <span class="user-menu-item-content"><span class="user-menu-item-label">Home</span></span>
+          <a class="user-menu-item" href="<c:out value='${headerControlDefaultWorkspaceUrl}'/>" title="Go to Home"<c:if test="${headerControlCurrentWorkspaceId lt 0}"> aria-current="true"</c:if>>
+            <i class="${font:fas()} ${headerControlCurrentWorkspaceId lt 0 ? 'fa-check' : 'fa-home'}" aria-hidden="true"></i>
+            <span class="user-menu-item-content"><span class="user-menu-item-label">Home</span><span class="user-menu-item-desc">Main site</span></span>
           </a>
         </div>
         <div class="user-menu-section">
-          <div class="user-menu-section-title"><c:out value="${headerControlLabel}" /></div>
+          <div class="user-menu-section-title">Your Workspaces</div>
           <c:forEach items="${headerControlWorkspaces}" var="workspace">
             <c:set var="isCurrentWorkspace" value="${workspace.id eq headerControlCurrentWorkspaceId}" />
             <a class="user-menu-item" href="<c:out value='${headerControlWorkspaceLaunchBase}'/>/workspace-launch?workspace=${workspace.uniqueId}"<c:if test="${isCurrentWorkspace}"> aria-current="true"</c:if>>
               <i class="${font:fas()} ${isCurrentWorkspace ? 'fa-check' : 'fa-cube'}" aria-hidden="true"></i>
-              <span class="user-menu-item-content"><span class="user-menu-item-label"><c:out value="${workspace.name}" /></span></span>
-              <%-- <c:if test="${isCurrentWorkspace}"><span class="user-menu-item-desc">Current</span></c:if> --%>
+              <span class="user-menu-item-content"><span class="user-menu-item-label"><c:out value="${workspace.name}" /></span><c:if test="${isCurrentWorkspace}"><span class="user-menu-item-desc">Current workspace</span></c:if></span>
             </a>
           </c:forEach>
         </div>

@@ -42,7 +42,9 @@
             <link name="Register" link="/register" icon="fa-user-plus" class="primary" rule="site.registrations" />
           </links>
         </widget>
-        <widget name="headerAccountMenu">
+        <widget name="cartMenu"></widget>
+        <widget name="headerControl" role="users"><type>workspaces</type></widget>
+        <widget name="headerAccountMenu" title="Account menu">
           <links>
             <link action="pageInfo" section="page" sectionLabel="Page Tools" name="Page Info" icon="fa-info-circle" />
             <link action="pageAnalytics" section="page" sectionLabel="Page Tools" name="Page Analytics" icon="fa-chart-area" />
@@ -62,8 +64,6 @@
             <link action="logout" name="Logout" icon="fa-sign-out-alt" />
           </links>
         </widget>
-        <widget name="cartMenu"></widget>
-        <widget name="headerControl" role="users"><type>workspaces</type></widget>
       </column>
       <column wrapper="none">
         <widget name="mainMenu"><omitFirstHomeItem>true</omitFirstHomeItem></widget>

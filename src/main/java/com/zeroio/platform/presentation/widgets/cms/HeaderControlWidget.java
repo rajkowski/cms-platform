@@ -110,6 +110,16 @@ public class HeaderControlWidget extends GenericWidget {
       context.getRequest().setAttribute("headerControlWorkspaces", workspaces);
       context.getRequest().setAttribute("headerControlCurrentWorkspaceId", workspaceContext != null ? workspaceContext.workspaceId() : -1L);
       context.getRequest().setAttribute("headerControlWorkspaceLaunchBase", launchBase);
+      String currentWorkspaceName = workspaceContext == null ? "Home" : "Current Workspace";
+      if (workspaceContext != null) {
+        for (Workspace workspace : workspaces) {
+          if (workspace.getId() == workspaceContext.workspaceId()) {
+            currentWorkspaceName = workspace.getName();
+            break;
+          }
+        }
+      }
+      context.getRequest().setAttribute("headerControlCurrentWorkspaceName", currentWorkspaceName);
       defaultLabel = "Workspaces";
       defaultIcon = "fa-cubes";
     } else {

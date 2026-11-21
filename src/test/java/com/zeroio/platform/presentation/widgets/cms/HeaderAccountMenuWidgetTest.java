@@ -247,7 +247,9 @@ class HeaderAccountMenuWidgetTest extends WidgetBase {
         "<widget name='headerAccountMenu'><links><link action='account' name='&lt;strong&gt;Account&lt;/strong&gt;' section='first' sectionLabel='First'/><link action='logout' name='Logout' section='second' sectionLabel='Second'/></links></widget>");
     new HeaderAccountMenuWidget().execute(widgetContext);
     List<?> sections = (List<?>) pageRequest.getAttribute("headerAccountSections");
+    assertEquals("first", text(sections.get(0), "name"));
     assertEquals("First", text(sections.get(0), "label"));
+    assertEquals("second", text(sections.get(1), "name"));
     assertEquals("Second", text(sections.get(1), "label"));
     List<?> actions = entries(record(sections.get(0)).get("actions"));
     assertTrue(text(actions.get(0), "name").startsWith("<strong>"));
