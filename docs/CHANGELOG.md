@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the [Common Changelog](https://common-changelog.org/).
 
+## 2026-11-21
+
+- Expanded unified search with result categories, related resources, custom field values, consolidated ranking, hybrid lexical/vector retrieval, re-ranking, and Ollama or Azure OpenAI-backed chat
+- Added dynamic tenant workspace creation, activation, data source pools, tenant database seeding, and workspace administration
+- Added a visual form editor with editable form definitions and fields, plus separate workflow and scheduler editors
+- Reworked the visual editor title bar, application switcher, workspace menus, logo/menu control alignment, and theme-aware header controls
+- Improved page hierarchy editing, hierarchy path repair, breadcrumb defaults, and page organization
+- In the image editor, added click-through image version navigation with version image previews and corrected version identifiers and update behavior
+- Added JWT verification and stronger OAuth, file-system model, path, modified-by, and localhost tenant validation
+- Added Web Page caching and switched Markdown rendering from Flexmark to CommonMark
+- Improved database diagnostics with optional connection-leak checks and tenant-aware database scripting
+- Updated dependency management, Ant/Maven test reporting, compiler configuration, Tomcat cleanup, build resources, and vendored dependencies
+
 ## 2026-10-17
 
 - Unified search results in the dynamic header control panel and the search results web page
