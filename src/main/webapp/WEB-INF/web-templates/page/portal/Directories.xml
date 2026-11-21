@@ -18,6 +18,11 @@
   <page name="/directories" title="Directories">
     <section>
       <column class="small-12 cell">
+        <widget name="pageBreadcrumb" />
+      </column>
+    </section>
+    <section>
+      <column class="small-12 cell">
         <widget name="content" class="text-center padding-top-30">
           <uniqueId>directories-hello</uniqueId>
           <html><![CDATA[

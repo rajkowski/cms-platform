@@ -17,6 +17,11 @@
 <template name="Calendar" image="Calendar.png">
   <page>
     <section>
+      <column class="small-12 cell">
+        <widget name="pageBreadcrumb" />
+      </column>
+    </section>
+    <section>
       <column class="small-12 medium-12 large-9 cell">
         <widget name="calendar">
           <!--<calendarUniqueId>events</calendarUniqueId>-->

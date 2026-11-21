@@ -20,7 +20,12 @@
   </rules>
   <page>
     <!-- Setup albums in Admin/Files & Folders -->
-    <!-- The one here is called Photo and Video Libary -->
+    <!-- The one here is called Photo and Video Library -->
+    <section>
+      <column class="small-12 cell">
+        <widget name="pageBreadcrumb" />
+      </column>
+    </section>
     <section id="sticky-gallery" class="margin-top-30 hide-for-small-only">
       <column class="small-12 medium-5 cell">
         <widget name="content">

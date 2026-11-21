@@ -16,6 +16,11 @@
   -->
 <template name="FAQ" image="FAQ.png">
   <page>
+    <section>
+      <column class="small-12 cell">
+        <widget name="pageBreadcrumb" />
+      </column>
+    </section>
     <section class="align-center">
       <column class="small-12 medium-10 large-7 cell">
         <widget name="content" class="margin-top-75 margin-bottom-25 small-margin-25">
