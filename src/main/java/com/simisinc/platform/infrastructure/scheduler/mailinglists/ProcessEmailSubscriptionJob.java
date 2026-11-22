@@ -21,6 +21,7 @@ import com.simisinc.platform.application.mailinglists.MailChimpCommand;
 import com.simisinc.platform.domain.model.mailinglists.Email;
 import com.simisinc.platform.domain.model.mailinglists.MailingList;
 import com.simisinc.platform.infrastructure.persistence.mailinglists.EmailRepository;
+import com.zeroio.platform.infrastructure.scheduler.TenantAwareJobRequest;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -28,7 +29,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jobrunr.jobs.annotations.Job;
-import org.jobrunr.jobs.lambdas.JobRequest;
 import org.jobrunr.jobs.lambdas.JobRequestHandler;
 
 /**
@@ -38,7 +38,7 @@ import org.jobrunr.jobs.lambdas.JobRequestHandler;
  * @created 9/12/2019 11:36 AM
  */
 @NoArgsConstructor
-public class ProcessEmailSubscriptionJob implements JobRequest {
+public class ProcessEmailSubscriptionJob extends TenantAwareJobRequest {
 
   private static Log LOG = LogFactory.getLog(ProcessEmailSubscriptionJob.class);
 
@@ -72,6 +72,10 @@ public class ProcessEmailSubscriptionJob implements JobRequest {
     @Override
     @Job(name = "Save an email subscription request", retries = 1)
     public void run(ProcessEmailSubscriptionJob jobRequest) {
+      jobRequest.runInTenantContext(() -> process(jobRequest));
+    }
+
+    private static void process(ProcessEmailSubscriptionJob jobRequest) {
 
       // Determine the service to use
       String service = LoadSitePropertyCommand.loadByName("mailing-list.service");

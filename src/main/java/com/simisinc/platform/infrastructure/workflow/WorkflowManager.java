@@ -35,7 +35,6 @@ import org.apache.commons.logging.LogFactory;
 import org.jobrunr.jobs.JobId;
 import org.jobrunr.scheduling.BackgroundJobRequest;
 
-import com.github.rajkowski.database.DB;
 import com.github.rajkowski.workflow.playbook.Playbook;
 import com.github.rajkowski.workflow.playbook.PlaybookManager;
 import com.github.rajkowski.workflow.reader.YamlReader;
@@ -104,7 +103,7 @@ public class WorkflowManager {
 
   public static void triggerWorkflowForEvent(Event domainEvent) {
     // Start the background job
-    JobId jobId = BackgroundJobRequest.enqueue(new WorkflowEngineJob(domainEvent, DB.getTenantId()));
+    JobId jobId = BackgroundJobRequest.enqueue(new WorkflowEngineJob(domainEvent));
     if (LOG.isDebugEnabled()) {
       LOG.debug("WorkflowEngineJob Enqueue jobId: " + jobId.toString() + " at " + domainEvent.getOccurred() + ": "
           + domainEvent.getDomainEventType());

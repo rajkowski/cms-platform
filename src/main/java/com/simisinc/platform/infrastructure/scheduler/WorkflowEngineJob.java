@@ -18,13 +18,12 @@
 package com.simisinc.platform.infrastructure.scheduler;
 
 import org.jobrunr.jobs.annotations.Job;
-import org.jobrunr.jobs.lambdas.JobRequest;
 import org.jobrunr.jobs.lambdas.JobRequestHandler;
 import org.jobrunr.server.runner.ThreadLocalJobContext;
 
-import com.github.rajkowski.database.DB;
 import com.simisinc.platform.domain.events.Event;
 import com.simisinc.platform.infrastructure.workflow.WorkflowManager;
+import com.zeroio.platform.infrastructure.scheduler.TenantAwareJobRequest;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -37,15 +36,11 @@ import lombok.Setter;
  * @created 3/20/21 11:25 AM
  */
 @NoArgsConstructor
-public class WorkflowEngineJob implements JobRequest {
+public class WorkflowEngineJob extends TenantAwareJobRequest {
 
   @Getter
   @Setter
   private Event event = null;
-
-  @Getter
-  @Setter
-  private String tenantId = null;
 
   public WorkflowEngineJob(Event event) {
     this.event = event;
@@ -53,7 +48,7 @@ public class WorkflowEngineJob implements JobRequest {
 
   public WorkflowEngineJob(Event event, String tenantId) {
     this.event = event;
-    this.tenantId = tenantId;
+    setTenantId(tenantId);
   }
 
   @Override
@@ -66,16 +61,7 @@ public class WorkflowEngineJob implements JobRequest {
     @Job(name = "Run a workflow", retries = 1)
     public void run(WorkflowEngineJob jobRequest) {
       ThreadLocalJobContext.getJobContext().saveMetadata("name", jobRequest.getEvent().getDomainEventType());
-      try {
-        if (jobRequest.getTenantId() == null) {
-          DB.clearTenant();
-          WorkflowManager.findAndRunWorkflow(jobRequest.getEvent());
-        } else {
-          DB.withTenant(jobRequest.getTenantId(), () -> WorkflowManager.findAndRunWorkflow(jobRequest.getEvent()));
-        }
-      } finally {
-        DB.clearTenant();
-      }
+      jobRequest.runInTenantContext(() -> WorkflowManager.findAndRunWorkflow(jobRequest.getEvent()));
     }
   }
 }

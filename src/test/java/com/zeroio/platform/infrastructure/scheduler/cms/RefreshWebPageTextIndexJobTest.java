@@ -22,10 +22,13 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 import javax.sql.DataSource;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.jobrunr.scheduling.BackgroundJobRequest;
 import org.mockito.MockedStatic;
 
 import com.github.rajkowski.database.DB;
@@ -77,6 +80,33 @@ class RefreshWebPageTextIndexJobTest {
 
     assertNull(WorkspaceContextManager.getCurrentContext());
     assertNull(DB.getTenantId());
+  }
+
+  @Test
+  void enqueueCapturesOriginatingWorkspaceContext() {
+    TenantRegistry registry = new TenantRegistry();
+    registry.register("42", mock(DataSource.class));
+    DB.setTenantRegistry(registry);
+
+    AtomicReference<RefreshWebPageTextIndexJob> queuedRequest = new AtomicReference<>();
+    WorkspaceContextManager.activate(42, "tenant.example.com", "/var/cms/tenant-42");
+
+    try (MockedStatic<BackgroundJobRequest> backgroundJobRequest = mockStatic(BackgroundJobRequest.class)) {
+      backgroundJobRequest.when(() -> BackgroundJobRequest.enqueue(any(RefreshWebPageTextIndexJob.class)))
+          .thenAnswer(invocation -> {
+            queuedRequest.set(invocation.getArgument(0));
+            return null;
+          });
+
+      RefreshWebPageTextIndexJob.enqueueForContent("content-1");
+    } finally {
+      WorkspaceContextManager.clear();
+    }
+
+    assertEquals("content-1", queuedRequest.get().getContentUniqueId());
+    assertEquals(42, queuedRequest.get().getWorkspaceId());
+    assertEquals("tenant.example.com", queuedRequest.get().getSourceHost());
+    assertEquals("/var/cms/tenant-42", queuedRequest.get().getFileRoot());
   }
 
   @Test

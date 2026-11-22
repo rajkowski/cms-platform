@@ -31,6 +31,7 @@ import com.simisinc.platform.infrastructure.persistence.ecommerce.ShippingMethod
 import com.simisinc.platform.infrastructure.persistence.ecommerce.TrackingNumberRepository;
 import com.simisinc.platform.infrastructure.scheduler.SchedulerManager;
 import com.simisinc.platform.infrastructure.workflow.WorkflowManager;
+import com.zeroio.platform.infrastructure.scheduler.TenantAwareJobRequest;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -39,7 +40,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.mail.ImageHtmlEmail;
 import org.jobrunr.jobs.annotations.Job;
-import org.jobrunr.jobs.lambdas.JobRequest;
 import org.jobrunr.jobs.lambdas.JobRequestHandler;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
@@ -60,7 +60,7 @@ import java.util.Map;
  * @created 11/13/2019 8:25 PM
  */
 @NoArgsConstructor
-public class OrderManagementEmailJob implements JobRequest {
+public class OrderManagementEmailJob extends TenantAwareJobRequest {
 
   public static String ORDER_OBJECT = "order";
   public static String ORDER_ITEM_LIST_OBJECT = "orderItemList";
@@ -103,6 +103,10 @@ public class OrderManagementEmailJob implements JobRequest {
     @Override
     @Job(name = "Send order management email", retries = 1)
     public void run(OrderManagementEmailJob jobRequest) {
+      jobRequest.runInTenantContext(() -> send(jobRequest));
+    }
+
+    private static void send(OrderManagementEmailJob jobRequest) {
 
       // Determine the objects
       Order order = jobRequest.getOrder();

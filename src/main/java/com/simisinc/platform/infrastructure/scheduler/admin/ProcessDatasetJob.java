@@ -22,13 +22,13 @@ import com.simisinc.platform.application.items.LoadCollectionCommand;
 import com.simisinc.platform.domain.model.datasets.Dataset;
 import com.simisinc.platform.domain.model.items.Collection;
 import com.simisinc.platform.infrastructure.persistence.datasets.DatasetRepository;
+import com.zeroio.platform.infrastructure.scheduler.TenantAwareJobRequest;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jobrunr.jobs.annotations.Job;
-import org.jobrunr.jobs.lambdas.JobRequest;
 import org.jobrunr.jobs.lambdas.JobRequestHandler;
 
 import java.sql.Timestamp;
@@ -40,7 +40,7 @@ import java.sql.Timestamp;
  * @created 5/21/18 12:50 PM
  */
 @NoArgsConstructor
-public class ProcessDatasetJob implements JobRequest {
+public class ProcessDatasetJob extends TenantAwareJobRequest {
 
   private static Log LOG = LogFactory.getLog(ProcessDatasetJob.class);
 
@@ -66,6 +66,10 @@ public class ProcessDatasetJob implements JobRequest {
     @Override
     @Job(name = "Process a dataset", retries = 1)
     public void run(ProcessDatasetJob jobRequest) {
+      jobRequest.runInTenantContext(() -> process(jobRequest));
+    }
+
+    private static void process(ProcessDatasetJob jobRequest) {
 
       // Load dataset
       Dataset dataset = DatasetRepository.findById(jobRequest.getDatasetId());

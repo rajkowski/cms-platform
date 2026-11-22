@@ -25,7 +25,6 @@ import javax.servlet.ServletContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jobrunr.jobs.annotations.Job;
-import org.jobrunr.jobs.lambdas.JobRequest;
 import org.jobrunr.jobs.lambdas.JobRequestHandler;
 import org.jobrunr.server.runner.ThreadLocalJobContext;
 import org.thymeleaf.templateresolver.WebApplicationTemplateResolver;
@@ -39,6 +38,7 @@ import com.simisinc.platform.infrastructure.distributedlock.LockManager;
 import com.simisinc.platform.infrastructure.scheduler.SchedulerManager;
 import com.simisinc.platform.presentation.controller.PageTemplateEngine;
 import com.zeroio.platform.application.staticsite.MakeStaticSiteCommand;
+import com.zeroio.platform.infrastructure.scheduler.TenantAwareJobRequest;
 
 import lombok.NoArgsConstructor;
 
@@ -49,7 +49,7 @@ import lombok.NoArgsConstructor;
  * @created 6/22/2024 3:06 PM
  */
 @NoArgsConstructor
-public class MakeStaticSiteJob implements JobRequest {
+public class MakeStaticSiteJob extends TenantAwareJobRequest {
 
   private static Log LOG = LogFactory.getLog(MakeStaticSiteJob.class);
 
@@ -63,7 +63,7 @@ public class MakeStaticSiteJob implements JobRequest {
     @Job(name = "Make a static site")
     public void run(MakeStaticSiteJob jobRequest) {
       ThreadLocalJobContext.getJobContext().saveMetadata("name", "Make Static Site");
-      execute();
+      jobRequest.runInTenantContext(MakeStaticSiteJob::execute);
     }
   }
 

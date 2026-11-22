@@ -19,15 +19,11 @@ package com.zeroio.platform.infrastructure.scheduler.cms;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jobrunr.jobs.annotations.Job;
-import org.jobrunr.jobs.lambdas.JobRequest;
 import org.jobrunr.jobs.lambdas.JobRequestHandler;
 import org.jobrunr.scheduling.BackgroundJobRequest;
 
 import com.simisinc.platform.application.cms.RefreshWebPageTextCommand;
-import com.zeroio.platform.domain.model.tenant.WorkspaceContext;
-import com.zeroio.platform.infrastructure.database.WorkspaceContextManager;
-import com.zeroio.platform.infrastructure.persistence.tenant.WorkspaceRepository;
-import com.zeroio.platform.infrastructure.scheduler.TenantAwareJobRunner;
+import com.zeroio.platform.infrastructure.scheduler.TenantAwareJobRequest;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -41,7 +37,7 @@ import lombok.Setter;
  * @created 6/10/26 2:00 PM
  */
 @NoArgsConstructor
-public class RefreshWebPageTextIndexJob implements JobRequest {
+public class RefreshWebPageTextIndexJob extends TenantAwareJobRequest {
 
   private static Log LOG = LogFactory.getLog(RefreshWebPageTextIndexJob.class);
 
@@ -49,28 +45,8 @@ public class RefreshWebPageTextIndexJob implements JobRequest {
   @Setter
   private String contentUniqueId = null;
 
-  @Getter
-  @Setter
-  private long workspaceId = -1L;
-
-  @Getter
-  @Setter
-  private String sourceHost = null;
-
-  @Getter
-  @Setter
-  private String fileRoot = null;
-
   public RefreshWebPageTextIndexJob(String contentUniqueId) {
     this.contentUniqueId = contentUniqueId;
-    WorkspaceContext workspaceContext = WorkspaceContextManager.getCurrentContext();
-    if (workspaceContext == null) {
-      workspaceId = 0L;
-    } else {
-      workspaceId = workspaceContext.workspaceId();
-      sourceHost = workspaceContext.sourceHost();
-      fileRoot = workspaceContext.fileRoot();
-    }
   }
 
   @Override
@@ -106,23 +82,7 @@ public class RefreshWebPageTextIndexJob implements JobRequest {
     }
 
     private static void executeRefresh(RefreshWebPageTextIndexJob jobRequest) {
-      if (jobRequest.getWorkspaceId() > 0) {
-        try {
-          WorkspaceContextManager.withWorkspace(jobRequest.getWorkspaceId(), jobRequest.getSourceHost(),
-              jobRequest.getFileRoot(), () -> refresh(jobRequest));
-        } finally {
-          WorkspaceContextManager.clear();
-        }
-      } else if (jobRequest.getWorkspaceId() == 0) {
-        try {
-          WorkspaceContextManager.withoutWorkspace(() -> refresh(jobRequest));
-        } finally {
-          WorkspaceContextManager.clear();
-        }
-      } else {
-        // Requests enqueued before workspace metadata was added must be processed in every possible tenant.
-        TenantAwareJobRunner.runDefaultAndAllActive(WorkspaceRepository.findAllActive(), workspace -> refresh(jobRequest));
-      }
+      jobRequest.runInTenantContext(() -> refresh(jobRequest));
     }
 
     private static void refresh(RefreshWebPageTextIndexJob jobRequest) {
