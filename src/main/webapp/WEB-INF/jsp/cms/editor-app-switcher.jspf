@@ -38,7 +38,7 @@
 <div class="editor-app-switcher">
   <button type="button" class="editor-app-switcher-btn" title="Switch Editor" aria-label="Switch editor. Current: <c:out value='${editorName}'/>" aria-haspopup="true" aria-expanded="false">
     <span class="editor-app-label">
-      <span class="editor-workspace-label">Site Editor</span>
+      <span class="editor-workspace-label"><property:name value="site.name"/></span>
       <span class="editor-name"><c:out value="${editorName}"/></span>
     </span>
     <i class="fas fa-chevron-down" aria-hidden="true"></i>

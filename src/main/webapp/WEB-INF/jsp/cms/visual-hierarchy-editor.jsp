@@ -19,6 +19,7 @@
 <%@ taglib prefix="js" uri="/WEB-INF/tlds/javascript-escape.tld" %>
 <%@ taglib prefix="g" uri="http://granule.com/tags" %>
 <%@ taglib prefix="web" uri="/WEB-INF/tlds/web.tld" %>
+<%@ taglib prefix="property" uri="/WEB-INF/tlds/property-tags.tld" %>
 <jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
 <web:script package="jquery" file="jquery.min.js" />

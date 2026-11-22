@@ -19,16 +19,14 @@
 <%@ taglib prefix="js" uri="/WEB-INF/tlds/javascript-escape.tld" %>
 <%@ taglib prefix="g" uri="http://granule.com/tags" %>
 <%@ taglib prefix="web" uri="/WEB-INF/tlds/web.tld" %>
+<%@ taglib prefix="property" uri="/WEB-INF/tlds/property-tags.tld" %>
 <jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
 <jsp:useBean id="widgetContext" class="com.simisinc.platform.presentation.controller.WidgetContext" scope="request"/>
-
 <web:script package="chartjs" file="chart.umd.js" />
-
 <g:compress>
   <link rel="stylesheet" type="text/css" href="${ctx}/css/visual-page-editor.css" />
   <link rel="stylesheet" type="text/css" href="${ctx}/css/visual-analytics-dashboard.css" />
 </g:compress>
-
 <div id="visual-analytics-dashboard-wrapper">
   <c:if test="${!empty title}">
     <h4><c:if test="${!empty icon}"><i class="${font:far()} ${icon}"></i> </c:if><c:out value="${title}"/></h4>

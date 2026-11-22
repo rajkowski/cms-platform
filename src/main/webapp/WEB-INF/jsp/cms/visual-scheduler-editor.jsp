@@ -17,6 +17,7 @@
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="font" uri="/WEB-INF/tlds/font-functions.tld" %>
 <%@ taglib prefix="g" uri="http://granule.com/tags" %>
+<%@ taglib prefix="property" uri="/WEB-INF/tlds/property-tags.tld" %>
 <jsp:useBean id="userSession" class="com.simisinc.platform.presentation.controller.UserSession" scope="session"/>
 <g:compress>
   <link rel="stylesheet" type="text/css" href="${ctx}/css/visual-page-editor.css" />
