@@ -15,7 +15,7 @@
       ]
     },
     "add-to-calendar-button": {
-      "version": "3.6.2",
+      "version": "3.6.3",
       "paths": [
         "node_modules/add-to-calendar-button/dist/atcb.js",
         "node_modules/add-to-calendar-button/dist/atcb.min.js",

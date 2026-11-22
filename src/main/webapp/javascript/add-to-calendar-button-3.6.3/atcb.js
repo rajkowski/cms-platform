@@ -32,11 +32,11 @@
    *  Publisher: Calendarverse GmbH (https://add-to-calendar-pro.com)
    *  Project: https://github.com/add2cal/add-to-calendar-button
    *  License: Elastic License 2.0 (ELv2) (https://github.com/add2cal/add-to-calendar-button/blob/main/LICENSE.txt)
-   *  Version: 3.6.2
+   *  Version: 3.6.3
    *  Note: DO NOT REMOVE THE COPYRIGHT NOTICE ABOVE!
    *
    */
-  var atcbVersion = "3.6.2";
+  var atcbVersion = "3.6.3";
   var isBrowser = () => {
     if (typeof window === "undefined") {
       return false;
@@ -2682,9 +2682,9 @@ LAST-MODIFIED:` + r4[1].replace(/[^\w\-:,;=+/<>]/g, "").replace(/<br>/g, `\r
       trigger = trigger.querySelector(".atcb-dropdown-anchor");
       anchorSet = true;
     }
+    list.style.position = "absolute";
+    list.style.display = "block";
     const listParentDim = list.parentElement.getBoundingClientRect();
-    list.style.position = "relative";
-    list.style.display = "inline-block";
     let triggerDim = trigger.getBoundingClientRect();
     const btnDim = originalTrigger.getBoundingClientRect();
     const viewportHeight = document.documentElement.clientHeight;
@@ -2717,8 +2717,6 @@ LAST-MODIFIED:` + r4[1].replace(/[^\w\-:,;=+/<>]/g, "").replace(/<br>/g, `\r
       const sideMargin = Math.round((btnDim.width - listDim.width) / 2);
       list.style.margin = -Math.round((listDim.height + btnDim.height) / 2) + "px " + sideMargin + "px 0 " + sideMargin + "px";
     }
-    list.style.position = "absolute";
-    list.style.display = "block";
     const brandingReference = host.querySelector("#atcb-reference");
     if (brandingReference) {
       if (originalTrigger.classList.contains("atcb-dropup")) {
