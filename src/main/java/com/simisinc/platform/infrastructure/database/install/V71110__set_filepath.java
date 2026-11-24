@@ -20,9 +20,10 @@ import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 
-import org.apache.commons.lang3.SystemUtils;
 import org.flywaydb.core.api.migration.BaseJavaMigration;
 import org.flywaydb.core.api.migration.Context;
+
+import com.simisinc.platform.application.filesystem.FileSystemCommand;
 
 /**
  * Initializes and saves system properties to the database
@@ -40,16 +41,7 @@ public class V71110__set_filepath extends BaseJavaMigration {
 
     // A runtime environment variable is used in place of the database value, if not found, this database value is used
     // Determine the OS, set a default path for files
-
-    File basePath = null;
-    if (SystemUtils.IS_OS_LINUX) {
-      basePath = new File("/opt/cms-platform");
-    } else {
-      File userHome = SystemUtils.getUserHome();
-      File webPath = new File(userHome, "Web");
-      File cmsPath = new File(webPath, "cms-platform");
-      basePath = cmsPath;
-    }
+    File basePath = FileSystemCommand.getCMSPath();
 
     {
       // Set the configuration path
