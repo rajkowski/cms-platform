@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -57,86 +58,42 @@ public class FileSystemCommand {
   private static String staticSitePath = null;
   private static String modelsPath = null;
 
-  /**
-   * Return the static config path based on system environment and database settings
-   * 
-   * @return
-   */
-  public static String getFileServerConfigPathValue() {
-    // Check for existing configPath
-    if (configPath != null) {
-      return configPath;
+  public static File getCMSPath() {
+    // Check for environment variable first
+    String envPath = System.getenv(CMS_PATH);
+    if (StringUtils.isNotBlank(envPath)) {
+      return new File(envPath);
     }
-    String serverConfigPath = null;
-    if (System.getenv().containsKey(CMS_PATH)) {
-      serverConfigPath = new File(System.getenv(CMS_PATH), "config").getPath();
+    // Determine the base path based on the operating system
+    File basePath = null;
+    if (SystemUtils.IS_OS_LINUX) {
+      basePath = new File("/opt/cms-platform");
+    } else {
+      File userHome = SystemUtils.getUserHome();
+      File webPath = new File(userHome, "Web");
+      File cmsPath = new File(webPath, "cms-platform");
+      basePath = cmsPath;
     }
-    if (StringUtils.isBlank(serverConfigPath)) {
-      serverConfigPath = LoadSitePropertyCommand.loadByName("system.configpath");
-    }
-    if (StringUtils.isBlank(serverConfigPath)) {
-      // @note this value is checked at system startup and will abort then
-      LOG.error("system.configpath does not exist");
-      LOG.info(
-          "HINT: INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('Configuration path', 'system.configpath', '/opt/cms-platform/config')");
-      return null;
-    }
-    if (!serverConfigPath.endsWith(File.separator)) {
-      serverConfigPath += File.separator;
-    }
-    // Set the static config path
-    configPath = serverConfigPath;
-    return configPath;
+    return basePath;
   }
 
   /** Return the serverConfigPath and add any specified subdirectories. */
   public static File getFileServerConfigPath(String... subdirectories) {
-    String serverConfigPath = getFileServerConfigPathValue();
-    if (StringUtils.isBlank(serverConfigPath)) {
-      return null;
-    }
-    if (subdirectories != null && subdirectories.length > 0) {
-      for (String subdirectory : subdirectories) {
-        serverConfigPath += subdirectory + File.separator;
-      }
-    }
-    return new File(serverConfigPath);
+    return resolveFileServerPath(getFileServerConfigPathValue(), subdirectories);
   }
 
   /**
-   * File storage path
+   * Return the static config path based on system environment and database
+   * settings
    * 
    * @return
    */
-  public static String getFileServerRootPathValue() {
-    WorkspaceContext workspaceContext = WorkspaceContextManager.getCurrentContext();
-    if (workspaceContext != null) {
-      return getWorkspaceFileRootPathValue(workspaceContext);
+  protected static String getFileServerConfigPathValue() {
+    if (WorkspaceContextManager.getCurrentContext() != null) {
+      return getFileServerPathValue("config", "system.configpath", configPath, false);
     }
-    // Check for the cached path
-    if (filesPath != null) {
-      return filesPath;
-    }
-    String serverRootPath = null;
-    if (System.getenv().containsKey(CMS_PATH)) {
-      serverRootPath = new File(System.getenv(CMS_PATH), "files").getPath();
-    }
-    if (StringUtils.isBlank(serverRootPath)) {
-      serverRootPath = LoadSitePropertyCommand.loadByName("system.filepath");
-    }
-    if (StringUtils.isBlank(serverRootPath)) {
-      // @note this value is checked at system startup and will abort then
-      LOG.error("CMS_PATH environment variable can be set, or add 'system.filepath' to the database");
-      LOG.info(
-          "HINT: INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('File server path', 'system.filepath', '/opt/cms-platform/files')");
-      return null;
-    }
-    if (!serverRootPath.endsWith(File.separator)) {
-      serverRootPath += File.separator;
-    }
-    // Cache the path
-    filesPath = serverRootPath;
-    return filesPath;
+    configPath = getFileServerPathValue("config", "system.configpath", configPath, false);
+    return configPath;
   }
 
   /** Return the serverRootPath and add any specified subdirectories. */
@@ -148,16 +105,56 @@ public class FileSystemCommand {
     return resolveFileServerPath(serverRootPath, subdirectories);
   }
 
-  private static String getWorkspaceFileRootPathValue(WorkspaceContext workspaceContext) {
+  /**
+   * File storage path
+   * 
+   * @return
+   */
+  public static String getFileServerRootPathValue() {
+    if (WorkspaceContextManager.getCurrentContext() != null) {
+      return getFileServerPathValue("files", "system.filepath", filesPath, true);
+    }
+    filesPath = getFileServerPathValue("files", "system.filepath", filesPath, true);
+    return filesPath;
+  }
+
+  private static String getFileServerPathValue(String directoryName, String propertyName, String cachedPath,
+      boolean requireDirectory) {
+    WorkspaceContext workspaceContext = WorkspaceContextManager.getCurrentContext();
+    if (workspaceContext != null) {
+      return getWorkspacePathValue(workspaceContext, directoryName, requireDirectory);
+    }
+    if (cachedPath != null) {
+      return cachedPath;
+    }
+    String configuredPath = null;
+    if (System.getenv().containsKey(CMS_PATH)) {
+      configuredPath = new File(System.getenv(CMS_PATH), directoryName).getPath();
+    }
+    if (StringUtils.isBlank(configuredPath)) {
+      configuredPath = LoadSitePropertyCommand.loadByName(propertyName);
+    }
+    if (configuredPath == null || StringUtils.isBlank(configuredPath)) {
+      LOG.error("CMS_PATH environment variable can be set, or add '" + propertyName + "' to the database");
+      return null;
+    }
+    if (!configuredPath.endsWith(File.separator)) {
+      configuredPath += File.separator;
+    }
+    return configuredPath;
+  }
+
+  private static String getWorkspacePathValue(WorkspaceContext workspaceContext, String directoryName,
+      boolean requireDirectory) {
     if (StringUtils.isBlank(workspaceContext.fileRoot())) {
       LOG.error("Workspace " + workspaceContext.workspaceId() + " has no configured file root");
       return null;
     }
     try {
-      Path rootPath = Paths.get(workspaceContext.fileRoot()).toAbsolutePath().normalize();
-      rootPath = rootPath.resolve("files").normalize();
-      if (!Files.isDirectory(rootPath)) {
-        LOG.error("Workspace " + workspaceContext.workspaceId() + " file root is unavailable");
+      Path rootPath = Paths.get(workspaceContext.fileRoot()).toAbsolutePath().normalize().resolve(directoryName)
+          .normalize();
+      if (requireDirectory && !Files.isDirectory(rootPath)) {
+        LOG.error("Workspace " + workspaceContext.workspaceId() + " file root is unavailable for: " + rootPath);
         return null;
       }
       return rootPath + File.separator;
@@ -168,6 +165,9 @@ public class FileSystemCommand {
   }
 
   private static File resolveFileServerPath(String serverRootPath, String... subdirectories) {
+    if (StringUtils.isBlank(serverRootPath)) {
+      return null;
+    }
     try {
       Path rootPath = Paths.get(serverRootPath).toAbsolutePath().normalize();
       Path resolvedPath = rootPath;
@@ -194,83 +194,27 @@ public class FileSystemCommand {
    * @return
    */
   private static String getFileServerStaticSitePathValue() {
-    // Check for the cached path
-    if (staticSitePath != null) {
-      return staticSitePath;
+    if (WorkspaceContextManager.getCurrentContext() != null) {
+      return getFileServerPathValue("static-site", "system.staticsite.filepath", staticSitePath, false);
     }
-    String serverRootPath = null;
-    if (System.getenv().containsKey(CMS_PATH)) {
-      serverRootPath = new File(System.getenv(CMS_PATH), "static-site").getPath();
-    }
-    if (StringUtils.isBlank(serverRootPath)) {
-      serverRootPath = LoadSitePropertyCommand.loadByName("system.staticsite.filepath");
-    }
-    if (StringUtils.isBlank(serverRootPath)) {
-      // @note this value is checked at system startup and will abort then
-      LOG.error("CMS_PATH environment variable can be set, or add 'system.staticsite.filepath' to the database");
-      LOG.info(
-          "HINT: INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('File server path', 'system.staticsite.filepath', '/opt/cms-platform/static-site')");
-      return null;
-    }
-    if (!serverRootPath.endsWith(File.separator)) {
-      serverRootPath += File.separator;
-    }
-    // Cache the path
-    staticSitePath = serverRootPath;
+    staticSitePath = getFileServerPathValue("static-site", "system.staticsite.filepath", staticSitePath, false);
     return staticSitePath;
   }
 
   /** Return a file reference for the static site path */
   public static File getFileServerStaticSitePath(String... subdirectories) {
-    String serverStaticSitePath = getFileServerStaticSitePathValue();
-    if (StringUtils.isBlank(serverStaticSitePath)) {
-      return null;
-    }
-    if (subdirectories != null && subdirectories.length > 0) {
-      for (String subdirectory : subdirectories) {
-        serverStaticSitePath += subdirectory + File.separator;
-      }
-    }
-    return new File(serverStaticSitePath);
+    return resolveFileServerPath(getFileServerStaticSitePathValue(), subdirectories);
   }
 
   public static File getFileServerModelsPath(String... subdirectories) {
-    String serverModelsPath = getFileServerModelsPathValue();
-    if (StringUtils.isBlank(serverModelsPath)) {
-      return null;
-    }
-    if (subdirectories != null && subdirectories.length > 0) {
-      for (String subdirectory : subdirectories) {
-        serverModelsPath += subdirectory + File.separator;
-      }
-    }
-    return new File(serverModelsPath);
+    return resolveFileServerPath(getFileServerModelsPathValue(), subdirectories);
   }
 
   private static String getFileServerModelsPathValue() {
-    // Check for the cached path
-    if (modelsPath != null) {
-      return modelsPath;
+    if (WorkspaceContextManager.getCurrentContext() != null) {
+      return getFileServerPathValue("models", "system.models.filepath", modelsPath, false);
     }
-    String serverRootPath = null;
-    if (System.getenv().containsKey(CMS_PATH)) {
-      serverRootPath = new File(System.getenv(CMS_PATH), "models").getPath();
-    }
-    if (StringUtils.isBlank(serverRootPath)) {
-      serverRootPath = LoadSitePropertyCommand.loadByName("system.models.filepath");
-    }
-    if (StringUtils.isBlank(serverRootPath)) {
-      // @note this value is checked at system startup and will abort then
-      LOG.error("CMS_PATH environment variable can be set, or add 'system.models.filepath' to the database");
-      LOG.info(
-          "HINT: INSERT INTO site_properties (property_label, property_name, property_value) VALUES ('Models Path', 'system.models.filepath', '/opt/cms-platform/models')");
-      return null;
-    }
-    if (!serverRootPath.endsWith(File.separator)) {
-      serverRootPath += File.separator;
-    }
-    // Cache the path
-    modelsPath = serverRootPath;
+    modelsPath = getFileServerPathValue("models", "system.models.filepath", modelsPath, false);
     return modelsPath;
   }
 
@@ -288,7 +232,8 @@ public class FileSystemCommand {
     int day = localDate.getDayOfMonth();
     String monthValue = (month < 10 ? "0" : "") + month;
     String dayValue = (day < 10 ? "0" : "") + day;
-    String subPath = module + File.separator + year + File.separator + monthValue + File.separator + dayValue + File.separator;
+    String subPath = module + File.separator + year + File.separator + monthValue + File.separator + dayValue
+        + File.separator;
 
     // Make sure the path exists
     File directory = new File(getFileServerRootPath(), subPath);
@@ -312,11 +257,14 @@ public class FileSystemCommand {
   }
 
   /**
-   * Reduces a file extension to a safe value (letters and digits only) so it cannot carry path separators or
+   * Reduces a file extension to a safe value (letters and digits only) so it
+   * cannot carry path separators or
    * traversal sequences ("/", "\\", "..") into a file path.
    *
-   * @param extension the raw extension, typically derived from a user-supplied filename
-   * @return the extension with everything but ASCII letters and digits removed (never null)
+   * @param extension the raw extension, typically derived from a user-supplied
+   *                  filename
+   * @return the extension with everything but ASCII letters and digits removed
+   *         (never null)
    */
   public static String cleanExtension(String extension) {
     if (extension == null) {

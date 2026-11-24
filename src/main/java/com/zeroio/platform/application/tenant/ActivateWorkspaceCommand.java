@@ -20,12 +20,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.Strings;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.github.rajkowski.database.DB;
 import com.simisinc.platform.application.admin.DatabaseCommand;
+import com.simisinc.platform.application.filesystem.FileSystemCommand;
 import com.simisinc.platform.infrastructure.database.ConnectionPool;
 import com.simisinc.platform.infrastructure.persistence.SitePropertyRepository;
 import com.zaxxer.hikari.HikariDataSource;
@@ -83,6 +83,7 @@ public class ActivateWorkspaceCommand {
             return "A workspace with that domain already exists.";
         }
 
+        // Construct the site URL for the workspace based on the default URL and unique ID
         int schemeEnd = defaultUrl.indexOf("://");
         String scheme = schemeEnd > -1 ? defaultUrl.substring(0, schemeEnd + 3) : "https://";
         String hostAndPort = schemeEnd > -1 ? defaultUrl.substring(schemeEnd + 3) : defaultUrl;
@@ -93,14 +94,12 @@ public class ActivateWorkspaceCommand {
         String siteUrl = scheme + uniqueId + "." + hostAndPort;
 
         // Determine the file root for the workspace
-        String cmsPath = StringUtils.defaultIfBlank(System.getenv("CMS_PATH"), "/workspace");
-        String fileRoot = Strings.CS.removeEnd(cmsPath, "/") + "/workspaces/" + uniqueId;
-        // Make the directory and parents
-        File fileRootDir = new File(fileRoot);
-        if (!fileRootDir.exists()) {
-            if (!fileRootDir.mkdirs()) {
-                return "Failed to create workspace file root directory: " + fileRoot;
-            }
+        File cmsRootDir = FileSystemCommand.getCMSPath();
+        File workspaceRootDir = new File(cmsRootDir, "workspaces" + File.separator + uniqueId);
+        File workspaceFilesDir = new File(workspaceRootDir, "files");
+        if (!workspaceFilesDir.exists() && !workspaceFilesDir.mkdirs()) {
+            return "Failed to create workspace files directory: " + workspaceFilesDir.getPath()
+                    + ". Ensure the parent CMS directory is writable.";
         }
 
         // A datasource is created for the selected database
@@ -117,7 +116,7 @@ public class ActivateWorkspaceCommand {
             workspace.setName(name);
             workspace.setSiteUrl(siteUrl);
             workspace.setCanonicalDomain(canonicalDomain);
-            workspace.setFileRoot(fileRoot);
+            workspace.setFileRoot(workspaceRootDir.getPath());
             workspace.setDepartment(department);
             workspace.setDescription(description);
             workspace.setActive(true);
@@ -139,12 +138,11 @@ public class ActivateWorkspaceCommand {
                 SitePropertyRepository.saveValue("site.name", workspace.getName());
                 SitePropertyRepository.saveValue("site.url", workspace.getSiteUrl());
                 SitePropertyRepository.saveValue("site.description", workspace.getDescription());
-                SitePropertyRepository.saveValue("system.configpath", new File(fileRootDir, "config").getPath());
-                SitePropertyRepository.saveValue("system.filepath", new File(fileRootDir, "files").getPath());
+                SitePropertyRepository.saveValue("system.configpath", new File(workspaceRootDir, "config").getPath());
+                SitePropertyRepository.saveValue("system.filepath", new File(workspaceRootDir, "files").getPath());
                 SitePropertyRepository.saveValue("system.customizations.filepath",
-                        new File(fileRootDir, "customization").getPath());
-                SitePropertyRepository.saveValue("system.staticsite.filepath",
-                        new File(fileRootDir, "static-site").getPath());
+                        new File(workspaceRootDir, "customization").getPath());
+                SitePropertyRepository.saveValue("system.staticsite.filepath", new File(workspaceRootDir, "static-site").getPath());
                 SitePropertyRepository.saveValue("site.online", "true");
 
                 // Load the seed data for the tenant database
@@ -155,7 +153,7 @@ public class ActivateWorkspaceCommand {
                     tenantSuccess.set(false);
                 }
             });
-            
+
             if (!tenantSuccess.get()) {
                 // Mark the workspace as failed/not active
                 workspace.setActive(false);

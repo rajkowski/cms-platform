@@ -15,6 +15,7 @@
  */
 package com.zeroio.platform.application.login;
 
+import java.io.File;
 import java.sql.Timestamp;
 import java.util.UUID;
 
@@ -28,6 +29,7 @@ import org.apache.commons.logging.LogFactory;
 import com.simisinc.platform.application.CreateSessionCommand;
 import com.simisinc.platform.application.SaveSessionCommand;
 import com.simisinc.platform.application.cms.UrlCommand;
+import com.simisinc.platform.application.filesystem.FileSystemCommand;
 import com.simisinc.platform.domain.model.User;
 import com.simisinc.platform.domain.model.login.UserLogin;
 import com.simisinc.platform.domain.model.login.UserToken;
@@ -59,6 +61,16 @@ public class WorkspaceCoordinatorCommand {
       LOG.warn("Main Tenant User " + userSession.getUserId() + " does not have access to workspace " + targetWorkspaceUniqueId);
       return defaultTenantRedirect("/");
     }
+
+    // Ensure the directories are available and writable for the workspace
+    File cmsRootDir = FileSystemCommand.getCMSPath();
+    File workspaceRootDir = new File(cmsRootDir, "workspaces" + File.separator + workspace.getUniqueId());
+    File workspaceFilesDir = new File(workspaceRootDir, "files");
+    if (!workspaceFilesDir.exists() && !workspaceFilesDir.mkdirs()) {
+      LOG.error("Workspace file server root path is not writable: " + workspaceFilesDir.getPath());
+      return defaultTenantRedirect("?error=WORKSPACE_FILEPATH_NOT_WRITABLE");
+    }
+
     // Issue a token that will be used by the target tenant
     String handoffToken = WorkspaceSessionHandoffCommand.issueToken(userSession.getUserId(), workspace.getId(), "/");
     if (handoffToken == null) {
