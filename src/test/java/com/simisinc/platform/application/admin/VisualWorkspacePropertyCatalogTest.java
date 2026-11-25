@@ -48,6 +48,7 @@ class VisualWorkspacePropertyCatalogTest {
   void includesEveryLegacyAndRenderedThemeColorChoice() {
     String[] propertyNames = {
         "theme.body.text.color",
+        "theme.body.link.color",
         "theme.body.backgroundColor",
         "theme.utilitybar.text.color",
         "theme.utilitybar.link.color",
@@ -73,16 +74,22 @@ class VisualWorkspacePropertyCatalogTest {
         "theme.topbar.dark.menu.dropdown.backgroundColor",
         "theme.topbar.dark.menu.dropdown.text.color",
         "theme.button.text.color",
+        "theme.button.default.text.color",
         "theme.button.default.backgroundColor",
         "theme.button.default.hoverBackgroundColor",
+        "theme.button.primary.text.color",
         "theme.button.primary.backgroundColor",
         "theme.button.primary.hoverBackgroundColor",
+        "theme.button.secondary.text.color",
         "theme.button.secondary.backgroundColor",
         "theme.button.secondary.hoverBackgroundColor",
+        "theme.button.success.text.color",
         "theme.button.success.backgroundColor",
         "theme.button.success.hoverBackgroundColor",
+        "theme.button.warning.text.color",
         "theme.button.warning.backgroundColor",
         "theme.button.warning.hoverBackgroundColor",
+        "theme.button.alert.text.color",
         "theme.button.alert.backgroundColor",
         "theme.button.alert.hoverBackgroundColor",
         "theme.callout.backgroundColor",
@@ -112,9 +119,16 @@ class VisualWorkspacePropertyCatalogTest {
   void providesThirtyCompleteIncludedThemes() {
     List<SiteProperty> properties = List.of(
         property("theme.body.backgroundColor", "color"),
+        property("theme.body.link.color", "color"),
         property("theme.utilitybar.backgroundColor", "color"),
         property("theme.topbar.dark.backgroundColor", "color"),
+        property("theme.button.default.text.color", "color"),
+        property("theme.button.primary.text.color", "color"),
         property("theme.button.primary.backgroundColor", "color"),
+        property("theme.button.secondary.text.color", "color"),
+        property("theme.button.success.text.color", "color"),
+        property("theme.button.warning.text.color", "color"),
+        property("theme.button.alert.text.color", "color"),
         property("theme.callout.alert.backgroundColor", "color"),
         property("theme.footer.links.color", "color"));
 
@@ -125,7 +139,22 @@ class VisualWorkspacePropertyCatalogTest {
       Assertions.assertEquals(properties.size(), theme.getSiteProperties().size());
       Assertions.assertTrue(theme.getSiteProperties().stream()
           .allMatch(themeProperty -> themeProperty.getValue().matches("#[0-9a-fA-F]{6}")));
+      Assertions.assertEquals(
+          propertyValue(theme, "theme.button.primary.backgroundColor"),
+          propertyValue(theme, "theme.body.link.color"));
+      Assertions.assertTrue(theme.getSiteProperties().stream()
+          .filter(themeProperty -> themeProperty.getName().startsWith("theme.button."))
+          .filter(themeProperty -> themeProperty.getName().endsWith(".text.color"))
+          .allMatch(themeProperty -> "#ffffff".equals(themeProperty.getValue())));
     }
+  }
+
+  private static String propertyValue(Theme theme, String propertyName) {
+    return theme.getSiteProperties().stream()
+        .filter(property -> propertyName.equals(property.getName()))
+        .map(SiteProperty::getValue)
+        .findFirst()
+        .orElse(null);
   }
 
   private static SiteProperty property(String name, String type) {

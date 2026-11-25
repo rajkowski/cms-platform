@@ -85,6 +85,9 @@ public class VisualThemePresetCatalog {
     if (name.equals("theme.body.text.color")) {
       return palette.bodyText;
     }
+    if (name.equals("theme.body.link.color")) {
+      return palette.accent;
+    }
     if (name.startsWith("theme.utilitybar.")) {
       return name.endsWith("backgroundcolor") ? palette.accent : "#ffffff";
     }
@@ -97,6 +100,9 @@ public class VisualThemePresetCatalog {
     }
     if (name.startsWith("theme.button.")) {
       if (name.equals("theme.button.text.color")) {
+        return "#ffffff";
+      }
+      if (name.endsWith(".text.color")) {
         return "#ffffff";
       }
       if (name.contains(".primary.") || name.contains(".default.")) {

@@ -170,6 +170,7 @@
     <c:choose>
     <c:when test="${siteProperty.name eq 'theme.body.text.color'}">colorSelectorList.push('body');</c:when>
     <c:when test="${siteProperty.name eq 'theme.body.backgroundColor'}">colorSelectorList.push('body');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.body.link.color'}">colorSelectorList.push('body a:not(.button)');</c:when>
     <c:when test="${siteProperty.name eq 'theme.utilitybar.text.color'}">colorSelectorList.push('#platform-menu .utility-bar');</c:when>
     <c:when test="${siteProperty.name eq 'theme.utilitybar.link.color'}">colorSelectorList.push('#platform-menu .utility-bar a');</c:when>
     <c:when test="${siteProperty.name eq 'theme.utilitybar.backgroundColor'}">colorSelectorList.push('#platform-menu .utility-bar');</c:when>
@@ -182,16 +183,22 @@
     <c:when test="${siteProperty.name eq 'theme.topbar.menu.dropdown.backgroundColor'}">colorSelectorList.push('#platform-menu ul.is-dropdown-submenu li.is-dropdown-submenu-item');</c:when>
     <c:when test="${siteProperty.name eq 'theme.topbar.menu.dropdown.text.color'}">colorSelectorList.push('#platform-menu ul.is-dropdown-submenu li.is-dropdown-submenu-item a');</c:when>
     <c:when test="${siteProperty.name eq 'theme.button.text.color'}">colorSelectorList.push('.button');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.button.default.text.color'}">colorSelectorList.push('.button.base,.button:not(.primary):not(.secondary):not(.success):not(.warning):not(.alert)');</c:when>
     <c:when test="${siteProperty.name eq 'theme.button.default.backgroundColor'}">colorSelectorList.push('.button.base');</c:when>
     <c:when test="${siteProperty.name eq 'theme.button.default.hoverBackgroundColor'}">colorSelectorList.push('.button.base:hover, .button.base:focus');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.button.primary.text.color'}">colorSelectorList.push('.button.primary');</c:when>
     <c:when test="${siteProperty.name eq 'theme.button.primary.backgroundColor'}">colorSelectorList.push('.button.primary');</c:when>
     <c:when test="${siteProperty.name eq 'theme.button.primary.hoverBackgroundColor'}">colorSelectorList.push('.button.primary:hover, .button.primary:focus');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.button.secondary.text.color'}">colorSelectorList.push('.button.secondary');</c:when>
     <c:when test="${siteProperty.name eq 'theme.button.secondary.backgroundColor'}">colorSelectorList.push('.button.secondary');</c:when>
     <c:when test="${siteProperty.name eq 'theme.button.secondary.hoverBackgroundColor'}">colorSelectorList.push('.button.secondary:hover, .button.secondary:focus');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.button.success.text.color'}">colorSelectorList.push('.button.success');</c:when>
     <c:when test="${siteProperty.name eq 'theme.button.success.backgroundColor'}">colorSelectorList.push('.button.success');</c:when>
     <c:when test="${siteProperty.name eq 'theme.button.success.hoverBackgroundColor'}">colorSelectorList.push('.button.success:hover, .button.success:focus');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.button.warning.text.color'}">colorSelectorList.push('.button.warning');</c:when>
     <c:when test="${siteProperty.name eq 'theme.button.warning.backgroundColor'}">colorSelectorList.push('.button.warning');</c:when>
     <c:when test="${siteProperty.name eq 'theme.button.warning.hoverBackgroundColor'}">colorSelectorList.push('.button.warning:hover, .button.warning:focus');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.button.alert.text.color'}">colorSelectorList.push('.button.alert');</c:when>
     <c:when test="${siteProperty.name eq 'theme.button.alert.backgroundColor'}">colorSelectorList.push('.button.alert');</c:when>
     <c:when test="${siteProperty.name eq 'theme.button.alert.hoverBackgroundColor'}">colorSelectorList.push('.button.alert:hover, .button.alert:focus');</c:when>
     <c:when test="${siteProperty.name eq 'theme.callout.backgroundColor'}">colorSelectorList.push('.callout.base');</c:when>

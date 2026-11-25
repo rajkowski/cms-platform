@@ -110,8 +110,9 @@
         }
         <c:if test="${!empty themePropertyMap['theme.body.text.color']}">body{color:<c:out value="${themePropertyMap['theme.body.text.color']}" />}</c:if>
         <c:if test="${!empty themePropertyMap['theme.body.backgroundColor']}">body{background-color:<c:out value="${themePropertyMap['theme.body.backgroundColor']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.body.link.color']}">body a:not(.button){color:<c:out value="${themePropertyMap['theme.body.link.color']}" />}</c:if>
         <c:if test="${!empty themePropertyMap['theme.body.text.color']}">.breadcrumbs li,.breadcrumbs li:not(:last-child)::after{color:<c:out value="${themePropertyMap['theme.body.text.color']}" />}.breadcrumbs li:not(:last-child)::after{opacity:.55}</c:if>
-        <c:if test="${!empty themePropertyMap['theme.button.primary.backgroundColor']}">.breadcrumbs a,.breadcrumbs a:hover,.breadcrumbs a:focus{color:<c:out value="${themePropertyMap['theme.button.primary.backgroundColor']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.body.link.color']}">.breadcrumbs a,.breadcrumbs a:hover,.breadcrumbs a:focus{color:<c:out value="${themePropertyMap['theme.body.link.color']}" />}</c:if>
         <c:if test="${!empty themePropertyMap['theme.callout.secondary.backgroundColor']}">.platform-toc-container li{background-color:<c:out value="${themePropertyMap['theme.callout.secondary.backgroundColor']}" />}</c:if>
         <c:if test="${!empty themePropertyMap['theme.callout.secondary.text.color']}">.platform-toc-container ul.vertical.menu li a{color:<c:out value="${themePropertyMap['theme.callout.secondary.text.color']}" /> !important}</c:if>
         <c:if test="${!empty themePropertyMap['theme.topbar.menu.activeBackgroundColor']}">.platform-toc-container li.is-active,.platform-toc-container ul.vertical.menu li.is-active>a{background-color:<c:out value="${themePropertyMap['theme.topbar.menu.activeBackgroundColor']}" />}.platform-toc-container .menu .is-active>a{border-left-color:<c:out value="${themePropertyMap['theme.topbar.menu.activeBackgroundColor']}" />}</c:if>
@@ -125,6 +126,12 @@
         <c:if test="${!empty themePropertyMap['theme.topbar.menu.activeTextColor']}">.platform-content-container .tabs .tabs-title>a[aria-selected=true],.platform-content-container .tabs .tabs-title.is-active a{color:<c:out value="${themePropertyMap['theme.topbar.menu.activeTextColor']}" /> !important}</c:if>
         <c:if test="${!empty themePropertyMap['theme.topbar.menu.hoverTextColor']}">.platform-content-container .tabs .tabs-title>a:hover,.platform-content-container .tabs .tabs-title>a:focus{color:<c:out value="${themePropertyMap['theme.topbar.menu.hoverTextColor']}" /> !important}</c:if>
         <c:if test="${!empty themePropertyMap['theme.button.text.color']}">.button{color:<c:out value="${themePropertyMap['theme.button.text.color']}" /> !important}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.button.default.text.color']}">.button{color:<c:out value="${themePropertyMap['theme.button.default.text.color']}" /> !important}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.button.primary.text.color']}">.button.primary{color:<c:out value="${themePropertyMap['theme.button.primary.text.color']}" /> !important}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.button.secondary.text.color']}">.button.secondary{color:<c:out value="${themePropertyMap['theme.button.secondary.text.color']}" /> !important}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.button.success.text.color']}">.button.success{color:<c:out value="${themePropertyMap['theme.button.success.text.color']}" /> !important}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.button.warning.text.color']}">.button.warning{color:<c:out value="${themePropertyMap['theme.button.warning.text.color']}" /> !important}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.button.alert.text.color']}">.button.alert{color:<c:out value="${themePropertyMap['theme.button.alert.text.color']}" /> !important}</c:if>
         <c:if test="${!empty themePropertyMap['theme.button.default.backgroundColor']}">.button{background-color:<c:out value="${themePropertyMap['theme.button.default.backgroundColor']}" />}</c:if>
         <c:if test="${!empty themePropertyMap['theme.button.default.hoverBackgroundColor']}">.button:hover, .button:focus{background-color:<c:out value="${themePropertyMap['theme.button.default.hoverBackgroundColor']}" />}</c:if>
         <c:if test="${!empty themePropertyMap['theme.button.primary.backgroundColor']}">.button.primary{background-color:<c:out value="${themePropertyMap['theme.button.primary.backgroundColor']}" />}</c:if>

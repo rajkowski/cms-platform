@@ -27,25 +27,6 @@
       </nav>
 
       <main class="workspace-preview-main">
-        <div class="platform-toc-container workspace-preview-toc" data-preview-area="toc">
-          <nav aria-label="Table of contents preview">
-            <ul class="vertical menu">
-              <li class="is-active"><a class="is-active" href="#" onclick="return false;">Example</a></li>
-              <li><a href="#" onclick="return false;">Page 1</a></li>
-              <li><a href="#" onclick="return false;">Page 2</a></li>
-            </ul>
-          </nav>
-        </div>
-        <div class="platform-content-container workspace-preview-tabs">
-          <ul class="tabs" role="tablist">
-            <li class="tabs-title is-active" role="presentation"><a href="#" aria-selected="true" role="tab" onclick="return false;">Tab 1</a></li>
-            <li class="tabs-title" role="presentation"><a href="#" aria-selected="false" role="tab" onclick="return false;">Tab 2</a></li>
-            <li class="tabs-title" role="presentation"><a href="#" aria-selected="false" role="tab" onclick="return false;">Tab 3</a></li>
-          </ul>
-          <div class="tabs-content">
-            <div class="tabs-panel is-active">Tab 1 Content</div>
-          </div>
-        </div>
         <nav aria-label="Breadcrumb preview">
           <ul class="breadcrumbs">
             <li><a href="#" onclick="return false;">Home</a></li>
@@ -108,6 +89,26 @@
             <p class="progress-meter-text">50%</p>
           </div>
         </div>
+        <div class="platform-toc-container workspace-preview-toc" data-preview-area="toc">
+          <nav aria-label="Table of contents preview">
+            <ul class="vertical menu">
+              <li class="is-active"><a class="is-active" href="#" onclick="return false;">Example</a></li>
+              <li><a href="#" onclick="return false;">Page 1</a></li>
+              <li><a href="#" onclick="return false;">Page 2</a></li>
+            </ul>
+          </nav>
+        </div>
+        <div class="platform-content-container workspace-preview-tabs margin-bottom-20">
+          <ul class="tabs" role="tablist">
+            <li class="tabs-title is-active" role="presentation"><a href="#" aria-selected="true" role="tab" onclick="return false;">Tab 1</a></li>
+            <li class="tabs-title" role="presentation"><a href="#" aria-selected="false" role="tab" onclick="return false;">Tab 2</a></li>
+            <li class="tabs-title" role="presentation"><a href="#" aria-selected="false" role="tab" onclick="return false;">Tab 3</a></li>
+          </ul>
+          <div class="tabs-content">
+            <div class="tabs-panel is-active">Tab 1 Content</div>
+          </div>
+        </div>
+
         <nav aria-label="Pagination">
           <ul class="pagination text-center">
             <li class="page current"><span class="show-for-sr">You're on page</span> 1</li>

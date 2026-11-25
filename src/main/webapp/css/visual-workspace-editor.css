@@ -301,10 +301,14 @@
   opacity: 0.55;
 }
 
+.workspace-preview-page .workspace-preview-main a:not(.button) {
+  color: var(--workspace-preview-link-color, #1779ba);
+}
+
 .workspace-preview-main .breadcrumbs a,
 .workspace-preview-main .breadcrumbs a:hover,
 .workspace-preview-main .breadcrumbs a:focus {
-  color: var(--workspace-preview-accent-color, #1779ba);
+  color: var(--workspace-preview-link-color, #1779ba);
 }
 
 .workspace-preview-page .workspace-preview-toc li {
@@ -367,7 +371,7 @@
 }
 
 .workspace-preview-page[data-preview-mode="dark"] .workspace-preview-main > a:not(.button) {
-  color: #8ab4f8;
+  color: var(--workspace-preview-link-color, #8ab4f8);
 }
 
 .workspace-preview-page .workspace-preview-button {

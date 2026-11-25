@@ -93,6 +93,7 @@ INSERT INTO site_properties (property_order, property_label, property_name, prop
 
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (14, 'Web Page Background', 'theme.body.backgroundColor', '#ffffff', 'color');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (15, 'Web Page Text Color', 'theme.body.text.color', '#000000', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (16, 'Web Page Link Color', 'theme.body.link.color', '#1779ba', 'color');
 
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (17, 'Bar Background Color', 'theme.utilitybar.backgroundColor', '#0067ff', 'color');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (18, 'Bar Text Color', 'theme.utilitybar.text.color', '#ffffff', 'color');
@@ -124,16 +125,22 @@ INSERT INTO site_properties (property_order, property_label, property_name, prop
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (47, 'Dark Drop Down Menu Text', 'theme.topbar.dark.menu.dropdown.text.color', '#e0e0e0', 'color');
 
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (50, 'Button Text', 'theme.button.text.color', '#FFFFFF', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (51, 'Default Button Text', 'theme.button.default.text.color', '#FFFFFF', 'color');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (52, 'Default Button', 'theme.button.default.backgroundColor', '#1779ba', 'color');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (54, 'Default Button Hover', 'theme.button.default.hoverBackgroundColor', '#126195', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (55, 'Primary Button Text', 'theme.button.primary.text.color', '#FFFFFF', 'color');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (56, 'Primary Button', 'theme.button.primary.backgroundColor', '#1779ba', 'color');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (58, 'Primary Button Hover', 'theme.button.primary.hoverBackgroundColor', '#126195', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (59, 'Secondary Button Text', 'theme.button.secondary.text.color', '#FFFFFF', 'color');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (60, 'Secondary Button', 'theme.button.secondary.backgroundColor', '#767676', 'color');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (62, 'Secondary Button Hover', 'theme.button.secondary.hoverBackgroundColor', '#5e5e5e', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (63, 'Success Button Text', 'theme.button.success.text.color', '#FFFFFF', 'color');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (64, 'Success Button', 'theme.button.success.backgroundColor', '#43AC6A', 'color');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (66, 'Success Button Hover', 'theme.button.success.hoverBackgroundColor', '#3a9158', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (67, 'Warning Button Text', 'theme.button.warning.text.color', '#FFFFFF', 'color');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (68, 'Warning Button', 'theme.button.warning.backgroundColor', '#ffae00', 'color');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (70, 'Warning Button Hover', 'theme.button.warning.hoverBackgroundColor', '#cc8b00', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (71, 'Alert Button Text', 'theme.button.alert.text.color', '#FFFFFF', 'color');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (72, 'Alert Button', 'theme.button.alert.backgroundColor', '#cc4b37', 'color');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (74, 'Alert Button Hover', 'theme.button.alert.hoverBackgroundColor', '#a53b2a', 'color');
 

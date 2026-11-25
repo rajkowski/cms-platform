@@ -119,15 +119,18 @@
         preview.style.setProperty("--workspace-preview-button-text-color", value);
         return;
       }
+      const textColorVariant = name.match(/^theme\.button\.(default|primary|secondary|success|warning|alert)\.text\.color$/i);
+      if (textColorVariant) {
+        setColors(root, `[data-button-style="${textColorVariant[1].toLowerCase()}"]`,
+          ["--workspace-preview-button-text-color"], value);
+        return;
+      }
       const property = lowerName.endsWith(".hoverbackgroundcolor")
         ? "--workspace-preview-button-hover-background-color"
         : "--workspace-preview-button-background-color";
       const variant = name.match(/^theme\.button\.(default|primary|secondary|success|warning|alert)\./i);
       if (variant) {
         setColors(root, `[data-button-style="${variant[1].toLowerCase()}"]`, [property], value);
-      }
-      if (lowerName === "theme.button.primary.backgroundcolor") {
-        preview.style.setProperty("--workspace-preview-accent-color", value);
       }
       return;
     }
@@ -174,6 +177,8 @@
 
     if (target === "footer" && lowerName === "theme.footer.links.color") {
       setColors(root, "a", ["color"], value);
+    } else if (target === "body" && lowerName === "theme.body.link.color") {
+      preview.style.setProperty("--workspace-preview-link-color", value);
     } else if (lowerName.endsWith(".backgroundcolor")) {
       root.style.backgroundColor = value;
     } else {
