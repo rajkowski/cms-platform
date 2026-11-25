@@ -40,7 +40,7 @@ public class ThemeCommand {
    * Saves the current site properties into a theme backup
    * @param name
    */
-  public static void createSnapshotWithName(String name) {
+  public static Theme createSnapshotWithName(String name) {
     // Create a snapshot of the current properties
     List<SiteProperty> siteProperties = SitePropertyRepository.findAllByPrefix(prefix);
     if (siteProperties != null && !siteProperties.isEmpty()) {
@@ -48,12 +48,13 @@ public class ThemeCommand {
       if (theme != null) {
         // Update the existing theme
         theme.setSiteProperties(siteProperties);
-        ThemeRepository.save(theme);
+        return ThemeRepository.save(theme);
       } else {
         // Save a new theme
-        ThemeRepository.save(siteProperties, name);
+        return ThemeRepository.save(siteProperties, name);
       }
     }
+    return null;
   }
 
   /**

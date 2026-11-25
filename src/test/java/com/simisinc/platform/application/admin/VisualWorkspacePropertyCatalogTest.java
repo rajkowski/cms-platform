@@ -1,0 +1,137 @@
+/*
+ * Copyright 2026 Matt Rajkowski (https://github.com/rajkowski)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.simisinc.platform.application.admin;
+
+import java.util.List;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import com.simisinc.platform.domain.model.SiteProperty;
+import com.simisinc.platform.domain.model.cms.Theme;
+
+class VisualWorkspacePropertyCatalogTest {
+
+  @Test
+  void allowsSafeSitePropertiesAndSupportedThemeColors() {
+    Assertions.assertTrue(VisualWorkspacePropertyCatalog.isEditableProperty(property("site.name", "text")));
+    Assertions.assertTrue(VisualWorkspacePropertyCatalog.isEditableProperty(property("site.logo", "image")));
+    Assertions.assertTrue(VisualWorkspacePropertyCatalog.isEditableProperty(property("theme.body.backgroundColor", "color")));
+    Assertions.assertFalse(VisualWorkspacePropertyCatalog.isEditableProperty(property("site.url", "url")));
+    Assertions.assertFalse(VisualWorkspacePropertyCatalog.isEditableProperty(property("site.api", "boolean")));
+    Assertions.assertFalse(VisualWorkspacePropertyCatalog.isEditableProperty(property("mail.apiKey", "text")));
+  }
+
+  @Test
+  void mapsThemeColorsOnlyToSupportedPreviewTargets() {
+    Assertions.assertEquals("body", VisualWorkspacePropertyCatalog.getPreviewTarget("theme.body.text.color"));
+    Assertions.assertEquals("topbar", VisualWorkspacePropertyCatalog.getPreviewTarget("theme.topbar.dark.backgroundColor"));
+    Assertions.assertEquals("button", VisualWorkspacePropertyCatalog.getPreviewTarget("theme.button.primary.backgroundColor"));
+    Assertions.assertNull(VisualWorkspacePropertyCatalog.getPreviewTarget("theme.fonts.body"));
+  }
+
+  @Test
+  void includesEveryLegacyAndRenderedThemeColorChoice() {
+    String[] propertyNames = {
+        "theme.body.text.color",
+        "theme.body.backgroundColor",
+        "theme.utilitybar.text.color",
+        "theme.utilitybar.link.color",
+        "theme.utilitybar.backgroundColor",
+        "theme.topbar.text.color",
+        "theme.topbar.backgroundColor",
+        "theme.topbar.menu.text.color",
+        "theme.topbar.menu.arrow.color",
+        "theme.topbar.menu.text.hoverBackgroundColor",
+        "theme.topbar.menu.hoverTextColor",
+        "theme.topbar.menu.dropdown.backgroundColor",
+        "theme.topbar.menu.dropdown.text.color",
+        "theme.topbar.menu.activeBackgroundColor",
+        "theme.topbar.menu.activeTextColor",
+        "theme.topbar.dark.backgroundColor",
+        "theme.topbar.dark.text.color",
+        "theme.topbar.dark.menu.text.color",
+        "theme.topbar.dark.menu.arrow.color",
+        "theme.topbar.dark.menu.hoverTextColor",
+        "theme.topbar.dark.menu.text.hoverBackgroundColor",
+        "theme.topbar.dark.menu.activeTextColor",
+        "theme.topbar.dark.menu.activeBackgroundColor",
+        "theme.topbar.dark.menu.dropdown.backgroundColor",
+        "theme.topbar.dark.menu.dropdown.text.color",
+        "theme.button.text.color",
+        "theme.button.default.backgroundColor",
+        "theme.button.default.hoverBackgroundColor",
+        "theme.button.primary.backgroundColor",
+        "theme.button.primary.hoverBackgroundColor",
+        "theme.button.secondary.backgroundColor",
+        "theme.button.secondary.hoverBackgroundColor",
+        "theme.button.success.backgroundColor",
+        "theme.button.success.hoverBackgroundColor",
+        "theme.button.warning.backgroundColor",
+        "theme.button.warning.hoverBackgroundColor",
+        "theme.button.alert.backgroundColor",
+        "theme.button.alert.hoverBackgroundColor",
+        "theme.callout.backgroundColor",
+        "theme.callout.text.color",
+        "theme.callout.primary.backgroundColor",
+        "theme.callout.primary.text.color",
+        "theme.callout.secondary.backgroundColor",
+        "theme.callout.secondary.text.color",
+        "theme.callout.success.backgroundColor",
+        "theme.callout.success.text.color",
+        "theme.callout.warning.backgroundColor",
+        "theme.callout.warning.text.color",
+        "theme.callout.alert.backgroundColor",
+        "theme.callout.alert.text.color",
+        "theme.footer.backgroundColor",
+        "theme.footer.text.color",
+        "theme.footer.links.color"
+    };
+
+    for (String propertyName : propertyNames) {
+      Assertions.assertTrue(VisualWorkspacePropertyCatalog.isEditableProperty(property(propertyName, "color")), propertyName);
+      Assertions.assertNotNull(VisualWorkspacePropertyCatalog.getPreviewTarget(propertyName), propertyName);
+    }
+  }
+
+  @Test
+  void providesThirtyCompleteIncludedThemes() {
+    List<SiteProperty> properties = List.of(
+        property("theme.body.backgroundColor", "color"),
+        property("theme.utilitybar.backgroundColor", "color"),
+        property("theme.topbar.dark.backgroundColor", "color"),
+        property("theme.button.primary.backgroundColor", "color"),
+        property("theme.callout.alert.backgroundColor", "color"),
+        property("theme.footer.links.color", "color"));
+
+    List<Theme> themes = VisualThemePresetCatalog.loadIncludedThemes(properties);
+
+    Assertions.assertEquals(30, themes.size());
+    for (Theme theme : themes) {
+      Assertions.assertEquals(properties.size(), theme.getSiteProperties().size());
+      Assertions.assertTrue(theme.getSiteProperties().stream()
+          .allMatch(themeProperty -> themeProperty.getValue().matches("#[0-9a-fA-F]{6}")));
+    }
+  }
+
+  private static SiteProperty property(String name, String type) {
+    SiteProperty property = new SiteProperty();
+    property.setName(name);
+    property.setType(type);
+    return property;
+  }
+}

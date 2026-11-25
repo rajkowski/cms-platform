@@ -54,6 +54,18 @@
       <i class="${font:far()} fa-file-lines"></i>
       <span>Pages</span>
     </a>
+    <c:if test="${activeApp == 'theme' || userSession.hasRole('admin') || userSession.hasRole('content-manager')}">
+      <a href="${ctx}/admin/visual-theme-editor" class="editor-app-item ${activeApp == 'theme' ? 'active' : ''} confirm-exit" title="Edit Theme Colors">
+        <i class="${font:far()} fa-palette"></i>
+        <span>Theme</span>
+      </a>
+    </c:if>
+    <c:if test="${activeApp == 'workspace' || userSession.hasRole('admin') || userSession.hasRole('content-manager')}">
+      <a href="${ctx}/admin/visual-workspace-editor" class="editor-app-item ${activeApp == 'workspace' ? 'active' : ''} confirm-exit" title="Edit Workspace Settings">
+        <i class="${font:far()} fa-sliders"></i>
+        <span>Workspace</span>
+      </a>
+    </c:if>
     <c:if test="${activeApp == 'content' || userSession.hasRole('admin') || userSession.hasRole('content-manager')}">
       <a href="${ctx}/admin/visual-content-editor" class="editor-app-item ${activeApp == 'content' ? 'active' : ''} confirm-exit" title="Manage Content">
         <i class="${font:far()} fa-edit"></i>

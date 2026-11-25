@@ -1,0 +1,68 @@
+<div class="workspace-editor-properties-layout">
+  <nav class="workspace-property-categories" aria-label="Site property categories">
+    <c:set var="firstCategory" value="true"/>
+    <c:forEach items="${sitePropertyGroups}" var="category">
+      <button type="button" class="workspace-property-category<c:if test='${firstCategory}'> active</c:if>"
+              data-property-category-select="<c:out value="${category.key}"/>">
+        <c:out value="${category.key}"/>
+      </button>
+      <c:set var="firstCategory" value="false"/>
+    </c:forEach>
+  </nav>
+
+  <div class="workspace-property-catalog">
+    <c:set var="firstCategory" value="true"/>
+    <c:forEach items="${sitePropertyGroups}" var="category">
+      <section class="workspace-property-group" data-property-category="<c:out value="${category.key}"/>"
+               <c:if test="${not firstCategory}">hidden</c:if>>
+        <h3><c:out value="${category.key}"/></h3>
+        <c:forEach items="${category.value}" var="property">
+          <c:set var="inputValue" value="${property.value}"/>
+          <c:if test="${propertyDraftValues.containsKey(property.name)}">
+            <c:set var="inputValue" value="${propertyDraftValues[property.name]}"/>
+          </c:if>
+          <div class="workspace-editor-setting">
+            <label for="site-setting-${property.id}"><c:out value="${property.label}"/></label>
+            <c:choose>
+              <c:when test="${property.type eq 'boolean'}">
+                <select id="site-setting-${property.id}" name="<c:out value="${property.name}"/>"
+                        data-property-input data-saved-value="<c:out value="${property.value}"/>">
+                  <option value="true"<c:if test="${inputValue eq 'true'}"> selected</c:if>>Yes</option>
+                  <option value="false"<c:if test="${inputValue ne 'true'}"> selected</c:if>>No</option>
+                </select>
+              </c:when>
+              <c:when test="${property.type eq 'color'}">
+                <div class="workspace-editor-color-inputs">
+                  <input type="color" data-color-picker-for="site-setting-${property.id}" value="<c:out value="${property.value}"/>"
+                         aria-label="Choose color"/>
+                  <input type="text" id="site-setting-${property.id}" name="<c:out value="${property.name}"/>"
+                         data-property-input value="<c:out value="${inputValue}"/>"
+                         data-saved-value="<c:out value="${property.value}"/>"/>
+                </div>
+              </c:when>
+              <c:when test="${property.type eq 'image'}">
+                <input type="text" id="site-setting-${property.id}" name="<c:out value="${property.name}"/>"
+                       data-property-input value="<c:out value="${inputValue}"/>"
+                       data-saved-value="<c:out value="${property.value}"/>"
+                       placeholder="Image path or URL"/>
+                <c:if test="${not empty inputValue}">
+                  <img class="workspace-property-image-preview" data-image-preview-for="site-setting-${property.id}"
+                       src="<c:out value="${inputValue}"/>" alt="<c:out value="${property.label}"/> preview"/>
+                </c:if>
+              </c:when>
+              <c:otherwise>
+                <input type="text" id="site-setting-${property.id}" name="<c:out value="${property.name}"/>"
+                       data-property-input value="<c:out value="${inputValue}"/>"
+                       data-saved-value="<c:out value="${property.value}"/>"/>
+              </c:otherwise>
+            </c:choose>
+            <c:if test="${not empty propertyErrors[property.name]}">
+              <span class="workspace-editor-field-error"><c:out value="${propertyErrors[property.name]}"/></span>
+            </c:if>
+          </div>
+        </c:forEach>
+      </section>
+      <c:set var="firstCategory" value="false"/>
+    </c:forEach>
+  </div>
+</div>

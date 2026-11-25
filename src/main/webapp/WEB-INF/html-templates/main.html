@@ -34,6 +34,63 @@
         color: [[${themePropertyMap['theme.body.text.color']}]];
         background-color: [[${themePropertyMap['theme.body.backgroundColor']}]];
       }
+      .breadcrumbs li,
+      .breadcrumbs li:not(:last-child)::after {
+        color: [[${themePropertyMap['theme.body.text.color']}]];
+      }
+      .breadcrumbs li:not(:last-child)::after {
+        opacity: .55;
+      }
+      .breadcrumbs a,
+      .breadcrumbs a:hover,
+      .breadcrumbs a:focus {
+        color: [[${themePropertyMap['theme.button.primary.backgroundColor']}]];
+      }
+      .platform-toc-container li {
+        background-color: [[${themePropertyMap['theme.callout.secondary.backgroundColor']}]];
+      }
+      .platform-toc-container ul.vertical.menu li a {
+        color: [[${themePropertyMap['theme.callout.secondary.text.color']}]] !important;
+      }
+      .platform-toc-container li.is-active,
+      .platform-toc-container ul.vertical.menu li.is-active>a {
+        background-color: [[${themePropertyMap['theme.topbar.menu.activeBackgroundColor']}]];
+      }
+      .platform-toc-container li:hover,
+      .platform-toc-container ul.vertical.menu li:hover>a {
+        background-color: [[${themePropertyMap['theme.topbar.menu.text.hoverBackgroundColor']}]];
+      }
+      .platform-toc-container .menu .is-active>a {
+        border-left-color: [[${themePropertyMap['theme.topbar.menu.activeBackgroundColor']}]];
+      }
+      .platform-toc-container ul.vertical.menu li.is-active a,
+      .platform-toc-container ul.vertical.menu li.is-active:hover a {
+        color: [[${themePropertyMap['theme.topbar.menu.activeTextColor']}]] !important;
+      }
+      .platform-toc-container ul.vertical.menu li a:hover,
+      .platform-toc-container ul.vertical.menu li a:focus {
+        color: [[${themePropertyMap['theme.topbar.menu.hoverTextColor']}]] !important;
+      }
+      .platform-content-container .tabs li a {
+        color: [[${themePropertyMap['theme.callout.secondary.text.color']}]] !important;
+        background-color: [[${themePropertyMap['theme.callout.secondary.backgroundColor']}]];
+      }
+      .platform-content-container .tabs .tabs-title.is-active a,
+      .platform-content-container .tabs .tabs-title>a[aria-selected=true] {
+        background-color: [[${themePropertyMap['theme.topbar.menu.activeBackgroundColor']}]];
+      }
+      .platform-content-container .tabs .tabs-title>a:hover,
+      .platform-content-container .tabs .tabs-title>a:focus {
+        background-color: [[${themePropertyMap['theme.topbar.menu.text.hoverBackgroundColor']}]];
+      }
+      .platform-content-container .tabs .tabs-title>a[aria-selected=true],
+      .platform-content-container .tabs .tabs-title.is-active a {
+        color: [[${themePropertyMap['theme.topbar.menu.activeTextColor']}]] !important;
+      }
+      .platform-content-container .tabs .tabs-title>a:hover,
+      .platform-content-container .tabs .tabs-title>a:focus {
+        color: [[${themePropertyMap['theme.topbar.menu.hoverTextColor']}]] !important;
+      }
       .button {
         color: [[${themePropertyMap['theme.button.text.color']}]];
         background-color: [[${themePropertyMap['theme.button.default.backgroundColor']}]];

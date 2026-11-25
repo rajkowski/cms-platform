@@ -31,6 +31,8 @@
   <widget name="visualDocumentEditor" class="com.zeroio.platform.presentation.widgets.editor.VisualDocumentEditorWidget" />
   <widget name="visualDataEditor" class="com.zeroio.platform.presentation.widgets.editor.VisualDataEditorWidget" />
   <widget name="visualContentEditor" class="com.zeroio.platform.presentation.widgets.editor.VisualContentEditorWidget" />
+  <widget name="visualThemeEditor" class="com.simisinc.platform.presentation.widgets.admin.VisualThemeEditorWidget" />
+  <widget name="visualWorkspaceEditor" class="com.simisinc.platform.presentation.widgets.admin.VisualWorkspaceEditorWidget" />
   <widget name="visualFormsEditor" class="com.zeroio.platform.presentation.widgets.editor.VisualFormsEditorWidget" />
   <widget name="visualHierarchyEditor" class="com.zeroio.platform.presentation.widgets.editor.VisualHierarchyEditorWidget" />
   <widget name="visualWebSyncEditor" class="com.zeroio.platform.presentation.widgets.editor.VisualWebSyncWidget" />

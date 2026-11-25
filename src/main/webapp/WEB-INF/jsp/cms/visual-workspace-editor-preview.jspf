@@ -1,0 +1,167 @@
+<div class="workspace-editor-preview-layout">
+  <div class="workspace-editor-preview-column">
+    <article id="workspace-preview-page" class="workspace-preview-page" data-preview-area="body" data-preview-mode="light">
+      <nav class="workspace-preview-platform-menu" data-preview-area="topbar" aria-label="Site navigation preview">
+        <div class="utility-bar workspace-preview-utilitybar" data-preview-area="utilitybar">
+          <div class="grid-container">
+            Welcome to the site!
+            <a href="#" onclick="return false;">Latest News</a>
+          </div>
+        </div>
+        <div class="top-bar workspace-preview-topbar">
+          <div class="top-bar-left">
+            <ul class="dropdown menu workspace-preview-menu">
+              <li class="menu-text"><a href="#" onclick="return false;">Your Site</a></li>
+              <li class="is-active"><a href="#" onclick="return false;">Home</a></li>
+              <li><a href="#" onclick="return false;">About</a></li>
+              <li class="is-dropdown-submenu-parent">
+                <a class="workspace-preview-dropdown-link" href="#" onclick="return false;">Services</a>
+                <ul class="menu vertical is-dropdown-submenu workspace-preview-submenu">
+                  <li><a href="#" onclick="return false;">Consulting</a></li>
+                  <li><a href="#" onclick="return false;">Support</a></li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+
+      <main class="workspace-preview-main">
+        <div class="platform-toc-container workspace-preview-toc" data-preview-area="toc">
+          <nav aria-label="Table of contents preview">
+            <ul class="vertical menu">
+              <li class="is-active"><a class="is-active" href="#" onclick="return false;">Example</a></li>
+              <li><a href="#" onclick="return false;">Page 1</a></li>
+              <li><a href="#" onclick="return false;">Page 2</a></li>
+            </ul>
+          </nav>
+        </div>
+        <div class="platform-content-container workspace-preview-tabs">
+          <ul class="tabs" role="tablist">
+            <li class="tabs-title is-active" role="presentation"><a href="#" aria-selected="true" role="tab" onclick="return false;">Tab 1</a></li>
+            <li class="tabs-title" role="presentation"><a href="#" aria-selected="false" role="tab" onclick="return false;">Tab 2</a></li>
+            <li class="tabs-title" role="presentation"><a href="#" aria-selected="false" role="tab" onclick="return false;">Tab 3</a></li>
+          </ul>
+          <div class="tabs-content">
+            <div class="tabs-panel is-active">Tab 1 Content</div>
+          </div>
+        </div>
+        <nav aria-label="Breadcrumb preview">
+          <ul class="breadcrumbs">
+            <li><a href="#" onclick="return false;">Home</a></li>
+            <li><a href="#" onclick="return false;">About</a></li>
+            <li aria-current="page">Privacy Policy</li>
+          </ul>
+        </nav>
+        <h1>H1 Header</h1>
+        <h2>H2 Header</h2>
+        <p class="no-gap">This is body text, with <a href="#" onclick="return false;">an example link</a>, and <strong>bold text</strong>.</p>
+        <div class="margin-top-20" data-preview-area="button">
+          <a class="button base workspace-preview-button" data-button-style="default" href="#" onclick="return false;">Default Button</a>
+          <a class="button primary workspace-preview-button" data-button-style="primary" href="#" onclick="return false;">Primary</a>
+          <a class="button secondary workspace-preview-button" data-button-style="secondary" href="#" onclick="return false;">Secondary</a>
+          <a class="button success workspace-preview-button" data-button-style="success" href="#" onclick="return false;">Success</a>
+          <a class="button alert workspace-preview-button" data-button-style="alert" href="#" onclick="return false;">Alert</a>
+          <a class="button warning workspace-preview-button" data-button-style="warning" href="#" onclick="return false;">Warning</a>
+        </div>
+        <hr />
+        <div class="workspace-preview-callouts" data-preview-area="callout">
+          <div class="base callout workspace-preview-callout" data-callout-style="base">Callout</div>
+          <div class="primary callout workspace-preview-callout" data-callout-style="primary">Primary Callout</div>
+          <div class="secondary callout workspace-preview-callout" data-callout-style="secondary">Secondary Callout</div>
+          <div class="success callout workspace-preview-callout" data-callout-style="success">Success Callout</div>
+          <div class="warning callout workspace-preview-callout" data-callout-style="warning">Warning Callout</div>
+          <div class="alert callout workspace-preview-callout" data-callout-style="alert">Alert Callout</div>
+          <div class="box callout workspace-preview-callout" data-callout-style="box">Box Callout</div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Table Header</th>
+              <th>Table Header</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Content Goes Here</td>
+              <td>Content Goes Here</td>
+            </tr>
+          </tbody>
+        </table>
+        <div>
+          <span class="label">Default Label</span>
+          <span class="primary label">Primary Label</span>
+          <span class="secondary label">Secondary Label</span>
+          <span class="success label">Success Label</span>
+          <span class="alert label">Alert Label</span>
+          <span class="warning label">Warning Label</span>
+        </div>
+        <div class="margin-top-20">
+          <span class="primary badge">1</span>
+          <span class="secondary badge">2</span>
+          <span class="success badge">3</span>
+          <span class="alert badge">A</span>
+          <span class="warning badge">B</span>
+        </div>
+        <div class="primary progress margin-top-20" role="progressbar" tabindex="0" aria-valuenow="25" aria-valuemin="0" aria-valuetext="25 percent" aria-valuemax="100">
+          <div class="progress-meter" style="width: 50%">
+            <p class="progress-meter-text">50%</p>
+          </div>
+        </div>
+        <nav aria-label="Pagination">
+          <ul class="pagination text-center">
+            <li class="page current"><span class="show-for-sr">You're on page</span> 1</li>
+            <li class="page"><a href="#" aria-label="Page 2">2</a></li>
+            <li class="page"><a href="#" aria-label="Page 3">3</a></li>
+            <li class="ellipsis" aria-hidden="true"></li>
+            <li class="page"><a href="#" aria-label="Page 16">16</a></li>
+            <li class="pagination-next"><a href="#" aria-label="Next page">Next <span class="show-for-sr">page</span></a></li>
+          </ul>
+        </nav>
+      </main>
+      <footer class="platform-footer workspace-preview-footer" data-preview-area="footer">
+        <span>Your Site</span>
+        <a href="#" onclick="return false;">Privacy</a>
+      </footer>
+    </article>
+  </div>
+
+  <aside class="workspace-editor-color-panel" aria-labelledby="workspace-theme-controls-title">
+    <header class="workspace-editor-panel-header">
+      <div class="workspace-editor-preview-mode" role="group" aria-label="Preview color scheme">
+        <button type="button" class="workspace-editor-mode active" data-preview-mode-select="light" aria-pressed="true">Light</button>
+        <button type="button" class="workspace-editor-mode" data-preview-mode-select="dark" aria-pressed="false">Dark</button>
+      </div>
+
+      <div class="workspace-editor-preview-toolbar" role="group" aria-label="Select a site component to edit">
+        <button type="button" class="button secondary active" data-preview-select="utilitybar">Bar</button>
+        <button type="button" class="button secondary" data-preview-select="topbar">Nav</button>
+        <button type="button" class="button secondary" data-preview-select="body">Body</button>
+        <button type="button" class="button secondary" data-preview-select="button">Buttons</button>
+        <button type="button" class="button secondary" data-preview-select="callout">Callouts</button>
+        <button type="button" class="button secondary" data-preview-select="footer">Footer</button>
+      </div>
+    </header>
+
+    <p id="workspace-theme-empty" hidden>No editable colors are available for this component.</p>
+    <div class="workspace-theme-settings-grid">
+      <c:forEach items="${themePropertyList}" var="property">
+        <c:set var="inputValue" value="${property.value}"/>
+        <c:if test="${propertyDraftValues.containsKey(property.name)}">
+          <c:set var="inputValue" value="${propertyDraftValues[property.name]}"/>
+        </c:if>
+        <div class="workspace-editor-setting workspace-theme-setting" data-theme-color-item data-preview-target="${themePreviewTargets[property.name]}">
+          <label for="theme-setting-${property.id}"><c:out value="${property.label}"/></label>
+          <div class="workspace-editor-color-inputs">
+            <input type="text" id="theme-setting-${property.id}" name="<c:out value="${property.name}"/>"
+                   data-property-input data-theme-property data-spectrum-color-picker value="<c:out value="${inputValue}"/>"
+                   data-saved-value="<c:out value="${property.value}"/>" autocomplete="off" spellcheck="false"/>
+          </div>
+          <c:if test="${not empty propertyErrors[property.name]}">
+            <span class="workspace-editor-field-error"><c:out value="${propertyErrors[property.name]}"/></span>
+          </c:if>
+        </div>
+      </c:forEach>
+    </div>
+  </aside>
+</div>

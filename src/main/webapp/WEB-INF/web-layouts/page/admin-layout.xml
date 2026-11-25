@@ -1270,6 +1270,26 @@
     </section>
   </page>
 
+  <page name="/admin/visual-workspace-editor" role="admin,content-manager" title="Visual Workspace Editor" class="full-page">
+    <section class="grid-x">
+      <column class="small-12 cell">
+        <widget name="visualWorkspaceEditor">
+          <title>Visual Workspace Editor</title>
+        </widget>
+      </column>
+    </section>
+  </page>
+
+  <page name="/admin/visual-theme-editor" role="admin,content-manager" title="Visual Theme Editor" class="full-page">
+    <section class="grid-x">
+      <column class="small-12 cell">
+        <widget name="visualThemeEditor">
+          <title>Visual Theme Editor</title>
+        </widget>
+      </column>
+    </section>
+  </page>
+
   <page name="/admin/visual-forms-editor" role="admin,content-manager" title="Visual Forms Editor" class="full-page">
     <section class="grid-x">
       <column class="small-12 cell">

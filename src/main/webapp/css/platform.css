@@ -332,6 +332,10 @@ label.button {
 
 /* Tables */
 
+table {
+  color: #0a0a0a;
+}
+
 table td .input-group {
   margin-bottom: 0;
 }
@@ -679,23 +683,27 @@ ul.pagination li.pagination-next a:hover {
 }
 .platform-toc-container li {
   margin-bottom: 1px;
-  background-color: #f1f1f1;
+  background-color: #edf1f5;
 }
 .platform-toc-container .menu .is-active>a {
-  border-left: 4px solid #57a1cc;
+  border-left: 4px solid #126195;
   padding-left: 28px;
 }
+.platform-toc-container li.is-active,
 .platform-toc-container li:hover {
-  background-color: #57a1cc;
+  background-color: #1779ba;
 }
 .platform-toc-container li a {
-  color: #005f98;
+  color: #126195;
   text-decoration: none;
   padding-top: 15px;
   padding-bottom: 14px;
   padding-left: 32px;
 }
-.platform-toc-container li a:hover {
+.platform-toc-container li.is-active a,
+.platform-toc-container li.is-active:hover a,
+.platform-toc-container li a:hover,
+.platform-toc-container li a:focus {
   color: #ffffff;
 }
 .platform-toc-editor {
@@ -813,6 +821,12 @@ ul.pagination li.pagination-next a:hover {
 .platform-blog-cards-container .blog-title h2 {
   font-size: 28px;
   padding-bottom: 0;
+}
+
+.platform-blog-cards-container .blog-title h2 a,
+.platform-blog-cards-container .blog-title h2 a:hover,
+.platform-blog-cards-container .blog-title h2 a:focus {
+  color: inherit;
 }
 
 .platform-blog-cards-container img {

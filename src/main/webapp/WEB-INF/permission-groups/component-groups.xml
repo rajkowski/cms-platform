@@ -26,6 +26,9 @@
   <component action="cms.visual-web-sync.access" group="visual-web-sync-editor" type="WIDGET" />
   <component action="cms.static-site.manage" group="visual-web-sync-editor" type="SERVICE" />
 
+  <!-- Visual Workspace Editor group -->
+  <component action="cms.visual-workspace-editor.access" group="visual-workspace-editor" type="WIDGET" />
+
   <!-- Visual Content Editor group (content blocks, pages, sitemap, blogs, calendars) -->
   <component action="cms.visual-content-editor.access" group="visual-content-editor" type="WIDGET" />
   <component action="cms.visual-forms-editor.access" group="visual-content-editor" type="WIDGET" />
