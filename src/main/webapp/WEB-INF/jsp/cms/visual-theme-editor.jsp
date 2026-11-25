@@ -57,6 +57,17 @@
         </select>
       </label>
       <button id="workspace-editor-discard" type="button" class="button tiny secondary no-gap radius" disabled>Discard</button>
+      <button type="submit" form="workspace-editor-form" name="command" value="downloadThemeColors"
+              class="button tiny secondary no-gap radius"><i class="${font:far()} fa-download"></i> Download</button>
+      <form id="workspace-editor-theme-upload-form" method="post" enctype="multipart/form-data">
+        <input type="hidden" name="widget" value="${widgetContext.uniqueId}"/>
+        <input type="hidden" name="token" value="${userSession.formToken}"/>
+        <input type="hidden" name="command" value="uploadThemeColors"/>
+        <label for="workspace-editor-theme-upload" class="button tiny secondary no-gap radius">
+          <i class="${font:far()} fa-upload"></i> Upload
+        </label>
+        <input type="file" id="workspace-editor-theme-upload" name="file" accept="application/json,.json" class="show-for-sr"/>
+      </form>
       <button id="workspace-editor-save" type="submit" form="workspace-editor-form" class="button tiny success no-gap radius" disabled><i class="${font:far()} fa-floppy-disk"></i> Save</button>
       <span id="workspace-editor-dirty-status" role="status" aria-live="polite">All changes saved</span>
     </div>
@@ -70,7 +81,8 @@
       <input type="hidden" name="widget" value="${widgetContext.uniqueId}"/>
       <input type="hidden" name="token" value="${userSession.formToken}"/>
       <input type="hidden" name="action" value="save"/>
-      <input type="hidden" id="workspace-editor-theme-snapshot-name" name="themeSnapshotBaseName" value="Custom Theme"/>
+      <input type="hidden" id="workspace-editor-theme-snapshot-name" name="themeSnapshotBaseName"
+             value="<c:out value="${empty uploadedThemeName ? 'Custom Theme' : uploadedThemeName}"/>"/>
       <%@include file="visual-workspace-editor-preview.jspf" %>
     </form>
   </div>
@@ -95,4 +107,9 @@
 <script src="${ctx}/javascript/widgets/editor/visual-workspace-editor-preview.js"></script>
 <script src="${ctx}/javascript/widgets/editor/visual-workspace-editor-properties.js"></script>
 <script src="${ctx}/javascript/widgets/editor/visual-workspace-editor-actions.js"></script>
+<script>
+  document.getElementById("workspace-editor-theme-upload").addEventListener("change", function() {
+    document.getElementById("workspace-editor-theme-upload-form").submit();
+  });
+</script>
 <script>setupEditorAppSwitcher();</script>

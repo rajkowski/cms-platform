@@ -53,6 +53,7 @@ public class HeaderAccountMenuWidget extends GenericWidget {
       Map.entry("instructions", ALL_MANAGERS_ROLES),
       Map.entry("users", COMMUNITY_ROLES),
       Map.entry("announcement", ADMIN_ROLE),
+      Map.entry("theme", CONTENT_ROLES),
       Map.entry("siteCss", ADMIN_ROLE),
       Map.entry("setup", ADMIN_ROLE),
       Map.entry("appearance", Set.of()),
@@ -215,6 +216,11 @@ public class HeaderAccountMenuWidget extends GenericWidget {
         break;
       case "announcement":
         destination = "/admin/site-header-properties";
+        break;
+      case "theme":
+        destination = "/admin/visual-theme-editor";
+        parameter = "returnPage";
+        value = pagePath;
         break;
       case "siteCss":
         destination = "/admin/css-editor";

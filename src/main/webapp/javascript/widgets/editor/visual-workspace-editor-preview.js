@@ -7,7 +7,6 @@
   const selectionButtons = Array.from(document.querySelectorAll("[data-preview-select]"));
   const modeButtons = Array.from(document.querySelectorAll("[data-preview-mode-select]"));
   const themeControls = Array.from(document.querySelectorAll("[data-theme-color-item]"));
-  const selectedLabel = document.getElementById("workspace-editor-selected-component");
   const emptyMessage = document.getElementById("workspace-theme-empty");
   const topbarColors = { light: {}, dark: {} };
   const topbarMenuProperties = {
@@ -20,15 +19,6 @@
     "menu.activebackgroundcolor": "--workspace-preview-menu-active-background-color",
     "menu.activetextcolor": "--workspace-preview-menu-active-text-color"
   };
-  const componentLabels = {
-    utilitybar: "Info Bar",
-    body: "Body",
-    topbar: "Navigation",
-    button: "Buttons",
-    callout: "Callouts",
-    footer: "Footer"
-  };
-
   function isColor(value) {
     return /^#[0-9a-f]{3}(?:[0-9a-f]{3})?$/i.test(value);
   }
@@ -195,11 +185,6 @@
     themeControls.forEach((control) => {
       control.hidden = control.dataset.previewTarget !== target;
     });
-    preview.classList.toggle("is-selected", preview.dataset.previewArea === target);
-    preview.querySelectorAll("[data-preview-area]").forEach((area) => {
-      area.classList.toggle("is-selected", area.dataset.previewArea === target);
-    });
-    selectedLabel.textContent = componentLabels[target] || "Component";
     if (emptyMessage) {
       emptyMessage.hidden = themeControls.some((control) => control.dataset.previewTarget === target);
     }

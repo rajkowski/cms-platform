@@ -16,7 +16,11 @@
 
 package com.simisinc.platform.application.admin;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -147,6 +151,55 @@ class VisualWorkspacePropertyCatalogTest {
           .filter(themeProperty -> themeProperty.getName().endsWith(".text.color"))
           .allMatch(themeProperty -> "#ffffff".equals(themeProperty.getValue())));
     }
+  }
+
+  @Test
+  void exportsAndImportsThemeColors() throws IOException {
+    List<SiteProperty> properties = List.of(
+        property("theme.body.backgroundColor", "color"),
+        property("theme.body.link.color", "color"));
+
+    byte[] contents = VisualThemePresetCatalog.createThemeFile("Ocean", Map.of(
+        "theme.body.backgroundColor", "#F8FBFF",
+        "theme.body.link.color", "#0077B6"));
+    Theme imported = VisualThemePresetCatalog.loadThemeFile(
+        new ByteArrayInputStream(contents), properties);
+
+    Assertions.assertEquals("Ocean", imported.getName());
+    Assertions.assertEquals("#f8fbff",
+        propertyValue(imported, "theme.body.backgroundColor"));
+    Assertions.assertEquals("#0077b6",
+        propertyValue(imported, "theme.body.link.color"));
+  }
+
+  @Test
+  void rejectsUnsupportedAndInvalidUploadedColors() {
+    String unsupportedColor = """
+        {
+          "format": "cms-platform-theme-colors",
+          "version": 1,
+          "name": "Unsafe",
+          "colors": {
+            "site.url": "#ffffff"
+          }
+        }
+        """;
+    String invalidColor = """
+        {
+          "format": "cms-platform-theme-colors",
+          "version": 1,
+          "name": "Invalid",
+          "colors": {
+            "theme.body.backgroundColor": "white"
+          }
+        }
+        """;
+    List<SiteProperty> properties = List.of(property("theme.body.backgroundColor", "color"));
+
+    Assertions.assertThrows(IOException.class, () -> VisualThemePresetCatalog.loadThemeFile(
+        new ByteArrayInputStream(unsupportedColor.getBytes(StandardCharsets.UTF_8)), properties));
+    Assertions.assertThrows(IOException.class, () -> VisualThemePresetCatalog.loadThemeFile(
+        new ByteArrayInputStream(invalidColor.getBytes(StandardCharsets.UTF_8)), properties));
   }
 
   private static String propertyValue(Theme theme, String propertyName) {

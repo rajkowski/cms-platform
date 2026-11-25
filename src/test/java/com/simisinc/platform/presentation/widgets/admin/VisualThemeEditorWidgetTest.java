@@ -23,9 +23,13 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import javax.servlet.http.Part;
 
 import org.junit.jupiter.api.Test;
 
@@ -95,6 +99,48 @@ class VisualThemeEditorWidgetTest {
 
       themeCommand.verify(() -> ThemeCommand.createSnapshotWithName("Midnight"));
       verify(context).setSuccessMessage("Theme colors were saved and added to history.");
+    }
+  }
+
+  @Test
+  void uploadsThemeColorsAsUnsavedDrafts() throws Exception {
+    WidgetContext context = mock(WidgetContext.class);
+    PageRequest request = mock(PageRequest.class);
+    Part part = mock(Part.class);
+    SiteProperty property = property("theme.body.backgroundColor", "#ffffff");
+    String file = """
+        {
+          "format": "cms-platform-theme-colors",
+          "version": 1,
+          "name": "Ocean",
+          "colors": {
+            "theme.body.backgroundColor": "#0077B6"
+          }
+        }
+        """;
+    when(context.getParameter("command")).thenReturn("uploadThemeColors");
+    when(context.getPart("file")).thenReturn(part);
+    when(context.getRequest()).thenReturn(request);
+    when(part.getSubmittedFileName()).thenReturn("ocean.json");
+    when(part.getSize()).thenReturn((long) file.length());
+    when(part.getInputStream()).thenReturn(new ByteArrayInputStream(file.getBytes(StandardCharsets.UTF_8)));
+
+    try (var permissions = mockStatic(Permission.class);
+        var siteProperties = mockStatic(SitePropertyRepository.class);
+        var themes = mockStatic(ThemeRepository.class)) {
+      permissions.when(() -> Permission.check(anyString(), org.mockito.ArgumentMatchers.isNull())).thenReturn(true);
+      siteProperties.when(() -> SitePropertyRepository.findAllByPrefix("site")).thenReturn(new ArrayList<>());
+      siteProperties.when(() -> SitePropertyRepository.findAllByPrefix("theme")).thenReturn(List.of(property));
+      themes.when(() -> ThemeRepository.findAll()).thenReturn(new ArrayList<>());
+
+      new VisualThemeEditorWidget().post(context);
+
+      siteProperties.verify(() -> SitePropertyRepository.saveAll(anyString(),
+          org.mockito.ArgumentMatchers.anyList()), never());
+      verify(request).setAttribute("uploadedThemeName", "Ocean");
+      verify(request).setAttribute("propertyDraftValues",
+          Map.of("theme.body.backgroundColor", "#0077b6"));
+      verify(context).setSuccessMessage("Theme colors were uploaded. Review the preview and save to apply them.");
     }
   }
 

@@ -16,10 +16,20 @@
 
 package com.simisinc.platform.application.admin;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.simisinc.platform.domain.model.SiteProperty;
 import com.simisinc.platform.domain.model.cms.Theme;
 
@@ -27,6 +37,11 @@ import com.simisinc.platform.domain.model.cms.Theme;
  * Provides built-in color combinations for the visual theme editor.
  */
 public class VisualThemePresetCatalog {
+
+  public static final String FILE_FORMAT = "cms-platform-theme-colors";
+  public static final int FILE_VERSION = 1;
+  private static final ObjectMapper MAPPER = new ObjectMapper()
+      .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS);
 
   private static final List<Palette> PALETTES = List.of(
       new Palette("Classic Blue", "#ffffff", "#1f2937", "#1779ba", "#126195", "#d7ecfa", "#353535", "#ffffff"),
@@ -75,6 +90,76 @@ public class VisualThemePresetCatalog {
       themes.add(theme);
     }
     return themes;
+  }
+
+  public static byte[] createThemeFile(String name, Map<String, String> colors) throws IOException {
+    if (colors == null || colors.isEmpty()) {
+      throw new IOException("The theme file does not contain any colors");
+    }
+    ObjectNode root = MAPPER.createObjectNode();
+    root.put("format", FILE_FORMAT);
+    root.put("version", FILE_VERSION);
+    root.put("name", StringUtils.trimToEmpty(name));
+    ObjectNode colorsNode = root.putObject("colors");
+    for (Map.Entry<String, String> color : colors.entrySet()) {
+      if (!isThemeColor(color.getValue())) {
+        throw new IOException("The theme contains an invalid color for " + color.getKey());
+      }
+      colorsNode.put(color.getKey(), color.getValue());
+    }
+    return MAPPER.writerWithDefaultPrettyPrinter().writeValueAsBytes(root);
+  }
+
+  public static Theme loadThemeFile(InputStream input, List<SiteProperty> editableProperties) throws IOException {
+    JsonNode root = MAPPER.readTree(input);
+    if (root == null || !root.isObject()) {
+      throw new IOException("The uploaded theme file is not a valid JSON object");
+    }
+    if (!FILE_FORMAT.equals(root.path("format").asText()) || root.path("version").asInt() != FILE_VERSION) {
+      throw new IOException("The uploaded file is not a supported theme colors file");
+    }
+
+    JsonNode colorsNode = root.get("colors");
+    if (colorsNode == null || !colorsNode.isObject() || colorsNode.isEmpty()) {
+      throw new IOException("The uploaded theme file does not contain any colors");
+    }
+
+    Map<String, SiteProperty> editableByName = new LinkedHashMap<>();
+    for (SiteProperty property : editableProperties) {
+      editableByName.put(property.getName(), property);
+    }
+
+    List<SiteProperty> colors = new ArrayList<>();
+    java.util.Iterator<Map.Entry<String, JsonNode>> fields = colorsNode.properties().iterator();
+    while (fields.hasNext()) {
+      Map.Entry<String, JsonNode> field = fields.next();
+      String propertyName = field.getKey();
+      String color = field.getValue().isTextual() ? field.getValue().textValue() : null;
+      SiteProperty editableProperty = editableByName.get(propertyName);
+      if (editableProperty == null) {
+        throw new IOException("The uploaded theme contains an unsupported color: " + propertyName);
+      }
+      if (color == null || !isThemeColor(color)) {
+        throw new IOException("The uploaded theme contains an invalid color for " + propertyName);
+      }
+      SiteProperty property = new SiteProperty();
+      property.setName(propertyName);
+      property.setValue(color.toLowerCase(Locale.ROOT));
+      colors.add(property);
+    }
+
+    if (colors.isEmpty()) {
+      throw new IOException("The uploaded theme file does not contain any colors");
+    }
+    String requestedName = StringUtils.trimToNull(
+        StringUtils.trimToEmpty(root.path("name").asText(null)).replaceAll("[\\p{Cntrl}]", " "));
+    Theme theme = new Theme(requestedName == null ? "Uploaded Theme" : StringUtils.abbreviate(requestedName, 255));
+    theme.setSiteProperties(colors);
+    return theme;
+  }
+
+  private static boolean isThemeColor(String value) {
+    return value != null && value.matches("#[0-9a-fA-F]{6}");
   }
 
   private static String resolveColor(String propertyName, Palette palette) {

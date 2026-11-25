@@ -49,6 +49,9 @@
   }
 
   form.addEventListener("submit", (event) => {
+    if (event.submitter?.name === "command" && event.submitter.value === "downloadThemeColors") {
+      return;
+    }
     if (!isDirty()) {
       event.preventDefault();
       return;

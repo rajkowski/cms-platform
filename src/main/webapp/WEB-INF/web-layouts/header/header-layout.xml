@@ -54,10 +54,11 @@
             <link action="hierarchy" section="content" sectionLabel="Content Tools" name="Page Hierarchy" icon="fa-sitemap" />
             <link action="instructions" section="admin" sectionLabel="Admin Tools" name="Instructions" icon="fa-circle-info" />
             <link action="siteAnalytics" section="admin" sectionLabel="Admin Tools" name="Site Analytics" icon="fa-chart-line" />
-            <link action="users" section="admin" sectionLabel="Admin Tools" name="Users" icon="fa-users" />
-            <link action="workspaces" section="admin" sectionLabel="Admin Tools" name="Workspaces" icon="fa-cubes" />
             <link action="announcement" section="admin" sectionLabel="Admin Tools" name="Announcement" icon="fa-bullhorn" />
+            <link action="workspaces" section="admin" sectionLabel="Admin Tools" name="Workspaces" icon="fa-cubes" />
+            <link action="theme" section="admin" sectionLabel="Admin Tools" name="Theme" icon="fa-palette" />
             <link action="siteCss" section="admin" sectionLabel="Admin Tools" name="Site CSS" icon="fa-brands fa-css" />
+            <link action="users" section="admin" sectionLabel="Admin Tools" name="Users" icon="fa-users" />
             <link action="setup" section="admin" sectionLabel="Admin Tools" name="Setup" icon="fa-cog" />
             <link action="appearance" name="Toggle Light/Dark Mode" icon="fa-moon" />
             <link action="account" name="My Account" icon="fa-user-cog" />
