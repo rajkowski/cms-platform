@@ -384,9 +384,9 @@
 }
 
 .workspace-preview-page .workspace-preview-button {
-  background-color: var(--workspace-preview-button-background-color, #1779ba);
+  background-color: var(--workspace-preview-button-background-color, #1779ba) !important;
   border: 0;
-  color: var(--workspace-preview-button-text-color, #fff);
+  color: var(--workspace-preview-button-text-color, #fff) !important;
   margin: 0;
 }
 
@@ -408,8 +408,8 @@
 
 .workspace-preview-page .workspace-preview-button:hover,
 .workspace-preview-page .workspace-preview-button:focus {
-  background-color: var(--workspace-preview-button-hover-background-color, var(--workspace-preview-button-background-color, #1779ba));
-  color: var(--workspace-preview-button-text-color, #fff);
+  background-color: var(--workspace-preview-button-hover-background-color, var(--workspace-preview-button-background-color, #1779ba)) !important;
+  color: var(--workspace-preview-button-text-color, #fff) !important;
 }
 
 .workspace-preview-callouts {

@@ -41,6 +41,13 @@
     });
   }
 
+  function setButtonTextColors(root, selector, value) {
+    root.querySelectorAll(selector).forEach((element) => {
+      element.style.setProperty("--workspace-preview-button-text-color", value);
+      element.style.setProperty("color", value, "important");
+    });
+  }
+
   function applyTopbarColors() {
     const root = targetRoot("topbar");
     const mode = preview.dataset.previewMode === "dark" ? "dark" : "light";
@@ -107,12 +114,18 @@
       if (lowerName === "theme.button.text.color") {
         root.style.setProperty("--workspace-preview-button-text-color", value);
         preview.style.setProperty("--workspace-preview-button-text-color", value);
+        root.querySelectorAll(".workspace-preview-button").forEach((element) => {
+          const style = element.dataset.buttonStyle;
+          const variantControl = style ? getColorControl(`theme.button.${style}.text.color`) : null;
+          const variantValue = variantControl?.value;
+          const buttonTextColor = isColor(variantValue) ? variantValue : value;
+          element.style.setProperty("color", buttonTextColor, "important");
+        });
         return;
       }
       const textColorVariant = name.match(/^theme\.button\.(default|primary|secondary|success|warning|alert)\.text\.color$/i);
       if (textColorVariant) {
-        setColors(root, `[data-button-style="${textColorVariant[1].toLowerCase()}"]`,
-          ["--workspace-preview-button-text-color"], value);
+        setButtonTextColors(root, `[data-button-style="${textColorVariant[1].toLowerCase()}"]`, value);
         return;
       }
       const property = lowerName.endsWith(".hoverbackgroundcolor")

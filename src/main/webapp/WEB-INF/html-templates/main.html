@@ -92,22 +92,41 @@
         color: [[${themePropertyMap['theme.topbar.menu.hoverTextColor']}]] !important;
       }
       .button {
-        color: [[${themePropertyMap['theme.button.text.color']}]];
+        color: [[${themePropertyMap['theme.button.text.color']}]] !important;
+      }
+      .button.base,
+      .button:not(.primary):not(.secondary):not(.success):not(.warning):not(.alert) {
+        color: [[${themePropertyMap['theme.button.default.text.color']}]] !important;
         background-color: [[${themePropertyMap['theme.button.default.backgroundColor']}]];
       }
-      .button:hover, .button:focus {
+      .button.base:hover, .button.base:focus,
+      .button:not(.primary):not(.secondary):not(.success):not(.warning):not(.alert):hover,
+      .button:not(.primary):not(.secondary):not(.success):not(.warning):not(.alert):focus {
         background-color: [[${themePropertyMap['theme.button.default.hoverBackgroundColor']}]];
       }
       .button.primary{
+        color: [[${themePropertyMap['theme.button.primary.text.color']}]] !important;
         background-color: [[${themePropertyMap['theme.button.primary.backgroundColor']}]];
       }
-      .button.secondary {background-color: [[${themePropertyMap['theme.button.secondary.backgroundColor']}]];}
+      .button.secondary {
+        color: [[${themePropertyMap['theme.button.secondary.text.color']}]] !important;
+        background-color: [[${themePropertyMap['theme.button.secondary.backgroundColor']}]];
+      }
       .button.secondary:hover, .button.secondary:focus, #platform-menu ul.menu li a.button.secondary:hover{ background-color:[[${themePropertyMap['theme.button.secondary.hoverBackgroundColor']}]];}
-      .button.success {background-color:[[${themePropertyMap['theme.button.success.backgroundColor']}]];}
+      .button.success {
+        color:[[${themePropertyMap['theme.button.success.text.color']}]] !important;
+        background-color:[[${themePropertyMap['theme.button.success.backgroundColor']}]];
+      }
       .button.success:hover, .button.success:focus {background-color:[[${themePropertyMap['theme.button.success.hoverBackgroundColor']}]];}
-      .button.warning {background-color:[[${themePropertyMap['theme.button.warning.backgroundColor']}]];}
+      .button.warning {
+        color:[[${themePropertyMap['theme.button.warning.text.color']}]] !important;
+        background-color:[[${themePropertyMap['theme.button.warning.backgroundColor']}]];
+      }
       .button.warning:hover, .button.warning:focus {background-color:[[${themePropertyMap['theme.button.warning.hoverBackgroundColor']}]];}
-      .button.alert {background-color:[[${themePropertyMap['theme.button.alert.backgroundColor']}]];}
+      .button.alert {
+        color:[[${themePropertyMap['theme.button.alert.text.color']}]] !important;
+        background-color:[[${themePropertyMap['theme.button.alert.backgroundColor']}]];
+      }
       .button.alert:hover, .button.alert:focus {background-color:[[${themePropertyMap['theme.button.alert.hoverBackgroundColor']}]];}
       .callout {background-color:[[${themePropertyMap['theme.callout.backgroundColor']}]];}
       .callout,.callout label {color:[[${themePropertyMap['theme.callout.text.color']}]];}
