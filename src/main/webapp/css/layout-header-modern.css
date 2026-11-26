@@ -346,14 +346,14 @@
   gap: 0.5rem;
 }
 
-.header-btn {
+.modern-header .header-btn {
   display: inline-flex;
   align-items: center;
   padding: 0.5rem 1rem;
   background: transparent;
-  border: 1px solid var(--header-border);
+  border: 1px solid color-mix(in srgb, var(--nav-link-color, var(--header-text)) 20%, transparent);
   border-radius: 6px;
-  color: var(--header-text);
+  color: var(--nav-link-color, var(--header-text));
   text-decoration: none;
   text-transform: unset;
   font-size: 0.9rem;
@@ -367,19 +367,30 @@ button.header-btn .btn-text {
   padding: 3px 0 3px 0;
 }
 
-.header-btn:hover {
+.modern-header .header-btn:hover,
+.modern-header .header-btn:focus {
   background: var(--nav-hover-bg);
   border-color: var(--button-primary);
   color: var(--button-primary);
 }
 
-.header-btn.primary {
+.modern-header[data-header-modern] a.header-btn:not(.primary) {
+  color: var(--nav-link-color, var(--header-text));
+}
+
+.modern-header[data-header-modern] a.header-btn:not(.primary):hover,
+.modern-header[data-header-modern] a.header-btn:not(.primary):focus {
+  color: var(--button-primary);
+}
+
+.modern-header[data-header-modern] a.header-btn.primary {
   background: var(--button-primary);
   border-color: var(--button-primary);
   color: var(--header-bg);
 }
 
-.header-btn.primary:hover {
+.modern-header[data-header-modern] a.header-btn.primary:hover,
+.modern-header[data-header-modern] a.header-btn.primary:focus {
   background: var(--button-primary-hover);
   border-color: var(--button-primary-hover);
   color: var(--header-bg);

@@ -23,6 +23,9 @@
               </li>
             </ul>
           </div>
+          <div class="top-bar-right">
+            <a class="workspace-preview-header-button" href="#" onclick="return false;"><i class="${font:fas()} fa-envelope" aria-hidden="true"></i> Contact Us</a>
+          </div>
         </div>
       </nav>
 

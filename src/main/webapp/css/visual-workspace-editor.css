@@ -244,6 +244,25 @@
   flex-wrap: wrap;
 }
 
+#workspace-preview-page .workspace-preview-header-button {
+  align-items: center;
+  border: 1px solid color-mix(in srgb, var(--workspace-preview-menu-text-color, currentColor) 20%, transparent);
+  border-radius: 6px;
+  color: var(--workspace-preview-menu-text-color, inherit);
+  display: inline-flex;
+  font-weight: 500;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+#workspace-preview-page .workspace-preview-header-button:hover,
+#workspace-preview-page .workspace-preview-header-button:focus {
+  background-color: var(--workspace-preview-menu-hover-background-color, transparent);
+  color: var(--workspace-preview-menu-hover-text-color, inherit);
+}
+
 .workspace-preview-menu > li > a {
   color: var(--workspace-preview-menu-text-color, inherit);
 }

@@ -32,7 +32,7 @@
         <widget name="headerControl"><type>region</type></widget>
         <widget name="menu">
           <links>
-            <link name="Contact" link="/contact-us" icon="fa-envelope" />
+            <link name="Contact Us" link="/contact-us" icon="fa-envelope" />
           </links>
         </widget>
         <widget name="headerControl" role="guest"><type>appearance</type></widget>
