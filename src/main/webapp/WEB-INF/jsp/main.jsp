@@ -222,6 +222,18 @@
         <c:if test="${!empty themePropertyMap['theme.topbar.menu.dropdown.text.color']}">#platform-menu ul.is-dropdown-submenu li.is-dropdown-submenu-item a{color:<c:out value="${themePropertyMap['theme.topbar.menu.dropdown.text.color']}" />;}</c:if>
         <c:if test="${!empty themePropertyMap['theme.topbar.menu.activeBackgroundColor']}">#platform-menu ul.menu .active > a{background-color:<c:out value="${themePropertyMap['theme.topbar.menu.activeBackgroundColor']}" />}</c:if>
         <c:if test="${!empty themePropertyMap['theme.topbar.menu.activeTextColor']}">#platform-menu ul.menu .active > a{color:<c:out value="${themePropertyMap['theme.topbar.menu.activeTextColor']}" />}</c:if>
+        .modern-header {
+          <c:if test="${!empty themePropertyMap['theme.topbar.text.color']}">--header-text:<c:out value="${themePropertyMap['theme.topbar.text.color']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.topbar.backgroundColor']}">--header-bg:<c:out value="${themePropertyMap['theme.topbar.backgroundColor']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.topbar.menu.text.color']}">--nav-link-color:<c:out value="${themePropertyMap['theme.topbar.menu.text.color']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.topbar.menu.arrow.color']}">--nav-arrow-color:<c:out value="${themePropertyMap['theme.topbar.menu.arrow.color']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.topbar.menu.text.hoverBackgroundColor']}">--nav-hover-bg:<c:out value="${themePropertyMap['theme.topbar.menu.text.hoverBackgroundColor']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.topbar.menu.hoverTextColor']}">--nav-hover-text:<c:out value="${themePropertyMap['theme.topbar.menu.hoverTextColor']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.topbar.menu.dropdown.backgroundColor']}">--nav-dropdown-bg:<c:out value="${themePropertyMap['theme.topbar.menu.dropdown.backgroundColor']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.topbar.menu.dropdown.text.color']}">--nav-dropdown-text:<c:out value="${themePropertyMap['theme.topbar.menu.dropdown.text.color']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.topbar.menu.activeBackgroundColor']}">--nav-active-bg:<c:out value="${themePropertyMap['theme.topbar.menu.activeBackgroundColor']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.topbar.menu.activeTextColor']}">--nav-active-text:<c:out value="${themePropertyMap['theme.topbar.menu.activeTextColor']}" />;</c:if>
+        }
         <c:if test="${!empty themePropertyMap['theme.footer.links.color']}">.platform-footer a{color:<c:out value="${themePropertyMap['theme.footer.links.color']}" />}</c:if>
         <c:if test="${!empty themePropertyMap['theme.body.dark.backgroundColor']}">html[data-theme="dark"] body{background-color:<c:out value="${themePropertyMap['theme.body.dark.backgroundColor']}" />}</c:if>
         <c:if test="${!empty themePropertyMap['theme.body.dark.text.color']}">html[data-theme="dark"] body,html[data-theme="dark"] .breadcrumbs li,html[data-theme="dark"] .breadcrumbs li:not(:last-child)::after{color:<c:out value="${themePropertyMap['theme.body.dark.text.color']}" />}</c:if>
@@ -244,6 +256,43 @@
         <c:if test="${!empty themePropertyMap['theme.topbar.dark.menu.text.hoverBackgroundColor']}">html[data-theme="dark"] .platform-toc-container li:hover,html[data-theme="dark"] .platform-toc-container ul.vertical.menu li:hover>a,html[data-theme="dark"] .platform-content-container .tabs .tabs-title>a:hover,html[data-theme="dark"] .platform-content-container .tabs .tabs-title>a:focus{background-color:<c:out value="${themePropertyMap['theme.topbar.dark.menu.text.hoverBackgroundColor']}" />}</c:if>
         <c:if test="${!empty themePropertyMap['theme.topbar.dark.menu.activeTextColor']}">html[data-theme="dark"] .platform-toc-container ul.vertical.menu li.is-active a,html[data-theme="dark"] .platform-toc-container ul.vertical.menu li.is-active:hover a,html[data-theme="dark"] .platform-content-container .tabs .tabs-title.is-active a,html[data-theme="dark"] .platform-content-container .tabs .tabs-title>a[aria-selected=true]{color:<c:out value="${themePropertyMap['theme.topbar.dark.menu.activeTextColor']}" /> !important}</c:if>
         <c:if test="${!empty themePropertyMap['theme.topbar.dark.menu.hoverTextColor']}">html[data-theme="dark"] .platform-toc-container ul.vertical.menu li a:hover,html[data-theme="dark"] .platform-toc-container ul.vertical.menu li a:focus,html[data-theme="dark"] .platform-content-container .tabs .tabs-title>a:hover,html[data-theme="dark"] .platform-content-container .tabs .tabs-title>a:focus{color:<c:out value="${themePropertyMap['theme.topbar.dark.menu.hoverTextColor']}" /> !important}</c:if>
+        html[data-theme="dark"] .modern-header {
+          <c:if test="${!empty themePropertyMap['theme.topbar.dark.text.color']}">--header-text:<c:out value="${themePropertyMap['theme.topbar.dark.text.color']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.topbar.dark.backgroundColor']}">--header-bg:<c:out value="${themePropertyMap['theme.topbar.dark.backgroundColor']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.topbar.dark.menu.text.color']}">--nav-link-color:<c:out value="${themePropertyMap['theme.topbar.dark.menu.text.color']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.topbar.dark.menu.arrow.color']}">--nav-arrow-color:<c:out value="${themePropertyMap['theme.topbar.dark.menu.arrow.color']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.topbar.dark.menu.text.hoverBackgroundColor']}">--nav-hover-bg:<c:out value="${themePropertyMap['theme.topbar.dark.menu.text.hoverBackgroundColor']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.topbar.dark.menu.hoverTextColor']}">--nav-hover-text:<c:out value="${themePropertyMap['theme.topbar.dark.menu.hoverTextColor']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.topbar.dark.menu.dropdown.backgroundColor']}">--nav-dropdown-bg:<c:out value="${themePropertyMap['theme.topbar.dark.menu.dropdown.backgroundColor']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.topbar.dark.menu.dropdown.text.color']}">--nav-dropdown-text:<c:out value="${themePropertyMap['theme.topbar.dark.menu.dropdown.text.color']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.topbar.dark.menu.activeBackgroundColor']}">--nav-active-bg:<c:out value="${themePropertyMap['theme.topbar.dark.menu.activeBackgroundColor']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.topbar.dark.menu.activeTextColor']}">--nav-active-text:<c:out value="${themePropertyMap['theme.topbar.dark.menu.activeTextColor']}" />;</c:if>
+        }
+        <c:if test="${!empty themePropertyMap['theme.topbar.dark.menu.text.color']}">
+          html[data-theme="dark"] .modern-header a.nav-link,
+          html[data-theme="dark"] .modern-header a.header-btn:not(.primary) {
+            color:<c:out value="${themePropertyMap['theme.topbar.dark.menu.text.color']}" />;
+          }
+        </c:if>
+        <c:if test="${!empty themePropertyMap['theme.topbar.dark.menu.hoverTextColor']}">
+          html[data-theme="dark"] .modern-header a.nav-link:hover,
+          html[data-theme="dark"] .modern-header a.nav-link:focus,
+          html[data-theme="dark"] .modern-header a.header-btn:not(.primary):hover,
+          html[data-theme="dark"] .modern-header a.header-btn:not(.primary):focus {
+            color:<c:out value="${themePropertyMap['theme.topbar.dark.menu.hoverTextColor']}" />;
+          }
+        </c:if>
+        <c:if test="${!empty themePropertyMap['theme.topbar.dark.menu.activeTextColor']}">
+          html[data-theme="dark"] .modern-header a.nav-link.active,
+          html[data-theme="dark"] .modern-header .dropdown-item.active {
+            color:<c:out value="${themePropertyMap['theme.topbar.dark.menu.activeTextColor']}" />;
+          }
+        </c:if>
+        <c:if test="${!empty themePropertyMap['theme.topbar.dark.menu.dropdown.text.color']}">
+          html[data-theme="dark"] .modern-header a.dropdown-item {
+            color:<c:out value="${themePropertyMap['theme.topbar.dark.menu.dropdown.text.color']}" />;
+          }
+        </c:if>
         <c:if test="${!empty themePropertyMap['theme.callout.dark.box.backgroundColor']}">html[data-theme="dark"] table,html[data-theme="dark"] table thead,html[data-theme="dark"] table tbody,html[data-theme="dark"] table tr,html[data-theme="dark"] table th,html[data-theme="dark"] table td{background-color:<c:out value="${themePropertyMap['theme.callout.dark.box.backgroundColor']}" />}</c:if>
         <c:if test="${!empty themePropertyMap['theme.callout.dark.box.text.color']}">html[data-theme="dark"] table,html[data-theme="dark"] table thead,html[data-theme="dark"] table tbody,html[data-theme="dark"] table tr,html[data-theme="dark"] table th,html[data-theme="dark"] table td{color:<c:out value="${themePropertyMap['theme.callout.dark.box.text.color']}" />}</c:if>
         <c:if test="${!empty themePropertyMap['theme.pagination.dark.border.color']}">html[data-theme="dark"] ul.pagination li.page,html[data-theme="dark"] ul.pagination li.current{border-color:<c:out value="${themePropertyMap['theme.pagination.dark.border.color']}" />}</c:if>
