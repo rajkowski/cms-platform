@@ -88,6 +88,14 @@ public class VisualWorkspacePropertyCatalog {
         return "Theme: Buttons";
       } else if ("callout".equals(target)) {
         return "Theme: Callouts";
+      } else if ("pagination".equals(target)) {
+        return "Theme: Pagination";
+      } else if ("label".equals(target)) {
+        return "Theme: Labels";
+      } else if ("badge".equals(target)) {
+        return "Theme: Badges";
+      } else if ("progress".equals(target)) {
+        return "Theme: Progress Meters";
       } else if ("footer".equals(target)) {
         return "Theme: Footer";
       }
@@ -120,6 +128,14 @@ public class VisualWorkspacePropertyCatalog {
       return "button";
     } else if (propertyName.startsWith("theme.callout.")) {
       return "callout";
+    } else if (propertyName.startsWith("theme.pagination.")) {
+      return "pagination";
+    } else if (propertyName.startsWith("theme.label.")) {
+      return "label";
+    } else if (propertyName.startsWith("theme.badge.")) {
+      return "badge";
+    } else if (propertyName.startsWith("theme.progress.")) {
+      return "progress";
     } else if (propertyName.startsWith("theme.footer.")) {
       return "footer";
     }

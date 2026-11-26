@@ -227,9 +227,52 @@ public class VisualThemePresetCatalog {
       }
       return palette.accentSoft;
     }
+    if (name.startsWith("theme.pagination.")) {
+      if (name.endsWith(".text.color")) {
+        return name.contains(".current.") ? "#ffffff" : palette.accent;
+      }
+      if (name.contains(".current.")) {
+        return palette.accent;
+      }
+      return palette.accentSoft;
+    }
+    if (name.startsWith("theme.label.") || name.startsWith("theme.badge.")) {
+      if (name.endsWith(".text.color")) {
+        return name.contains(".badge.") && name.equals("theme.badge.text.color") ? "#000000" : "#ffffff";
+      }
+      return resolveSemanticBackgroundColor(name, palette);
+    }
+    if (name.startsWith("theme.progress.")) {
+      if (name.endsWith(".text.color")) {
+        return "#ffffff";
+      }
+      if (name.equals("theme.progress.backgroundcolor")) {
+        return "#e6e6e6";
+      }
+      return resolveSemanticBackgroundColor(name, palette);
+    }
     if (name.startsWith("theme.footer.")) {
       return name.endsWith("links.color") ? palette.accentSoft
           : name.endsWith("text.color") ? palette.navigationText : palette.navigationBackground;
+    }
+    return palette.accent;
+  }
+
+  private static String resolveSemanticBackgroundColor(String name, Palette palette) {
+    if (name.contains(".secondary.")) {
+      return "#64748b";
+    }
+    if (name.contains(".success.")) {
+      return "#34a55f";
+    }
+    if (name.contains(".warning.")) {
+      return "#e89b00";
+    }
+    if (name.contains(".alert.")) {
+      return "#c44736";
+    }
+    if (name.startsWith("theme.badge.") && !name.contains(".primary.")) {
+      return "#dfe1e6";
     }
     return palette.accent;
   }

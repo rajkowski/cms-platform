@@ -45,6 +45,10 @@ class VisualWorkspacePropertyCatalogTest {
     Assertions.assertEquals("body", VisualWorkspacePropertyCatalog.getPreviewTarget("theme.body.text.color"));
     Assertions.assertEquals("topbar", VisualWorkspacePropertyCatalog.getPreviewTarget("theme.topbar.dark.backgroundColor"));
     Assertions.assertEquals("button", VisualWorkspacePropertyCatalog.getPreviewTarget("theme.button.primary.backgroundColor"));
+    Assertions.assertEquals("pagination", VisualWorkspacePropertyCatalog.getPreviewTarget("theme.pagination.link.color"));
+    Assertions.assertEquals("label", VisualWorkspacePropertyCatalog.getPreviewTarget("theme.label.success.backgroundColor"));
+    Assertions.assertEquals("badge", VisualWorkspacePropertyCatalog.getPreviewTarget("theme.badge.alert.text.color"));
+    Assertions.assertEquals("progress", VisualWorkspacePropertyCatalog.getPreviewTarget("theme.progress.meter.backgroundColor"));
     Assertions.assertNull(VisualWorkspacePropertyCatalog.getPreviewTarget("theme.fonts.body"));
   }
 
@@ -108,6 +112,42 @@ class VisualWorkspacePropertyCatalogTest {
         "theme.callout.warning.text.color",
         "theme.callout.alert.backgroundColor",
         "theme.callout.alert.text.color",
+        "theme.pagination.border.color",
+        "theme.pagination.link.color",
+        "theme.pagination.current.backgroundColor",
+        "theme.pagination.current.text.color",
+        "theme.label.backgroundColor",
+        "theme.label.text.color",
+        "theme.label.primary.backgroundColor",
+        "theme.label.primary.text.color",
+        "theme.label.secondary.backgroundColor",
+        "theme.label.secondary.text.color",
+        "theme.label.success.backgroundColor",
+        "theme.label.success.text.color",
+        "theme.label.warning.backgroundColor",
+        "theme.label.warning.text.color",
+        "theme.label.alert.backgroundColor",
+        "theme.label.alert.text.color",
+        "theme.badge.backgroundColor",
+        "theme.badge.text.color",
+        "theme.badge.primary.backgroundColor",
+        "theme.badge.primary.text.color",
+        "theme.badge.secondary.backgroundColor",
+        "theme.badge.secondary.text.color",
+        "theme.badge.success.backgroundColor",
+        "theme.badge.success.text.color",
+        "theme.badge.warning.backgroundColor",
+        "theme.badge.warning.text.color",
+        "theme.badge.alert.backgroundColor",
+        "theme.badge.alert.text.color",
+        "theme.progress.backgroundColor",
+        "theme.progress.text.color",
+        "theme.progress.meter.backgroundColor",
+        "theme.progress.meter.primary.backgroundColor",
+        "theme.progress.meter.secondary.backgroundColor",
+        "theme.progress.meter.success.backgroundColor",
+        "theme.progress.meter.warning.backgroundColor",
+        "theme.progress.meter.alert.backgroundColor",
         "theme.footer.backgroundColor",
         "theme.footer.text.color",
         "theme.footer.links.color"
@@ -134,6 +174,10 @@ class VisualWorkspacePropertyCatalogTest {
         property("theme.button.warning.text.color", "color"),
         property("theme.button.alert.text.color", "color"),
         property("theme.callout.alert.backgroundColor", "color"),
+        property("theme.pagination.current.backgroundColor", "color"),
+        property("theme.label.success.backgroundColor", "color"),
+        property("theme.badge.text.color", "color"),
+        property("theme.progress.meter.warning.backgroundColor", "color"),
         property("theme.footer.links.color", "color"));
 
     List<Theme> themes = VisualThemePresetCatalog.loadIncludedThemes(properties);
@@ -150,6 +194,10 @@ class VisualWorkspacePropertyCatalogTest {
           .filter(themeProperty -> themeProperty.getName().startsWith("theme.button."))
           .filter(themeProperty -> themeProperty.getName().endsWith(".text.color"))
           .allMatch(themeProperty -> "#ffffff".equals(themeProperty.getValue())));
+      Assertions.assertEquals(
+          propertyValue(theme, "theme.body.link.color"),
+          propertyValue(theme, "theme.pagination.current.backgroundColor"));
+      Assertions.assertEquals("#000000", propertyValue(theme, "theme.badge.text.color"));
     }
   }
 

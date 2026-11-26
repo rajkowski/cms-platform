@@ -444,6 +444,114 @@
   --workspace-preview-callout-background-color: #fce8e5;
 }
 
+.workspace-preview-page .workspace-preview-label {
+  background-color: var(--workspace-preview-label-background-color, #1779ba);
+  color: var(--workspace-preview-label-text-color, #fff);
+}
+
+.workspace-preview-label[data-label-style="secondary"] {
+  --workspace-preview-label-background-color: #767676;
+}
+
+.workspace-preview-label[data-label-style="success"] {
+  --workspace-preview-label-background-color: #43ac6a;
+}
+
+.workspace-preview-label[data-label-style="warning"] {
+  --workspace-preview-label-background-color: #ffae00;
+}
+
+.workspace-preview-label[data-label-style="alert"] {
+  --workspace-preview-label-background-color: #cc4b37;
+}
+
+.workspace-preview-page .workspace-preview-badge {
+  background-color: var(--workspace-preview-badge-background-color, #dfe1e6);
+  color: var(--workspace-preview-badge-text-color, #000);
+}
+
+.workspace-preview-badge[data-badge-style="primary"] {
+  --workspace-preview-badge-background-color: #1779ba;
+  --workspace-preview-badge-text-color: #fff;
+}
+
+.workspace-preview-badge[data-badge-style="secondary"] {
+  --workspace-preview-badge-background-color: #767676;
+  --workspace-preview-badge-text-color: #fff;
+}
+
+.workspace-preview-badge[data-badge-style="success"] {
+  --workspace-preview-badge-background-color: #43ac6a;
+  --workspace-preview-badge-text-color: #fff;
+}
+
+.workspace-preview-badge[data-badge-style="warning"] {
+  --workspace-preview-badge-background-color: #ffae00;
+  --workspace-preview-badge-text-color: #fff;
+}
+
+.workspace-preview-badge[data-badge-style="alert"] {
+  --workspace-preview-badge-background-color: #cc4b37;
+  --workspace-preview-badge-text-color: #fff;
+}
+
+.workspace-preview-progress-list {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.workspace-preview-page .workspace-preview-progress {
+  background-color: var(--workspace-preview-progress-background-color, #e6e6e6);
+  height: 1.5rem;
+  margin: 0;
+}
+
+.workspace-preview-progress .progress-meter {
+  background-color: var(--workspace-preview-progress-meter-background-color, #1779ba);
+  min-width: 5.5rem;
+}
+
+.workspace-preview-progress[data-progress-style="secondary"] {
+  --workspace-preview-progress-meter-background-color: #767676;
+}
+
+.workspace-preview-progress[data-progress-style="success"] {
+  --workspace-preview-progress-meter-background-color: #43ac6a;
+}
+
+.workspace-preview-progress[data-progress-style="warning"] {
+  --workspace-preview-progress-meter-background-color: #ffae00;
+}
+
+.workspace-preview-progress[data-progress-style="alert"] {
+  --workspace-preview-progress-meter-background-color: #cc4b37;
+}
+
+.workspace-preview-progress .progress-meter-text {
+  color: var(--workspace-preview-progress-text-color, #fff);
+  margin: 0;
+}
+
+.workspace-preview-page .pagination li.page {
+  border-color: var(--workspace-preview-pagination-border-color, #d1d1d1);
+}
+
+.workspace-preview-page .pagination li.page:hover {
+  border-color: var(--workspace-preview-pagination-link-color, #1779ba);
+}
+
+.workspace-preview-page .pagination li.page a,
+.workspace-preview-page .pagination li.pagination-previous a,
+.workspace-preview-page .pagination li.pagination-next a {
+  color: var(--workspace-preview-pagination-link-color, #1779ba);
+}
+
+.workspace-preview-page .pagination li.current {
+  background: var(--workspace-preview-pagination-current-background-color, #1779ba);
+  border-color: var(--workspace-preview-pagination-current-background-color, #1779ba);
+  color: var(--workspace-preview-pagination-current-text-color, #fff);
+}
+
 .workspace-preview-footer {
   align-items: center;
   background: #353535;

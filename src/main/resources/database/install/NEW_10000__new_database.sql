@@ -157,6 +157,46 @@ INSERT INTO site_properties (property_order, property_label, property_name, prop
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (95, 'Alert Callout Background', 'theme.callout.alert.backgroundColor', '#f7e4e1', 'color');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (96, 'Alert Callout Text Color', 'theme.callout.alert.text.color', '#0a0a0a', 'color');
 
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (98, 'Pagination Border Color', 'theme.pagination.border.color', '#d1d1d1', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (99, 'Pagination Link Color', 'theme.pagination.link.color', '#1779ba', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (100, 'Current Page Background', 'theme.pagination.current.backgroundColor', '#1779ba', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (101, 'Current Page Text', 'theme.pagination.current.text.color', '#ffffff', 'color');
+
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (140, 'Label Background', 'theme.label.backgroundColor', '#1779ba', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (141, 'Label Text', 'theme.label.text.color', '#ffffff', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (142, 'Primary Label Background', 'theme.label.primary.backgroundColor', '#1779ba', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (143, 'Primary Label Text', 'theme.label.primary.text.color', '#ffffff', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (144, 'Secondary Label Background', 'theme.label.secondary.backgroundColor', '#767676', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (145, 'Secondary Label Text', 'theme.label.secondary.text.color', '#ffffff', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (146, 'Success Label Background', 'theme.label.success.backgroundColor', '#43ac6a', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (147, 'Success Label Text', 'theme.label.success.text.color', '#ffffff', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (148, 'Warning Label Background', 'theme.label.warning.backgroundColor', '#ffae00', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (149, 'Warning Label Text', 'theme.label.warning.text.color', '#ffffff', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (150, 'Alert Label Background', 'theme.label.alert.backgroundColor', '#cc4b37', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (151, 'Alert Label Text', 'theme.label.alert.text.color', '#ffffff', 'color');
+
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (152, 'Badge Background', 'theme.badge.backgroundColor', '#dfe1e6', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (153, 'Badge Text', 'theme.badge.text.color', '#000000', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (154, 'Primary Badge Background', 'theme.badge.primary.backgroundColor', '#1779ba', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (155, 'Primary Badge Text', 'theme.badge.primary.text.color', '#ffffff', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (156, 'Secondary Badge Background', 'theme.badge.secondary.backgroundColor', '#767676', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (157, 'Secondary Badge Text', 'theme.badge.secondary.text.color', '#ffffff', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (158, 'Success Badge Background', 'theme.badge.success.backgroundColor', '#43ac6a', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (159, 'Success Badge Text', 'theme.badge.success.text.color', '#ffffff', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (160, 'Warning Badge Background', 'theme.badge.warning.backgroundColor', '#ffae00', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (161, 'Warning Badge Text', 'theme.badge.warning.text.color', '#ffffff', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (162, 'Alert Badge Background', 'theme.badge.alert.backgroundColor', '#cc4b37', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (163, 'Alert Badge Text', 'theme.badge.alert.text.color', '#ffffff', 'color');
+
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (164, 'Progress Track', 'theme.progress.backgroundColor', '#e6e6e6', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (165, 'Progress Text', 'theme.progress.text.color', '#ffffff', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (166, 'Progress Meter', 'theme.progress.meter.backgroundColor', '#1779ba', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (167, 'Primary Progress Meter', 'theme.progress.meter.primary.backgroundColor', '#1779ba', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (168, 'Secondary Progress Meter', 'theme.progress.meter.secondary.backgroundColor', '#767676', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (169, 'Success Progress Meter', 'theme.progress.meter.success.backgroundColor', '#43ac6a', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (170, 'Warning Progress Meter', 'theme.progress.meter.warning.backgroundColor', '#ffae00', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (171, 'Alert Progress Meter', 'theme.progress.meter.alert.backgroundColor', '#cc4b37', 'color');
+
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (112, 'Footer Background', 'theme.footer.backgroundColor', '', 'color');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (114, 'Footer Text Color', 'theme.footer.text.color', '', 'color');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (116, 'Footer Links Color', 'theme.footer.links.color', '', 'color');

@@ -69,24 +69,40 @@
             </tr>
           </tbody>
         </table>
-        <div>
-          <span class="label">Default Label</span>
-          <span class="primary label">Primary Label</span>
-          <span class="secondary label">Secondary Label</span>
-          <span class="success label">Success Label</span>
-          <span class="alert label">Alert Label</span>
-          <span class="warning label">Warning Label</span>
+        <div data-preview-area="label">
+          <span class="label workspace-preview-label" data-label-style="base">Default Label</span>
+          <span class="primary label workspace-preview-label" data-label-style="primary">Primary Label</span>
+          <span class="secondary label workspace-preview-label" data-label-style="secondary">Secondary Label</span>
+          <span class="success label workspace-preview-label" data-label-style="success">Success Label</span>
+          <span class="alert label workspace-preview-label" data-label-style="alert">Alert Label</span>
+          <span class="warning label workspace-preview-label" data-label-style="warning">Warning Label</span>
         </div>
-        <div class="margin-top-20">
-          <span class="primary badge">1</span>
-          <span class="secondary badge">2</span>
-          <span class="success badge">3</span>
-          <span class="alert badge">A</span>
-          <span class="warning badge">B</span>
+        <div class="margin-top-20" data-preview-area="badge">
+          <span class="badge workspace-preview-badge" data-badge-style="base">0</span>
+          <span class="primary badge workspace-preview-badge" data-badge-style="primary">1</span>
+          <span class="secondary badge workspace-preview-badge" data-badge-style="secondary">2</span>
+          <span class="success badge workspace-preview-badge" data-badge-style="success">3</span>
+          <span class="alert badge workspace-preview-badge" data-badge-style="alert">A</span>
+          <span class="warning badge workspace-preview-badge" data-badge-style="warning">B</span>
         </div>
-        <div class="primary progress margin-top-20" role="progressbar" tabindex="0" aria-valuenow="25" aria-valuemin="0" aria-valuetext="25 percent" aria-valuemax="100">
-          <div class="progress-meter" style="width: 50%">
-            <p class="progress-meter-text">50%</p>
+        <div class="workspace-preview-progress-list margin-top-20" data-preview-area="progress">
+          <div class="base progress workspace-preview-progress" data-progress-style="base" role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-meter" style="width: 50%"><p class="progress-meter-text">Default</p></div>
+          </div>
+          <div class="primary progress workspace-preview-progress" data-progress-style="primary" role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-meter" style="width: 50%"><p class="progress-meter-text">Primary</p></div>
+          </div>
+          <div class="secondary progress workspace-preview-progress" data-progress-style="secondary" role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-meter" style="width: 50%"><p class="progress-meter-text">Secondary</p></div>
+          </div>
+          <div class="success progress workspace-preview-progress" data-progress-style="success" role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-meter" style="width: 50%"><p class="progress-meter-text">Success</p></div>
+          </div>
+          <div class="warning progress workspace-preview-progress" data-progress-style="warning" role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-meter" style="width: 50%"><p class="progress-meter-text">Warning</p></div>
+          </div>
+          <div class="alert progress workspace-preview-progress" data-progress-style="alert" role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-meter" style="width: 50%"><p class="progress-meter-text">Alert</p></div>
           </div>
         </div>
         <div class="platform-toc-container workspace-preview-toc" data-preview-area="toc">
@@ -109,7 +125,7 @@
           </div>
         </div>
 
-        <nav aria-label="Pagination">
+        <nav aria-label="Pagination" data-preview-area="pagination">
           <ul class="pagination text-center">
             <li class="page current"><span class="show-for-sr">You're on page</span> 1</li>
             <li class="page"><a href="#" aria-label="Page 2">2</a></li>
@@ -140,6 +156,10 @@
         <button type="button" class="button secondary" data-preview-select="body">Body</button>
         <button type="button" class="button secondary" data-preview-select="button">Buttons</button>
         <button type="button" class="button secondary" data-preview-select="callout">Callouts</button>
+        <button type="button" class="button secondary" data-preview-select="pagination">Pages</button>
+        <button type="button" class="button secondary" data-preview-select="label">Labels</button>
+        <button type="button" class="button secondary" data-preview-select="badge">Badges</button>
+        <button type="button" class="button secondary" data-preview-select="progress">Progress</button>
         <button type="button" class="button secondary" data-preview-select="footer">Footer</button>
       </div>
     </header>

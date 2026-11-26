@@ -159,6 +159,42 @@
       return;
     }
 
+    if (target === "pagination") {
+      if (lowerName === "theme.pagination.border.color") {
+        preview.style.setProperty("--workspace-preview-pagination-border-color", value);
+      } else if (lowerName === "theme.pagination.link.color") {
+        preview.style.setProperty("--workspace-preview-pagination-link-color", value);
+      } else if (lowerName === "theme.pagination.current.backgroundcolor") {
+        preview.style.setProperty("--workspace-preview-pagination-current-background-color", value);
+      } else if (lowerName === "theme.pagination.current.text.color") {
+        preview.style.setProperty("--workspace-preview-pagination-current-text-color", value);
+      }
+      return;
+    }
+
+    if (target === "label" || target === "badge") {
+      const variant = name.match(new RegExp(`^theme\\.${target}\\.(primary|secondary|success|warning|alert)\\.`, "i"));
+      const style = variant ? variant[1].toLowerCase() : "base";
+      const property = lowerName.endsWith(".text.color")
+        ? `--workspace-preview-${target}-text-color`
+        : `--workspace-preview-${target}-background-color`;
+      setColors(root, `[data-${target}-style="${style}"]`, [property], value);
+      return;
+    }
+
+    if (target === "progress") {
+      if (lowerName === "theme.progress.backgroundcolor") {
+        setColors(root, ".workspace-preview-progress", ["--workspace-preview-progress-background-color"], value);
+      } else if (lowerName === "theme.progress.text.color") {
+        setColors(root, ".workspace-preview-progress", ["--workspace-preview-progress-text-color"], value);
+      } else {
+        const variant = name.match(/^theme\.progress\.meter\.(primary|secondary|success|warning|alert)\.backgroundcolor$/i);
+        const style = variant ? variant[1].toLowerCase() : "base";
+        setColors(root, `[data-progress-style="${style}"]`, ["--workspace-preview-progress-meter-background-color"], value);
+      }
+      return;
+    }
+
     if (target === "utilitybar") {
       if (lowerName === "theme.utilitybar.link.color") {
         setColors(root, "a", ["color"], value);

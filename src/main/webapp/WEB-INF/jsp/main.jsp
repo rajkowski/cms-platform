@@ -156,6 +156,51 @@
         <c:if test="${!empty themePropertyMap['theme.callout.warning.text.color']}">.callout.warning,.callout.warning label{color:<c:out value="${themePropertyMap['theme.callout.warning.text.color']}" />}</c:if>
         <c:if test="${!empty themePropertyMap['theme.callout.alert.backgroundColor']}">.callout.alert{background-color:<c:out value="${themePropertyMap['theme.callout.alert.backgroundColor']}" />}</c:if>
         <c:if test="${!empty themePropertyMap['theme.callout.alert.text.color']}">.callout.alert,.callout.alert label{color:<c:out value="${themePropertyMap['theme.callout.alert.text.color']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.pagination.border.color']}">ul.pagination li.page,ul.pagination li.current{border-color:<c:out value="${themePropertyMap['theme.pagination.border.color']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.pagination.link.color']}">
+          ul.pagination li.page a,ul.pagination li.pagination-previous a,ul.pagination li.pagination-next a{color:<c:out value="${themePropertyMap['theme.pagination.link.color']}" />}
+          ul.pagination li.page:hover{border-color:<c:out value="${themePropertyMap['theme.pagination.link.color']}" />}
+        </c:if>
+        <c:if test="${!empty themePropertyMap['theme.pagination.current.backgroundColor']}">
+          ul.pagination li.current{background-color:<c:out value="${themePropertyMap['theme.pagination.current.backgroundColor']}" />;border-color:<c:out value="${themePropertyMap['theme.pagination.current.backgroundColor']}" />}
+        </c:if>
+        <c:if test="${!empty themePropertyMap['theme.pagination.current.text.color']}">ul.pagination li.current{color:<c:out value="${themePropertyMap['theme.pagination.current.text.color']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.label.backgroundColor']}">.label:not(.primary):not(.secondary):not(.success):not(.warning):not(.alert){background-color:<c:out value="${themePropertyMap['theme.label.backgroundColor']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.label.text.color']}">.label:not(.primary):not(.secondary):not(.success):not(.warning):not(.alert){color:<c:out value="${themePropertyMap['theme.label.text.color']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.label.primary.backgroundColor']}">.label.primary{background-color:<c:out value="${themePropertyMap['theme.label.primary.backgroundColor']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.label.primary.text.color']}">.label.primary{color:<c:out value="${themePropertyMap['theme.label.primary.text.color']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.label.secondary.backgroundColor']}">.label.secondary{background-color:<c:out value="${themePropertyMap['theme.label.secondary.backgroundColor']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.label.secondary.text.color']}">.label.secondary{color:<c:out value="${themePropertyMap['theme.label.secondary.text.color']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.label.success.backgroundColor']}">.label.success{background-color:<c:out value="${themePropertyMap['theme.label.success.backgroundColor']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.label.success.text.color']}">.label.success{color:<c:out value="${themePropertyMap['theme.label.success.text.color']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.label.warning.backgroundColor']}">.label.warning{background-color:<c:out value="${themePropertyMap['theme.label.warning.backgroundColor']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.label.warning.text.color']}">.label.warning{color:<c:out value="${themePropertyMap['theme.label.warning.text.color']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.label.alert.backgroundColor']}">.label.alert{background-color:<c:out value="${themePropertyMap['theme.label.alert.backgroundColor']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.label.alert.text.color']}">.label.alert{color:<c:out value="${themePropertyMap['theme.label.alert.text.color']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.badge.backgroundColor']}">
+          .badge:not(.primary):not(.secondary):not(.success):not(.warning):not(.alert):not(.new):not(.updated){background-color:<c:out value="${themePropertyMap['theme.badge.backgroundColor']}" />}
+        </c:if>
+        <c:if test="${!empty themePropertyMap['theme.badge.text.color']}">
+          .badge:not(.primary):not(.secondary):not(.success):not(.warning):not(.alert):not(.new):not(.updated){color:<c:out value="${themePropertyMap['theme.badge.text.color']}" />}
+        </c:if>
+        <c:if test="${!empty themePropertyMap['theme.badge.primary.backgroundColor']}">.badge.primary{background-color:<c:out value="${themePropertyMap['theme.badge.primary.backgroundColor']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.badge.primary.text.color']}">.badge.primary{color:<c:out value="${themePropertyMap['theme.badge.primary.text.color']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.badge.secondary.backgroundColor']}">.badge.secondary{background-color:<c:out value="${themePropertyMap['theme.badge.secondary.backgroundColor']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.badge.secondary.text.color']}">.badge.secondary{color:<c:out value="${themePropertyMap['theme.badge.secondary.text.color']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.badge.success.backgroundColor']}">.badge.success{background-color:<c:out value="${themePropertyMap['theme.badge.success.backgroundColor']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.badge.success.text.color']}">.badge.success{color:<c:out value="${themePropertyMap['theme.badge.success.text.color']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.badge.warning.backgroundColor']}">.badge.warning{background-color:<c:out value="${themePropertyMap['theme.badge.warning.backgroundColor']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.badge.warning.text.color']}">.badge.warning{color:<c:out value="${themePropertyMap['theme.badge.warning.text.color']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.badge.alert.backgroundColor']}">.badge.alert{background-color:<c:out value="${themePropertyMap['theme.badge.alert.backgroundColor']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.badge.alert.text.color']}">.badge.alert{color:<c:out value="${themePropertyMap['theme.badge.alert.text.color']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.progress.backgroundColor']}">.progress{background-color:<c:out value="${themePropertyMap['theme.progress.backgroundColor']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.progress.text.color']}">.progress .progress-meter,.progress .progress-meter .progress-meter-text{color:<c:out value="${themePropertyMap['theme.progress.text.color']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.progress.meter.backgroundColor']}">.progress:not(.primary):not(.secondary):not(.success):not(.warning):not(.alert) .progress-meter{background-color:<c:out value="${themePropertyMap['theme.progress.meter.backgroundColor']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.progress.meter.primary.backgroundColor']}">.progress.primary .progress-meter{background-color:<c:out value="${themePropertyMap['theme.progress.meter.primary.backgroundColor']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.progress.meter.secondary.backgroundColor']}">.progress.secondary .progress-meter{background-color:<c:out value="${themePropertyMap['theme.progress.meter.secondary.backgroundColor']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.progress.meter.success.backgroundColor']}">.progress.success .progress-meter{background-color:<c:out value="${themePropertyMap['theme.progress.meter.success.backgroundColor']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.progress.meter.warning.backgroundColor']}">.progress.warning .progress-meter{background-color:<c:out value="${themePropertyMap['theme.progress.meter.warning.backgroundColor']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.progress.meter.alert.backgroundColor']}">.progress.alert .progress-meter{background-color:<c:out value="${themePropertyMap['theme.progress.meter.alert.backgroundColor']}" />}</c:if>
         <c:if test="${!empty themePropertyMap['theme.footer.backgroundColor']}">.platform-footer{background-color:<c:out value="${themePropertyMap['theme.footer.backgroundColor']}" />}.platform-footer .fa-inverse{color:<c:out value="${themePropertyMap['theme.footer.backgroundColor']}" />}</c:if>
         <c:if test="${!empty themePropertyMap['theme.footer.text.color']}">.platform-footer,.platform-footer p{color:<c:out value="${themePropertyMap['theme.footer.text.color']}" />}</c:if>
         <c:if test="${!empty themePropertyMap['theme.utilitybar.text.color']}">#platform-menu .utility-bar{color:<c:out value="${themePropertyMap['theme.utilitybar.text.color']}" />}</c:if>
