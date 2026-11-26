@@ -1,8 +1,11 @@
+.full-page .web-content {
+  overflow: visible;
+}
+
 #visual-workspace-editor-wrapper,
 #visual-theme-editor-wrapper {
   display: flex;
   width: 100%;
-  height: 100vh;
   flex-direction: column;
   background: var(--editor-canvas-bg);
 }
@@ -13,7 +16,7 @@
   --workspace-editor-muted: #5f6b78;
   flex: 1;
   min-height: 0;
-  overflow: auto;
+  overflow: visible;
   color: #242a31;
   padding: 1rem;
 }

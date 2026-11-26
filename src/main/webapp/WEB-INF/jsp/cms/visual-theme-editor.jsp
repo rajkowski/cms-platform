@@ -56,7 +56,6 @@
           </c:forEach>
         </select>
       </label>
-      <button id="workspace-editor-discard" type="button" class="button tiny secondary no-gap radius" disabled>Discard</button>
       <button type="submit" form="workspace-editor-form" name="command" value="downloadThemeColors"
               class="button tiny secondary no-gap radius"><i class="${font:far()} fa-download"></i> Download</button>
       <form id="workspace-editor-theme-upload-form" method="post" enctype="multipart/form-data">
@@ -68,6 +67,7 @@
         </label>
         <input type="file" id="workspace-editor-theme-upload" name="file" accept="application/json,.json" class="show-for-sr"/>
       </form>
+      <button id="workspace-editor-discard" type="button" class="button tiny secondary no-gap radius" disabled>Discard</button>
       <button id="workspace-editor-save" type="submit" form="workspace-editor-form" class="button tiny success no-gap radius" disabled><i class="${font:far()} fa-floppy-disk"></i> Save</button>
       <span id="workspace-editor-dirty-status" role="status" aria-live="polite">All changes saved</span>
     </div>
