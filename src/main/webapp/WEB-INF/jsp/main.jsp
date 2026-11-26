@@ -104,12 +104,42 @@
     <g:compress>
       <style><%-- Prevent top-bar flicker --%>
         :root {
+          <c:if test="${!empty themePropertyMap['theme.body.backgroundColor']}">--theme-body-background-color:<c:out value="${themePropertyMap['theme.body.backgroundColor']}" />;</c:if>
           <c:if test="${!empty themePropertyMap['theme.body.text.color']}">--theme-body-text-color:<c:out value="${themePropertyMap['theme.body.text.color']}" />;</c:if>
           <c:if test="${!empty themePropertyMap['theme.body.link.color']}">--theme-body-link-color:<c:out value="${themePropertyMap['theme.body.link.color']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.callout.box.backgroundColor']}">--theme-surface-background-color:<c:out value="${themePropertyMap['theme.callout.box.backgroundColor']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.callout.box.text.color']}">--theme-surface-text-color:<c:out value="${themePropertyMap['theme.callout.box.text.color']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.callout.secondary.backgroundColor']}">--theme-secondary-background-color:<c:out value="${themePropertyMap['theme.callout.secondary.backgroundColor']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.callout.secondary.backgroundColor']}">--theme-neutral-background-color:<c:out value="${themePropertyMap['theme.callout.secondary.backgroundColor']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.callout.secondary.text.color']}">--theme-secondary-text-color:<c:out value="${themePropertyMap['theme.callout.secondary.text.color']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.button.primary.backgroundColor']}">--theme-primary-background-color:<c:out value="${themePropertyMap['theme.button.primary.backgroundColor']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.button.primary.text.color']}">--theme-primary-text-color:<c:out value="${themePropertyMap['theme.button.primary.text.color']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.button.success.backgroundColor']}">--theme-success-background-color:<c:out value="${themePropertyMap['theme.button.success.backgroundColor']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.button.success.text.color']}">--theme-success-text-color:<c:out value="${themePropertyMap['theme.button.success.text.color']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.button.warning.backgroundColor']}">--theme-warning-background-color:<c:out value="${themePropertyMap['theme.button.warning.backgroundColor']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.button.warning.text.color']}">--theme-warning-text-color:<c:out value="${themePropertyMap['theme.button.warning.text.color']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.button.alert.backgroundColor']}">--theme-alert-background-color:<c:out value="${themePropertyMap['theme.button.alert.backgroundColor']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.button.alert.text.color']}">--theme-alert-text-color:<c:out value="${themePropertyMap['theme.button.alert.text.color']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.topbar.backgroundColor']}">--theme-topbar-background-color:<c:out value="${themePropertyMap['theme.topbar.backgroundColor']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.topbar.menu.text.color']}">--theme-topbar-text-color:<c:out value="${themePropertyMap['theme.topbar.menu.text.color']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.footer.backgroundColor']}">--theme-footer-background-color:<c:out value="${themePropertyMap['theme.footer.backgroundColor']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.footer.text.color']}">--theme-footer-text-color:<c:out value="${themePropertyMap['theme.footer.text.color']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.footer.links.color']}">--theme-footer-link-color:<c:out value="${themePropertyMap['theme.footer.links.color']}" />;--theme-footer-link-hover-color:<c:out value="${themePropertyMap['theme.footer.links.color']}" />;</c:if>
         }
         html[data-theme="dark"] {
+          <c:if test="${!empty themePropertyMap['theme.body.dark.backgroundColor']}">--theme-body-background-color:<c:out value="${themePropertyMap['theme.body.dark.backgroundColor']}" />;</c:if>
           <c:if test="${!empty themePropertyMap['theme.body.dark.text.color']}">--theme-body-text-color:<c:out value="${themePropertyMap['theme.body.dark.text.color']}" />;</c:if>
           <c:if test="${!empty themePropertyMap['theme.body.dark.link.color']}">--theme-body-link-color:<c:out value="${themePropertyMap['theme.body.dark.link.color']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.callout.dark.box.backgroundColor']}">--theme-surface-background-color:<c:out value="${themePropertyMap['theme.callout.dark.box.backgroundColor']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.callout.dark.box.text.color']}">--theme-surface-text-color:<c:out value="${themePropertyMap['theme.callout.dark.box.text.color']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.callout.dark.secondary.backgroundColor']}">--theme-secondary-background-color:<c:out value="${themePropertyMap['theme.callout.dark.secondary.backgroundColor']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.callout.dark.secondary.backgroundColor']}">--theme-neutral-background-color:<c:out value="${themePropertyMap['theme.callout.dark.secondary.backgroundColor']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.callout.dark.secondary.text.color']}">--theme-secondary-text-color:<c:out value="${themePropertyMap['theme.callout.dark.secondary.text.color']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.topbar.dark.backgroundColor']}">--theme-topbar-background-color:<c:out value="${themePropertyMap['theme.topbar.dark.backgroundColor']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.topbar.dark.menu.text.color']}">--theme-topbar-text-color:<c:out value="${themePropertyMap['theme.topbar.dark.menu.text.color']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.footer.dark.backgroundColor']}">--theme-footer-background-color:<c:out value="${themePropertyMap['theme.footer.dark.backgroundColor']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.footer.dark.text.color']}">--theme-footer-text-color:<c:out value="${themePropertyMap['theme.footer.dark.text.color']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.footer.dark.links.color']}">--theme-footer-link-color:<c:out value="${themePropertyMap['theme.footer.dark.links.color']}" />;--theme-footer-link-hover-color:<c:out value="${themePropertyMap['theme.footer.dark.links.color']}" />;</c:if>
         }
         .no-js .top-bar { display: none; }
         @media screen and (min-width: 40em) {

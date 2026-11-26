@@ -26,8 +26,28 @@
     <link rel="stylesheet" type="text/css" th:href="${#strings.concat(ctx, '/css/platform-ecommerce.css?v=', VERSION)}" />
     <style th:if="${not #strings.isEmpty(themePropertyMap['theme.body.text.color'])}">
       :root {
+        --theme-body-background-color: [[${themePropertyMap['theme.body.backgroundColor']}]];
         --theme-body-text-color: [[${themePropertyMap['theme.body.text.color']}]];
         --theme-body-link-color: [[${themePropertyMap['theme.body.link.color']}]];
+        --theme-surface-background-color: [[${themePropertyMap['theme.callout.box.backgroundColor']}]];
+        --theme-surface-text-color: [[${themePropertyMap['theme.callout.box.text.color']}]];
+        --theme-secondary-background-color: [[${themePropertyMap['theme.callout.secondary.backgroundColor']}]];
+        --theme-neutral-background-color: [[${themePropertyMap['theme.callout.secondary.backgroundColor']}]];
+        --theme-secondary-text-color: [[${themePropertyMap['theme.callout.secondary.text.color']}]];
+        --theme-primary-background-color: [[${themePropertyMap['theme.button.primary.backgroundColor']}]];
+        --theme-primary-text-color: [[${themePropertyMap['theme.button.primary.text.color']}]];
+        --theme-success-background-color: [[${themePropertyMap['theme.button.success.backgroundColor']}]];
+        --theme-success-text-color: [[${themePropertyMap['theme.button.success.text.color']}]];
+        --theme-warning-background-color: [[${themePropertyMap['theme.button.warning.backgroundColor']}]];
+        --theme-warning-text-color: [[${themePropertyMap['theme.button.warning.text.color']}]];
+        --theme-alert-background-color: [[${themePropertyMap['theme.button.alert.backgroundColor']}]];
+        --theme-alert-text-color: [[${themePropertyMap['theme.button.alert.text.color']}]];
+        --theme-topbar-background-color: [[${themePropertyMap['theme.topbar.backgroundColor']}]];
+        --theme-topbar-text-color: [[${themePropertyMap['theme.topbar.menu.text.color']}]];
+        --theme-footer-background-color: [[${themePropertyMap['theme.footer.backgroundColor']}]];
+        --theme-footer-text-color: [[${themePropertyMap['theme.footer.text.color']}]];
+        --theme-footer-link-color: [[${themePropertyMap['theme.footer.links.color']}]];
+        --theme-footer-link-hover-color: [[${themePropertyMap['theme.footer.links.color']}]];
       }
       .no-js .top-bar { display: none; }
       @media screen and (min-width: 40em) {
