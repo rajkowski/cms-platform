@@ -366,7 +366,7 @@
 }
 
 .workspace-preview-page .workspace-preview-toc li a {
-  color: var(--workspace-preview-toc-text-color, #17202a);
+  color: var(--workspace-preview-toc-text-color, #17202a) !important;
 }
 
 .workspace-preview-page .workspace-preview-toc .menu .is-active > a {
@@ -385,7 +385,7 @@
 
 .workspace-preview-page .workspace-preview-tabs .tabs li a {
   background: var(--workspace-preview-toc-background-color, #edf1f5);
-  color: var(--workspace-preview-toc-text-color, #17202a);
+  color: var(--workspace-preview-toc-text-color, #17202a) !important;
 }
 
 .workspace-preview-page .workspace-preview-tabs .tabs,

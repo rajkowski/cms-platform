@@ -12,6 +12,7 @@
   --theme-neutral-text-color: CanvasText;
   --theme-primary-background-color: Highlight;
   --theme-primary-text-color: HighlightText;
+  --theme-menu-text-color: CanvasText;
   --theme-secondary-background-color: color-mix(in srgb, CanvasText 18%, Canvas);
   --theme-secondary-text-color: CanvasText;
   --theme-success-background-color: color-mix(in srgb, LinkText 70%, Highlight);
@@ -706,7 +707,7 @@ ul.pagination li.pagination-next a:hover {
   background-color: var(--theme-primary-background-color);
 }
 .platform-toc-container li a {
-  color: var(--theme-body-link-color);
+  color: var(--theme-secondary-text-color);
   text-decoration: none;
   padding-top: 15px;
   padding-bottom: 14px;

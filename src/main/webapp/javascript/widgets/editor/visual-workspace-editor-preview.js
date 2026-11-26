@@ -91,7 +91,6 @@
       }
     });
     const tocMenuColors = {
-      "--workspace-preview-toc-text-color": colorFor("menu.text.color"),
       "--workspace-preview-toc-active-background-color": colorFor("menu.activebackgroundcolor"),
       "--workspace-preview-toc-active-text-color": colorFor("menu.activetextcolor"),
       "--workspace-preview-toc-hover-background-color": colorFor("menu.text.hoverbackgroundcolor"),
@@ -178,6 +177,11 @@
         preview.style.setProperty("--workspace-preview-box-text-color", value);
         preview.querySelectorAll(".workspace-preview-toc, .workspace-preview-tabs").forEach((component) => {
           component.style.setProperty("--workspace-preview-box-text-color", value);
+        });
+      } else if (lowerName === "theme.callout.secondary.text.color") {
+        preview.style.setProperty("--workspace-preview-toc-text-color", value);
+        preview.querySelectorAll(".workspace-preview-toc, .workspace-preview-tabs").forEach((component) => {
+          component.style.setProperty("--workspace-preview-toc-text-color", value);
         });
       }
       return;
