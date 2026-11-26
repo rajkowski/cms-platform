@@ -117,6 +117,10 @@ public class VisualWorkspacePropertyCatalog {
     return "Site: Identity";
   }
 
+  public static boolean isDarkThemeProperty(String propertyName) {
+    return propertyName != null && propertyName.startsWith("theme.") && propertyName.contains(".dark.");
+  }
+
   public static String getPreviewTarget(String propertyName) {
     if (propertyName.startsWith("theme.body.")) {
       return "body";

@@ -128,8 +128,11 @@
 }
 
 .workspace-editor-color-panel {
+  align-self: start;
   max-height: 85vh;
   overflow: auto;
+  position: sticky;
+  top: 0;
 }
 
 .workspace-editor-panel-header {
@@ -379,6 +382,11 @@
   border-color: #59616c;
 }
 
+.workspace-preview-page[data-preview-mode="dark"] .workspace-preview-main table {
+  background: var(--workspace-preview-callout-background-color, #252d38);
+  color: var(--workspace-preview-callout-text-color, #e8edf2);
+}
+
 .workspace-preview-page[data-preview-mode="dark"] .workspace-preview-main > a:not(.button) {
   color: var(--workspace-preview-link-color, #8ab4f8);
 }
@@ -625,5 +633,7 @@
 
   .workspace-editor-color-panel {
     max-height: none;
+    overflow: visible;
+    position: static;
   }
 }

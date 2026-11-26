@@ -201,6 +201,36 @@ INSERT INTO site_properties (property_order, property_label, property_name, prop
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (114, 'Footer Text Color', 'theme.footer.text.color', '', 'color');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (116, 'Footer Links Color', 'theme.footer.links.color', '', 'color');
 
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (214, 'Dark Web Page Background', 'theme.body.dark.backgroundColor', '#10151d', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (215, 'Dark Web Page Text Color', 'theme.body.dark.text.color', '#e8edf2', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (216, 'Dark Web Page Link Color', 'theme.body.dark.link.color', '#60a5fa', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (217, 'Dark Bar Background Color', 'theme.utilitybar.dark.backgroundColor', '#17212c', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (218, 'Dark Bar Text Color', 'theme.utilitybar.dark.text.color', '#f3f4f6', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (219, 'Dark Bar Link Color', 'theme.utilitybar.dark.link.color', '#f3f4f6', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (280, 'Dark Callout Background', 'theme.callout.dark.backgroundColor', '#252d38', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (281, 'Dark Callout Text Color', 'theme.callout.dark.text.color', '#e8edf2', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (283, 'Dark Primary Callout Background', 'theme.callout.dark.primary.backgroundColor', '#17283a', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (284, 'Dark Primary Callout Text Color', 'theme.callout.dark.primary.text.color', '#e8edf2', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (286, 'Dark Secondary Callout Background', 'theme.callout.dark.secondary.backgroundColor', '#252d38', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (287, 'Dark Secondary Callout Text Color', 'theme.callout.dark.secondary.text.color', '#e8edf2', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (289, 'Dark Success Callout Background', 'theme.callout.dark.success.backgroundColor', '#173d2b', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (290, 'Dark Success Callout Text Color', 'theme.callout.dark.success.text.color', '#e8edf2', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (292, 'Dark Warning Callout Background', 'theme.callout.dark.warning.backgroundColor', '#4a3513', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (293, 'Dark Warning Callout Text Color', 'theme.callout.dark.warning.text.color', '#fff4d6', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (295, 'Dark Alert Callout Background', 'theme.callout.dark.alert.backgroundColor', '#492423', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (296, 'Dark Alert Callout Text Color', 'theme.callout.dark.alert.text.color', '#fde8e7', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (298, 'Dark Pagination Border Color', 'theme.pagination.dark.border.color', '#46505d', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (299, 'Dark Pagination Link Color', 'theme.pagination.dark.link.color', '#60a5fa', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (300, 'Dark Current Page Background', 'theme.pagination.dark.current.backgroundColor', '#60a5fa', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (301, 'Dark Current Page Text', 'theme.pagination.dark.current.text.color', '#ffffff', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (352, 'Dark Badge Background', 'theme.badge.dark.backgroundColor', '#3b4654', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (353, 'Dark Badge Text', 'theme.badge.dark.text.color', '#f3f4f6', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (364, 'Dark Progress Track', 'theme.progress.dark.backgroundColor', '#343d49', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (365, 'Dark Progress Text', 'theme.progress.dark.text.color', '#ffffff', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (412, 'Dark Footer Background', 'theme.footer.dark.backgroundColor', '#0b1118', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (414, 'Dark Footer Text Color', 'theme.footer.dark.text.color', '#dce2e8', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (416, 'Dark Footer Links Color', 'theme.footer.dark.links.color', '#60a5fa', 'color');
+
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (130, 'Header XML Name', 'theme.header.name', '', 'text');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (132, 'Footer XML Name', 'theme.footer.name', '', 'text');
 

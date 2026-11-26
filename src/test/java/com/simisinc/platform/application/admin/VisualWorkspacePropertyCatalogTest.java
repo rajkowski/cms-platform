@@ -43,6 +43,7 @@ class VisualWorkspacePropertyCatalogTest {
   @Test
   void mapsThemeColorsOnlyToSupportedPreviewTargets() {
     Assertions.assertEquals("body", VisualWorkspacePropertyCatalog.getPreviewTarget("theme.body.text.color"));
+    Assertions.assertEquals("body", VisualWorkspacePropertyCatalog.getPreviewTarget("theme.body.dark.backgroundColor"));
     Assertions.assertEquals("topbar", VisualWorkspacePropertyCatalog.getPreviewTarget("theme.topbar.dark.backgroundColor"));
     Assertions.assertEquals("button", VisualWorkspacePropertyCatalog.getPreviewTarget("theme.button.primary.backgroundColor"));
     Assertions.assertEquals("pagination", VisualWorkspacePropertyCatalog.getPreviewTarget("theme.pagination.link.color"));
@@ -50,6 +51,8 @@ class VisualWorkspacePropertyCatalogTest {
     Assertions.assertEquals("badge", VisualWorkspacePropertyCatalog.getPreviewTarget("theme.badge.alert.text.color"));
     Assertions.assertEquals("progress", VisualWorkspacePropertyCatalog.getPreviewTarget("theme.progress.meter.backgroundColor"));
     Assertions.assertNull(VisualWorkspacePropertyCatalog.getPreviewTarget("theme.fonts.body"));
+    Assertions.assertTrue(VisualWorkspacePropertyCatalog.isDarkThemeProperty("theme.body.dark.backgroundColor"));
+    Assertions.assertFalse(VisualWorkspacePropertyCatalog.isDarkThemeProperty("theme.body.backgroundColor"));
   }
 
   @Test
@@ -58,9 +61,15 @@ class VisualWorkspacePropertyCatalogTest {
         "theme.body.text.color",
         "theme.body.link.color",
         "theme.body.backgroundColor",
+        "theme.body.dark.backgroundColor",
+        "theme.body.dark.text.color",
+        "theme.body.dark.link.color",
         "theme.utilitybar.text.color",
         "theme.utilitybar.link.color",
         "theme.utilitybar.backgroundColor",
+        "theme.utilitybar.dark.backgroundColor",
+        "theme.utilitybar.dark.text.color",
+        "theme.utilitybar.dark.link.color",
         "theme.topbar.text.color",
         "theme.topbar.backgroundColor",
         "theme.topbar.menu.text.color",
@@ -112,10 +121,26 @@ class VisualWorkspacePropertyCatalogTest {
         "theme.callout.warning.text.color",
         "theme.callout.alert.backgroundColor",
         "theme.callout.alert.text.color",
+        "theme.callout.dark.backgroundColor",
+        "theme.callout.dark.text.color",
+        "theme.callout.dark.primary.backgroundColor",
+        "theme.callout.dark.primary.text.color",
+        "theme.callout.dark.secondary.backgroundColor",
+        "theme.callout.dark.secondary.text.color",
+        "theme.callout.dark.success.backgroundColor",
+        "theme.callout.dark.success.text.color",
+        "theme.callout.dark.warning.backgroundColor",
+        "theme.callout.dark.warning.text.color",
+        "theme.callout.dark.alert.backgroundColor",
+        "theme.callout.dark.alert.text.color",
         "theme.pagination.border.color",
         "theme.pagination.link.color",
         "theme.pagination.current.backgroundColor",
         "theme.pagination.current.text.color",
+        "theme.pagination.dark.border.color",
+        "theme.pagination.dark.link.color",
+        "theme.pagination.dark.current.backgroundColor",
+        "theme.pagination.dark.current.text.color",
         "theme.label.backgroundColor",
         "theme.label.text.color",
         "theme.label.primary.backgroundColor",
@@ -140,6 +165,8 @@ class VisualWorkspacePropertyCatalogTest {
         "theme.badge.warning.text.color",
         "theme.badge.alert.backgroundColor",
         "theme.badge.alert.text.color",
+        "theme.badge.dark.backgroundColor",
+        "theme.badge.dark.text.color",
         "theme.progress.backgroundColor",
         "theme.progress.text.color",
         "theme.progress.meter.backgroundColor",
@@ -148,9 +175,14 @@ class VisualWorkspacePropertyCatalogTest {
         "theme.progress.meter.success.backgroundColor",
         "theme.progress.meter.warning.backgroundColor",
         "theme.progress.meter.alert.backgroundColor",
+        "theme.progress.dark.backgroundColor",
+        "theme.progress.dark.text.color",
         "theme.footer.backgroundColor",
         "theme.footer.text.color",
-        "theme.footer.links.color"
+        "theme.footer.links.color",
+        "theme.footer.dark.backgroundColor",
+        "theme.footer.dark.text.color",
+        "theme.footer.dark.links.color"
     };
 
     for (String propertyName : propertyNames) {
@@ -163,6 +195,7 @@ class VisualWorkspacePropertyCatalogTest {
   void providesThirtyCompleteIncludedThemes() {
     List<SiteProperty> properties = List.of(
         property("theme.body.backgroundColor", "color"),
+        property("theme.body.dark.backgroundColor", "color"),
         property("theme.body.link.color", "color"),
         property("theme.utilitybar.backgroundColor", "color"),
         property("theme.topbar.dark.backgroundColor", "color"),
@@ -198,6 +231,10 @@ class VisualWorkspacePropertyCatalogTest {
           propertyValue(theme, "theme.body.link.color"),
           propertyValue(theme, "theme.pagination.current.backgroundColor"));
       Assertions.assertEquals("#000000", propertyValue(theme, "theme.badge.text.color"));
+      Assertions.assertEquals("#10151d", propertyValue(theme, "theme.body.dark.backgroundColor"));
+      Assertions.assertNotEquals(
+          propertyValue(theme, "theme.body.backgroundColor"),
+          propertyValue(theme, "theme.body.dark.backgroundColor"));
     }
   }
 

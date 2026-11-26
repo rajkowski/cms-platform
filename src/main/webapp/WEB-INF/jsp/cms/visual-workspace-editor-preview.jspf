@@ -171,7 +171,8 @@
         <c:if test="${propertyDraftValues.containsKey(property.name)}">
           <c:set var="inputValue" value="${propertyDraftValues[property.name]}"/>
         </c:if>
-        <div class="workspace-editor-setting workspace-theme-setting" data-theme-color-item data-preview-target="${themePreviewTargets[property.name]}">
+        <div class="workspace-editor-setting workspace-theme-setting" data-theme-color-item
+             data-preview-target="${themePreviewTargets[property.name]}" data-preview-color-mode="${themePropertyModes[property.name]}">
           <label for="theme-setting-${property.id}"><c:out value="${property.label}"/></label>
           <div class="workspace-editor-color-inputs">
             <input type="text" id="theme-setting-${property.id}" name="<c:out value="${property.name}"/>"

@@ -35,6 +35,22 @@
       .find((control) => control.name === name);
   }
 
+  function isControlVisibleInMode(control, mode) {
+    const colorMode = control.dataset.previewColorMode;
+    if (mode === "light") {
+      return colorMode !== "dark";
+    }
+    if (colorMode === "dark") {
+      return true;
+    }
+    const propertyInput = control.querySelector("[data-theme-property]");
+    const darkName = propertyInput?.name.replace(
+      /^(theme\.(?:body|utilitybar|topbar|callout|pagination|badge|progress|footer))\./,
+      "$1.dark."
+    );
+    return !darkName || !getColorControl(darkName);
+  }
+
   function setColors(root, selector, properties, value) {
     root.querySelectorAll(selector).forEach((element) => {
       properties.forEach((property) => element.style.setProperty(property, value));
@@ -101,7 +117,11 @@
     }
     const control = getColorControl(name);
     const target = control?.closest("[data-theme-color-item]")?.dataset.previewTarget;
+    const colorMode = control?.closest("[data-theme-color-item]")?.dataset.previewColorMode;
     if (!target) {
+      return;
+    }
+    if (colorMode === "dark" && preview.dataset.previewMode !== "dark") {
       return;
     }
     const root = targetRoot(target);
@@ -109,7 +129,10 @@
       return;
     }
 
-    const lowerName = name.toLowerCase();
+    const lowerName = name.toLowerCase().replace(
+      /^(theme\.(?:body|utilitybar|callout|pagination|badge|progress|footer))\.dark\./,
+      "$1."
+    );
     if (target === "button") {
       if (lowerName === "theme.button.text.color") {
         root.style.setProperty("--workspace-preview-button-text-color", value);
@@ -232,21 +255,33 @@
       button.setAttribute("aria-pressed", selected ? "true" : "false");
     });
     themeControls.forEach((control) => {
-      control.hidden = control.dataset.previewTarget !== target;
+      const mode = preview.dataset.previewMode || "light";
+      const modeMatches = isControlVisibleInMode(control, mode);
+      control.hidden = control.dataset.previewTarget !== target || !modeMatches;
     });
     if (emptyMessage) {
-      emptyMessage.hidden = themeControls.some((control) => control.dataset.previewTarget === target);
+      emptyMessage.hidden = themeControls.some((control) =>
+        control.dataset.previewTarget === target && !control.hidden);
     }
   }
 
   function selectMode(mode) {
     preview.dataset.previewMode = mode;
-    applyTopbarColors();
     modeButtons.forEach((button) => {
       const selected = button.dataset.previewModeSelect === mode;
       button.classList.toggle("active", selected);
       button.setAttribute("aria-pressed", selected ? "true" : "false");
     });
+    document.querySelectorAll("[data-theme-property]").forEach((control) => {
+      const controlMode = control.closest("[data-theme-color-item]")?.dataset.previewColorMode;
+      if (controlMode === "light" || controlMode === mode) {
+        applyColor(control.name, control.value);
+      }
+    });
+    applyTopbarColors();
+    const activeTarget = selectionButtons.find((button) => button.classList.contains("active"))?.dataset.previewSelect
+      || "utilitybar";
+    selectTarget(activeTarget);
   }
 
   selectionButtons.forEach((button) => {
@@ -263,10 +298,5 @@
     }
   });
 
-  document.querySelectorAll("[data-theme-property]").forEach((control) => {
-    applyColor(control.name, control.value);
-  });
-
-  selectTarget("utilitybar");
   selectMode(preview.dataset.previewMode || "light");
 })();

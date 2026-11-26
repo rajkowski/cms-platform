@@ -190,16 +190,20 @@ public class VisualThemeEditorWidget extends GenericWidget {
   private void renderEditor(WidgetContext context, Map<String, String> drafts, Map<String, String> errors) {
     List<SiteProperty> themeProperties = new ArrayList<>();
     Map<String, String> themePreviewTargets = new LinkedHashMap<>();
+    Map<String, String> themePropertyModes = new LinkedHashMap<>();
 
     for (SiteProperty property : VisualWorkspaceEditorCommand.loadEditableProperties()) {
       if (property.getName().startsWith("theme.")) {
         themeProperties.add(property);
         themePreviewTargets.put(property.getName(), VisualWorkspacePropertyCatalog.getPreviewTarget(property.getName()));
+        themePropertyModes.put(property.getName(),
+            VisualWorkspacePropertyCatalog.isDarkThemeProperty(property.getName()) ? "dark" : "light");
       }
     }
 
     context.getRequest().setAttribute("themePropertyList", themeProperties);
     context.getRequest().setAttribute("themePreviewTargets", themePreviewTargets);
+    context.getRequest().setAttribute("themePropertyModes", themePropertyModes);
     context.getRequest().setAttribute("includedThemeList", VisualThemePresetCatalog.loadIncludedThemes(themeProperties));
     List<Theme> savedThemes = ThemeRepository.findAll();
     List<Theme> themeHistoryList = new ArrayList<>();

@@ -164,6 +164,9 @@ public class VisualThemePresetCatalog {
 
   private static String resolveColor(String propertyName, Palette palette) {
     String name = propertyName.toLowerCase(Locale.ROOT);
+    if (name.contains(".dark.") && !name.startsWith("theme.topbar.dark.")) {
+      return resolveDarkColor(name.replace(".dark.", "."), palette);
+    }
     if (name.equals("theme.body.backgroundcolor")) {
       return palette.bodyBackground;
     }
@@ -254,6 +257,61 @@ public class VisualThemePresetCatalog {
     if (name.startsWith("theme.footer.")) {
       return name.endsWith("links.color") ? palette.accentSoft
           : name.endsWith("text.color") ? palette.navigationText : palette.navigationBackground;
+    }
+    return palette.accent;
+  }
+
+  private static String resolveDarkColor(String name, Palette palette) {
+    if (name.equals("theme.body.backgroundcolor")) {
+      return "#10151d";
+    }
+    if (name.equals("theme.body.text.color")) {
+      return "#e8edf2";
+    }
+    if (name.equals("theme.body.link.color")) {
+      return palette.accent;
+    }
+    if (name.startsWith("theme.utilitybar.")) {
+      return name.endsWith("backgroundcolor") ? palette.navigationBackground : "#f3f4f6";
+    }
+    if (name.startsWith("theme.callout.")) {
+      if (name.endsWith(".text.color") || name.equals("theme.callout.text.color")) {
+        return "#e8edf2";
+      }
+      if (name.contains(".primary.")) {
+        return palette.navigationBackground;
+      }
+      if (name.contains(".success.")) {
+        return "#173d2b";
+      }
+      if (name.contains(".warning.")) {
+        return "#4a3513";
+      }
+      if (name.contains(".alert.")) {
+        return "#492423";
+      }
+      return "#252d38";
+    }
+    if (name.startsWith("theme.pagination.")) {
+      if (name.equals("theme.pagination.border.color")) {
+        return "#46505d";
+      }
+      if (name.contains(".current.")) {
+        return name.endsWith(".text.color") ? "#ffffff" : palette.accent;
+      }
+      return palette.accent;
+    }
+    if (name.startsWith("theme.badge.")) {
+      return name.endsWith(".text.color") ? "#f3f4f6" : "#3b4654";
+    }
+    if (name.startsWith("theme.progress.")) {
+      return name.endsWith(".text.color") ? "#ffffff" : "#343d49";
+    }
+    if (name.startsWith("theme.footer.")) {
+      if (name.endsWith("links.color")) {
+        return palette.accent;
+      }
+      return name.endsWith("text.color") ? "#dce2e8" : "#0b1118";
     }
     return palette.accent;
   }

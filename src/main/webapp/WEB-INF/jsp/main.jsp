@@ -44,13 +44,13 @@
   <c:when test="${!empty sitePropertyMap['site.header.line1'] || userSession.hasRole('admin')}">
     <c:if test="${!empty themePropertyMap['theme.utilitybar.backgroundColor']}">
       <meta name="theme-color" content="<c:out value="${themePropertyMap['theme.utilitybar.backgroundColor']}" />" media="(prefers-color-scheme: light)">
-      <meta name="theme-color" content="<c:out value="${themePropertyMap['theme.utilitybar.backgroundColor']}" />" media="(prefers-color-scheme: dark)">
+      <meta name="theme-color" content="<c:out value="${empty themePropertyMap['theme.utilitybar.dark.backgroundColor'] ? themePropertyMap['theme.utilitybar.backgroundColor'] : themePropertyMap['theme.utilitybar.dark.backgroundColor']}" />" media="(prefers-color-scheme: dark)">
     </c:if>
   </c:when>
   <c:otherwise>
     <c:if test="${!empty themePropertyMap['theme.topbar.backgroundColor']}">
       <meta name="theme-color" content="<c:out value="${themePropertyMap['theme.topbar.backgroundColor']}" />" media="(prefers-color-scheme: light)">
-      <meta name="theme-color" content="<c:out value="${themePropertyMap['theme.topbar.backgroundColor']}" />" media="(prefers-color-scheme: dark)">
+      <meta name="theme-color" content="<c:out value="${empty themePropertyMap['theme.topbar.dark.backgroundColor'] ? themePropertyMap['theme.topbar.backgroundColor'] : themePropertyMap['theme.topbar.dark.backgroundColor']}" />" media="(prefers-color-scheme: dark)">
     </c:if>
   </c:otherwise>
 </c:choose>
@@ -220,6 +220,35 @@
         <c:if test="${!empty themePropertyMap['theme.topbar.menu.activeBackgroundColor']}">#platform-menu ul.menu .active > a{background-color:<c:out value="${themePropertyMap['theme.topbar.menu.activeBackgroundColor']}" />}</c:if>
         <c:if test="${!empty themePropertyMap['theme.topbar.menu.activeTextColor']}">#platform-menu ul.menu .active > a{color:<c:out value="${themePropertyMap['theme.topbar.menu.activeTextColor']}" />}</c:if>
         <c:if test="${!empty themePropertyMap['theme.footer.links.color']}">.platform-footer a{color:<c:out value="${themePropertyMap['theme.footer.links.color']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.body.dark.backgroundColor']}">html[data-theme="dark"] body{background-color:<c:out value="${themePropertyMap['theme.body.dark.backgroundColor']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.body.dark.text.color']}">html[data-theme="dark"] body,html[data-theme="dark"] .breadcrumbs li,html[data-theme="dark"] .breadcrumbs li:not(:last-child)::after{color:<c:out value="${themePropertyMap['theme.body.dark.text.color']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.body.dark.link.color']}">html[data-theme="dark"] body a:not(.button),html[data-theme="dark"] .breadcrumbs a,html[data-theme="dark"] .breadcrumbs a:hover,html[data-theme="dark"] .breadcrumbs a:focus{color:<c:out value="${themePropertyMap['theme.body.dark.link.color']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.utilitybar.dark.backgroundColor']}">html[data-theme="dark"] #platform-menu .utility-bar{background-color:<c:out value="${themePropertyMap['theme.utilitybar.dark.backgroundColor']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.utilitybar.dark.text.color']}">html[data-theme="dark"] #platform-menu .utility-bar{color:<c:out value="${themePropertyMap['theme.utilitybar.dark.text.color']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.utilitybar.dark.link.color']}">html[data-theme="dark"] #platform-menu .utility-bar a,html[data-theme="dark"] #platform-menu .utility-bar button.button i.fa{color:<c:out value="${themePropertyMap['theme.utilitybar.dark.link.color']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.callout.dark.backgroundColor']}">html[data-theme="dark"] .callout:not(.primary):not(.secondary):not(.success):not(.warning):not(.alert){background-color:<c:out value="${themePropertyMap['theme.callout.dark.backgroundColor']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.callout.dark.text.color']}">html[data-theme="dark"] .callout:not(.primary):not(.secondary):not(.success):not(.warning):not(.alert),html[data-theme="dark"] .callout:not(.primary):not(.secondary):not(.success):not(.warning):not(.alert) label{color:<c:out value="${themePropertyMap['theme.callout.dark.text.color']}" />}</c:if>
+        <c:forEach items="${fn:split('primary,secondary,success,warning,alert', ',')}" var="themeCalloutVariant">
+          <c:set var="themeDarkCalloutBackground" value="${themePropertyMap['theme.callout.dark.'.concat(themeCalloutVariant).concat('.backgroundColor')]}" />
+          <c:set var="themeDarkCalloutText" value="${themePropertyMap['theme.callout.dark.'.concat(themeCalloutVariant).concat('.text.color')]}" />
+          <c:if test="${!empty themeDarkCalloutBackground}">html[data-theme="dark"] .callout.${themeCalloutVariant}{background-color:<c:out value="${themeDarkCalloutBackground}" />}</c:if>
+          <c:if test="${!empty themeDarkCalloutText}">html[data-theme="dark"] .callout.${themeCalloutVariant},html[data-theme="dark"] .callout.${themeCalloutVariant} label{color:<c:out value="${themeDarkCalloutText}" />}</c:if>
+        </c:forEach>
+        <c:if test="${!empty themePropertyMap['theme.callout.dark.secondary.backgroundColor']}">html[data-theme="dark"] .platform-toc-container li,html[data-theme="dark"] .platform-content-container .tabs li a{background-color:<c:out value="${themePropertyMap['theme.callout.dark.secondary.backgroundColor']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.callout.dark.secondary.text.color']}">html[data-theme="dark"] .platform-toc-container ul.vertical.menu li a,html[data-theme="dark"] .platform-content-container .tabs li a{color:<c:out value="${themePropertyMap['theme.callout.dark.secondary.text.color']}" /> !important}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.callout.dark.secondary.backgroundColor']}">html[data-theme="dark"] table{background-color:<c:out value="${themePropertyMap['theme.callout.dark.secondary.backgroundColor']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.callout.dark.secondary.text.color']}">html[data-theme="dark"] table,html[data-theme="dark"] table th,html[data-theme="dark"] table td{color:<c:out value="${themePropertyMap['theme.callout.dark.secondary.text.color']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.pagination.dark.border.color']}">html[data-theme="dark"] ul.pagination li.page,html[data-theme="dark"] ul.pagination li.current{border-color:<c:out value="${themePropertyMap['theme.pagination.dark.border.color']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.pagination.dark.link.color']}">html[data-theme="dark"] ul.pagination li.page a,html[data-theme="dark"] ul.pagination li.pagination-previous a,html[data-theme="dark"] ul.pagination li.pagination-next a{color:<c:out value="${themePropertyMap['theme.pagination.dark.link.color']}" />}html[data-theme="dark"] ul.pagination li.page:hover{border-color:<c:out value="${themePropertyMap['theme.pagination.dark.link.color']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.pagination.dark.current.backgroundColor']}">html[data-theme="dark"] ul.pagination li.current{background-color:<c:out value="${themePropertyMap['theme.pagination.dark.current.backgroundColor']}" />;border-color:<c:out value="${themePropertyMap['theme.pagination.dark.current.backgroundColor']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.pagination.dark.current.text.color']}">html[data-theme="dark"] ul.pagination li.current{color:<c:out value="${themePropertyMap['theme.pagination.dark.current.text.color']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.badge.dark.backgroundColor']}">html[data-theme="dark"] .badge:not(.primary):not(.secondary):not(.success):not(.warning):not(.alert):not(.new):not(.updated){background-color:<c:out value="${themePropertyMap['theme.badge.dark.backgroundColor']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.badge.dark.text.color']}">html[data-theme="dark"] .badge:not(.primary):not(.secondary):not(.success):not(.warning):not(.alert):not(.new):not(.updated){color:<c:out value="${themePropertyMap['theme.badge.dark.text.color']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.progress.dark.backgroundColor']}">html[data-theme="dark"] .progress{background-color:<c:out value="${themePropertyMap['theme.progress.dark.backgroundColor']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.progress.dark.text.color']}">html[data-theme="dark"] .progress .progress-meter,html[data-theme="dark"] .progress .progress-meter .progress-meter-text{color:<c:out value="${themePropertyMap['theme.progress.dark.text.color']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.footer.dark.backgroundColor']}">html[data-theme="dark"] .platform-footer{background-color:<c:out value="${themePropertyMap['theme.footer.dark.backgroundColor']}" />}html[data-theme="dark"] .platform-footer .fa-inverse{color:<c:out value="${themePropertyMap['theme.footer.dark.backgroundColor']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.footer.dark.text.color']}">html[data-theme="dark"] .platform-footer,html[data-theme="dark"] .platform-footer p{color:<c:out value="${themePropertyMap['theme.footer.dark.text.color']}" />}</c:if>
+        <c:if test="${!empty themePropertyMap['theme.footer.dark.links.color']}">html[data-theme="dark"] .platform-footer a{color:<c:out value="${themePropertyMap['theme.footer.dark.links.color']}" />}</c:if>
         #site-newsletter-overlay, #site-promo-overlay {
           position: fixed;
           bottom: 0;
