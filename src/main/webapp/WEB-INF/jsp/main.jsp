@@ -103,6 +103,14 @@
   <c:if test="${!empty themePropertyMap}">
     <g:compress>
       <style><%-- Prevent top-bar flicker --%>
+        :root {
+          <c:if test="${!empty themePropertyMap['theme.body.text.color']}">--theme-body-text-color:<c:out value="${themePropertyMap['theme.body.text.color']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.body.link.color']}">--theme-body-link-color:<c:out value="${themePropertyMap['theme.body.link.color']}" />;</c:if>
+        }
+        html[data-theme="dark"] {
+          <c:if test="${!empty themePropertyMap['theme.body.dark.text.color']}">--theme-body-text-color:<c:out value="${themePropertyMap['theme.body.dark.text.color']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.body.dark.link.color']}">--theme-body-link-color:<c:out value="${themePropertyMap['theme.body.dark.link.color']}" />;</c:if>
+        }
         .no-js .top-bar { display: none; }
         @media screen and (min-width: 40em) {
           .no-js .top-bar { display: block; }

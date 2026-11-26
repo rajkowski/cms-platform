@@ -43,7 +43,7 @@
   }
 
   .tree-item:hover .tree-content {
-    background: rgba(0, 93, 181, 0.05);
+    background: color-mix(in srgb, var(--accent-1) 5%, transparent);
   }
 
   .tree-item.level-1 {
@@ -95,7 +95,7 @@
 
   .tree-link:hover {
     text-decoration: none;
-    color: #003f7a;
+    color: var(--accent-1);
   }
 
   .tree-description {
@@ -114,7 +114,7 @@
   .tree-description::before {
     content: "\2014";
     margin-right: 0.35rem;
-    color: rgba(95, 111, 130, 0.7);
+    color: var(--muted);
   }
 
   .tree-meta,
@@ -129,7 +129,7 @@
     align-items: center;
     gap: 0.4rem;
     padding: 0.22rem 0.7rem;
-    background: rgba(0, 93, 181, 0.08);
+    background: color-mix(in srgb, var(--accent-1) 8%, transparent);
     border-radius: 999px;
   }
 

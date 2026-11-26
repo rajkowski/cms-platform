@@ -1345,11 +1345,11 @@ a.read-more {
 /* Page Tree */
 
 .page-tree {
-  --text: #1f2a37;
-  --accent-1: #005db5;
-  --accent-2: #005db5;
-  --accent-3: #005db5;
-  --muted: #5f6f82;
+  --text: var(--theme-body-text-color, #1f2a37);
+  --accent-1: var(--theme-body-link-color, #005db5);
+  --accent-2: var(--theme-body-link-color, #005db5);
+  --accent-3: var(--theme-body-link-color, #005db5);
+  --muted: color-mix(in srgb, var(--theme-body-text-color, #1f2a37) 70%, transparent);
 }
 
 /* Callout */

@@ -25,6 +25,10 @@
     <link rel="stylesheet" type="text/css" th:href="${#strings.concat(ctx, '/css/platform.css?v=', VERSION)}" />
     <link rel="stylesheet" type="text/css" th:href="${#strings.concat(ctx, '/css/platform-ecommerce.css?v=', VERSION)}" />
     <style th:if="${not #strings.isEmpty(themePropertyMap['theme.body.text.color'])}">
+      :root {
+        --theme-body-text-color: [[${themePropertyMap['theme.body.text.color']}]];
+        --theme-body-link-color: [[${themePropertyMap['theme.body.link.color']}]];
+      }
       .no-js .top-bar { display: none; }
       @media screen and (min-width: 40em) {
         .no-js .top-bar { display: block; }
