@@ -156,6 +156,8 @@ INSERT INTO site_properties (property_order, property_label, property_name, prop
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (93, 'Warning Callout Text Color', 'theme.callout.warning.text.color', '#0a0a0a', 'color');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (95, 'Alert Callout Background', 'theme.callout.alert.backgroundColor', '#f7e4e1', 'color');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (96, 'Alert Callout Text Color', 'theme.callout.alert.text.color', '#0a0a0a', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (97, 'Box Callout Background', 'theme.callout.box.backgroundColor', '#ffffff', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (97, 'Box Callout Text Color', 'theme.callout.box.text.color', '#0a0a0a', 'color');
 
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (98, 'Pagination Border Color', 'theme.pagination.border.color', '#d1d1d1', 'color');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (99, 'Pagination Link Color', 'theme.pagination.link.color', '#1779ba', 'color');
@@ -219,6 +221,8 @@ INSERT INTO site_properties (property_order, property_label, property_name, prop
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (293, 'Dark Warning Callout Text Color', 'theme.callout.dark.warning.text.color', '#fff4d6', 'color');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (295, 'Dark Alert Callout Background', 'theme.callout.dark.alert.backgroundColor', '#492423', 'color');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (296, 'Dark Alert Callout Text Color', 'theme.callout.dark.alert.text.color', '#fde8e7', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (297, 'Dark Box Callout Background', 'theme.callout.dark.box.backgroundColor', '#252d38', 'color');
+INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (297, 'Dark Box Callout Text Color', 'theme.callout.dark.box.text.color', '#e8edf2', 'color');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (298, 'Dark Pagination Border Color', 'theme.pagination.dark.border.color', '#46505d', 'color');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (299, 'Dark Pagination Link Color', 'theme.pagination.dark.link.color', '#60a5fa', 'color');
 INSERT INTO site_properties (property_order, property_label, property_name, property_value, property_type) VALUES (300, 'Dark Current Page Background', 'theme.pagination.dark.current.backgroundColor', '#60a5fa', 'color');

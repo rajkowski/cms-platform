@@ -91,6 +91,7 @@
       }
     });
     const tocMenuColors = {
+      "--workspace-preview-toc-text-color": colorFor("menu.text.color"),
       "--workspace-preview-toc-active-background-color": colorFor("menu.activebackgroundcolor"),
       "--workspace-preview-toc-active-text-color": colorFor("menu.activetextcolor"),
       "--workspace-preview-toc-hover-background-color": colorFor("menu.text.hoverbackgroundcolor"),
@@ -165,18 +166,18 @@
       const property = lowerName.endsWith(".text.color")
         ? "--workspace-preview-callout-text-color"
         : "--workspace-preview-callout-background-color";
-      const variant = name.match(/^theme\.callout\.(primary|secondary|success|warning|alert)\./i);
+      const variant = lowerName.match(/^theme\.callout\.(primary|secondary|success|warning|alert|box)\./i);
       const style = variant ? variant[1].toLowerCase() : "base";
       setColors(root, `[data-callout-style="${style}"]`, [property], value);
-      if (lowerName === "theme.callout.secondary.backgroundcolor") {
+      if (lowerName === "theme.callout.box.backgroundcolor") {
         preview.style.setProperty("--workspace-preview-toc-background-color", value);
         preview.querySelectorAll(".workspace-preview-toc, .workspace-preview-tabs").forEach((component) => {
           component.style.setProperty("--workspace-preview-toc-background-color", value);
         });
-      } else if (lowerName === "theme.callout.secondary.text.color") {
-        preview.style.setProperty("--workspace-preview-toc-text-color", value);
+      } else if (lowerName === "theme.callout.box.text.color") {
+        preview.style.setProperty("--workspace-preview-box-text-color", value);
         preview.querySelectorAll(".workspace-preview-toc, .workspace-preview-tabs").forEach((component) => {
-          component.style.setProperty("--workspace-preview-toc-text-color", value);
+          component.style.setProperty("--workspace-preview-box-text-color", value);
         });
       }
       return;

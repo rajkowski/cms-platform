@@ -216,6 +216,9 @@ public class VisualThemePresetCatalog {
       if (name.contains(".primary.")) {
         return palette.accentSoft;
       }
+      if (name.contains(".box.")) {
+        return "#ffffff";
+      }
       if (name.contains(".secondary.")) {
         return "#edf1f5";
       }

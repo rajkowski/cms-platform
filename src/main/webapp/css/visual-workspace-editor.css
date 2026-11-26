@@ -369,6 +369,17 @@
   color: var(--workspace-preview-toc-text-color, #17202a);
 }
 
+.workspace-preview-page .workspace-preview-tabs .tabs,
+.workspace-preview-page .workspace-preview-tabs .tabs-content,
+.workspace-preview-page .workspace-preview-tabs .tabs-panel {
+  background: var(--workspace-preview-toc-background-color, #edf1f5);
+}
+
+.workspace-preview-page .workspace-preview-tabs .tabs-content,
+.workspace-preview-page .workspace-preview-tabs .tabs-panel {
+  color: var(--workspace-preview-box-text-color, #17202a);
+}
+
 .workspace-preview-page .workspace-preview-tabs .tabs .tabs-title.is-active a,
 .workspace-preview-page .workspace-preview-tabs .tabs .tabs-title > a[aria-selected="true"] {
   background: var(--workspace-preview-toc-active-background-color, #1779ba) !important;
@@ -386,8 +397,17 @@
 }
 
 .workspace-preview-page[data-preview-mode="dark"] .workspace-preview-main table {
-  background: var(--workspace-preview-callout-background-color, #252d38);
-  color: var(--workspace-preview-callout-text-color, #e8edf2);
+  background: var(--workspace-preview-toc-background-color, #252d38);
+  color: var(--workspace-preview-box-text-color, #e8edf2);
+}
+
+.workspace-preview-page[data-preview-mode="dark"] .workspace-preview-main table thead,
+.workspace-preview-page[data-preview-mode="dark"] .workspace-preview-main table tbody,
+.workspace-preview-page[data-preview-mode="dark"] .workspace-preview-main table tr,
+.workspace-preview-page[data-preview-mode="dark"] .workspace-preview-main table th,
+.workspace-preview-page[data-preview-mode="dark"] .workspace-preview-main table td {
+  background: var(--workspace-preview-toc-background-color, #252d38);
+  color: var(--workspace-preview-box-text-color, #e8edf2);
 }
 
 .workspace-preview-page[data-preview-mode="dark"] .workspace-preview-main > a:not(.button) {
@@ -433,6 +453,15 @@
 .workspace-preview-page .workspace-preview-callout {
   background-color: var(--workspace-preview-callout-background-color, #fff);
   color: var(--workspace-preview-callout-text-color, inherit);
+}
+
+.workspace-preview-callout[data-callout-style="box"] {
+  --workspace-preview-callout-background-color: #fff;
+  background-image: none;
+}
+
+.workspace-preview-page[data-preview-mode="dark"] .workspace-preview-callout[data-callout-style="box"] {
+  --workspace-preview-callout-background-color: #252d38;
 }
 
 .workspace-preview-callout[data-callout-style="primary"] {

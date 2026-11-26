@@ -1360,12 +1360,7 @@ a.read-more {
 }
 
 .callout.box {
-  color: #0a0a0a;
-  --surface: linear-gradient(180deg, #ffffff 0%, #f6f9fc 100%);
-  --surface-strong: #ffffff;
   --border: rgba(23, 43, 77, 0.12);
-  --shadow: 0 12px 32px rgba(20, 33, 61, 0.08);
-  background: var(--surface);
   border: 1px solid var(--border);
 }
 

@@ -213,6 +213,8 @@
     <c:when test="${siteProperty.name eq 'theme.callout.warning.text.color'}">colorSelectorList.push('.callout.warning,.callout.warning label');</c:when>
     <c:when test="${siteProperty.name eq 'theme.callout.alert.backgroundColor'}">colorSelectorList.push('.callout.alert');</c:when>
     <c:when test="${siteProperty.name eq 'theme.callout.alert.text.color'}">colorSelectorList.push('.callout.alert,.callout.alert label');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.callout.box.backgroundColor'}">colorSelectorList.push('.callout.box');</c:when>
+    <c:when test="${siteProperty.name eq 'theme.callout.box.text.color'}">colorSelectorList.push('.callout.box,.callout.box label');</c:when>
     <c:when test="${siteProperty.name eq 'theme.footer.backgroundColor'}">colorSelectorList.push('.platform-footer');</c:when>
     <c:when test="${siteProperty.name eq 'theme.footer.text.color'}">colorSelectorList.push('.platform-footer');</c:when>
     <c:when test="${siteProperty.name eq 'theme.footer.links.color'}">colorSelectorList.push('.platform-footer a');</c:when>

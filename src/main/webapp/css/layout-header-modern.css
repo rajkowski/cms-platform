@@ -208,7 +208,7 @@
 }
 
 /* Logo/Brand */
-.header-logo {
+.modern-header .header-logo {
   display: flex;
   align-items: center;
   text-decoration: none;
@@ -220,25 +220,26 @@
   flex: 0 0 auto;
 }
 
-.header-logo img {
+.modern-header .header-logo img {
   height: 40px;
   margin-right: 0.75rem;
 }
 
 /* Swap logos based on theme */
-.header-logo img.logo-dark {
+.modern-header .header-logo img.logo-dark {
   display: none;
 }
 
-[data-theme="dark"] .header-logo img.logo-light {
+.modern-header[data-theme="dark"] .header-logo img.logo-light {
   display: none;
 }
 
-[data-theme="dark"] .header-logo img.logo-dark {
+.modern-header[data-theme="dark"] .header-logo img.logo-dark {
   display: inline-block;
 }
 
-.header-logo:hover {
+.modern-header .header-logo:hover,
+.modern-header .header-logo:focus {
   color: var(--button-primary-hover);
   text-decoration: none;
 }
@@ -267,7 +268,7 @@
   position: relative;
 }
 
-.nav-link {
+.modern-header .nav-link {
   display: block;
   padding: 0.75rem 1rem;
   color: var(--nav-link-color, var(--header-text));
@@ -278,12 +279,13 @@
   white-space: nowrap;
 }
 
-.nav-link:hover {
+.modern-header .nav-link:hover,
+.modern-header .nav-link:focus {
   background: var(--nav-hover-bg);
   color: var(--nav-hover-text, var(--button-primary));
 }
 
-.nav-link.active {
+.modern-header .nav-link.active {
   background: var(--nav-active-bg);
   color: var(--nav-active-text, var(--button-active));
 }
@@ -306,7 +308,7 @@
   display: block;
 }
 
-.dropdown-item {
+.modern-header .dropdown-item {
   display: block;
   padding: 0.75rem 1.25rem;
   color: var(--nav-dropdown-text, var(--header-text));
@@ -314,12 +316,13 @@
   transition: background 0.2s ease;
 }
 
-.dropdown-item:hover {
+.modern-header .dropdown-item:hover,
+.modern-header .dropdown-item:focus {
   background: var(--nav-hover-bg);
   color: var(--nav-hover-text, var(--nav-dropdown-text, var(--header-text)));
 }
 
-.dropdown-item.active {
+.modern-header .dropdown-item.active {
   background: var(--nav-active-bg, var(--nav-active-dropdown-bg));
   color: var(--nav-active-text, var(--button-active-dropdown));
 }

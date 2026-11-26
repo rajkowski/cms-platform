@@ -121,6 +121,8 @@ class VisualWorkspacePropertyCatalogTest {
         "theme.callout.warning.text.color",
         "theme.callout.alert.backgroundColor",
         "theme.callout.alert.text.color",
+        "theme.callout.box.backgroundColor",
+        "theme.callout.box.text.color",
         "theme.callout.dark.backgroundColor",
         "theme.callout.dark.text.color",
         "theme.callout.dark.primary.backgroundColor",
@@ -133,6 +135,8 @@ class VisualWorkspacePropertyCatalogTest {
         "theme.callout.dark.warning.text.color",
         "theme.callout.dark.alert.backgroundColor",
         "theme.callout.dark.alert.text.color",
+        "theme.callout.dark.box.backgroundColor",
+        "theme.callout.dark.box.text.color",
         "theme.pagination.border.color",
         "theme.pagination.link.color",
         "theme.pagination.current.backgroundColor",
@@ -207,6 +211,10 @@ class VisualWorkspacePropertyCatalogTest {
         property("theme.button.warning.text.color", "color"),
         property("theme.button.alert.text.color", "color"),
         property("theme.callout.alert.backgroundColor", "color"),
+        property("theme.callout.box.backgroundColor", "color"),
+        property("theme.callout.box.text.color", "color"),
+        property("theme.callout.dark.box.backgroundColor", "color"),
+        property("theme.callout.dark.box.text.color", "color"),
         property("theme.pagination.current.backgroundColor", "color"),
         property("theme.label.success.backgroundColor", "color"),
         property("theme.badge.text.color", "color"),
@@ -232,6 +240,10 @@ class VisualWorkspacePropertyCatalogTest {
           propertyValue(theme, "theme.pagination.current.backgroundColor"));
       Assertions.assertEquals("#000000", propertyValue(theme, "theme.badge.text.color"));
       Assertions.assertEquals("#10151d", propertyValue(theme, "theme.body.dark.backgroundColor"));
+      Assertions.assertEquals("#ffffff", propertyValue(theme, "theme.callout.box.backgroundColor"));
+      Assertions.assertEquals("#17202a", propertyValue(theme, "theme.callout.box.text.color"));
+      Assertions.assertEquals("#252d38", propertyValue(theme, "theme.callout.dark.box.backgroundColor"));
+      Assertions.assertEquals("#e8edf2", propertyValue(theme, "theme.callout.dark.box.text.color"));
       Assertions.assertNotEquals(
           propertyValue(theme, "theme.body.backgroundColor"),
           propertyValue(theme, "theme.body.dark.backgroundColor"));
