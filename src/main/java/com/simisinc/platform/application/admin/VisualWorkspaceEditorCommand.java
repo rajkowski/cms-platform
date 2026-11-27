@@ -57,6 +57,7 @@ public class VisualWorkspaceEditorCommand {
     Map<String, String> errors = new LinkedHashMap<>();
     List<SiteProperty> updates = new ArrayList<>();
     if (submittedValues == null) {
+      LOG.error("No property values were submitted.");
       errors.put("_global", "No property values were submitted.");
       return new SaveResult(false, errors);
     }
@@ -65,30 +66,36 @@ public class VisualWorkspaceEditorCommand {
       String name = entry.getKey();
       SiteProperty property = currentByName.get(name);
       if (property == null || "site.url".equals(name) || (allowedPrefix != null && !name.startsWith(allowedPrefix))) {
+        LOG.error("Attempted to change a property that cannot be modified: " + name);
         errors.put(name, "This property cannot be changed in this visual editor.");
         continue;
       }
 
       String value = normalizeValue(property, entry.getValue());
+      if (Objects.equals(property.getValue(), value)) {
+        continue;
+      }
       String validationError = validateValue(property, value);
       if (validationError != null) {
+        LOG.error("Validation error for property " + name + ": " + validationError);
         errors.put(name, validationError);
         continue;
       }
 
-      if (!Objects.equals(property.getValue(), value)) {
-        property.setValue(value);
-        updates.add(property);
-      }
+      property.setValue(value);
+      updates.add(property);
     }
 
     if (!errors.isEmpty()) {
+      LOG.error("One or more errors occurred while saving visual workspace editor values.");
       return new SaveResult(false, errors);
     }
     if (updates.isEmpty()) {
+      LOG.debug("No visual workspace editor values were changed.");
       return new SaveResult(true, errors);
     }
 
+    LOG.debug("Attempting to save visual workspace editor values.");
     if (!SitePropertyRepository.saveAll("site,theme", updates)) {
       LOG.error("One or more visual workspace editor values could not be saved");
       CacheManager.invalidateCurrentWorkspaceKey(CacheManager.SYSTEM_PROPERTY_PREFIX_CACHE, "site", true);
@@ -96,6 +103,7 @@ public class VisualWorkspaceEditorCommand {
       errors.put("_global", "The values could not all be saved. Your changes are still available to retry.");
       return new SaveResult(false, errors);
     }
+    LOG.debug("Visual workspace editor values saved successfully.");
     return new SaveResult(true, errors);
   }
 

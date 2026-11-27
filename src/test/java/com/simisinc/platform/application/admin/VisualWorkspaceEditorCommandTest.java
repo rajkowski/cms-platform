@@ -87,6 +87,27 @@ class VisualWorkspaceEditorCommandTest {
     }
   }
 
+  @Test
+  void ignoresUnchangedEmptyThemeColorsWhenSavingAPreset() {
+    try (MockedStatic<SitePropertyRepository> repository = mockStatic(SitePropertyRepository.class)) {
+      SiteProperty background = property("theme.body.backgroundColor", "color", "#ffffff");
+      SiteProperty footer = property("theme.footer.backgroundColor", "color", "");
+      repository.when(() -> SitePropertyRepository.findAllByPrefix("site")).thenReturn(List.of());
+      repository.when(() -> SitePropertyRepository.findAllByPrefix("theme"))
+          .thenReturn(List.of(background, footer));
+      repository.when(() -> SitePropertyRepository.saveAll(anyString(), anyList())).thenReturn(true);
+
+      VisualWorkspaceEditorCommand.SaveResult result = VisualWorkspaceEditorCommand.saveValues(
+          Map.of(
+              "theme.body.backgroundColor", "#000000",
+              "theme.footer.backgroundColor", ""),
+          "theme.");
+
+      Assertions.assertTrue(result.isSuccessful());
+      repository.verify(() -> SitePropertyRepository.saveAll("site,theme", List.of(background)));
+    }
+  }
+
   private static SiteProperty property(String name, String type, String value) {
     SiteProperty property = new SiteProperty();
     property.setId(1);

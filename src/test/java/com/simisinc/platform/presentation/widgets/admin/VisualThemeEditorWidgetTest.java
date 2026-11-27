@@ -78,7 +78,8 @@ class VisualThemeEditorWidgetTest {
     SiteProperty property = property("theme.body.backgroundColor", "#ffffff");
     when(context.getParameterMap()).thenReturn(Map.of(
         "theme.body.backgroundColor", new String[] { "#000000" },
-        "themeSnapshotBaseName", new String[] { "Midnight" }));
+        "themeSnapshotBaseName", new String[] { "Midnight" },
+        "returnPage", new String[] { "/" }));
     when(context.getParameter("themeSnapshotBaseName")).thenReturn("Midnight");
     when(context.getRequest()).thenReturn(request);
 

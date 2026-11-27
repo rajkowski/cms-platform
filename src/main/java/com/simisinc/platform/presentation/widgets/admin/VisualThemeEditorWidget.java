@@ -53,7 +53,8 @@ public class VisualThemeEditorWidget extends GenericWidget {
   private static final Log LOG = LogFactory.getLog(VisualThemeEditorWidget.class);
   private static final String ACCESS_PERMISSION = "cms.visual-workspace-editor.access";
   private static final String EDITOR_JSP = "/cms/visual-theme-editor.jsp";
-  private static final Set<String> REQUEST_METADATA = Set.of("widget", "token", "action", "command", "themeSnapshotBaseName");
+  private static final Set<String> REQUEST_METADATA = Set.of(
+      "widget", "token", "action", "command", "returnPage", "themeSnapshotBaseName");
   private static final long MAX_THEME_FILE_SIZE = 1024 * 1024;
 
   @Override

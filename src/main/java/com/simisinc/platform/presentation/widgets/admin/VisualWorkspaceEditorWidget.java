@@ -49,7 +49,7 @@ public class VisualWorkspaceEditorWidget extends GenericWidget {
   private static final Log LOG = LogFactory.getLog(VisualWorkspaceEditorWidget.class);
   private static final String ACCESS_PERMISSION = "cms.visual-workspace-editor.access";
   private static final String EDITOR_JSP = "/cms/visual-workspace-editor.jsp";
-  private static final Set<String> REQUEST_METADATA = Set.of("widget", "token", "action");
+  private static final Set<String> REQUEST_METADATA = Set.of("widget", "token", "action", "returnPage");
 
   @Override
   public WidgetContext execute(WidgetContext context) {

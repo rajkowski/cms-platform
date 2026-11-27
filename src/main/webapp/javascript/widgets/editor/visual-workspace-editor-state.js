@@ -56,17 +56,27 @@
       event.preventDefault();
       return;
     }
+    const unchangedControls = controls.filter((control) => control.value === savedValues.get(control.name));
+    unchangedControls.forEach((control) => {
+      control.disabled = true;
+    });
     const themeNameInput = document.getElementById("workspace-editor-theme-snapshot-name");
     if (themeNameInput) {
       const themeName = window.prompt("Name this theme:", themeNameInput.value);
       if (themeName === null) {
         event.preventDefault();
+        unchangedControls.forEach((control) => {
+          control.disabled = false;
+        });
         updateDirtyState();
         return;
       }
       if (!themeName.trim()) {
         window.alert("Enter a name for the theme.");
         event.preventDefault();
+        unchangedControls.forEach((control) => {
+          control.disabled = false;
+        });
         updateDirtyState();
         return;
       }
