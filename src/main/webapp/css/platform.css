@@ -582,6 +582,117 @@ table td .input-group {
   right: 40px;
 }
 
+/* Content Accordion */
+
+.accordion {
+  background: transparent;
+  margin: 0 0 1rem;
+}
+
+.accordion > .accordion-item {
+  overflow: hidden;
+  margin-bottom: .75rem;
+  border: 1px solid color-mix(in srgb, var(--theme-body-text-color) 20%, transparent);
+  border-radius: .5rem;
+  background-color: var(--theme-surface-background-color);
+  color: var(--theme-surface-text-color);
+}
+
+.accordion > .accordion-item:last-child {
+  margin-bottom: 0;
+}
+
+.accordion .accordion-title,
+.accordion .accordion-header {
+  display: block;
+  min-height: 3.5rem;
+  margin: 0;
+  padding: 1rem 3.25rem 1rem 1.25rem;
+  border: 0;
+  border-radius: 0;
+  background-color: var(--theme-secondary-background-color);
+  color: var(--theme-secondary-text-color);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+  text-decoration: none;
+  transition: background-color .2s ease, color .2s ease;
+}
+
+.accordion > .accordion-item:last-child:not(.is-active) > .accordion-title {
+  border-bottom: 0;
+}
+
+.accordion .accordion-title:hover,
+.accordion .accordion-title:focus {
+  background-color: color-mix(in srgb, var(--theme-secondary-background-color) 82%, var(--theme-primary-background-color));
+  color: var(--theme-secondary-text-color);
+}
+
+.accordion .accordion-title:focus {
+  box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--theme-primary-background-color) 65%, transparent);
+}
+
+.accordion .accordion-title::before {
+  right: 1.25rem;
+  width: 1rem;
+  margin-top: -.75rem;
+  color: var(--theme-primary-background-color);
+  font-size: 1.5rem;
+  font-weight: 400;
+  line-height: 1.5rem;
+  text-align: center;
+}
+
+.accordion > .accordion-item.is-active > .accordion-title {
+  background-color: color-mix(in srgb, var(--theme-secondary-background-color) 88%, var(--theme-primary-background-color));
+}
+
+.accordion-title.accordion-title-level-1,
+.accordion-header.accordion-title-level-1 {
+  font-size: 1.125rem;
+}
+
+.accordion-title.accordion-title-level-2 {
+  font-size: 1rem;
+}
+
+.accordion > .accordion-item > .accordion-content,
+.accordion > .accordion-item:last-child > .accordion-content:last-child {
+  padding: 1.25rem;
+  border: 0;
+  border-top: 1px solid color-mix(in srgb, var(--theme-body-text-color) 15%, transparent);
+  background-color: var(--theme-surface-background-color);
+  color: var(--theme-surface-text-color);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.accordion .accordion-content > :last-child {
+  margin-bottom: 0;
+}
+
+.accordion .inner-accordion {
+  margin: 0;
+}
+
+.accordion .inner-accordion > .accordion-item {
+  margin-bottom: .5rem;
+}
+
+.accordion .inner-accordion > .accordion-item:last-child {
+  margin-bottom: 0;
+}
+
+.accordion .inner-accordion .accordion-title {
+  min-height: 3rem;
+  padding: .875rem 3rem .875rem 1rem;
+}
+
+.accordion .inner-accordion .accordion-content {
+  padding: 1rem;
+}
+
 /* Pagination */
 
 ul.pagination li.page {
