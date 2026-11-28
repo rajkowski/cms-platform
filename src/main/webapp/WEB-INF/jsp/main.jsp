@@ -106,7 +106,7 @@
         :root {
           <c:if test="${!empty themePropertyMap['theme.body.backgroundColor']}">--theme-body-background-color:<c:out value="${themePropertyMap['theme.body.backgroundColor']}" />;</c:if>
           <c:if test="${!empty themePropertyMap['theme.body.text.color']}">--theme-body-text-color:<c:out value="${themePropertyMap['theme.body.text.color']}" />;</c:if>
-          <c:if test="${!empty themePropertyMap['theme.body.link.color']}">--theme-body-link-color:<c:out value="${themePropertyMap['theme.body.link.color']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.body.link.color']}">--theme-body-link-color:<c:out value="${themePropertyMap['theme.body.link.color']}" />;--swiper-theme-color:<c:out value="${themePropertyMap['theme.body.link.color']}" />;</c:if>
           <c:if test="${!empty themePropertyMap['theme.callout.box.backgroundColor']}">--theme-surface-background-color:<c:out value="${themePropertyMap['theme.callout.box.backgroundColor']}" />;</c:if>
           <c:if test="${!empty themePropertyMap['theme.callout.box.text.color']}">--theme-surface-text-color:<c:out value="${themePropertyMap['theme.callout.box.text.color']}" />;</c:if>
           <c:if test="${!empty themePropertyMap['theme.callout.secondary.backgroundColor']}">--theme-secondary-background-color:<c:out value="${themePropertyMap['theme.callout.secondary.backgroundColor']}" />;</c:if>
@@ -129,7 +129,7 @@
         html[data-theme="dark"] {
           <c:if test="${!empty themePropertyMap['theme.body.dark.backgroundColor']}">--theme-body-background-color:<c:out value="${themePropertyMap['theme.body.dark.backgroundColor']}" />;</c:if>
           <c:if test="${!empty themePropertyMap['theme.body.dark.text.color']}">--theme-body-text-color:<c:out value="${themePropertyMap['theme.body.dark.text.color']}" />;</c:if>
-          <c:if test="${!empty themePropertyMap['theme.body.dark.link.color']}">--theme-body-link-color:<c:out value="${themePropertyMap['theme.body.dark.link.color']}" />;</c:if>
+          <c:if test="${!empty themePropertyMap['theme.body.dark.link.color']}">--theme-body-link-color:<c:out value="${themePropertyMap['theme.body.dark.link.color']}" />;--swiper-theme-color:<c:out value="${themePropertyMap['theme.body.dark.link.color']}" />;</c:if>
           <c:if test="${!empty themePropertyMap['theme.callout.dark.box.backgroundColor']}">--theme-surface-background-color:<c:out value="${themePropertyMap['theme.callout.dark.box.backgroundColor']}" />;</c:if>
           <c:if test="${!empty themePropertyMap['theme.callout.dark.box.text.color']}">--theme-surface-text-color:<c:out value="${themePropertyMap['theme.callout.dark.box.text.color']}" />;</c:if>
           <c:if test="${!empty themePropertyMap['theme.callout.dark.secondary.backgroundColor']}">--theme-secondary-background-color:<c:out value="${themePropertyMap['theme.callout.dark.secondary.backgroundColor']}" />;</c:if>
