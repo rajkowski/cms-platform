@@ -284,8 +284,8 @@
   color: var(--workspace-preview-menu-active-text-color, inherit);
 }
 
-.workspace-preview-menu .is-dropdown-submenu-parent > a::after {
-  border-top-color: var(--workspace-preview-menu-arrow-color, currentColor);
+#workspace-preview-page .workspace-preview-menu .is-dropdown-submenu-parent > a::after {
+  border-color: var(--workspace-preview-menu-arrow-color, currentColor) transparent transparent;
 }
 
 .dropdown.menu .is-dropdown-submenu.workspace-preview-submenu {
