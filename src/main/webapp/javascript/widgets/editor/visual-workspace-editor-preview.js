@@ -96,6 +96,13 @@
       "--workspace-preview-toc-hover-background-color": colorFor("menu.text.hoverbackgroundcolor"),
       "--workspace-preview-toc-hover-text-color": colorFor("menu.hovertextcolor")
     };
+    if (mode === "dark") {
+      Object.assign(tocMenuColors, {
+        "--workspace-preview-toc-background-color": colorFor("backgroundcolor"),
+        "--workspace-preview-toc-text-color": colorFor("menu.text.color"),
+        "--workspace-preview-box-text-color": colorFor("menu.text.color")
+      });
+    }
     Object.entries(tocMenuColors).forEach(([property, value]) => {
       if (value) {
         preview.style.setProperty(property, value);
@@ -168,17 +175,17 @@
       const variant = lowerName.match(/^theme\.callout\.(primary|secondary|success|warning|alert|box)\./i);
       const style = variant ? variant[1].toLowerCase() : "base";
       setColors(root, `[data-callout-style="${style}"]`, [property], value);
-      if (lowerName === "theme.callout.box.backgroundcolor") {
+      if (lowerName === "theme.callout.box.backgroundcolor" && preview.dataset.previewMode !== "dark") {
         preview.style.setProperty("--workspace-preview-toc-background-color", value);
         preview.querySelectorAll(".workspace-preview-toc, .workspace-preview-tabs").forEach((component) => {
           component.style.setProperty("--workspace-preview-toc-background-color", value);
         });
-      } else if (lowerName === "theme.callout.box.text.color") {
+      } else if (lowerName === "theme.callout.box.text.color" && preview.dataset.previewMode !== "dark") {
         preview.style.setProperty("--workspace-preview-box-text-color", value);
         preview.querySelectorAll(".workspace-preview-toc, .workspace-preview-tabs").forEach((component) => {
           component.style.setProperty("--workspace-preview-box-text-color", value);
         });
-      } else if (lowerName === "theme.callout.secondary.text.color") {
+      } else if (lowerName === "theme.callout.secondary.text.color" && preview.dataset.previewMode !== "dark") {
         preview.style.setProperty("--workspace-preview-toc-text-color", value);
         preview.querySelectorAll(".workspace-preview-toc, .workspace-preview-tabs").forEach((component) => {
           component.style.setProperty("--workspace-preview-toc-text-color", value);

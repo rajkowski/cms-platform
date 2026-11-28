@@ -411,6 +411,40 @@
   color: var(--workspace-preview-toc-hover-text-color, #fff) !important;
 }
 
+#workspace-preview-page[data-preview-mode="dark"] .workspace-preview-toc li:not(.is-active):not(:hover) {
+  background-color: var(--workspace-preview-toc-background-color, #252d38) !important;
+}
+
+#workspace-preview-page[data-preview-mode="dark"] .workspace-preview-toc li:not(.is-active):not(:hover) > a {
+  color: var(--workspace-preview-toc-text-color, #e8edf2) !important;
+}
+
+#workspace-preview-page[data-preview-mode="dark"] .workspace-preview-tabs .tabs-title:not(.is-active) > a[aria-selected="false"]:not(:hover):not(:focus),
+#workspace-preview-page[data-preview-mode="dark"] .workspace-preview-tabs .tabs,
+#workspace-preview-page[data-preview-mode="dark"] .workspace-preview-tabs .tabs-content,
+#workspace-preview-page[data-preview-mode="dark"] .workspace-preview-tabs .tabs-panel {
+  background-color: var(--workspace-preview-toc-background-color, #252d38) !important;
+}
+
+#workspace-preview-page[data-preview-mode="dark"] .workspace-preview-tabs .tabs-title:not(.is-active) > a[aria-selected="false"]:not(:hover):not(:focus),
+#workspace-preview-page[data-preview-mode="dark"] .workspace-preview-tabs .tabs-content,
+#workspace-preview-page[data-preview-mode="dark"] .workspace-preview-tabs .tabs-panel {
+  color: var(--workspace-preview-toc-text-color, #e8edf2) !important;
+}
+
+#workspace-preview-page[data-preview-mode="dark"] .workspace-preview-toc li:hover,
+#workspace-preview-page[data-preview-mode="dark"] .workspace-preview-tabs .tabs-title > a:hover,
+#workspace-preview-page[data-preview-mode="dark"] .workspace-preview-tabs .tabs-title > a:focus {
+  background-color: var(--workspace-preview-toc-hover-background-color, #253247) !important;
+  color: var(--workspace-preview-toc-hover-text-color, #edf2f7) !important;
+}
+
+#workspace-preview-page[data-preview-mode="dark"] .workspace-preview-toc li:hover > a,
+#workspace-preview-page[data-preview-mode="dark"] .workspace-preview-toc li > a:hover,
+#workspace-preview-page[data-preview-mode="dark"] .workspace-preview-toc li > a:focus {
+  color: var(--workspace-preview-toc-hover-text-color, #edf2f7) !important;
+}
+
 .workspace-preview-page[data-preview-mode="dark"] .workspace-preview-main hr {
   border-color: #59616c;
 }
